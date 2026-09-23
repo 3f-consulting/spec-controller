@@ -188,6 +188,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
     failing: "Evidence Observation is failing",
     watermelon: "Evidence Observation is passing but fabricated",
     "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
+    "duplicate-scn-code": "Evidence Obligation's @SCN code is carried by another Scenario",
     "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
     "cites-no-scenario": "Evidence Observation cites no Scenario",
     "no-evidence-obligation": "Evidence Observation cites a Scenario with no matching Evidence Obligation",

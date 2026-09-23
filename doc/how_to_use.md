@@ -294,6 +294,8 @@ Both carry a **provenance** header recording what was reconciled (target, source
 
 The outcome you are watching for is the **watermelon**: a static check that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
 
+**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict. Earlier releases refused such a corpus outright at exit `2` and printed no report; they no longer do.
+
 ---
 
 ## Wiring into CI
@@ -369,6 +371,8 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 **My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, or one buried in a quoted argument to a wrapper, is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
+
+**A row reads `duplicate-scn-code`** — two scenarios carry that `@SCN` code, and the report names them under *The corpus holds N scenarios in M accounts*. Give one of them a code of its own; an `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. Until then the run exits `1`.
 
 **`--json` rejected** — the legacy flag was removed; use `--format json:<path>`.
 

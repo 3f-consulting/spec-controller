@@ -11,8 +11,8 @@
  *    every outcome and REFUSES (throws on) any forbidden pair, expectations derived from the
  *    type-forced OUTCOME_SIDE_PROFILE map (never a hand-copied list).
  *  - THE ARTEFACT-VS-MANIFESTO GATE (@integration) — the REAL `spec-controller balance` binary is
- *    spawned over a ten-outcome corpus fixture; every emitted Quality Check Reconciliation's
- *    side-presence is checked against its canon row, and all ten outcomes must be exercised. This
+ *    spawned over a corpus fixture that exercises every outcome; every emitted Quality Check Reconciliation's
+ *    side-presence is checked against its canon row, and every outcome must be exercised. This
  *    verifies the object the real tool EMITS against canon, not a golden.
  */
 
@@ -31,13 +31,13 @@ import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // @SCN-LDG-030
 
-/** The ten-outcome corpus fixture — shaped so the real reconcile emits ALL TEN outcomes. */
-const TEN_OUTCOME_CORPUS = {
-  features: "tests/fixtures/ten-outcome-corpus/features",
-  vitest: "tests/fixtures/ten-outcome-corpus/vitest.json",
-  cucumber: "tests/fixtures/ten-outcome-corpus/cucumber.json",
-  ci: "tests/fixtures/ten-outcome-corpus/ci.yml",
-  packageJson: "tests/fixtures/ten-outcome-corpus/package.json",
+/** The every-outcome corpus fixture — shaped so the real reconcile emits EVERY outcome. */
+const EVERY_OUTCOME_CORPUS = {
+  features: "tests/fixtures/every-outcome-corpus/features",
+  vitest: "tests/fixtures/every-outcome-corpus/vitest.json",
+  cucumber: "tests/fixtures/every-outcome-corpus/cucumber.json",
+  ci: "tests/fixtures/every-outcome-corpus/ci.yml",
+  packageJson: "tests/fixtures/every-outcome-corpus/package.json",
 };
 
 /** A REAL debit and a REAL credit — content is immaterial to the presence-only invariant. */
@@ -69,8 +69,9 @@ function spawnBalance(args: string[]): SpawnSyncReturns<string> {
 
 Given("the canon outcome-side profile OUTCOME_SIDE_PROFILE", function () {
   profile = OUTCOME_SIDE_PROFILE;
-  // Totality: the type-forced record keys every Outcome — all ten.
-  assert.equal(Object.keys(profile).length, 10, "expected ten outcomes in OUTCOME_SIDE_PROFILE");
+  // Totality: the type-forced record keys every Outcome — all eleven, canon's table
+  // (double-entry-manifesto.md) since duplicate-scn-code (3F-3609).
+  assert.equal(Object.keys(profile).length, 11, "expected eleven outcomes in OUTCOME_SIDE_PROFILE");
 });
 
 When(
@@ -131,19 +132,48 @@ Then(
   },
 );
 
+/**
+ * Every Quality Check Reconciliation the REAL tool emitted, checked against canon — the debit/credit
+ * PRESENCE of each must match its OUTCOME_SIDE_PROFILE row — and the set of outcomes seen. Its own
+ * function because the step that reads it is held to the line ceiling it would otherwise breach.
+ */
+function outcomesCheckedAgainstCanon(report: {
+  ledger: { scenarioReconciliations: { scnId: string; qualityCheckReconciliations: { outcome: string; evidenceObligation?: unknown; evidenceObservation?: unknown }[] }[] };
+}): Set<string> {
+  const emittedOutcomes = new Set<string>();
+  for (const sr of report.ledger.scenarioReconciliations) {
+    for (const q of sr.qualityCheckReconciliations) {
+      const row = OUTCOME_SIDE_PROFILE[q.outcome as Outcome];
+      assert.ok(row !== undefined, `emitted QCR carries an unknown outcome: ${q.outcome}`);
+      assert.equal(
+        q.evidenceObligation !== undefined,
+        row.obligation === "Exists",
+        `${q.outcome} (scn ${sr.scnId}): emitted obligation side-presence must match canon`,
+      );
+      assert.equal(
+        q.evidenceObservation !== undefined,
+        row.observation === "Exists",
+        `${q.outcome} (scn ${sr.scnId}): emitted observation side-presence must match canon`,
+      );
+      emittedOutcomes.add(q.outcome);
+    }
+  }
+  return emittedOutcomes;
+}
+
 Then(
-  "when the real tool balances a ten-outcome corpus, every emitted Quality Check Reconciliation's sides match its canon row",
+  "when the real tool balances a corpus that exercises every outcome, every emitted Quality Check Reconciliation's sides match its canon row",
   function () {
     const root = process.cwd();
-    for (const p of Object.values(TEN_OUTCOME_CORPUS)) {
+    for (const p of Object.values(EVERY_OUTCOME_CORPUS)) {
       assert.ok(existsSync(join(root, p)), `missing fixture path: ${p}`);
     }
     const result = spawnBalance([
-      "--features", TEN_OUTCOME_CORPUS.features,
-      "--vitest", TEN_OUTCOME_CORPUS.vitest,
-      "--cucumber", TEN_OUTCOME_CORPUS.cucumber,
-      "--ci", TEN_OUTCOME_CORPUS.ci,
-      "--package-json", TEN_OUTCOME_CORPUS.packageJson,
+      "--features", EVERY_OUTCOME_CORPUS.features,
+      "--vitest", EVERY_OUTCOME_CORPUS.vitest,
+      "--cucumber", EVERY_OUTCOME_CORPUS.cucumber,
+      "--ci", EVERY_OUTCOME_CORPUS.ci,
+      "--package-json", EVERY_OUTCOME_CORPUS.packageJson,
       "--format", "json",
     ]);
     // The corpus is deliberately out-of-balance AND unsound (it carries a broken proof), so the
@@ -153,32 +183,14 @@ Then(
       result.stdout.trim().length > 0,
       `expected report JSON on stdout; stderr was: ${result.stderr}`,
     );
-    const report = JSON.parse(result.stdout);
-    const emittedOutcomes = new Set<string>();
-    for (const sr of report.ledger.scenarioReconciliations) {
-      for (const q of sr.qualityCheckReconciliations) {
-        const row = OUTCOME_SIDE_PROFILE[q.outcome as Outcome];
-        assert.ok(row !== undefined, `emitted QCR carries an unknown outcome: ${q.outcome}`);
-        // The artefact the REAL tool emits, checked against canon — the debit/credit PRESENCE of
-        // every emitted reconciliation must match its OUTCOME_SIDE_PROFILE row.
-        assert.equal(
-          q.evidenceObligation !== undefined,
-          row.obligation === "Exists",
-          `${q.outcome} (scn ${sr.scnId}): emitted obligation side-presence must match canon`,
-        );
-        assert.equal(
-          q.evidenceObservation !== undefined,
-          row.observation === "Exists",
-          `${q.outcome} (scn ${sr.scnId}): emitted observation side-presence must match canon`,
-        );
-        emittedOutcomes.add(q.outcome);
-      }
-    }
-    // All ten outcomes are exercised — the corpus spans the whole table.
-    assert.equal(
-      emittedOutcomes.size,
-      10,
-      `expected all ten outcomes exercised, got: ${[...emittedOutcomes].sort().join(", ")}`,
+    const emittedOutcomes = outcomesCheckedAgainstCanon(JSON.parse(result.stdout));
+    // EVERY outcome is exercised — the corpus spans the whole table, read off the profile
+    // rather than a counted literal, so the next outcome cannot leave the corpus behind silently.
+    const missingOutcomes = Object.keys(OUTCOME_SIDE_PROFILE).filter((o) => !emittedOutcomes.has(o));
+    assert.deepEqual(
+      missingOutcomes,
+      [],
+      `expected every outcome exercised; not emitted: ${missingOutcomes.join(", ")}`,
     );
   },
 );

@@ -164,8 +164,9 @@ Feature: alpha
     // THE OPERATOR'S GUARDRAIL (3F-1775). A hoisted @SCN is inherited by every scenario beneath
     // it, so two scenarios can carry one id. The parser must NOT quietly collapse them: if it did,
     // the unproven scenario would vanish and the run would read balanced. It emits BOTH — and the
-    // CLI then REFUSES the corpus (exit 2), because evidence citing a duplicated id cannot be
-    // attributed to either scenario and any verdict over it would be a guess.
+    // ledger then keys them as ONE account whose every quality check reads duplicate-scn-code
+    // (@SCN-STG-013, 3F-3609), because evidence citing a duplicated id cannot be attributed to
+    // either scenario. The CLI no longer refuses the corpus over it (@SCN-STG-018).
     const source = `@AAA
 Feature: alpha
 

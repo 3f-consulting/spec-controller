@@ -52,7 +52,11 @@ export { parseScenarios, countScnOccurrences, parseUntaggedScenarios, proseOnlyC
 
 // --- Evidence-obligation census (`census/evidenceObligations.ts`) ---
 export { evidenceObligations } from "./census/evidenceObligations.js";
-export type { EvidenceObligations, UntaggedScenario } from "./census/evidenceObligations.js";
+export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./census/evidenceObligations.js";
+// The codes more than one scenario carries (@SCN-STG-017, 3F-3609): a published module — the CLI's
+// ingest edge — names them from the file bytes it already holds, and the tag-inheritance walk that
+// reads them stays internal, as it does for `evidenceReconciliationFromSources`.
+export { sharedScnCodesOf } from "./census/evidenceObligations.js";
 
 // --- Evidence Reconciliation (`domain/evidenceReconciliation.ts`) + the Ledger predicates ---
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";

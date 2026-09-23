@@ -26,7 +26,7 @@ import type { Ledger } from "../model.js";
 // the same surface off `./assemble/renderInput.js` — only their home moved.
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
+import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../census/evidenceObligations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
 // "the summary is its totals". Re-exported here so the public v1 barrel (`index.ts`) keeps the
@@ -49,6 +49,8 @@ export interface EvidenceObligationsSection {
   excludedOccurrences: number;
   untaggedScenarios: UntaggedScenario[];
   proseOnlyCodes: string[];
+  /** The codes more than one scenario carries (@SCN-STG-017) — present only when non-empty. */
+  sharedScnCodes?: SharedScnCode[];
 }
 
 // The observed-evidence `EvidenceObservationsSection` interface is RETIRED (3F-2104):
@@ -138,6 +140,9 @@ export function assembleRenderInput(
             excludedOccurrences: evidenceObligations.excludedOccurrences,
             untaggedScenarios: evidenceObligations.untaggedScenarios,
             proseOnlyCodes: evidenceObligations.proseOnlyCodes,
+            ...(evidenceObligations.sharedScnCodes && evidenceObligations.sharedScnCodes.length > 0
+              ? { sharedScnCodes: evidenceObligations.sharedScnCodes }
+              : {}),
           },
         }
       : {}),

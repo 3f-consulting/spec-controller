@@ -423,7 +423,7 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
  * debit/credit/neither group-side subtotal rows. The former grouping emitted both a
  * "↳ <group>-side" subtotal row AND each leaf row at the same "↳" indent, so a naive
  * column-sum double-counted (the live 170 vs 85). Removing the grouping leaves exactly
- * nine counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
+ * ten counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
  *
  * EXHAUSTIVENESS (3F-1649, superseded as the primary mechanism by 3F-1806):
  * OUT_OF_BALANCE_OUTCOMES USED TO BE a hand-maintained readonly Outcome[] in the renderer, so
@@ -443,7 +443,7 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
  *
  * Parent: (@SCN-RPT-019).
  */
-describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outcomes with no group rows", () => {
+describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outcomes with no group rows", () => {
   // A balance whose out-of-balance obligations span all three FORMER groups:
   //   DEBIT   — SCN-A carries a missing obligation.
   //   CREDIT  — the suspense row carries a cites-no-scenario credit.
@@ -463,7 +463,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
   );
 
-  // The nine out-of-balance leaf outcomes in canonical (model.ts reading) order —
+  // The ten out-of-balance leaf outcomes in canonical (model.ts reading) order —
   // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
   // Canon groups by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
   // no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, no-evidence-obligation), then
@@ -476,6 +476,8 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     // The DEBIT twin of cites-no-scenario (@SCN-LDG-021, 3F-1774) — a real, ordinary scenario
     // carrying no @SCN, whose obligation has no code for an observation to link to.
     "no-scn-code",
+    // The debit-side account whose @SCN code another scenario also carries (3F-3609).
+    "duplicate-scn-code",
     "cites-unknown-scenario",
     "cites-no-scenario",
     "no-evidence-obligation",
@@ -496,6 +498,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     "cites-unknown-scenario": true,
     "cites-no-scenario": true,
     "no-scn-code": true,
+    "duplicate-scn-code": true,
     broken: true,
     "no-evidence-obligation": true,
     "both-missing": true,
@@ -504,18 +507,18 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     (outcome) => outcome !== "satisfied"
   );
 
-  it("decomposes the evidence-obligation out-of-balance into exactly the nine leaf outcome rows", () => {
+  it("decomposes the evidence-obligation out-of-balance into exactly the ten leaf outcome rows", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     // Every leaf outcome renders as a counted "↳ <description>" row — the canon
     // description, not the bare handle (3F-1626), located via the single-sourced map.
     for (const leaf of LEAVES) {
       expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
     }
-    // And there are EXACTLY nine "↳" rows in the decomposition — no more (the group-side
+    // And there are EXACTLY ten "↳" rows in the decomposition — no more (the group-side
     // subtotal rows are gone). Count every "↳ " marker across the rendered document; the
-    // only "↳" rows are the nine leaf decomposition rows.
+    // only "↳" rows are the ten leaf decomposition rows.
     const arrowRows = md.split("\n").filter((line) => line.includes("↳"));
-    expect(arrowRows.length).toBe(9);
+    expect(arrowRows.length).toBe(10);
   });
 
   it("renders a leaf row for EVERY Outcome member except satisfied (the exhaustiveness guard)", () => {
@@ -580,6 +583,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
       "failing",
       "watermelon",
       "no-scn-code",
+      "duplicate-scn-code",
       "cites-unknown-scenario",
       "cites-no-scenario",
       "no-evidence-obligation",

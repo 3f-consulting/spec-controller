@@ -391,6 +391,8 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
     "cites-no-scenario": 0,
     // The debit twin of cites-no-scenario (@SCN-LDG-021) — a scenario with no @SCN code to link.
     "no-scn-code": 0,
+    // A code more than one scenario carries (3F-3609) — every quality check on that one account.
+    "duplicate-scn-code": 0,
     // The broken reconciling item — a proof that NEVER RAN: a vitest suite that failed to collect
     // (@SCN-LDG-017), or a cucumber step matched by two or more definitions (@SCN-LDG-019). A
     // machine consumer reads run-soundness off this count: `byOutcome.broken > 0` ⇒ any `missing`
@@ -401,7 +403,7 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
     // the reconciliation-matched-attributed count (ruling Q1).
     "no-evidence-obligation": 0,
     // The both-missing reconciling item (@SCN-LDG-009) — the NEITHER-side outcome:
-    // a scenario reconciling to zero rows on both sides. `byOutcome` is now 8-valued.
+    // a scenario reconciling to zero rows on both sides.
     "both-missing": 0,
   };
   const missing = new Map<string, number>();

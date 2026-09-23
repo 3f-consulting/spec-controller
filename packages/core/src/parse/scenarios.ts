@@ -359,6 +359,12 @@ export interface TaggedScenario {
   startLine: number;
   /** The last line of this scenario's text — see `startLine`. 1-based, inclusive. */
   endLine: number;
+  /**
+   * The scenario's NAME as the AST gives it (@SCN-STG-017, 3F-3609) — what the report names a
+   * scenario by when its code is carried by another too, since the account keyed by that code
+   * cannot say which scenarios stand behind it.
+   */
+  name: string;
 }
 
 /**
@@ -506,6 +512,7 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
         tags: effective,
         startLine,
         endLine: blockEnd(startLine, starts, lines),
+        name: child.scenario.name,
       });
     }
   };

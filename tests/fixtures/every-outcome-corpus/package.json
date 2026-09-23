@@ -1,5 +1,5 @@
 {
-  "name": "ten-outcome-corpus-fixture",
+  "name": "every-outcome-corpus-fixture",
   "private": true,
   "scripts": {
     "guard:wm": "echo the watermelon guard runs in CI but its red does not gate the job",

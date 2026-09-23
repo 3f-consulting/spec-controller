@@ -66,6 +66,11 @@ export type Outcome =
   // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. UNCODED
   // work: it can never reconcile satisfied, failing, or even `missing` — an obligation never
   // RAISED cannot be ABSENT — so without this it was invisible to the verdict entirely.
+  | "duplicate-scn-code" // a DEBIT outcome (3F-3609): the Evidence Obligation's @SCN code is carried
+  // by another scenario too, so the code names ONE account two scenarios claim and no credit citing
+  // it can be attributed to either. It lands on EVERY quality check of that account, so the account
+  // is out-of-balance by the ordinary rule — no new verdict, no precedence. Not `broken`: the proofs
+  // ran; what fails is the attribution.
   | "both-missing"; // a scenario that reconciles to ZERO rows on BOTH sides (no
   // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
   // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
@@ -108,6 +113,8 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side — the
   // scenario is real and ORDINARY, but carries no @SCN for an observation to link to.
   "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
+  // CANON VERBATIM, backticks stripped — double-entry-manifesto.md's Outcome table (3F-3609).
+  "duplicate-scn-code": "Evidence Obligation's @SCN code is carried by another Scenario",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
   // CANON VERBATIM — double-entry-manifesto.md:42, the Outcome column. The gloss is the outcome
@@ -279,6 +286,10 @@ export const OUTCOME_SIDE_PROFILE: Record<
   failing: { obligation: "Exists", observation: "Exists" },
   watermelon: { obligation: "Exists", observation: "Exists" },
   "no-scn-code": { obligation: "Exists", observation: "None" },
+  // Canon's Observation column reads "Any": that is the ACCOUNT's posted credits, which ride on the
+  // row's `evidenceObservations`. The item reconciles no one credit (none can be attributed), so it
+  // carries none (3F-3609).
+  "duplicate-scn-code": { obligation: "Exists", observation: "None" },
   "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
   "cites-no-scenario": { obligation: "None", observation: "Exists" },
   "no-evidence-obligation": { obligation: "None", observation: "Exists" },
@@ -766,6 +777,36 @@ export function suspenseReconciliationsOf(
  */
 export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
   return [makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: {} })];
+}
+
+/**
+ * The items on an account whose `@SCN` code more than one scenario carries (@SCN-STG-013, 3F-3609).
+ *
+ * EVERY QUALITY CHECK THE SHARERS NAME, EACH READING `duplicate-scn-code` — deferred ones included.
+ * Two scenarios behind one code means no credit citing it can be attributed to either, and a
+ * pending declaration is no more attributable than a credit, so every sub-account is tainted for the
+ * same reason. One item per distinct quality check, in the order the sharers first name them, each
+ * carrying the first obligation that named it.
+ *
+ * WITH NONE NAMED AT ALL, ONE ITEM, never `both-missing`: "every quality check" has no members, and
+ * the account is still unreconcilable. It carries the scenario-scope `{}` obligation `no-scn-code`
+ * also uses, because canon's row for this outcome says the obligation Exists.
+ */
+export function duplicateScnCodeReconciliationsOf(
+  obligations: readonly EvidenceObligation[]
+): QualityCheckReconciliation[] {
+  const firstNaming = new Map<QualityCheck, EvidenceObligation>();
+  for (const obligation of obligations) {
+    if (obligation.qualityCheck !== undefined && !firstNaming.has(obligation.qualityCheck)) {
+      firstNaming.set(obligation.qualityCheck, obligation);
+    }
+  }
+  if (firstNaming.size === 0) {
+    return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: {} })];
+  }
+  return [...firstNaming].map(([qualityCheck, evidenceObligation]) =>
+    makeQualityCheckReconciliation({ qualityCheck, outcome: "duplicate-scn-code", evidenceObligation })
+  );
 }
 
 /**

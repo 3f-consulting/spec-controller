@@ -12,6 +12,9 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   checkInputsExist,
   checkInputsParse,
@@ -669,4 +672,70 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
       expect(views.word === "BALANCED").toBe(views.outOfBalance === 0);
     });
   }
+});
+
+describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
+  /** A target whose corpus carries SCN-DUP-001 on two scenarios beside SCN-DUP-002, all cited passing. */
+  function duplicateTarget(): string {
+    const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
+    mkdirSync(join(dir, "features"));
+    writeFileSync(
+      join(dir, "features", "dup.feature"),
+      "@DUP\nFeature: dup\n\n  @unit @SCN-DUP-001\n  Scenario: first\n    Given a thing\n\n" +
+        "  @unit @SCN-DUP-001\n  Scenario: second\n    Given a thing\n\n" +
+        "  @unit @SCN-DUP-002\n  Scenario: its own\n    Given a thing\n"
+    );
+    writeFileSync(
+      join(dir, "vitest.json"),
+      JSON.stringify({
+        testResults: [
+          {
+            name: "dup.test.ts",
+            assertionResults: [
+              { fullName: "[SCN-DUP-001] proven", status: "passed" },
+              { fullName: "[SCN-DUP-002] proven", status: "passed" },
+            ],
+          },
+        ],
+      })
+    );
+    writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");
+    writeFileSync(join(dir, "package.json"), "{}\n");
+    return dir;
+  }
+
+  it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", () => {
+    const dir = duplicateTarget();
+    const savedExitCode = process.exitCode;
+    process.exitCode = 0;
+    const out: string[] = [];
+    const err: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      err.push(String(c));
+      return true;
+    });
+    try {
+      runBalance([
+        "--features", join(dir, "features"),
+        "--vitest", join(dir, "vitest.json"),
+        "--ci", join(dir, "ci.yml"),
+        "--package-json", join(dir, "package.json"),
+        "--format", "json",
+      ]);
+      const report = JSON.parse(out.join(""));
+      const rows = report.ledger.scenarioReconciliations as { scnId: string; verdict: string }[];
+      expect(rows.filter((r) => r.scnId === "SCN-DUP-001")).toHaveLength(1);
+      expect(rows.find((r) => r.scnId === "SCN-DUP-002")?.verdict).toBe("balanced");
+      expect(process.exitCode).toBe(1);
+      expect(err.join("")).not.toMatch(/names the same @SCN on more than one scenario/);
+    } finally {
+      outSpy.mockRestore();
+      errSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
 });

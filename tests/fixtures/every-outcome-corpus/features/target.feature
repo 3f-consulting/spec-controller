@@ -1,9 +1,9 @@
 @TOC
-Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all ten outcomes
+Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits every outcome
 
   # Each scenario (plus the citing observations in vitest.json / cucumber.json and the guard
   # wiring in package.json / ci.yml) is chosen so the real `balance` pipeline emits one of the
-  # ten Outcome members. The @integration arm of @SCN-LDG-030 spawns the real binary over this
+  # Outcome members, and together they emit all of them. The @integration arm of @SCN-LDG-030 spawns the real binary over this
   # directory and asserts every emitted Quality Check Reconciliation's side-presence against
   # OUTCOME_SIDE_PROFILE. This fixture lives under tests/fixtures/, so the feature-code lint and
   # the scenario↔sub-issue gate ignore it.
@@ -50,3 +50,17 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Given a scenario carrying a tier tag but no @SCN
     When it reconciles
     Then its obligation has no code for an observation to link to
+
+  # duplicate-scn-code (3F-3609): two scenarios carrying one code are ONE account, and every
+  # quality check on it reads duplicate-scn-code. Nothing cites it; the outcome needs no credit.
+  @unit @SCN-TOC-007
+  Scenario: duplicate-scn-code — the first of two scenarios carrying one code
+    Given a unit obligation
+    When another scenario carries the same code
+    Then the one account reads duplicate-scn-code
+
+  @unit @SCN-TOC-007
+  Scenario: duplicate-scn-code — the second of two scenarios carrying one code
+    Given a unit obligation
+    When another scenario carries the same code
+    Then the one account reads duplicate-scn-code

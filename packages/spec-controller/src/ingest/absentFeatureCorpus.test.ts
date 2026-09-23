@@ -25,7 +25,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
-  featureCorpusDuplicateScnIds,
   featureCorpusParseErrors,
   readEvidenceObligations,
   readFeatureNames,
@@ -84,12 +83,6 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
     expect(obligations.scenarioCount).toBe(0);
     expect(obligations.rawScnOccurrences).toBe(0);
     expect(obligations.untaggedScenarios).toEqual([]);
-  });
-
-  it("finds no duplicate @SCN id", () => {
-    const { features } = absentCorpus();
-
-    expect(featureCorpusDuplicateScnIds(features)).toEqual([]);
   });
 
   it("reconciles the target instead of throwing, and the ledger has no accounts", () => {

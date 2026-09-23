@@ -1,7 +1,7 @@
 {
   "testResults": [
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-001.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-001.test.ts",
       "status": "passed",
       "assertionResults": [
         {
@@ -12,7 +12,7 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-002.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-002.test.ts",
       "status": "failed",
       "assertionResults": [
         {
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-005-no-evidence-obligation.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-005-no-evidence-obligation.test.ts",
       "status": "passed",
       "assertionResults": [
         {
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-phantom.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-phantom.test.ts",
       "status": "passed",
       "assertionResults": [
         {
@@ -45,7 +45,7 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-uncited.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-uncited.test.ts",
       "status": "passed",
       "assertionResults": [
         {
@@ -56,9 +56,9 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-broken.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-broken.test.ts",
       "status": "failed",
-      "message": "Failed to collect: SyntaxError: Unexpected token in tests/fixtures/ten-outcome-corpus/toc-broken.test.ts",
+      "message": "Failed to collect: SyntaxError: Unexpected token in tests/fixtures/every-outcome-corpus/toc-broken.test.ts",
       "assertionResults": []
     }
   ]

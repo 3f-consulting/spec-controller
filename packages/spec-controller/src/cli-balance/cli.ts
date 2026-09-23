@@ -19,7 +19,6 @@ import {
   readEvidenceObligations,
   readFeatureNames,
   featureCorpusParseErrors,
-  featureCorpusDuplicateScnIds,
   type ReconcileOptions,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
@@ -460,28 +459,6 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
     for (const { file, message } of featureParseErrors) {
       process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
     }
-    process.exit(2);
-  }
-
-  // AMBIGUOUS-CORPUS guard (@SCN-LDG-020's guardrail, 3F-1775). An @SCN identifies exactly ONE
-  // scenario — that is the whole basis of attributing evidence to it. Tag inheritance makes a
-  // DUPLICATE reachable: an @SCN hoisted to a Feature:/Rule: is inherited by every scenario
-  // beneath it (cucumber does this, so we do). One passing test would then mark EVERY scenario
-  // sharing that id `balanced` — including scenarios nothing proves — a BALANCED-WHEN-BROKEN run
-  // at exit 0. A new silent false-green, introduced by the very fix that closed the last one.
-  //
-  // So the corpus is REFUSED, not reconciled: the tool cannot know which scenario a citing test
-  // proves, and any verdict over it would be a guess. Same Rule as @SCN-CLI-014/015/016 — an input
-  // the tool cannot read is a usage error, never a verdict.
-  const duplicateScnIds = featureCorpusDuplicateScnIds(args["features"]);
-  if (duplicateScnIds.length > 0) {
-    process.stderr.write(
-      `The --features corpus names the same @SCN on more than one scenario: ` +
-        `${duplicateScnIds.join(", ")}.\n` +
-        `An @SCN identifies exactly one scenario — evidence citing a duplicated id cannot be ` +
-        `attributed, so no verdict over this corpus would be trustworthy. (An @SCN on a Feature: ` +
-        `or Rule: line is inherited by every scenario beneath it — name it on the scenario.)\n`
-    );
     process.exit(2);
   }
 }

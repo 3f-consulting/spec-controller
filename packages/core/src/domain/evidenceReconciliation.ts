@@ -72,6 +72,7 @@ import {
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
+  duplicateScnCodeReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import {
   ledgerTally,
@@ -340,6 +341,51 @@ function scenarioRow(
 }
 
 /**
+ * The tagged scenarios grouped by the code they carry, in first-seen order — the ACCOUNTS
+ * (@SCN-STG-013, 3F-3609). The ledger is keyed by the `@SCN`, so a code two scenarios carry is one
+ * account, not two rows that would each take every citing credit. A code carried once is a group of
+ * one, and builds exactly the row it always did.
+ */
+function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
+  const byCode = new Map<string, Scenario[]>();
+  for (const scenario of scenarios) {
+    const sharers = byCode.get(scenario.scnId) ?? [];
+    sharers.push(scenario);
+    byCode.set(scenario.scnId, sharers);
+  }
+  return [...byCode.values()];
+}
+
+/**
+ * ONE ACCOUNT WHOSE CODE MORE THAN ONE SCENARIO CARRIES (@SCN-STG-013, 3F-3609) — a real account,
+ * every quality check reading `duplicate-scn-code` (rule + rationale:
+ * `duplicateScnCodeReconciliationsOf`).
+ *
+ * Posting is not classifying, so both sides still post: every credit citing the code (held once,
+ * because routing files a credit by its citation and the code is one account), and every obligation
+ * any sharer raises. None of them reconciles, and no deferral becomes a Pending Item — neither can
+ * be attributed to one sharer.
+ */
+function duplicateScnCodeRow(
+  sharers: readonly Scenario[],
+  citations: CitationIndex
+): ScenarioReconciliation {
+  const scnId = sharers[0]!.scnId;
+  const evidenceObligations = sharers.flatMap((s) => s.evidenceObligations);
+  const items = duplicateScnCodeReconciliationsOf(evidenceObligations);
+  return {
+    scnId,
+    kind: "scenario",
+    verdict: verdictFor(items),
+    evidenceObservations: citations.creditsFor(scnId),
+    evidenceObligations,
+    qualityCheckReconciliations: items,
+    reconcilingItems: reconcilingItemsOf(items),
+    pendingItems: [],
+  };
+}
+
+/**
  * THE PHANTOM ROWS, assembled (@SCN-LDG-006). Extracted beside its siblings at 3F-3472; the
  * routing that produced `citations.phantomIds` is `routeCredits`', and unchanged.
  */
@@ -486,8 +532,10 @@ export function reconcile(
   // then the one suspense row, then uncoded work, then the configured rows no scenario specifies.
   return {
     scenarioReconciliations: [
-      ...scenarios.map((d) =>
-        scenarioRow(d, observations, citations, evidenceObligationPairs)
+      ...accountsByCode(scenarios).map((sharers) =>
+        sharers.length === 1
+          ? scenarioRow(sharers[0]!, observations, citations, evidenceObligationPairs)
+          : duplicateScnCodeRow(sharers, citations)
       ),
       ...phantomScenarioRows(citations),
       ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationStaticChecks),

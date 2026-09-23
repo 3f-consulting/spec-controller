@@ -498,12 +498,12 @@ Feature: The report renders the ledger as sectioned facts
       Then Test volume counts the single observation under both integration and e2e
       And SCN-TGT-102's Integration and E2e cells each render a count, not ∅
 
-  Rule: the evidence-obligation out-of-balance decomposes into a flat list of the nine leaf outcomes, with no group-side subtotal rows
+  Rule: the evidence-obligation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
     The obligation-summary decomposition (@SCN-RPT-019, 3F-1453; extended 3F-1649). The Evidence
     reconciliation's evidence-obligation out-of-balance row decomposes into a FLAT list of the
-    nine out-of-balance leaf outcomes — missing, failing, watermelon,
-    no-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — each a counted
+    ten out-of-balance leaf outcomes — missing, failing, watermelon,
+    no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — each a counted
     "↳ <outcome>" row whose Out-of-balance counts SUM to the evidence-obligation out-of-balance
     total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
     "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
@@ -522,16 +522,18 @@ Feature: The report renders the ledger as sectioned facts
     table. It WORKED: `no-scn-code` (@SCN-LDG-021, 3F-1774) could not be added to the union without
     this decomposition acknowledging it — the compiler refused the type-forced Record until it did.
     The ninth leaf therefore reached the table in the same commit as the outcome, by construction.
+    The tenth, `duplicate-scn-code` (3F-3609), is the same move again: a debit-side outcome, so it
+    reads after `no-scn-code`, where canon's Outcome table puts it.
 
     @unit @SCN-RPT-019
-    Scenario: the obligation summary lists the nine leaf outcomes summing to the out-of-balance total, with no group rows
+    Scenario: the obligation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
       Given a reconciliation balance whose out-of-balance obligations span debit, credit, and neither outcomes
       When the markdown report is rendered
-      Then the Evidence obligation out-of-balance decomposes into exactly the nine leaf outcome rows
+      Then the Evidence obligation out-of-balance decomposes into exactly the ten leaf outcome rows
       And the leaf rows cover every Outcome member except satisfied
       And their counts sum to the evidence-obligation out-of-balance total
       And no debit-side / credit-side / neither-side group row is present
-      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — debit block, credit block, neither
+      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — debit block, credit block, neither
 
   Rule: the markdown renders each outcome's canon description in place of the bare handle
 
@@ -578,6 +580,7 @@ Feature: The report renders the ledger as sectioned facts
         | failing                | Evidence Observation is failing                                                                                          |
         | watermelon             | Evidence Observation is passing but fabricated                                                                            |
         | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
+        | duplicate-scn-code     | Evidence Obligation's @SCN code is carried by another Scenario                                                            |
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
         | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
         | no-evidence-obligation             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |

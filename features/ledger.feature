@@ -416,8 +416,8 @@ Feature: Ledger over obligation-vs-observation evidence
   # The corpus is now extracted from the REAL Gherkin AST, so the scenarios spec-controller
   # reconciles carry EXACTLY the tags cucumber gives them — one reading of the file, not two.
   # Every tag inherits (@SCN included): parity is the goal, and excluding one would invent a rule
-  # cucumber does not have. Whether a corpus SHOULD hoist an @SCN — every scenario beneath would
-  # then share one id — is a corpus-authoring-fault policy, deferred (3F-1774's sibling).
+  # cucumber does not have. A hoisted @SCN makes every scenario beneath share one id, and the
+  # ledger reports that as one account reading duplicate-scn-code (@SCN-STG-013, 3F-3609).
   Rule: a scenario's tags include the ones it inherits from its Feature and Rule
 
     @unit @integration @SCN-LDG-020
@@ -659,7 +659,9 @@ Feature: Ledger over obligation-vs-observation evidence
   # makeQualityCheckReconciliation, which enforces (outcome, side-presence) consistency with the
   # canon outcome table (double-entry-manifesto.md lines 35-44). NOT naive derivation — missing and
   # no-scn-code share (Exists, None); the three credit outcomes share (None, Exists) — a
-  # consistency constraint against the type-forced OUTCOME_SIDE_PROFILE map.
+  # consistency constraint against the type-forced OUTCOME_SIDE_PROFILE map. The corpus arm reads
+  # EVERY outcome, not a counted ten: `duplicate-scn-code` (3F-3609) made the table eleven, and a
+  # count written into the prose would have gone false the same way.
   Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
 
     @unit @integration @SCN-LDG-030
@@ -668,7 +670,7 @@ Feature: Ledger over obligation-vs-observation evidence
       When a Quality Check Reconciliation is constructed for each outcome with its canon-correct sides
       Then each reconciliation's side-presence matches its canon row
       And constructing any outcome with a forbidden side throws — a divergent pair is unconstructible
-      And when the real tool balances a ten-outcome corpus, every emitted Quality Check Reconciliation's sides match its canon row
+      And when the real tool balances a corpus that exercises every outcome, every emitted Quality Check Reconciliation's sides match its canon row
 
   # A CITATION IS BRACKETED (SCN-LDG-033, 3F-2368). The vitest reader matched
   # /\bSCN-[A-Z0-9]+-\d+\b/ ANYWHERE in a describe/it title, so any SCN-shaped token was a

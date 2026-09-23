@@ -34,7 +34,7 @@ import type {
 // union. Internal core imports (NOT on the frozen v1 barrel).
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { EvidenceObligations, SharedScnCode } from "../census/evidenceObligations.js";
 // THE MODEL DERIVATIONS THE RENDERER READS (3F-2203) — it projects these; it does not compute them.
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import { isScenario } from "../domain/scenarioReconciliation.js";
@@ -72,6 +72,9 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // exists and cucumber runs it. The debit twin of `cites-no-scenario`: same missing link, opposite
   // side. It can never be proven, so its row is always out-of-balance.
   "no-scn-code": "🔗",
+  // DEBIT-SIDE: the account's @SCN code is carried by more than one scenario (3F-3609), so no credit
+  // citing it can be attributed to either — every quality check on the account reads this.
+  "duplicate-scn-code": "⧉",
   // CREDIT-SIDE: a credit citing an @SCN no scenario matches — the
   // reconciling item on a phantom scenario (@SCN-LDG-006).
   "cites-unknown-scenario": "👻",
@@ -117,6 +120,11 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   // glyph + description alone. (Debit-side, but subject-less — the missing thing is the LINK.)
   if (item.outcome === "no-scn-code") {
     return `${ITEM_GLYPH["no-scn-code"]} ${OUTCOME_DESCRIPTION["no-scn-code"]}`;
+  }
+  // A `duplicate-scn-code` account whose sharers name NO quality check (@SCN-STG-013) carries one
+  // scenario-scope item, like the two above: no subject to lead with, so none is invented.
+  if (item.qualityCheck === undefined) {
+    return `${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}`;
   }
   const subject = item.qualityCheck;
   const suffix = creditSuffix(item) ?? "";
@@ -402,8 +410,8 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     ]),
   ];
   // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
-  // nine out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453; the ninth,
-  // `no-scn-code`, added by @SCN-LDG-021, 3F-1774). The list is DERIVED from the type-forced
+  // out-of-balance leaf outcomes in canonical order — ten since `duplicate-scn-code` (3F-3609)
+  // (@SCN-RPT-019, 3F-1453; `no-scn-code` added by @SCN-LDG-021, 3F-1774). The list is DERIVED from the type-forced
   // OUTCOME_DESCRIPTION (3F-1806), so a new Outcome renders here with no edit to this file;
   // its ROW ORDER is that map's key order, which is therefore load-bearing. Each a
   // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
@@ -597,7 +605,7 @@ const ledgerSection: SectionEmitter = (report) => {
     "## Scenario Reconciliations",
     "",
     ...ledgerTallyLines(report.summary.scenarioReconciliations),
-    ...(report.evidenceObligations ? censusLines(report.evidenceObligations) : []),
+    ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
     "",
     ...ledgerTableLines(scenarios, withObservations),
     "",
@@ -638,7 +646,7 @@ function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliation
  * with the excluded-occurrence bullet (the evidenceObligations census view). Facts only —
  * count + locator.
  */
-function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>): string[] {
+function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, accounts: number): string[] {
   const lines = [`- ${census.excludedOccurrences} @SCN ids seen in non-tag context, excluded`];
   // Untagged scenarios (@SCN-RPT-014) — Gherkin scenarios with no @SCN tag, located by
   // `feature : scenario`. Sorted defensively (a hand-built corpus fixture may be unsorted).
@@ -652,6 +660,7 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>): s
       lines.push(`  - ${feature} : ${scenario}`);
     }
   }
+  lines.push(...sharedScnCodeLines(census.sharedScnCodes ?? [], accounts));
   // Prose-only codes (@SCN-RPT-015) — @SCN ids mentioned in prose but never tagged anywhere
   // (the dangling references). The bare code is its own locator. Sorted, after untagged.
   const proseOnly = census.proseOnlyCodes;
@@ -662,6 +671,24 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>): s
     }
   }
   return lines;
+}
+
+/**
+ * The codes more than one scenario carries (@SCN-STG-017, 3F-3609): the corpus's scenarios stated
+ * against its accounts, then each code with the scenarios behind it. The account a code names reads
+ * `duplicate-scn-code` on the rows and cannot say who stands behind it, so this is where they are
+ * named. The scenario count is DERIVED — each shared code is one account standing for its sharers —
+ * so nothing is persisted that the ledger and this list could disagree about.
+ */
+function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number): string[] {
+  if (shared.length === 0) return [];
+  const scenarios = accounts + shared.reduce((extra, code) => extra + code.scenarios.length - 1, 0);
+  return [
+    `- The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${shared.length} @SCN code(s) carried by more than one scenario:`,
+    ...shared.map(
+      (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
+    ),
+  ];
 }
 
 /**

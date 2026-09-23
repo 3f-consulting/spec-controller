@@ -1,7 +1,7 @@
 [
   {
-    "uri": "tests/fixtures/ten-outcome-corpus/features/target.feature",
-    "name": "ten-outcome corpus",
+    "uri": "tests/fixtures/every-outcome-corpus/features/target.feature",
+    "name": "every-outcome corpus",
     "elements": [
       {
         "name": "no-evidence-obligation — a real scenario cited at a quality-check it never named",

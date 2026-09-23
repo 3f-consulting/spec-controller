@@ -22,6 +22,7 @@ import {
   countScnOccurrences,
   parseUntaggedScenarios,
   proseOnlyCodes,
+  sharedScnCodesOf,
 } from "@3f-consulting/spec-controller-core";
 import {
   MissingFeatureCorpusError,
@@ -217,36 +218,6 @@ export function featureCorpusParseErrors(featuresDir: string | undefined): Gherk
 }
 
 /**
- * The `@SCN` ids the feature corpus CARRIES MORE THAN ONCE (@SCN-LDG-020's guardrail, 3F-1775).
- *
- * An `@SCN` identifies exactly ONE scenario — that is the whole basis of attributing evidence to
- * it. If two scenarios carry the same id, a test citing it could be proving EITHER, and the tool
- * cannot know which: the corpus is ambiguous, and any verdict over it is a guess.
- *
- * WHY THIS EXISTS. Tag inheritance made this reachable: an `@SCN` hoisted to a `Feature:`/`Rule:`
- * is inherited by every scenario beneath it (cucumber does this, so we do — parity). Left
- * unhandled, ONE passing test then marked EVERY scenario sharing that id `balanced`, including
- * scenarios nothing proves — a BALANCED-WHEN-BROKEN run, exit 0. A new silent false-green,
- * introduced by the very fix that closed the last one.
- *
- * Refused at the edge (exit 2) rather than reconciled, under the Rule already shipped for the
- * observed side and the corrupt corpus (@SCN-CLI-014/015/016): an input the tool cannot read is a
- * usage error, never a verdict. Whether hoisting an `@SCN` is an authoring fault worth a richer
- * diagnostic is the deferred policy question (3F-1774's sibling); refusing to reconcile a corpus we
- * cannot read is not a policy — it is the floor.
- */
-export function featureCorpusDuplicateScnIds(featuresDir: string | undefined): string[] {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
-
-  for (const scenario of scenariosFromFeatures(featuresDir)) {
-    if (seen.has(scenario.scnId)) duplicates.add(scenario.scnId);
-    seen.add(scenario.scnId);
-  }
-  return [...duplicates].sort();
-}
-
-/**
  * Read the target's `feature-code → slug` map over the same `discoverFeatures` corpus
  * (@SCN-RPT-006) — each coded feature file's `@<FFF>` header (`featureCode`)
  * mapped to its filename `slug`, the full feature name. This is the mapping
@@ -283,9 +254,11 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   let scenarioCount = 0;
   const untagged: UntaggedScenario[] = [];
   const sources: string[] = [];
+  const files: { feature: string; source: string }[] = [];
   for (const f of featureFiles) {
     const source = readFileSync(f.path, "utf8");
     sources.push(source);
+    files.push({ feature: `${f.slug}.feature`, source });
     raw += countScnOccurrences(source);
     scenarioCount += parseScenarios(source).length;
     for (const scenario of parseUntaggedScenarios(source)) {
@@ -297,7 +270,7 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   );
   // The prose-only codes are a CROSS-CORPUS difference (a code tagged in any file isn't
   // dangling), so it reads all sources at once — not per-file like the others.
-  return evidenceObligations(raw, scenarioCount, untagged, proseOnlyCodes(sources));
+  return evidenceObligations(raw, scenarioCount, untagged, proseOnlyCodes(sources), sharedScnCodesOf(files));
 }
 
 /**

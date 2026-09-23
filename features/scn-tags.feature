@@ -8,6 +8,11 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   over its own corpus, resolving its own manifest. Exit 0 clean, 1 findings, 2 a corpus that
   cannot be read.
 
+  AND THE FILE NOW HOLDS `balance`'S ACCOUNT-NUMBER RULES TOO (3F-3609). An @SCN is the account
+  number the ledger is keyed by, so a code two scenarios carry is a fault of the books, and the
+  command a target already runs reports it on the rows. The Rule at the foot of this file is
+  `balance`'s; the `tags` Rules above it leave with the command.
+
   WHAT THE LEDGER ALREADY SAYS DOES NOT SHIP, and that is what decides which Rules are here.
   Measured rather than reasoned about: a tier-less unparked @SCN scenario reconciles both-missing
   and is named by id in the report's own by-feature cut. So the tier-tag FLOOR this file was once
@@ -316,3 +321,68 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Then it fails, naming the file, the offending id, and the code that file carries
       When it runs over that same target with the id re-coded to its own file
       Then it passes
+
+  Rule: an @SCN is one account number, and two scenarios carrying it make that account unreconcilable
+
+    THE ACCOUNT IS KEYED BY THE CODE, SO TWO SCENARIOS CARRYING ONE CODE ARE ONE ACCOUNT. A phantom
+    account already exists for a cited code with no scenario behind it; a code carried twice is the
+    mirror, two scenarios behind one account. No credit citing that code can be attributed to either
+    of them, so nothing the account says can be trusted, and every quality check on it reads
+    `duplicate-scn-code`. Each is a reconciling item, so the account is out of balance by the
+    ordinary rule: no new verdict, no precedence. It is not `broken` — the proofs ran; what fails is
+    the attribution.
+
+    Until now `balance` refused such a corpus as unreadable (exit 2), and one bad code blanked the
+    whole report. Reported on its account instead, it reds the run and leaves every other account
+    reconciling exactly as before.
+
+    @unit @integration @SCN-STG-013
+    Scenario: Two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check
+      Given a feature file whose two scenarios carry one @SCN, each naming a unit check, the second also deferring an integration check
+      When the ledger reconciles that corpus into accounts
+      Then the corpus holds one account for that code
+      And every quality check on it, the deferred integration check included, reads duplicate-scn-code
+      And that account carries no Pending Item
+      And that account is out of balance
+      When the two scenarios name no quality check at all
+      Then the one account carries a single duplicate-scn-code sub-row, never both-missing
+
+    @unit @integration @SCN-STG-014
+    Scenario: Two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check
+      Given a corpus of two feature files, each holding a scenario that carries the same @SCN and names a unit check
+      When the ledger reconciles that corpus into accounts
+      Then the corpus holds one account for that code
+      And every quality check on it reads duplicate-scn-code
+      And that account is out of balance
+
+    @unit @integration @SCN-STG-015
+    Scenario: Scenarios sharing a code but naming disjoint quality checks still never balance
+      Given two scenarios sharing one @SCN, one naming a unit check and the other an integration check, each with passing evidence at its own check
+      When the ledger reconciles that corpus into accounts
+      Then the corpus holds one account for that code
+      And that account carries both the unit and the integration check, each reading duplicate-scn-code
+      And that account is out of balance
+
+    @unit @integration @SCN-STG-016
+    Scenario: Every credit citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position
+      Given two scenarios sharing one @SCN and three credits citing it, one passing, one failing, and one at a check neither names
+      When the ledger reconciles that corpus into accounts
+      Then each of the three credits posts to that one account exactly once
+      And no other account carries any of them
+      And none of them satisfies a quality check on that account
+
+    @unit @integration @SCN-STG-018
+    Scenario: A duplicated code is exit 1 with the rest of the report complete, never a refused corpus
+      Given a target whose corpus carries one @SCN on two scenarios beside a scenario of its own, every scenario cited by passing evidence
+      When the target runs balance over it
+      Then the run fails as out of balance, not as an input it cannot read
+      And the report reconciles the scenario of its own exactly as it does in the same corpus without the duplicate
+      And nothing says the corpus was refused
+
+    @unit @integration @SCN-STG-017
+    Scenario: The report states that the corpus holds more scenarios than accounts, and names the scenarios sharing each code
+      Given a target whose corpus carries one @SCN on two scenarios in two feature files, beside a scenario of its own
+      When the target runs balance over it
+      Then the report states that the corpus holds three scenarios in two accounts
+      And it names the shared code with the file and the name of each scenario carrying it
+      And the report saved as JSON re-renders the same statement
