@@ -111,11 +111,12 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   const spanning: Ledger = {
     scenarioReconciliations: [
       ...reconciledNamed.scenarioReconciliations,
-      // OUT OF SCOPE (3F-1894 ruling → 3F-1897): the guard-handle collision. SCN-LNT-002 and
-      // SCN-LNT-009 both name the `guard-lint` handle at DIFFERENT outcomes (watermelon vs
-      // satisfied) — a shape one reconcile pass cannot emit (a handle reconciles to exactly one
-      // outcome). Left HAND-BUILT verbatim per the ruling; not reconciler-true, and not this
-      // slice's to fix. RPT-006 threads no census, so these never reach evidenceCell.
+      // HAND-BUILT, not reconciler-true: two fitness rows sharing the `guard-lint` handle at
+      // different outcomes (watermelon vs satisfied). The handle collision this once stood for is
+      // gone — a credit now answers the obligation of the @SCN it cites and nothing compares the
+      // handle (3F-3525) — so these rows are ordinary hand-built fixtures, left for the tree-wide
+      // audit of the remaining hand-built ledgers. RPT-006 threads no census, so these never reach
+      // evidenceCell.
       {
         scnId: "SCN-LNT-002",
         kind: "scenario",

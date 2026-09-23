@@ -17,26 +17,7 @@ import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to these assembler
-// tests, which tally by OUTCOME, not by side presence — only side PRESENCE is constrained by the
-// invariant) so each fixture routes through the constructor.
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
-      : {}),
-  });
-}
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { summaryOf } from "../domain/evidenceReconciliation.js";
@@ -55,39 +36,18 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
   ledger,
 });
 
-// A balance spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
-// (unit + integration), so the summary totals have teeth (2 scenarios / 1 balanced; 3
-// evidenceObligations / 2 out-of-balance; missing split 1 unit + 1 integration).
-const balance: Ledger = {
-  scenarioReconciliations: [
-    {
-      scnId: "SCN-RMD-001",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "balanced",
-      qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-      pendingItems: [],
-      reconcilingItems: [],
-    },
-    {
-      scnId: "SCN-RMD-002",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "out-of-balance",
-      qualityCheckReconciliations: [
-        qcr({ qualityCheck: "unit", outcome: "missing" }),
-        qcr({ qualityCheck: "integration", outcome: "missing" }),
-      ],
-      pendingItems: [],
-      reconcilingItems: [
-        qcr({ qualityCheck: "unit", outcome: "missing" }),
-        qcr({ qualityCheck: "integration", outcome: "missing" }),
-      ],
-    },
+// A ledger spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
+// (unit + integration). RECONCILER-TRUE (evidence-manifesto §11A): SCN-RMD-001's unit obligation
+// is credited (satisfied); SCN-RMD-002 declares unit + integration and no credit meets either. It
+// names no fitness and no pending obligation, so its fitness tally reads 0 of 0 and its Pending
+// Items tally 0.
+const reportLedger: Ledger = reconcile(
+  [
+    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
   ],
-};
+  [{ qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" }],
+);
 
 const ctx: RunContext = {
   target: "an-adopters-repository",
@@ -149,38 +109,18 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // A balance carrying static (@fitness) evidenceObligations so the fitness tally is non-trivial: 2 static
   // evidenceObligations, 1 balanced (satisfied) + 1 not — satisfied 1 of 2. The runtime evidenceObligations must
   // NOT count towards the static-only fitness tally (summary.byOutcome is kind-agnostic; the fitness tally
-  // is not).
-  const lintBalance: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-RMD-010",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [
-          qcr({ qualityCheck: "fitness", staticCheck: "foo", outcome: "satisfied" }),
-          qcr({ qualityCheck: "unit", outcome: "missing" }),
-        ],
-        pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-      },
-      {
-        scnId: "SCN-RMD-011",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [
-          qcr({ qualityCheck: "fitness", staticCheck: "bar", outcome: "watermelon" }),
-        ],
-        pendingItems: [],
-        reconcilingItems: [
-          qcr({ qualityCheck: "fitness", staticCheck: "bar", outcome: "watermelon" }),
-        ],
-      },
+  // is not). RECONCILER-TRUE (evidence-manifesto §11A): lint:foo exists and is enforced (satisfied);
+  // lint:bar exists but enforces nothing (watermelon); SCN-RMD-010's unit obligation has no credit.
+  const lintBalance: Ledger = reconcile(
+    [
+      { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "unit" }] },
+      { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ],
-  };
+    [
+      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+    ],
+  );
 
   it("materialises the test-volume totals (onScenario excludes onPhantomScenario)", () => {
     const report = assembleRenderInput(__er(rmd005Balance, true, false), ctx);
@@ -234,7 +174,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("omits testVolume / staticChecks when their sibling read is not threaded, but always carries the fitness tally", () => {
-    const report = assembleRenderInput(__er(balance), ctx);
+    const report = assembleRenderInput(__er(reportLedger), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
     expect(report.summary).not.toHaveProperty("staticChecks");
     // The fitness tally is a pure balance derive — always present (this balance carries no fitness
@@ -269,34 +209,15 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
 describe("[SCN-RMD-006] the report model carries the feature titles", () => {
   // Two out-of-balance scenarios in two coded features (LDG, LNT), so the by-feature cut is
   // non-empty and the feature-title path is exercised.
-  const codedBalance: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-LDG-003",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-        pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-      },
-      {
-        scnId: "SCN-LNT-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [
-          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
-        ],
-        pendingItems: [],
-        reconcilingItems: [
-          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
-        ],
-      },
+  // RECONCILER-TRUE (evidence-manifesto §11A): SCN-LDG-003's unit obligation has no credit
+  // (missing); SCN-LNT-002's fitness check exists but enforces nothing (watermelon).
+  const codedBalance: Ledger = reconcile(
+    [
+      { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ],
-  };
+    [{ qualityCheck: "fitness", staticCheck: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
+  );
   const featureNames = new Map([
     ["LDG", "ledger"],
     ["LNT", "fitness-evidence"],
@@ -519,40 +440,25 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   // (out-of-balance via a genuine missing unit error), SCN-PDX-003 NONE (balanced). So Pending
   // Items = 3 across 2 scenarios; scenarios: 3 (balanced 2, out-of-balance 1); evidence
   // obligations: 2 (1 satisfied, 1 missing). The tally (3) coincides with none of them.
-  const pendingBalance: Ledger = {
-    scenarioReconciliations: [
+  // RECONCILER-TRUE (evidence-manifesto §11A): no credit except SCN-PDX-003's, so SCN-PDX-002's
+  // bare unit obligation reads missing while every pending obligation becomes a Pending Item.
+  const pendingBalance: Ledger = reconcile(
+    [
       {
         scnId: "SCN-PDX-001",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [],
-        reconcilingItems: [],
-        pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+        evidenceObligations: [
+          { qualityCheck: "unit", pending: true },
+          { qualityCheck: "integration", pending: true },
+        ],
       },
       {
         scnId: "SCN-PDX-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-        pendingItems: [{ qualityCheck: "integration" }],
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
       },
-      {
-        scnId: "SCN-PDX-003",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-        reconcilingItems: [],
-        pendingItems: [],
-      },
+      { scnId: "SCN-PDX-003", evidenceObligations: [{ qualityCheck: "unit" }] },
     ],
-  };
+    [{ qualityCheck: "unit", scnId: "SCN-PDX-003", status: "passed" }],
+  );
 
   it("materialises summary.pending counting Pending Items across the rows", () => {
     const report = assembleRenderInput(__er(pendingBalance), ctx);
@@ -592,8 +498,8 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   });
 
   it("is always present — a pure balance derive reading 0 when no scenario names a pending obligation", () => {
-    const report = assembleRenderInput(__er(balance), ctx);
-    // The `balance` fixture (top of file) raises no pending obligations, so the tally reads 0.
+    const report = assembleRenderInput(__er(reportLedger), ctx);
+    // The `reportLedger` fixture (top of file) raises no pending obligations, so the tally reads 0.
     expect(report.summary.pending).toBe(0);
   });
 

@@ -6,7 +6,7 @@
  * both halves of the pair.
  *
  * Proves the provenance projection on the machine surface in isolation:
- * renderJson(__er(balance), ctx) parses to an object that grows a top-level `provenance`
+ * renderJson(__er(balancedLedger), ctx) parses to an object that grows a top-level `provenance`
  * carrying the same non-derivable run facts as the markdown header — target, source
  * SHA, the UTC run timestamp, and the input paths/flags actually used — while the
  * reconciliation body (the ledger) is unchanged. The retired `warnings` key
@@ -21,26 +21,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
-
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to these tests — only
-// side PRESENCE is constrained by the invariant) so each fixture routes through the constructor.
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
-      : {}),
-  });
-}
 import type { RunContext } from "../provenance/provenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
@@ -61,12 +42,16 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 });
 
 
-/** A minimal balanced balance — enough for the renderer to serialise a report. */
-const balance: Ledger = {
-  scenarioReconciliations: [
-    { scnId: "SCN-RPT-002", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
-  ],
-};
+/**
+ * A minimal balanced ledger, RECONCILER-TRUE (evidence-manifesto §11A): one `@unit` scenario and
+ * the passing credit that satisfies it, through the real `reconcile()`. A scenario that declares
+ * nothing cannot reconcile `balanced` (it degenerates to `both-missing`), so the obligation is
+ * what makes this the smallest honest balanced run.
+ */
+const balancedLedger: Ledger = reconcile(
+  [{ scnId: "SCN-RPT-002", evidenceObligations: [{ qualityCheck: "unit" }] }],
+  [{ qualityCheck: "unit", scnId: "SCN-RPT-002", status: "passed" }],
+);
 
 const ctx: RunContext = {
   target: "an-adopters-repository",
@@ -82,7 +67,7 @@ const ctx: RunContext = {
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   it("carries a top-level provenance with target, source SHA, UTC timestamp, and the inputs used", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), ctx));
 
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.runProvenance.target).toBe("an-adopters-repository");
@@ -99,7 +84,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   });
 
   it("keeps the reconciliation body (the ledger) intact alongside provenance, with no retired warnings key", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), ctx));
 
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
     expect(parsed.ledger.scenarioReconciliations[0].scnId).toBe("SCN-RPT-002");
@@ -109,7 +94,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   });
 
   it("includes only the inputs actually used (an absent flag is omitted, not null)", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), { ...ctx, inputs: { features: "f" } }));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), { ...ctx, inputs: { features: "f" } }));
 
     expect(parsed.runProvenance.inputs.features).toBe("f");
     expect(parsed.runProvenance.inputs).not.toHaveProperty("vitest");
@@ -117,12 +102,12 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   });
 
   it("preserves a null source SHA as JSON null (unknown, non-git target)", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), { ...ctx, sourceSha: null }));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), { ...ctx, sourceSha: null }));
     expect(parsed.runProvenance.sourceSha).toBeNull();
   });
 
   it("preserves a null tool SHA as JSON null (the tool is not a git checkout)", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), { ...ctx, toolSha: null }));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), { ...ctx, toolSha: null }));
     expect(parsed.runProvenance.toolSha).toBeNull();
     // The version is always present even when the SHA cannot be read.
     expect(parsed.runProvenance.toolVersion).toBe("0.1.0");
@@ -154,19 +139,19 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
 
   it("carries evidenceObligations.excludedOccurrences when a corpus is threaded", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations).toBeDefined();
     expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
   });
 
   it("persists ONLY excludedOccurrences (scenarioCount + rawScnOccurrences are derivable)", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations).not.toHaveProperty("scenarioCount");
     expect(parsed.evidenceObligations).not.toHaveProperty("rawScnOccurrences");
   });
 
   it("keeps evidenceObligations distinct from provenance and the reconciliation body", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.runProvenance).not.toHaveProperty("excludedOccurrences");
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
@@ -174,7 +159,7 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
   });
 
   it("omits evidenceObligations when no corpus is threaded (the RPT-002 guard stays green)", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger), ctx));
     expect(parsed).not.toHaveProperty("evidenceObligations");
     // Provenance + body survive intact.
     expect(parsed.runProvenance).toBeDefined();
@@ -278,7 +263,7 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
   };
 
   it("carries evidenceObligations.untaggedScenarios with the feature : scenario locators", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations.untaggedScenarios).toEqual([
       { feature: "alpha.feature", scenario: "a scenario with no anchor" },
       { feature: "beta.feature", scenario: "another untagged scenario" },
@@ -286,7 +271,7 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
   });
 
   it("keeps untaggedScenarios beside excludedOccurrences on the evidenceObligations object", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
     expect(parsed.evidenceObligations).toHaveProperty("untaggedScenarios");
     // Still distinct from provenance and the reconciliation body.
@@ -296,7 +281,7 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
 
   it("emits an empty untaggedScenarios array when there are none", () => {
     const parsed = JSON.parse(
-      renderJson(__er(balance, false, false), ctx, { ...evidenceObligations, untaggedScenarios: [] })
+      renderJson(__er(balancedLedger, false, false), ctx, { ...evidenceObligations, untaggedScenarios: [] })
     );
     expect(parsed.evidenceObligations.untaggedScenarios).toEqual([]);
   });
@@ -324,12 +309,12 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
   };
 
   it("carries evidenceObligations.proseOnlyCodes with the dangling codes", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations.proseOnlyCodes).toEqual(["SCN-BAR-013", "SCN-FOO-001"]);
   });
 
   it("keeps proseOnlyCodes beside excludedOccurrences / untaggedScenarios on the evidenceObligations object", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
     expect(parsed.evidenceObligations).toHaveProperty("untaggedScenarios");
     expect(parsed.evidenceObligations).toHaveProperty("proseOnlyCodes");
@@ -337,7 +322,7 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
   });
 
   it("emits an empty proseOnlyCodes array when there are none", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, { ...evidenceObligations, proseOnlyCodes: [] }));
+    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, { ...evidenceObligations, proseOnlyCodes: [] }));
     expect(parsed.evidenceObligations.proseOnlyCodes).toEqual([]);
   });
 });
@@ -361,20 +346,12 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
  * Parent: (@SCN-PND-010).
  */
 describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () => {
-  const pendingBalance: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-PDX-001",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [],
-        reconcilingItems: [],
-        pendingItems: [{ qualityCheck: "integration" }],
-      },
-    ],
-  };
+  // RECONCILER-TRUE (evidence-manifesto §11A): a scenario whose sole obligation is deferred
+  // pending reconciles balanced with one Pending Item and no sub-row on either side.
+  const pendingBalance: Ledger = reconcile(
+    [{ scnId: "SCN-PDX-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
+    [],
+  );
 
   it("serialises a scenario's pendingItems on its ledger account row (glue-free consistency with markdown)", () => {
     const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));
@@ -404,30 +381,25 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
  * Parent: (@SCN-PND-011).
  */
 describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () => {
-  const pendingBalance: Ledger = {
-    scenarioReconciliations: [
+  // RECONCILER-TRUE (evidence-manifesto §11A): SCN-PDX-001 defers both its obligations (two
+  // Pending Items, balanced); SCN-PDX-002 declares a unit obligation no credit meets (missing,
+  // out-of-balance) beside one deferred integration obligation (one Pending Item).
+  const pendingBalance: Ledger = reconcile(
+    [
       {
         scnId: "SCN-PDX-001",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [],
-        reconcilingItems: [],
-        pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+        evidenceObligations: [
+          { qualityCheck: "unit", pending: true },
+          { qualityCheck: "integration", pending: true },
+        ],
       },
       {
         scnId: "SCN-PDX-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
-        pendingItems: [{ qualityCheck: "integration" }],
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
       },
     ],
-  };
+    [],
+  );
 
   it("serialises summary.pending counting the Pending Items (glue-free consistency with markdown)", () => {
     const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));

@@ -20,27 +20,7 @@ import { renderJson } from "../render/json.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
-
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to these assembler
-// tests, which tally by OUTCOME, not by side presence — only side PRESENCE is constrained by the
-// invariant) so each fixture routes through the constructor.
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
-      : {}),
-  });
-}
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
@@ -61,39 +41,18 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 });
 
 
-// A balance spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
+// A ledger spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
 // (unit + integration), so the summary totals have teeth (2 scenarios / 1 balanced; 3
-// evidenceObligations / 2 out-of-balance; missing split 1 unit + 1 integration).
-const balance: Ledger = {
-  scenarioReconciliations: [
-    {
-      scnId: "SCN-RMD-001",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "balanced",
-      qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-      pendingItems: [],
-      reconcilingItems: [],
-    },
-    {
-      scnId: "SCN-RMD-002",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "out-of-balance",
-      qualityCheckReconciliations: [
-        qcr({ qualityCheck: "unit", outcome: "missing" }),
-        qcr({ qualityCheck: "integration", outcome: "missing" }),
-      ],
-      pendingItems: [],
-      reconcilingItems: [
-        qcr({ qualityCheck: "unit", outcome: "missing" }),
-        qcr({ qualityCheck: "integration", outcome: "missing" }),
-      ],
-    },
+// evidenceObligations / 2 out-of-balance; missing split 1 unit + 1 integration). RECONCILER-TRUE
+// (evidence-manifesto §11A): SCN-RMD-001's unit obligation is credited (satisfied); SCN-RMD-002
+// declares unit + integration and no credit meets either.
+const reportLedger: Ledger = reconcile(
+  [
+    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
   ],
-};
+  [{ qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" }],
+);
 
 const ctx: RunContext = {
   target: "an-adopters-repository",
@@ -112,7 +71,7 @@ const evidenceObligations: EvidenceObligations = {
 
 describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
-    const report = assembleRenderInput(__er(balance, false, false), ctx, evidenceObligations) as unknown as Record<string, unknown>;
+    const report = assembleRenderInput(__er(reportLedger, false, false), ctx, evidenceObligations) as unknown as Record<string, unknown>;
     // runProvenance opens; the summary's totals then the LEDGER's detail (chain step 6, RMD-002);
     // the evidenceObligations census follows. The retired `warnings` key is GONE — a zero-evidence
     // scenario is a both-missing row in the ledger, not a separate top-level axis.
@@ -126,14 +85,14 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   it("renames the provenance section to runProvenance carrying the run facts", () => {
-    const report = assembleRenderInput(__er(balance), ctx);
+    const report = assembleRenderInput(__er(reportLedger), ctx);
     expect(report.runProvenance.target).toBe("an-adopters-repository");
     expect(report.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
     expect(report.runProvenance.runTimestamp).toBe("2026-07-02T08:17:53Z");
   });
 
   it("materialises the summary totals from the balance", () => {
-    const report = assembleRenderInput(__er(balance), ctx);
+    const report = assembleRenderInput(__er(reportLedger), ctx);
     // A scenario-only balance: every row is a scenario, so the totals are the
     // scenario rows and the phantom / suspense sub-counts read 0.
     expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
@@ -154,40 +113,18 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   // the suspense `(no scenario)` row — so the run IS out-of-balance and exits 1. Under the
   // scenario-only tally the summary read `total 2, balanced 2, outOfBalance 0`: a failing run
   // rendering a headline that read as a clean pass.
-  const balanceWithSuspense: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-TGT-001",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-      {
-        scnId: "SCN-TGT-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-      {
-        scnId: "(no scenario)",
-        kind: "suspense-scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-        pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-      },
-    ],
-  };
+  // RECONCILER-TRUE (evidence-manifesto §11A): two @unit scenarios, each credited (balanced), and
+  // a fitness credit citing no scenario, which reconcile() posts to the suspense row.
+  const suspenseScenarios: Scenario[] = [
+    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+  ];
+  const suspenseObservations: EvidenceObservation[] = [
+    { qualityCheck: "unit", scnId: "SCN-TGT-001", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
+    { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
+  ];
+  const balanceWithSuspense: Ledger = reconcile(suspenseScenarios, suspenseObservations);
 
   it("counts the suspense reconciliation in the summary totals — a run whose only out-of-balance row is the suspense row tallies 1 out-of-balance, not 0", () => {
     const report = assembleRenderInput(__er(balanceWithSuspense), ctx);
@@ -214,21 +151,10 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   it("counts the phantom reconciliation in the summary totals too — a phantom scenario is out-of-balance, not a bucket apart", () => {
     // The phantom row is the suspense row's sibling: also ALWAYS out-of-balance, so it also
     // counts into the total and into out-of-balance, with `phantom` surviving as its sub-count.
-    const balanceWithPhantom: Ledger = {
-      scenarioReconciliations: [
-        ...balanceWithSuspense.scenarioReconciliations,
-        {
-          scnId: "SCN-PHANTOM-999",
-          kind: "phantom-scenario",
-          evidenceObservations: [],
-          evidenceObligations: [],
-          verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-          pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-        },
-      ],
-    };
+    const balanceWithPhantom: Ledger = reconcile(suspenseScenarios, [
+      ...suspenseObservations,
+      { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed" },
+    ]);
     const report = assembleRenderInput(__er(balanceWithPhantom), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({
       total: 4,
@@ -244,15 +170,15 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   it("carries no warnings key — the retired authoring-quality axis", () => {
-    const report = assembleRenderInput(__er(balance), ctx) as unknown as Record<string, unknown>;
+    const report = assembleRenderInput(__er(reportLedger), ctx) as unknown as Record<string, unknown>;
     expect(report).not.toHaveProperty("warnings");
     expect(((report.ledger as { scenarioReconciliations: unknown[] }).scenarioReconciliations)).toHaveLength(2);
   });
 
   it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
-    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(reportLedger, false, false), ctx, evidenceObligations));
     // Glue-free: the parsed JSON EQUALS the assembled model (no divergent hand-assembly).
-    expect(parsed).toEqual(assembleRenderInput(__er(balance, false, false), ctx, evidenceObligations));
+    expect(parsed).toEqual(assembleRenderInput(__er(reportLedger, false, false), ctx, evidenceObligations));
     // And it carries the renamed provenance + materialised summary on the machine surface.
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.summary.scenarioReconciliations.total).toBe(2);
@@ -280,7 +206,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
  */
 describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
   it("carries the grid of Scenario Reconciliations under ledger — never evidenceReconciliation, never scenarios", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
     // ONE VOCABULARY: an OBJECT mirroring `interface Ledger { scenarioReconciliations }`, never a
     // bare array of rows.
     expect(Array.isArray(parsed.ledger)).toBe(false);
@@ -295,7 +221,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries the ledger BESIDE summary — chain step 6: the summary has the totals and the ledger the detail", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
     // Both at ROOT, and `ledger` follows `summary` in document order — the totals, then the detail.
     const keys = Object.keys(parsed);
     expect(keys).toContain("summary");
@@ -307,11 +233,9 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     // THE READER (parent ruling 2): the posted entries are visible ON THE ARTEFACT, so the
     // double-entry invariant is checkable there — not inferred from which rows survived.
     //
-    // Driven from REAL reconcile output, not the hand-built `balance` above (evidence-manifesto
-    // §11A): the posted entries are what `reconcile` puts on the account, and the shared fixture
-    // predates them (the fields are optional for exactly that back-compat, ABSENCE ≡ []). This is
-    // also the scenario's Given — "accounts CARRY posted entries" — so a fixture without them
-    // would not exercise it.
+    // Driven from REAL reconcile output over a parsed feature (evidence-manifesto §11A): the posted
+    // entries are what `reconcile` puts on the account. This is also the scenario's Given —
+    // "accounts CARRY posted entries" — so a fixture without them would not exercise it.
     const feature = [
       "@AAA",
       "Feature: alpha",
@@ -334,7 +258,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries each quality check reconciliation's outcome field with the reconciliation-outcome literals", () => {
-    const parsed = JSON.parse(renderJson(__er(balance), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
     const outOfBalance = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
     );

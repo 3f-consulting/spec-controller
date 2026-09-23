@@ -20,70 +20,36 @@ import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced, hasPendingItems, hasBrokenEvidence, hasNothingToReconcile } from "./ledger.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type {
   Ledger,
-  ScenarioReconciliation,
   Scenario,
   EvidenceObservation,
 } from "../model.js";
 
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to this predicate —
-// only side PRESENCE is constrained by the invariant) so each fixture routes through the constructor.
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
-      : {}),
-  });
-}
-
-/** A scenario row that reconciles balanced — zero reconciling items. */
-const balancedScenario = (scnId: string): ScenarioReconciliation => ({
-  scnId,
-  kind: "scenario",
-  evidenceObservations: [],
-  evidenceObligations: [],
-  verdict: "balanced",
-  qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-  pendingItems: [],
-  reconcilingItems: [],
-});
+/**
+ * RECONCILER-TRUE corpus pieces (evidence-manifesto §11A): a `@unit` scenario and the passing
+ * credit that satisfies it. A ledger built from them is `reconcile()`'s output, so no row can
+ * claim an outcome its own posted entries contradict.
+ */
+const unitScenario = (scnId: string): Scenario => ({ scnId, evidenceObligations: [{ qualityCheck: "unit" }] });
+const unitCredit = (scnId: string): EvidenceObservation => ({ qualityCheck: "unit", scnId, status: "passed" });
 
 describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the Ledger", () => {
   it("is balanced when every row reconciles with zero reconciling items", () => {
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
-    };
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
+      [unitCredit("SCN-TGT-001"), unitCredit("SCN-TGT-002")],
+    );
     expect(isBalanced(reconciliation)).toBe(true);
   });
 
   it("is NOT balanced when a scenario carries an out-of-balance reconciling item", () => {
     // Teeth: a single missing obligation on one scenario row makes the whole run
     // out-of-balance — the ordinary out-of-balance-scenario case the gate must red.
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [
-        balancedScenario("SCN-TGT-001"),
-        {
-          scnId: "SCN-TGT-002",
-          kind: "scenario",
-          evidenceObservations: [],
-          evidenceObligations: [],
-          verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "integration", outcome: "missing" })],
-          pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "integration", outcome: "missing" })],
-        },
-      ],
-    };
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001"), { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheck: "integration" }] }],
+      [unitCredit("SCN-TGT-001")],
+    );
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
@@ -93,22 +59,14 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     // no-evidence-obligation static-check (a `fitness` credit no @fitness obligation names) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [
-        balancedScenario("SCN-TGT-001"),
-        balancedScenario("SCN-TGT-002"),
-        {
-          scnId: "(no scenario)",
-          kind: "suspense-scenario",
-          evidenceObservations: [],
-          evidenceObligations: [],
-          verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-          pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-        },
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
+      [
+        unitCredit("SCN-TGT-001"),
+        unitCredit("SCN-TGT-002"),
+        { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
-    };
+    );
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
@@ -116,21 +74,10 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     // A second suspense-family case: every scenario balanced, but a credit cites
     // an @SCN no feature carries → a phantom row, verdict always out-of-balance. The whole
     // run is out-of-balance even though no scenario is.
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [
-        balancedScenario("SCN-TGT-001"),
-        {
-          scnId: "SCN-PHANTOM-999",
-          kind: "phantom-scenario",
-          evidenceObservations: [],
-          evidenceObligations: [],
-          verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-          pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-        },
-      ],
-    };
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001")],
+      [unitCredit("SCN-TGT-001"), unitCredit("SCN-PHANTOM-999")],
+    );
     expect(isBalanced(reconciliation)).toBe(false);
   });
 });
@@ -151,9 +98,10 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
     // Mirrors the ALL-BALANCED FIXTURE the @e2e drives: two @unit scenarios both
     // satisfied and — crucially — NO suspense/phantom row at all (the guardless design).
     // isBalanced consults every row's reconcilingItems, finds none anywhere, and returns true.
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
-    };
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
+      [unitCredit("SCN-TGT-001"), unitCredit("SCN-TGT-002")],
+    );
     expect(isBalanced(reconciliation)).toBe(true);
   });
 
@@ -163,9 +111,10 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
     // the run leaves process.exitCode at its default 0. Expressing the gate's own condition
     // here makes the positive boundary explicit: isBalanced true → exit code 0. Inverting or
     // always-failing the predicate flips this to 1 (the mutation that proves this pin's teeth).
-    const reconciliation: Ledger = {
-      scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
-    };
+    const reconciliation: Ledger = reconcile(
+      [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
+      [unitCredit("SCN-TGT-001"), unitCredit("SCN-TGT-002")],
+    );
     const exitCode = !isBalanced(reconciliation) ? 1 : 0;
     expect(exitCode).toBe(0);
   });
