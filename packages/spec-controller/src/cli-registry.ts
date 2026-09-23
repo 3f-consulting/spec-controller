@@ -150,7 +150,7 @@ const balanceFlags: FlagSpec[] = [
   },
   {
     name: "--exit-zero",
-    description: "Print the same report but exit 0 on an out-of-balance (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
+    description: "Print the same report but exit 0 on an out-of-balance (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4), nothing-to-reconcile (5) and no-verdict (6, an unknown command) still fail.",
   },
   {
     name: "--help",

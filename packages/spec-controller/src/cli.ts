@@ -32,7 +32,7 @@ import {
   type KeptRunSpec,
   type RunManifestMeta,
 } from "./run-management/keptRun.js";
-import { parseHostInvocation, wrapCommandArgv, peekFlag } from "./host.js";
+import { parseHostInvocation, wrapCommandArgv, peekFlag, answerUnknownCommand } from "./host.js";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 
 /** Dispatch a command to its handler with the given (clean or store-wrapped) argv. */
@@ -44,11 +44,11 @@ function runCommand(command: string, argv: string[]): void {
     case "tags":
       runTags(argv);
       return;
-    default:
-      process.stderr.write(
-        `spec-controller: unknown command "${command}".\n\n${renderTopLevelHelp(cliRegistry)}\n`,
-      );
-      process.exit(1);
+    default: {
+      const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
+      process.stderr.write(answer.stderr);
+      process.exit(answer.exitCode);
+    }
   }
 }
 

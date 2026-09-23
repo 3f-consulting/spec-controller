@@ -307,6 +307,45 @@ Feature: spec-controller balance runs standalone
         | unsound              | a target whose vitest report carries a collection-failed suite | 4    | it prints the Evidence Reconciliation to stdout                                    |
         | nothing to reconcile | a target that declared no scenario and produced no evidence    | 5    | the verdict headline says the run had nothing to reconcile, never that it balanced |
 
+  Rule: an unknown command reaches no verdict about the corpus, and exits 6
+
+    Exit 6 means spec-controller was asked something it cannot answer, and so reached no
+    verdict about your corpus. It is not 1: 1 is a verdict against the corpus, and nothing was
+    reconciled. A typo such as `blance` and a command that has left the tool both land here,
+    and before 3F-3634 both exited 1, so a consumer's CI read a mistyped step as an accusation.
+    The help that follows the statement is for a person at a terminal; the status is for the
+    pipeline. Later commands that are asked something they cannot answer cite this meaning
+    rather than defining a second one.
+
+    @SCN-CLI-056 @unit @e2e
+    Scenario Outline: an unknown command reaches no verdict about the corpus — <request>
+      Given the spec-controller top-level binary
+      When it is asked for <request>
+      Then it answers that it reached no verdict about the corpus, with the no-verdict status
+      And it names the command it does not know
+      And it prints nothing a pipeline could read as a report
+
+      Examples:
+        | request                                    |
+        | a typo of a command                        |
+        | a name that is no command                  |
+        | a name that is no command, as a stored run |
+
+    # --exit-zero moves verdicts, and an unknown command reached none, so the flag cannot move it
+    # wherever it is written. Written before the command, the host reads the flag itself as the
+    # command, which is one more command it does not know.
+
+    @SCN-CLI-057 @unit @e2e
+    Scenario Outline: --exit-zero never moves an unknown command's no-verdict status — the flag <placement>
+      Given the spec-controller top-level binary
+      When it is asked for a name that is no command, with --exit-zero <placement>
+      Then it answers that it reached no verdict about the corpus, with the no-verdict status
+
+      Examples:
+        | placement          |
+        | after the command  |
+        | before the command |
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `<command> --help` (and `-h`) prints THAT command's flags — each name +

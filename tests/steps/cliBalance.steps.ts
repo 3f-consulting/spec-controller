@@ -24,10 +24,11 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
+import { NO_VERDICT_STATEMENT } from "../../packages/spec-controller/src/host.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 /** The reconcilable fixture target — scenarios + a Vitest report. */
@@ -491,6 +492,82 @@ Then(
     assert.ok(out.includes("--run-id"), `expected top-level --help to document --run-id; got:\n${out}`);
   },
 );
+
+// @SCN-CLI-056
+/**
+ * An unknown command reaches no verdict (3F-3634). Each request names the command the host
+ * will not know. The stored-run row goes through the `--store` route, which reaches the same
+ * dispatch; the run directory that route leaves behind is out of scope, so the throwaway store
+ * root is removed rather than inspected.
+ */
+const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string; stored: boolean }> = {
+  "a typo of a command": { argv: ["blance"], command: "blance", stored: false },
+  "a name that is no command": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: false },
+  "a name that is no command, as a stored run": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: true },
+  // @SCN-CLI-057 — the flag after the command reaches the command's args; before it, the host
+  // reads the flag itself as the command.
+  "a name that is no command, with --exit-zero after the command": {
+    argv: ["nosuchcommand", "--exit-zero"],
+    command: "nosuchcommand",
+    stored: false,
+  },
+  "a name that is no command, with --exit-zero before the command": {
+    argv: ["--exit-zero", "nosuchcommand"],
+    command: "--exit-zero",
+    stored: false,
+  },
+};
+let unknownCommand = "";
+
+// @SCN-CLI-056 @SCN-CLI-057
+When("it is asked for {}", function (request: string) {
+  const known = UNKNOWN_COMMAND_REQUESTS[request];
+  assert.ok(known !== undefined, `no request row named "${request}"`);
+  unknownCommand = known.command;
+  if (!known.stored) {
+    controllerResult = spawnController(known.argv);
+    return;
+  }
+  const storeRoot = mkdtempSync(join(tmpdir(), "scn-cli-056-"));
+  try {
+    controllerResult = spawnController(["--store", storeRoot, ...known.argv]);
+  } finally {
+    rmSync(storeRoot, { recursive: true, force: true });
+  }
+});
+
+// @SCN-CLI-056 @SCN-CLI-057
+// The MEANING is pinned, never the prose (features/message-catalogue.feature): the status is the
+// contract, and the statement is asserted by the exported constant, so a copy-edit reds nothing
+// while dropping the statement reds this step.
+Then("it answers that it reached no verdict about the corpus, with the no-verdict status", function () {
+  assert.equal(
+    controllerResult.status,
+    6,
+    `expected the no-verdict status 6; got ${controllerResult.status}\n${controllerResult.stderr}`,
+  );
+  assert.ok(
+    typeof NO_VERDICT_STATEMENT === "string" && NO_VERDICT_STATEMENT.trim().length > 0,
+    "the no-verdict statement must exist and say something",
+  );
+  assert.ok(
+    controllerResult.stderr.includes(NO_VERDICT_STATEMENT),
+    `expected stderr to carry the no-verdict statement; got:\n${controllerResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-056
+Then("it names the command it does not know", function () {
+  assert.ok(
+    controllerResult.stderr.includes(`"${unknownCommand}"`),
+    `expected stderr to name "${unknownCommand}"; got:\n${controllerResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-056
+Then("it prints nothing a pipeline could read as a report", function () {
+  assert.equal(controllerResult.stdout, "", `expected nothing on stdout; got:\n${controllerResult.stdout}`);
+});
 
 // @SCN-CLI-009
 // The registry-bounded parser: `balance` accepts ONLY its registered flags; an
