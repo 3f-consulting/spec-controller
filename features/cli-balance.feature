@@ -431,6 +431,96 @@ Feature: spec-controller balance runs standalone
       And the refusal advises no pin
       And nothing is written to the store root or the working directory
 
+  Rule: every argument is read as what it is, or refused as a usage fault before anything runs
+
+    The unknown-flag check (@SCN-CLI-009) bounds a flag's NAME against the registry. That alone let
+    a value given to a flag that takes none, a word that is no flag at all, a second copy of a
+    single-value flag, a flag spelled --flag=value, and a command read as a modifier's value all past
+    it, and three of those ran to a verdict --exit-zero turned green (3F-3672). Which flags take a value, which take none,
+    and which may repeat are the registry's to say, so a flag added later is covered by construction.
+    A refusal inside a stored run leaves no run.yaml. --help still answers first, whatever else is
+    given: it runs nothing and reaches no verdict, so --exit-zero has nothing to turn green.
+
+    @SCN-CLI-062 @unit @e2e
+    Scenario Outline: balance refuses a value given to a flag that takes none, naming both — <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When balance is asked to run with <flag> given the value <value>, <shape>
+      Then balance refuses the run as a usage fault, with nothing reconciled
+      And the refusal names <flag> as a flag that takes no value, and <value> as the value it was given
+      And the store root holds no record of a run
+
+      Examples:
+        | flag        | value | shape                                     |
+        | --strict    | foo   | after the target's flags                  |
+        | --exit-zero | foo   | after the target's flags                  |
+        | --strict    | foo   | after the target's flags, in a stored run |
+
+    @SCN-CLI-063 @unit @e2e
+    Scenario Outline: balance refuses an argument that is neither a flag nor a flag's value, naming it — <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When balance is asked to run with an argument that is no flag, <shape>
+      Then balance refuses the run as a usage fault, with nothing reconciled
+      And the refusal names that argument as one balance does not take
+      And the store root holds no record of a run
+
+      Examples:
+        | shape                                                          |
+        | the target's features directory alone, with no flag before it |
+        | a stray word after the target's flags, with --exit-zero        |
+        | a single-dash token after the target's flags, with --exit-zero |
+        | the command given twice, in a stored run                       |
+
+    @SCN-CLI-064 @unit @e2e
+    Scenario Outline: a flag that does not repeat, given twice, is refused naming the flag, never read as its last value — <flag> <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a run is asked for with <flag> given twice, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And nothing is reconciled
+      And the refusal names <flag> as given more than once
+      And the store root holds no record of a run
+
+      Examples:
+        | flag       | shape                                                               |
+        | --features | at a path that does not exist, then at the target, with --exit-zero |
+        | --target   | as two different names                                              |
+        | --strict   | with no value either time                                           |
+        | --target   | as two different names, in a stored run                             |
+        | --store    | before the command, the second time at the store root               |
+        | --run-id   | before the command, as two ids, in a stored run                     |
+
+    @SCN-CLI-065 @unit @e2e
+    Scenario Outline: a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice — <written> <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a run is asked for with <written>, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And nothing is reconciled
+      And the refusal names <written> as a form that is not read, and <spelling> as the spelling that is
+      And the refusal advises no pin, and calls the flag neither unknown nor out of place
+      And the store root holds no record of a run
+
+      Examples:
+        | written        | spelling         | shape                                      |
+        | --format=json  | --format json    | after the target's flags                   |
+        | --format=json  | --format json    | after the target's flags, with --exit-zero |
+        | --features=    | --features <dir> | after the target's flags                   |
+        | --store=<root> | --store <root>   | before the command                         |
+        | --store=<root> | --store <root>   | after the command                          |
+        | --format=json  | --format json    | after the target's flags, in a stored run  |
+
+    @SCN-CLI-066 @unit @e2e
+    Scenario Outline: the host refuses a modifier that took the command as its value, naming both, and stores nothing — <modifier> <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a stored run is asked for, with the command given as the value of <modifier>, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And the refusal names <modifier> as having taken the command as its value
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | modifier | shape                                           |
+        | --store  | with the target's flags after it                |
+        | --store  | with nothing after it                           |
+        | --run-id | after --store, with the target's flags after it |
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `<command> --help` (and `-h`) prints THAT command's flags — each name +

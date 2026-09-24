@@ -25,10 +25,11 @@ import type { CliRegistry, CommandSpec, FlagSpec } from "./cli-registry.js";
  * the boolean flags — `--strict`, `--help` — are recognised: presence is what matters, so callers
  * read them with `!== undefined`.
  *
- * PERMISSIVE BY ITSELF, AND BOUNDED BY THE CALLER. It records whatever it is given, including a
- * flag no registry names; `checkUnknownFlags` below is what turns that into a usage error. The
- * split is deliberate — the parse has no opinion about which command it is reading for, and the
- * bounding has nothing else to do.
+ * PERMISSIVE BY ITSELF, AND BOUNDED BY THE CALLER. It records whatever it is given — a flag no
+ * registry names, the last of two copies, a word after a flag that takes none — and drops a word
+ * that follows no flag. `checkArgvShape` and `checkUnknownFlags` below are what refuse those, before
+ * anything reads the record (3F-3672). The split is deliberate — the parse has no opinion about which
+ * command it is reading for, and the bounding has nothing else to do.
  */
 export function parseArgs(argv: readonly string[]): Record<string, string> {
   const args: Record<string, string> = {};
@@ -100,6 +101,133 @@ export function missingValueRefusal(given: string, flag: FlagSpec, scope: string
 }
 
 /**
+ * The shape of a command's argv, read against its registry scope (3F-3672): every token is a flag,
+ * or the value of the flag before it, or a usage fault. Returns the refusal for the first token that
+ * is neither, else null.
+ */
+export function checkArgvShape(argv: readonly string[], registry: CliRegistry, command: string): string | null {
+  const scope = flagScopeOf(registry, command);
+  const seen = new Set<FlagSpec>();
+  for (let i = 0; i < argv.length; i++) {
+    const read = readToken(argv, i, { scope, seen }, command);
+    if (typeof read === "string") return read;
+    i += read;
+  }
+  return null;
+}
+
+/** What the walk knows as it goes: the command's flags, and which of them it has already read. */
+interface Walk {
+  scope: ReadonlyMap<string, FlagSpec>;
+  seen: Set<FlagSpec>;
+}
+
+/** One token of the walk: the refusal it earns, or how many of the tokens after it are its value. */
+function readToken(argv: readonly string[], i: number, walk: Walk, command: string): string | number {
+  const token = argv[i] ?? "";
+  const next = argv[i + 1];
+  if (isEqualsForm(token)) return equalsFormRefusal(token, walk.scope, `spec-controller ${command}`);
+  if (!isFlagShaped(token) && !walk.scope.has(token)) return notAFlagRefusal(token, command);
+  const flag = walk.scope.get(token);
+  if (flag === undefined) return valueTokensAfter(undefined, next);
+  return registeredFlagRefusal(flag, token, next, walk, command) ?? valueTokensAfter(flag, next);
+}
+
+/**
+ * The refusal a registered flag earns where it stands: given a second time when the registry does not
+ * mark it `repeatable` (by name or alias, one flag), or given a value it does not take.
+ */
+function registeredFlagRefusal(
+  flag: FlagSpec,
+  token: string,
+  next: string | undefined,
+  walk: Walk,
+  command: string,
+): string | undefined {
+  if (walk.seen.has(flag) && flag.repeatable !== true) return givenTwiceRefusal(token, `spec-controller ${command}`);
+  walk.seen.add(flag);
+  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && !walk.scope.has(next)) {
+    return takesNoValueRefusal(token, next, command);
+  }
+  return undefined;
+}
+
+/** The refusal for a flag given more than once that is read once: the flag, and where. */
+export function givenTwiceRefusal(given: string, scope: string): string {
+  return (
+    `The ${given} flag of '${scope}' was given more than once, and is read once: give it once.\n` +
+    `Run '${scope} --help' to see the flags this version accepts.`
+  );
+}
+
+/** Every flag of one command's scope, by name and alias, dashes kept. */
+function flagScopeOf(registry: CliRegistry, command: string): Map<string, FlagSpec> {
+  const scope = new Map<string, FlagSpec>();
+  for (const flag of registry.commands.find((c) => c.name === command)?.flags ?? []) {
+    for (const name of [flag.name, ...(flag.aliases ?? [])]) scope.set(name, flag);
+  }
+  return scope;
+}
+
+/** A token read as a flag whether or not the scope has it: two dashes, as `parseArgs` reads one. */
+function isFlagShaped(token: string): boolean {
+  return token.startsWith("--");
+}
+
+/** A flag written with its value after an `=`, as in `--format=json`: a form this CLI does not read. */
+export function isEqualsForm(token: string): boolean {
+  return isFlagShaped(token) && token.includes("=");
+}
+
+/**
+ * The refusal for a flag written `--flag=value` (@SCN-CLI-065, 3F-3672): the form as given, and the
+ * spelling that is read — the flag and its value as two arguments, or the flag alone when it takes
+ * none. Never the unknown-flag pin advice: no version reads the form, so no pin cures it. Refused
+ * rather than split, by ruling: one spelling means one reader of argv, where splitting would teach
+ * every reader of it the same answer.
+ */
+export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, FlagSpec>, scope: string): string {
+  const at = token.indexOf("=");
+  const name = token.slice(0, at);
+  const value = token.slice(at + 1);
+  const flag = flags.get(name);
+  const spelling =
+    flag !== undefined && flag.arg === undefined ? name : `${name} ${value === "" ? (flag?.arg ?? "<value>") : value}`;
+  return (
+    `The ${token} form is not read by '${scope}': a flag and its value are two arguments, as in '${spelling}'.\n` +
+    `Run '${scope} --help' to see the flags this version accepts.`
+  );
+}
+
+/**
+ * How many tokens after a flag are its value: one for a value flag given one, and — for a flag the
+ * scope does not have — one for the word after it, exactly as `parseArgs` pairs them, so an unknown
+ * flag and its word stay @SCN-CLI-009's to refuse. An empty value is consumed as one, so it stays
+ * @SCN-CLI-058's missing value rather than becoming a stray argument.
+ */
+function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined): number {
+  if (next === undefined || isFlagShaped(next)) return 0;
+  return flag === undefined || flag.arg !== undefined ? 1 : 0;
+}
+
+/** The refusal for a value given to a flag that takes none: the flag, and the value it was given. */
+function takesNoValueRefusal(flag: string, value: string, command: string): string {
+  return (
+    `The ${flag} flag of 'spec-controller ${command}' takes no value, and was given one: '${value}'.\n` +
+    `Run 'spec-controller ${command} --help' to see the flags this version accepts and the values they take.`
+  );
+}
+
+/** The refusal for a token that is no flag and no flag's value: the token, and what the command takes. */
+function notAFlagRefusal(token: string, command: string): string {
+  return (
+    `The argument '${token}' is not a flag, nor the value of the flag before it: ` +
+    `'spec-controller ${command}' takes only flags and their values.\n` +
+    `Run 'spec-controller ${command} --help' to see the flags this version accepts.`
+  );
+}
+
+/**
  * A host modifier given after the command is out of place, not unknown (@SCN-CLI-061, 3F-3639): the
  * flag exists, so @SCN-CLI-009's advice to bump a pin to a version that accepts it is false. Its own
  * check rather than a branch of `checkUnknownFlags`, because the caller refuses this one through
@@ -124,8 +252,10 @@ export function checkMisplacedHostModifiers(
 /**
  * The registry-bounded flag check at a command's CLI edge (@SCN-CLI-009). A command accepts ONLY
  * the flags its per-command registry scope LISTS (by `name` or `alias`); an unregistered flag — a
- * typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently swallowed the way the
- * permissive parse above would leave it. This is the structural teeth behind "accepted = registry
+ * typo like `--strcit`, a stray `--bogus` — is a usage error, where the permissive parse above would
+ * have recorded it. It bounds flag NAMES and nothing else: a word that is no flag, a value given to a
+ * flag that takes none, a second copy, a `--flag=value` form, are `checkArgvShape`'s, which runs
+ * first (@SCN-CLI-062–066, 3F-3672). This is the structural teeth behind "accepted = registry
  * = help": a flag cannot affect behaviour without a registry entry, and so (by @SCN-CLI-008's
  * guard) without appearing in that command's help.
  *

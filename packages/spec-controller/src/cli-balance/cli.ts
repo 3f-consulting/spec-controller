@@ -36,7 +36,13 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 // THE ARGV READING AND ITS REGISTRY BOUNDING, SHARED WITH EVERY OTHER COMMAND (3F-3300). Both
 // lived here while `balance` was the only command; a second command needs them, and a second
 // copy of "what did the operator type" is the one thing this tree least wants two of.
-import { parseArgs, checkUnknownFlags, checkMissingValues, checkMisplacedHostModifiers } from "../cli-args.js";
+import {
+  parseArgs,
+  checkArgvShape,
+  checkUnknownFlags,
+  checkMissingValues,
+  checkMisplacedHostModifiers,
+} from "../cli-args.js";
 import type { EvidenceReconciliation, RunContext } from "@3f-consulting/spec-controller-core";
 
 /**
@@ -258,14 +264,21 @@ export function runBalance(argv: string[]): void {
   const misplacedModifierError = checkMisplacedHostModifiers(args, cliRegistry, "balance");
   if (misplacedModifierError) exitUsage(misplacedModifierError);
 
-  // Registry-bounded parse (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
-  // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
-  // USAGE error: name it on stderr, set process.exitCode = 2 (the enumerated usage code,
-  // 3F-1414's 0/1/2 taxonomy — never 1, never a silent swallow), and RETURN before any
-  // reconcile. Runs AFTER the legacy-`--json` guard so `--json` keeps its specific migration
-  // hint, and after the misplaced-modifier refusal above, so a `--store` / `--run-id` written after
-  // the command is named as out of place rather than given pin advice. This is the structural teeth
-  // behind "accepted = registry = help" — a flag can't affect behaviour without a registry entry.
+  // Every token is a flag or the value of the flag before it (3F-3672), refused through
+  // `process.exit` so a stored run is never stamped, and before the unknown-flag check below.
+  const shapeError = checkArgvShape(argv, cliRegistry, "balance");
+  if (shapeError) exitUsage(shapeError);
+
+  // Registry-bounded flag NAMES (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
+  // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a USAGE error:
+  // name it on stderr, set process.exitCode = 2 (the enumerated usage code, 3F-1414's 0/1/2
+  // taxonomy — never 1, never 0), and RETURN before any reconcile. It bounds names only; that every
+  // other token is read or refused is the argv-shape check above (@SCN-CLI-062–066, 3F-3672).
+  // Runs AFTER the legacy-`--json` guard so `--json` keeps its specific migration hint, after the
+  // misplaced-modifier refusal, so a `--store` / `--run-id` written after the command is named as
+  // out of place rather than given pin advice, and after the argv-shape check, so `--format=json` is
+  // refused as a form and never given pin advice. This is the structural teeth behind "accepted =
+  // registry = help" — a flag can't affect behaviour without a registry entry.
   const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");

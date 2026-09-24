@@ -576,7 +576,8 @@ When("{string} is run through the CLI binary", function (command: string) {
 Then("it exits with status 2 naming the unrecognised flag --bogus on stderr", function () {
   // EXACTLY 2 — the usage code (3F-1414 / 3F-1405): an unregistered flag must never
   // masquerade as the out-of-balance verdict (1) nor be silently swallowed (0). stderr
-  // names the offending flag so the operator sees the typo.
+  // names the offending flag so the operator sees the typo. This fixture tests a flag's NAME;
+  // the other shapes a swallow takes are @SCN-CLI-062–066's (3F-3672).
   assert.equal(
     cliResult.status,
     2,
@@ -1751,4 +1752,276 @@ Then("the refusal names the store modifier as one that goes before the command",
 // The drift advice @SCN-CLI-009 gives a flag no version accepts is false here: --store exists.
 Then("the refusal advises no pin", function () {
   assert.doesNotMatch(cliResult.stderr, /\bpin\b/i, `stderr advises a pin:\n${cliResult.stderr}`);
+});
+
+/**
+ * @SCN-CLI-063 — an argument that is neither a flag nor a flag's value (3F-3672). Each row builds the
+ * argv from the out-of-balance target and names the token the refusal must name. Every row runs in
+ * the fresh directory beside the empty store root, so a stored run that went ahead is found there.
+ */
+const NOT_A_FLAG: Record<string, (store: string, target: string[]) => { argv: string[]; token: string }> = {
+  "the target's features directory alone, with no flag before it": (_store, target) => {
+    const dir = target[target.indexOf("--features") + 1] ?? "";
+    return { argv: ["balance", dir], token: dir };
+  },
+  "a stray word after the target's flags, with --exit-zero": (_store, target) => ({
+    argv: ["balance", ...target, "extra", "--exit-zero"],
+    token: "extra",
+  }),
+  "a single-dash token after the target's flags, with --exit-zero": (_store, target) => ({
+    argv: ["balance", ...target, "-x", "--exit-zero"],
+    token: "-x",
+  }),
+  "the command given twice, in a stored run": (store, target) => ({
+    argv: ["--store", store, "--run-id", "r1", "balance", "balance", ...target],
+    token: "balance",
+  }),
+};
+let argumentNamed = "";
+
+// @SCN-CLI-063
+When("balance is asked to run with an argument that is no flag, {}", function (shape: string) {
+  const rowOf = NOT_A_FLAG[shape];
+  assert.ok(rowOf !== undefined, `no row named "${shape}"`);
+  const { argv, token } = rowOf(storedRunRoot, invocationArgs);
+  argumentNamed = token;
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-063
+// The meaning, never the prose: one line names the token as no flag, and none calls it a flag no
+// version accepts.
+Then("the refusal names that argument as one balance does not take", function () {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(argumentNamed) && /not a flag/i.test(line)),
+    `expected a line of stderr naming ${argumentNamed} as not a flag; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /\bpin\b|unknown/i, `stderr names another fault:\n${stderr}`);
+});
+
+// @SCN-CLI-063
+// A refused stored run stamps no run.yaml (3F-3672 Acceptance 4). The empty run directory a refusal
+// inside the run leaves is 3F-3650's to rule on, so only the manifest is looked for.
+Then("the store root holds no record of a run", function () {
+  try {
+    const manifests = readdirSync(storedRunRoot, { recursive: true }).filter((entry) =>
+      String(entry).endsWith("run.yaml"),
+    );
+    assert.deepEqual(manifests, [], `expected no run.yaml under the store root; found ${manifests.join(", ")}`);
+  } finally {
+    rmSync(storedRunDir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * @SCN-CLI-062 — a value given to a flag that takes none (3F-3672). The stored shape runs the same
+ * invocation under --store, so a run that read past the value is found in the store root.
+ */
+const VALUE_TO_A_FLAG_THAT_TAKES_NONE: Record<string, (store: string, target: string[], given: string[]) => string[]> = {
+  "after the target's flags": (_store, target, given) => ["balance", ...target, ...given],
+  "after the target's flags, in a stored run": (store, target, given) => [
+    "--store",
+    store,
+    "--run-id",
+    "r1",
+    "balance",
+    ...target,
+    ...given,
+  ],
+};
+
+// @SCN-CLI-062
+When("balance is asked to run with {word} given the value {word}, {}", function (flag: string, value: string, shape: string) {
+  const argvOf = VALUE_TO_A_FLAG_THAT_TAKES_NONE[shape];
+  assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
+  const argv = argvOf(storedRunRoot, invocationArgs, [flag, value]);
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-062
+// The meaning, never the prose: one line names the flag, the value it was given, and that it takes none.
+Then(
+  "the refusal names {word} as a flag that takes no value, and {word} as the value it was given",
+  function (flag: string, value: string) {
+    const { stderr } = cliResult;
+    assert.ok(
+      stderr.split("\n").some((line) => line.includes(flag) && line.includes(value) && /takes no value/i.test(line)),
+      `expected a line of stderr naming ${flag} as taking no value and ${value} as given it; got:\n${stderr}`,
+    );
+  },
+);
+
+/**
+ * @SCN-CLI-064 — a flag that does not repeat, given twice (3F-3672), in balance's scope and the host's.
+ * Each row is keyed by the flag and its shape; the stored rows run under --store, so a run that read
+ * the last value and went ahead is found in the store root.
+ */
+const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]> = {
+  "--features at a path that does not exist, then at the target, with --exit-zero": (_store, target) => [
+    "balance",
+    ...withoutFlag(target, "--features"),
+    "--features",
+    join(tmpdir(), "scn-cli-064-no-such-dir"),
+    "--features",
+    target[target.indexOf("--features") + 1] ?? "",
+    "--exit-zero",
+  ],
+  "--target as two different names": (_store, target) => ["balance", ...target, "--target", "a", "--target", "b"],
+  "--strict with no value either time": (_store, target) => ["balance", ...target, "--strict", "--strict"],
+  "--target as two different names, in a stored run": (store, target) => [
+    "--store",
+    store,
+    "--run-id",
+    "r1",
+    "balance",
+    ...target,
+    "--target",
+    "a",
+    "--target",
+    "b",
+  ],
+  "--store before the command, the second time at the store root": (store, target) => [
+    "--store",
+    join(tmpdir(), "scn-cli-064-other-store"),
+    "--store",
+    store,
+    "balance",
+    ...target,
+  ],
+  "--run-id before the command, as two ids, in a stored run": (store, target) => [
+    "--store",
+    store,
+    "--run-id",
+    "r0",
+    "--run-id",
+    "r1",
+    "balance",
+    ...target,
+  ],
+};
+
+// @SCN-CLI-064
+When("a run is asked for with {word} given twice, {}", function (flag: string, shape: string) {
+  const argvOf = GIVEN_TWICE[`${flag} ${shape}`];
+  assert.ok(argvOf !== undefined, `no row for ${flag} ${shape}`);
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
+    cwd: storedRunDir,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-064
+// The meaning, never the prose: one line names the flag as given more than once.
+Then("the refusal names {word} as given more than once", function (flag: string) {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(flag) && /more than once/i.test(line)),
+    `expected a line of stderr naming ${flag} as given more than once; got:\n${stderr}`,
+  );
+});
+
+/**
+ * @SCN-CLI-065 — a flag written --flag=value (3F-3672). `<root>` in a row stands for the store root,
+ * which only the run knows; each shape places the written token relative to the command.
+ */
+const EQUALS_FORM: Record<string, (store: string, target: string[], written: string) => string[]> = {
+  "after the target's flags": (_store, target, written) => ["balance", ...target, written],
+  "after the target's flags, with --exit-zero": (_store, target, written) => ["balance", ...target, written, "--exit-zero"],
+  "before the command": (_store, target, written) => [written, "balance", ...target],
+  "after the command": (_store, target, written) => ["balance", ...target, written],
+  "after the target's flags, in a stored run": (store, target, written) => [
+    "--store",
+    store,
+    "--run-id",
+    "r1",
+    "balance",
+    ...target,
+    written,
+  ],
+};
+
+/** A row's cell with `<root>` read as the store root. */
+function withStoreRoot(cell: string): string {
+  return cell.replace("<root>", storedRunRoot);
+}
+
+// @SCN-CLI-065
+When("a run is asked for with {word}, {}", function (written: string, shape: string) {
+  const argvOf = EQUALS_FORM[shape];
+  assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
+  const argv = argvOf(storedRunRoot, invocationArgs, withStoreRoot(written));
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-065
+// The meaning, never the prose: one line names the form as given and not read; the spelling that is
+// read appears quoted, as the instruction to follow.
+Then("the refusal names {word} as a form that is not read, and {} as the spelling that is", function (written: string, spelling: string) {
+  const { stderr } = cliResult;
+  const given = withStoreRoot(written);
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(given) && /not read/i.test(line)),
+    `expected a line of stderr naming ${given} as a form that is not read; got:\n${stderr}`,
+  );
+  assert.ok(stderr.includes(`'${withStoreRoot(spelling)}'`), `expected the spelling '${spelling}' in stderr; got:\n${stderr}`);
+});
+
+// @SCN-CLI-065
+Then("the refusal advises no pin, and calls the flag neither unknown nor out of place", function () {
+  assert.doesNotMatch(cliResult.stderr, /\bpin\b|unknown|before the command/i, `stderr gives other advice:\n${cliResult.stderr}`);
+});
+
+/**
+ * @SCN-CLI-066 — the command taken as a host modifier's value (3F-3672). Each row is keyed by the
+ * modifier and its shape; the run stands beside the empty store root, and a modifier that took
+ * `balance` as a store root would write a `balance` directory into the working directory.
+ */
+const COMMAND_AS_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
+  "--store with the target's flags after it": (_store, target) => ["--store", "balance", ...target],
+  "--store with nothing after it": () => ["--store", "balance"],
+  "--run-id after --store, with the target's flags after it": (store, target) => [
+    "--store",
+    store,
+    "--run-id",
+    "balance",
+    ...target,
+  ],
+};
+
+// @SCN-CLI-066
+When("a stored run is asked for, with the command given as the value of {word}, {}", function (modifier: string, shape: string) {
+  const argvOf = COMMAND_AS_VALUE[`${modifier} ${shape}`];
+  assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
+    cwd: storedRunDir,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-066
+// The meaning, never the prose: one line names the modifier and the command it took as its value,
+// and nothing blames the token after it as a flag given before the command.
+Then("the refusal names {word} as having taken the command as its value", function (modifier: string) {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(modifier) && line.includes("balance") && /as its value/i.test(line)),
+    `expected a line of stderr naming ${modifier} as having taken balance as its value; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /before the command/i, `stderr blames another token:\n${stderr}`);
 });

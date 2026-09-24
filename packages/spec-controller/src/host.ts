@@ -13,7 +13,14 @@
  * @SCN-RMG-004 — features/run-management.feature.
  */
 
-import { isMissingValue, missingValueRefusal, valueFlagsOf } from "./cli-args.js";
+import {
+  equalsFormRefusal,
+  givenTwiceRefusal,
+  isEqualsForm,
+  isMissingValue,
+  missingValueRefusal,
+  valueFlagsOf,
+} from "./cli-args.js";
 import { cliRegistry, type FlagSpec } from "./cli-registry.js";
 
 /** A parsed host invocation: leading global options, then the command and its clean args. */
@@ -45,6 +52,7 @@ export interface HostInvocation {
 export function parseHostInvocation(
   argv: readonly string[],
   globalFlags: readonly FlagSpec[] = cliRegistry.global,
+  commands: readonly string[] = cliRegistry.commands.map((command) => command.name),
 ): HostInvocation {
   // The modifiers and the values they take are the registry's global scope, never a list kept here
   // (@SCN-CLI-059): a modifier added later is read, and refused without its value, by construction.
@@ -55,17 +63,13 @@ export function parseHostInvocation(
     const token = argv[i] ?? "";
     const modifier = modifiers.get(token);
     if (modifier === undefined) {
-      // Any other flag here is out of place, never a command (@SCN-CLI-060): `--exit-zero balance`
-      // used to answer `unknown command "--exit-zero"`. The top-level help stays where it was.
-      if (isFlagOutOfPlace(token)) return { commandArgs: [], refusal: flagBeforeCommandRefusal(token, globalFlags) };
+      const refusal = leadingFlagRefusal(token, modifiers, globalFlags);
+      if (refusal !== undefined) return { commandArgs: [], refusal };
       break; // first non-modifier token is the command
     }
     const value = argv[i + 1];
-    // A modifier given no value is refused, never handed the next token: `--store --run-id r1`
-    // used to store under a directory called `--run-id`, and an empty `--store` under the cwd.
-    if (isMissingValue(value)) {
-      return { commandArgs: [], refusal: missingValueRefusal(token, modifier, "spec-controller") };
-    }
+    const refusal = modifierRefusal(token, modifier, argv.slice(i + 1, i + 3), { values, commands });
+    if (refusal !== undefined) return { commandArgs: [], refusal };
     values.set(modifier.name, value ?? "");
     i++;
   }
@@ -75,6 +79,60 @@ export function parseHostInvocation(
     command: argv[i],
     commandArgs: argv.slice(i + 1),
   };
+}
+
+/** What the host has read so far, and the commands the registry carries. */
+interface HostRead {
+  values: ReadonlyMap<string, string>;
+  commands: readonly string[];
+}
+
+/**
+ * The refusal a modifier earns where it stands, else undefined; `ahead` is its value and the token
+ * after it. Given twice, it is never read as its last value (@SCN-CLI-064): `--store A --store B` used
+ * to store under B without a word. Given no value, it is never handed the next token (@SCN-CLI-059):
+ * `--store --run-id r1` used to store under a directory called `--run-id`. Given the command as its
+ * value with no command after it, it has eaten the command (@SCN-CLI-066): `--store balance
+ * --features f` used to blame `--features`, and `--store balance` alone answered help at exit 0. A
+ * command name followed by the command is still a value: `--store balance balance …` is read.
+ */
+function modifierRefusal(
+  token: string,
+  modifier: FlagSpec,
+  [value, after]: readonly string[],
+  read: HostRead,
+): string | undefined {
+  if (read.values.has(modifier.name)) return givenTwiceRefusal(token, "spec-controller");
+  if (isMissingValue(value)) return missingValueRefusal(token, modifier, "spec-controller");
+  if (read.commands.includes(value ?? "") && (after === undefined || after.startsWith("-"))) {
+    return commandAsValueRefusal(token, modifier, value ?? "");
+  }
+  return undefined;
+}
+
+/** The refusal for a modifier that took the command as its value: the modifier, the command, and the fix. */
+function commandAsValueRefusal(token: string, modifier: FlagSpec, command: string): string {
+  return (
+    `The ${token} host modifier took '${command}', a command, as its value, and left no command to run.\n` +
+    `Give ${token} its own value, as in 'spec-controller ${token} ${modifier.arg ?? ""} ${command} …'. ` +
+    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
+  );
+}
+
+/**
+ * The refusal a leading token that is no modifier earns, else undefined (it is the command). A
+ * modifier written `--store=<root>` is a form that is not read (@SCN-CLI-065), never a flag out of
+ * place; any other flag here is out of place, never a command (@SCN-CLI-060): `--exit-zero balance`
+ * used to answer `unknown command "--exit-zero"`. The top-level help stays where it was.
+ */
+function leadingFlagRefusal(
+  token: string,
+  modifiers: ReadonlyMap<string, FlagSpec>,
+  globalFlags: readonly FlagSpec[],
+): string | undefined {
+  if (isEqualsForm(token)) return equalsFormRefusal(token, modifiers, "spec-controller");
+  if (isFlagOutOfPlace(token)) return flagBeforeCommandRefusal(token, globalFlags);
+  return undefined;
 }
 
 /** The help the host answers in the command's place, which is the one flag it takes there. */
