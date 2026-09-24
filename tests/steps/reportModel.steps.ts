@@ -96,7 +96,7 @@ Then("the persisted artefact is named spec-reconciliation.json", function () {
 });
 
 Then(
-  "it parses to one object carrying runProvenance, summary, scenarioCodeErrors and evidenceObligations as top-level sections in document order",
+  "it parses to one object carrying runProvenance, summary, scenarioCodeErrors, scenarioCodePopulation and evidenceObligations as top-level sections in document order",
   function () {
     const parsed = JSON.parse(
       readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")
@@ -121,8 +121,24 @@ Then(
         keys.indexOf("scenarioCodeErrors") < keys.indexOf("evidenceObligations"),
       `expected scenarioCodeErrors between ledger and evidenceObligations; got ${keys.join(", ")}`
     );
+    // The population the codes were judged over follows them, before the census (3F-3666).
+    assert.equal(
+      keys.indexOf("scenarioCodePopulation"),
+      keys.indexOf("scenarioCodeErrors") + 1,
+      `expected scenarioCodePopulation directly after scenarioCodeErrors; got ${keys.join(", ")}`
+    );
   }
 );
+
+// @SCN-RMD-001
+Then("its scenarioCodePopulation counts the feature files and the feature codes of the corpus it judged", function () {
+  const parsed = JSON.parse(readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")) as {
+    scenarioCodePopulation?: unknown;
+  };
+  // The fixture corpus is one file, target.feature, headed @TGT. The population arms whose
+  // counts differ are @SCN-STG-021's.
+  assert.deepEqual(parsed.scenarioCodePopulation, { featureFiles: 1, featureCodes: 1 });
+});
 
 /** The two parts of the persisted report the tally arm reads: the summary's totals and the rows. */
 interface PersistedTally {

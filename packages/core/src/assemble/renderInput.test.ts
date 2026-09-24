@@ -16,6 +16,7 @@
 
 import { describe, it, expect } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
+import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { renderJson } from "../render/json.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -71,9 +72,21 @@ const evidenceObligations: EvidenceObligations = {
 
 describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
-    // A reconciliation that judged its corpus (3F-3635) — every `balance` run's — so its scenario
-    // code errors ride after the ledger's detail and before the census, even when there are none.
-    const judged = { ...__er(reportLedger, false, false), scenarioCodeErrors: [] };
+    // A reconciliation that judged its corpus (3F-3635) — every `balance` run's, built by the real
+    // composition — so its scenario code errors, and the population they were judged over
+    // (3F-3666), ride after the ledger's detail and before the census, even when there are none.
+    const judged = evidenceReconciliationFromSources({
+      featureSources: ["@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"],
+      featureFiles: [
+        { slug: "one", featureCode: "ONE" },
+        { slug: "plain", featureCode: null },
+      ],
+      untaggedScenarios: [],
+      packageJson: {},
+      ciSources: [],
+      runtimeObservations: [],
+      deferralTags: [],
+    });
     const report = assembleRenderInput(judged, ctx, evidenceObligations) as unknown as Record<string, unknown>;
     // runProvenance opens; the summary's totals then the LEDGER's detail (chain step 6, RMD-002);
     // the evidenceObligations census follows. The retired `warnings` key is GONE — a zero-evidence
@@ -83,8 +96,11 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "summary",
       "ledger",
       "scenarioCodeErrors",
+      "scenarioCodePopulation",
       "evidenceObligations",
     ]);
+    // Two files, one of them uncoded: the counts differ, so each is its own (3F-3666).
+    expect(report.scenarioCodePopulation).toEqual({ featureFiles: 2, featureCodes: 1 });
     expect(report).not.toHaveProperty("warnings");
   });
 

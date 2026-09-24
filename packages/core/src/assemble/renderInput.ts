@@ -20,7 +20,7 @@
  * Parent: (@SCN-RMD-001).
  */
 
-import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import type { Ledger } from "../model.js";
 // The Evidence Reconciliation arrives WHOLE from the concept that owns it (3F-2233); this module
 // computes nothing. `Summary` and its sub-types are re-exported below so the frozen v1 barrel keeps
@@ -99,6 +99,8 @@ export interface RenderInput {
   ledger: Ledger;
   /** The corpus's scenario code errors (3F-3635); absent when no corpus was judged. */
   scenarioCodeErrors?: readonly ScenarioCodeError[];
+  /** The population the codes were judged over (3F-3666), so a re-render states it unchanged. */
+  scenarioCodePopulation?: ScenarioCodePopulation;
   evidenceObligations?: EvidenceObligationsSection;
   // The `evidenceObservations` section is RETIRED (@SCN-RPT-010, 3F-2103): the runtime
   // evidence-observation counting folds onto the Ledger (`runtimeObservationTally`), its raw totals

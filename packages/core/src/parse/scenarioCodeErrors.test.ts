@@ -14,7 +14,7 @@ function file(slug: string, code: string | null, ids: readonly string[]): Corpus
   return { slug, featureCode: code, source: `${header}Feature: ${slug}\n\n${scenarios}` };
 }
 
-describe("[SCN-STG-011] a scenario whose feature part is not its file's header code is listed as foreign-scn-code", () => {
+describe("[SCN-STG-011] a scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file", () => {
   const one = file("one", "ONE", ["SCN-ONE-001"]);
 
   it("lists the foreign id, naming the file, the id and the code the file carries", () => {
@@ -25,6 +25,24 @@ describe("[SCN-STG-011] a scenario whose feature part is not its file's header c
     expect(errors[0]!.message).toContain("@TWO");
     // The scenario that agrees with its file is not convicted with it.
     expect(errors[0]!.message).not.toContain("SCN-TWO-001");
+  });
+
+  it("names the one file carrying the named code, as data and in the message (3F-3666)", () => {
+    const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
+    expect(errors[0]).toMatchObject({ namedFeatureCode: "ONE", namedFeatureFiles: ["one.feature"] });
+    expect(errors[0]!.message).toContain("one.feature");
+  });
+
+  it("names every file carrying the named code when two carry it (3F-3666)", () => {
+    const errors = scenarioCodeErrorsOf([
+      one,
+      file("one-b", "ONE", ["SCN-ONE-003"]),
+      file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"]),
+    ]);
+    const foreign = errors.find((e) => e.kind === "foreign-scn-code");
+    expect(foreign?.namedFeatureFiles).toEqual(["one.feature", "one-b.feature"]);
+    expect(foreign?.message).toContain("one.feature");
+    expect(foreign?.message).toContain("one-b.feature");
   });
 
   it("lists an out-of-class near-miss the same way (S7b): SCN-ONE-1 parses, so ONE is its class", () => {
@@ -46,6 +64,34 @@ describe("[SCN-STG-011] a scenario whose feature part is not its file's header c
     expect(hasScenarioCodeErrors({ scenarioCodeErrors: errors })).toBe(true);
     expect(hasScenarioCodeErrors({ scenarioCodeErrors: [] })).toBe(false);
     expect(hasScenarioCodeErrors({})).toBe(false);
+  });
+});
+
+describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
+  /** The foreign finding's data, the header tags it names, and the files it names. */
+  function foreignOf(files: readonly CorpusFile[]) {
+    const foreign = scenarioCodeErrorsOf(files).find((e) => e.kind === "foreign-scn-code")!;
+    return { foreign, namedFiles: [...new Set(foreign.message.match(/[\w-]+\.feature/g))] };
+  }
+
+  it("carries no file for the named code, and names no header tag or file the corpus lacks", () => {
+    const { foreign, namedFiles } = foreignOf([
+      file("one", "ONE", ["SCN-ONE-001"]),
+      file("two", "TWO", ["SCN-TWO-001", "SCN-THR-002"]),
+    ]);
+    expect(foreign).toMatchObject({ namedFeatureCode: "THR", namedFeatureFiles: [] });
+    expect(foreign.message).not.toMatch(/@THR\b/);
+    expect(namedFiles).toEqual(["two.feature"]);
+  });
+
+  it("says the same when the only other file using the code carries no header", () => {
+    const { foreign, namedFiles } = foreignOf([
+      file("thr", null, ["SCN-THR-001"]),
+      file("two", "TWO", ["SCN-THR-002"]),
+    ]);
+    expect(foreign.namedFeatureFiles).toEqual([]);
+    expect(foreign.message).not.toMatch(/@THR\b/);
+    expect(namedFiles).toEqual(["two.feature"]);
   });
 });
 

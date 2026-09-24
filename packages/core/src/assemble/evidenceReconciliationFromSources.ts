@@ -39,7 +39,7 @@ import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
 import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
-import { scenarioCodeErrorsOf } from "../parse/scenarioCodeErrors.js";
+import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
 import {
   resolveDeferralTags,
@@ -317,7 +317,11 @@ function withScenarioCodeErrors(
 ): EvidenceReconciliation {
   if (input.featureFiles === undefined) return reconciliation;
   const files = input.featureFiles.map((header, i) => ({ ...header, source: input.featureSources[i] ?? "" }));
-  return { ...reconciliation, scenarioCodeErrors: scenarioCodeErrorsOf(files) };
+  return {
+    ...reconciliation,
+    scenarioCodeErrors: scenarioCodeErrorsOf(files),
+    scenarioCodePopulation: scenarioCodePopulationOf(files),
+  };
 }
 
 /**

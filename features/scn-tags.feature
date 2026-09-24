@@ -32,17 +32,37 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     than five characters — has no feature part to compare, so `foreign-scn-code` does not see it
     (3F-3636 owns that question).
 
+    THE SECTION'S SENTENCES ARE CLAIMS ABOUT A POPULATION, so each is held by a corpus on which a
+    false one would show (3F-3666). A finding says where the by-feature cut counted the scenario,
+    and that depends on which files carry the code its id names: one, none or several. A clean
+    statement counts files and codes, and those counts differ as soon as one file carries no code.
+    A fixture where the counts agree cannot tell a true sentence from a false one.
+
     @unit @integration @SCN-STG-011
-    Scenario: A scenario whose feature part is not its file's header code is listed as foreign-scn-code, and the run reds
-      Given a target whose file headed @TWO holds a scenario coded @SCN-ONE-002, beside a file headed @ONE
+    Scenario: A scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file as where the by-feature cut counts it, and the run reds
+      Given a target whose file headed @TWO holds an uncited scenario coded @SCN-ONE-002, beside a file headed @ONE
       When balance reconciles that target
       Then the run fails on a scenario code error
       And the scenario code errors name foreign-scn-code with the file, the offending id and the code that file carries
+      And they name the file headed @ONE as where the by-feature cut counts the scenario, the row the report lists it under
       And they do not name the scenario whose code agrees with its file
       When the offending scenario is coded @SCN-ONE-1 instead
       Then the scenario code errors name foreign-scn-code for @SCN-ONE-1 in the same way
       When the offending scenario is re-coded to its own file
       Then the run balances with no scenario code error
+      When a second file is also headed @ONE and the offending scenario is coded @SCN-ONE-002 again
+      Then the scenario code errors name foreign-scn-code with both files headed @ONE, presenting neither as the file
+
+    @unit @integration @SCN-STG-022
+    Scenario: A scenario whose feature part no file's header carries is listed as foreign-scn-code, saying its by-feature row has no file behind it, and it offers no move to a file the corpus lacks
+      Given a target whose file headed @TWO holds an uncited scenario coded @SCN-THR-002, beside a file headed @ONE and no file headed @THR
+      When balance reconciles that target
+      Then the run fails on a scenario code error
+      And the foreign-scn-code finding names two.feature, the id @SCN-THR-002 and the code @TWO that file carries
+      And it says no file carries THR, and the report's by-feature row for THR names no file
+      And it offers no move to a file headed @THR
+      When the only other file using THR carries no header code and holds @SCN-THR-001
+      Then the foreign-scn-code finding still says no file carries THR, and offers no move to a file headed @THR
 
     @unit @integration @SCN-STG-010
     Scenario: Two feature files carrying one header code are listed as duplicate-feature-code, and the run reds
@@ -72,12 +92,26 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       And only the scenario code errors tell them apart
 
     @unit @integration @SCN-STG-021
-    Scenario: Clean scenario codes are stated, not left blank, and the section says a duplicated code is reported on the rows
-      Given a target whose two feature files each carry a header code of their own, every scenario coded for its file
+    Scenario: Clean scenario codes are stated with the corpus's own count of feature files and of feature codes, and the section says a duplicated code is reported on the rows
+      Given a target of three feature files, two each carrying a header code of its own with every scenario coded for it, and one carrying no code and no coded scenario
       When balance reconciles that target
-      Then the report's scenario code errors section states the codes are clean, with the number of feature codes and feature files
+      Then the report's scenario code errors section states the codes are clean over 3 feature files carrying 2 feature codes
       And it says a duplicated scenario code is reported on its account's rows
       And the run lists no scenario code error
+      And the report saved as JSON re-renders the same section
+      When the target is one feature file carrying no code and no coded scenario
+      Then the report's scenario code errors section states the codes are clean over 1 feature file carrying 0 feature codes
+      And the report saved as JSON re-renders the same section
+      When the target is two feature files, one carrying a header code and one carrying no code and no coded scenario
+      Then the report's scenario code errors section states the codes are clean over 2 feature files carrying 1 feature code
+      And the report saved as JSON re-renders the same section
+
+    @unit @integration @SCN-STG-023
+    Scenario: A corpus with no feature file is never stated clean: the section says no feature file was judged, and the run still exits 5
+      Given a target whose feature directory holds no feature file
+      When balance reconciles that target
+      Then the run has nothing to reconcile
+      And the report's scenario code errors section says no feature file was judged, stating no code clean and no count
       And the report saved as JSON re-renders the same section
 
   Rule: an @SCN is one account number, and two scenarios carrying it make that account unreconcilable

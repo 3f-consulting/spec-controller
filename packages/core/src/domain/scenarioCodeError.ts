@@ -19,7 +19,25 @@ export interface ScenarioCodeError {
   readonly kind: ScenarioCodeErrorKind;
   /** The feature file(s) the error concerns, as `<slug>.feature`. */
   readonly files: readonly string[];
+  /** `foreign-scn-code` only: the feature part the scenario's id names. */
+  readonly namedFeatureCode?: string;
+  /**
+   * `foreign-scn-code` only: the files whose header carries that feature part — none, one or
+   * several (3F-3666). The by-feature cut counts the scenario under that code's row, so this is
+   * what decides which row the scenario lands in and where it could move.
+   */
+  readonly namedFeatureFiles?: readonly string[];
   readonly message: string;
+}
+
+/**
+ * The population the scenario codes were judged over (3F-3666): every feature file read, coded
+ * or not, and the distinct header codes among them. Two counts, because they differ as soon as
+ * one file carries no code, and one count naming both is what made the clean statement false.
+ */
+export interface ScenarioCodePopulation {
+  readonly featureFiles: number;
+  readonly featureCodes: number;
 }
 
 /** Does this run carry a scenario code error? Absent means no corpus was judged. */

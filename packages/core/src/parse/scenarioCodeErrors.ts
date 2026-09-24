@@ -12,7 +12,7 @@
  */
 
 import { featureCodeOf } from "../lib/featureCode.js";
-import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { parseTaggedScenarios } from "./scenarios.js";
 
 /**
@@ -47,17 +47,8 @@ export interface CorpusFile {
  * could share; a file with no header code whose scenarios carry codes is `no-feature-code`'s.
  */
 export function duplicateFeatureCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
-  const filesByCode = new Map<string, string[]>();
-  for (const file of features) {
-    if (file.featureCode === null) continue;
-    filesByCode.set(file.featureCode, [
-      ...(filesByCode.get(file.featureCode) ?? []),
-      `${file.slug}.feature`,
-    ]);
-  }
-
   const faults: ScenarioCodeError[] = [];
-  for (const [code, files] of filesByCode) {
+  for (const [code, files] of headerFilesByCode(features)) {
     if (files.length < 2) continue;
     faults.push({
       kind: "duplicate-feature-code",
@@ -70,6 +61,48 @@ export function duplicateFeatureCodes(features: readonly CorpusFile[]): Scenario
     });
   }
   return faults;
+}
+
+/** Each header code, with the files that carry it (as `<slug>.feature`), in corpus order. */
+function headerFilesByCode(features: readonly CorpusFile[]): Map<string, string[]> {
+  const filesByCode = new Map<string, string[]>();
+  for (const file of features) {
+    if (file.featureCode === null) continue;
+    filesByCode.set(file.featureCode, [...(filesByCode.get(file.featureCode) ?? []), `${file.slug}.feature`]);
+  }
+  return filesByCode;
+}
+
+/**
+ * What the by-feature cut did with a foreign id, and where the scenario could go (3F-3666). The cut
+ * groups on the id's feature part, so the files carrying that part decide the row: one file's row,
+ * a row no file stands behind, or one row several files share. The sentence names those files and
+ * no other.
+ */
+function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: string, named: string, carriers: readonly string[]): string {
+  const opening =
+    `${file.slug}.feature carries the feature code @${file.featureCode}, but holds the scenario ` +
+    `@${scnId}, whose feature part names ${named}. A reconciliation's by-feature cut groups on the id, so `;
+  const recode = `Re-code the scenario for @${file.featureCode}`;
+  if (carriers.length === 1) {
+    return (
+      `${opening}it counts this scenario under ${carriers[0]}'s row, not ${file.slug}.feature's. ` +
+      `${recode}, or move it to ${carriers[0]}.`
+    );
+  }
+  if (carriers.length > 1) {
+    return (
+      `${opening}it counts this scenario under the one row for ${named}, which ${carriers.length} feature ` +
+      `files carry — ${carriers.join(", ")} — so that row cannot say which of them it belongs to. ` +
+      `${recode}, or move it once a single file carries ${named}.`
+    );
+  }
+  // No file's header carries the code, so there is no file to move it to: a remedy naming one
+  // would send the author looking for a file the corpus lacks (3F-3666).
+  return (
+    `${opening}it opens a row for ${named}, which no feature file carries as its header code, so ` +
+    `that row stands for no file. ${recode}.`
+  );
 }
 
 /**
@@ -104,22 +137,21 @@ export function duplicateFeatureCodes(features: readonly CorpusFile[]): Scenario
  * belongs to every scenario beneath it, and a scan that missed that would pass over the file.
  */
 export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
+  const carriersByCode = headerFilesByCode(features);
   const faults: ScenarioCodeError[] = [];
   for (const file of features) {
     if (file.featureCode === null) continue;
+    const coded = { ...file, featureCode: file.featureCode };
     for (const scenario of parseTaggedScenarios(file.source)) {
       const named = featureCodeOf(scenario.scnId);
       if (named === null || named === file.featureCode) continue;
+      const carriers = carriersByCode.get(named) ?? [];
       faults.push({
         kind: "foreign-scn-code",
         files: [`${file.slug}.feature`],
-        message:
-          `${file.slug}.feature carries the feature code ` +
-          `@${file.featureCode}, but holds the scenario @${scenario.scnId}, whose feature part ` +
-          `names ${named}. A scenario's code names the file it is written in: a ` +
-          `reconciliation's by-feature cut groups on the id, so this one opens a row for a ` +
-          `feature no file in the corpus carries and files the scenario under it. Re-code the ` +
-          `scenario for @${file.featureCode}, or move it to the file headed @${named}.`,
+        namedFeatureCode: named,
+        namedFeatureFiles: carriers,
+        message: foreignMessage(coded, scenario.scnId, named, carriers),
       });
     }
   }
@@ -150,6 +182,14 @@ export function uncodedFeatureFiles(features: readonly CorpusFile[]): ScenarioCo
         `file is the class its scenarios' codes are filed under: give it a header code of its own, ` +
         `and code its scenarios for it.`,
     }));
+}
+
+/**
+ * The population a corpus's codes are judged over (3F-3666): every file read, coded or not, and
+ * the distinct header codes among them.
+ */
+export function scenarioCodePopulationOf(features: readonly CorpusFile[]): ScenarioCodePopulation {
+  return { featureFiles: features.length, featureCodes: headerFilesByCode(features).size };
 }
 
 /**

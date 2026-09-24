@@ -63,33 +63,69 @@ describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors,
   });
 });
 
-const CLEAN_STATEMENT =
-  "Scenario codes are clean — 2 feature codes, each carried by exactly one of 2 feature files, " +
-  "and every coded scenario sits in the file its code names.";
 const DUPLICATE_LINE =
   "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.";
 
-describe("[SCN-STG-021] clean scenario codes are stated, not left blank, and a duplicated code is reported on the rows", () => {
-  const featureNames = new Map([
-    ["ONE", "one"],
-    ["TWO", "two"],
-  ]);
+/** The section's first statement: the clean line, or the error count. */
+function statementOf(md: string): string {
+  const section = md.slice(md.indexOf("## Scenario code errors"));
+  return section.split("\n\n")[1] ?? "";
+}
 
-  it("states the codes clean with their population, and says where a duplicate is reported", () => {
-    const md = renderMarkdown(balancedWith([]), ctx, undefined, featureNames);
-    expect(md).toContain("## Scenario code errors");
-    expect(md).toContain(CLEAN_STATEMENT);
-    expect(md).toContain(DUPLICATE_LINE);
-    expect(md).toContain("**BALANCED**");
+/** The number the statement puts before `noun`, or undefined when it states none. */
+function countBefore(statement: string, noun: string): number | undefined {
+  const match = new RegExp(`(\\d+) ${noun}s?\\b`).exec(statement);
+  return match ? Number(match[1]) : undefined;
+}
+
+describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own count of feature files and of feature codes", () => {
+  // Every population here has counts that differ, save the last, so a sentence that states one
+  // count for both is caught (3F-3666).
+  const populations = [
+    { featureFiles: 3, featureCodes: 2 },
+    { featureFiles: 1, featureCodes: 0 },
+    { featureFiles: 2, featureCodes: 1 },
+    { featureFiles: 2, featureCodes: 2 },
+  ];
+
+  for (const population of populations) {
+    it(`states the codes clean over ${population.featureFiles} files carrying ${population.featureCodes} codes`, () => {
+      const md = renderMarkdown({ ...balancedWith([]), scenarioCodePopulation: population }, ctx);
+      const statement = statementOf(md);
+      expect(statement).toMatch(/\bclean\b/);
+      expect(countBefore(statement, "feature file")).toBe(population.featureFiles);
+      expect(countBefore(statement, "feature code")).toBe(population.featureCodes);
+      expect(md).toContain(DUPLICATE_LINE);
+      expect(md).toContain("**BALANCED**");
+    });
+  }
+
+  it("states no counts for a report saved before the population was recorded", () => {
+    const statement = statementOf(renderMarkdown(balancedWith([]), ctx));
+    expect(statement).toMatch(/\bclean\b/);
+    expect(countBefore(statement, "feature file")).toBeUndefined();
+    expect(countBefore(statement, "feature code")).toBeUndefined();
   });
 
   it("says where a duplicate is reported beside the errors too", () => {
-    expect(renderMarkdown(balancedWith([FOREIGN]), ctx, undefined, featureNames)).toContain(DUPLICATE_LINE);
+    expect(renderMarkdown(balancedWith([FOREIGN]), ctx)).toContain(DUPLICATE_LINE);
   });
 
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
-    expect(renderMarkdown(unjudged, ctx, undefined, featureNames)).not.toContain("## Scenario code errors");
+    expect(renderMarkdown(unjudged, ctx)).not.toContain("## Scenario code errors");
+  });
+});
+
+describe("[SCN-STG-023] a corpus with no feature file is never stated clean", () => {
+  it("says no feature file was judged, stating no code clean and no count", () => {
+    const md = renderMarkdown({ ...balancedWith([]), scenarioCodePopulation: { featureFiles: 0, featureCodes: 0 } }, ctx);
+    const statement = statementOf(md);
+    expect(statement).not.toMatch(/\bclean\b/);
+    expect(countBefore(statement, "feature file")).toBeUndefined();
+    expect(countBefore(statement, "feature code")).toBeUndefined();
+    expect(statement).toMatch(/\bno feature file\b/i);
+    expect(md).toContain(DUPLICATE_LINE);
   });
 });
 

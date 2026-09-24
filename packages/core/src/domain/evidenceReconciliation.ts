@@ -93,7 +93,7 @@ import {
 } from "./scenarioReconciliation.js";
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
-import type { ScenarioCodeError } from "./scenarioCodeError.js";
+import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
 import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 // The `fitness` quality-check's own predicate, asked here to NARROW what the posting rule has already
@@ -870,6 +870,8 @@ export interface EvidenceReconciliation {
    * scenarios with no corpus to judge.
    */
   scenarioCodeErrors?: readonly ScenarioCodeError[];
+  /** The population those codes were judged over (3F-3666); present exactly when they are. */
+  scenarioCodePopulation?: ScenarioCodePopulation;
 }
 
 /**
