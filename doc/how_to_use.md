@@ -199,7 +199,7 @@ spec-controller balance --features ./features \
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
 | `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
-| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and no-verdict (`6`, an unknown command) still fail. The on-ramp before gating. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output

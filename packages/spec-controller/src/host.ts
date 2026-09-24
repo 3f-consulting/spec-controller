@@ -82,20 +82,6 @@ export function peekFlag(argv: readonly string[], name: string): string | undefi
   return undefined;
 }
 
-/**
- * The status for a request spec-controller cannot answer, so no verdict about the corpus was
- * reached (3F-3634). Never 1, which is a verdict against the corpus; and not a verdict at all, so
- * `--exit-zero`, which moves only verdicts, never moves it. A later command that is asked something
- * it cannot answer cites this constant rather than writing a second 6.
- *
- * @SCN-CLI-056 — features/cli-balance.feature.
- */
-export const NO_VERDICT_EXIT_CODE = 6;
-
-/** The one sentence a pipeline's log needs; the help that follows it is for a person. */
-export const NO_VERDICT_STATEMENT =
-  "spec-controller was asked something it cannot answer, and reached no verdict about your corpus.";
-
 /** The host's answer to a command it does not know: what goes to stderr, and the status. */
 export interface UnknownCommandAnswer {
   exitCode: number;
@@ -105,10 +91,15 @@ export interface UnknownCommandAnswer {
 /**
  * Answer a command the registry does not carry. It is given the command token and the rendered
  * help, never the command's args, so no flag after the command can change the answer.
+ *
+ * An unknown command is a usage fault, so it exits 2, the published usage code
+ * (packages/spec-controller/README.md), which `--exit-zero` never masks (3F-3649).
+ *
+ * @SCN-CLI-056 @SCN-CLI-057 — features/cli-balance.feature.
  */
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {
-    exitCode: NO_VERDICT_EXIT_CODE,
-    stderr: `spec-controller: unknown command "${command}".\n${NO_VERDICT_STATEMENT}\n\n${help}\n`,
+    exitCode: 2,
+    stderr: `spec-controller: unknown command "${command}".\n\n${help}\n`,
   };
 }

@@ -28,7 +28,6 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
-import { NO_VERDICT_STATEMENT } from "../../packages/spec-controller/src/host.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 /** The reconcilable fixture target — scenarios + a Vitest report. */
@@ -495,7 +494,7 @@ Then(
 
 // @SCN-CLI-056
 /**
- * An unknown command reaches no verdict (3F-3634). Each request names the command the host
+ * An unknown command is a usage fault (3F-3649). Each request names the command the host
  * will not know. The stored-run row goes through the `--store` route, which reaches the same
  * dispatch; the run directory that route leaves behind is out of scope, so the throwaway store
  * root is removed rather than inspected.
@@ -537,22 +536,13 @@ When("it is asked for {}", function (request: string) {
 });
 
 // @SCN-CLI-056 @SCN-CLI-057
-// The MEANING is pinned, never the prose (features/message-catalogue.feature): the status is the
-// contract, and the statement is asserted by the exported constant, so a copy-edit reds nothing
-// while dropping the statement reds this step.
-Then("it answers that it reached no verdict about the corpus, with the no-verdict status", function () {
+// An unknown command is a usage fault (3F-3649): the status is the published usage code, 2
+// (packages/spec-controller/README.md), and the MEANING is pinned, never the prose.
+Then("it answers that the invocation was wrong, with the usage status", function () {
   assert.equal(
     controllerResult.status,
-    6,
-    `expected the no-verdict status 6; got ${controllerResult.status}\n${controllerResult.stderr}`,
-  );
-  assert.ok(
-    typeof NO_VERDICT_STATEMENT === "string" && NO_VERDICT_STATEMENT.trim().length > 0,
-    "the no-verdict statement must exist and say something",
-  );
-  assert.ok(
-    controllerResult.stderr.includes(NO_VERDICT_STATEMENT),
-    `expected stderr to carry the no-verdict statement; got:\n${controllerResult.stderr}`,
+    2,
+    `expected the usage status 2; got ${controllerResult.status}\n${controllerResult.stderr}`,
   );
 });
 
