@@ -13,6 +13,9 @@
  * @SCN-RMG-004 — features/run-management.feature.
  */
 
+import { isMissingValue, missingValueRefusal, valueFlagsOf } from "./cli-args.js";
+import { cliRegistry, type FlagSpec } from "./cli-registry.js";
+
 /** A parsed host invocation: leading global options, then the command and its clean args. */
 export interface HostInvocation {
   /** The injected store root from a leading `--store <root>`, or undefined (no store). */
@@ -23,6 +26,11 @@ export interface HostInvocation {
   command?: string;
   /** The command's own args — everything after the command token, verbatim. */
   commandArgs: string[];
+  /**
+   * The usage fault in the leading tokens, when there is one: the host refuses it at exit 2 before
+   * any command or stored run starts (@SCN-CLI-059).
+   */
+  refusal?: string;
 }
 
 /**
@@ -34,25 +42,58 @@ export interface HostInvocation {
  * /s` leaves `--store` in the command's args (a `--store` AFTER the command is the
  * command's own arg, never a host store directive) — the "global before command" contract.
  */
-export function parseHostInvocation(argv: readonly string[]): HostInvocation {
-  let store: string | undefined;
-  let runId: string | undefined;
+export function parseHostInvocation(
+  argv: readonly string[],
+  globalFlags: readonly FlagSpec[] = cliRegistry.global,
+): HostInvocation {
+  // The modifiers and the values they take are the registry's global scope, never a list kept here
+  // (@SCN-CLI-059): a modifier added later is read, and refused without its value, by construction.
+  const modifiers = valueFlagsOf(globalFlags);
+  const values = new Map<string, string>();
   let i = 0;
   for (; i < argv.length; i++) {
-    const token = argv[i];
-    if (token === "--store" && i + 1 < argv.length) {
-      store = argv[i + 1];
-      i++;
-      continue;
+    const token = argv[i] ?? "";
+    const modifier = modifiers.get(token);
+    if (modifier === undefined) {
+      // Any other flag here is out of place, never a command (@SCN-CLI-060): `--exit-zero balance`
+      // used to answer `unknown command "--exit-zero"`. The top-level help stays where it was.
+      if (isFlagOutOfPlace(token)) return { commandArgs: [], refusal: flagBeforeCommandRefusal(token, globalFlags) };
+      break; // first non-modifier token is the command
     }
-    if (token === "--run-id" && i + 1 < argv.length) {
-      runId = argv[i + 1];
-      i++;
-      continue;
+    const value = argv[i + 1];
+    // A modifier given no value is refused, never handed the next token: `--store --run-id r1`
+    // used to store under a directory called `--run-id`, and an empty `--store` under the cwd.
+    if (isMissingValue(value)) {
+      return { commandArgs: [], refusal: missingValueRefusal(token, modifier, "spec-controller") };
     }
-    break; // first non-global-option token is the command
+    values.set(modifier.name, value ?? "");
+    i++;
   }
-  return { store, runId, command: argv[i], commandArgs: argv.slice(i + 1) };
+  return {
+    store: values.get("--store"),
+    runId: values.get("--run-id"),
+    command: argv[i],
+    commandArgs: argv.slice(i + 1),
+  };
+}
+
+/** The help the host answers in the command's place, which is the one flag it takes there. */
+const TOP_LEVEL_HELP: ReadonlySet<string> = new Set(["--help", "-h"]);
+
+/** True for a flag-shaped token that is not the top-level help. */
+function isFlagOutOfPlace(token: string): boolean {
+  return token.length > 1 && token.startsWith("-") && !TOP_LEVEL_HELP.has(token);
+}
+
+/** The refusal for a flag given before the command: the flag, what goes there, and where it goes. */
+function flagBeforeCommandRefusal(flag: string, globalFlags: readonly FlagSpec[]): string {
+  const modifiers = globalFlags.map((modifier) => modifier.name).join(", ");
+  return (
+    `The ${flag} flag was given before the command. Before the command, spec-controller takes ` +
+    `only its host modifiers (${modifiers}); a command's own flags go after it, as in ` +
+    `'spec-controller <command> ${flag}'.\n` +
+    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
+  );
 }
 
 /**

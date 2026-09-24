@@ -348,20 +348,88 @@ Feature: spec-controller balance runs standalone
         | a name that is no command                  |
         | a name that is no command, as a stored run |
 
-    # --exit-zero moves only verdicts, and a usage fault is not one (@SCN-CLI-022), so the flag
-    # cannot move it wherever it is written. Written before the command, the host reads the flag
-    # itself as the command, which is one more command it does not know.
+    # --exit-zero moves only verdicts, and a usage fault is not one (@SCN-CLI-022). Written after a
+    # command the host does not know, the flag reaches only that command's arguments, which the host
+    # never reads. Written before the command, it is a flag out of place (@SCN-CLI-060), not a command.
 
     @SCN-CLI-057 @unit @e2e
-    Scenario Outline: --exit-zero never moves an unknown command's usage status — the flag <placement>
+    Scenario: --exit-zero after an unknown command never moves its usage status
       Given the spec-controller top-level binary
-      When it is asked for a name that is no command, with --exit-zero <placement>
+      When it is asked for a name that is no command, with --exit-zero after the command
       Then it answers that the invocation was wrong, with the usage status
 
+  Rule: a flag that takes a value, given none, is a usage fault, refused before anything runs
+
+    Which flags take a value is the registry's to say: a flag with a value placeholder, in either
+    scope. So the rule reaches a flag added later with no new row. A value is missing when nothing
+    follows the flag, when a flag follows it, or when it is empty. The invocation is refused at the
+    usage status before any reconcile, report or store write, and --exit-zero cannot move it,
+    because a usage fault is not a verdict (@SCN-CLI-022). Until now a missing value was read as the
+    word "true". A path flag went looking for a file called true, --target and --source-sha recorded
+    it, and --format dropped it and ran to a verdict that --exit-zero turned green (3F-3639).
+
+    @SCN-CLI-058 @unit @e2e
+    Scenario Outline: balance refuses <flag> given no value as a usage fault, naming the missing value — <shape>
+      Given a target that reconciles out-of-balance
+      When balance is asked to run with <flag> given no value, <shape>
+      Then balance refuses the run as a usage fault, with nothing reconciled
+      And the refusal names <flag> as a flag missing its value
+
       Examples:
-        | placement          |
-        | after the command  |
-        | before the command |
+        | flag               | shape                                                 |
+        | --format           | at the end of the arguments                           |
+        | --format           | followed by --exit-zero                               |
+        | --target           | followed by --exit-zero                               |
+        | --vitest           | at the end, with a file named true in the working dir |
+        | --render-from-json | at the end of the arguments                           |
+        | --features         | with an empty value                                   |
+
+    @SCN-CLI-059 @unit @e2e
+    Scenario Outline: the host refuses <modifier> given no value as a usage fault, and stores nothing — <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a stored balance run is asked for with <modifier> given no value, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And the refusal names <modifier> as a flag missing its value
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | modifier | shape                         |
+        | --store  | alone                         |
+        | --store  | followed by --run-id          |
+        | --run-id | at the end, after --store     |
+        | --run-id | with an empty value           |
+        | --store  | with an empty value           |
+
+  Rule: a flag goes on its own side of the command, and one on the wrong side is refused as out of place
+
+    The host reads its modifiers before the command, and the command reads its own flags after it.
+    A flag on the wrong side is a usage fault that names the flag and where it belongs. It is never
+    read as a command the host does not know, and never given the pin advice meant for a flag no
+    version accepts (3F-3639).
+
+    @SCN-CLI-060 @unit @e2e
+    Scenario Outline: a flag given before the command is refused as a flag out of place, never as an unknown command — <flag>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a stored run is asked for with <flag>
+      Then it answers that the invocation was wrong, with the usage status
+      And the refusal names the flag as given before the command, never as an unknown command
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | flag                                  |
+        | --exit-zero, before balance           |
+        | --format md, before balance           |
+        | --bogus, before balance               |
+        | --exit-zero, before no known command  |
+
+    @SCN-CLI-061 @unit @e2e
+    Scenario: a host modifier given after the command is refused as out of place, naming where it goes, with no pin advice
+      Given a target that reconciles out-of-balance, and an empty store root
+      When balance is asked to run with the store modifier given after the command
+      Then balance refuses the run as a usage fault, with nothing reconciled
+      And the refusal names the store modifier as one that goes before the command
+      And the refusal advises no pin
+      And nothing is written to the store root or the working directory
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 

@@ -48,6 +48,12 @@ function runCommand(command: string, argv: string[]): void {
 
 function main(hostArgv: string[]): void {
   const inv = parseHostInvocation(hostArgv);
+  // A usage fault in the leading tokens is refused before any command or stored run starts, so
+  // nothing is written anywhere (@SCN-CLI-059).
+  if (inv.refusal !== undefined) {
+    process.stderr.write(inv.refusal + "\n");
+    process.exit(2);
+  }
   const command = inv.command;
 
   if (command === undefined || command === "help" || command === "--help" || command === "-h") {

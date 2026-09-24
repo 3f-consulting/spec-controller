@@ -16,7 +16,7 @@
  * asks about `balance`: a command added later gets the same bounding BY CONSTRUCTION.
  */
 
-import type { CliRegistry, CommandSpec } from "./cli-registry.js";
+import type { CliRegistry, CommandSpec, FlagSpec } from "./cli-registry.js";
 
 /**
  * Parse `--flag value` pairs from a command's argv into a record, keys with the `--` stripped.
@@ -49,6 +49,79 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
 }
 
 /**
+ * The value flags of one scope: every flag the registry gives a value placeholder (`arg`), by
+ * name and alias, dashes kept. Read from the registry alone, so a value flag added later is one.
+ */
+export function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, FlagSpec> {
+  const valueFlags = new Map<string, FlagSpec>();
+  for (const flag of flags) {
+    if (flag.arg === undefined) continue;
+    for (const name of [flag.name, ...(flag.aliases ?? [])]) valueFlags.set(name, flag);
+  }
+  return valueFlags;
+}
+
+/**
+ * True when the token after a value flag is not a value: there is none, it is the next flag (the
+ * same `--` test `parseArgs` reads a flag by), or it is empty — an unset variable, quoted.
+ */
+export function isMissingValue(next: string | undefined): boolean {
+  return next === undefined || next === "" || next.startsWith("--");
+}
+
+/**
+ * A flag that takes a value, given none, is a usage fault (@SCN-CLI-058, 3F-3639). It reads the
+ * RAW argv, because `parseArgs` has already turned a missing value into the string "true" — which a
+ * path flag then looked for on disk, `--target` recorded, and `--format` dropped on its way to a
+ * verdict `--exit-zero` turned green. Returns the refusal for the first such flag, else null.
+ */
+export function checkMissingValues(
+  argv: readonly string[],
+  registry: CliRegistry,
+  command: string,
+): string | null {
+  const entry = registry.commands.find((c) => c.name === command);
+  const valueFlags = valueFlagsOf(entry?.flags ?? []);
+  for (let i = 0; i < argv.length; i++) {
+    const flag = valueFlags.get(argv[i] ?? "");
+    if (flag !== undefined && isMissingValue(argv[i + 1])) {
+      return missingValueRefusal(argv[i] ?? flag.name, flag, `spec-controller ${command}`);
+    }
+  }
+  return null;
+}
+
+/** The refusal for a value flag given none: the flag, the value it takes, and where the flags are listed. */
+export function missingValueRefusal(given: string, flag: FlagSpec, scope: string): string {
+  return (
+    `The ${given} flag of '${scope}' needs a value — ${given} ${flag.arg ?? ""} — and was given none.\n` +
+    `Run '${scope} --help' to see the flags this version accepts and the values they take.`
+  );
+}
+
+/**
+ * A host modifier given after the command is out of place, not unknown (@SCN-CLI-061, 3F-3639): the
+ * flag exists, so @SCN-CLI-009's advice to bump a pin to a version that accepts it is false. Its own
+ * check rather than a branch of `checkUnknownFlags`, because the caller refuses this one through
+ * `process.exit` — the unknown-flag path sets a status and returns, which inside a stored run reaches
+ * the scaffold that stamps a run.yaml (3F-3650). Returns the refusal for the first such flag, else null.
+ */
+export function checkMisplacedHostModifiers(
+  args: Record<string, string>,
+  registry: CliRegistry,
+  command: string,
+): string | null {
+  const modifiers = new Set(registry.global.map((flag) => flag.name.replace(/^-+/, "")));
+  const key = Object.keys(args).find((k) => modifiers.has(k));
+  if (key === undefined) return null;
+  return (
+    `The --${key} flag is a host modifier: it goes before the command, as in ` +
+    `'spec-controller --${key} <value> ${command} …', never after it.\n` +
+    `Run 'spec-controller --help' to see the host modifiers this version accepts.`
+  );
+}
+
+/**
  * The registry-bounded flag check at a command's CLI edge (@SCN-CLI-009). A command accepts ONLY
  * the flags its per-command registry scope LISTS (by `name` or `alias`); an unregistered flag — a
  * typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently swallowed the way the
@@ -59,9 +132,10 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
  * PURE and `@unit`-testable: the parsed args (keys already `--`-stripped) plus the registry and
  * the command to bound against, returning the FIRST unregistered flag as a typed usage error
  * naming it WITH its dashes — routed to stderr and the enumerated usage status 2 by the caller,
- * never 1, never a silent run — else null. The global `--store`/`--run-id` modifiers never reach
- * here: the top-level dispatcher consumes them BEFORE any command is dispatched, so a bounded
- * parse sees only the command's own args.
+ * never 1, never a silent run — else null. The global `--store`/`--run-id` modifiers are consumed
+ * by the top-level dispatcher when they come BEFORE the command; written after it they reach the
+ * command, and `checkMisplacedHostModifiers` refuses them as out of place before this runs
+ * (@SCN-CLI-061).
  *
  * A COMMAND THE REGISTRY DOES NOT NAME ACCEPTS NOTHING, which is the honest reading rather than a
  * degenerate one: an unregistered command has no scope, so every flag given to it is outside it.

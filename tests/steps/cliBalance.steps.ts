@@ -24,7 +24,7 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
@@ -503,16 +503,11 @@ const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string
   "a typo of a command": { argv: ["blance"], command: "blance", stored: false },
   "a name that is no command": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: false },
   "a name that is no command, as a stored run": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: true },
-  // @SCN-CLI-057 — the flag after the command reaches the command's args; before it, the host
-  // reads the flag itself as the command.
+  // @SCN-CLI-057 — the flag after the command reaches only the command's args. Before the command
+  // it is a flag out of place, which is @SCN-CLI-060's, never an unknown command.
   "a name that is no command, with --exit-zero after the command": {
     argv: ["nosuchcommand", "--exit-zero"],
     command: "nosuchcommand",
-    stored: false,
-  },
-  "a name that is no command, with --exit-zero before the command": {
-    argv: ["--exit-zero", "nosuchcommand"],
-    command: "--exit-zero",
     stored: false,
   },
 };
@@ -1563,4 +1558,197 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
 Then("the report still lists the scenario code error", function () {
   assert.match(cliResult.stdout, /^## Scenario code errors$/m);
   assert.match(cliResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-UCA-002/m);
+});
+
+/** `args` with every occurrence of `flag` and the value after it removed. */
+function withoutFlag(args: readonly string[], flag: string): string[] {
+  const kept: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === flag) {
+      i++;
+      continue;
+    }
+    kept.push(args[i] ?? "");
+  }
+  return kept;
+}
+
+/**
+ * Stand the run in a fresh directory holding a file called `true`, the name a missing value used to
+ * become (3F-3639). The file is a real Vitest report, so a run that still read `--vitest` as `true`
+ * would find it, reconcile, and give a verdict. The other paths are made absolute to follow the run.
+ */
+function standBesideAFileNamedTrue(args: readonly string[]): string[] {
+  const root = process.cwd();
+  const dir = mkdtempSync(join(tmpdir(), "scn-cli-058-"));
+  writeFileSync(join(dir, "true"), readFileSync(join(root, FIXTURE.vitest), "utf8"));
+  invocationCwd = dir;
+  return args.map((arg) => (arg.startsWith("--") ? arg : join(root, arg)));
+}
+
+/** The ways a value goes missing, each applied to the out-of-balance target's own arguments. */
+const MISSING_VALUE_SHAPES: Record<string, (args: string[], flag: string) => string[]> = {
+  "at the end of the arguments": (args, flag) => [...args, flag],
+  "followed by --exit-zero": (args, flag) => [...args, flag, "--exit-zero"],
+  "with an empty value": (args, flag) => [...args, flag, ""],
+  "at the end, with a file named true in the working dir": (args, flag) => [
+    ...standBesideAFileNamedTrue(args),
+    flag,
+  ],
+};
+
+// @SCN-CLI-058
+When("balance is asked to run with {word} given no value, {}", function (flag: string, shape: string) {
+  const shapeOf = MISSING_VALUE_SHAPES[shape];
+  assert.ok(shapeOf !== undefined, `no missing-value shape named "${shape}"`);
+  const args = shapeOf(withoutFlag(invocationArgs, flag), flag);
+  const cwd = invocationCwd;
+  try {
+    cliResult = spawnBalance(args);
+  } finally {
+    if (cwd !== undefined) rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// @SCN-CLI-058
+// The usage status, and nothing on stdout: a refusal before any reconcile leaves no report at all,
+// so --exit-zero has no verdict to move.
+Then("balance refuses the run as a usage fault, with nothing reconciled", function () {
+  assert.equal(cliResult.status, 2, `expected the usage status 2; got ${cliResult.status}\n${cliResult.stderr}`);
+  assert.equal(cliResult.stdout, "", `expected nothing on stdout; got:\n${cliResult.stdout}`);
+});
+
+// @SCN-CLI-058
+// The meaning, never the prose: the flag is named, as missing its value, and not as any fault a
+// missing value used to be mistaken for.
+Then("the refusal names {word} as a flag missing its value", function (flag: string) {
+  const { stderr } = cliResult;
+  // One line naming both, because a refusal that goes on to print the help names every flag there is.
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(flag) && /value/i.test(line)),
+    `expected a line of stderr naming ${flag} as missing its value; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /\btrue\b/, `stderr names the word a missing value used to become:\n${stderr}`);
+  assert.doesNotMatch(
+    stderr,
+    /does not exist|could not be read|unknown command|bump the pin/i,
+    `stderr names a fault other than the missing value:\n${stderr}`,
+  );
+});
+
+/**
+ * @SCN-CLI-059 — a stored run whose host modifier is given no value (3F-3639). The run stands in a
+ * fresh directory with an empty store root beside it, so a modifier that swallowed the next token,
+ * or an empty one that fell back to the cwd, would leave something behind to find.
+ */
+let storedRunDir = "";
+let storedRunRoot = "";
+
+// @SCN-CLI-059
+Given("a target that reconciles out-of-balance, and an empty store root", function () {
+  storedRunDir = mkdtempSync(join(tmpdir(), "scn-cli-059-"));
+  storedRunRoot = join(storedRunDir, "store");
+  mkdirSync(storedRunRoot);
+  const root = process.cwd();
+  invocationArgs = [
+    "--features",
+    join(root, FIXTURE.features),
+    "--vitest",
+    join(root, FIXTURE.vitest),
+    ...NO_WORKFLOWS(join(root, "tests/fixtures/evidence-observation")),
+  ];
+});
+
+/** Each row's host argv, keyed by the modifier and the way its value goes missing. */
+const MISSING_MODIFIER_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
+  "--store alone": () => ["--store"],
+  "--store followed by --run-id": (_store, target) => ["--store", "--run-id", "r1", "balance", ...target],
+  "--run-id at the end, after --store": (store) => ["--store", store, "--run-id"],
+  "--run-id with an empty value": (store, target) => ["--store", store, "--run-id", "", "balance", ...target],
+  "--store with an empty value": (_store, target) => ["--store", "", "balance", ...target],
+};
+
+// @SCN-CLI-059
+When("a stored balance run is asked for with {word} given no value, {}", function (modifier: string, shape: string) {
+  const argvOf = MISSING_MODIFIER_VALUE[`${modifier} ${shape}`];
+  assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
+    cwd: storedRunDir,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-059
+Then("nothing is written to the store root or the working directory", function () {
+  try {
+    assert.deepEqual(readdirSync(storedRunRoot), [], "expected the store root to stay empty");
+    assert.deepEqual(readdirSync(storedRunDir), ["store"], "expected nothing beside the store root");
+  } finally {
+    rmSync(storedRunDir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * @SCN-CLI-060 — a flag written before the command (3F-3639). Each row is the leading tokens and
+ * the command they stand before; the flag the refusal must name is the first of them.
+ */
+const FLAG_BEFORE_COMMAND: Record<string, { before: string[]; command: string }> = {
+  "--exit-zero, before balance": { before: ["--exit-zero"], command: "balance" },
+  "--format md, before balance": { before: ["--format", "md"], command: "balance" },
+  "--bogus, before balance": { before: ["--bogus"], command: "balance" },
+  "--exit-zero, before no known command": { before: ["--exit-zero"], command: "nosuchcommand" },
+};
+let flagOutOfPlace = "";
+
+// @SCN-CLI-060
+When("a stored run is asked for with {}", function (row: string) {
+  const known = FLAG_BEFORE_COMMAND[row];
+  assert.ok(known !== undefined, `no row named "${row}"`);
+  flagOutOfPlace = known.before[0] ?? "";
+  const argv = ["--store", storedRunRoot, ...known.before, known.command, ...invocationArgs];
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-060
+// The meaning, never the prose: one line names the flag as given before the command, and nothing
+// calls it a command the host does not know.
+Then("the refusal names the flag as given before the command, never as an unknown command", function () {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes(flagOutOfPlace) && /before the command/i.test(line)),
+    `expected a line of stderr naming ${flagOutOfPlace} as given before the command; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /unknown command/i, `stderr calls the flag a command:\n${stderr}`);
+});
+
+// @SCN-CLI-061
+// The store modifier written after the command (3F-3639), in the same fresh directory as @SCN-CLI-059,
+// so a run that took it anyway would leave something to find.
+When("balance is asked to run with the store modifier given after the command", function () {
+  const argv = ["balance", ...invocationArgs, "--store", storedRunRoot];
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-061
+Then("the refusal names the store modifier as one that goes before the command", function () {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes("--store") && /before the command/i.test(line)),
+    `expected a line of stderr naming --store as going before the command; got:\n${stderr}`,
+  );
+});
+
+// @SCN-CLI-061
+// The drift advice @SCN-CLI-009 gives a flag no version accepts is false here: --store exists.
+Then("the refusal advises no pin", function () {
+  assert.doesNotMatch(cliResult.stderr, /\bpin\b/i, `stderr advises a pin:\n${cliResult.stderr}`);
 });

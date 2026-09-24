@@ -36,7 +36,7 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 // THE ARGV READING AND ITS REGISTRY BOUNDING, SHARED WITH EVERY OTHER COMMAND (3F-3300). Both
 // lived here while `balance` was the only command; a second command needs them, and a second
 // copy of "what did the operator type" is the one thing this tree least wants two of.
-import { parseArgs, checkUnknownFlags } from "../cli-args.js";
+import { parseArgs, checkUnknownFlags, checkMissingValues, checkMisplacedHostModifiers } from "../cli-args.js";
 import type { EvidenceReconciliation, RunContext } from "@3f-consulting/spec-controller-core";
 
 /**
@@ -253,20 +253,31 @@ export function runBalance(argv: string[]): void {
   const legacyJsonError = checkLegacyJson(args);
   if (legacyJsonError) exitUsage(legacyJsonError);
 
+  // A host modifier after the command is out of place, not unknown (@SCN-CLI-061, 3F-3639), so it is
+  // refused before the drift advice, through `process.exit` so a stored run is never stamped.
+  const misplacedModifierError = checkMisplacedHostModifiers(args, cliRegistry, "balance");
+  if (misplacedModifierError) exitUsage(misplacedModifierError);
+
   // Registry-bounded parse (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
   // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
   // USAGE error: name it on stderr, set process.exitCode = 2 (the enumerated usage code,
   // 3F-1414's 0/1/2 taxonomy — never 1, never a silent swallow), and RETURN before any
   // reconcile. Runs AFTER the legacy-`--json` guard so `--json` keeps its specific migration
-  // hint; the global `--store`/`--run-id` modifiers were consumed by the dispatcher before
-  // balance, so they never reach here. This is the structural teeth behind "accepted =
-  // registry = help" — a flag can't affect behaviour without a registry entry.
+  // hint, and after the misplaced-modifier refusal above, so a `--store` / `--run-id` written after
+  // the command is named as out of place rather than given pin advice. This is the structural teeth
+  // behind "accepted = registry = help" — a flag can't affect behaviour without a registry entry.
   const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
     process.exitCode = 2;
     return;
   }
+
+  // A flag that takes a value, given none (@SCN-CLI-058, 3F-3639), refused before anything reads
+  // the value `parseArgs` made up for it. `process.exit`, never a set status and a return: inside a
+  // stored run the return would reach the kept-run scaffold, which stamps a run.yaml (3F-3650).
+  const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
+  if (missingValueError) exitUsage(missingValueError);
 
   if (renderSavedReport(args)) return;
   refuseUnreadableInputs(args);
