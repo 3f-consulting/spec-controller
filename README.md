@@ -106,7 +106,7 @@ Mutation testing has no notion of your specification — a requirement with no t
 npm install -g spec-controller@alpha
 ```
 
-`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has neither `tags` nor `--ci-steps`.
+`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has no `--ci-steps` and no scenario code errors.
 
 Requires Node ≥ 22.
 

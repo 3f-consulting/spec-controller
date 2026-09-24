@@ -289,10 +289,11 @@ Feature: spec-controller balance runs standalone
       And the two runs print the same Evidence Reconciliation to stdout, byte for byte but for the run timestamp each stamps for itself
 
       Examples:
-        | verdict            | flags         | code |
-        | all-balanced       | with no flags | 0    |
-        | out-of-balance     | with no flags | 1    |
-        | only-Pending-Items | with --strict | 3    |
+        | verdict                            | flags         | code |
+        | all-balanced                       | with no flags | 0    |
+        | out-of-balance                     | with no flags | 1    |
+        | only-Pending-Items                 | with --strict | 3    |
+        | balanced-with-scenario-code-errors | with no flags | 1    |
 
     @SCN-CLI-022 @unit @e2e
     Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still exits <code>
@@ -306,6 +307,23 @@ Feature: spec-controller balance runs standalone
         | usage                | a target, and --vitest pointing at a path that does not exist  | 2    | stderr names --vitest and the missing path                                         |
         | unsound              | a target whose vitest report carries a collection-failed suite | 4    | it prints the Evidence Reconciliation to stdout                                    |
         | nothing to reconcile | a target that declared no scenario and produced no evidence    | 5    | the verdict headline says the run had nothing to reconcile, never that it balanced |
+        | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code | 4 | the report still lists the scenario code error                             |
+
+  Rule: a corpus-shape fault never pre-empts the report
+
+    A scenario code error (3F-3635) is a fault in how the corpus files its codes, not in what its
+    accounts say, so it never stops the reconciliation. It takes the exit-1 rung ahead of the
+    balance verdict — 5, 4, then 1 for scenario code errors, then 1 for out of balance, then 3 —
+    and the report still carries every account, balanced or not.
+
+    @SCN-CLI-055 @unit @e2e
+    Scenario: An out-of-balance account and a scenario code error in one run exit 1, both reported
+      Given a target whose corpus misfiles a scenario code and whose ledger has an account out of balance
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 1
+      And the report lists the scenario code error
+      And the report carries the out-of-balance account
+      And the verdict headline names both the scenario code error and the accounts out of balance
 
   Rule: an unknown command is a usage fault, and exits 2
 

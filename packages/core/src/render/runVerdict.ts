@@ -18,6 +18,7 @@ import {
   hasPendingItems,
   hasNothingToReconcile,
 } from "../domain/ledger.js";
+import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 
 /**
  * The corpus directory a run reads when `--features` is not supplied — the tool's own default,
@@ -50,8 +51,29 @@ function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;
 }
 
+/**
+ * A run whose corpus misfiles a scenario code (3F-3635). THIRD in the chain, the CLI ladder's own
+ * position: after the two runs that could give no trustworthy verdict, ahead of the balance
+ * verdict it would otherwise hide behind — a misfiled code leaves every account reconciling, so a
+ * balance check alone reads BALANCED.
+ */
+function scenarioCodeErrorsVerdict(reconciliation: Ledger): Verdict {
+  // BOTH REPORTED (@SCN-CLI-055): the rung heads the verdict, and never hides the balance it
+  // pre-empts — a run carrying both is told both.
+  const alsoOutOfBalance = isBalanced(reconciliation)
+    ? ""
+    : " The accounts do not agree either: at least one Scenario Reconciliation carries a reconciling item.";
+  return {
+    headline: "**SCENARIO CODE ERRORS**",
+    exit: "exit 1",
+    gloss:
+      "the corpus files a scenario code under the wrong feature, so the by-feature grouping " +
+      `cannot be trusted. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+  };
+}
+
 /** Which verdict this ledger has earned — the dominance chain, and nothing else. */
-function verdictOf(reconciliation: Ledger, corpusDir: string): Verdict {
+function verdictOf(reconciliation: Ledger, corpusDir: string, codeErrors: boolean): Verdict {
   // The predicates, in the CLI's dominance order. Each headline word is the RENDER word, not the
   // predicate name (`hasBrokenEvidence` → "UNSOUND"), the `isBalanced` → "balanced" precedent —
   // and "UNSOUND" is coherent with the `## Run integrity: unsound` stamp above (@SCN-RPT-021).
@@ -93,6 +115,8 @@ function verdictOf(reconciliation: Ledger, corpusDir: string): Verdict {
           "it proves was never exercised. Read the run-integrity stamp above before any count " +
           "below it.",
       }
+    : codeErrors
+    ? scenarioCodeErrorsVerdict(reconciliation)
     : !isBalanced(reconciliation)
       ? {
           headline: "**OUT-OF-BALANCE**",
@@ -140,7 +164,7 @@ function verdictOf(reconciliation: Ledger, corpusDir: string): Verdict {
  */
 export const runVerdictSection = (report: RenderInput): string[] => {
   const reconciliation = { scenarioReconciliations: report.ledger.scenarioReconciliations };
-  const verdict = verdictOf(reconciliation, corpusExamined(report.runProvenance));
+  const verdict = verdictOf(reconciliation, corpusExamined(report.runProvenance), hasScenarioCodeErrors(report));
   const lines = [
     "### Run verdict",
     "",

@@ -104,13 +104,9 @@ export class UnreadableFeatureCorpusError extends Error {
  * refusal means for it.
  *
  * WHY A TYPED ERROR RATHER THAN AN EMPTY CORPUS. The obvious fix is for `discoverFeatures` to hand
- * back `[]` when the directory is not there. Measured, that would ship a NEW false green in a
- * second command: `spec-controller tags` reaches the same reader through `readCorpusInputs`, whose
- * GENERIC catch is the only thing turning an absent corpus — and, since `tags` carries no
- * `checkInputsExist`, a supplied-but-absent `--features` too — into `The corpus could not be
- * read: …` at exit 2. Tolerance at the reader turns both into `tags: OK …` at exit 0, inside the
- * slice whose whole purpose is killing a vacuous certification. Typed, both survive untouched:
- * this IS an `Error`, so it still lands in that generic catch.
+ * back `[]` when the directory is not there, and that would decide for every reader that absence
+ * is empty. Typed, each caller decides: `balance` reads it as no corpus (@SCN-CLI-017), and any
+ * other reader still meets a refusal. (The second command this guarded, `tags`, left at 3F-3635.)
  *
  * IT CARRIES THE DIRECTORY because the report is owed the name of what it examined — "I found no
  * record" and "I found no regression" must never wear one word (3F-2947), and a consumer told

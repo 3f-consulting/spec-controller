@@ -258,33 +258,6 @@ jobs:
         # the pipeline's business, and no other artefact states that command.
         run: pnpm exec eslint
 
-      # THE ONE STEP HERE THAT IS THE PRODUCT RATHER THAN A CHECK WE WROTE (3F-3311), AND IT IS NOW
-      # THE ONLY ONE POLICING THE CORPUS. It stood beside two private copies of itself —
-      # `lint:scn-tags` (620 lines over a hand-rolled line parser, left at 3F-3312) and
-      # `lint:feature-codes` (417 lines over a second corpus walk and a hand-kept table of feature
-      # codes, left at 3F-3313) — both under `tests/checks/`, which is in neither package's
-      # published `files` and so unreachable from any other repository by construction. An adopter
-      # got `@SCN` codes and inherited nothing that policed them. This step runs the WORKSPACE CLI
-      # DIRECTLY, the way an adopter runs the command they installed, which is the whole of what
-      # acceptance item 2 asks: a private copy ships nothing. `3F-3296` de-wrappered the
-      # self-reconciliation step below for the same reason, and the two steps now differ only in
-      # which command they hand the binary.
-      #
-      # IT INVOKES NO `package.json` SCRIPT, AND THAT IS WHY NO PHANTOM CHECK ARRIVES WITH IT.
-      # `runningStaticChecks` counts a `package.json` script as a running static check when its
-      # name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. This
-      # tree has no `spec-controller` script at all since 3F-3476 — `pnpm` falls through to the
-      # pinned binary in `node_modules/.bin` — so there is no manifest entry for the rule to reach,
-      # and this step adds an observation for SCN-FIT-014 and nothing to the static-check census.
-      #
-      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the `@fitness` scenario and this
-      # step is the observation that answers it — cited by `id:` alone (@SCN-LNT-031). Misspell it
-      # and the credit posts to a PHANTOM row (@SCN-LNT-009) while the scenario reads `missing`.
-      - name: Corpus tags
-        id: SCN-FIT-014
-        if: always()
-        run: pnpm spec-controller tags
-
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()
@@ -587,8 +560,8 @@ jobs:
       # `reconcilerSteps` recognises this step by comparing `spec-controller balance` — the
       # invocation `ingest/ingestQualityChecks.ts` injects — as WHOLE ADJACENT shell tokens against
       # the command, following manifest scripts where a step invokes one and matching the command
-      # directly where it does not. Adjacency is what keeps `Corpus tags` above on the books: the
-      # same binary, a different second token, an ordinary reconciled step.
+      # directly where it does not. Adjacency is what keeps any other step running the same binary
+      # on the books: a different second token is an ordinary reconciled step.
       #
       # THE ONE-LINE PART USED TO BE ENFORCED AND IS NOW A CONVENTION WITH ONE REMAINING STAKE.
       # A derived local green-check reported a multi-line `run:` as `unsupported` and redded

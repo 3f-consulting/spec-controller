@@ -48,6 +48,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 // reconciliation for a verdict of its own, so the headline cannot drift from the code it names.
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
+import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { discoveryScopeSection } from "./discoveryScope.js";
 import { staticChecksSection } from "./staticChecks.js";
@@ -743,6 +744,8 @@ const SECTIONS: readonly SectionEmitter[] = [
   titleSection,
   provenanceSection,
   runIntegritySection,
+  // Beside the unsound stamp, and for its reason: a caveat on every cut below it (3F-3635).
+  scenarioCodeErrorsSection,
   summaryViewsSection,
   // The verdict OPENS the summary (@SCN-RPT-022) — before any cut of the reconciliation, so a
   // reader meets the bottom line first and a failing run can never LOOK like a passing one.

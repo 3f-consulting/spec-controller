@@ -58,8 +58,7 @@ export { parseTaggedScenarios } from "./parse/scenarios.js";
 export type { TaggedScenario } from "./parse/scenarios.js";
 
 // `FITNESS_AXIS_TAG` — the ONE spelling of the word a CONVERTED check's scenario carries
-// (`parse/scenarios`, @SCN-LNT-018). Shared because the corpus check's grammar rule (@SCN-STG-005)
-// must admit exactly the scenarios the obligation rule raises against, and this word is the one
+// (`parse/scenarios`, @SCN-LNT-018). Shared because this word is the one
 // source left of what names a check on a corpus — the registry retired (3F-3161) and the measured
 // axis's ceilings with it (3F-3516); a converted check has no runnable script handle, only a
 // configured row. A second spelling in `tests/checks/` would be a word the floor admitted while
@@ -103,9 +102,7 @@ export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.j
 
 // The `resolve*` family — a target's `specController.*` configuration read into the rows and
 // mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
-// engine and the tree's own gates still read a target's config through them: the corpus check
-// (@SCN-STG-005) resolves the same rows and mints the
-// reconciler does, and a second reader deciding independently which words a manifest names would
+// engine and the tree's own gates still read a target's config through them, and a second reader deciding independently which words a manifest names would
 // admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,
 // where they were the reason a PUBLISHED module imported this unpublished subpath — the fault
 // 3F-3086 repairs. Internal, not public: where a target's rows and mints are AUTHORED

@@ -96,7 +96,7 @@ Then("the persisted artefact is named spec-reconciliation.json", function () {
 });
 
 Then(
-  "it parses to one object carrying runProvenance, summary, and evidenceObligations as top-level sections in document order",
+  "it parses to one object carrying runProvenance, summary, scenarioCodeErrors and evidenceObligations as top-level sections in document order",
   function () {
     const parsed = JSON.parse(
       readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")
@@ -113,8 +113,30 @@ Then(
     const keys = Object.keys(parsed);
     assert.equal(keys[0], "runProvenance", `expected runProvenance first; got ${keys.join(", ")}`);
     assert.equal(keys[1], "summary", `expected summary second; got ${keys.join(", ")}`);
+    // The corpus was judged, so its scenario code errors ride after the ledger and before the
+    // census (3F-3635) — present, and an array, even when there are none.
+    assert.ok(Array.isArray(parsed.scenarioCodeErrors), `expected a scenarioCodeErrors section; got keys: ${keys.join(", ")}`);
+    assert.ok(
+      keys.indexOf("ledger") < keys.indexOf("scenarioCodeErrors") &&
+        keys.indexOf("scenarioCodeErrors") < keys.indexOf("evidenceObligations"),
+      `expected scenarioCodeErrors between ledger and evidenceObligations; got ${keys.join(", ")}`
+    );
   }
 );
+
+/** The two parts of the persisted report the tally arm reads: the summary's totals and the rows. */
+interface PersistedTally {
+  summary: {
+    scenarioReconciliations: {
+      total: number;
+      balanced: number;
+      outOfBalance: number;
+      phantom: number;
+      suspense: number;
+    };
+  };
+  ledger: { scenarioReconciliations: { kind?: string; verdict: string }[] };
+}
 
 /**
  * @SCN-RMD-001 (3F-1724) — the summary totals count EVERY Scenario Reconciliation.
@@ -136,18 +158,7 @@ Then(
   function () {
     const parsed = JSON.parse(
       readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")
-    ) as {
-      summary: {
-        scenarioReconciliations: {
-          total: number;
-          balanced: number;
-          outOfBalance: number;
-          phantom: number;
-          suspense: number;
-        };
-      };
-      ledger: { scenarioReconciliations: { kind?: string; verdict: string }[] };
-    };
+    ) as PersistedTally;
     const totals = parsed.summary.scenarioReconciliations;
     const rows = parsed.ledger.scenarioReconciliations;
 

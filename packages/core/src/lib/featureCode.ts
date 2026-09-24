@@ -5,8 +5,8 @@
  * alphanumerics. This is the ONE engine-side owner of parsing the `<FFF>` off a bare
  * scenario id; the impure feature-file discovery (`discoverFeatures`) lives in
  * ingest/ingestScenarios.ts. The duplicate-code lint was product-side in
- * tests/checks/featureCodes.ts until 3F-3313 and is now @SCN-STG-010, a rule of the shipped
- * `spec-controller tags` command in parse/corpusFaults.ts.
+ * tests/checks/featureCodes.ts until 3F-3313 and is now @SCN-STG-010, one of `balance`'s scenario
+ * code errors in parse/scenarioCodeErrors.ts (3F-3635).
  *
  * Reused by the by-feature report grouping (@SCN-RPT-006).
  */

@@ -127,11 +127,11 @@ describe("[SCN-USG-014] reconcilerSteps — what it does not recognise", () => {
     ...reconcilerSteps([ci], NAMES, INVOCATION, { scripts }).steps,
   ];
 
-  // THE TOOL, RUN FOR SOMETHING ELSE. Measured off this repository's own pipeline, which runs
-  // `pnpm spec-controller tags` beside its balance step: a whole-token match on the binary alone
-  // takes that step off the books, and it is an ordinary step of the pipeline being reconciled.
+  // THE TOOL, RUN FOR SOMETHING ELSE. A step running the same binary for anything but `balance`
+  // is an ordinary step of the pipeline being reconciled, and a whole-token match on the binary
+  // alone would take it off the books.
   it("leaves a step running this tool's OTHER command a candidate", () => {
-    expect(recognised(`jobs:\n  ci:\n    steps:\n      - run: pnpm spec-controller tags`)).toEqual(
+    expect(recognised(`jobs:\n  ci:\n    steps:\n      - run: pnpm spec-controller help`)).toEqual(
       []
     );
   });

@@ -150,7 +150,7 @@ const balanceFlags: FlagSpec[] = [
   },
   {
     name: "--exit-zero",
-    description: "Print the same report but exit 0 on an out-of-balance (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
+    description: "Print the same report but exit 0 on an out-of-balance or scenario-code-error (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
   },
   {
     name: "--help",
@@ -188,39 +188,6 @@ const balanceRetiredFlags: RetiredFlagSpec[] = [
   },
 ];
 
-/**
- * The `tags` command's per-command scope (3F-3300). Two input flags and `--help`/`-h`, and the
- * two are `balance`'s own spellings on purpose: a consumer pointing one command at a corpus and a
- * manifest should not have to learn a second name for each when they point the other at the same
- * two files. The descriptions are this command's — what it reads them FOR is not what `balance`
- * reads them for — but the flags are the same flags.
- *
- * NO `configHelp`. A command's config block documents the `package.json` fields THAT command
- * reads, and `tags` reads none yet: the check-tag union and the recognised deferral set arrive
- * with the grammar rules (3F-3302 onward), and the entry gains its block then. Appending
- * `balance`'s block here would document, under this command, fields this command does not read —
- * which is the fault 3F-3298 moved that block onto a command entry to prevent.
- */
-const tagsFlags: FlagSpec[] = [
-  {
-    name: "--features",
-    arg: "<dir>",
-    description:
-      "Directory of Gherkin .feature files — the corpus these rules are asked about (default ./features).",
-  },
-  {
-    name: "--package-json",
-    arg: "<path>",
-    description:
-      "The target's package.json — its specController block, from which the configured fitness rows and the tags that park a scenario are resolved (default ./package.json).",
-  },
-  {
-    name: "--help",
-    aliases: ["-h"],
-    description: "Show this help and exit.",
-  },
-];
-
 /** The global host-modifier scope — recognised before the command; the CLI-007 surface. */
 const globalFlags: FlagSpec[] = [
   {
@@ -249,12 +216,6 @@ export const cliRegistry: CliRegistry = {
       flags: balanceFlags,
       configHelp: balanceConfigHelp,
       retiredFlags: balanceRetiredFlags,
-    },
-    {
-      name: "tags",
-      summary:
-        "Police the @SCN scheme over your Gherkin corpus — the rules the scheme itself imposes on the tags and header codes a feature file carries (exit 1 on findings, 2 on a corpus that cannot be read).",
-      flags: tagsFlags,
     },
   ],
 };

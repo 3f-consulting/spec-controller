@@ -212,9 +212,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
-      Given a reconciliation balance carrying scenarios alongside zero-obligation scenarios
+      Given a reconciliation balance carrying scenarios alongside zero-obligation scenarios, over a corpus it judged
       When the markdown report is rendered
-      Then it emits exactly its known top-level sections — run provenance, summary views and scenario reconciliations — and the census is recoverable as the ledger scenario-count
+      Then it emits exactly its known top-level sections — run provenance, scenario code errors, summary views and scenario reconciliations — and the census is recoverable as the ledger scenario-count
 
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 

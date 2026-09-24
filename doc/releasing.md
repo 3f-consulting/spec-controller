@@ -190,9 +190,9 @@ Both packages are **semver**, and both are on `0.x`.
 through to `node_modules/.bin/spec-controller` and runs the *installed* package. Measured on
 `3F-3476`'s branch with the script gone: the report's own provenance reads `Tool version:
 0.1.0-alpha.3` and `Tool SHA: unknown (not a git checkout)`, against `0.1.0-alpha.4` and this
-checkout's HEAD for the workspace build run over the same argv. Both `ci.yml` steps that invoke the
-tool (`Corpus tags` and `Self-reconciliation balance`) go through it, which is what makes this
-repository an ordinary adopter of its own product rather than a special case (`3F-3105`).
+checkout's HEAD for the workspace build run over the same argv. The `ci.yml` step that invokes the
+tool (`Self-reconciliation balance`) goes through it, which is what makes this repository an
+ordinary adopter of its own product rather than a special case (`3F-3105`).
 
 **That pin is the single declaration of which reader judges this tree.** There is no second
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees

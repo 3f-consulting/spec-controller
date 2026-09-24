@@ -71,7 +71,10 @@ const evidenceObligations: EvidenceObligations = {
 
 describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
-    const report = assembleRenderInput(__er(reportLedger, false, false), ctx, evidenceObligations) as unknown as Record<string, unknown>;
+    // A reconciliation that judged its corpus (3F-3635) — every `balance` run's — so its scenario
+    // code errors ride after the ledger's detail and before the census, even when there are none.
+    const judged = { ...__er(reportLedger, false, false), scenarioCodeErrors: [] };
+    const report = assembleRenderInput(judged, ctx, evidenceObligations) as unknown as Record<string, unknown>;
     // runProvenance opens; the summary's totals then the LEDGER's detail (chain step 6, RMD-002);
     // the evidenceObligations census follows. The retired `warnings` key is GONE — a zero-evidence
     // scenario is a both-missing row in the ledger, not a separate top-level axis.
@@ -79,6 +82,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "runProvenance",
       "summary",
       "ledger",
+      "scenarioCodeErrors",
       "evidenceObligations",
     ]);
     expect(report).not.toHaveProperty("warnings");

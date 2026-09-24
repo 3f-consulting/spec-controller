@@ -85,7 +85,7 @@ the two artefacts above are the whole of what you author.
 ### A converted check is still a command you can run
 
 Converting a check does not move it inside anything. Most of the converted checks in this
-repository's own pipeline are a command you can paste into a terminal — `pnpm spec-controller tags`, `pnpm typecheck`, bare
+repository's own pipeline are a command you can paste into a terminal — `pnpm typecheck`, `pnpm lint:boundaries`, bare
 `eslint` — and exit 0 is the check passing, with no cucumber and no `spec-controller` involved. The
 rest read a number an earlier step, or a scheduled sweep, already left behind. What the scenario and
 the `id:` add is that the run becomes **observable**: the ledger can say the check ran, and against
@@ -159,7 +159,7 @@ not obliged on this run"* are different claims, and only the first is modelled.
 npm install -g spec-controller@alpha
 ```
 
-`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has neither `tags` nor `--ci-steps`.
+`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has no `--ci-steps` and no scenario code errors.
 
 Or run without installing:
 
@@ -199,7 +199,7 @@ spec-controller balance --features ./features \
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
 | `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
-| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
@@ -296,6 +296,18 @@ The outcome you are watching for is the **watermelon**: a static check that is g
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict. Earlier releases refused such a corpus outright at exit `2` and printed no report; they no longer do.
 
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and says what it found under `## Scenario code errors` (`scenarioCodeErrors` in the JSON), just after `## Run integrity`. There are three errors:
+
+| Handle | The fault | The fix |
+| --- | --- | --- |
+| `foreign-scn-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-ONE-002` in the file headed `@TWO` | re-code the scenario for its file, or move it to the file its code names |
+| `no-feature-code` | a feature file carries no header code while its scenarios carry `@SCN` codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
+| `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
+
+Each one misfiles a code without making any posting ambiguous, so every account still reconciles exactly as it would if it were filed correctly. What a misfiled code falsifies is the by-feature cut, which groups on the code. So any scenario code error fails the run at exit `1`. The ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). A run carrying both a scenario code error and an out-of-balance account exits `1`, and its verdict names both. When the codes are clean the section says so, with how many feature codes and files it judged. It always says that a duplicated `@SCN` is reported on its account's rows, never here.
+
+**What it does not catch.** `foreign-scn-code` reads a scenario's feature part as two to five characters. An id with a longer feature part, such as `@SCN-TOOLONGCODE-001` in the file headed `@ONE`, is not listed: it reconciles as an ordinary account, grouped under its whole id. And the errors are judged over the corpus `--features` names, and no other.
+
 ---
 
 ## Wiring into CI
@@ -371,6 +383,8 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 **My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, or one buried in a quoted argument to a wrapper, is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
+
+**The verdict reads SCENARIO CODE ERRORS** — the corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one. `## Scenario code errors` names each by its handle and file, and says which fix it wants. Every account still reconciles, so the rest of the report is as it would be; the run exits `1` until the codes are filed correctly.
 
 **A row reads `duplicate-scn-code`** — two scenarios carry that `@SCN` code, and the report names them under *The corpus holds N scenarios in M accounts*. Give one of them a code of its own; an `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. Until then the run exits `1`.
 

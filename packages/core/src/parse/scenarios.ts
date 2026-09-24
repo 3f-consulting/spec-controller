@@ -73,20 +73,6 @@ export function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
 
-/**
- * Every recognised `<quality-check>pending` spelling, derived from the map above rather than
- * listed again (@SCN-STG-002, 3F-3302).
- *
- * WHY A LIST AND NOT JUST THE PREDICATE. `pendingQualityCheck` answers "is THIS tag one", which
- * is all an obligation needs. The tag-grammar rule needs the other direction too — the words to
- * measure an unrecognised tag AGAINST, so it can name the tier a typo resembles — and a list
- * written out over there would agree with this map by diligence and then drift the first time a
- * quality-check is added.
- */
-export const PENDING_QUALITY_CHECK_TAGS: readonly string[] = Object.keys(
-  PENDING_TAG_TO_QUALITY_CHECK
-);
-
 const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
   unit: "unit",
   integration: "integration",
@@ -94,12 +80,6 @@ const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
   performance: "performance",
 };
 
-/**
- * The bare tags that name a RUNTIME evidence tier, derived from the map above (@SCN-STG-002,
- * 3F-3302). Exported for the same reason as the pending list beside it, and kept beneath the map
- * it reads so the two can never be edited apart.
- */
-export const RUNTIME_QUALITY_CHECK_TAGS: readonly string[] = Object.keys(TAG_TO_QUALITY_CHECK);
 
 /** Is a trimmed line a genuine Gherkin TAG LINE? Return its bare tags, else null. */
 function tagLineTags(line: string): string[] | null {

@@ -13,9 +13,7 @@
  * command rather than for the one this code was written beside. `checkUnknownFlags` took the
  * registry and looked `balance` up inside itself; the command is a parameter now, exactly as it
  * became one for `renderCommandHelp` (3F-3298). @SCN-CLI-009's scenario is unchanged and still
- * asks about `balance`: what a second command gets is the same bounding BY CONSTRUCTION, and the
- * residual — that an unregistered flag to `tags` is unproven by a scenario of its own — is named
- * on 3F-3286 rather than left silent.
+ * asks about `balance`: a command added later gets the same bounding BY CONSTRUCTION.
  */
 
 import type { CliRegistry, CommandSpec } from "./cli-registry.js";

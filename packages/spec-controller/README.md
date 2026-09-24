@@ -20,7 +20,7 @@ Or without installing anything:
 npx spec-controller@alpha balance --help
 ```
 
-`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has neither `tags` nor `--ci-steps`.
+`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has no `--ci-steps` and no scenario code errors.
 
 ## Your first run
 
@@ -42,7 +42,7 @@ To bring it into a pipeline you already have without redding it on day one, add 
 spec-controller balance --features ./features --vitest ./vitest-report.json --exit-zero
 ```
 
-The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status moves. Out-of-balance (`1`) and pending under `--strict` (`3`) exit `0`. Usage (`2`), unsound (`4`) and nothing to reconcile (`5`) still fail, because each means the run could not give a verdict at all, and a flag that suppresses verdicts does not suppress that.
+The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status moves. Out-of-balance and scenario code errors (`1`), and pending under `--strict` (`3`), exit `0`. Usage (`2`), unsound (`4`) and nothing to reconcile (`5`) still fail, because each means the run could not give a verdict at all, and a flag that suppresses verdicts does not suppress that.
 
 Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Don't wrap the step in `continue-on-error` or `|| true` instead: those swallow the codes that mean the run could not be trusted, and they leave nothing in the command to say the gate is off.
 
@@ -62,7 +62,7 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 | Exit | What it says |
 | --- | --- |
 | `0` | balanced — every obligation has evidence, and it holds |
-| `1` | out-of-balance — the two records disagree, and the report says where |
+| `1` | out-of-balance — the two records disagree, and the report says where; or a scenario code is misfiled, listed under `## Scenario code errors` |
 | `2` | usage — the invocation was wrong |
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |

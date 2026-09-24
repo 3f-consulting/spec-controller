@@ -50,7 +50,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Given a kept run over a target corpus under an injected store root
       When the kept run persists its machine artefact
       Then the persisted artefact is named spec-reconciliation.json
-      And it parses to one object carrying runProvenance, summary, and evidenceObligations as top-level sections in document order
+      And it parses to one object carrying runProvenance, summary, scenarioCodeErrors and evidenceObligations as top-level sections in document order
       And its summary totals count every Scenario Reconciliation, so the tally reads out-of-balance and agrees with the run's exit code
 
   Rule: the ledger is the detail beside the summary's totals

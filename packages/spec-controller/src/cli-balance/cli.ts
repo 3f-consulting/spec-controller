@@ -29,6 +29,7 @@ import {
   hasPendingItems,
   hasBrokenEvidence,
   hasNothingToReconcile,
+  hasScenarioCodeErrors,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
@@ -36,7 +37,7 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 // lived here while `balance` was the only command; a second command needs them, and a second
 // copy of "what did the operator type" is the one thing this tree least wants two of.
 import { parseArgs, checkUnknownFlags } from "../cli-args.js";
-import type { Ledger, RunContext } from "@3f-consulting/spec-controller-core";
+import type { EvidenceReconciliation, RunContext } from "@3f-consulting/spec-controller-core";
 
 /**
  * Collect the `--format <spec>` values from argv in order (the flag is REPEATABLE, unlike
@@ -368,7 +369,7 @@ export function runBalance(argv: string[]): void {
   // credits HAS a row — its suspense row — and is an ordinary out-of-balance report at exit 1
   // (@SCN-CLI-020). @SCN-CLI-004/005/010/012 are BYSTANDERS: every one of their fixtures carries
   // rows, so none reaches this branch.
-  const verdict = verdictExitCode(balance.ledger, args["strict"] !== undefined);
+  const verdict = verdictExitCode(balance, args["strict"] !== undefined);
   const code = args["exit-zero"] !== undefined ? exitZeroStatus(verdict) : verdict;
   // Assigned only when NON-ZERO, so a balanced run still LEAVES process.exitCode at its default
   // rather than writing a 0 over it — the distinction @SCN-CLI-005 and @SCN-CLI-010 both rest on.
@@ -506,9 +507,12 @@ function runContextOf(
  * ENUMERATED, NEVER A COUNT — a count would 8-bit `& 0xFF` wrap into a false pass. Returns 0 for a
  * balanced run; the caller leaves the process's default alone rather than writing that 0 back.
  */
-function verdictExitCode(ledger: Ledger, strict: boolean): number {
+function verdictExitCode(balance: EvidenceReconciliation, strict: boolean): number {
+  const { ledger } = balance;
   if (hasNothingToReconcile(ledger)) return 5;
   if (hasBrokenEvidence(ledger)) return 4;
+  // A misfiled code (3F-3635): every account still reconciles, so `isBalanced` alone would pass it.
+  if (hasScenarioCodeErrors(balance)) return 1;
   if (!isBalanced(ledger)) return 1;
   if (strict && hasPendingItems(ledger)) return 3;
   return 0;

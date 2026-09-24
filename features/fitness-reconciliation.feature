@@ -35,9 +35,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   form, where a scenario named a runnable script and the run was matched back to it BY NAME — is
   the thing this feature retired, so the FILE took the right name and the code stayed put. Bare
   `@lint` survived for a while as GRAMMAR alone — recognised, raising nothing, kept because an
-  adopter's corpus still wrote it (3F-3525). It stopped being grammar at 3F-3606: the wait ended
-  with the compatibility position, and a bare `@lint` now reds the corpus check like any other
-  word that means nothing here (@SCN-STG-012).
+  adopter's corpus still wrote it (3F-3525). It stopped being grammar at 3F-3606, when the wait
+  ended with the compatibility position; and since 3F-3635 no word a tool does not read is a
+  corpus fault at all — it is a consumer's own tag.
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
   REAL source: its command must be a `run:` step in the CI config over the real tree — not
@@ -57,8 +57,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   obligations are untouched and still reconcile — the distinction from a deferral tag,
   which would take every obligation these scenarios name dark to silence one row each.
   AND lint:feature-codes IS ONE OF THOSE FIXTURE HANDLES. It was this repository's own check once;
-  the rules it carried ship from `spec-controller tags` now, and the row, the script and the
-  scenario left together. The handle survives here as a step-definition constant: a name no script
+  the rules it carried are `balance`'s scenario code errors now (3F-3635), and the row, the script
+  and the scenario left together. The handle survives here as a step-definition constant: a name no script
   in this repository answers to, and none may again, for exactly the reason the three above must
   never exist.
 

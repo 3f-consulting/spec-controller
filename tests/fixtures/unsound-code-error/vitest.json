@@ -1,0 +1,10 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/unsound-code-error/widget.test.ts",
+      "status": "failed",
+      "message": "Error: Cannot find package '@cucumber/tag-expressions' imported from tests/fixtures/unsound-code-error/widget.test.ts",
+      "assertionResults": []
+    }
+  ]
+}

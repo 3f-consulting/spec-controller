@@ -1,0 +1,12 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/scenario-code-error/widget.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-SCA-001] the first scenario is proven", "status": "passed" },
+        { "fullName": "[SCN-SCB-001] the second file's own scenario is proven", "status": "passed" },
+        { "fullName": "[SCN-SCA-002] the misfiled scenario is proven", "status": "passed" }
+      ]
+    }
+  ]
+}

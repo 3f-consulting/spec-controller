@@ -73,12 +73,6 @@ Feature: The fitness checks this repository declares, one scenario per check
     And every other function over the standard is reported without failing the run
     And no suppression directive that suppresses nothing survives the run
 
-  @fitness @SCN-FIT-014
-  Scenario: every tag on the corpus obeys the @SCN scheme's own rules
-    Given this repository's Gherkin corpus, its tags and its feature codes
-    When the @SCN scheme's own rules are applied to it
-    Then every tag on the corpus obeys them
-
   @fitness @SCN-FIT-009
   Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
     Given this repository's own module graph and the names of its domain modules

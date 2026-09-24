@@ -156,9 +156,7 @@ Given("that scenario also carries the unit tier tag", function () {
   // `{ qualityCheck: "unit" }` from @unit and `{ qualityCheck: "fitness" }` from @fitness
   // (@SCN-LNT-018) — so the reconciler meets a row owing evidence on both.
   //
-  // The shape below is not an endorsement of mixed tagging — whether one scenario may carry a
-  // tier tag and a fitness tag together is @SCN-STG-005's question — what is read here is a
-  // two-axis row.
+  // The shape below is not an endorsement of mixed tagging — what is read here is a two-axis row.
   fitnessCorpus = [
     "@LNT",
     "Feature: fixture",

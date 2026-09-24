@@ -43,6 +43,18 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
       ],
       code: 3,
     },
+    {
+      // Every account balances, and one code is misfiled (3F-3635): a verdict-class 1, which
+      // --exit-zero moves like any other (operator ruling, 2026-09-24).
+      verdict: "balanced-with-scenario-code-errors",
+      argv: [
+        "--features", "tests/fixtures/scenario-code-error/features",
+        "--vitest", "tests/fixtures/scenario-code-error/vitest.json",
+        "--package-json", "tests/fixtures/scenario-code-error/package.json",
+        "--ci", "tests/fixtures/scenario-code-error",
+      ],
+      code: 1,
+    },
   ] as const;
 
   /** Run `balance` in-process at a pinned instant; return what it printed and the status it left. */
@@ -143,6 +155,16 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
       "--vitest", "tests/fixtures/broken/vitest.json",
       "--package-json", "tests/fixtures/broken/package.json",
       "--ci", "tests/fixtures/broken",
+    ]);
+    expect(run.exitCode).toBe(4);
+  });
+
+  it("unsound beside a misfiled code: unsound pre-empts the scenario code error, and still exits 4", () => {
+    const run = runWithExitZero([
+      "--features", "tests/fixtures/unsound-code-error/features",
+      "--vitest", "tests/fixtures/unsound-code-error/vitest.json",
+      "--package-json", "tests/fixtures/unsound-code-error/package.json",
+      "--ci", "tests/fixtures/unsound-code-error",
     ]);
     expect(run.exitCode).toBe(4);
   });

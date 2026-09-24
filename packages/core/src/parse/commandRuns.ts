@@ -21,9 +21,8 @@
  *
  * AN INVOCATION OF MORE THAN ONE TOKEN IS MATCHED ADJACENT AND IN ORDER, which is what lets a
  * caller name a tool AND the command it is being run for. `spec-controller balance` is the
- * reconciler; `spec-controller tags` is the same binary doing something else, and this repository's
- * own pipeline runs both — so a rule comparing the binary alone would take an ordinary step of the
- * pipeline off the books. Per LINE, because two commands on two lines are two commands.
+ * reconciler; `spec-controller help` is the same binary doing something else — so a rule comparing
+ * the binary alone would take an ordinary step of a pipeline off the books. Per LINE, because two commands on two lines are two commands.
  *
  * Its own module rather than a private helper of the runner rule: the reconciler asks the same
  * question (`parse/reconcilerSteps`), and a second implementation of "does this command run that"

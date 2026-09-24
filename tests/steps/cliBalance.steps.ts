@@ -1497,3 +1497,70 @@ When(
     cliResult = spawnBalance([...invocationArgs, "--exit-zero"]);
   },
 );
+
+/** @SCN-CLI-055's target: a misfiled code, and an account nothing proves (3F-3635). */
+const CODE_ERROR_OUT_OF_BALANCE = "tests/fixtures/code-error-out-of-balance";
+
+// @SCN-CLI-055
+Given(
+  "a target whose corpus misfiles a scenario code and whose ledger has an account out of balance",
+  function () {
+    invocationArgs = [
+      "--features", `${CODE_ERROR_OUT_OF_BALANCE}/features`,
+      "--vitest", `${CODE_ERROR_OUT_OF_BALANCE}/vitest.json`,
+      "--package-json", `${CODE_ERROR_OUT_OF_BALANCE}/package.json`,
+      ...NO_WORKFLOWS(CODE_ERROR_OUT_OF_BALANCE),
+    ];
+  },
+);
+
+// @SCN-CLI-055
+Then("the report lists the scenario code error", function () {
+  assert.match(cliResult.stdout, /^## Scenario code errors$/m);
+  assert.match(cliResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-CEA-002/m);
+});
+
+// @SCN-CLI-055
+Then("the report carries the out-of-balance account", function () {
+  assert.match(cliResult.stdout, /\| SCN-CEB-001 \|[^\n]*out-of-balance/);
+});
+
+// @SCN-CLI-055
+Then("the verdict headline names both the scenario code error and the accounts out of balance", function () {
+  const headline = cliResult.stdout.split("\n").find((line) => line.startsWith("**SCENARIO CODE ERRORS**"));
+  assert.ok(headline, `expected the SCENARIO CODE ERRORS headline; got:\n${cliResult.stdout}`);
+  assert.match(headline, /accounts do not agree/);
+  assert.match(headline, /\(exit 1\)$/);
+});
+
+/** @SCN-CLI-021's new row: every account balances, and one code is misfiled (3F-3635). */
+const SCENARIO_CODE_ERROR = "tests/fixtures/scenario-code-error";
+
+// @SCN-CLI-021
+Given("a target that reconciles balanced-with-scenario-code-errors", function () {
+  invocationArgs = [
+    "--features", `${SCENARIO_CODE_ERROR}/features`,
+    "--vitest", `${SCENARIO_CODE_ERROR}/vitest.json`,
+    "--package-json", `${SCENARIO_CODE_ERROR}/package.json`,
+    ...NO_WORKFLOWS(SCENARIO_CODE_ERROR),
+  ];
+});
+
+/** @SCN-CLI-022's new row: a proof that never ran, beside a misfiled code (3F-3635). */
+const UNSOUND_CODE_ERROR = "tests/fixtures/unsound-code-error";
+
+// @SCN-CLI-022
+Given("a target whose collection-failed suite sits beside a misfiled scenario code", function () {
+  invocationArgs = [
+    "--features", `${UNSOUND_CODE_ERROR}/features`,
+    "--vitest", `${UNSOUND_CODE_ERROR}/vitest.json`,
+    "--package-json", `${UNSOUND_CODE_ERROR}/package.json`,
+    ...NO_WORKFLOWS(UNSOUND_CODE_ERROR),
+  ];
+});
+
+// @SCN-CLI-022
+Then("the report still lists the scenario code error", function () {
+  assert.match(cliResult.stdout, /^## Scenario code errors$/m);
+  assert.match(cliResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-UCA-002/m);
+});

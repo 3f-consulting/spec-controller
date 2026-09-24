@@ -200,8 +200,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  *
  * THE FIXTURE IS STEPLESS, and that is how it is written rather than what the reader requires: the
  * `@fitness` tag and its configured row raise the obligation, steps or none (@SCN-LNT-018).
- * That is not an endorsement of mixed tagging — whether a behavioural scenario may carry a fitness
- * tag is @SCN-STG-005's question — it is what the corpus reader admits.
+ * That is not an endorsement of mixed tagging — it is what the corpus reader admits.
  *
  * The fitness arm drives the real `runningStaticChecks` OBSERVER over a planted severed tree and
  * the obligations come from the real corpus reader, so what reconciles here is what the migration

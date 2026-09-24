@@ -39,6 +39,7 @@ import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
 import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
+import { scenarioCodeErrorsOf } from "../parse/scenarioCodeErrors.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
 import {
   resolveDeferralTags,
@@ -154,6 +155,7 @@ function observationStreams(
  */
 export interface EvidenceReconciliationSources {
   featureSources: readonly string[];
+  featureFiles?: readonly FeatureFileHeader[];
   untaggedScenarios: readonly string[];
   packageJson: TargetManifest;
   ciSources: readonly string[];
@@ -162,6 +164,16 @@ export interface EvidenceReconciliationSources {
   runtimeObservations: readonly EvidenceObservation[];
   deferralTags: readonly string[];
   ciStepRecord?: CiStepRecord;
+}
+
+/**
+ * One feature file's name and header code, paired BY INDEX with `featureSources` (3F-3635) — the
+ * `ciSourceNames` precedent. The edge knows which file a source came from; a source string does
+ * not, and the scenario code errors are statements about files.
+ */
+export interface FeatureFileHeader {
+  readonly slug: string;
+  readonly featureCode: string | null;
 }
 
 /**
@@ -288,16 +300,24 @@ export function evidenceReconciliationFromSources(
     true,
     true
   );
-  return withReaderAccounts(
-    reconciliation,
-    corpus,
-    input,
-    packageJson,
-    runners,
-    exclusions,
-    reconciler,
-    isExcluded
+  return withScenarioCodeErrors(
+    withReaderAccounts(reconciliation, corpus, input, packageJson, runners, exclusions, reconciler, isExcluded),
+    input
   );
+}
+
+/**
+ * THE CORPUS JUDGED AS A CHART OF ACCOUNT CLASSES (3F-3635) — whether each code is filed under
+ * its file's header, from the same bytes the ledger was built from. Only when the edge named the
+ * files: a caller that handed over bare sources judged no corpus, and the field stays absent.
+ */
+function withScenarioCodeErrors(
+  reconciliation: EvidenceReconciliation,
+  input: EvidenceReconciliationSources
+): EvidenceReconciliation {
+  if (input.featureFiles === undefined) return reconciliation;
+  const files = input.featureFiles.map((header, i) => ({ ...header, source: input.featureSources[i] ?? "" }));
+  return { ...reconciliation, scenarioCodeErrors: scenarioCodeErrorsOf(files) };
 }
 
 /**

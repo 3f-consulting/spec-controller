@@ -333,9 +333,16 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   );
 
   it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
-    const md = renderMarkdown(__er(reconciliationFixture), ctx);
+    // Over a corpus it judged, as every `balance` run's is (3F-3635), so the scenario code errors
+    // section is among them — here stating the codes clean.
+    const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [] }, ctx);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
-    expect(sections).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
+    expect(sections).toEqual([
+      "## Run provenance",
+      "## Scenario code errors",
+      "## Summary views",
+      "## Scenario Reconciliations",
+    ]);
   });
 
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {

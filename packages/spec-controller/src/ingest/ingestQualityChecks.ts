@@ -78,10 +78,9 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
  * publishes and `balance` is the command that reconciles; the engine holds neither, and a core
  * that assumed them would be asserting something about a command line it never sees.
  *
- * BOTH TOKENS, AND THE SECOND IS NOT DECORATION. This repository's own pipeline runs
- * `pnpm spec-controller tags` beside its balance step — the same binary, doing something that is
- * an ordinary step of the pipeline being reconciled — so an invocation naming the binary alone
- * would take that step off the books. The comparison is whole, adjacent shell tokens
+ * BOTH TOKENS, AND THE SECOND IS NOT DECORATION. A step running the same binary for anything but
+ * `balance` is an ordinary step of the pipeline being reconciled, so an invocation naming the
+ * binary alone would take that step off the books. The comparison is whole, adjacent shell tokens
  * (`parse/commandRuns`), so this names the reconciliation and nothing else the tool can do.
  */
 const RECONCILER_INVOCATION = "spec-controller balance";
@@ -134,7 +133,7 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
  * this by hand is five chances for one to stay intolerant, and a run that reports on a corpus for
  * four of its readings and throws on the fifth is worse than one that throws. The translation is
  * also why `discoverFeatures` is not the place to be tolerant — see its own note, and
- * `MissingFeatureCorpusError`'s: `tags` reaches the same reader and keeps refusing.
+ * `MissingFeatureCorpusError`'s.
  *
  * IT IS `[]`, NOT A VERDICT. Zero rows is what @SCN-CLI-019 reads as NOTHING TO RECONCILE, and a
  * corpus-less target that still has uncited credits keeps its suspense row and its exit 1
@@ -225,10 +224,9 @@ export function featureCorpusParseErrors(featuresDir: string | undefined): Gherk
  * the balance, threaded to `renderMarkdown` (via `writeOutputs`) as the 5th sibling arg
  * (markdown-only — the by-feature cut is markdown-only, so it is NOT serialised to JSON).
  * Uncoded files (`featureCode === null`) are omitted, so the by-feature emitter falls
- * back to the bare `FFF` for any id whose code no file registers. One-prefix-one-file holds
- * by invariant (`corpusFaults` raises `duplicate-feature-code`, @SCN-STG-010), so the map is
- * unambiguous. That invariant was `lintFeatureCodes`' until 3F-3313; it is the shipped command's
- * now, which is the first time a CONSUMER of this reader has it too.
+ * back to the bare `FFF` for any id whose code no file registers. When two files carry one
+ * code the map keeps the last, and that run lists `duplicate-feature-code` under Scenario code
+ * errors and fails (@SCN-STG-010, 3F-3635), so a report whose map is ambiguous never passes.
  */
 export function readFeatureNames(featuresDir?: string): Map<string, string> {
   const map = new Map<string, string>();
@@ -337,11 +335,20 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // bytes and the names to fall out of the order they are paired by.
   const ciPaths = ciSourcePathsOf(ciPath);
 
+  // The corpus, discovered and read ONCE: its bytes, and — paired by index — which file each came
+  // from and the header code it carries, for the scenario code errors (3F-3635).
+  const corpusFiles = balanceCorpus(opts.features).map((f) => ({
+    slug: f.slug,
+    featureCode: f.featureCode,
+    source: readFileSync(f.path, "utf8"),
+  }));
+
   return evidenceReconciliationFromSources({
     // The corpus's bytes, read ONCE at this impure edge (3F-3088). The engine composes the three
     // readings a citing run needs from this one array, so they cannot be assembled from two
     // discoveries that disagree about the corpus (@SCN-LNT-009).
-    featureSources: featureSources(opts.features),
+    featureSources: corpusFiles.map((f) => f.source),
+    featureFiles: corpusFiles.map(({ slug, featureCode }) => ({ slug, featureCode })),
     // The untagged half by its `<feature> : <scenario>` locator — parsed here because the locator
     // names the FILE, which the discovery knows and a source string does not.
     untaggedScenarios: untaggedScenariosFromFeatures(opts.features),
