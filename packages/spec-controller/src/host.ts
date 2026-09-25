@@ -48,6 +48,7 @@ export interface HostInvocation {
  * --features f` yields the store + `balance` + `[--features, f]`, while `balance --store
  * /s` leaves `--store` in the command's args (a `--store` AFTER the command is the
  * command's own arg, never a host store directive) — the "global before command" contract.
+ * A modifier with nothing after it is refused (@SCN-CLI-067); an empty argv is the bare help.
  */
 export function parseHostInvocation(
   argv: readonly string[],
@@ -73,6 +74,7 @@ export function parseHostInvocation(
     values.set(modifier.name, value ?? "");
     i++;
   }
+  if (i === argv.length && values.size > 0) return { commandArgs: [], refusal: noCommandRefusal([...values.keys()]) };
   return {
     store: values.get("--store"),
     runId: values.get("--run-id"),
@@ -108,6 +110,20 @@ function modifierRefusal(
     return commandAsValueRefusal(token, modifier, value ?? "");
   }
   return undefined;
+}
+
+/**
+ * The refusal for host modifiers with nothing after them: every modifier given, in one line, and the
+ * fix (@SCN-CLI-067). Given last, `--store <root>` used to answer the top-level help at exit 0 having
+ * run nothing, a false green for a CI step that lost its command word (3F-3686). Help after a
+ * modifier is a command here, and a bare `spec-controller` never reaches this.
+ */
+function noCommandRefusal(given: readonly string[]): string {
+  return (
+    `No command followed the host modifiers given (${given.join(", ")}), so nothing ran: ` +
+    `a host modifier needs a command after it, or --help.\n` +
+    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
+  );
 }
 
 /** The refusal for a modifier that took the command as its value: the modifier, the command, and the fix. */

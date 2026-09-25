@@ -214,7 +214,7 @@ At most one output may go to stdout in a single invocation. (The legacy `--json 
 
 ### Host modifiers — storing a run (`--store` / `--run-id`)
 
-`--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags.
+`--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags. A host modifier needs a command, or `--help`, after it: given with nothing after it, it is refused at exit 2 and nothing runs.
 
 ```sh
 spec-controller [--store <root>] [--run-id <id>] balance [options]

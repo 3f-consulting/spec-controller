@@ -2025,3 +2025,87 @@ Then("the refusal names {word} as having taken the command as its value", functi
   );
   assert.doesNotMatch(stderr, /before the command/i, `stderr blames another token:\n${stderr}`);
 });
+
+/**
+ * @SCN-CLI-067 — a host modifier with no command after it (3F-3686). Each row is keyed by the
+ * modifiers and the shape; the run stands beside the empty store root, so a modifier that stored
+ * anything, or created the root it was pointed at, leaves something behind to find.
+ */
+const MODIFIERS_WITH_NO_COMMAND: Record<string, (store: string) => string[]> = {
+  "--store at a store root that is not there": (store) => ["--store", join(store, "absent")],
+  "--store at the empty store root": (store) => ["--store", store],
+  "--run-id alone": () => ["--run-id", "r1"],
+  "--store, --run-id in that order": (store) => ["--store", store, "--run-id", "r1"],
+  "--run-id, --store in that order": (store) => ["--run-id", "r1", "--store", store],
+};
+let modifiersGiven: string[] = [];
+
+// @SCN-CLI-067
+When("the host modifiers {} are given with no command after them, {}", function (modifiers: string, shape: string) {
+  const argvOf = MODIFIERS_WITH_NO_COMMAND[`${modifiers} ${shape}`];
+  assert.ok(argvOf !== undefined, `no row for ${modifiers} ${shape}`);
+  modifiersGiven = modifiers.split(", ");
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot)], {
+    cwd: storedRunDir,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  controllerResult = result;
+  cliResult = result;
+});
+
+// @SCN-CLI-067
+// The meaning, never the prose: one line names every modifier given and says no command followed,
+// and the refusal is none of its neighbours' (an unknown command, a flag out of place, a command
+// taken as a value, a missing value).
+Then("the refusal names every modifier given, and says no command followed them", function () {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => modifiersGiven.every((m) => line.includes(m)) && /no command/i.test(line)),
+    `expected a line of stderr naming ${modifiersGiven.join(" and ")} and saying no command followed; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /unknown command|before the command|as its value|needs a value/i, `stderr names another fault:\n${stderr}`);
+});
+
+/**
+ * @SCN-CLI-068 — help after a host modifier, or nothing at all, still answers the top-level help
+ * (3F-3686). The control on @SCN-CLI-067: each row runs beside the empty store root, and its stdout
+ * is compared byte-for-byte with a bare invocation's, which is itself held to `--help` alone, so the
+ * bare row is compared with something other than itself.
+ */
+const HELP_REQUESTS: Record<string, (store: string) => string[]> = {
+  "--help after --store": (store) => ["--store", store, "--help"],
+  "help after --store": (store) => ["--store", store, "help"],
+  "-h after --store": (store) => ["--store", store, "-h"],
+  "--help after --run-id": () => ["--run-id", "r1", "--help"],
+  "--help after --store and --run-id": (store) => ["--store", store, "--run-id", "r1", "--help"],
+  "nothing at all": () => [],
+};
+
+/** Spawn the built binary with the given argv, beside the empty store root. */
+function spawnBesideStore(argv: string[]): SpawnSyncReturns<string> {
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: storedRunDir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return result;
+}
+
+// @SCN-CLI-068
+When("the top-level binary is asked for {}", function (request: string) {
+  const argvOf = HELP_REQUESTS[request];
+  assert.ok(argvOf !== undefined, `no request row named "${request}"`);
+  controllerResult = spawnBesideStore(argvOf(storedRunRoot));
+});
+
+// @SCN-CLI-068
+// The success status is 0; "the same top-level help" is byte-identity with a bare run, and the bare
+// run is held to `--help` alone, the surface @SCN-CLI-007 pins.
+Then("it answers with the same top-level help as a bare invocation, and the success status", function () {
+  const bare = spawnBesideStore([]);
+  const help = spawnBesideStore(["--help"]);
+  assert.equal(controllerResult.status, 0, `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`);
+  assert.equal(controllerResult.stderr, "", `expected nothing on stderr; got:\n${controllerResult.stderr}`);
+  assert.equal(bare.status, 0, `expected the bare run to exit 0; got ${bare.status}`);
+  assert.equal(bare.stdout, help.stdout, "expected the bare run's stdout to be --help's");
+  assert.ok(help.stdout.length > 0, "expected --help to print the top-level help");
+  assert.equal(controllerResult.stdout, bare.stdout, `expected the top-level help; got:\n${controllerResult.stdout}`);
+});

@@ -440,6 +440,8 @@ Feature: spec-controller balance runs standalone
     and which may repeat are the registry's to say, so a flag added later is covered by construction.
     A refusal inside a stored run leaves no run.yaml. --help still answers first, whatever else is
     given: it runs nothing and reaches no verdict, so --exit-zero has nothing to turn green.
+    A host modifier needs a command after it, or help. Given last, it is refused, and a bare
+    spec-controller still answers help (3F-3686).
 
     @SCN-CLI-062 @unit @e2e
     Scenario Outline: balance refuses a value given to a flag that takes none, naming both — <shape>
@@ -520,6 +522,39 @@ Feature: spec-controller balance runs standalone
         | --store  | with the target's flags after it                |
         | --store  | with nothing after it                           |
         | --run-id | after --store, with the target's flags after it |
+
+    @SCN-CLI-067 @unit @e2e
+    Scenario Outline: the host refuses a modifier with no command after it, naming it, and stores nothing — <modifiers> <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When the host modifiers <modifiers> are given with no command after them, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And it prints nothing a pipeline could read as a report
+      And the refusal names every modifier given, and says no command followed them
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | modifiers         | shape                             |
+        | --store           | at a store root that is not there |
+        | --store           | at the empty store root           |
+        | --run-id          | alone                             |
+        | --store, --run-id | in that order                     |
+        | --run-id, --store | in that order                     |
+
+    @SCN-CLI-068 @unit @e2e
+    Scenario Outline: help after a modifier, or nothing given at all, still answers the top-level help — <request>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When the top-level binary is asked for <request>
+      Then it answers with the same top-level help as a bare invocation, and the success status
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | request                           |
+        | --help after --store              |
+        | help after --store                |
+        | -h after --store                  |
+        | --help after --run-id             |
+        | --help after --store and --run-id |
+        | nothing at all                    |
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
