@@ -31,6 +31,7 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
+import { SCN_ID_SOURCE } from "../lib/featureCode.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 /**
@@ -42,8 +43,11 @@ import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } 
  * NO OPTIONAL SIGIL, deliberately, and that is what `SCN_TAG` in `parse/cucumber` is for instead.
  * `bareTerm` strips ONE leading `@` (@SCN-TRM-001), so a doubled sigil bares to `@SCN-…` and must
  * NOT read as the un-doubled code: it is a different spelling, not whitespace.
+ *
+ * THE FEATURE PART IS TWO TO FIVE CHARACTERS, the NUMBER ANY WIDTH (evidence-manifesto §9A, 3F-3636).
+ * A longer or shorter feature part is not an @SCN, so it mints no account and cites nothing.
  */
-export const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
+export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
 
 /**
  * The recognised `<quality-check>pending` lexicon (evidence-manifesto §11B) — a bare tag
@@ -94,7 +98,7 @@ function tagLineTags(line: string): string[] | null {
  * the non-tag context — prose, comments, step text — the tag-line parser ignores).
  * The global flag counts every occurrence (@SCN-RPT-008).
  */
-const SCN_OCCURRENCE = /@SCN-[A-Z0-9]+-\d+/g;
+const SCN_OCCURRENCE = new RegExp(`@${SCN_ID_SOURCE}`, "g");
 
 /**
  * Count every raw `@SCN-FFF-NNN` occurrence across the WHOLE source — including the

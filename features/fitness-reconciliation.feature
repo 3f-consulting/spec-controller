@@ -169,8 +169,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       one independently of the unit axis beside it.
 
       THE SHAPE RULE IS NOT THIS SCENARIO'S. Whether one scenario may carry a tier tag and a
-      fitness tag together is @SCN-STG-005's question; the fixture below carries both because a
-      TWO-AXIS scenario is what this reads. What is settled here is only that the reconciler
+      fitness tag together was a question for the retired `tags` command, which left with its
+      rules (3F-3635); the fixture below carries both because a TWO-AXIS scenario is what this reads. What is settled here is only that the reconciler
       answers each obligation a scenario raises on its own axis.
 
       Given a @fitness scenario "SCN-AAA-001"

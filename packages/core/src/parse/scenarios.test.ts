@@ -21,6 +21,7 @@ import { describe, it, expect } from "vitest";
 import {
   countScnOccurrences,
   parseScenarios,
+  parseTaggedScenarios,
   parseUntaggedScenarios,
   proseOnlyCodes,
 } from "./scenarios.js";
@@ -132,10 +133,10 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
 
   it("returns nothing when every scenario carries an @SCN tag", () => {
     const allTagged = [
-      "@SCN-A-001",
+      "@SCN-AA-001",
       "Scenario: one",
       "  Given a step",
-      "@SCN-A-002",
+      "@SCN-AA-002",
       "Scenario: two",
       "  Given a step",
     ].join("\n");
@@ -158,25 +159,25 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
  */
 describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose but never tagged anywhere", () => {
   // File A tags AAA-001 (and prose-mentions it — legitimate) and prose-mentions a
-  // dangling DANGLE-001. File B tags BBB-002, prose-mentions AAA-001 (tagged in A —
-  // NOT dangling, the cross-file union) and a dangling DANGLE-002.
+  // dangling DNG-001. File B tags BBB-002, prose-mentions AAA-001 (tagged in A —
+  // NOT dangling, the cross-file union) and a dangling DNG-002.
   const sourceA = [
     "@RPT @SCN-AAA-001",
     "Scenario: a tagged scenario",
     "  Given @SCN-AAA-001 is referenced again in prose (legitimate — it IS tagged)",
-    "  # see also @SCN-DANGLE-001 — a dangling reference, never tagged",
+    "  # see also @SCN-DNG-001 — a dangling reference, never tagged",
   ].join("\n");
   const sourceB = [
     "@RPT @SCN-BBB-002",
     "Scenario: another tagged scenario",
     "  Given the rule mentions @SCN-AAA-001 (tagged in file A — not dangling)",
-    "  # and @SCN-DANGLE-002 — dangling, never tagged anywhere",
+    "  # and @SCN-DNG-002 — dangling, never tagged anywhere",
   ].join("\n");
 
   it("returns only the codes that are prosed AND never tagged across the whole corpus", () => {
     expect(proseOnlyCodes([sourceA, sourceB])).toEqual([
-      "SCN-DANGLE-001",
-      "SCN-DANGLE-002",
+      "SCN-DNG-001",
+      "SCN-DNG-002",
     ]);
   });
 
@@ -194,5 +195,65 @@ describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose
       "  Given @SCN-SAME-001 is also in prose here",
     ].join("\n");
     expect(proseOnlyCodes([single])).toEqual([]);
+  });
+});
+
+/**
+ * @unit for @SCN-STG-024 (3F-3636) — a scenario's @SCN tag is read by evidence-manifesto §9A's
+ * grammar: a feature part of two to five characters. The four scenarios straddle both bounds, so
+ * the ids that ARE read (two and five characters) are what show the reader was looking when the
+ * ids that are NOT (one and six) come back as nothing.
+ */
+describe("[SCN-STG-024] a scenario tagged with a feature part outside two to five characters carries no @SCN code", () => {
+  const source = [
+    "Feature: bounds",
+    "  @unit @SCN-A-001",
+    "  Scenario: one character",
+    "    Given a step",
+    "  @unit @SCN-AB-001",
+    "  Scenario: two characters",
+    "    Given a step",
+    "  @unit @SCN-FIVEC-001",
+    "  Scenario: five characters",
+    "    Given a step",
+    "  @unit @SCN-SIXCHR-001",
+    "  Scenario: six characters",
+    "    Given a step",
+  ].join("\n");
+
+  it("reads the two- and five-character codes as the scenarios' codes, and no other", () => {
+    expect(parseTaggedScenarios(source).map((s) => s.scnId)).toEqual(["SCN-AB-001", "SCN-FIVEC-001"]);
+  });
+
+  it("leaves the one- and six-character scenarios uncoded", () => {
+    expect(parseUntaggedScenarios(source)).toEqual(["one character", "six characters"]);
+  });
+
+  it("still reads a number of any width, which canon allows", () => {
+    const wide = "Feature: wide\n  @unit @SCN-AB-1\n  Scenario: one digit\n    Given a step\n";
+    expect(parseTaggedScenarios(wide).map((s) => s.scnId)).toEqual(["SCN-AB-1"]);
+  });
+});
+
+/**
+ * @unit for @SCN-STG-028 (3F-3636) — a prose mention of an @SCN (a step, a comment) is read by
+ * evidence-manifesto §9A's grammar, so the non-tag-context count and the prose-only audit count
+ * only ids with a feature part of two to five characters.
+ */
+describe("[SCN-STG-028] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
+  const source = [
+    "Feature: prose",
+    "  @unit @SCN-OWN-001",
+    "  Scenario: own",
+    "    Given the prose mentions @SCN-A-001 and @SCN-AB-001",
+    "    # and a comment mentions @SCN-FIVEC-001 and @SCN-SIXCHR-001",
+  ].join("\n");
+
+  it("counts the tag and the two- and five-character mentions, and not the one- or six-character ones", () => {
+    expect(countScnOccurrences(source)).toBe(3);
+  });
+
+  it("lists only the two- and five-character mentions as prose-only codes", () => {
+    expect(proseOnlyCodes([source])).toEqual(["SCN-AB-001", "SCN-FIVEC-001"]);
   });
 });

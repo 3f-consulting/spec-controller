@@ -28,9 +28,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     THE CODE ARRIVES AND THE GRAMMAR IS READ ONCE. The file's header comes from the ingest edge,
     the reading the by-feature cut groups on; a scenario's `<FFF>` comes off its id through the
-    one helper that owns that grammar. An id that helper cannot parse — a feature code longer
-    than five characters — has no feature part to compare, so `foreign-scn-code` does not see it
-    (3F-3636 owns that question).
+    one helper that owns that grammar, and every reader takes the same grammar (3F-3636). An id
+    whose feature part is longer than five characters is no @SCN, so it is no scenario code for
+    these rules to judge — it is the one-grammar Rule below that says so.
 
     THE SECTION'S SENTENCES ARE CLAIMS ABOUT A POPULATION, so each is held by a corpus on which a
     false one would show (3F-3666). A finding says where the by-feature cut counted the scenario,
@@ -79,7 +79,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       When balance reconciles that target
       Then the run fails on a scenario code error
       And the scenario code errors name no-feature-code with the file that carries no header code
-      When that file is headed @TOOLONGCODE, a header code of more than five characters, and its scenario is coded @SCN-TOOLONGCODE-001
+      When that file is headed @TOOLONGCODE, a header code of more than five characters, and its only scenario is coded @SCN-TOOLONGCODE-001
+      Then the run lists no scenario code error, because neither the header nor the scenario's code is a code
+      When that file's scenario is coded @SCN-FIVEC-001 instead, a feature part of five characters
       Then the scenario code errors name no-feature-code with that file in the same way
       When the file carrying no header code holds only scenarios that carry no code
       Then the run lists no scenario code error
@@ -178,3 +180,52 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Then the report states that the corpus holds three scenarios in two accounts
       And it names the shared code with the file and the name of each scenario carrying it
       And the report saved as JSON re-renders the same statement
+
+  Rule: an @SCN is read by canon's one grammar in every role — a feature part of two to five characters, and a number of any width
+
+    Evidence-manifesto §9A fixes a scenario id as SCN-<FFF>-<NNN>, the feature part two to five
+    characters and the number any width. Every place the tool reads an id — a scenario's tag, a
+    Vitest title's citation, a Cucumber scenario's tag, a CI step's id and a prose mention — takes
+    that one grammar, so an id canon says is not an @SCN is not one anywhere, and no account,
+    citation or finding rests on it (3F-3636). Each scenario holds the bound from both sides in one
+    target: a feature part of two and of five characters is read, one of one and of six is not.
+
+    @unit @integration @SCN-STG-024
+    Scenario: A scenario tagged with a feature part outside two to five characters carries no @SCN code, beside scenarios of two and five characters that are accounts
+      Given a target whose four scenarios are tagged with feature parts of one, two, five and six characters, each in a file of its own
+      When balance reconciles that grammar target
+      Then the two- and five-character codes are accounts
+      And the scenarios tagged with a one- and a six-character feature part carry no @SCN code, and no account is opened for either
+      And the grammar target lists no scenario code error
+
+    @unit @integration @SCN-STG-025
+    Scenario: A Vitest title citing a feature part outside two to five characters cites no scenario, beside citations of two and five characters that are read
+      Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
+      When balance reconciles that grammar target
+      Then the two- and five-character citations open phantom scenarios
+      And the one- and six-character titles cite no scenario, so both credits post to the suspense scenario
+      And the grammar target lists no scenario code error
+
+    @unit @integration @SCN-STG-026
+    Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that are read
+      Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
+      When balance reconciles that grammar target
+      Then the two- and five-character citations open phantom scenarios
+      And the one- and six-character Cucumber scenarios cite no scenario, so both credits post to the suspense scenario
+      And the grammar target lists no scenario code error
+
+    @unit @integration @SCN-STG-027
+    Scenario: A CI step whose id is a feature part outside two to five characters is no fitness credit's citation, beside step ids of two and five characters that are
+      Given a target with one scenario of its own, and a CI step record whose successful steps are keyed by feature parts of one, two, five and six characters that no scenario carries
+      When balance reconciles that grammar target
+      Then the two- and five-character citations open phantom scenarios
+      And the one- and six-character step ids post no credit at all
+      And the grammar target lists no scenario code error
+
+    @unit @integration @SCN-STG-028
+    Scenario: A prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context, beside mentions of two and five characters that are
+      Given a target whose only scenario mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters
+      When balance reconciles that grammar target
+      Then the report counts two @SCN ids seen in non-tag context, and lists the two- and five-character codes as appearing only in prose
+      And it counts and lists neither the one- nor the six-character id
+      And the grammar target lists no scenario code error

@@ -173,7 +173,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     // counts into the total and into out-of-balance, with `phantom` surviving as its sub-count.
     const balanceWithPhantom: Ledger = reconcile(suspenseScenarios, [
       ...suspenseObservations,
-      { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed" },
+      { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(balanceWithPhantom), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({

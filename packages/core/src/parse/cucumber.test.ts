@@ -394,3 +394,25 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     expect(observations[0]).toMatchObject({ scnId: null, broken: true, locator: "features/ldg019.feature" });
   });
 });
+
+/**
+ * @unit for @SCN-STG-026 (3F-3636) — a Cucumber scenario's @SCN tag is read by evidence-manifesto
+ * §9A's grammar: a feature part of two to five characters, a number of any width. The tags straddle
+ * both bounds, so the citations that ARE read show the reader was looking.
+ */
+describe("[SCN-STG-026] a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario", () => {
+  const tagged = (id: string) => ({ tags: [{ name: `@${id}` }], steps: [{ result: { status: "passed" as const } }] });
+  const report: CucumberJsonReport = [
+    { uri: "features/x.feature", elements: ["SCN-A-001", "SCN-AB-001", "SCN-FIVEC-001", "SCN-SIXCHR-001", "SCN-AB-1"].map(tagged) },
+  ];
+
+  it("cites the two- and five-character codes, any number width, and nothing for the one- or six-character tags", () => {
+    expect(parseCucumberEvidenceObservations(report, "integration").map((o) => o.scnId)).toEqual([
+      null,
+      "SCN-AB-001",
+      "SCN-FIVEC-001",
+      null,
+      "SCN-AB-1",
+    ]);
+  });
+});

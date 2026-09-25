@@ -276,9 +276,9 @@ Then(
       qualityCheckReconciliations: { outcome: string; locator?: string }[];
     }[];
     // The phantom credit surfaces as a phantom-scenario row (@SCN-LDG-006), never a section detail
-    // array. The fixture's 1 phantom (SCN-PHANTOM-999) surfaces as a phantom row carrying the locator.
-    const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHANTOM-999");
-    assert.ok(phantom, "expected a phantom-scenario row for SCN-PHANTOM-999 in the ledger");
+    // array. The fixture's 1 phantom (SCN-PHM-999) surfaces as a phantom row carrying the locator.
+    const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHM-999");
+    assert.ok(phantom, "expected a phantom-scenario row for SCN-PHM-999 in the ledger");
     assert.equal(phantom!.kind, "phantom-scenario", "expected kind phantom-scenario");
     const phantomItem = phantom!.qualityCheckReconciliations[0];
     assert.equal(phantomItem?.outcome, "cites-unknown-scenario", "expected the cites-unknown-scenario outcome");

@@ -21,15 +21,17 @@
  * each other, so there is one copy now and both import it (3F-2368).
  */
 
+import { SCN_ID_SOURCE } from "./featureCode.js";
+
 /**
  * The bracketed citation. Captures the bare code so callers get `SCN-<FFF>-<NNN>` with no
  * wrapper. Intentionally NOT anchored — a title carries the citation among prose — and
  * intentionally not `\b`-delimited, because the brackets are the delimiters.
  */
-const SCN_CITATION = /\[(SCN-[A-Z0-9]+-\d+)\]/;
+const SCN_CITATION = new RegExp(`\\[(${SCN_ID_SOURCE})\\]`);
 
 /** The same, globally, for callers reading every citation on a line. */
-const SCN_CITATIONS = /\[(SCN-[A-Z0-9]+-\d+)\]/g;
+const SCN_CITATIONS = new RegExp(`\\[(${SCN_ID_SOURCE})\\]`, "g");
 
 /**
  * The FIRST bracketed scenario id cited in `text`, as a bare code, or null when `text`

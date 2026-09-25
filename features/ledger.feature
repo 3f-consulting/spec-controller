@@ -115,21 +115,21 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @integration @SCN-LDG-006
     Scenario: a credit citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance
       Given a scenario "SCN-LDG-006" requiring unit-level evidence
-      And a passing unit-level result citing the phantom scenario "SCN-PHANTOM-999"
+      And a passing unit-level result citing the phantom scenario "SCN-PHM-999"
       When the reconciler runs
-      Then the ledger reports "SCN-PHANTOM-999" as a phantom-scenario reconciliation with a cites-unknown-scenario item
-      And the phantom-scenario "SCN-PHANTOM-999" is out of balance
+      Then the ledger reports "SCN-PHM-999" as a phantom-scenario reconciliation with a cites-unknown-scenario item
+      And the phantom-scenario "SCN-PHM-999" is out of balance
 
     # A phantom item's SHAPE, one destination over from @SCN-LDG-008: it carries what the
     # credit has a value for, and omits — not nulls — the keys it does not.
     @unit @integration @SCN-LDG-034
     Scenario: a phantom row's item carries the keys its credit has a value for and omits the rest
       Given a scenario "SCN-LDG-034" requiring unit-level evidence
-      And a passing fitness credit citing the phantom scenario "SCN-PHANTOM-034" naming the check "lint:complexity"
+      And a passing fitness credit citing the phantom scenario "SCN-PHM-034" naming the check "lint:complexity"
       When the reconciler runs
-      Then the ledger reports "SCN-PHANTOM-034" as a phantom-scenario reconciliation with a cites-unknown-scenario item
-      And the phantom-scenario "SCN-PHANTOM-034"'s item carries the check "lint:complexity" and no locator key
-      And the phantom-scenario "SCN-PHANTOM-034" is out of balance
+      Then the ledger reports "SCN-PHM-034" as a phantom-scenario reconciliation with a cites-unknown-scenario item
+      And the phantom-scenario "SCN-PHM-034"'s item carries the check "lint:complexity" and no locator key
+      And the phantom-scenario "SCN-PHM-034" is out of balance
 
   Rule: a credit citing no scenario is a suspense-scenario reconciliation
 

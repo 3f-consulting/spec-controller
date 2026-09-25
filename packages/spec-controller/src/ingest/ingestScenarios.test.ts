@@ -141,7 +141,6 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
 
     expect(discovered.map((f) => f.slug)).toEqual(["a-alpha"]);
     expect(discovered[0]!.featureCode).toBe("AAA");
-    expect(discovered[0]!.scenarioCodes).toEqual(["SCN-AAA-001"]);
   });
 });
 
@@ -151,12 +150,9 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
  * command translates the refusal into its own status.
  *
  * WHY NOT `[]`. The obvious fix — hand back an empty corpus when the directory is not there —
- * would ship a NEW false green in a second command. `spec-controller tags` reaches this same
- * reader through `readCorpusInputs`, whose generic `catch` is the only thing turning an absent
- * corpus into `The corpus could not be read: …` at exit 2; tolerance here turns that named
- * refusal into `tags: OK …` at exit 0, inside the slice whose whole purpose is killing a vacuous
- * certification. So absence stays a refusal AT THE READER and becomes typed, which is what lets
- * `balance` opt in to reporting while `tags` keeps its refusal untouched.
+ * makes the decision for every caller, and a caller that certifies a corpus would certify an
+ * absent one as empty: a vacuous green. So absence stays a refusal AT THE READER and becomes
+ * typed, which is what lets `balance` opt in to reporting, by catching the class by name.
  *
  * THE DEFAULT-DIRECTORY FORM IS NOT PROVABLE HERE. `featuresDir()` resolves against
  * `process.cwd()` and `process.chdir` throws in a Vitest worker, so the arm that runs the tool
@@ -185,15 +181,6 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
 
     expect((thrown as { directory?: string }).directory).toBe(dir);
     expect((thrown as Error).message).toContain(dir);
-  });
-
-  it("is still an Error, so `tags`' generic catch keeps refusing an absent corpus", () => {
-    // THE MEASURED TRAP, pinned at the type. `readCorpusInputs` (corpus/cli.ts) catches
-    // `UnreadableFeatureCorpusError` by name and everything else generically; a refusal that
-    // stopped being an Error would fall out of both and crash `tags` to Node's default instead.
-    const { thrown } = discover(absentDir());
-
-    expect(thrown).toBeInstanceOf(Error);
   });
 
   it("hands back nothing — an absent corpus is not an empty one at this reader", () => {

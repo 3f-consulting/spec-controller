@@ -126,10 +126,12 @@ function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: strin
  * AN UNCODED FILE RAISES NOTHING HERE: with no header there is nothing for an id to be foreign
  * TO, and the file itself is `no-feature-code`'s.
  *
- * AND AN ID `featureCodeOf` CANNOT PARSE RAISES NOTHING HERE — a Named limit, not a claim that
- * something else reports it. Measured (3F-3635): `@SCN-TOOLONGCODE-001` in a `@ONE` file is read
- * by the scenario reader as an ordinary account and reconciles satisfied, while this rule, which
- * needs the id's feature part, skips it. Which reader's answer the tree should hold is 3F-3636's.
+ * THE `null` FROM `featureCodeOf` IS DEFENSIVE, NOT A LIMIT (3F-3636). The scenario walk reads an
+ * id by the same grammar `featureCodeOf` parses — a feature part of two to five characters — so
+ * every scenario reaching this rule has a feature part. An id outside that grammar is no @SCN at
+ * all: it mints no account here or anywhere else, which is what canon (evidence-manifesto §9A)
+ * says of it. The skip stays so that a reader drifting from the grammar again fails quiet here
+ * rather than throwing, and @SCN-STG-011's boundary pair is what would notice the drift.
  *
  * The tag walk is `parseTaggedScenarios`, which inherits Feature- and Rule-level tags exactly as
  * cucumber does. A hand-rolled scan of the tag lines is the second reading that walk was
@@ -163,11 +165,10 @@ export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioC
  * cancelled 3F-3314). The file is an account class with no number, so the by-feature cut files its
  * scenarios under whatever their ids happen to name.
  *
- * "CARRIES A CODE" IS THE ACCOUNT READER'S ANSWER, NOT `featureCodeOf`'s (operator ruling,
- * 2026-09-24). `parseTaggedScenarios` is the walk the ledger's accounts are minted from, so a
- * scenario it reads is an account, whether or not its feature part is one `featureCodeOf` accepts.
- * That is what catches a file headed `@TOOLONGCODE`: its header is no header code, and its
- * `@SCN-TOOLONGCODE-001` is still an account.
+ * "CARRIES A CODE" IS THE ACCOUNT READER'S ANSWER. `parseTaggedScenarios` is the walk the ledger's
+ * accounts are minted from, and it reads an id by evidence-manifesto §9A's grammar (3F-3636). So a
+ * file headed `@TOOLONGCODE` whose scenario is coded `@SCN-TOOLONGCODE-001` raises nothing: neither
+ * is a code, and the file holds no coded scenario. The same file over `@SCN-FIVEC-001` is listed.
  *
  * ONE ERROR PER FILE, because the file is what the remedy changes: give it a header code.
  */

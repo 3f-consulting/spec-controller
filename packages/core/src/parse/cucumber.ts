@@ -20,6 +20,7 @@
 
 import type { RuntimeQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
+import { SCN_ID_SOURCE } from "../lib/featureCode.js";
 
 /** The minimal shape of Cucumber-JS's JSON formatter output this reader depends on. */
 export type CucumberJsonReport = Array<{
@@ -59,7 +60,7 @@ export type CucumberJsonReport = Array<{
  * the code, so nothing there has a tag line to read. The export stands because the corpus reader
  * beside it takes the same pattern.
  */
-export const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
+export const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
 
 /**
  * The non-unit runtime tiers a scenario can NAME by tag. A cucumber observation's
@@ -144,69 +145,83 @@ export function parseCucumberEvidenceObservations(
     // Q5), made portable relative to the run root (verbatim without root).
     const locator = relativizeToRoot(feature.uri ?? feature.name ?? "(unknown feature)", root);
     for (const scenario of feature.elements ?? []) {
-      const tags = scenario.tags ?? [];
-      const scnTag = tags
-        .map((t) => SCN_TAG.exec(t.name ?? ""))
-        .find((m): m is RegExpExecArray => m !== null);
-
-      const steps = scenario.steps ?? [];
-      // FOUR-WAY classification (@SCN-PND-013, extended by @SCN-LDG-019) — pending is NEVER
-      // inferred from status. The DROP is what realises inconclusive→missing and the `broken`
-      // FLAG is what realises ambiguous→suspense, so `EvidenceStatus` stays binary: no new
-      // status, no reconciler change. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
-      // no observation at ANY named tier (the `continue` below). The statuses that stay dropped
-      // stay honest: `undefined` (no step definition is written — the test genuinely IS absent),
-      // `pending` (explicitly deferred), `skipped` (never ran).
-      //
-      // THE AMBIGUOUS ARM IS ORDERED FIRST (@SCN-LDG-019) because cucumber halts the scenario at
-      // the ambiguous step — every step after it reads `skipped`, so the inconclusive drop would
-      // otherwise swallow the ambiguity along with them. An ambiguous step is not a stub that
-      // proved nothing but a BROKEN HARNESS: two step definitions match one step, so the proof
-      // exists and cannot execute. Dropping it as inconclusive sent the reader the WRONG remedy —
-      // write a test that already exists, rather than fix the colliding step definitions. It is
-      // cucumber's instance of the `broken` outcome vitest's collection failure established
-      // (@SCN-LDG-017): evidence that NEVER MATERIALISED.
-      //
-      // ONE observation for the whole scenario (never one per named tier): the harness broke ONCE,
-      // so a multi-tier scenario posts ONE broken item, levelled at its first named tier. Unlike
-      // vitest's collection failure (citation-less by construction — a file that fails to collect
-      // names no test), this observation CARRIES the scnId: the cucumber scenario DID cite its
-      // @SCN; only its step could not run. The reconciler's fail-safe checks `broken` BEFORE
-      // `status`, so it can never discharge (or fail) the obligation it cites; it posts to the
-      // SUSPENSE row and the obligation reconciles `missing` BY ABSENCE (pinned in
-      // reconcile.test.ts [SCN-LDG-019], under BOTH status values).
-      const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
-      if (ambiguous) {
-        results.push({
-          qualityCheck: deriveLevels(tags, fallbackQualityCheck)[0]!,
-          scnId: scnTag ? scnTag[1]! : null,
-          // Structurally required, and the step certainly did not pass; the reconciler's fail-safe
-          // checks `broken` BEFORE `status`, so this never reconciles as `failing`.
-          status: "failed",
-          locator,
-          broken: true,
-          message: ambiguousMessage(ambiguous),
-        });
-        continue;
-      }
-      const anyFailed = steps.some((s) => s.result?.status === "failed");
-      const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
-      if (!anyFailed && !allPassed) continue; // inconclusive → drop the whole scenario.
-      const status: EvidenceStatus = anyFailed ? "failed" : "passed";
-      // One observation PER named non-unit tier: a cucumber run of an @integration @e2e
-      // scenario discharges BOTH obligations, so it emits an integration AND an e2e observation
-      // (the multi-tag ruling's teeth, @SCN-LDG-014). A single-tier or untagged scenario emits
-      // exactly one. The levels are DERIVED from the scenario's own tier tags, not the input
-      // source; the caller-supplied level is the fallback for an untagged scenario.
-      for (const level of deriveLevels(tags, fallbackQualityCheck)) {
-        results.push({
-          qualityCheck: level,
-          scnId: scnTag ? scnTag[1]! : null, // no @SCN tag → an uncited credit (SUSPENSE).
-          status,
-          locator,
-        });
-      }
+      results.push(...scenarioObservations(scenario, locator, fallbackQualityCheck));
     }
   }
   return results;
+}
+
+/** One cucumber scenario as the report carries it. */
+type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
+
+/** The bare @SCN a scenario's tags cite — the first one — or null when it carries none. */
+function citedScnIdOf(tags: Array<{ name?: string }>): string | null {
+  const scnTag = tags
+    .map((t) => SCN_TAG.exec(t.name ?? ""))
+    .find((m): m is RegExpExecArray => m !== null);
+  return scnTag ? scnTag[1]! : null;
+}
+
+/** The observations ONE scenario posts: none, one broken one, or one per named tier. */
+function scenarioObservations(
+  scenario: CucumberScenario,
+  locator: string,
+  fallbackQualityCheck: RuntimeQualityCheck
+): EvidenceObservation[] {
+  const tags = scenario.tags ?? [];
+  const scnId = citedScnIdOf(tags);
+  const steps = scenario.steps ?? [];
+  // FOUR-WAY classification (@SCN-PND-013, extended by @SCN-LDG-019) — pending is NEVER
+  // inferred from status. The DROP is what realises inconclusive→missing and the `broken`
+  // FLAG is what realises ambiguous→suspense, so `EvidenceStatus` stays binary: no new
+  // status, no reconciler change. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
+  // no observation at ANY named tier (the empty return below). The statuses that stay dropped
+  // stay honest: `undefined` (no step definition is written — the test genuinely IS absent),
+  // `pending` (explicitly deferred), `skipped` (never ran).
+  //
+  // THE AMBIGUOUS ARM IS ORDERED FIRST (@SCN-LDG-019) because cucumber halts the scenario at
+  // the ambiguous step — every step after it reads `skipped`, so the inconclusive drop would
+  // otherwise swallow the ambiguity along with them. An ambiguous step is not a stub that
+  // proved nothing but a BROKEN HARNESS: two step definitions match one step, so the proof
+  // exists and cannot execute. Dropping it as inconclusive sent the reader the WRONG remedy —
+  // write a test that already exists, rather than fix the colliding step definitions. It is
+  // cucumber's instance of the `broken` outcome vitest's collection failure established
+  // (@SCN-LDG-017): evidence that NEVER MATERIALISED.
+  //
+  // ONE observation for the whole scenario (never one per named tier): the harness broke ONCE,
+  // so a multi-tier scenario posts ONE broken item, levelled at its first named tier. Unlike
+  // vitest's collection failure (citation-less by construction — a file that fails to collect
+  // names no test), this observation CARRIES the scnId: the cucumber scenario DID cite its
+  // @SCN; only its step could not run. The reconciler's fail-safe checks `broken` BEFORE
+  // `status`, so it can never discharge (or fail) the obligation it cites; it posts to the
+  // SUSPENSE row and the obligation reconciles `missing` BY ABSENCE (pinned in
+  // reconcile.test.ts [SCN-LDG-019], under BOTH status values).
+  const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
+  if (ambiguous) {
+    return [{
+      qualityCheck: deriveLevels(tags, fallbackQualityCheck)[0]!,
+      scnId,
+      // Structurally required, and the step certainly did not pass; the reconciler's fail-safe
+      // checks `broken` BEFORE `status`, so this never reconciles as `failing`.
+      status: "failed",
+      locator,
+      broken: true,
+      message: ambiguousMessage(ambiguous),
+    }];
+  }
+  const anyFailed = steps.some((s) => s.result?.status === "failed");
+  const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
+  if (!anyFailed && !allPassed) return []; // inconclusive → drop the whole scenario.
+  const status: EvidenceStatus = anyFailed ? "failed" : "passed";
+  // One observation PER named non-unit tier: a cucumber run of an @integration @e2e
+  // scenario discharges BOTH obligations, so it emits an integration AND an e2e observation
+  // (the multi-tag ruling's teeth, @SCN-LDG-014). A single-tier or untagged scenario emits
+  // exactly one. The levels are DERIVED from the scenario's own tier tags, not the input
+  // source; the caller-supplied level is the fallback for an untagged scenario.
+  return deriveLevels(tags, fallbackQualityCheck).map((level) => ({
+    qualityCheck: level,
+    scnId, // no @SCN tag → an uncited credit (SUSPENSE).
+    status,
+    locator,
+  }));
 }

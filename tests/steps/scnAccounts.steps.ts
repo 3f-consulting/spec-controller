@@ -2,8 +2,8 @@
  * @integration arms for the account-number Rule of features/scn-tags.feature (3F-3609) — an @SCN
  * is one account number, and two scenarios carrying it make that account unreconcilable.
  *
- * Its own file, not scnTags.steps.ts: that one drives the `tags` command, which leaves the CLI
- * with its Rules, and this Rule is `balance`'s.
+ * Its own file, because this Rule is `balance`'s: a Rule's arms live beside the command that
+ * answers it.
  *
  * THE SUBJECT IS REAL GHERKIN. Each corpus here is feature-file text the real parser reads, so the
  * wiring under test is parse → reconcile — the reading cucumber itself makes of the file, tag

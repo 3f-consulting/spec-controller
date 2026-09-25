@@ -55,8 +55,13 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
     expect(scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-TWO-002"])])).toEqual([]);
   });
 
-  it("does not see an id whose feature code it cannot parse — a Named limit, 3F-3636", () => {
-    expect(scenarioCodeErrorsOf([file("one", "ONE", ["SCN-ONE-001", "SCN-TOOLONGCODE-001"])])).toEqual([]);
+  it("lists a five-character foreign code, and not a six-character one, which is no scenario code at all (3F-3636)", () => {
+    // The boundary pair in one file: the five-character id is the positive control that shows the
+    // rule is looking, so the six-character id's silence is the grammar's, not a rule gone quiet.
+    const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-FIVEC-001", "SCN-SIXCHR-001"])]);
+    expect(errors.map((e) => e.kind)).toEqual(["foreign-scn-code"]);
+    expect(errors[0]!.message).toContain("SCN-FIVEC-001");
+    expect(errors.some((e) => e.message.includes("SCN-SIXCHR-001"))).toBe(false);
   });
 
   it("reds the run: a reconciliation carrying one has scenario code errors, a clean or unjudged one has none", () => {
@@ -122,13 +127,16 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
     expect(errors).toEqual([expect.objectContaining({ kind: "no-feature-code", files: ["unc.feature"] })]);
   });
 
-  it("lists a file whose header code is too long to be one, by the reader that mints the account", () => {
-    const long: CorpusFile = {
+  it("lists nothing for a file whose header and scenario codes are both too long to be codes, and lists the same file once its scenario's feature part is five characters", () => {
+    const headedTooLong = (scnId: string): CorpusFile => ({
       slug: "long",
       featureCode: null,
-      source: "@TOOLONGCODE\nFeature: long\n\n  @unit @SCN-TOOLONGCODE-001\n  Scenario: s\n    Given a thing\n",
-    };
-    expect(scenarioCodeErrorsOf([long]).map((e) => e.kind)).toEqual(["no-feature-code"]);
+      source: `@TOOLONGCODE\nFeature: long\n\n  @unit @${scnId}\n  Scenario: s\n    Given a thing\n`,
+    });
+    // Neither is a code (evidence-manifesto §9A: <FFF> is 2–5), so there is no coded scenario to name.
+    expect(scenarioCodeErrorsOf([headedTooLong("SCN-TOOLONGCODE-001")])).toEqual([]);
+    // The positive control: one character shorter, the scenario IS coded, and the header still is not.
+    expect(scenarioCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
   });
 
   it("lists nothing for an uncoded file whose scenarios carry no code", () => {

@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { SCN_ID_SOURCE } from "@3f-consulting/spec-controller-core/internal";
 
 /** What one `balance` run left behind: its status, its JSON report and its markdown. */
 interface CodeRun {
@@ -54,7 +55,7 @@ function featureFile(code: string | null, ids: readonly string[]): string {
 
 /** Every @SCN the files carry, bar the uncited, each cited by one passing Vitest assertion. */
 function citedIds(): string[] {
-  const ids = new Set(Object.values(files).flatMap((source) => source.match(/SCN-[A-Z0-9]+-\d+/g) ?? []));
+  const ids = new Set(Object.values(files).flatMap((source) => source.match(new RegExp(SCN_ID_SOURCE, "g")) ?? []));
   return [...ids].filter((id) => !uncited.has(id));
 }
 
@@ -330,13 +331,31 @@ Then("the scenario code errors name no-feature-code with the file that carries n
 
 // @SCN-STG-019
 When(
-  "that file is headed @TOOLONGCODE, a header code of more than five characters, and its scenario is coded @SCN-TOOLONGCODE-001",
+  "that file is headed @TOOLONGCODE, a header code of more than five characters, and its only scenario is coded @SCN-TOOLONGCODE-001",
   function () {
     delete files["unc.feature"];
     files["long.feature"] = featureFile("TOOLONGCODE", ["SCN-TOOLONGCODE-001"]);
     run = balance();
   },
 );
+
+// @SCN-STG-019 — the absence is the GRAMMAR's (3F-3636): an over-long feature part is no @SCN, so
+// the file holds no coded scenario for `no-feature-code` to name. The five-character arm below is
+// the same file, one character shorter, and it IS listed — that is what makes this absence mean
+// something rather than a rule that went quiet.
+Then(
+  "the run lists no scenario code error, because neither the header nor the scenario's code is a code",
+  function () {
+    assert.deepEqual(run.report.scenarioCodeErrors, [], `expected no scenario code error; got ${JSON.stringify(run.report.scenarioCodeErrors)}`);
+    assert.ok(!section(run.markdown).includes("no-feature-code"), `expected no no-feature-code; got:\n${section(run.markdown)}`);
+  },
+);
+
+// @SCN-STG-019
+When("that file's scenario is coded @SCN-FIVEC-001 instead, a feature part of five characters", function () {
+  files["long.feature"] = featureFile("TOOLONGCODE", ["SCN-FIVEC-001"]);
+  run = balance();
+});
 
 // @SCN-STG-019
 Then("the scenario code errors name no-feature-code with that file in the same way", function () {

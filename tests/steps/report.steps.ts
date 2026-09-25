@@ -287,27 +287,11 @@ Then(
       parsed.runProvenance,
       `expected the persisted spec-reconciliation.json to carry a top-level runProvenance object; got:\n${jsonText}`
     );
-    assert.equal(
-      parsed.runProvenance.target,
-      ctx.target,
-      `expected runProvenance.target "${ctx.target}"; got "${parsed.runProvenance.target}"`
-    );
-    assert.equal(
-      parsed.runProvenance.sourceSha,
-      ctx.sourceSha,
-      `expected runProvenance.sourceSha "${ctx.sourceSha}"; got "${parsed.runProvenance.sourceSha}"`
-    );
-    // The TOOL's identity, distinct from the target's sourceSha (3F-1916).
-    assert.equal(
-      parsed.runProvenance.toolSha,
-      ctx.toolSha,
-      `expected runProvenance.toolSha "${ctx.toolSha}"; got "${parsed.runProvenance.toolSha}"`
-    );
-    assert.equal(
-      parsed.runProvenance.toolVersion,
-      ctx.toolVersion,
-      `expected runProvenance.toolVersion "${ctx.toolVersion}"; got "${parsed.runProvenance.toolVersion}"`
-    );
+    // toolSha is the TOOL's identity, distinct from the target's sourceSha (3F-1916).
+    for (const key of ["target", "sourceSha", "toolSha", "toolVersion"] as const) {
+      const got: string | null | undefined = parsed.runProvenance[key];
+      assert.equal(got, ctx[key], `expected runProvenance.${key} "${ctx[key]}"; got "${got}"`);
+    }
     assert.match(
       parsed.runProvenance.runTimestamp ?? "",
       /2026-06-27T08:17:53Z/,
@@ -451,7 +435,7 @@ When("the run writes its artifacts with the evidence observation reconciliation"
 Then(
   "the persisted spec-reconciliation.md renders the Test volume cut with the balancing identity and spec-reconciliation.json carries evidence-observation atoms that balance by construction",
   function () {
-    // The fixture spans the kinds: 3 unit (TGT-001 attributed, PHANTOM-999 phantom evidence observation, one
+    // The fixture spans the kinds: 3 unit (TGT-001 attributed, PHM-999 phantom evidence observation, one
     // no-@SCN) + 2 integration (TGT-002 attributed, one @smoke no-@SCN) = 5 evidence observations;
     // attributed-to-scenario 2, phantom 1, suspense 2 ⇒ 5 = 2 + 1 + 2 (three-way).
     assert.match(

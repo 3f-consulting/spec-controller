@@ -252,7 +252,7 @@ Given("a target that reconciles out-of-balance", function () {
   const root = process.cwd();
   // The shared out-of-balance fixture: it NAMES SCN-TGT-002 at @integration but the
   // run supplies only --vitest (no --cucumber), so that obligation reconciles as MISSING;
-  // it also carries a phantom (SCN-PHANTOM-999) and uncited credits (the suspense row) —
+  // it also carries a phantom (SCN-PHM-999) and uncited credits (the suspense row) —
   // so the whole reconciliation is out-of-balance many times over. Reconcilable end-to-end:
   // the ONLY thing wrong is the balance itself, which is exactly what the gate must red.
   assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);

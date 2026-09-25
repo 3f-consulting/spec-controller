@@ -58,6 +58,7 @@ import {
   type ScnGateResult,
 } from "./scnSubIssueGate.js";
 import { readScenarioChanges } from "./scenarioTextChanges.js";
+import { SCN_ID_SOURCE } from "@3f-consulting/spec-controller-core/internal";
 
 /** Resolve the base ref to diff HEAD against (the PR base). */
 function resolveBaseRef(): string {
@@ -399,7 +400,7 @@ export function parseExemptions(
   commitMessages: string[],
   prBody: string
 ): Exemption[] {
-  const directive = /^\s*SCN-exempt:\s*(SCN-[A-Z0-9]+-\d+)\s*(?:\(([^)]*)\))?\s*$/;
+  const directive = new RegExp(`^\\s*SCN-exempt:\\s*(${SCN_ID_SOURCE})\\s*(?:\\(([^)]*)\\))?\\s*$`);
 
   const exemptions: Exemption[] = [];
   for (const source of [...commitMessages, prBody]) {
@@ -477,6 +478,35 @@ function reportAndExit(result: ScnGateResult): never {
   process.exit(1);
 }
 
+/**
+ * What the pull request itself says: the exemptions its commits and body claim, whether it carries a
+ * ticket handle, whether it comes from a fork, and whether there was a body to read at all.
+ */
+function readPullRequestFacts(base: string): {
+  exemptions: Exemption[];
+  hasTicketHandle: boolean;
+  isExternalPr: boolean;
+  prBodyReadable: boolean;
+} {
+  const commitMessages = commitMessagesSinceBase(base);
+  // THE ABSENT VARIABLE AND THE EMPTY ONE ARE DIFFERENT FACTS, AND THE `?? ""` USED TO ERASE THAT
+  // (@SCN-SSM-018). CI always supplies PR_BODY — `${{ github.event.pull_request.body }}` resolves
+  // to the empty string for a pull request whose author wrote nothing — so a body that is PRESENT
+  // and empty was read and carried no exemption, and an unclaimed exemption there still reds. It
+  // is UNSET that says there was no pull request body at all, which off a pull request is not a
+  // fault but the ordinary state. The parse still gets a string; the decision gets the fact.
+  const prBody = process.env["PR_BODY"];
+  const prBodyReadable = prBody !== undefined;
+  const exemptions = parseExemptions(commitMessages, prBody ?? "");
+  const hasTicketHandle = readTicketHandle(process.env["GITHUB_HEAD_REF"], commitMessages);
+
+  // The live fork read (@SCN-SSM-003): a fork-sourced (external) PR —
+  // head.repo.full_name != base.repo.full_name in the GitHub PR event payload —
+  // is exempt. Absent/local runs default false (internal), keeping the teeth.
+  const isExternalPr = readIsExternalPr(process.env["GITHUB_EVENT_PATH"]);
+  return { exemptions, hasTicketHandle, isExternalPr, prBodyReadable };
+}
+
 async function main(): Promise<void> {
   const base = resolveBaseRef();
   const diff = featureFileDiff(base);
@@ -504,22 +534,7 @@ async function main(): Promise<void> {
 
   if (codesToCheck.length === 0 && !unitEquivalentBehaviourBearing) exitWithNothingToCheck(base);
 
-  const commitMessages = commitMessagesSinceBase(base);
-  // THE ABSENT VARIABLE AND THE EMPTY ONE ARE DIFFERENT FACTS, AND THE `?? ""` USED TO ERASE THAT
-  // (@SCN-SSM-018). CI always supplies PR_BODY — `${{ github.event.pull_request.body }}` resolves
-  // to the empty string for a pull request whose author wrote nothing — so a body that is PRESENT
-  // and empty was read and carried no exemption, and an unclaimed exemption there still reds. It
-  // is UNSET that says there was no pull request body at all, which off a pull request is not a
-  // fault but the ordinary state. The parse still gets a string; the decision gets the fact.
-  const prBody = process.env["PR_BODY"];
-  const prBodyReadable = prBody !== undefined;
-  const exemptions = parseExemptions(commitMessages, prBody ?? "");
-  const hasTicketHandle = readTicketHandle(process.env["GITHUB_HEAD_REF"], commitMessages);
-
-  // The live fork read (@SCN-SSM-003): a fork-sourced (external) PR —
-  // head.repo.full_name != base.repo.full_name in the GitHub PR event payload —
-  // is exempt. Absent/local runs default false (internal), keeping the teeth.
-  const isExternalPr = readIsExternalPr(process.env["GITHUB_EVENT_PATH"]);
+  const { exemptions, hasTicketHandle, isExternalPr, prBodyReadable } = readPullRequestFacts(base);
 
   console.log(
     `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]${uncited(uncitedChangedTestBlocks)}; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}; pull request body: ${prBodyReadable ? "readable" : "NONE TO READ"}${checking(codesToCheck)}`

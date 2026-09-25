@@ -1,11 +1,14 @@
 /**
  * Ingest the target's feature files — the IMPURE reader that walks features/ on disk
- * and parses each file's feature code + scenario codes into DiscoveredFeature
- * records (split out of the old spec/featureCodes.ts). The pure per-source
- * parsers (extractFeatureCode / parseScenarioCodes) live here with their sole consumer;
- * the `scnId → feature-code` grammar helper is engine-side (packages/core/src/lib/
+ * and reads each file's header code into DiscoveredFeature records (split out of the old
+ * spec/featureCodes.ts). The pure header parser (extractFeatureCode) lives here with its sole
+ * consumer; the `scnId → feature-code` grammar helper is engine-side (packages/core/src/lib/
  * featureCode.ts); the duplicate-code lint is engine-side too since 3F-3313, as @SCN-STG-010 in
- * parse/corpusFaults.ts, and no longer a private check under tests/checks/.
+ * parse/scenarioCodeErrors.ts, and no longer a private check under tests/checks/.
+ *
+ * NO PER-FILE LIST OF SCENARIO CODES (3F-3636). One used to ride here, read by a copy of the
+ * @SCN grammar of its own, and nothing but its own test read it; a scenario's code is read by the
+ * engine's scenario walk, which is the reading the ledger's accounts are minted from.
  *
  * The foundation, folded into the @LDG runtime spine.
  */
@@ -30,8 +33,6 @@ export interface DiscoveredFeature {
   /** Absolute path to the feature file. */
   path: string;
   featureCode: string | null;
-  /** Every @SCN-<FFF>-<NNN> scenario code in the file, in order, duplicates kept. */
-  scenarioCodes: string[];
 }
 
 /**
@@ -41,48 +42,32 @@ export interface DiscoveredFeature {
  */
 export function extractFeatureCode(source: string): string | null {
   const lines = source.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]!.trim();
-    if (line === "" || line.startsWith("#")) continue;
-    if (line.startsWith("Feature:")) {
-      for (let j = i - 1; j >= 0; j--) {
-        const prev = lines[j]!.trim();
-        if (prev === "") continue;
-        if (!prev.startsWith("@")) break;
-        const tags = prev.split(/\s+/).filter((t) => t.startsWith("@"));
-        for (const tag of tags) {
-          const bare = tag.slice(1);
-          if (bare.startsWith("SCN-")) continue;
-          if (["unit", "integration", "e2e", "performance", "smoke"].includes(bare)) continue;
-          if (CODE_PATTERN.test(bare)) return bare;
-        }
-      }
-      return null;
-    }
-  }
-  return null;
+  const featureLine = lines.findIndex((line) => line.trim().startsWith("Feature:"));
+  if (featureLine < 0) return null;
+  return headerTagsAbove(lines, featureLine).find(isHeaderCode) ?? null;
+}
+
+/** The tags a tier or routing concern owns, which are never a file's header code. */
+const NON_CODE_TAGS = ["unit", "integration", "e2e", "performance", "smoke"];
+
+/** Is this bare tag the file's header code — not an @SCN id, not a tier tag, and code-shaped? */
+function isHeaderCode(bare: string): boolean {
+  return !bare.startsWith("SCN-") && !NON_CODE_TAGS.includes(bare) && CODE_PATTERN.test(bare);
 }
 
 /**
- * Parse every @SCN-<FFF>-<NNN> scenario code in a feature file's source, in
- * document order, duplicates preserved. Only genuine TAG LINES are scanned (a
- * line whose first non-blank character is `@` and whose every whitespace-
- * separated token is a tag) — prose that merely mentions a code is skipped.
+ * The bare tags on the tag lines directly above the `Feature:` line, nearest line first and each
+ * line left to right. Blank lines are passed over; the first line that is not a tag line ends it.
  */
-export function parseScenarioCodes(source: string): string[] {
-  const codes: string[] = [];
-  const codePattern = /^SCN-[A-Z0-9]+-\d+$/;
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line.startsWith("@")) continue;
-    const tokens = line.split(/\s+/);
-    if (!tokens.every((t) => t.startsWith("@"))) continue;
-    for (const token of tokens) {
-      const bare = token.slice(1);
-      if (codePattern.test(bare)) codes.push(bare);
-    }
+function headerTagsAbove(lines: readonly string[], featureLine: number): string[] {
+  const tags: string[] = [];
+  for (let j = featureLine - 1; j >= 0; j--) {
+    const prev = lines[j]!.trim();
+    if (prev === "") continue;
+    if (!prev.startsWith("@")) break;
+    tags.push(...prev.split(/\s+/).filter((t) => t.startsWith("@")).map((t) => t.slice(1)));
   }
-  return codes;
+  return tags;
 }
 
 /**
@@ -102,10 +87,9 @@ function featuresDir(): string {
  *
  * Absence stays a REFUSAL AT THE READER — what changed is that it is typed, so a caller can decide.
  * `balance` opts in to reporting on a target that has no corpus (most targets have no `features/`
- * at all, and `new-client` is a supported adoption state); `tags` keeps refusing, unedited, because
- * a `MissingFeatureCorpusError` is still an `Error` and still lands in its generic catch. Returning
- * `[]` here instead would make that decision for both, and measured it turns two named refusals
- * into `tags: OK …` at exit 0.
+ * at all, and `new-client` is a supported adoption state) by catching `MissingFeatureCorpusError` by
+ * name. Returning `[]` here instead would make that decision for every caller, and one that
+ * certifies a corpus would certify an absent one as empty.
  *
  * ONLY `ENOENT`. A `features` path that exists but is a FILE, or one the process may not read, is
  * a different fault and is not ours to reinterpret — it rethrows.
@@ -156,6 +140,5 @@ export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature
     slug: name.replace(/\.feature$/, ""),
     path,
     featureCode: extractFeatureCode(source),
-    scenarioCodes: parseScenarioCodes(source),
   }));
 }

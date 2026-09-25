@@ -46,6 +46,8 @@ import {
   // it holds (two plain `run:` steps, a code on one) by the reader the observer uses rather than
   // by a second reading of the same YAML.
   ciRunSteps,
+  // The one @SCN grammar the product reads a step's id by (3F-3636).
+  SCN_ID_SOURCE,
 } from "@3f-consulting/spec-controller-core/internal";
 import { parseTaggedScenarios } from "../../packages/core/src/parse/scenarios.js";
 // @SCN-LNT-028 — the CI RUN's record as its own reader takes it, so the planted record is handed
@@ -147,7 +149,7 @@ function citedScnIdsIn(ciSource: string): string[] {
   return ciSource
     .split(/\r?\n/)
     .map((line) => /^\s*id:\s*(\S+)\s*$/.exec(line.trimEnd())?.[1])
-    .filter((id): id is string => id !== undefined && /^SCN-[A-Z0-9]+-\d+$/.test(id));
+    .filter((id): id is string => id !== undefined && new RegExp(`^${SCN_ID_SOURCE}$`).test(id));
 }
 
 // @SCN-LNT-004

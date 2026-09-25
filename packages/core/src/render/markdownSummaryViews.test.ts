@@ -49,7 +49,7 @@ function qcr(
       ? { evidenceObligation: { qualityCheck: "unit" } }
       : {}),
     ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
+      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" } }
       : {}),
   });
 }

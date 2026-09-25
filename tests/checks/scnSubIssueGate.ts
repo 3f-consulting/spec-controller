@@ -37,7 +37,7 @@
  * spec-controller parent 3F-1137 (port + fork-exemption design, endorsed 2026-07-09).
  */
 
-import { parseScnCitations } from "@3f-consulting/spec-controller-core/internal";
+import { parseScnCitations, SCN_ID_SOURCE } from "@3f-consulting/spec-controller-core/internal";
 import { isQuotedStringLiteralLine, structuralBraces } from "./testSourceLexer.js";
 
 /**
@@ -198,68 +198,123 @@ const notExamined = (code: string, subject: string): ScnGateUnexamined => ({
  * has to be read to understand the other.
  */
 function unitEquivalentFindings(input: ScnGateInput): ScnGateFindings {
-  const violations: ScnGateViolation[] = [];
-  const unexamined: ScnGateUnexamined[] = [];
+  const none: ScnGateFindings = { violations: [], unexamined: [] };
+  if (input.unitEquivalentCitedCodes.some((code) => hasValidExemption(input.exemptions, code))) {
+    return none;
+  }
+  if (input.uncitedChangedTestBlocks.length > 0) {
+    // A CHANGED test block cites nothing — not on itself, not on any ancestor.
+    // A sibling's cite elsewhere in the file does NOT vouch for it (@SCN-SSM-005),
+    // and neither does the ticket handle: the handle proves a live work-unit, not
+    // WHICH scenario this new behaviour belongs to. Both are required.
+    return { violations: [uncitedBlocksViolation(input.uncitedChangedTestBlocks)], unexamined: [] };
+  }
+  const cited = input.unitEquivalentCitedCodes[0];
+  if (cited === undefined) return { violations: [UNCITED_CHANGE_VIOLATION], unexamined: [] };
+  if (input.hasTicketHandle) return none;
+  // The same third answer the code-set loop gives, on the unit-equivalent surface and for
+  // the same reason: the cite arrived, the handle did not, and an exemption was the only
+  // thing left that could have bound it (@SCN-SSM-018).
+  if (!input.prBodyReadable) {
+    return {
+      violations: [],
+      unexamined: [notExamined(cited, `The behaviour-bearing unit-equivalent change citing @${cited}`)],
+    };
+  }
+  return { violations: [unitEquivalentMissingHandle(cited)], unexamined: [] };
+}
 
-  const exempted = input.unitEquivalentCitedCodes.some((code) =>
-    input.exemptions.some(
-      (e) =>
-        e.code === code &&
-        e.reason !== null &&
-        (EXEMPTION_REASONS as readonly string[]).includes(e.reason)
-    )
+/** Does an exemption with a recognised reason name this code? */
+function hasValidExemption(exemptions: readonly Exemption[], code: string): boolean {
+  return exemptions.some(
+    (e) => e.code === code && e.reason !== null && (EXEMPTION_REASONS as readonly string[]).includes(e.reason)
   );
-  if (!exempted) {
-    if (input.uncitedChangedTestBlocks.length > 0) {
-      // A CHANGED test block cites nothing — not on itself, not on any ancestor.
-      // A sibling's cite elsewhere in the file does NOT vouch for it (@SCN-SSM-005),
-      // and neither does the ticket handle: the handle proves a live work-unit, not
-      // WHICH scenario this new behaviour belongs to. Both are required.
-      violations.push({
-        kind: "uncited-unit-equivalent",
-        code: "",
-        message:
-          `A behaviour-bearing unit-equivalent change is proven by test block(s) that cite ` +
-          `no scenario: ${input.uncitedChangedTestBlocks.join("; ")}. Another test in the ` +
-          `same file citing an @SCN does not vouch for these — a cite belongs to the block ` +
-          `it annotates. Carry the scenario's feature-prefixed @SCN-<FFF>-<NNN> id in the ` +
-          `changed test's own describe/it string (or in an enclosing describe's).`,
-      });
-    } else if (input.unitEquivalentCitedCodes.length === 0) {
-      violations.push({
-        kind: "uncited-unit-equivalent",
-        code: "",
-        message:
-          `A behaviour-bearing unit-equivalent change (a src/** change proven only by a ` +
-          `@unit test, with no Gherkin @SCN feature delta) cites no scenario. Carry the ` +
-          `scenario's feature-prefixed @SCN-<FFF>-<NNN> id inside the @unit test's describe/it ` +
-          `string (the bidirectional-link rule) — a ticket handle alone is not enough.`,
-      });
-    } else if (!input.hasTicketHandle && !input.prBodyReadable) {
-      // The same third answer the code-set loop gives, on the unit-equivalent surface and for
-      // the same reason: the cite arrived, the handle did not, and an exemption was the only
-      // thing left that could have bound it (@SCN-SSM-018).
-      unexamined.push(
-        notExamined(
-          input.unitEquivalentCitedCodes[0]!,
-          `The behaviour-bearing unit-equivalent change citing @${input.unitEquivalentCitedCodes[0]}`
-        )
-      );
-    } else if (!input.hasTicketHandle) {
-      violations.push({
-        kind: "missing-ticket-handle",
-        code: input.unitEquivalentCitedCodes[0]!,
-        message:
-          `A behaviour-bearing unit-equivalent change cites @${input.unitEquivalentCitedCodes[0]} ` +
-          `but is on a PR that carries no ticket handle (no Linear-auto-named branch ` +
-          `"steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a ` +
-          `live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a ` +
-          `[3F-NNN] commit prefix).`,
-      });
+}
+
+function uncitedBlocksViolation(blocks: readonly string[]): ScnGateViolation {
+  return {
+    kind: "uncited-unit-equivalent",
+    code: "",
+    message:
+      `A behaviour-bearing unit-equivalent change is proven by test block(s) that cite ` +
+      `no scenario: ${blocks.join("; ")}. Another test in the ` +
+      `same file citing an @SCN does not vouch for these — a cite belongs to the block ` +
+      `it annotates. Carry the scenario's feature-prefixed @SCN-<FFF>-<NNN> id in the ` +
+      `changed test's own describe/it string (or in an enclosing describe's).`,
+  };
+}
+
+const UNCITED_CHANGE_VIOLATION: ScnGateViolation = {
+  kind: "uncited-unit-equivalent",
+  code: "",
+  message:
+    `A behaviour-bearing unit-equivalent change (a src/** change proven only by a ` +
+    `@unit test, with no Gherkin @SCN feature delta) cites no scenario. Carry the ` +
+    `scenario's feature-prefixed @SCN-<FFF>-<NNN> id inside the @unit test's describe/it ` +
+    `string (the bidirectional-link rule) — a ticket handle alone is not enough.`,
+};
+
+function unitEquivalentMissingHandle(code: string): ScnGateViolation {
+  return {
+    kind: "missing-ticket-handle",
+    code,
+    message:
+      `A behaviour-bearing unit-equivalent change cites @${code} ` +
+      `but is on a PR that carries no ticket handle (no Linear-auto-named branch ` +
+      `"steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a ` +
+      `live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a ` +
+      `[3F-NNN] commit prefix).`,
+  };
+}
+
+/** Every behaviour-bearing code once, in the order added, then updated, then deleted. */
+function codesToCheck(input: ScnGateInput): Array<{ code: string; verb: "Added" | "Updated" | "Deleted" }> {
+  const seen = new Set<string>();
+  const out: Array<{ code: string; verb: "Added" | "Updated" | "Deleted" }> = [];
+  const sets = [
+    [input.addedCodes, "Added"],
+    [input.updatedCodes, "Updated"],
+    [input.deletedCodes, "Deleted"],
+  ] as const;
+  for (const [codes, verb] of sets) {
+    for (const code of codes) {
+      if (seen.has(code)) continue;
+      seen.add(code);
+      out.push({ code, verb });
     }
   }
+  return out;
+}
 
-  return { violations, unexamined };
+/** The one finding a behaviour-bearing code raises, or nothing when something binds it. */
+function codeFindings(input: ScnGateInput, code: string, verb: "Added" | "Updated" | "Deleted"): ScnGateFindings {
+  const none: ScnGateFindings = { violations: [], unexamined: [] };
+  if (input.renumberPairs.some((p) => p.added === code)) return none;
+  if (input.hasTicketHandle) return none;
+  if (hasValidExemption(input.exemptions, code)) return none;
+  if (input.exemptions.some((e) => e.code === code)) {
+    return {
+      violations: [{
+        kind: "malformed-exemption",
+        code,
+        message: `${verb} scenario code @${code} carries a malformed SCN-exempt trailer — its reason is missing or not in {${EXEMPTION_REASONS.join(", ")}}. A malformed exemption is a failure, not a silent pass: correct the reason to one of {${EXEMPTION_REASONS.join(", ")}}, or remove the SCN-exempt trailer and put the change on a ticketed PR.`,
+      }],
+      unexamined: [],
+    };
+  }
+  // The last rescue was an exemption, and one of the two places exemptions live was not
+  // readable. Nothing here is a finding: the gate reports what it could not answer.
+  if (!input.prBodyReadable) {
+    return { violations: [], unexamined: [notExamined(code, `${verb} scenario code @${code}`)] };
+  }
+  return {
+    violations: [{
+      kind: "missing-ticket-handle",
+      code,
+      message: `${verb} scenario code @${code} is a behaviour-bearing change on a PR that carries no ticket handle (no Linear-auto-named branch "steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a [3F-NNN] commit prefix), or add a SCN-exempt: ${code} (<reason>) trailer with reason ∈ {${EXEMPTION_REASONS.join(", ")}}.`,
+    }],
+    unexamined: [],
+  };
 }
 
 /**
@@ -296,68 +351,12 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
     return { ok: true, verdict: "pass", violations: [], unexamined: [] };
   }
 
-  const violations: ScnGateViolation[] = [];
-  const unexamined: ScnGateUnexamined[] = [];
-
-  const checkCode = (code: string, verb: "Added" | "Updated" | "Deleted"): void => {
-    if (input.renumberPairs.some((p) => p.added === code)) return;
-    if (input.hasTicketHandle) return;
-
-    const exemptionsForCode = input.exemptions.filter((e) => e.code === code);
-    if (
-      exemptionsForCode.some(
-        (e) => e.reason !== null && (EXEMPTION_REASONS as readonly string[]).includes(e.reason)
-      )
-    ) {
-      return;
-    }
-    if (exemptionsForCode.length > 0) {
-      violations.push({
-        kind: "malformed-exemption",
-        code,
-        message: `${verb} scenario code @${code} carries a malformed SCN-exempt trailer — its reason is missing or not in {${EXEMPTION_REASONS.join(", ")}}. A malformed exemption is a failure, not a silent pass: correct the reason to one of {${EXEMPTION_REASONS.join(", ")}}, or remove the SCN-exempt trailer and put the change on a ticketed PR.`,
-      });
-      return;
-    }
-
-    // The last rescue was an exemption, and one of the two places exemptions live was not
-    // readable. Nothing here is a finding: the gate reports what it could not answer.
-    if (!input.prBodyReadable) {
-      unexamined.push(notExamined(code, `${verb} scenario code @${code}`));
-      return;
-    }
-
-    violations.push({
-      kind: "missing-ticket-handle",
-      code,
-      message: `${verb} scenario code @${code} is a behaviour-bearing change on a PR that carries no ticket handle (no Linear-auto-named branch "steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a [3F-NNN] commit prefix), or add a SCN-exempt: ${code} (<reason>) trailer with reason ∈ {${EXEMPTION_REASONS.join(", ")}}.`,
-    });
-  };
-
-  const seen = new Set<string>();
-  for (const code of input.addedCodes) {
-    if (seen.has(code)) continue;
-    seen.add(code);
-    checkCode(code, "Added");
-  }
-  for (const code of input.updatedCodes) {
-    if (seen.has(code)) continue;
-    seen.add(code);
-    checkCode(code, "Updated");
-  }
-  for (const code of input.deletedCodes) {
-    if (seen.has(code)) continue;
-    seen.add(code);
-    checkCode(code, "Deleted");
-  }
-
+  const findings = codesToCheck(input).map(({ code, verb }) => codeFindings(input, code, verb));
   // Unit-equivalent surface (the 3F-805 leak) — its own function since @SCN-SSM-018 added a
   // fourth branch to it, because the complexity check reds before the reader does.
-  if (input.unitEquivalentBehaviourBearing) {
-    const found = unitEquivalentFindings(input);
-    violations.push(...found.violations);
-    unexamined.push(...found.unexamined);
-  }
+  if (input.unitEquivalentBehaviourBearing) findings.push(unitEquivalentFindings(input));
+  const violations = findings.flatMap((f) => f.violations);
+  const unexamined = findings.flatMap((f) => f.unexamined);
 
   // A FINDING OUTRANKS AN UNANSWERED QUESTION. A run that both found something and could not
   // answer for something else has still found something, so it reds — which is what keeps CI's
@@ -376,7 +375,6 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
  * in document order, de-duplicated.
  */
 export function parseAddedCodes(diff: string): string[] {
-  const codePattern = /^SCN-[A-Z0-9]+-\d+$/;
   const seen = new Set<string>();
   const codes: string[] = [];
 
@@ -390,7 +388,7 @@ export function parseAddedCodes(diff: string): string[] {
 
     for (const token of tokens) {
       const bare = token.slice(1);
-      if (codePattern.test(bare) && !seen.has(bare)) {
+      if (SCN_CODE.test(bare) && !seen.has(bare)) {
         seen.add(bare);
         codes.push(bare);
       }
@@ -401,7 +399,25 @@ export function parseAddedCodes(diff: string): string[] {
 }
 
 const HUNK_HEADER = /^@@ /;
-const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
+
+/**
+ * The added and removed CONTENT lines of a unified diff, marker split from body — never a file
+ * header (`+++`/`---`), a `diff --git` line or a hunk header. The one reading of a diff's lines
+ * the detectors below share.
+ */
+function diffContentLines(diff: string): Array<{ marker: "+" | "-"; body: string }> {
+  const out: Array<{ marker: "+" | "-"; body: string }> = [];
+  for (const rawLine of diff.split(/\r?\n/)) {
+    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
+    if (rawLine.startsWith("diff --git") || HUNK_HEADER.test(rawLine)) continue;
+    const marker = rawLine[0];
+    if (marker === "+" || marker === "-") out.push({ marker, body: rawLine.slice(1) });
+  }
+  return out;
+}
+
+/** A bare @SCN code, by the product's one grammar. */
+const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
 
 /** Is a diff line's body (after the marker, trimmed) a genuine Gherkin TAG LINE? */
 function tagLineCodes(body: string): string[] {
@@ -435,31 +451,14 @@ export function detectDeletedCodes(
   updatedCodes: readonly string[],
   renumberRemovedCodes: readonly string[]
 ): string[] {
-  const removed: string[] = [];
-  const removedSeen = new Set<string>();
+  const removedInOrder: string[] = [];
   const added = new Set<string>();
-
-  for (const rawLine of diff.split(/\r?\n/)) {
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-    if (rawLine.startsWith("diff --git")) continue;
-    if (HUNK_HEADER.test(rawLine)) continue;
-
-    const marker = rawLine[0];
-    if (marker !== "+" && marker !== "-") continue;
-
-    const codes = tagLineCodes(rawLine.slice(1));
-    if (codes.length === 0) continue;
-    if (marker === "-") {
-      for (const code of codes) {
-        if (!removedSeen.has(code)) {
-          removedSeen.add(code);
-          removed.push(code);
-        }
-      }
-    } else {
-      for (const code of codes) added.add(code);
-    }
+  for (const { marker, body } of diffContentLines(diff)) {
+    const codes = tagLineCodes(body);
+    if (marker === "-") removedInOrder.push(...codes);
+    else for (const code of codes) added.add(code);
   }
+  const removed = [...new Set(removedInOrder)];
 
   if (removed.length === 0) return [];
 
@@ -663,47 +662,26 @@ export function attributeChangedBlockCites(
   changedLines: number[]
 ): ChangedBlockCites {
   const touched = new Set(changedLines);
-  const blocks = parseTestBlocks(source);
-
-  const citedCodes: string[] = [];
-  const seenCodes = new Set<string>();
-  const uncitedBlocks: string[] = [];
-  const seenBlocks = new Set<string>();
-
   // Only LEAF blocks are judged: a describe is proven by the its beneath it, and
   // judging both would name the same offence twice.
-  for (const block of blocks) {
-    if (!block.isLeaf) continue;
+  const judged = parseTestBlocks(source).filter((block) => block.isLeaf && isTouched(block, touched));
 
-    let isTouched = false;
-    for (let line = block.startLine; line <= block.endLine; line += 1) {
-      if (touched.has(line)) {
-        isTouched = true;
-        break;
-      }
-    }
-    if (!isTouched) continue;
-
-    if (block.citedCodes.length === 0) {
-      // No cite on the block, none inherited from any ancestor. A SIBLING's cite is
-      // not in this chain and so cannot vouch for it — the whole point of 3F-1758.
-      const name = block.chain.join(" > ");
-      if (!seenBlocks.has(name)) {
-        seenBlocks.add(name);
-        uncitedBlocks.push(name);
-      }
-      continue;
-    }
-
-    for (const code of block.citedCodes) {
-      if (!seenCodes.has(code)) {
-        seenCodes.add(code);
-        citedCodes.push(code);
-      }
-    }
-  }
+  // No cite on the block, none inherited from any ancestor. A SIBLING's cite is
+  // not in this chain and so cannot vouch for it — the whole point of 3F-1758.
+  const uncitedBlocks = [
+    ...new Set(judged.filter((b) => b.citedCodes.length === 0).map((b) => b.chain.join(" > "))),
+  ];
+  const citedCodes = [...new Set(judged.flatMap((b) => b.citedCodes))];
 
   return { citedCodes, uncitedBlocks };
+}
+
+/** Does any line of this block's range carry a change? */
+function isTouched(block: TestBlock, touched: ReadonlySet<number>): boolean {
+  for (let line = block.startLine; line <= block.endLine; line += 1) {
+    if (touched.has(line)) return true;
+  }
+  return false;
 }
 
 /**
@@ -724,14 +702,7 @@ export function isUnitEquivalentBehaviourBearing(
 
 /** Does the `src/**` diff carry any added/removed content line (not just headers)? */
 function hasSrcChange(srcDiff: string): boolean {
-  for (const rawLine of srcDiff.split(/\r?\n/)) {
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-    if (rawLine.startsWith("diff --git") || HUNK_HEADER.test(rawLine)) continue;
-    const marker = rawLine[0];
-    if (marker !== "+" && marker !== "-") continue;
-    if (rawLine.slice(1).trim() !== "") return true;
-  }
-  return false;
+  return diffContentLines(srcDiff).some(({ body }) => body.trim() !== "");
 }
 
 /**
@@ -740,22 +711,14 @@ function hasSrcChange(srcDiff: string): boolean {
  * import / whitespace / type-only line does NOT count.
  */
 function hasBehaviourBearingTestDelta(testDiff: string): boolean {
-  const testCall = /\b(?:describe|it|test)\s*(?:\.\w+)?\s*\(/;
-  const assertion = /\b(?:expect\s*\(|assert\b)/;
+  return diffContentLines(testDiff).some(({ body }) => isBehaviourBearingLine(body.trim()));
+}
 
-  for (const rawLine of testDiff.split(/\r?\n/)) {
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-    if (rawLine.startsWith("diff --git") || HUNK_HEADER.test(rawLine)) continue;
-    const marker = rawLine[0];
-    if (marker !== "+" && marker !== "-") continue;
-
-    const body = rawLine.slice(1).trim();
-    if (body === "") continue;
-    if (body.startsWith("//") || body.startsWith("/*") || body.startsWith("*")) continue;
-    if (/^(?:import|export)\b/.test(body) && /\bfrom\b/.test(body)) continue;
-    if (isQuotedStringLiteralLine(body)) continue;
-
-    if (testCall.test(body) || assertion.test(body)) return true;
-  }
-  return false;
+/** A changed test line that is a test call or an assertion — not a comment, import or literal. */
+function isBehaviourBearingLine(body: string): boolean {
+  if (body === "") return false;
+  if (body.startsWith("//") || body.startsWith("/*") || body.startsWith("*")) return false;
+  if (/^(?:import|export)\b/.test(body) && /\bfrom\b/.test(body)) return false;
+  if (isQuotedStringLiteralLine(body)) return false;
+  return /\b(?:describe|it|test)\s*(?:\.\w+)?\s*\(/.test(body) || /\b(?:expect\s*\(|assert\b)/.test(body);
 }

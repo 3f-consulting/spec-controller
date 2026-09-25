@@ -27,6 +27,10 @@
 // not public — the form is spec-controller's own reading convention, not a v1 contract.
 export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 
+// The one @SCN grammar (evidence-manifesto §9A, 3F-3636), for the repository's own apparatus —
+// the sub-issue gate and the step helpers — so it reads an id exactly as the product does.
+export { SCN_ID_SOURCE } from "./lib/featureCode.js";
+
 // `bareTerm` — the ONE reading of what a term BARE is: whitespace around it is not part of it, and
 // only a LEADING @ is a sigil. Shared because it was hand-copied seven times and the copies carried
 // the same anchored-strip-before-trim ordering, so a term a target typed with a stray space in

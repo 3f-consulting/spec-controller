@@ -151,15 +151,15 @@ describe("[SCN-LDG-006] a credit citing a phantom scenario becomes a phantom-sce
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-006", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
-    // A passing unit credit citing SCN-PHANTOM-999 — an @SCN id NO scenario
+    // A passing unit credit citing SCN-PHM-999 — an @SCN id NO scenario
     // matches. It posts to no real scenario, so it lands on a PHANTOM scenario. The
     // credit carries a locator (the where-to-fix, ruling Q5).
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed", locator: "src/phantom.test.ts" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const phantom = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PHANTOM-999");
+    const phantom = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PHM-999");
 
     // A phantom-scenario reconciliation: kind discriminates it from a scenario;
     // its single Quality Check Reconciliation is cites-unknown-scenario carrying the
@@ -167,10 +167,10 @@ describe("[SCN-LDG-006] a credit citing a phantom scenario becomes a phantom-sce
     expect(phantom?.kind).toBe("phantom-scenario");
     expect(phantom?.verdict).toBe("out-of-balance");
     expect(phantom?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" } },
+      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed", locator: "src/phantom.test.ts" } },
     ]);
     expect(phantom?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" } },
+      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed", locator: "src/phantom.test.ts" } },
     ]);
 
     // SCN-LDG-006 stays a scenario-kind row — `scenario` is reserved for the real kind.

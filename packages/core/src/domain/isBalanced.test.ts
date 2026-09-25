@@ -76,7 +76,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     // run is out-of-balance even though no scenario is.
     const reconciliation: Ledger = reconcile(
       [unitScenario("SCN-TGT-001")],
-      [unitCredit("SCN-TGT-001"), unitCredit("SCN-PHANTOM-999")],
+      [unitCredit("SCN-TGT-001"), unitCredit("SCN-PHM-999")],
     );
     expect(isBalanced(reconciliation)).toBe(false);
   });

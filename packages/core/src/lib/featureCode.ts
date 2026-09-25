@@ -13,12 +13,28 @@
 
 /**
  * Parse the feature code (the `<FFF>`) from a bare scenario id of the form
- * `SCN-<FFF>-<NNN>` (no leading `@`). Returns null when the id is malformed. The
+ * `SCN-<FFF>-<NNN>` (no leading `@`). Returns null when the id is malformed — which no reader in
+ * the tool now hands it, since every one reads by this same grammar (3F-3636). The
  * single owner of `scnId → feature-code` parsing — callers reuse this rather than
  * re-deriving a regex (Evidence Manifesto §9A: a scenario id is `SCN-<FFF>-<NNN>`
  * where `<FFF>` is 2–5 uppercase alphanumerics).
  */
 export function featureCodeOf(scnId: string): string | null {
-  const match = /^SCN-([A-Z0-9]{2,5})-\d+$/.exec(scnId);
+  const match = FEATURE_CODE_OF.exec(scnId);
   return match ? match[1]! : null;
 }
+
+/** The `<FFF>` of §9A: two to five uppercase alphanumerics. */
+const FEATURE_PART_SOURCE = "[A-Z0-9]{2,5}";
+
+/**
+ * THE ONE @SCN GRAMMAR, as a `RegExp` source with no anchors (evidence-manifesto §9A, 3F-3636):
+ * `SCN-<FFF>-<NNN>`, the feature part two to five characters, the number any width. Every reader
+ * in the tree builds its pattern from this — the tag, the Vitest citation, the Cucumber tag, the CI
+ * step id, the prose mention, and the repository's own sub-issue gate — adding only its own
+ * anchors, sigil or brackets. Six copies of this answer are how the readers drifted from canon
+ * and from `featureCodeOf`, one character class at a time.
+ */
+export const SCN_ID_SOURCE = `SCN-${FEATURE_PART_SOURCE}-\\d+`;
+
+const FEATURE_CODE_OF = new RegExp(`^SCN-(${FEATURE_PART_SOURCE})-\\d+$`);

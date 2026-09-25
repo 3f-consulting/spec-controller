@@ -66,7 +66,12 @@ concurrency:
 # and stamps the run unsound, so without `always()` one early red would report one `failing` and
 # nine `broken` — a worse account from a correct mechanism. The exceptions are the two runners,
 # `Test` and `Cucumber`: each is a suite's run-time check (SCN-FIT-012, SCN-FIT-013) and that
-# suite's runner at once, and each keeps a runner's unconditional place at the head of the ladder.
+# suite's runner at once, and neither takes `always()`, because a runner must never run over a
+# failed `Build` — its red would be the build's, reported as the suite's. `Test` keeps the default.
+# `Cucumber` runs whenever `Test` ran, pass or fail (3F-3636): an unrelated suite's red is not a
+# reason to go unrecorded. Its condition WIDENS `success()` as `always()` does, so the premise above
+# holds — every run on which the default would run it, it runs — and it stops short of `always()`
+# at exactly the failed build, where `Test` never ran.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
 # `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
@@ -195,9 +200,17 @@ jobs:
       # AND IT IS SCN-FIT-013'S CHECK AS WELL AS THE BEHAVIOURAL RUNNER, for the reason `Test` is
       # SCN-FIT-012's: the row's bar is the limit this step runs the suite under, in seconds; past
       # it GNU `timeout` exits 124, the step's `outcome` is `failure`, and the dump below carries
-      # that to `balance` under this `id:`. No `if: always()`, for the same reason as `Test`.
+      # that to `balance` under this `id:`.
+      #
+      # IT RUNS WHENEVER `Test` RAN, PASS OR FAIL (3F-3636). Under the default, a unit red skipped
+      # this step, so a behavioural red that arrived with it was attested only locally — the CI log
+      # held nothing for it. The condition reads `Test`'s own outcome rather than `always()`: a
+      # failed `Build` leaves `Test` skipped, and a runner over a build that did not happen reports
+      # the build's failure as the suite's. `Build` carries no `id:` for this, deliberately — an
+      # `id:` enters the steps record `balance` reads, and `Build` is not a check.
       - name: Cucumber
         id: SCN-FIT-013
+        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
         run: timeout 150 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
       # STEP 2b — THE FITNESS ROWS, AS ONE CI STEP EACH THAT CITES THEM (3F-3271, under
