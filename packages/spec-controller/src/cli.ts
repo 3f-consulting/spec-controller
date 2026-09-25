@@ -7,7 +7,8 @@
  *
  * Commands: `balance` — the deterministic reconciliation of scenarios against
  * observed evidence, standalone on the public core + app layer (no engine). It also polices the
- * corpus's own scenario codes (3F-3635), which is why there is no second command for that. The
+ * corpus's own scenario codes (3F-3635). `allocate` — a query, not a verdict: the next scenario code
+ * for a feature part, which keeps no run and so takes no host modifier. The
  * `analyse` / `migrate` capabilities are a separate, closed offering built on the same core.
  *
  * Storage is a CROSS-CUTTING host modifier, not a command. A leading `--store <root>`
@@ -22,6 +23,7 @@
 import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
+import { runAllocate } from "./cli-allocate/cli.js";
 import { resolveSourceSha, resolveToolIdentity } from "./run-management/resolveRunInputs.js";
 import {
   executeKeptRun,
@@ -29,7 +31,14 @@ import {
   type KeptRunSpec,
   type RunManifestMeta,
 } from "./run-management/keptRun.js";
-import { parseHostInvocation, wrapCommandArgv, peekFlag, answerUnknownCommand } from "./host.js";
+import {
+  parseHostInvocation,
+  wrapCommandArgv,
+  peekFlag,
+  answerUnknownCommand,
+  modifiersNotTakenRefusal,
+  type HostInvocation,
+} from "./host.js";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 
 /** Dispatch a command to its handler with the given (clean or store-wrapped) argv. */
@@ -37,6 +46,9 @@ function runCommand(command: string, argv: string[]): void {
   switch (command) {
     case "balance":
       runBalance(argv);
+      return;
+    case "allocate":
+      runAllocate(argv);
       return;
     default: {
       const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
@@ -46,14 +58,21 @@ function runCommand(command: string, argv: string[]): void {
   }
 }
 
+/**
+ * Refuse, at the usage status, what the leading tokens get wrong, before any command or stored run
+ * starts, so nothing is written anywhere: a usage fault among them (@SCN-CLI-059), or modifiers
+ * that would keep a run given to a command that keeps none.
+ */
+function refuseLeadingFaults(inv: HostInvocation): void {
+  const refusal = inv.refusal ?? modifiersNotTakenRefusal(inv);
+  if (refusal === undefined) return;
+  process.stderr.write(refusal + "\n");
+  process.exit(2);
+}
+
 function main(hostArgv: string[]): void {
   const inv = parseHostInvocation(hostArgv);
-  // A usage fault in the leading tokens is refused before any command or stored run starts, so
-  // nothing is written anywhere (@SCN-CLI-059).
-  if (inv.refusal !== undefined) {
-    process.stderr.write(inv.refusal + "\n");
-    process.exit(2);
-  }
+  refuseLeadingFaults(inv);
   const command = inv.command;
 
   if (command === undefined || command === "help" || command === "--help" || command === "-h") {

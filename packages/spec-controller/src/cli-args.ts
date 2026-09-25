@@ -16,7 +16,7 @@
  * asks about `balance`: a command added later gets the same bounding BY CONSTRUCTION.
  */
 
-import type { CliRegistry, CommandSpec, FlagSpec } from "./cli-registry.js";
+import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cli-registry.js";
 
 /**
  * Parse `--flag value` pairs from a command's argv into a record, keys with the `--` stripped.
@@ -108,8 +108,10 @@ export function missingValueRefusal(given: string, flag: FlagSpec, scope: string
 export function checkArgvShape(argv: readonly string[], registry: CliRegistry, command: string): string | null {
   const scope = flagScopeOf(registry, command);
   const seen = new Set<FlagSpec>();
+  const positionals = positionalsOf(registry, command);
+  const walk: Walk = { scope, seen, positionals, slotsLeft: positionals.length };
   for (let i = 0; i < argv.length; i++) {
-    const read = readToken(argv, i, { scope, seen }, command);
+    const read = readToken(argv, i, walk, command);
     if (typeof read === "string") return read;
     i += read;
   }
@@ -120,6 +122,30 @@ export function checkArgvShape(argv: readonly string[], registry: CliRegistry, c
 interface Walk {
   scope: ReadonlyMap<string, FlagSpec>;
   seen: Set<FlagSpec>;
+  /** The positional arguments the command takes, and how many are still to be read. */
+  positionals: readonly PositionalSpec[];
+  slotsLeft: number;
+}
+
+/** The positional arguments a command takes, in order; none for a command that takes flags only. */
+function positionalsOf(registry: CliRegistry, command: string): readonly PositionalSpec[] {
+  return registry.commands.find((c) => c.name === command)?.positionals ?? [];
+}
+
+/**
+ * The positional arguments in a command's argv, in order: every word that is no flag and no flag's
+ * value. A flag the registry gives no value placeholder takes none, so `--new ZZ` reads ZZ as the
+ * positional, never as `--new`'s value — which `parseArgs` alone would make it.
+ */
+export function positionalArguments(argv: readonly string[], registry: CliRegistry, command: string): string[] {
+  const scope = flagScopeOf(registry, command);
+  const words: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const token = argv[i] ?? "";
+    if (!isFlagShaped(token)) words.push(token);
+    else if (scope.get(token)?.arg !== undefined) i++;
+  }
+  return words;
 }
 
 /** One token of the walk: the refusal it earns, or how many of the tokens after it are its value. */
@@ -127,7 +153,7 @@ function readToken(argv: readonly string[], i: number, walk: Walk, command: stri
   const token = argv[i] ?? "";
   const next = argv[i + 1];
   if (isEqualsForm(token)) return equalsFormRefusal(token, walk.scope, `spec-controller ${command}`);
-  if (!isFlagShaped(token) && !walk.scope.has(token)) return notAFlagRefusal(token, command);
+  if (!isFlagShaped(token) && !walk.scope.has(token)) return positionalRead(token, walk, command);
   const flag = walk.scope.get(token);
   if (flag === undefined) return valueTokensAfter(undefined, next);
   return registeredFlagRefusal(flag, token, next, walk, command) ?? valueTokensAfter(flag, next);
@@ -146,7 +172,7 @@ function registeredFlagRefusal(
 ): string | undefined {
   if (walk.seen.has(flag) && flag.repeatable !== true) return givenTwiceRefusal(token, `spec-controller ${command}`);
   walk.seen.add(flag);
-  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && !walk.scope.has(next)) {
+  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && !walk.scope.has(next) && walk.slotsLeft === 0) {
     return takesNoValueRefusal(token, next, command);
   }
   return undefined;
@@ -215,6 +241,24 @@ function takesNoValueRefusal(flag: string, value: string, command: string): stri
   return (
     `The ${flag} flag of 'spec-controller ${command}' takes no value, and was given one: '${value}'.\n` +
     `Run 'spec-controller ${command} --help' to see the flags this version accepts and the values they take.`
+  );
+}
+
+/** A word that is no flag fills the command's next positional slot, or is refused when none is left. */
+function positionalRead(token: string, walk: Walk, command: string): string | number {
+  if (walk.slotsLeft === 0) {
+    return walk.positionals.length === 0 ? notAFlagRefusal(token, command) : extraPositionalRefusal(token, walk, command);
+  }
+  walk.slotsLeft--;
+  return 0;
+}
+
+/** The refusal for a word beyond the positional arguments a command takes: the word, and what it takes. */
+function extraPositionalRefusal(token: string, walk: Walk, command: string): string {
+  const takes = walk.positionals.map((positional) => positional.name).join(" ");
+  return (
+    `The argument '${token}' is more than 'spec-controller ${command}' takes: it takes ${takes} once, and its flags.\n` +
+    `Run 'spec-controller ${command} --help' to see what this version accepts.`
   );
 }
 

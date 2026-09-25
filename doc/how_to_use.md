@@ -374,6 +374,55 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 
 ---
 
+## Allocating the next scenario code — `spec-controller allocate`
+
+Ask the tool for the next scenario code instead of inventing one:
+
+```bash
+spec-controller allocate PAY
+# SCN-PAY-013
+```
+
+The code is one past the highest the repository has **ever** carried for that feature part, so a
+code that was retired is never handed out again: every old reference to it, in history, a chat or a
+stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and
+grows past them (`999` is followed by `1000`).
+
+- **The argument** is the feature part, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`.
+  A part is known when a feature file in `features/` at the top of the repository is headed with
+  it — the corpus `balance` reads by default. A part only history or a test fixture carries is not
+  known.
+- **`--new`** starts a part no feature file's header carries yet, such as a first code in a tree with
+  no feature files. Its first code is `001`, or one past any number the repository already carries
+  for the part. Given for a part a header already carries, it answers as usual and says so on stderr.
+- **stdout** carries the code and nothing else, so a script or an agent can consume it.
+- **stderr** says what the answer rests on: `highest seen: SCN-PAY-012, features/pay.feature:40`, with
+  ` in <commit>` when only history carries it; `highest seen: none` for a first code; and, when
+  history is short, `history: not a git repository — none read` or `history: shallow clone — history
+  before <commit> unread`, each followed by what that risks.
+- **Exit codes:** `0` when it answers; `2` for a usage error (no part, a part not in canon's form,
+  a second part, a flag it does not take, or a host modifier such as `--store` before it) or an
+  unknown part. The message says which of the two it was, and an unknown part's refusal lists the
+  parts the feature files carry. It never refuses because history is short.
+
+**What it reads.** Every text file in the repository — tracked, and untracked files the repository
+does not ignore, since you allocate because you have just written a scenario — wherever you run it
+from. And the added and removed lines of every reachable commit, never commit messages: a code that
+only ever appeared in a message was never a scenario, and a message cannot be unwritten. Outside a
+git repository it walks the working tree, skipping `node_modules` and hidden directories, whose
+packages carry codes of their own.
+
+**Stated limits.**
+
+- **Prose counts.** A code cited in a document or a comment retires its number. It does so visibly,
+  because stderr names where the highest code was seen.
+- **Only reachable history is read.** A code that only ever lived outside it — on a branch you never
+  fetched, or before a shallow clone's edge — is not seen, and stderr says so where it can.
+- **Merge resolutions are not read.** `git log -p` shows no diff for a merge commit, so a code that
+  existed only in a merge's conflict resolution is invisible to the history read.
+
+---
+
 ## Troubleshooting
 
 **No scenarios found / empty report** — check `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.

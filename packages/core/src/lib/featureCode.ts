@@ -38,3 +38,10 @@ const FEATURE_PART_SOURCE = "[A-Z0-9]{2,5}";
 export const SCN_ID_SOURCE = `SCN-${FEATURE_PART_SOURCE}-\\d+`;
 
 const FEATURE_CODE_OF = new RegExp(`^SCN-(${FEATURE_PART_SOURCE})-\\d+$`);
+
+const FEATURE_PART = new RegExp(`^${FEATURE_PART_SOURCE}$`);
+
+/** Whether `text` is a feature part in canon's form, the `<FFF>` of §9A: two to five of A-Z and 0-9. */
+export function isFeaturePart(text: string): boolean {
+  return FEATURE_PART.test(text);
+}

@@ -148,7 +148,8 @@ describe("[SCN-CLI-008] the completeness guard — no registry entry is missing 
     // the command that reads that field and under nothing else, which is a per-command
     // help surface obligation exactly as its flags are.
     const entryCount = cliRegistry.commands.reduce(
-      (total, command) => total + command.flags.length + (command.configHelp?.length ?? 0),
+      (total, command) =>
+        total + command.flags.length + (command.positionals?.length ?? 0) + (command.configHelp?.length ?? 0),
       0,
     );
     // The floor the sibling arms carry, kept as the set widens: a loop over an empty set
@@ -159,12 +160,22 @@ describe("[SCN-CLI-008] the completeness guard — no registry entry is missing 
       const out = renderCommandHelp(cliRegistry, command.name);
       return [
         ...command.flags.filter((flag) => !out.includes(flag.name)).map((flag) => `${command.name} ${flag.name}`),
+        ...(command.positionals ?? [])
+          .filter((positional) => !out.includes(positional.name) || !out.includes(positional.description))
+          .map((positional) => `${command.name} ${positional.name}`),
         ...(command.configHelp ?? [])
           .filter((line) => !out.includes(line))
           .map((line) => `${command.name} configHelp: ${line.trim()}`),
       ];
     });
     expect(missing).toEqual([]);
+  });
+
+  it("counts a positional argument among the entries it guards, so a command's positionals cannot fall out unseen", () => {
+    // The floor for the positional arm, which the entry count above cannot give: every command
+    // could declare none and the arm would still pass.
+    const positionals = cliRegistry.commands.flatMap((command) => command.positionals ?? []);
+    expect(positionals.length).toBeGreaterThan(0);
   });
 
   it("finds every global host modifier in the top-level --help render (global scope)", () => {

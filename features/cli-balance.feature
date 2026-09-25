@@ -585,9 +585,9 @@ Feature: spec-controller balance runs standalone
       Then it exits 0, lists each registered command, and documents the global --store and --run-id modifiers
 
     @SCN-CLI-008 @unit
-    Scenario: every registered flag, command and modifier reaches its help surface (completeness guard)
+    Scenario: every registered flag, positional argument, command and modifier reaches its help surface (completeness guard)
       Given the two-scope command/flag registry and its two help renderers
-      Then no flag the registry gives any command is missing from that command's --help render
+      Then no flag and no positional argument the registry gives any command is missing from that command's --help render
       And no global modifier and no registered command is missing from the top-level --help render
       And a registry entry that its help surface omits reds the guard
 

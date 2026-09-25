@@ -21,7 +21,7 @@ import {
   missingValueRefusal,
   valueFlagsOf,
 } from "./cli-args.js";
-import { cliRegistry, type FlagSpec } from "./cli-registry.js";
+import { cliRegistry, type CommandSpec, type FlagSpec } from "./cli-registry.js";
 
 /** A parsed host invocation: leading global options, then the command and its clean args. */
 export interface HostInvocation {
@@ -217,4 +217,20 @@ export function answerUnknownCommand(command: string, help: string): UnknownComm
     exitCode: 2,
     stderr: `spec-controller: unknown command "${command}".\n\n${help}\n`,
   };
+}
+
+/** The refusal for host modifiers given before a command that takes none, else undefined. */
+export function modifiersNotTakenRefusal(
+  inv: HostInvocation,
+  commands: readonly CommandSpec[] = cliRegistry.commands,
+): string | undefined {
+  const entry = commands.find((command) => command.name === inv.command);
+  if (entry?.acceptsHostModifiers !== false) return undefined;
+  const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
+  if (given.length === 0) return undefined;
+  return (
+    `spec-controller: usage error — '${entry.name}' takes no host modifier, and was given ${given.join(", ")}: ` +
+    `it answers a query and keeps no run.\n` +
+    `Run 'spec-controller ${entry.name} …' without them.`
+  );
 }

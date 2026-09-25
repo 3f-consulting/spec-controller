@@ -86,6 +86,11 @@ export {
 // Ledger-fold-sourced) STAYS on the barrel. Pre-freeze, no external consumer (unpublished package;
 // only workspace dependents, all rewired).
 
+// --- The next scenario code for a feature part (`domain/scnAllocation.ts`) ---
+// On the root barrel because the published CLI reaches it, and `./internal` is not published.
+export { nextScnCode } from "./domain/scnAllocation.js";
+export type { Allocation, AllocationRequest, ScnSighting, UnknownPart } from "./domain/scnAllocation.js";
+
 // --- Parse — result/CI readers (`parse/*`) ---
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
@@ -132,5 +137,5 @@ export { provenanceObject, projectProvenance, projectProvenanceObject } from "./
 export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, ProvenanceInput } from "./provenance/provenance.js";
 
 // --- Pure helpers ---
-export { featureCodeOf } from "./lib/featureCode.js";
+export { featureCodeOf, isFeaturePart } from "./lib/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";

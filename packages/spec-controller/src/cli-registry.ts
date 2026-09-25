@@ -39,6 +39,14 @@ export interface FlagSpec {
   description: string;
 }
 
+/** A positional argument a command takes: its placeholder, and what it is. */
+export interface PositionalSpec {
+  /** The placeholder as help shows it (e.g. "<FFF>"). */
+  name: string;
+  /** One-line help text. */
+  description: string;
+}
+
 /** A command: its token, a one-line summary, its per-command flag scope, and any config it reads. */
 export interface CommandSpec {
   /** The command token (e.g. "balance"). */
@@ -47,6 +55,10 @@ export interface CommandSpec {
   summary: string;
   /** The command's per-command flag scope. */
   flags: FlagSpec[];
+  /** The positional arguments the command takes, in order, each once. Omit when it takes flags only. */
+  positionals?: PositionalSpec[];
+  /** False for a command that keeps no run, so the host refuses `--store`/`--run-id` before it. Omit otherwise. */
+  acceptsHostModifiers?: false;
   /**
    * Trailing help lines documenting `package.json` config THIS command reads, rendered
    * verbatim after the flag list. It lives on the command's entry rather than in the
@@ -217,6 +229,23 @@ export const cliRegistry: CliRegistry = {
       configHelp: balanceConfigHelp,
       retiredFlags: balanceRetiredFlags,
     },
+    {
+      name: "allocate",
+      summary:
+        "Print the next @SCN code for a feature part: one past the highest the repository has ever carried, the code alone on stdout.",
+      acceptsHostModifiers: false,
+      positionals: [
+        { name: "<FFF>", description: "The feature part: a feature file's header code, two to five of A-Z and 0-9." },
+      ],
+      flags: [
+        {
+          name: "--new",
+          description:
+            "Start a part no feature file's header carries yet: its first code, or one past any number the repository already carries for it.",
+        },
+        { name: "--help", aliases: ["-h"], description: "Show this help and exit." },
+      ],
+    },
   ],
 };
 
@@ -250,11 +279,25 @@ export function renderCommandHelp(registry: CliRegistry, command: string): strin
   const configHelp = entry?.configHelp ?? [];
   return [
     `spec-controller ${command} — ${entry?.summary ?? ""}`,
+    ...positionalHelp(command, entry?.positionals ?? []),
     "",
     "Options:",
     ...lines,
     ...(configHelp.length > 0 ? ["", ...configHelp] : []),
   ].join("\n");
+}
+
+/** A command's usage line and its arguments, one line each; nothing for a command that takes flags only. */
+function positionalHelp(command: string, positionals: readonly PositionalSpec[]): string[] {
+  if (positionals.length === 0) return [];
+  const width = Math.max(...positionals.map((positional) => positional.name.length));
+  return [
+    "",
+    `Usage: spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
+    "",
+    "Arguments:",
+    ...positionals.map((positional) => `  ${positional.name.padEnd(width + 2)}${positional.description}`),
+  ];
 }
 
 /**
