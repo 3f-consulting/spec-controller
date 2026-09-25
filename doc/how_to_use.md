@@ -133,11 +133,11 @@ sold on. A runner is matched as a **whole shell token** — of the step's own co
 named on the report rather than dropped, and an entry matching no step is reported as stale.
 `balance` itself and its `toJSON(steps)` dump are excluded **by construction** — never write them.
 
-**What stays Node-shaped is where the configuration lives**, not what can be discovered: both keys
-sit under `specController` in a `package.json`, so a repository that has none adds a stub file. And
-the residue of the recognition rule is a **false positive you can see**: a suite run through an
-action, or a runner buried in a quoted argument to a wrapper, is reported as a candidate check rather
-than silently excluded — one line of `notChecks` each. **Annotating the steps has no such shape at
+**What stays Node-shaped is where the configuration lives**, not what can be discovered: `runners`
+and `notChecks` sit under `specController` in a `package.json`, so a repository that has none adds a
+stub file. And the residue of the recognition rule is a **false positive you can see**: a suite run
+through an action, or a runner buried in a quoted argument to a wrapper, is reported as a candidate
+check rather than silently excluded — one line of `notChecks` each. **Annotating the steps has no such shape at
 all**: an `id:` is a key of the step mapping, the command below it is any command in any language,
 and nothing in the resolution reads a manifest.
 
@@ -149,6 +149,36 @@ the same report, and the out-of-balance verdict exits `0`. Remove the flag when 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip reds. *"The command examined nothing"* and *"this row was
 not obliged on this run"* are different claims, and only the first is modelled.
+
+### Deferring a scenario — `deferralTags`
+
+**A scenario you have written but deliberately not yet evidenced is deferred with a tag, not left to
+read as missing.** A scenario carrying a recognised deferral tag has **every** one of its evidence
+obligations deferred to a **Pending Item** — whatever the observed side says, including a scenario
+filtered out of the run or reporting a pending step. A deferred scenario that raises no obligations
+at all is one Pending Item for the whole scenario. The tag counts whether it sits on the scenario or
+is inherited from its `Rule:` or `Feature:`. A Pending Item is shown and tallied on the report, apart
+from the out-of-balance rows, and it does not affect the verdict or the exit code unless you pass
+`--strict`, which fails the run at exit `3`.
+
+The recognised set starts as `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your own under
+`specController` in the target's `package.json`:
+
+```jsonc
+"specController": {
+  "deferralTags": ["deferred", "@blocked"]
+}
+```
+
+**Your list extends the built-in set and never replaces it** — `@wip` defers whatever you configure.
+An entry may be written bare or with its `@`, and surrounding whitespace is ignored. A value that is
+not an array, or an entry that is not a string, is ignored rather than refused. A tag in neither
+list never defers the whole scenario, however much it looks like a deferral tag.
+
+**This is scenario scope, and it differs from `@<check>pending`.** `@integrationpending` defers only
+the integration obligation on its scenario, so a passing `@unit` beside it still reconciles
+satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending
+Item from each. `balance --help` prints the key and the built-in set.
 
 
 ---
@@ -192,7 +222,7 @@ spec-controller balance --features ./features \
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners` / `specController.notChecks` (see *Naming your runners*). A fitness check is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness check is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |

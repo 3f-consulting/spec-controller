@@ -18,10 +18,11 @@ in the eight days that followed. A commitment maintained by hand against a
 moving model is one that gets broken quietly — so it is withdrawn deliberately
 instead, while withdrawing it still costs nobody anything.
 
-**What the reader reads today.** `specController.runners` and `notChecks`, and the `--ci-steps`
-record. That is the whole list. There is one way to declare a fitness check, and it is two
-artefacts: a `@fitness` scenario, and its `@SCN` as the `id:` of the CI step that runs the check.
-See [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+**What the reader reads today.** Three `specController` keys — `runners`, `notChecks` and
+`deferralTags` — and the `--ci-steps` record. [`how_to_use.md`](./how_to_use.md) says what each key
+does. There is one way to declare a fitness check, and it is two artefacts: a `@fitness` scenario,
+and its `@SCN` as the `id:` of the CI step that runs the check. See
+[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
 **A key this reader has no reading for is passed over — it is not read, and it is not named
 either.** `specController.checkRegistry` and `specController.staticChecks` stopped being read at
