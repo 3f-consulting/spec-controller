@@ -16,6 +16,29 @@ what your corpus said was owed.
 
 ---
 
+## What spec-controller assumes
+
+**Not a task tracker. Not a documentation spec. Automated tests — unit, integration, e2e, performance — and fitness checks in CI.**
+
+You need no feature files to begin. A tree with none, or with feature files not tagged to
+spec-controller's model, is `new-client`; scenarios tagged to the model are what `conformant` adds,
+not the precondition for starting. **Your tracker keeps the work**: a ticket is a change, a scenario
+is behaviour the system has now, and they meet only where one piece of work creates, reads, updates
+or deletes one scenario.
+
+**Test validity is assumed, and deliberately so.** spec-controller reconciles a result — the
+evidence observation — to the test that claimed it — the evidence obligation. Whether that test
+reflects the behaviour the business wants is yours to ensure, as it is under CI, TDD and BDD; the
+tool does not try to establish that a test is a good test.
+
+**Dead documentation is a gap in this process**, and it is the first thing under
+[*What this leaves open*](#what-this-leaves-open-stated-rather-than-left-to-be-found): wherever the
+runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario's steps are
+never executed. The ledger proves a scenario is linked to evidence and that the evidence passed.
+**It does not prove the evidence tests what the steps say.**
+
+---
+
 ## Three states, and you choose where to stop
 
 Take one check — *every function measures inside the external complexity standard.* What
@@ -41,8 +64,9 @@ demands the credit your check was already producing. The phantom becomes real.
 **You write the scenario exactly as you write a `@unit` one** — steps, and a tag naming its axis.
 Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumber is filtered on
 `@integration`, `@e2e` and `@performance`, so it selects neither. The steps are the specification;
-the runner your CI already calls is what produces the evidence. Getting here from `annotated` is
-either your own work or `migrate`'s.
+the runner your CI already calls is what produces the evidence. That is the dead-documentation gap
+named above: nothing executes those steps, so nothing reds if they come to say something the check
+does not. Getting here from `annotated` is either your own work or `migrate`'s.
 
 **There are two artefacts and no third: the `@fitness` scenario, and its `@SCN` as the `id:` of the
 CI step that runs the check.** The scenario raises the obligation — from its tag, exactly as a
@@ -335,6 +359,21 @@ nothing about another's.
 ---
 
 ## What this leaves open, stated rather than left to be found
+
+**Dead documentation is a gap, and it is in this process.** A scenario whose steps no runner
+executes is pure documentation: nothing reads the steps against the check that answers them, so the
+two drift and nothing reds. This holds wherever the runner is somewhere other than Cucumber —
+`@unit`, `@performance` and `@fitness`, as most trees run them. Where Cucumber runs the steps
+(`@integration` and `@e2e`, and `@performance` wherever your Cucumber selects it), they are executed
+and cannot drift from the run: that is living documentation. The ledger proves a scenario is linked
+to evidence and that the evidence passed. **It does not prove the evidence tests what the steps
+say.** The gap is stated, not solved: nothing in this release closes it, and a green reconciliation
+of a scenario whose steps no runner executes is a claim about its evidence, never about its prose.
+
+**It is a different thing from test validity, which is assumed rather than missing.** Whether a
+test is a good test is yours, as under CI, TDD and BDD (see *What spec-controller assumes*). Dead
+documentation is the part the process itself leaves open: a correct test, passing, under steps that
+no longer describe it.
 
 **A discovery axis with nothing to discover reports a vacuous zero, and annotating the pipeline is
 what ends it.** A capability exercised by nothing and reporting green is the exact fault this

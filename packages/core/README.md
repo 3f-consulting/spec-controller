@@ -34,7 +34,7 @@ const ledger = reconcile(scenarios, observed);
 isBalanced(ledger); // false while any scenario names evidence that did not arrive
 ```
 
-`parseScenarios` reads the `@SCN` code and the quality-check tags off each scenario and turns them into the **obligations** it names. `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the `@SCN` it proves. `reconcile` puts the two sides against each other and answers per scenario. Everything else on the barrel is a variation on those three moves.
+`parseScenarios` reads the `@SCN` code and the quality-check tags off each scenario and turns them into the **obligations** it names. `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the `@SCN` it claims. `reconcile` puts the two sides against each other and answers per scenario. Everything else on the barrel is a variation on those three moves.
 
 ## What is on the barrel
 
