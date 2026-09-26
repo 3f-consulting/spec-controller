@@ -1,12 +1,10 @@
 /**
  * Unit tests for the markdown renderer — broken evidence, the run verdict and the collection's
- * name (@SCN-RPT-021, @SCN-RPT-022, @SCN-RPT-024). Each describe carries its own @SCN id and its
- * own bidirectional-evidence note.
+ * name.
  *
- * SPLIT FROM `markdown.test.ts` AT 3F-3541, AND FOR A MECHANICAL REASON. That file measured 1341
- * code lines against the 400-line test ceiling then in force (retired portfolio-wide on
- * 2026-09-18, 3F-2320; the surviving thresholds moved into `eslint.config.mjs` at 3F-3607),
- * and the complexity gate raises a touched file's standing findings to errors. No assertion
+ * SPLIT FROM `markdown.test.ts`, AND FOR A MECHANICAL REASON. That file measured 1341
+ * code lines against the 400-line test ceiling then in force (since retired portfolio-wide; the
+ * surviving thresholds live in `eslint.config.mjs`), and the complexity gate raises a touched file's standing findings to errors. No assertion
  * moved in the split. The file-local helpers below are copies of that file's own, which is this tree's
  * convention for test fixtures: a helper shared through a module under `src/` would ship in `dist`.
  */
@@ -22,7 +20,7 @@ import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
 /**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture.
  *
  * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
  * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
@@ -34,10 +32,9 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
   ledger,
 });
 
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to the renderer, which
-// reads no per-QCR side — only side PRESENCE is constrained by the invariant) so each hand-built
-// fixture routes through the constructor.
+// Mints a Quality Check Reconciliation through the smart constructor, supplying canon-correct
+// PLACEHOLDER sides (only side PRESENCE is constrained by the invariant). `balanceWithBroken` reads
+// only its quality check, locator and message, to build the broken credit it reconciles.
 function qcr(
   fields: Parameters<typeof makeQualityCheckReconciliation>[0],
 ): ReturnType<typeof makeQualityCheckReconciliation> {
@@ -66,38 +63,30 @@ const ctx: RunContext = {
 };
 
 /**
- * Unit test for the unsound run-integrity stamp (@SCN-RPT-021), over BOTH broken kinds.
+ * Unit test for the unsound run-integrity stamp, over BOTH broken kinds.
  *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-021 id
- * matching features/report.feature, so a grep of the id returns both halves of the pair.
- * @unit ONLY (operator-endorsed): the renderer is a pure function over the report model, and the
- * pipeline manifestation is already carried by @SCN-LDG-017 / @SCN-LDG-018 / @SCN-LDG-019's arms.
- *
- * The customer-visible payoff of the whole `broken` slice (3F-1642, generalised over cucumber by
- * 3F-1654). A `missing` row tells the reader to WRITE A TEST; when the proof exists and merely
+ * The customer-visible payoff of the whole `broken` slice (generalised over cucumber). A `missing` row tells the reader to WRITE A TEST; when the proof exists and merely
  * NEVER RAN, that instruction is wrong. So the markdown NAMES the broken evidence, PRINTS what
  * broke, and STAMPS the run "unsound" — the render headline word (the predicate is
  * `hasBrokenEvidence`; predicate-name ≠ headline-word, per `isBalanced` vs "balanced").
  *
- * TWO INSTANCES, ONE SHAPE (3F-1654). `broken` now has two producers, and the copy must read
+ * TWO INSTANCES, ONE SHAPE. `broken` now has two producers, and the copy must read
  * truthfully over both:
  *   - VITEST — a suite that failed to COLLECT. The runner gives its own message (multi-line, with
  *     a stack), printed VERBATIM: the tool does not interpret it.
  *   - CUCUMBER — a step two or more step definitions match, so it never ran. Cucumber emits NO
  *     `error_message` for an ambiguous step, so there is nothing to quote: the reader SYNTHESISED
- *     the diagnosis upstream (@SCN-LDG-019) and the renderer prints what the item CARRIES. No
+ *     the diagnosis upstream and the renderer prints what the item CARRIES. No
  *     per-reader branch here — the difference is already resolved before the renderer sees it.
  * The bounded softening (operator-mandated): pass the runner's words through where it gives them;
  * STATE the diagnosis where it gives none; PRESCRIBE NO CURE, either way. The renderer may name
  * WHAT failed and WHERE. It may never say how to fix it.
  *
- * Teeth (the Update, 3F-1744): today's copy is vitest-shaped — "N proving suites failed to
+ * Teeth (the Update): today's copy is vitest-shaped — "N proving suites failed to
  * collect", "the collection error the runner reported", and an `OUTCOME_DESCRIPTION.broken` gloss
  * that names a suite's collection. Rendered over a CUCUMBER-broken balance it MISCALLS a
  * step-definition collision a collection failure — the tool lying about what broke. The
  * no-miscall assertions below red against it.
- *
- * Parent: (@SCN-RPT-021).
  */
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
   const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";
@@ -108,7 +97,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     `${VITEST_LOCATOR}\n    at packageResolve (node:internal/modules/esm/resolve:catch)\n    at moduleResolve (node:internal/modules/esm/resolve)`;
 
   const CUCUMBER_LOCATOR = "features/handover.feature";
-  // The message the CUCUMBER reader SYNTHESISES (@SCN-LDG-019, verbatim from `ambiguousMessage`):
+  // The message the CUCUMBER reader SYNTHESISES (verbatim from `ambiguousMessage`):
   // cucumber gives no error_message for an ambiguous step, so the reader states the diagnosis —
   // what broke, and no cure.
   const CUCUMBER_MESSAGE =
@@ -130,7 +119,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   const balanceWithBroken = (
     item: ScenarioReconciliation["reconcilingItems"][number]
   ): Ledger => {
-    // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). SCN-HNS-002 raises a unit
+    // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A). SCN-HNS-002 raises a unit
     // obligation whose proof never ran (no non-broken credit cites it → `missing`); the broken
     // observation names no test, so it cites nothing and posts to SUSPENSE carrying its locator +
     // message. The suspense item is DERIVED from `item` (a broken credit built from its fields) —
@@ -153,7 +142,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     return reconcile(scenarios, observations);
   };
 
-  // The lived an adopter's repository shape (3F-1642): vitest's collection failure.
+  // The lived an adopter's repository shape: vitest's collection failure.
   const vitestBroken = balanceWithBroken(
     qcr({
       qualityCheck: "unit",
@@ -163,7 +152,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     }),
   );
 
-  // The cucumber instance (3F-1654): an ambiguous step. The item's shape is identical — locator
+  // The cucumber instance: an ambiguous step. The item's shape is identical — locator
   // + message — which is exactly why the renderer needs no per-reader branch.
   const cucumberBroken = balanceWithBroken(
     qcr({
@@ -195,7 +184,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
       expect(md).toContain("## Run integrity: unsound");
       // Sited between the provenance header and the summary views: the stamp qualifies every
       // count below it (a `missing` in an unsound run may be a broken proof), so it must be read
-      // FIRST. @SCN-RPT-009's summary-first / ledger-last ordering is otherwise unchanged.
+      // FIRST. The summary-first / ledger-last ordering is otherwise unchanged.
       const iProvenance = md.indexOf("## Run provenance");
       const iStamp = md.indexOf("## Run integrity: unsound");
       const iSummary = md.indexOf("## Summary views");
@@ -216,7 +205,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(vitestMd).toContain(VITEST_LOCATOR);
     expect(cucumberMd).toContain(CUCUMBER_LOCATOR);
 
-    // THE UPDATE (3F-1744, narrowed 3F-1925). An ambiguous cucumber step is neither a "suite" nor
+    // THE UPDATE (narrowed). An ambiguous cucumber step is neither a "suite" nor
     // a "collection error", so the run-integrity STAMP — reader-agnostic by design — must not call
     // it one. Manifesto → the Unsound entry governs the stamp (a run may carry `broken` items of
     // different producers, so the stamp names only what they share); the Outcome column governs the
@@ -264,7 +253,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
     const suspense = rowFor(vitestMd, "(no scenario)");
     // The credit-side locator suffix (ruling Q5), now extended to `broken`: glyph + the canon
-    // description (single-sourced from OUTCOME_DESCRIPTION, 3F-1626) + the where-to-fix.
+    // description (single-sourced from OUTCOME_DESCRIPTION) + the where-to-fix.
     expect(suspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
     expect(suspense).toContain(VITEST_LOCATOR);
     // The row cell carries the error's HEADLINE line only — the verbatim multi-line message
@@ -304,17 +293,12 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 });
 
 /**
- * Unit test for the run-verdict headline (@SCN-RPT-022).
+ * Unit test for the run-verdict headline.
  *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-022 id
- * matching features/report.feature, so a grep of the id returns both halves of the pair.
- * @unit ONLY (ticket-endorsed): the renderer is a pure function over the report model. The
- * agreement between this headline and the REAL process exit code is @SCN-CLI-013's arm.
- *
- * A SUPPLEMENT, not the fix (3F-1727). The tally already fails on its own once every Scenario
- * Reconciliation is counted (@SCN-RMD-001, 3F-1724); this makes the failure impossible to MISS.
+ * A SUPPLEMENT, not the fix. The tally already fails on its own once every Scenario
+ * Reconciliation is counted; this makes the failure impossible to MISS.
  * The slice's non-negotiable invariant: a run that exits non-zero NEVER renders a headline that
- * reads as a pass — an adopter's repository 17-36-50Z fault (3F-1703), where `141 | 141 | 0` looked like a
+ * reads as a pass — an adopter's repository 17-36-50Z fault, where `141 | 141 | 0` looked like a
  * clean board on a run that exited 1.
  *
  * The verdict is read off the WHOLE-RUN predicates in the CLI's own dominance order (broken →
@@ -322,15 +306,13 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
  * is what stops the headline drifting from the exit code it names. Exit 3 is the one code the
  * core cannot assert: `--strict` is a CLI-edge flag invisible to the core, so a balanced run
  * carrying Pending Items names it CONDITIONALLY and never claims it.
- *
- * Parent: (@SCN-RPT-022).
  */
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   /** The text from the `## Summary views` heading to the first cut beneath it. */
   const summaryOpening = (md: string): string =>
     md.slice(md.indexOf("## Summary views"), md.indexOf("### Evidence reconciliation"));
 
-  // RECONCILER-TRUE FIXTURES (evidence-manifesto §11A, 3F-1894). Every ledger is PRODUCED by
+  // RECONCILER-TRUE FIXTURES (evidence-manifesto §11A). Every ledger is PRODUCED by
   // reconcile() over a corpus, so the whole-run verdict predicates read a ledger the pipeline emits.
   // The shared balanced scenario + its passing unit credit.
   const balancedScenario: Scenario = {
@@ -396,7 +378,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     expect(summaryOpening(md)).toContain("exit 0");
     // The gloss names the three scenario-kinds by canon, pinned as the WHOLE sentence — so the
     // retired kind-label once emitted in `scenario`'s place cannot return without failing here.
-    // A companion negative naming it went at 3F-2329: subsumed, and renaming it to canon would
+    // A companion negative naming it went: subsumed, and renaming it to canon would
     // invert it into "`scenario` is absent" — green for the wrong reason.
     expect(summaryOpening(md)).toContain(
       "every Scenario Reconciliation balances: scenario, phantom and suspense alike."
@@ -425,14 +407,14 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     const opening = summaryOpening(renderMarkdown(__er(broken), ctx));
 
     // `broken` is READER-AGNOSTIC: it covers a vitest suite that failed to collect
-    // (@SCN-LDG-017) AND a cucumber step matched by two or more definitions (@SCN-LDG-019).
+    // AND a cucumber step matched by two or more definitions.
     // The verdict line is read by the same reader in both cases, so it must name the FACT
     // the two SHARE — a proof never ran — and leave the producer-specific detail to the
-    // run-integrity stamp above (@SCN-RPT-021).
+    // run-integrity stamp above.
     expect(opening).toContain("could not be TRUSTED to reconcile");
     expect(opening).toContain("A proof never ran");
 
-    // The TEETH (3F-1749): the gloss was generalised in 3F-1744 but nothing pinned the text,
+    // The TEETH: the gloss was generalised but nothing pinned the text,
     // so it could silently drift BACK to the vitest idiom — which would misdescribe a cucumber
     // ambiguity to the reader's face. An ambiguous step is not a "suite", and it did not fail
     // to "collect". Forbid the vocabulary, not merely require the phrasing.
@@ -453,67 +435,35 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 });
 
 /**
- * Unit test for the reconciliation-collection noun (@SCN-RPT-024).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-024 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the reconciliation-collection noun.
  *
  * Binds the vocabulary rule for the reconciled OUTPUT collection: canon names it
  * "Scenario Reconciliation" ("scenarios" is a Rejected alias — it holds Scenario
  * Reconciliations, not scenarios). The report names the collection on two rendered
  * surfaces — the Subject CELL of the Evidence-reconciliation table's collection row,
  * and the headline verdict tally under "## Scenario Reconciliations" — and both must
- * read the same word. The tally counts EVERY row (scenario + phantom + suspense;
- * @SCN-RMD-001, 3F-1724), so it names Scenario Reconciliations, not scenarios.
+ * read the same word. The tally counts EVERY row (scenario + phantom + suspense),
+ * so it names Scenario Reconciliations, not scenarios.
  *
  * Teeth: the Subject-cell assertion passes against current code (markdown.ts already
  * renders "Scenario Reconciliation" in the table cell); the tally assertion REDS —
- * the tally renders "N scenario(s):" today. That is the genuine red→green (3F-1919):
+ * the tally renders "N scenario(s):" today. That is the genuine red→green:
  * the tally noun is corrected to "Scenario Reconciliation(s)". Asserts the rendered
  * CELL VALUE and the tally STRING, never their section headings (a separate concern).
- *
- * Parent: (@SCN-RPT-024).
  */
 describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconciliation(s)", never "scenario(s)"', () => {
   // A balance carrying one scenario (balanced) row, one phantom row, and one suspense row.
   // The summary tally then reads total=3, balanced=1, out-of-balance=2 (phantom + suspense are
   // both always out-of-balance), phantom=1, suspense=1 — so the headline names 3 of the
   // collection. Counting is UNCHANGED by this scenario; only the rendered noun.
-  const namedPhantomSuspense: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-A",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-      {
-        scnId: "SCN-PHM-999",
-        kind: "phantom-scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-        pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
-      },
-      {
-        scnId: "(no scenario)",
-        kind: "suspense-scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-        pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
-      },
+  const namedPhantomSuspense: Ledger = reconcile(
+    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [
+      { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+      { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
+      { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
     ],
-  };
+  );
 
   it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
     const md = renderMarkdown(__er(namedPhantomSuspense), ctx);

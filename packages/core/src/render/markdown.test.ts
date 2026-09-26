@@ -1,9 +1,5 @@
 /**
- * Unit test for the markdown run-provenance header (@SCN-RPT-001).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-001 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown run-provenance header.
  *
  * Proves the provenance SECTION in isolation: renderMarkdown(__er(balance), ctx) opens
  * with a "## Run provenance" header carrying all four facts — the resolved target
@@ -16,8 +12,6 @@
  * provenance" / fact assertion reds (the genuine red→green). The byte-green guard
  * (the table header still renders) pins the Scenario-CRUD Read — the existing
  * sections survive the sectioned-renderer refactor.
- *
- * Parent: (@SCN-RPT-001).
  */
 
 import { describe, it, expect } from "vitest";
@@ -31,7 +25,7 @@ import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
 /**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture.
  *
  * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
  * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
@@ -43,12 +37,16 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
   ledger,
 });
 
-/** A minimal balanced balance — enough for the renderer to produce a report. */
-const balance: Ledger = {
-  scenarioReconciliations: [
-    { scnId: "SCN-RPT-001", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
-  ],
-};
+/**
+ * A minimal balanced balance, RECONCILER-TRUE (evidence-manifesto §11A): one `@unit` scenario and
+ * the passing credit that satisfies it, through the real `reconcile()`. A scenario that declares
+ * nothing cannot reconcile `balanced` (it degenerates to `both-missing`), so the obligation is
+ * what makes this the smallest honest balanced run.
+ */
+const balance: Ledger = reconcile(
+  [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+  [{ qualityCheck: "unit", scnId: "SCN-RPT-001", status: "passed" }],
+);
 
 const ctx: RunContext = {
   target: "an-adopters-repository",
@@ -77,7 +75,7 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     expect(md).toContain("2026-06-27T08:17:53Z");
     // The target's source SHA.
     expect(md).toContain("905a987c0ffeeba110000000000000000deadbeef");
-    // The TOOL's identity (3F-1916) — which spec-controller produced the run,
+    // The TOOL's identity — which spec-controller produced the run,
     // distinct from the target's source SHA.
     expect(md).toContain("- Tool SHA: 13ee47f271ace511efdb2511276284b4cb50c247");
     expect(md).toContain("- Tool version: 0.1.0");
@@ -113,18 +111,14 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
 });
 
 /**
- * Unit test for the markdown evidenceObligation tally (@SCN-RPT-004).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-004 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown evidenceObligation tally.
  *
  * Proves the evidenceObligationCountSection in isolation: renderMarkdown counts every
  * reconciled quality-check across balance.scenarioReconciliations[].qualityCheckReconciliations[]
  * (the full per-quality-check breakdown — NOT reconcilingItems, which excludes balanced) by its
- * Outcome. (Prose corrected 3F-1894: the tally iterates `qualityCheckReconciliations`, the field
- * 3F-1846 renamed from the old `evidenceObligations` — which now names the posted DEBITS the tally
- * does not read.) Kind-agnostically (both runtime and static contribute, keyed only by outcome). All
+ * Outcome. (The tally iterates `qualityCheckReconciliations`, the field renamed from the old
+ * `evidenceObligations` — which now names the posted DEBITS the tally does not read.)
+ * Kind-agnostically (both runtime and static contribute, keyed only by outcome). All
  * four outcomes are always rendered, including a zero count (the watermelon here),
  * in the fixed order balanced → missing → failing →
  * watermelon, each with its ITEM_GLYPH glyph.
@@ -132,8 +126,6 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
  * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Evidence obligation
  * tally" / per-outcome assertion reds (the genuine red→green). Markdown-only — the
  * derived view is NOT duplicated into JSON (project design §3).
- *
- * Parent: (@SCN-RPT-004).
  */
 describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by reconciliation outcome", () => {
   // A balance designed to make the scenario-verdict vs evidence-obligation
@@ -143,7 +135,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   // must never let the two counts coincide. Totals — scenarios: 3 (balanced 1,
   // out-of-balance 2); evidenceObligations: 5 (balanced 2, missing 2,
   // failing 1, watermelon 0 — out-of-balance 3). 2 ≠ 3.
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894): the balance is PRODUCED by
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A): the balance is PRODUCED by
   // reconcile() over the corpus below, so every row is a shape the pipeline emits. SCN-A: unit
   // satisfied + integration failing (out-of-balance). SCN-B: the PST-035-shaped double arm — two
   // missing obligations, the source of the 2-scenario / 3-obligation divergence. SCN-C: unit
@@ -168,7 +160,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(md).toContain("| --- | --- | --- | --- | --- |");
     // Scenario Reconciliation subject — total 3, balanced 1, out-of-balance 2. The subject
     // is the manifesto's COLLECTION (scenario + phantom + suspense), not `Scenario`, which
-    // names only the real thing (3F-1726). The numbers are unchanged by the rename. The
+    // names only the real thing. The numbers are unchanged by the rename. The
     // substring stops before the (empty) Detail cell, so the assertion is robust to that
     // cell's spacing.
     expect(md).toContain("| Scenario Reconciliation | 3 | 1 | 2 |");
@@ -181,7 +173,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // The three non-balanced causes nest (↳) under the evidence-obligation row,
     // populating the out-of-balance column only; missing carries the
     // bare-level split (1 unit + 1 integration — SCN-B's two missing arms). The Subject
-    // cell shows the outcome's canon DESCRIPTION, not the bare handle (3F-1626).
+    // cell shows the outcome's canon DESCRIPTION, not the bare handle.
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("1 unit + 1 integration");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
@@ -229,7 +221,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // reconcilingItems carries only the 3 non-balanced items; the 2 balanced quality-checks are
     // visible only via qualityCheckReconciliations[]. A balanced count of 2 in the
     // Evidence-obligation row proves the tally iterates qualityCheckReconciliations[] (the field
-    // 3F-1846 renamed from `evidenceObligations`), not the posted debits.
+    // renamed from `evidenceObligations`), not the posted debits.
     expect(md).toContain("| Evidence obligation | 5 | 2 | 3 |");
   });
 
@@ -292,7 +284,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(iHeadline).toBeLessThan(iLedger);
   });
 
-  // The arm @SCN-RPT-004 never had (3F-1726): a fixture carrying a SUSPENSE reconciliation.
+  // The arm this scenario never had: a fixture carrying a SUSPENSE reconciliation.
   // The old fixtures are scenario-only, so they never exercised the divergence that let the
   // an adopter's repository 17-36-50Z run render `141 | 141 | 0` — a clean-looking board — on a run `isBalanced`
   // failed → exit 1. The subject row is the SCENARIO RECONCILIATION (the manifesto's
@@ -352,15 +344,9 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 });
 
 /**
- * Unit test for the markdown fitness-obligation section (@SCN-RPT-005).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-005 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown fitness-obligation section.
  *
  * Markdown-only — the derived view is deliberately NOT duplicated into JSON (project design §3).
- *
- * Parent: (@SCN-RPT-005).
  */
 describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligations as their own section", () => {
   // Reconciler-built (§11A): SCN-A raises unit + the guard-typecheck fitness check + integration
@@ -396,11 +382,11 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
     expect(md).toContain("### Fitness evidence obligations");
     // The total line states how many of the fitness evidence obligations reconcile satisfied.
     expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
-    // The table header — the scenario and its outcome, and no check column (3F-3525): what a check
+    // The table header — the scenario and its outcome, and no check column: what a check
     // is about is its scenario's title, and no report rolls a check up by a word.
     expect(md).toContain("| Scenario | Outcome |");
     expect(md).not.toContain("| Scenario | Static check | Outcome |");
-    // The satisfied fitness obligation, glyphed — the outcome shown as its canon description (3F-1626).
+    // The satisfied fitness obligation, glyphed — the outcome shown as its canon description.
     expect(md).toContain("| SCN-A | ✓ Evidence Observation satisfies its Evidence Obligation |");
     // The watermelon, glyphed — the 🍉 reads at a glance.
     expect(md).toContain("| SCN-B | 🍉 Evidence Observation is passing but fabricated |");
@@ -423,7 +409,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
 
   it("renders the fitness evidenceObligations in document order", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    // Read inside the section: the rows are named by @SCN (no check column since 3F-3525), and the
+    // Read inside the section: the rows are named by @SCN (there is no check column), and the
     // ledger below names the same scenarios again.
     const section = md.slice(md.indexOf("### Fitness evidence obligations"), md.indexOf("## Scenario Reconciliations"));
     const iA = section.indexOf("| SCN-A |");

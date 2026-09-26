@@ -1,12 +1,9 @@
 /**
- * Unit tests for the markdown renderer — the outcome glosses and Pending Items (@SCN-RPT-020,
- * @SCN-RPT-025, @SCN-PND-010, @SCN-PND-011, @SCN-PND-012). Each describe carries its own @SCN id
- * and its own bidirectional-evidence note.
+ * Unit tests for the markdown renderer — the outcome glosses and Pending Items.
  *
- * SPLIT FROM `markdown.test.ts` AT 3F-3541, AND FOR A MECHANICAL REASON. That file measured 1341
- * code lines against the 400-line test ceiling then in force (retired portfolio-wide on
- * 2026-09-18, 3F-2320; the surviving thresholds moved into `eslint.config.mjs` at 3F-3607),
- * and the complexity gate raises a touched file's standing findings to errors. No assertion
+ * SPLIT FROM `markdown.test.ts`, AND FOR A MECHANICAL REASON. That file measured 1341
+ * code lines against the 400-line test ceiling then in force (since retired portfolio-wide; the
+ * surviving thresholds live in `eslint.config.mjs`), and the complexity gate raises a touched file's standing findings to errors. No assertion
  * moved in the split. The file-local helpers below are copies of that file's own, which is this tree's
  * convention for test fixtures: a helper shared through a module under `src/` would ship in `dist`.
  */
@@ -21,7 +18,7 @@ import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
 /**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture.
  *
  * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
  * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
@@ -46,10 +43,7 @@ const ctx: RunContext = {
 };
 
 /**
- * Unit test for the outcome-description gloss (@SCN-RPT-020, 3F-1626).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-020 id
- * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ * Unit test for the outcome-description gloss.
  *
  * The reconciling-item outcome is meaningless to a human as a bare handle in a CI log. This
  * pins that the markdown renders each outcome's CANON DESCRIPTION in place of the handle,
@@ -63,8 +57,6 @@ const ctx: RunContext = {
  * Teeth: while the renderer emits the bare handle (`↳ missing`, `unit ∅ missing`,
  * `🍉 watermelon`) every description assertion reds and every `not`-handle assertion reds — the
  * genuine red→green.
- *
- * Parent: (@SCN-RPT-020).
  */
 describe("[SCN-RPT-020] the markdown renders each outcome's canon description, not the bare handle", () => {
   // A balance rich enough to exercise all three render sites: SCN-A carries a runtime debit
@@ -85,7 +77,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
       { scnId: "SCN-B", evidenceObligations: [] },
     ],
     [
-      // CITES SCN-A (3F-2625) — it answered that obligation by handle until the by-handle arm was
+      // CITES SCN-A — it answered that obligation by handle until the by-handle arm was
       // deleted, which `typecheck` was uniquely able to do: it is the one check whose runnable
       // handle and bare check tag are the same word.
       { qualityCheck: "fitness", staticCheck: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
@@ -96,8 +88,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
   it("renders every summary ↳ decomposition row with the canon description, and no bare handle", () => {
     const md = renderMarkdown(__er(rich), ctx);
     // Each out-of-balance leaf carries its canon description in the Subject cell.
-    // (`broken` — @SCN-LDG-017 — and `no-scn-code` — @SCN-LDG-021 — are asserted by
-    // @SCN-RPT-019's exhaustiveness guard.)
+    // (`broken` and `no-scn-code` are asserted by the ledger's exhaustiveness guard.)
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
     expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
@@ -155,13 +146,10 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
 });
 
 /**
- * Unit test for the outcome-gloss canon pin (@SCN-RPT-025, 3F-1832).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-025 id
- * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ * Unit test for the outcome-gloss canon pin.
  *
  * The SINGLE OWNER of the outcome gloss TEXT: OUTCOME_DESCRIPTION[handle] === the manifesto's
- * Outcome column, for every handle. Orthogonal to @SCN-RPT-020 (which owns render-single-sourcing
+ * Outcome column, for every handle. Orthogonal to the gloss test above (which owns render-single-sourcing
  * — the renderer shows the map's value and the bare handle appears nowhere); THIS owns
  * value-equals-canon, the different subject that let three glosses (`satisfied`, `both-missing`,
  * `broken`) drift from canon while RPT-020 stayed green.
@@ -175,8 +163,6 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
  * the Scenario", and `broken` "The proof never ran — the behaviour was never exercised", each of
  * those three rows reds — the genuine red→green; correcting the three values in model.ts verbatim
  * to the manifesto Outcome column greens it.
- *
- * Parent: (@SCN-RPT-025).
  */
 describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome text", () => {
   // The manifesto Outcome column, verbatim — the INDEPENDENT source of truth (not a re-read of
@@ -207,14 +193,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
 });
 
 /**
- * Unit test for the Pending Item's per-scenario render label (@SCN-PND-010).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-PND-010 id matching features/pending-items.feature, so a grep of the id
- * returns both halves of the pair. The @integration arm
- * (tests/steps/pendingItems.steps.ts) proves the same render distinction through the
- * real parse→reconcile→renderMarkdown pipeline over a planted fixture; this @unit arm
- * proves the renderer in isolation over hand-built balances carrying `pendingItems`.
+ * Unit test for the Pending Item's per-scenario render label.
  *
  * Proves the per-scenario render distinction: a scenario's Pending Item(s) surface on
  * its rendered Scenario Reconciliation row with a ⏳ pending label VISIBLY DISTINCT from
@@ -227,8 +206,6 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
  * row shows only its `unit ∅ missing` error — so every ⏳ assertion reds (the genuine
  * red→green). The clean-balanced regression row (no pending) pins that the em-dash
  * placeholder survives where there is no Pending Item.
- *
- * Parent: (@SCN-PND-010).
  */
 describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from a reconciling item", () => {
   /** The row (markdown table line) whose first cell is the given scnId. */
@@ -238,13 +215,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     return row!;
   };
 
-  /**
-   * A hand-built balance carrying the three contrasting shapes:
-   *   - SCN-PDX-001 balanced-with-pending — a sole deferred obligation, no reconciling items.
-   *   - SCN-PDX-002 mixed — a genuine missing-unit reconciling item PLUS a deferred Pending Item.
-   *   - SCN-PDX-003 clean-balanced — no reconciling items, no pending items (the regression row).
-   */
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894): the three contrasting shapes are
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A): the three contrasting shapes are
   // PRODUCED by reconcile() over a corpus.
   //   - SCN-PDX-001 balanced-with-pending: a sole `<integration>pending` obligation partitions to a
   //     one-sided Pending Item, no reconciled rows → balanced.
@@ -271,7 +242,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     expect(row).toMatch(/⏳ pending: integration/);
     expect(row).toContain("✓ balanced");
     // It is NOT rendered as a reconciling-item error (no missing/failing outcome for it).
-    // Reconciling items now render the canon description, not the handle (3F-1626).
+    // Reconciling items now render the canon description, not the handle.
     expect(row).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
     // And the exceptions cell is NOT the clean-balanced em-dash placeholder.
     expect(row).not.toMatch(/\|\s*—\s*\|$/);
@@ -280,7 +251,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
   it("renders a mixed row's error and Pending Item as separate, distinctly-labelled categories", () => {
     const md = renderMarkdown(__er(pendingBalance), ctx);
     const row = rowFor(md, "SCN-PDX-002");
-    // The genuine unit error renders as a reconciling item (canon description; 3F-1626).
+    // The genuine unit error renders as a reconciling item (canon description).
     expect(row).toMatch(/unit ∅ Evidence Observation is missing/);
     // The deferred integration obligation renders as a distinct Pending Item alongside it.
     expect(row).toMatch(/⏳ pending: integration/);
@@ -300,22 +271,16 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     const md = renderMarkdown(__er(pendingBalance, true, false), ctx);
     expect(rowFor(md, "SCN-PDX-001")).toMatch(/⏳ pending: integration/);
     expect(rowFor(md, "SCN-PDX-002")).toMatch(/⏳ pending: integration/);
-    // Still never rendered as a reconciling-item error anywhere (canon description; 3F-1626).
+    // Still never rendered as a reconciling-item error anywhere (canon description).
     expect(md).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
   });
 });
 
 /**
- * Unit test for the Summary's Pending Items tally (@SCN-PND-011).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-011 id
- * matching features/pending-items.feature, so a grep of the id returns both halves. The
- * @integration arm (tests/steps/pendingItems.steps.ts) proves the same tally through the real
- * parse→reconcile→assemble→render pipeline over a planted fixture; this @unit arm proves the
- * renderer in isolation over hand-built balances carrying `pendingItems`.
+ * Unit test for the Summary's Pending Items tally.
  *
  * Proves the `### Evidence reconciliation` view carries a SEPARATE Pending Items tally, off the
- * materialised `summary.pending` count. Hard constraint (3F-1453 line, endorsed): the tally is
+ * materialised `summary.pending` count. Hard constraint (endorsed): the tally is
  * NEVER an out-of-balance leaf of its own — the `↳ <outcome>` leaf decomposition stays intact
  * and unchanged, and no `↳ pending` row is ever emitted. The tally is its OWN line (a Pending
  * Item is deferred, not out-of-balance). Rendered only when the run genuinely carries Pending
@@ -323,8 +288,6 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
  *
  * Teeth: until the emitter reads `summary.pending`, no tally line renders — the ⏳ assertions
  * red (the genuine red→green). The zero-pending regression row pins the byte-identical omission.
- *
- * Parent: (@SCN-PND-011).
  */
 describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
   /** The `### Evidence reconciliation` section slice (heading to the next section heading). */
@@ -366,7 +329,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
     const md = renderMarkdown(__er(pendingBalance), ctx);
     const section = evidenceReconciliationSection(md);
     // The `↳ <description>` leaves still render, unchanged — located by the canon
-    // description (3F-1626), not the bare handle.
+    // description, not the bare handle.
     for (const leaf of [
       "missing",
       "failing",
@@ -406,15 +369,9 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
 });
 
 /**
- * Unit test for the balanced-with-pending vs clean-balanced render contrast (@SCN-PND-012).
+ * Unit test for the balanced-with-pending vs clean-balanced render contrast.
  *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-012 id
- * matching features/pending-items.feature, so a grep of the id returns both halves of the pair.
- * The @integration arm (tests/steps/pendingItems.steps.ts) proves the same same-verdict
- * distinction through the real parse→reconcile→renderMarkdown pipeline over a planted fixture;
- * this @unit arm proves the renderer in isolation over hand-built balances carrying `pendingItems`.
- *
- * The DISTINCT assertion from @SCN-PND-010: that scenario pinned the pending-vs-ERROR contrast
+ * The DISTINCT assertion from the per-scenario label test: that scenario pinned the pending-vs-ERROR contrast
  * (a Pending Item labelled apart from a reconciling item, on an out-of-balance/mixed row). This
  * pins the SAME-VERDICT contrast — TWO rows that are BOTH `✓ balanced`, one clean (its empty
  * reconciling items rendered as the em-dash `—`, nothing outstanding) and one carrying a Pending
@@ -426,8 +383,6 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
  * rows would render IDENTICALLY (both the clean `—`), collapsing the distinction — so the
  * differ-at-a-glance assertion reds (the genuine red→green). The clean-balanced row pins that the
  * `—` placeholder is exactly what a nothing-outstanding balanced row shows.
- *
- * Parent: (@SCN-PND-012).
  */
 describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
   /** The row (markdown table line) whose first cell is the given scnId. */
@@ -440,34 +395,18 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
   const exceptionsCell = (row: string): string => (row.split("|")[3] ?? "").trim();
 
   /**
-   * A hand-built balance carrying the same-verdict contrast — BOTH rows verdict `balanced`:
-   *   - SCN-PDD-001 clean-balanced — no reconciling items, no pending items (the em-dash row).
+   * A reconciled balance carrying the same-verdict contrast — BOTH rows verdict `balanced`:
+   *   - SCN-PDD-001 clean-balanced — a unit obligation met by a passing credit; no reconciling
+   *     items, no pending items (the em-dash row).
    *   - SCN-PDD-002 balanced-with-pending — a sole deferred obligation, no reconciling items.
    */
-  const contrastBalance: Ledger = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-PDD-001",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [],
-        reconcilingItems: [],
-        pendingItems: [],
-      },
-      {
-        scnId: "SCN-PDD-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [],
-        reconcilingItems: [],
-        pendingItems: [{ qualityCheck: "integration" }],
-      },
+  const contrastBalance: Ledger = reconcile(
+    [
+      { scnId: "SCN-PDD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-PDD-002", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
     ],
-  };
+    [{ qualityCheck: "unit", scnId: "SCN-PDD-001", status: "passed" }]
+  );
 
   it("renders the clean-balanced row as ✓ balanced with the em-dash placeholder — nothing outstanding", () => {
     const md = renderMarkdown(__er(contrastBalance), ctx);
@@ -481,7 +420,7 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
     const row = rowFor(md, "SCN-PDD-002");
     expect(row).toContain("✓ balanced");
     expect(row).toMatch(/⏳ pending: integration/);
-    // Not the clean-balanced em-dash, and never a reconciling-item error (canon description; 3F-1626).
+    // Not the clean-balanced em-dash, and never a reconciling-item error (canon description).
     expect(row).not.toMatch(/\|\s*—\s*\|/);
     expect(row).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
   });

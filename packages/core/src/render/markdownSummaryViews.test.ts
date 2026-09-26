@@ -1,13 +1,10 @@
 /**
  * Unit tests for the markdown renderer — the summary views: out-of-balance by feature, the corpus
- * census, excluded occurrences, section order and test volume (@SCN-RPT-006, @SCN-RPT-007, @SCN-
- * RPT-008, @SCN-RPT-009, @SCN-RPT-010). Each describe carries its own @SCN id and its own
- * bidirectional-evidence note.
+ * census, excluded occurrences, section order and test volume.
  *
- * SPLIT FROM `markdown.test.ts` AT 3F-3541, AND FOR A MECHANICAL REASON. That file measured 1341
- * code lines against the 400-line test ceiling then in force (retired portfolio-wide on
- * 2026-09-18, 3F-2320; the surviving thresholds moved into `eslint.config.mjs` at 3F-3607),
- * and the complexity gate raises a touched file's standing findings to errors. No assertion
+ * SPLIT FROM `markdown.test.ts`, AND FOR A MECHANICAL REASON. That file measured 1341
+ * code lines against the 400-line test ceiling then in force (since retired portfolio-wide; the
+ * surviving thresholds live in `eslint.config.mjs`), and the complexity gate raises a touched file's standing findings to errors. No assertion
  * moved in the split. The file-local helpers below are copies of that file's own, which is this tree's
  * convention for test fixtures: a helper shared through a module under `src/` would ship in `dist`.
  */
@@ -15,7 +12,6 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
@@ -23,7 +19,7 @@ import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
 /**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture.
  *
  * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
  * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
@@ -34,25 +30,6 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
   summary: summaryOf(ledger, wo, wg),
   ledger,
 });
-
-// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
-// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to the renderer, which
-// reads no per-QCR side — only side PRESENCE is constrained by the invariant) so each hand-built
-// fixture routes through the constructor.
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" } }
-      : {}),
-  });
-}
 
 const ctx: RunContext = {
   target: "an-adopters-repository",
@@ -67,11 +44,7 @@ const ctx: RunContext = {
 };
 
 /**
- * Unit test for the markdown by-feature grouping (@SCN-RPT-006).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-006 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown by-feature grouping.
  *
  * Proves the byFeatureSection in isolation: renderMarkdown groups the
  * verdict === "out-of-balance" scenarios under their feature code (the <FFF> parsed
@@ -85,71 +58,50 @@ const ctx: RunContext = {
  * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Out-of-balance
  * by feature" / grouping / placement assertion reds (the genuine red→green). Markdown-only
  * — the grouped view is NOT duplicated into JSON (project design §3).
- *
- * Parent: (@SCN-RPT-006).
  */
 describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {
-  // A balance whose out-of-balance scenarios span THREE feature codes (LDG ×2,
-  // LNT ×1) interleaved with balanced scenarios that must NOT appear. Document
-  // order of the out-of-balance scenarios: SCN-LDG-003, SCN-LNT-002, SCN-LDG-007 —
-  // so first-appearance feature order is LDG (first seen at SCN-LDG-003), then LNT.
-  // Reconciler-built (§11A) for the LDG rows: SCN-LDG-001 balanced (unit satisfied), SCN-LDG-003
-  // out-of-balance (unit missing), SCN-LDG-007 out-of-balance (integration failing). Document order
-  // of the out-of-balance scenarios stays SCN-LDG-003, SCN-LNT-002, SCN-LDG-007 → first-appearance
-  // feature order LDG then LNT (RPT-006 threads no census, so no row here reaches evidenceCell).
-  const reconciledNamed = reconcile(
+  // Reconciler-built (§11A). Out-of-balance scenarios span two feature codes (LDG ×2, LNT ×1),
+  // interleaved with balanced ones that must NOT appear: SCN-LDG-001 balanced (unit satisfied),
+  // SCN-LDG-003 out-of-balance (unit missing), SCN-LNT-002 out-of-balance (fitness guard-lint
+  // watermelon), SCN-LDG-007 out-of-balance (integration failing), SCN-LNT-009 balanced (fitness
+  // guard-lint satisfied). Each fitness credit answers the @SCN it cites, so one handle carries two
+  // outcomes. Rows follow scenario-input order, so the out-of-balance document order is SCN-LDG-003,
+  // SCN-LNT-002, SCN-LDG-007 and the first-appearance feature order is LDG then LNT. RPT-006 threads
+  // no census, so no row here reaches evidenceCell.
+  const spanning: Ledger = reconcile(
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
       { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "integration" }] },
+      { scnId: "SCN-LNT-009", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
       { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
+      {
+        qualityCheck: "fitness",
+        staticCheck: "lint:guard-lint",
+        scnId: "SCN-LNT-002",
+        exists: true,
+        enforcedOverRealSource: false,
+      },
+      {
+        qualityCheck: "fitness",
+        staticCheck: "lint:guard-lint",
+        scnId: "SCN-LNT-009",
+        exists: true,
+        enforcedOverRealSource: true,
+      },
     ]
   );
-  const spanning: Ledger = {
-    scenarioReconciliations: [
-      ...reconciledNamed.scenarioReconciliations,
-      // HAND-BUILT, not reconciler-true: two fitness rows sharing the `guard-lint` handle at
-      // different outcomes (watermelon vs satisfied). The handle collision this once stood for is
-      // gone — a credit now answers the obligation of the @SCN it cites and nothing compares the
-      // handle (3F-3525) — so these rows are ordinary hand-built fixtures, left for the tree-wide
-      // audit of the remaining hand-built ledgers. RPT-006 threads no census, so these never reach
-      // evidenceCell.
-      {
-        scnId: "SCN-LNT-002",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "out-of-balance",
-        qualityCheckReconciliations: [
-          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
-        ],
-        pendingItems: [],
-        reconcilingItems: [
-          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
-        ],
-      },
-      {
-        scnId: "SCN-LNT-009",
-        kind: "scenario",
-        evidenceObservations: [],
-        evidenceObligations: [],
-        verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "satisfied" })],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-    ],
-  };
 
   it("renders an '### Out-of-balance by feature' table grouping the out-of-balance scenarios under their feature code", () => {
     const md = renderMarkdown(__er(spanning), ctx);
 
     expect(md).toContain("### Out-of-balance by feature");
     // The total line: 3 of the 5 scenarios are out of balance.
-    // The ruled head (3F-3297): scenario rows, not "out-of-balance scenarios" — the old wording
+    // The ruled head: scenario rows, not "out-of-balance scenarios" — the old wording
     // read as 5 out of balance.
     expect(md).toContain("3 of 5 scenario rows out of balance, grouped by feature.");
     // The table header (FFF prefix only — full names are added separately).
@@ -245,11 +197,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
 });
 
 /**
- * Unit test for the by-feature total line's ungrouped rows (@SCN-RPT-030, 3F-3297).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-030 id matching
- * features/report.feature. The @integration half is the `// @SCN-RPT-030` block in
- * tests/steps/report.steps.ts, over a real reconcile of a stranded citation.
+ * Unit test for the by-feature total line's ungrouped rows.
  *
  * Reconciler-built (§11A): `reconcile` mints the phantom-scenario row for a credit citing an @SCN no
  * scenario names, and the suspense-scenario row for a credit citing none — the shapes a real run
@@ -302,18 +250,12 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
 });
 
 /**
- * Unit test for the markdown corpus census (@SCN-RPT-007).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-007 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown corpus census.
  *
  * Proves the census in isolation: EVERY scenario is a ledger row (a zero-obligation
  * scenario is a both-missing row, not a second axis), so the census is recoverable from
  * the ledger scenario-count ALONE. The dissolved census section is guarded POSITIVELY over
- * the whole top-level section set (3F-2418): one returning under ANY name reds as unexpected.
- *
- * Parent: (@SCN-RPT-007).
+ * the whole top-level section set: one returning under ANY name reds as unexpected.
  */
 describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
   // Reconciler-built (§11A): SCN-A balanced (unit satisfied); SCN-B out-of-balance
@@ -322,7 +264,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   // land on — so the census total IS the ledger scenario-count, with nothing to sum in.
   // The section list below is this renderer's FULL top-level emission for this fixture,
   // transcribed from the render and re-proved by mutation when it moves: plant a standalone
-  // section into markdown.ts and this describe reds (3F-2418).
+  // section into markdown.ts and this describe reds.
   const reconciliationFixture: Ledger = reconcile(
     [
       { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -333,7 +275,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   );
 
   it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
-    // Over a corpus it judged, as every `balance` run's is (3F-3635), so the scenario code errors
+    // Over a corpus it judged, as every `balance` run's is, so the scenario code errors
     // section is among them — here stating the codes clean.
     const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [] }, ctx);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
@@ -371,11 +313,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
 });
 
 /**
- * Unit test for the markdown excluded-occurrence bullet (@SCN-RPT-008).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-008 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
+ * Unit test for the markdown excluded-occurrence bullet.
  *
  * Proves the evidenceObligationsSection extension in isolation: when a EvidenceObligations is
  * threaded as the optional third arg, renderMarkdown(__er(balance, false, false), ctx, corpus) appends
@@ -386,15 +324,12 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
  * Teeth: until the emitter reads the corpus arg, the excluded bullet is absent, so
  * its assertions red (the genuine red→green). The 2-arg omission case is the
  * back-compat guard (the existing byte/JSON guards pass the corpus to nothing).
- *
- * Parent: (@SCN-RPT-008).
  */
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
-  const simple: Ledger = {
-    scenarioReconciliations: [
-      { scnId: "SCN-A", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
-    ],
-  };
+  const simple: Ledger = reconcile(
+    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
+  );
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
@@ -419,18 +354,14 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     // The ledger summary scenario-count still renders.
     expect(md).toContain("- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance.");
     // But the excluded bullet is absent, and the top-level section set is the renderer's
-    // known three — the dissolved census section has not returned under any name (3F-2418).
+    // known three — the dissolved census section has not returned under any name.
     expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
     expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
 });
 
 /**
- * Unit test for the reformatted report layout (@SCN-RPT-009).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-009 id matching features/report.feature, so a grep of the id returns both
- * halves of the pair.
+ * Unit test for the reformatted report layout.
  *
  * Proves the summary-first / ledger-last structure in isolation: renderMarkdown opens
  * with `# Evidence Reconciliation` (not `# Ledger`), keeps `## Run provenance`
@@ -519,10 +450,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 });
 
 /**
- * Unit test for the markdown Test volume cut (@SCN-RPT-010).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-010
- * id matching features/report.feature, so a grep of the id returns both halves.
+ * Unit test for the markdown Test volume cut.
  *
  * Proves the testVolumeSection in isolation: when a RuntimeEvidenceObservationKindCounts is threaded as
  * the 4th arg, renderMarkdown emits a "### Test volume" cut under Summary views — the
@@ -530,11 +458,9 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
  * view) then a by-level evidenceObservation table with ALL four levels (e2e/performance zeros
  * shown — a fixed tally like Evidence reconciliation), levels read as lowercase tag words. When
  * no evidenceObservations is threaded the 3-arg call omits the cut (the back-compat guard).
- *
- * Parent: (@SCN-RPT-010) — the evidenceObservations-reconciliation spine.
  */
 describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObservations reconciliation", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). The balance AND the census are
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A). The balance AND the census are
   // PRODUCED by reconcile() + countRuntimeEvidenceObservationKinds() over ONE corpus, so the census
   // cannot claim an attribution / phantom / suspense the ledger does not carry — which is exactly
   // the shape this block used to embody (an all-empty SCN-A row beside a census asserting
