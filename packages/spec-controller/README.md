@@ -74,6 +74,8 @@ The whole report is written before the code is set, so a failing run still tells
 
 `--exit-zero` moves `1` and `3` to `0` and leaves every other code alone: see *Report first, gate later*.
 
+`balance --render-from-json <saved.json>` re-renders a saved report and exits the code its verdict names, from the same table: a saved run that failed fails again when it is read back. A report saved under `--strict` records it, so its re-render exits `3` too, and `--strict` or `--exit-zero` beside the re-render work as they do live. Any other flag beside it is refused at `2`, because a re-render reads no live input and writes only to stdout.
+
 **Node's default is never one of these.** A run that cannot reconcile ends on an enumerated code of
 its own rather than falling out of the process — a crash that exits `1` would be indistinguishable,
 by status, from an honest disagreement. **An input the tool cannot read is part of `2`**: a mistyped

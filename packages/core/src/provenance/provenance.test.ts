@@ -1,18 +1,14 @@
 /**
- * Unit tests for the provenance INPUT-PATH portability (@SCN-RPT-001 Update).
- *
- * Bidirectional evidence (Evidence Manifesto §9 / the discipline): the describe
- * carries the @SCN-RPT-001 id matching features/report.feature, so a grep of the id
- * returns both halves of the pair. The exact parallel of the evidenceObservations
+ * Unit tests for the provenance INPUT-PATH portability. The exact parallel of the evidenceObservations
  * locators for the provenance inputs: when RunContext carries a run root, the projection
  * relativizes each input path so a committed artefact never leaks an absolute
- * local/worktree path. Opt-in — no root means verbatim, so the existing RPT-001 ctx
+ * local/worktree path. Opt-in — no root means verbatim, so the existing ctx
  * fixtures stay unchanged.
  *
- * The impure resolveSourceSha / resolveTargetRoot arms (@SCN-RPT-003 / @SCN-RPT-016) moved
+ * The impure resolveSourceSha / resolveTargetRoot arms moved
  * to run-management/resolveRunInputs.test.ts with their functions.
  *
- * Parent: (@SCN-RPT-001).
+ * Parent:.
  */
 
 import { describe, it, expect } from "vitest";
@@ -62,8 +58,7 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
 });
 
 /**
- * The optional fitness stream — the CI step record — on the canonical input list (@SCN-RPT-027,
- * 3F-3155). The isolation half of the pair: the @integration arm in
+ * The optional fitness stream — the CI step record — on the canonical input list. The isolation half of the pair: the @integration arm in
  * tests/steps/report.steps.ts runs the REAL CLI and reads the persisted block back, while
  * these arms pin the projection's ORDER and its additive JSON shape, which a rendered line
  * cannot show.
@@ -126,12 +121,12 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
 });
 
 /**
- * The canonical inputs a run did NOT receive (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 named
+ * The canonical inputs a run did NOT receive. Naming
  * every stream a run was handed, which killed the "handed it and the block does not say so"
  * reading; it left the other one alive, because absence from a list only informs a reader who
  * already holds the list. These arms pin the derivation — the flags with no value, taken from
  * the SAME canonical list the Inputs line renders, so a flag can never be listed on one line
- * and missing from both. The rendering is @SCN-RPT-028's provenanceSection.test.ts arms; the persisted
+ * and missing from both. The rendering is provenanceSection.test.ts's arms; the persisted
  * line is its @integration arm.
  */
 describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
@@ -194,6 +189,7 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
       "toolVersion",
       "runTimestamp",
       "inputs",
+      "strict",
     ]);
     expect(obj).not.toHaveProperty("absentInputs");
     expect(JSON.stringify(obj)).not.toContain("absent");

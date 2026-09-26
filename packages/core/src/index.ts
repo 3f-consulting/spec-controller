@@ -5,7 +5,7 @@
  * This re-exports the v1 contract surface — what a downstream consumer builds
  * on.
  *
- * NOTHING HOLDS IT TO A LIST, AND THAT IS NEW (3F-3449). Until that commit a
+ * NOTHING HOLDS IT TO A LIST, AND THAT IS NEW. Until that commit a
  * `@unit` drift guard reconciled this barrel's actual exports against a surface
  * written down for it in the repository's check tree, both directions, so a
  * symbol added here or dropped reds CI. The list and its arm are gone, with the
@@ -53,19 +53,19 @@ export { parseScenarios, countScnOccurrences, parseUntaggedScenarios, proseOnlyC
 // --- Evidence-obligation census (`census/evidenceObligations.ts`) ---
 export { evidenceObligations } from "./census/evidenceObligations.js";
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./census/evidenceObligations.js";
-// The codes more than one scenario carries (@SCN-STG-017, 3F-3609): a published module — the CLI's
+// The codes more than one scenario carries: a published module — the CLI's
 // ingest edge — names them from the file bytes it already holds, and the tag-inheritance walk that
 // reads them stays internal, as it does for `evidenceReconciliationFromSources`.
 export { sharedScnCodesOf } from "./census/evidenceObligations.js";
 
 // --- Evidence Reconciliation (`domain/evidenceReconciliation.ts`) + the Ledger predicates ---
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-// The scenario code errors (3F-3635): the whole-run predicate the CLI ladder asks, and the shape.
+// The scenario code errors: the whole-run predicate the CLI ladder asks, and the shape.
 export { hasScenarioCodeErrors } from "./domain/scenarioCodeError.js";
 export type { ScenarioCodeError, ScenarioCodeErrorKind, ScenarioCodePopulation } from "./domain/scenarioCodeError.js";
-// The whole-run predicates come DIRECT from the concept that OWNS them (3F-2232). They used to
+// The whole-run predicates come DIRECT from the concept that OWNS them. They used to
 // be re-exported through `reconcile/reconcile.js` — a shell kept alive purely to preserve importer
-// paths after 3F-1994 sent the behaviour home. No symbol is re-exported through a module that does
+// paths after the behaviour was sent home. No symbol is re-exported through a module that does
 // not own it.
 export {
   isBalanced,
@@ -73,14 +73,17 @@ export {
   hasBrokenEvidence,
   hasNothingToReconcile,
 } from "./domain/ledger.js";
+// The one verdict ladder the exit and the headline both read.
+export { verdictCode } from "./domain/verdictCode.js";
+export type { VerdictCode, VerdictInputs } from "./domain/verdictCode.js";
 
-// The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED (3F-2104):
+// The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED:
 // its counting folds onto the Ledger (`runtimeObservationTally`, an internal domain fold), and its
 // 6 symbols + `EvidenceObservationsSection` left this frozen-in-intent surface. Pre-freeze, no
 // external consumer (unpublished package; only workspace dependents, all rewired).
 
-// The static evidence-observation census (`census/staticEvidenceObservations.ts`) is RETIRED
-// (3F-2119): its counting folds onto the Ledger (`staticObservationTally`, an internal domain fold),
+// The static evidence-observation census (`census/staticEvidenceObservations.ts`) is RETIRED:
+// its counting folds onto the Ledger (`staticObservationTally`, an internal domain fold),
 // and its 2 symbols (`countStaticEvidenceObservationKinds` value / `StaticEvidenceObservationKindCounts`
 // type) left this frozen-in-intent surface. `StaticCheckTotals` (the materialised headline, now
 // Ledger-fold-sourced) STAYS on the barrel. Pre-freeze, no external consumer (unpublished package;
@@ -103,7 +106,7 @@ export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 // --- Evidence Reconciliation (the concept, `domain/evidenceReconciliation.ts`) + the RENDER
 // INPUT the adapters frame around it (`assemble/renderInput.ts`). `RenderInput` is deliberately
 // NOT a canon word: canon reserves "the report" for the RENDERED ARTEFACT, so the payload a
-// renderer consumes must not borrow it (3F-2234). ---
+// renderer consumes must not borrow it. ---
 export { assembleRenderInput } from "./assemble/renderInput.js";
 export type {
   EvidenceReconciliation,
@@ -121,9 +124,9 @@ export type {
 
 // --- The RECONCILE COMPOSITION over a target's already-read sources
 // (`assemble/evidenceReconciliationFromSources.ts`) ---
-// THE ONE ENTRY POINT THIS BARREL GAINS AT 3F-3086, and the reason it is here rather than on
+// THE ONE ENTRY POINT THIS BARREL GAINS, and the reason it is here rather than on
 // `./internal`: a published module — the CLI's ingest edge — has to reach the composition, and
-// `./internal` is not published (3F-2837, unamended). The nine symbols it composes stay internal,
+// `./internal` is not published. The nine symbols it composes stay internal,
 // so the surface a consumer's v1 contract carries widens by one name and nothing else.
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
 

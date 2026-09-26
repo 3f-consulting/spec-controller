@@ -10,8 +10,6 @@
  * the markdown header here and the JSON object) lives here so the two surfaces
  * never drift. This is the PURE provenance projection — the impure `resolveSourceSha` /
  * `resolveTargetRoot` git reads live in `run-management/resolveRunInputs.ts`.
- *
- * Parent: (@SCN-RPT-001).
  */
 
 import { relativizeToRoot } from "../lib/portablePath.js";
@@ -21,7 +19,7 @@ import { relativizeToRoot } from "../lib/portablePath.js";
  * the operator supplied are present. The same --features/--vitest/--cucumber/--ci/
  * --package-json/--ci-steps seams as the CLI's ReconcileOptions.
  *
- * The converted checks' credit stream joined the interface at 3F-3184 (@SCN-RPT-027). It was
+ * The converted checks' credit stream joined the interface later. It was
  * ALREADY flowing through it: `reconcileInputsOf` builds one ReconcileOptions and that same
  * object is assigned to `ctx.inputs`, so structural typing let the stream ride along unseen and
  * the block simply never named it. It is optional by design — passed only where the file
@@ -52,7 +50,7 @@ export interface RunContext {
   /** The target's source SHA, or null when unknown (non-git target). */
   sourceSha: string | null;
   /**
-   * The TOOL's own git SHA — which spec-controller produced this run (3F-1916),
+   * The TOOL's own git SHA — which spec-controller produced this run,
    * distinct from the target's `sourceSha`. Null when the tool is not a git checkout
    * (an installed package). OPTIONAL on the ctx: fixtures that do not exercise
    * tool-provenance omit it and the projection defaults it to null; the CLI always
@@ -73,6 +71,8 @@ export interface RunContext {
    * under that root is recorded relative — a banked artefact stays portable.
    */
   root?: string;
+  /** Whether the run was asked to treat a Pending Item as a failure. */
+  strict?: boolean;
 }
 
 /** The canonical input flags, in render order, mapped to their RunInputs key. */
@@ -82,7 +82,7 @@ const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
   { key: "cucumber", flag: "--cucumber" },
   { key: "ci", flag: "--ci" },
   { key: "packageJson", flag: "--package-json" },
-  // APPENDED, so no flag that was already rendered moves (@SCN-RPT-027). Widening this
+  // APPENDED, so no flag that was already rendered moves. Widening this
   // list is the whole of the change: `presentInputs`, `provenanceObject`,
   // `projectProvenanceObject`, the markdown header and the JSON object all iterate it, so
   // the two surfaces gain the stream in step and neither can drift from the other.
@@ -107,13 +107,13 @@ export interface ProvenanceFacts {
   inputs: ProvenanceInput[];
   runStartUtc: string;
   sourceSha: string | null;
-  /** The tool's own SHA — which spec-controller produced the run (3F-1916); null when not a git checkout. */
+  /** The tool's own SHA — which spec-controller produced the run; null when not a git checkout. */
   toolSha: string | null;
   /** The tool's package version — always present. */
   toolVersion: string;
   /**
    * The canonical input flags the run did NOT receive — the complement of `inputs` over
-   * INPUT_FLAGS, in the same canonical order (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 made the
+   * INPUT_FLAGS, in the same canonical order. Naming every input made the
    * block name every stream a run was handed, which killed the "handed it and the block does
    * not say so" reading; it left the other one alive, because absence from a list only informs
    * a reader who already holds the list. Naming the flags with no value is what makes the page
@@ -164,12 +164,14 @@ function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
 export interface ProvenanceObject {
   target: string;
   sourceSha: string | null;
-  /** The tool's own SHA (3F-1916) — which spec-controller produced the run; null when not a git checkout. */
+  /** The tool's own SHA — which spec-controller produced the run; null when not a git checkout. */
   toolSha: string | null;
   /** The tool's package version — always present. */
   toolVersion: string;
   runTimestamp: string;
   inputs: RunInputs;
+  /** Absent on a report saved before strictness was recorded, which reads as not strict. */
+  strict?: boolean;
 }
 
 /**
@@ -182,12 +184,13 @@ export function provenanceObject(ctx: RunContext): ProvenanceObject {
   return {
     target: ctx.target,
     sourceSha: ctx.sourceSha,
-    // The tool identity (3F-1916), defaulted for ctx fixtures that omit it; the CLI
+    // The tool identity, defaulted for ctx fixtures that omit it; the CLI
     // always sets both via resolveToolIdentity.
     toolSha: ctx.toolSha ?? null,
     toolVersion: ctx.toolVersion ?? "unknown",
     runTimestamp: formatUtc(ctx.runStart),
     inputs: presentInputs(ctx.inputs, ctx.root),
+    strict: ctx.strict === true,
   };
 }
 
@@ -202,7 +205,7 @@ export function provenanceObject(ctx: RunContext): ProvenanceObject {
 export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts {
   const inputs: ProvenanceInput[] = [];
   // The flags with no value, derived in the SAME pass over the SAME canonical list that
-  // produces the flags with one (@SCN-RPT-028). One list, one traversal, two complementary
+  // produces the flags with one. One list, one traversal, two complementary
   // outputs — so a flag can never be named on both lines, nor missing from both, and adding
   // another input flag reaches the absence line without anyone remembering to.
   const absentInputs: string[] = [];

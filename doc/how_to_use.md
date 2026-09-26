@@ -241,7 +241,7 @@ spec-controller balance --features ./features \
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
-| `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. |
+| `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. The re-render exits the code the saved verdict names, and is strict if the saved run was or `--strict` is given beside it; `--exit-zero` composes as it does live. Every other flag beside it (a live input, `--target`, `--source-sha`, `--format`) is refused at exit `2`, so a re-render under `--store` is refused too. |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |

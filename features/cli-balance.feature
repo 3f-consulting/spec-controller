@@ -106,12 +106,13 @@ Feature: spec-controller balance runs standalone
       And the reconciliation reports a Pending Item
 
     @unit @e2e @SCN-CLI-011
-    Scenario: an only-Pending-Items reconciliation with --strict → balance exits 3
+    Scenario: an only-Pending-Items reconciliation with --strict → balance exits 3, and its verdict headline names exit 3
       Given a target whose only exception is Pending Items
       When "spec-controller balance" is invoked with --strict over that target through the CLI binary
       Then the command exits with status 3
       And it prints the Evidence Reconciliation to stdout
       And the reconciliation reports a Pending Item
+      And the verdict headline reads PENDING and names exit 3
 
   Rule: the printed verdict agrees with the process exit code
 
@@ -132,6 +133,85 @@ Feature: spec-controller balance runs standalone
       And the verdict headline reads OUT-OF-BALANCE and names exit 1
       And the command exits with status 1
       And the tally, the verdict headline and the process exit code agree
+
+  Rule: a re-render exits the verdict its saved reconciliation carries
+
+    A saved spec-reconciliation.json carries its verdict: the ledger, the scenario code errors and
+    whether the run treated a deferral as a failure. Re-rendering it reads that verdict rather than
+    recomputing it, and exits the code it names, so a failed run never reads as a pass because it
+    was read back. The re-rendered headline and the exit agree exactly as a live run's do.
+
+    @unit @e2e @SCN-CLI-069
+    Scenario Outline: a re-render of a saved <verdict> reconciliation exits <code>, and its verdict headline names <code>
+      Given a saved reconciliation of a target that reconciles <verdict>
+      When "spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary
+      Then the re-render exits with status <code>
+      And the re-render's verdict headline names exit <code>
+
+      Examples:
+        | verdict                            | code |
+        | all-balanced                       | 0    |
+        | out-of-balance                     | 1    |
+        | balanced-with-scenario-code-errors | 1    |
+        | unsound                            | 4    |
+        | nothing to reconcile               | 5    |
+
+    @unit @e2e @SCN-CLI-070
+    Scenario Outline: a re-render is strict when the saved run was strict or the re-render is given --strict
+      Given a saved reconciliation of a target whose only exception is Pending Items, saved <saved>
+      When "spec-controller balance --render-from-json" is invoked <given> over the saved reconciliation through the CLI binary
+      Then the re-render exits with status <code>
+      And the re-render's verdict headline names exit <code>
+
+      Examples:
+        | saved                          | given         | code |
+        | under --strict                 | with no flags | 3    |
+        | without --strict               | with --strict | 3    |
+        | without --strict               | with no flags | 0    |
+        | before strictness was recorded | with no flags | 0    |
+
+    @unit @e2e @SCN-CLI-071
+    Scenario Outline: under --exit-zero a re-render moves 1 and 3 to 0 and never 4 or 5, printing the same report
+      Given a saved reconciliation of a target that reconciles <verdict>
+      When "spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary, once without --exit-zero and once with it
+      Then without --exit-zero the re-render exits with status <code>
+      And with --exit-zero the re-render exits with status <zeroed>
+      And the two re-renders print the same report, byte for byte
+
+      Examples:
+        | verdict                           | code | zeroed |
+        | out-of-balance                    | 1    | 0      |
+        | only-Pending-Items under --strict | 3    | 0      |
+        | unsound                           | 4    | 4      |
+        | nothing to reconcile              | 5    | 5      |
+
+  Rule: a re-render reads its saved report and refuses every flag it would otherwise drop
+
+    A re-render reads the saved report, --strict and --exit-zero, and nothing else: it reconciles
+    nothing, so a live input, a provenance override or an output destination given beside it would
+    be silently ignored. Each is refused as a usage fault, naming the flag, before anything is
+    rendered. --help still answers first. A stored run passes --format for its report files, so a
+    re-render under --store is refused the same way.
+
+    @unit @e2e @SCN-CLI-072
+    Scenario Outline: a <flag> given beside --render-from-json exits 2 naming the flag, and nothing is rendered
+      Given a saved reconciliation of a target that reconciles out-of-balance
+      When "spec-controller balance --render-from-json" is invoked with <flag> <value> over the saved reconciliation through the CLI binary
+      Then the re-render exits with status 2
+      And stderr names the flag <flag>
+      And nothing is re-rendered
+
+      Examples:
+        | flag           | value         |
+        | --features     | /nonexistent  |
+        | --vitest       | /nonexistent  |
+        | --cucumber     | /nonexistent  |
+        | --ci           | /nonexistent  |
+        | --package-json | /nonexistent  |
+        | --ci-steps     | /nonexistent  |
+        | --target       | elsewhere     |
+        | --source-sha   | 0000000       |
+        | --format       | json:out.json |
 
   Rule: an input the tool cannot read is a usage error, never a verdict
 
@@ -179,7 +259,7 @@ Feature: spec-controller balance runs standalone
         | missing     |
         | unparseable |
 
-  # THE OBLIGATION SIDE of the same rule (@SCN-CLI-016, 3F-1767). The tool's inputs are not only
+  # THE OBLIGATION SIDE of the same rule. The tool's inputs are not only
   # the evidence reports; the FEATURE CORPUS is an input too — the ledger's DEBIT side. It was
   # read by a hand-rolled TAG-LINE SCAN that never looked for a Scenario: header, so a malformed
   # tag line simply stopped being a tag line and its scenario CEASED TO EXIST. One stray
@@ -193,11 +273,11 @@ Feature: spec-controller balance runs standalone
   # reconciling, name the file and the parse failure. Never a verdict, and never a green.
   #
   # Validation is half the story: it decides whether a file can be READ. The corpus is then
-  # EXTRACTED from that same real AST (@SCN-LDG-020), so what spec-controller reconciles IS what
+  # EXTRACTED from that same real AST, so what spec-controller reconciles IS what
   # cucumber runs — Feature/Rule tag inheritance included. One reading of the file, not two.
   #
   # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether UNCODED work
-  # should red a run is a policy question, deliberately kept out of this bug fix (3F-1774).
+  # should red a run is a policy question, deliberately kept out of this bug fix.
 
     @unit @e2e @SCN-CLI-016
     Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
@@ -276,8 +356,8 @@ Feature: spec-controller balance runs standalone
 
     The on-ramp for a new-client or annotated adopter: the gate's report, stated exactly,
     without the red. Gate stays the default. The flag is a CLI-edge suppression of the
-    process status only, invisible to the core exactly as --strict is — so the report,
-    headline included, still names the code the GATE gives; @SCN-CLI-013's agreement is
+    process status only and is never recorded, unlike --strict, which the saved report carries
+    — so the report, headline included, still names the code the GATE gives; @SCN-CLI-013's agreement is
     between the headline and the gate, and holds unchanged with no flag.
 
     @SCN-CLI-021 @unit @e2e
@@ -348,9 +428,9 @@ Feature: spec-controller balance runs standalone
         | a name that is no command                  |
         | a name that is no command, as a stored run |
 
-    # --exit-zero moves only verdicts, and a usage fault is not one (@SCN-CLI-022). Written after a
+    # --exit-zero moves only verdicts, and a usage fault is not one. Written after a
     # command the host does not know, the flag reaches only that command's arguments, which the host
-    # never reads. Written before the command, it is a flag out of place (@SCN-CLI-060), not a command.
+    # never reads. Written before the command, it is a flag out of place, not a command.
 
     @SCN-CLI-057 @unit @e2e
     Scenario: --exit-zero after an unknown command never moves its usage status

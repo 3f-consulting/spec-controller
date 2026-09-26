@@ -1,7 +1,6 @@
 /**
  * Step definitions for features/report-model.feature (the @RMD whole-document report model).
  *
- * @SCN-RMD-001 — the bidirectional @integration evidence marker (Evidence Manifesto §9).
  * This arm exercises the REAL kept-run scaffold END-TO-END: executeKeptRun makes the run dir
  * under an INJECTED temp store root and routes the tool's --format outputs in by invoking the
  * REAL CLI as a black-box subprocess. The machine artefact must be named spec-reconciliation.json
@@ -11,8 +10,6 @@
  * REDS. Anti-watermelon: the assertions read the REAL persisted file, never a renderJson re-run.
  *
  * Self-contained module-level outcome + distinct step text (Cucumber registers steps globally).
- *
- * Evidence: @SCN-RMD-001 — the report-model slice.
  */
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
@@ -36,7 +33,7 @@ const META: RunManifestMeta = { sourceSha: "unknown", toolSha: "unknown", toolVe
 let rmdStoreRoot: string;
 let rmdPlan: KeptRunPlan;
 /**
- * The REAL process exit code the tool returned for this run (3F-1724). Captured so the
+ * The REAL process exit code the tool returned for this run. Captured so the
  * tally assertion can prove the invariant the bug broke: the summary's out-of-balance
  * count and the process exit code AGREE. Read off the subprocess, never re-derived.
  */
@@ -74,7 +71,7 @@ When("the kept run persists its machine artefact", function () {
       );
       assert.equal(result.error, undefined, `the tool subprocess failed to spawn: ${result.error?.message}`);
       rmdExitCode = result.status;
-      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // fix-to-canon: balance is now an unconditional CI gate, so this
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(
@@ -114,14 +111,14 @@ Then(
     assert.equal(keys[0], "runProvenance", `expected runProvenance first; got ${keys.join(", ")}`);
     assert.equal(keys[1], "summary", `expected summary second; got ${keys.join(", ")}`);
     // The corpus was judged, so its scenario code errors ride after the ledger and before the
-    // census (3F-3635) — present, and an array, even when there are none.
+    // census — present, and an array, even when there are none.
     assert.ok(Array.isArray(parsed.scenarioCodeErrors), `expected a scenarioCodeErrors section; got keys: ${keys.join(", ")}`);
     assert.ok(
       keys.indexOf("ledger") < keys.indexOf("scenarioCodeErrors") &&
         keys.indexOf("scenarioCodeErrors") < keys.indexOf("evidenceObligations"),
       `expected scenarioCodeErrors between ledger and evidenceObligations; got ${keys.join(", ")}`
     );
-    // The population the codes were judged over follows them, before the census (3F-3666).
+    // The population the codes were judged over follows them, before the census.
     assert.equal(
       keys.indexOf("scenarioCodePopulation"),
       keys.indexOf("scenarioCodeErrors") + 1,
@@ -130,13 +127,12 @@ Then(
   }
 );
 
-// @SCN-RMD-001
 Then("its scenarioCodePopulation counts the feature files and the feature codes of the corpus it judged", function () {
   const parsed = JSON.parse(readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")) as {
     scenarioCodePopulation?: unknown;
   };
   // The fixture corpus is one file, target.feature, headed @TGT. The population arms whose
-  // counts differ are @SCN-STG-021's.
+  // counts differ belong to the scenario code errors re-render.
   assert.deepEqual(parsed.scenarioCodePopulation, { featureFiles: 1, featureCodes: 1 });
 });
 
@@ -155,7 +151,7 @@ interface PersistedTally {
 }
 
 /**
- * @SCN-RMD-001 (3F-1724) — the summary totals count EVERY Scenario Reconciliation.
+ * The summary totals count EVERY Scenario Reconciliation.
  *
  * The Evidence Reconciliation is all Scenario Reconciliations assembled and the summary is
  * its totals (the maintainers' private notes); phantom / suspense reconciliations are
@@ -163,7 +159,7 @@ interface PersistedTally {
  * corpus reconciles to 4 rows — 2 balanced scenarios, 1 phantom, 1 suspense — and
  * the run exits 1. Under the scenario-only tally the summary read `total 2, balanced 2,
  * outOfBalance 0`: a FAILING run rendering a headline that reads as a clean pass, the exact
- * divergence 3F-1703 found in an adopter's repository dogfood.
+ * divergence found in an adopter's repository dogfood.
  *
  * Anti-watermelon: every number is read off the REAL persisted spec-reconciliation.json and
  * the REAL process exit code — no re-run of assembleRenderInput, no re-derivation. The final
@@ -215,7 +211,6 @@ After({ tags: "@SCN-RMD-001" }, function () {
   if (rmdStoreRoot && existsSync(rmdStoreRoot)) rmSync(rmdStoreRoot, { recursive: true, force: true });
 });
 
-// @SCN-RMD-003
 // Drives the REAL file-read pipeline over the evidence observation fixture (whose Vitest/Cucumber reports
 // span attributed, phantom-id, and cites-no-scenario evidence observations) via the kept-run scaffold, then
 // reads the persisted spec-reconciliation.json: the observed evidence must be under
@@ -252,7 +247,7 @@ When("the run persists spec-reconciliation.json", function () {
         ],
         { cwd: rmd003StoreRoot, encoding: "utf8" }
       );
-      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // fix-to-canon: balance is now an unconditional CI gate, so this
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
@@ -264,7 +259,7 @@ When("the run persists spec-reconciliation.json", function () {
 Then(
   "the phantom and suspense credits surface on their ledger rows and there is no evidenceObservations section",
   function () {
-    // The evidenceObservations SECTION is RETIRED (3F-2103) — its raw totals re-home onto
+    // The evidenceObservations SECTION is RETIRED — its raw totals re-home onto
     // summary.rawByRuntimeQualityCheck; the posted credits live on the ledger rows.
     assert.ok(!("evidenceObservations" in rmd003Json), `expected NO evidenceObservations section; got keys: ${Object.keys(rmd003Json).join(", ")}`);
     assert.ok(!("evidence observation" in rmd003Json), `expected NO legacy "evidence observation" key`);
@@ -275,8 +270,8 @@ Then(
       kind?: string;
       qualityCheckReconciliations: { outcome: string; locator?: string }[];
     }[];
-    // The phantom credit surfaces as a phantom-scenario row (@SCN-LDG-006), never a section detail
-    // array. The fixture's 1 phantom (SCN-PHM-999) surfaces as a phantom row carrying the locator.
+    // The phantom credit surfaces as a phantom-scenario row, never a section detail
+    // array. The fixture's 1 phantom surfaces as a phantom row carrying the locator.
     const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHM-999");
     assert.ok(phantom, "expected a phantom-scenario row for SCN-PHM-999 in the ledger");
     assert.equal(phantom!.kind, "phantom-scenario", "expected kind phantom-scenario");
@@ -287,7 +282,7 @@ Then(
       `expected the phantom item to carry a file locator; got ${JSON.stringify(phantomItem)}`
     );
     // The uncited credits surface as cites-no-scenario items on the suspense-scenario row
-    // (@SCN-LDG-007), never a section detail array. The fixture's 2 uncited credits surface on the
+    //, never a section detail array. The fixture's 2 uncited credits surface on the
     // "(no scenario)" row, each with a locator.
     const suspense = evidenceReconciliation.find((s) => s.scnId === "(no scenario)");
     assert.ok(suspense, "expected a suspense-scenario row (no scenario) in the ledger");
@@ -303,7 +298,7 @@ Then(
 Then(
   "the sum of summary rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts",
   function () {
-    // The identity now holds off the re-homed summary folds (3F-2103): raw = attributed +
+    // The identity now holds off the re-homed summary folds: raw = attributed +
     // cites-unknown-scenario + cites-no-scenario, all Ledger folds on summary — no section.
     const summary = rmd003Json.summary as {
       rawByRuntimeQualityCheck: Record<string, number>;
@@ -324,9 +319,8 @@ After({ tags: "@SCN-RMD-003" }, function () {
   if (rmd003StoreRoot && existsSync(rmd003StoreRoot)) rmSync(rmd003StoreRoot, { recursive: true, force: true });
 });
 
-// @SCN-RMD-005
 // Drives the REAL CLI over a COMBINED fixture spanning all three totals: the usg features
-// (whose stepless SCN-TGT-001 carries the bare check @foo) + the usg ci.yml/package.json (CI runs lint:foo
+// (whose stepless first scenario carries the bare check @foo) + the usg ci.yml/package.json (CI runs lint:foo
 // + lint:bar, only lint:foo named) + the evidence observation fixture's Vitest/Cucumber reports (attributed
 // + phantom + cites-no-scenario evidence observations). Reading the persisted spec-reconciliation.json back, the
 // summary must materialise all three totals AND both Σ = Σ identities must hold ON THE FILE.
@@ -373,7 +367,7 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
         ],
         { cwd: rmd005StoreRoot, encoding: "utf8" }
       );
-      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // fix-to-canon: balance is now an unconditional CI gate, so this
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
@@ -400,7 +394,7 @@ Then(
     // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticChecks, `expected summary.staticChecks; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.staticChecks, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
-    // Fitness tally — the fitness-only cut: lint:foo NAMED by SCN-TGT-001 and enforced in CI →
+    // Fitness tally — the fitness-only cut: lint:foo NAMED by the first scenario and enforced in CI →
     // 1 of 1 satisfied (the runtime evidence obligations do NOT count). Under `fitness`, never the
     // retired key `lint`.
     assert.ok(summary.fitness, `expected summary.fitness; got summary keys: ${Object.keys(summary).join(", ")}`);
@@ -443,9 +437,8 @@ After({ tags: "@SCN-RMD-005" }, function () {
   if (rmd005StoreRoot && existsSync(rmd005StoreRoot)) rmSync(rmd005StoreRoot, { recursive: true, force: true });
 });
 
-// @SCN-RMD-006
 // Drives the REAL CLI over the byfeature fixture (a @CVL-coded feature with an out-of-balance
-// SCN-CVL-001 + an uncoded feature carrying SCN-XYZ-001), persisting BOTH machine artefacts via
+// scenario + an uncoded feature carrying an XYZ-coded scenario), persisting BOTH machine artefacts via
 // --format json:<path> + md:<path>. The persisted spec-reconciliation.json must carry the feature
 // titles keyed by feature code (CVL→config-vocabulary-lint; the uncoded feature omitted) — the
 // slice-3 JSON-shape change — and the persisted spec-reconciliation.md must name the coded
@@ -477,7 +470,7 @@ When("the coded-corpus reconciliation run persists its machine artefacts", funct
     ],
     { cwd: rmd006Dir, encoding: "utf8" }
   );
-  // [3F-1460] fix-to-canon (3F-1414): unconditional CI gate — out-of-balance fixture now
+  // fix-to-canon: unconditional CI gate — out-of-balance fixture now
   // exits 1 (report written IN FULL first). Pure exit-expectation flip 0->1.
   assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
   rmd006Json = JSON.parse(readFileSync(jsonPath, "utf8"));
@@ -519,7 +512,6 @@ After({ tags: "@SCN-RMD-006" }, function () {
   if (rmd006Dir && existsSync(rmd006Dir)) rmSync(rmd006Dir, { recursive: true, force: true });
 });
 
-// @SCN-RMD-007
 // Drives the REAL render-from-saved-JSON round-trip end-to-end over the roundtrip fixture (a
 // @CHK-coded feature with a balanced unit scenario + an out-of-balance integration scenario, so
 // the by-feature cut names "checkout (CHK)"). Three REAL CLI invocations: (1) --format md → the
@@ -536,6 +528,8 @@ let rmd007Dir: string;
 let rmd007JsonPath: string;
 let rmd007DirectMd: string;
 let rmd007RegeneratedMd: string;
+let rmd007SavedStatus: number | null;
+let rmd007RegeneratedStatus: number | null;
 
 Given(
   "a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render",
@@ -561,10 +555,11 @@ Given(
       ],
       { cwd: rmd007Dir, encoding: "utf8" }
     );
-    // [3F-1460] fix-to-canon (3F-1414): unconditional CI gate — this out-of-balance
+    // fix-to-canon: unconditional CI gate — this out-of-balance
     // reconciliation run exits 1 (both md + json written IN FULL first, so the round-trip
     // regenerate below still holds). Pure exit-expectation flip 0->1.
     assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
+    rmd007SavedStatus = result.status;
     assert.ok(existsSync(rmd007JsonPath), `expected the banked JSON at ${rmd007JsonPath}`);
     assert.ok(existsSync(mdPath), `expected the direct markdown render at ${mdPath}`);
     rmd007DirectMd = readFileSync(mdPath, "utf8");
@@ -576,7 +571,7 @@ When("the markdown is regenerated from the saved spec-reconciliation.json alone"
   // ONLY --render-from-json <path> — NO --features / --vitest, proving the JSON alone suffices
   // (no RunContext, no live inputs).
   const regen = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--render-from-json", rmd007JsonPath], { cwd: rmd007Dir, encoding: "utf8" });
-  assert.equal(regen.status, 0, `regenerating from the saved JSON exited non-zero:\n${regen.stderr}`);
+  rmd007RegeneratedStatus = regen.status;
   rmd007RegeneratedMd = regen.stdout;
 });
 
@@ -596,12 +591,19 @@ Then("the regenerated markdown names the coded out-of-balance feature in full", 
   );
 });
 
+Then("the regeneration exits the code the saved run exited", function () {
+  assert.equal(
+    rmd007RegeneratedStatus,
+    rmd007SavedStatus,
+    `the regeneration exited ${rmd007RegeneratedStatus}; the run that saved the report exited ${rmd007SavedStatus}`
+  );
+});
+
 After({ tags: "@SCN-RMD-007" }, function () {
   if (rmd007Dir && existsSync(rmd007Dir)) rmSync(rmd007Dir, { recursive: true, force: true });
 });
 
-// @SCN-RMD-008
-// Drives the REAL CLI over the usg fixture (SCN-TGT-001 carries @unit + the bare check @foo) with the
+// Drives the REAL CLI over the usg fixture (its first scenario carries @unit + the bare check @foo) with the
 // usg ci.yml/package.json but NO runner reports, so the runtime unit evidence obligation reconciles
 // missing and the lint:foo guard reconciles satisfied — a corpus with BOTH a runtime
 // sub-row AND a fitness sub-row, and a non-empty missing split. Reading the persisted
@@ -644,7 +646,7 @@ When("the report is serialised to spec-reconciliation.json", function () {
         ],
         { cwd: rmd008StoreRoot, encoding: "utf8" }
       );
-      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // fix-to-canon: balance is now an unconditional CI gate, so this
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
@@ -675,8 +677,8 @@ Then("each evidence sub-row is keyed by one quality-check field with no kind or 
 Then('a fitness sub-row carries its quality-check "fitness" and names no characteristic', function () {
   const evidenceReconciliation = (rmd008Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
   // The fitness sub-rows on SCENARIO rows (the obligation side): one @fitness scenario is one check,
-  // keyed by its @SCN, so the sub-row carries its quality check and no word naming the check
-  // (3F-3570). The value is "fitness", never the retired "lint" (3F-3564).
+  // keyed by its @SCN, so the sub-row carries its quality check and no word naming the check.
+  // The value is "fitness", never the retired "lint".
   const fitnessRows = evidenceReconciliation
     .flatMap((s) => s.qualityCheckReconciliations)
     .filter((o) => o.qualityCheck === "fitness" && o.evidenceObligation !== undefined);

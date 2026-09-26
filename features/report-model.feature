@@ -185,7 +185,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     JSON.parses it back into a Report, and renders the human markdown via renderReport — no
     RunContext, no live inputs, the JSON alone: the exported renderReportFromJson(json) + the CLI
     "--render-from-json <path>" mode (reads the file, prints the regenerated markdown to stdout,
-    exits before any reconcile). Drift-equality is the acceptance: the markdown regenerated from
+    exits before any reconcile, on the code the saved verdict names). Drift-equality is the acceptance: the markdown regenerated from
     the saved JSON EQUALS the markdown rendered directly from the same run — the by-feature titles
     included (why the feature-title model-completion, @SCN-RMD-006, is the enabling dependency).
     Its unit arm proves the parse→renderReport drift-equality over a corpus spanning the whole
@@ -195,11 +195,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     persist the JSON, regenerate from it, byte-identical to the direct render.
 
     @unit @integration @SCN-RMD-007
-    Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render
+    Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
       Given a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render
       When the markdown is regenerated from the saved spec-reconciliation.json alone
       Then the regenerated markdown equals the directly rendered markdown
       And the regenerated markdown names the coded out-of-balance feature in full
+      And the regeneration exits the code the saved run exited
 
   Rule: each evidence sub-row is keyed by one flat quality-check coordinate
 
