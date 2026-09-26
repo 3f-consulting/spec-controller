@@ -87,3 +87,46 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
       And a run directory named for the target and run-id exists under the store root
       And that run directory holds spec-reconciliation.md, spec-reconciliation.json, and run.yaml
       And its run.yaml parses with mode balance, the target, and the run-id
+
+  Rule: a store location that cannot be written is refused, never a crash
+
+    A stored run writes a run directory, the two reports inside it and a run.yaml. Where any of
+    them cannot be written, the run is refused as a usage error, naming the location and the
+    operating system's reason, with no stack trace and no run directory announced as if output had
+    landed there. The refusal outranks the verdict: the operator asked for a stored run, and it
+    could not be stored. A root whose missing parents can be created is not refused, because the
+    store creates them.
+
+    @unit @e2e @SCN-RMG-008
+    Scenario Outline: a --store root that cannot be created is refused naming the location and why, with no stack trace and no run directory printed
+      Given an out-of-balance target and a store root that is <location>
+      When the operator stores a run of it under that root
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names the run directory and says <reason>
+      And the refusal carries no stack trace
+      And no run directory is announced
+
+      Examples:
+        | location                                   | reason                          |
+        | a regular file                             | a parent is not a directory     |
+        | a path under a regular file                | a parent is not a directory     |
+        | a directory it may not write               | permission was denied           |
+        | a path under a directory it may not write  | permission was denied           |
+        | a root whose run directory is a file       | the location already exists     |
+
+    @unit @e2e @SCN-RMG-009
+    Scenario Outline: a stored run that cannot write a report or its run.yaml into its run directory is refused naming the file and why, with no stack trace and no run directory printed
+      Given an out-of-balance target and a store root whose run directory already holds <obstacle>
+      When the operator stores a run of it under that root
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names the run directory's <file> and says <reason>
+      And the refusal carries no stack trace
+      And no run directory is announced
+
+      Examples:
+        | obstacle                                   | file                     | reason                         |
+        | nothing it may write into                  | spec-reconciliation.md   | permission was denied          |
+        | a directory named spec-reconciliation.md   | spec-reconciliation.md   | the destination is a directory |
+        | a directory named spec-reconciliation.json | spec-reconciliation.json | the destination is a directory |
+        | a directory named run.yaml                 | run.yaml                 | the destination is a directory |
+        | a run.yaml it may not write                | run.yaml                 | permission was denied          |

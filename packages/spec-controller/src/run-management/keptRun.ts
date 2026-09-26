@@ -15,31 +15,28 @@
  *     files under a temp root + the repo untouched — never a planner re-run).
  *
  * The store root is an INJECTED parameter — never hardcoded — so the scaffold is
- * location-agnostic (proven against a temp root; the repo is never written). RMG-001 is
- * the dir + the routed outputs; the `run.yaml` stamp (RMG-002) and the `--run-id` mnemonic
- * override (RMG-003) land in later sub-issues.
- *
- * Parent: @SCN-RMG-001 — the run-management layer.
+ * location-agnostic (proven against a temp root; the repo is never written).
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify } from "yaml";
+import { writeOrRefuse } from "../outputLocation.js";
 
 /** The two artefact filenames a kept run routes the tool's outputs into. */
 export const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
 /**
- * The machine artefact filename (@SCN-RMD-001) — renamed `ledger.json` →
+ * The machine artefact filename — renamed `ledger.json` →
  * `spec-reconciliation.json` (parity with `spec-reconciliation.md`): it is the machine form
  * of the WHOLE reconciliation document, not just the ledger.
  */
 export const RECONCILIATION_JSON = "spec-reconciliation.json";
 
-/** The manifest filename a kept run stamps in the run dir (RMG-002). */
+/** The manifest filename a kept run stamps in the run dir. */
 export const RUN_MANIFEST = "run.yaml";
 
 /**
- * The run.yaml schema version this scaffold stamps. Bumped 1 → 2 by 3F-1916, which added
+ * The run.yaml schema version this scaffold stamps. Bumped 1 → 2 when it added
  * the tool identity (`tool_sha` / `tool_version`) — so a reader can tell a run that
  * predates tool-identity recording (schema 1) from one that should carry it (schema 2).
  * run.yaml is write-only (no production reader), so the bump breaks no read path.
@@ -56,7 +53,7 @@ export type RunMode = "balance" | "analyse" | "migrate";
 export interface RunManifestMeta {
   readonly sourceSha: string;
   /**
-   * The TOOL's own git SHA — which spec-controller produced this run (3F-1916), distinct
+   * The TOOL's own git SHA — which spec-controller produced this run, distinct
    * from the target's `sourceSha`. A string ("unknown" when the tool is not a git
    * checkout), mirroring `sourceSha`'s own "unknown" fallback — so run.yaml is internally
    * consistent (both facts use the same absent-marker, never a bare null).
@@ -84,7 +81,7 @@ export interface RunManifest {
   readonly run_id: string;
   readonly target: string;
   readonly source_sha: string;
-  /** The TOOL's identity (3F-1916) — which spec-controller produced the run. */
+  /** The TOOL's identity — which spec-controller produced the run. */
   readonly tool_sha: string;
   readonly tool_version: string;
   readonly mode: RunMode;
@@ -135,7 +132,7 @@ export function planKeptRun(spec: KeptRunSpec): KeptRunPlan {
 }
 
 /**
- * Options for the pure run-id resolver (RMG-003): the operator's OPTIONAL `--run-id` mnemonic
+ * Options for the pure run-id resolver: the operator's OPTIONAL `--run-id` mnemonic
  * and the INJECTED clock instant the default timestamp derives from.
  */
 export interface ResolveRunIdOptions {
@@ -153,7 +150,7 @@ export interface ResolveRunIdOptions {
  * run-id naming the run dir (feeds `KeptRunSpec.runId`). No `--run-id` → an ISO-8601 UTC
  * timestamp derived from the INJECTED `now` (filesystem-safe: no colons, no millis — matching
  * the existing store run dir); `--run-id <mnemonic>` → that mnemonic verbatim (`acme-q3`, `e1`
- * — an earlier precedent), which ignores the clock. No IO — proven `@unit` (RMG-003).
+ * — an earlier precedent), which ignores the clock. No IO — proven `@unit`.
  * The clock is injected (never a bare `new Date()`) so the default timestamp is deterministic
  * under test (the discipline the old `formatRunTimestamp` used). Just default-vs-override — no
  * sanitisation / collision policy (deferred).
@@ -178,7 +175,7 @@ function formatRunTimestamp(instant: Date): string {
 }
 
 /**
- * PURE: build the run.yaml manifest object from the run metadata (RMG-002). `purpose` and
+ * PURE: build the run.yaml manifest object from the run metadata. `purpose` and
  * `links` are stamped EMPTY (the ad-hoc default; slugs are added by operator hand-edit of
  * run.yaml afterward — the documented curation convention); `artefacts` carry the decided
  * filenames. No IO — proven `@unit`.
@@ -210,12 +207,11 @@ export function serialiseRunManifest(manifest: RunManifest): string {
 }
 
 /**
- * IMPURE runner: `mkdir -p` the run dir, route the tool's `--format` outputs into the two
- * files via the injected `route` — the document as `md:<documentPath>`, the reconciliation
- * JSON as `json:<reconciliationJsonPath>` — and stamp `run.yaml` with the manifest built from the spec + `meta`
- * (RMG-002). Returns the plan it realised. The only IO. The `mkdir` is load-bearing: the
- * tool's writer uses `writeFileSync`, which needs the parent dir to exist — so the scaffold
- * creates the dir the location-agnostic tool writes into.
+ * IMPURE runner: `mkdir -p` the run dir, route the tool's `--format` outputs into the two files
+ * via the injected `route` — the document as `md:<documentPath>`, the reconciliation JSON as
+ * `json:<reconciliationJsonPath>` — and stamp `run.yaml` from the spec + `meta`. Returns the
+ * plan it realised. The `mkdir` is load-bearing: the tool's writer creates no directories, so the
+ * scaffold creates the one the location-agnostic tool writes into.
  */
 export function executeKeptRun(
   spec: KeptRunSpec,
@@ -223,11 +219,14 @@ export function executeKeptRun(
   route: RouteOutputs
 ): KeptRunPlan {
   const plan = planKeptRun(spec);
-  mkdirSync(plan.runDir, { recursive: true });
+  writeOrRefuse("The stored run's directory could not be created", plan.runDir, () =>
+    mkdirSync(plan.runDir, { recursive: true }),
+  );
   route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`]);
-  // Stamp run.yaml from the spec's run-id/target (so it can't drift from the run dir) + the
-  // manifest-only meta. The serialised YAML is valid — the @integration parses it back.
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
-  writeFileSync(join(plan.runDir, RUN_MANIFEST), serialiseRunManifest(manifest));
+  const manifestPath = join(plan.runDir, RUN_MANIFEST);
+  writeOrRefuse("The stored run's run.yaml could not be written", manifestPath, () =>
+    writeFileSync(manifestPath, serialiseRunManifest(manifest)),
+  );
   return plan;
 }

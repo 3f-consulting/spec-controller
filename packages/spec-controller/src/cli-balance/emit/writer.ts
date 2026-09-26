@@ -1,38 +1,23 @@
 /**
- * The output WRITER — the impure app-layer that realises an `OutputPlan` (the
- * three-layer split). For each planned output it renders
- * the payload via the PURE renderers (`renderMarkdown` / `renderJson` in `src/render/`)
- * and performs the IO: stdout, or a file.
- *
- * This is the ONLY layer that performs IO — the renderers stay pure (`model → string`)
- * and `planOutput` stays pure (parse+validate). So the writer carries the `@integration`
- * evidence: its real stdout/file effect is asserted directly (the anti-watermelon rule),
- * never a re-run of the `planOutput` `@unit`.
- *
- * FMT-001 (`@SCN-FMT-001`) writes markdown to stdout. The `json` format (FMT-002) and the
- * file destination (FMT-002/003) are wired on the same `render` + `dest` switch below as
- * later sub-issues plan them.
- *
- * Parent: @SCN-FMT-001 — the output-dispatch rework.
+ * The output writer: renders each planned output through the pure renderers and performs the only
+ * IO in the pipeline, to stdout or to a file.
  */
 
 import { writeFileSync } from "node:fs";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { FeatureNames } from "@3f-consulting/spec-controller-core";
-import type { OutputFormat, OutputPlan } from "./format.js";
+import type { OutputFormat, OutputPlan, PlannedOutput } from "./format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import { probeWritable, writeOrRefuse } from "../../outputLocation.js";
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
- * (ctx / evidenceObligations / featureNames), exactly the arguments the pure renderers take. Threaded
- * from `cli.ts` (built once, rendered per planned output). `withRuntimeObservations` and
- * `withStaticChecks` are the GATES for the two observation axes (Test volume + the evidence grid;
- * the Static checks cut): the renderers fold BOTH off the Ledger themselves (3F-2103 / 3F-2118 —
- * the parallel censuses are retired), so the writer threads only whether each axis is in play,
- * never a census object.
+ * (ctx / evidenceObligations / featureNames), exactly the arguments the pure renderers take.
+ * `withRuntimeObservations` and `withStaticChecks` gate the two observation axes; the renderers
+ * fold both off the Ledger themselves, so the writer threads only whether each axis is in play.
  */
 export interface OutputPayloads {
   readonly balance: EvidenceReconciliation;
@@ -43,31 +28,35 @@ export interface OutputPayloads {
   readonly featureNames?: FeatureNames;
 }
 
-/** Render one format from the payloads via the matching pure renderer. */
 function render(fmt: OutputFormat, p: OutputPayloads): string {
-  // The axis gates moved onto the concept's factory (3F-2233) — by the time a payload reaches a
-  // renderer the totals are already folded, so there is nothing left here to switch on.
   return fmt === "json"
     ? renderJson(p.balance, p.ctx, p.evidenceObligations, p.featureNames)
     : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, p.featureNames);
 }
 
 /**
- * Realise the plan: render each planned output and write it to its destination. The only
- * IO in the pipeline. FMT-001 exercises the markdown→stdout path.
+ * Every file destination is proved writable before any output is emitted, so a refused run never
+ * leaves a report behind, on stdout or in a file, whose headline names an exit the process does not
+ * take. Writing files first and stdout last would not do: an earlier file would still be written.
  */
 export function writeOutputs(plan: OutputPlan, payloads: OutputPayloads): void {
-  for (const output of plan.outputs) {
-    const rendered = render(output.fmt, payloads);
-    switch (output.dest.kind) {
-      case "stdout":
-        // Trailing newline so the report ends cleanly on a terminal — FMT-001's path.
-        process.stdout.write(rendered + "\n");
-        break;
-      case "file":
-        // The file destination (FMT-002/003) — same rendered bytes, to a caller path.
-        writeFileSync(output.dest.path, rendered + "\n", "utf8");
-        break;
-    }
+  const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
+  for (const { output } of emissions) {
+    const dest = output.dest;
+    if (dest.kind === "file") writeOrRefuse(refusalSubject(output), dest.path, () => probeWritable(dest.path));
   }
+  for (const { output, text } of emissions) emit(output, text);
+}
+
+function refusalSubject(output: PlannedOutput): string {
+  return `The ${output.fmt} report could not be written`;
+}
+
+function emit(output: PlannedOutput, text: string): void {
+  const dest = output.dest;
+  if (dest.kind === "stdout") {
+    process.stdout.write(text);
+    return;
+  }
+  writeOrRefuse(refusalSubject(output), dest.path, () => writeFileSync(dest.path, text, "utf8"));
 }

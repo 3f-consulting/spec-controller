@@ -78,7 +78,9 @@ The whole report is written before the code is set, so a failing run still tells
 its own rather than falling out of the process — a crash that exits `1` would be indistinguishable,
 by status, from an honest disagreement. **An input the tool cannot read is part of `2`**: a mistyped
 path, an unparseable report or a corpus the Gherkin parser rejects are all the invocation being
-wrong, never a verdict about your code.
+wrong, never a verdict about your code. **So is an output location it cannot write**: a `--format` path that is
+read-only, a directory, under a regular file or in a directory that does not exist, and a
+`--store` root the run directory cannot be created under, are refused at `2`, naming the location and the operating system's reason, before any report is printed.
 
 **The enumeration is open at the top, and that is the one thing to design your pipeline around.** A
 state that is genuinely none of the above gets a **new** code rather than being folded into the

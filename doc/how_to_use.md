@@ -256,6 +256,8 @@ spec-controller balance --features ./features \
 
 At most one output may go to stdout in a single invocation. (The legacy `--json <path>` flag has been removed; use `--format json:<path>` instead.)
 
+A path is written as given: the directory it names must already exist, since `--format` creates none. A path that cannot be written (read-only, an existing directory, under a regular file, or in a directory that does not exist) is refused at exit `2`, naming the path and the operating system's reason. Every path is checked before anything is emitted, so a refused run prints no report and writes no other file.
+
 ### Host modifiers — storing a run (`--store` / `--run-id`)
 
 `--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags. A host modifier needs a command, or `--help`, after it: given with nothing after it, it is refused at exit 2 and nothing runs.
@@ -264,7 +266,7 @@ At most one output may go to stdout in a single invocation. (The legacy `--json 
 spec-controller [--store <root>] [--run-id <id>] balance [options]
 ```
 
-Storage is a cross-cutting concern of the host, not of `balance`. A leading `--store` turns any run into a **stored** run — the host writes `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest, and hands `balance` its own clean args unchanged (so a bare, no-`--store` run stays emit-only and byte-identical). Without `--store`, nothing is written to disk beyond what `--format …:<path>` requests.
+Storage is a cross-cutting concern of the host, not of `balance`. A leading `--store` turns any run into a **stored** run — the host writes `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest, and hands `balance` its own clean args unchanged (so a bare, no-`--store` run stays emit-only and byte-identical). Without `--store`, nothing is written to disk beyond what `--format …:<path>` requests. Missing parents of the root are created. A root the run directory cannot be created under (a regular file, a path under one, or a directory the tool may not write) is refused at exit `2`, naming the run directory and the operating system's reason, and no run directory is printed.
 
 | Modifier | Purpose |
 |---|---|
