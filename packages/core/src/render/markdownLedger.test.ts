@@ -348,7 +348,7 @@ describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the
  * and the whole section omitted on the back-compat (no-guards) call. Markdown-only.
  */
 describe("[SCN-USG-001] the markdown report renders the Static checks section", () => {
-  const emptyBalance: Ledger = { scenarioReconciliations: [] };
+  const emptyBalance: Ledger = reconcile([], []);
 
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static checks counts are a FOLD OVER
   // THE LEDGER now (`staticObservationTally`), so the numbers derive from `balance`, not a
