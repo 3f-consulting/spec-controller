@@ -8,7 +8,9 @@ Feature: Allocate the next scenario code for a feature part
 
   Parts come from the corpus's feature-file headers. Numbers come from every text file in the tree
   and from the diff lines of reachable history. The answer is the code alone, so an agent or a
-  script can consume it; anything the tool could not see is said beside the answer, never inside it.
+  script can consume it. What the repository's shape leaves unread, having no repository or being a
+  shallow clone, is said beside the answer, never inside it; what the tool is prevented from reading
+  is refused.
 
   Rule: the next code is one past the highest the tree has ever carried
 
@@ -188,3 +190,92 @@ Feature: Allocate the next scenario code for a feature part
         | --store and --run-id | by its short name, alone                                    |
         | --store and --run-id | after a part                                                |
         | --store and --run-id | by its short name, beside a flag the command does not take |
+
+  Rule: a file allocate cannot read is a usage error, never a crash and never an answer without it
+
+    A file, a directory or a repository that allocate is meant to read and cannot is the invocation
+    being wrong, the same as a malformed request: it is refused, naming the path and the reason, and
+    no code is given. An answer computed without it could hand out a code the unread file carries.
+
+    @SCN-ALC-017 @unit @e2e
+    Scenario Outline: a path allocate reads that is not the kind it reads is refused, naming the path — <path>
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      And in that repository <path> is <kind>
+      When the author asks for the next code for ONE
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal names <path>
+
+      Examples:
+        | path                 | kind                               |
+        | features             | a regular file                     |
+        | features/two.feature | a directory                        |
+        | features/two.feature | a link to a file that is not there |
+
+    @SCN-ALC-018 @unit @e2e
+    Scenario Outline: a path allocate is not permitted to read is refused, naming the path and saying it was not permitted — <path>
+      Given a <copy> whose feature file headed ONE carries the scenario code SCN-ONE-003, and whose <path> allocate is not permitted to read
+      When the author asks for the next code for ONE
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal names <path> and says allocate was not permitted to read it
+
+      Examples:
+        | copy             | path                 |
+        | repository       | features/one.feature |
+        | repository       | features             |
+        | copy without git | docs/notes.md        |
+        | copy without git | docs                 |
+        | copy without git | working directory    |
+
+    @SCN-ALC-019 @e2e
+    Scenario: asked from a working directory that no longer exists, allocate is refused as a usage error
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      When the author asks for the next code for ONE from a working directory that has since been removed
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal says the working directory could not be read
+
+    @SCN-ALC-020 @unit @e2e
+    Scenario Outline: a file in the repository git cannot read is refused, never left out of the answer — <file>
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      And in it, <file> carries SCN-ONE-016, and <unreadable>
+      When the author asks for the next code for ONE, standing in <where>
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal names <named> and says allocate was not permitted to read it
+
+      Examples:
+        | file                                                         | unreadable                                             | named                | where          |
+        | an untracked file, drafts/new.md                             | allocate is not permitted to read it                   | drafts/new.md        | its top        |
+        | an untracked file, drafts/new.md                             | allocate is not permitted to list its directory        | drafts               | its top        |
+        | an untracked file, drafts/new.md                             | allocate may list its directory but not enter it       | drafts               | its top        |
+        | a tracked file with an edit not yet committed, docs/notes.md | allocate is not permitted to read it                   | docs/notes.md        | its top        |
+        | the feature file, with an edit not yet committed             | allocate is not permitted to list the repository's top | the repository's top | a subdirectory |
+
+    @SCN-ALC-021 @unit @e2e
+    Scenario Outline: history git cannot read is refused, never answered below a code it carries — <history>
+      Given a repository whose feature file headed ONE carries the scenario codes SCN-ONE-001 and SCN-ONE-005
+      And a later commit deletes the scenario coded SCN-ONE-005
+      And <history>
+      When the author asks for the next code for ONE
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal says the repository's history could not be read
+
+      Examples:
+        | history                                                                                   |
+        | its loose objects are not permitted to be read                                            |
+        | its objects are packed, and the pack is not permitted to be read                          |
+        | its branch refs are not permitted to be read                                              |
+        | it is cloned one commit deep, and the clone's shallow record is not permitted to be read |
+
+    @SCN-ALC-022 @unit @e2e
+    Scenario Outline: a repository git cannot open is refused, never read as no repository — <git directory>
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      And <git directory>
+      When the author asks for the next code for ONE
+      Then it is refused as a path allocate cannot read, and no code is given
+      And allocate's refusal names the repository's .git and says git could not open it
+
+      Examples:
+        | git directory                                                |
+        | its .git directory is not permitted to be read               |
+        | its object store is not permitted to be read                 |
+        | its HEAD is not permitted to be read                         |
+        | its .git is a file pointing to a directory that is not there |

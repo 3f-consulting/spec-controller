@@ -6,7 +6,8 @@ import { nextScnCode, type ScnSighting } from "@3f-consulting/spec-controller-co
 import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readHeaderCodes } from "./readParts.js";
-import { readRequest } from "./request.js";
+import { readRequest, type AllocateRequest } from "./request.js";
+import { readOrRefuse, refusalLine, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
@@ -21,11 +22,21 @@ export function runAllocate(argv: string[]): void {
     process.stderr.write(request.usageError + "\n");
     process.exit(2);
   }
-  const { part, isNew } = request;
-  const cwd = process.cwd();
+  try {
+    answerRequest(request);
+  } catch (err) {
+    if (!(err instanceof UnreadableInput)) throw err;
+    process.stderr.write(refusalLine(err) + "\n");
+    process.exit(2);
+  }
+}
+
+/** Read the tree, its history and its parts, and write the answer to a well-formed request, or its refusal. */
+function answerRequest({ part, isNew }: AllocateRequest): void {
+  const cwd = readOrRefuse("the working directory", "", () => process.cwd());
   const top = repositoryTop(cwd);
   const headerCodes = readHeaderCodes(join(top ?? cwd, "features"));
-  const answer = nextScnCode({ part, headerCodes, isNew }, sightingsFrom(cwd, part, top !== null));
+  const answer = nextScnCode({ part, headerCodes, isNew }, sightingsFrom(cwd, part, top));
   if (answer.kind === "unknown-part") {
     process.stderr.write(unknownPartRefusal(answer) + "\n");
     process.exit(2);
@@ -39,6 +50,6 @@ export function runAllocate(argv: string[]): void {
 }
 
 /** The tree and its history through git, or the tree alone by a walk where there is no repository. */
-function sightingsFrom(cwd: string, part: string, inRepository: boolean): ScnSighting[] {
-  return inRepository ? [...readTree(cwd, part), ...readHistory(cwd, part)] : walkTree(cwd, part);
+function sightingsFrom(cwd: string, part: string, top: string | null): ScnSighting[] {
+  return top !== null ? [...readTree(top, part), ...readHistory(cwd, part)] : walkTree(cwd, part);
 }

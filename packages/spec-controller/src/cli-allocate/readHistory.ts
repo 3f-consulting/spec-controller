@@ -7,11 +7,16 @@
  * cannot be unwritten, so one stray mention would move the answer for good. The format asks git for
  * each commit's abbreviated hash and nothing else, so a sighting can name the commit that carried it.
  *
- * As with the tree read, git is handed a fixed string only.
+ * Git is handed the part's prefix alone, which holds no regex syntax. Which words on a line are
+ * scenario codes is core's question, answered with the shared grammar, because git's regex dialect
+ * has no `\d` and matches nothing when given one, silently.
  */
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { ScnSighting } from "@3f-consulting/spec-controller-core";
+import { proveRefsReadable } from "./refStore.js";
+import { readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
 /** How much history the read could see: all of it, none (no repository), or back to a shallow clone's edge. */
 export type HistoryBoundary = { kind: "complete" } | { kind: "not-a-repository" } | { kind: "shallow"; before: string };
@@ -22,13 +27,22 @@ const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 /** The marker the format puts before each commit's hash, a byte no patch line starts with. */
 const COMMIT_MARKER = "\u0001";
 
-/** The added and removed lines of every reachable commit whose patch touched `SCN-<part>-`. */
+/**
+ * The added and removed lines of every reachable commit whose patch touched `SCN-<part>-`; a refusal
+ * when the refs it starts from, or the history git walks from them, cannot be read.
+ */
 export function readHistory(cwd: string, part: string): ScnSighting[] {
+  proveRefsReadable(cwd);
   const result = spawnSync(
     "git",
     ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `SCN-${part}-`],
     { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES },
   );
+  if (result.error !== undefined) refuse("the repository's history", cwd, result.error);
+  if (result.status !== 0) {
+    const said = result.stderr.split("\n")[0] ?? "";
+    throw new UnreadableInput("the repository's history", cwd, `git log exited ${result.status}: ${said}`);
+  }
   return diffLineSightings(result.stdout);
 }
 
@@ -38,9 +52,28 @@ function gitAnswer(cwd: string, args: readonly string[]): string | null {
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
-/** The top of the repository `cwd` stands in, or null outside one. */
+/**
+ * The top of the repository `cwd` stands in, or null outside one. A `.git` at or above `cwd` that git
+ * will not open is a repository allocate cannot read, refused naming it, never read as no repository:
+ * that would state "no history was read" about a directory whose history exists. No git to ask at all
+ * is still no repository, a boundary said beside the answer.
+ */
 export function repositoryTop(cwd: string): string | null {
-  return gitAnswer(cwd, ["rev-parse", "--show-toplevel"]);
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
+  if (result.status === 0) return result.stdout.trim();
+  const gitEntry = result.error === undefined ? gitEntryAtOrAbove(cwd) : null;
+  if (gitEntry === null) return null;
+  const said = result.stderr.split("\n")[0] ?? "";
+  throw new UnreadableInput("the repository", gitEntry, `git rev-parse exited ${result.status}: ${said}`);
+}
+
+/** The `.git` git's own discovery would find from `dir`: the nearest at or above it, of any kind; else null. */
+function gitEntryAtOrAbove(dir: string): string | null {
+  for (let at = dir; ; at = dirname(at)) {
+    const entry = join(at, ".git");
+    if (lstatSync(entry, { throwIfNoEntry: false }) !== undefined) return entry;
+    if (dirname(at) === at) return null;
+  }
 }
 
 /** Whether `cwd` stands in a git repository. */
@@ -53,7 +86,9 @@ export function historyBoundaryOf(cwd: string): HistoryBoundary {
   if (!isGitRepository(cwd)) return { kind: "not-a-repository" };
   if (gitAnswer(cwd, ["rev-parse", "--is-shallow-repository"]) !== "true") return { kind: "complete" };
   const shallowFile = gitAnswer(cwd, ["rev-parse", "--git-path", "shallow"]) ?? "";
-  const edge = readFileSync(shallowFile.startsWith("/") ? shallowFile : `${cwd}/${shallowFile}`, "utf8").split("\n")[0] ?? "";
+  const shallowPath = shallowFile.startsWith("/") ? shallowFile : `${cwd}/${shallowFile}`;
+  const record = readOrRefuse("the repository's history", shallowPath, () => readFileSync(shallowPath, "utf8"));
+  const edge = record.split("\n")[0] ?? "";
   return { kind: "shallow", before: gitAnswer(cwd, ["rev-parse", "--short", edge]) ?? edge };
 }
 

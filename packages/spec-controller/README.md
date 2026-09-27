@@ -70,7 +70,7 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 
 The whole report is written before the code is set, so a failing run still tells you why.
 
-`spec-controller allocate`, which prints the next scenario code for a feature part, reaches no verdict: it exits `0` when it answers and `2` for a usage error or an unknown part.
+`spec-controller allocate`, which prints the next scenario code for a feature part, reaches no verdict: it exits `0` when it answers and `2` for a usage error or an unknown part. A file or directory it cannot read, whether it reads it itself or through git, is a usage error: it is refused, naming the path and the reason, and no code is given.
 
 `--exit-zero` moves `1` and `3` to `0` and leaves every other code alone: see *Report first, gate later*.
 

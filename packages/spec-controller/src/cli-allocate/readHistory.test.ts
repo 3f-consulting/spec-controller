@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { diffLineSightings } from "./readHistory.js";
+import { afterEach, beforeAll, describe, it, expect } from "vitest";
+import { spawnSync } from "node:child_process";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
 
 /** `git log -p` output as it reads with the default format: a commit header and message, then its patch. */
 const LOG_WITH_MESSAGE = [
@@ -83,5 +87,122 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen — a remov
       "--- SCN-ONE-005 retired",
     ].join("\n");
     expect(diffLineSightings(log)).toEqual([{ text: "--- SCN-ONE-005 retired", path: "doc/a.sql", line: 3, commit: "abc1234" }]);
+  });
+});
+
+/** Git run over a fixture, blind to the machine's own configuration. */
+function git(repo: string, args: readonly string[]): void {
+  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
+    cwd: repo,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+  });
+  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+}
+
+/** A repository whose history once carried a code of part ONE that a later commit deleted. */
+function templateRepository(): string {
+  const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+  git(repo, ["init", "-q", "-b", "main"]);
+  writeFileSync(join(repo, "one.md"), "SCN-ONE-001\nSCN-ONE-005\n");
+  git(repo, ["add", "-A"]);
+  git(repo, ["commit", "-q", "-m", "both"]);
+  writeFileSync(join(repo, "one.md"), "SCN-ONE-001\n");
+  git(repo, ["commit", "-q", "-am", "retire 005"]);
+  return repo;
+}
+
+/** The repository each test reads: made once, copied per test so git builds it once for the file. */
+let template = "";
+
+beforeAll(() => {
+  template = templateRepository();
+});
+
+function repositoryWithHistory(): string {
+  const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+  cpSync(template, repo, { recursive: true });
+  return repo;
+}
+
+/** Permissions taken away by a test, given back after it. */
+const taken: Array<() => void> = [];
+
+function withhold(path: string, mode: number): void {
+  const before = statSync(path).mode & 0o7777;
+  chmodSync(path, mode);
+  taken.push(() => chmodSync(path, before));
+}
+
+afterEach(() => {
+  while (taken.length > 0) taken.pop()?.();
+});
+
+/** What `read` throws, or a failure when it reads without throwing. */
+function thrownBy(read: () => unknown): unknown {
+  try {
+    read();
+  } catch (err) {
+    return err;
+  }
+  throw new Error("expected the read to be refused, and it read");
+}
+
+describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
+  it("refuses history whose loose objects it may not read", () => {
+    const repo = repositoryWithHistory();
+    const objects = join(repo, ".git", "objects");
+    for (const name of readdirSync(objects).filter((entry) => /^[0-9a-f]{2}$/.test(entry))) withhold(join(objects, name), 0o000);
+    expect(thrownBy(() => readHistory(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", subject: "the repository's history" });
+  });
+
+  it("refuses history whose branch refs it may not read, though git itself says nothing", () => {
+    const repo = repositoryWithHistory();
+    withhold(join(repo, ".git", "refs", "heads"), 0o000);
+    expect(thrownBy(() => readHistory(repo, "ONE"))).toMatchObject({
+      name: "UnreadableInput",
+      subject: "the repository's history",
+      path: join(realpathSync(repo), ".git", "refs", "heads"),
+    });
+  });
+
+  it("reads a history it may read, the deleted code included", () => {
+    const texts = readHistory(repositoryWithHistory(), "ONE").map((sighting) => sighting.text);
+    expect(texts).toContain("-SCN-ONE-005");
+  });
+});
+
+describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
+  it("refuses a repository whose .git it may not read, naming the .git", () => {
+    const repo = repositoryWithHistory();
+    withhold(join(repo, ".git"), 0o000);
+    expect(thrownBy(() => repositoryTop(repo))).toMatchObject({ name: "UnreadableInput", subject: "the repository", path: join(repo, ".git") });
+  });
+
+  it("refuses a repository whose .git names a directory that is not there", () => {
+    const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+    writeFileSync(join(repo, ".git"), `gitdir: ${join(repo, "nowhere")}\n`);
+    expect(thrownBy(() => repositoryTop(repo))).toMatchObject({ name: "UnreadableInput", subject: "the repository", path: join(repo, ".git") });
+  });
+
+  it("finds the .git git would have found from a subdirectory", () => {
+    const repo = repositoryWithHistory();
+    mkdirSync(join(repo, "src"));
+    withhold(join(repo, ".git", "HEAD"), 0o000);
+    expect(thrownBy(() => repositoryTop(join(repo, "src")))).toMatchObject({ name: "UnreadableInput", path: join(repo, ".git") });
+  });
+
+  it("still reads a directory with no .git at or above it as no repository", () => {
+    expect(repositoryTop(mkdtempSync(join(tmpdir(), "allocate-plain-")))).toBeNull();
+  });
+
+  it("still reads a repository with no git to ask as no repository", () => {
+    const path = process.env.PATH;
+    process.env.PATH = "";
+    try {
+      expect(repositoryTop(repositoryWithHistory())).toBeNull();
+    } finally {
+      process.env.PATH = path;
+    }
   });
 });

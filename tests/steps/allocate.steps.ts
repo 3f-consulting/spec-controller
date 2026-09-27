@@ -3,9 +3,9 @@
  * directory, with real git commits, and spawns the BUILT binary inside it, because what an author
  * gets is the installed command run in their own checkout.
  */
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { basename, dirname, join } from "node:path";
@@ -370,4 +370,213 @@ Then("it answers with allocate's help, exactly as it does with nothing before it
   assert.equal(answer.stderr, "");
   assert.equal(answer.stdout, answerAlone.stdout);
   assert.doesNotMatch(answer.stdout, /^SCN-/m);
+});
+
+/** The ways a path the allocator reads can be something other than the kind it reads there. */
+const WRONG_KIND: Record<string, (path: string) => void> = {
+  "a regular file": (path) => {
+    rmSync(path, { recursive: true, force: true });
+    writeFileSync(path, "not a directory\n");
+  },
+  "a directory": (path) => mkdirSync(path, { recursive: true }),
+  "a link to a file that is not there": (path) => symlinkSync(join(dirname(path), "nowhere.feature"), path),
+};
+
+Given("in that repository {word} is {}", function (path: string, kind: string) {
+  const make = WRONG_KIND[kind];
+  assert.ok(make !== undefined, `no fixture for: ${kind}`);
+  make(join(repository, path));
+});
+
+/** The refusal line allocate writes for a path it could not read, or a failure naming what it wrote instead. */
+function refusalOf(result: SpawnSyncReturns<string>): string {
+  const line = /^spec-controller allocate: usage error — .+ could not be read.*$/m.exec(result.stderr);
+  assert.ok(line !== null, `expected a refusal naming what could not be read; got:\n${result.stderr}`);
+  return line[0];
+}
+
+Then("it is refused as a path allocate cannot read, and no code is given", function () {
+  assert.equal(answer.status, 2, `expected the usage status, got ${answer.status}\n${answer.stderr}`);
+  assert.equal(answer.stdout, "");
+  assert.doesNotMatch(answer.stderr, /^\s+at /m, `a stack trace was printed:\n${answer.stderr}`);
+  refusalOf(answer);
+});
+
+/** Whether a refusal names `path` as the path it could not read, wherever the fixture lives. */
+function namesPath(refusal: string, path: string): boolean {
+  return refusal.includes(`/${path} (`);
+}
+
+Then("allocate's refusal names {word}", function (path: string) {
+  const refusal = refusalOf(answer);
+  assert.ok(namesPath(refusal, path), `expected the refusal to name ${path}; got:\n${refusal}`);
+});
+
+/** Every permission a scenario took away, given back after it so its temp directory can be removed. */
+const permissionsTaken: Array<() => void> = [];
+
+/** Take a path's permissions away for this scenario, recording how to give them back. */
+function withhold(path: string, mode: number): void {
+  const before = statSync(path).mode & 0o7777;
+  chmodSync(path, mode);
+  permissionsTaken.push(() => chmodSync(path, before));
+}
+
+After(function () {
+  while (permissionsTaken.length > 0) permissionsTaken.pop()?.();
+});
+
+/** A copy of a corpus that is not a git repository: its feature file, and a document that cites a code. */
+function copyWithoutGit(): string {
+  const copy = mkdtempSync(join(tmpdir(), "allocate-plain-"));
+  writeInto(copy, "features/one.feature", featureFile("ONE", ["SCN-ONE-003"]));
+  writeInto(copy, "docs/notes.md", "Cites SCN-ONE-004.\n");
+  const probe = spawnSync("git", ["rev-parse", "--git-dir"], { cwd: copy, encoding: "utf8" });
+  assert.notEqual(probe.status, 0, `the copy is inside a git repository: ${probe.stdout}`);
+  return copy;
+}
+
+/** The mode that withholds each path: a directory entered but not listed, or nothing at all. */
+function withholdingMode(path: string): number {
+  return path === "working directory" ? 0o311 : 0o000;
+}
+
+Given(
+  "a {} whose feature file headed ONE carries the scenario code {word}, and whose {} allocate is not permitted to read",
+  function (copy: string, code: string, path: string) {
+    if (copy === "repository") {
+      repository = newRepository();
+      writeInto(repository, "features/one.feature", featureFile("ONE", [code]));
+      commitAll(repository, "the corpus");
+    } else {
+      assert.equal(copy, "copy without git", `no fixture for: ${copy}`);
+      repository = copyWithoutGit();
+    }
+    withhold(path === "working directory" ? repository : join(repository, path), withholdingMode(path));
+  },
+);
+
+Then("allocate's refusal names {} and says allocate was not permitted to read it", function (path: string) {
+  const refusal = refusalOf(answer);
+  const named = path === "working directory" || path === "the repository's top" ? basename(repository) : path;
+  assert.ok(namesPath(refusal, named), `expected the refusal to name ${named}; got:\n${refusal}`);
+  assert.match(refusal, /EACCES|EPERM/, `expected the operating system's reason; got:\n${refusal}`);
+});
+
+When(
+  "the author asks for the next code for {word} from a working directory that has since been removed",
+  function (part: string) {
+    const removed = join(repository, "removed");
+    mkdirSync(removed);
+    const script = 'cd "$1" && rmdir "$1" && shift && exec "$@"';
+    const result = spawnSync("/bin/sh", ["-c", script, "sh", removed, NODE, ...SPEC_CONTROLLER_ARGV, "allocate", part], {
+      encoding: "utf8",
+    });
+    assert.equal(result.error, undefined, `the binary failed to spawn: ${result.error?.message}`);
+    assert.equal(existsSync(removed), false, "the working directory should have been removed before the binary ran");
+    answer = result;
+  },
+);
+
+Then("allocate's refusal says the working directory could not be read", function () {
+  assert.match(refusalOf(answer), /the working directory could not be read/);
+});
+
+/** Each file a row writes a code into, and how: an untracked draft, or an edit not yet committed. */
+const CARRIER: Record<string, { path: string; write: (code: string) => void }> = {
+  "an untracked file, drafts/new.md": {
+    path: "drafts/new.md",
+    write: (code) => writeInto(repository, "drafts/new.md", `Cites ${code}.\n`),
+  },
+  "a tracked file with an edit not yet committed, docs/notes.md": {
+    path: "docs/notes.md",
+    write: (code) => {
+      writeInto(repository, "docs/notes.md", "Cites SCN-ONE-003.\n");
+      commitAll(repository, "the notes");
+      writeInto(repository, "docs/notes.md", `Cites ${code}.\n`);
+    },
+  },
+  "the feature file, with an edit not yet committed": {
+    path: "features/one.feature",
+    write: (code) => {
+      const path = join(repository, "features", "one.feature");
+      writeFileSync(path, `${readFileSync(path, "utf8")}\n  @${code} @unit\n  Scenario: a new scenario\n    Given a step\n`);
+    },
+  },
+};
+
+/** What each row withholds, given the file that carries the code. */
+const WITHHELD: Record<string, (file: string) => void> = {
+  "allocate is not permitted to read it": (file) => withhold(join(repository, file), 0o000),
+  "allocate is not permitted to list its directory": (file) => withhold(dirname(join(repository, file)), 0o000),
+  "allocate may list its directory but not enter it": (file) => withhold(dirname(join(repository, file)), 0o600),
+  "allocate is not permitted to list the repository's top": () => withhold(repository, 0o100),
+};
+
+Given("in it, {} carries {word}, and {}", function (file: string, code: string, unreadable: string) {
+  const carrier = CARRIER[file];
+  const withholdFrom = WITHHELD[unreadable];
+  assert.ok(carrier !== undefined && withholdFrom !== undefined, `no fixture for: ${file} / ${unreadable}`);
+  carrier.write(code);
+  mkdirSync(join(repository, "src"), { recursive: true });
+  withholdFrom(carrier.path);
+});
+
+When("the author asks for the next code for {word}, standing in {}", function (part: string, where: string) {
+  assert.ok(where === "its top" || where === "a subdirectory", `no directory for: ${where}`);
+  answer = allocate(where === "its top" ? repository : join(repository, "src"), [part]);
+});
+
+Given("its loose objects are not permitted to be read", function () {
+  const objects = join(repository, ".git", "objects");
+  const loose = readdirSync(objects).filter((name) => /^[0-9a-f]{2}$/.test(name));
+  assert.ok(loose.length > 0, "the fixture should hold loose objects");
+  for (const name of loose) withhold(join(objects, name), 0o000);
+});
+
+Given("its objects are packed, and the pack is not permitted to be read", function () {
+  git(repository, ["gc", "-q"]);
+  const pack = join(repository, ".git", "objects", "pack");
+  const files = readdirSync(pack);
+  assert.ok(files.some((name) => name.endsWith(".pack")), "gc should have written a pack");
+  for (const name of files) withhold(join(pack, name), 0o000);
+});
+
+Given("its branch refs are not permitted to be read", function () {
+  withhold(join(repository, ".git", "refs", "heads"), 0o000);
+});
+
+Given("it is cloned one commit deep, and the clone's shallow record is not permitted to be read", function () {
+  const clone = join(mkdtempSync(join(tmpdir(), "allocate-clone-")), "clone");
+  git(repository, ["clone", "-q", "--depth", "1", `file://${repository}`, clone]);
+  assert.equal(git(clone, ["rev-parse", "--is-shallow-repository"]).trim(), "true");
+  repository = clone;
+  withhold(join(repository, ".git", "shallow"), 0o000);
+});
+
+Then("allocate's refusal says the repository's history could not be read", function () {
+  assert.match(refusalOf(answer), /the repository's history could not be read/);
+});
+
+Given("its .git directory is not permitted to be read", function () {
+  withhold(join(repository, ".git"), 0o000);
+});
+
+Given("its object store is not permitted to be read", function () {
+  withhold(join(repository, ".git", "objects"), 0o000);
+});
+
+Given("its HEAD is not permitted to be read", function () {
+  withhold(join(repository, ".git", "HEAD"), 0o000);
+});
+
+Given("its .git is a file pointing to a directory that is not there", function () {
+  rmSync(join(repository, ".git"), { recursive: true });
+  writeFileSync(join(repository, ".git"), `gitdir: ${join(repository, "nowhere")}\n`);
+});
+
+Then("allocate's refusal names the repository's .git and says git could not open it", function () {
+  const refusal = refusalOf(answer);
+  assert.ok(namesPath(refusal, `${basename(repository)}/.git`), `expected the refusal to name the repository's .git; got:\n${refusal}`);
+  assert.match(refusal, /the repository could not be read: .* \(git rev-parse exited \d+: /, `expected git's reason; got:\n${refusal}`);
 });
