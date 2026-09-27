@@ -38,6 +38,32 @@ node --version   # must be v22.x or higher
 
 ---
 
+## How your evidence finds its scenario
+
+A scenario's tag line says what it needs proved: `@SCN-ALC-001 @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-ALC-001`. Each piece of evidence then names the scenario it answers, **in the one form its runner's report carries**:
+
+| the scenario asks for | the evidence | how it names the scenario |
+|---|---|---|
+| `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title — the most specific one wins |
+| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
+| `@fitness` | a CI step | the step's `id:` is the code (see *Declaring a fitness check*, below) |
+
+```ts
+describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+  it("offers the next code", () => { /* … */ });
+});
+```
+
+```yaml
+      - name: Test
+        id: SCN-FIT-012
+        run: pnpm test
+```
+
+**Only these three forms are read.** `SCN-ALC-001` or `@SCN-ALC-001` in a test title without the square brackets, a code in a comment — including a `// @SCN-…` line in a step-definition file — or a code anywhere else names nothing. A test that names nothing still runs and is still reported: it lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. When a `@unit` scenario reads `missing` while its test passes, check the brackets first.
+
+---
+
 ## Declaring a fitness check
 
 A **fitness check** is a whole-system property — complexity, mutation score, type
