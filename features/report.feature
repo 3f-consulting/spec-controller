@@ -185,6 +185,13 @@ Feature: The report renders the ledger as sectioned facts
     out-of-balance and total. The section is omitted only when no Scenario Reconciliation of
     any kind is out of balance; when only ungrouped rows are, it states them and has no table.
 
+    A SCENARIO CARRYING NO @SCN CODE has no <FFF> to parse, and it still belongs to a feature: it
+    counts on the row of the feature file it sits in, under that file's header code when the file
+    carries one, and under the file's name when it carries none. Its cell states how many such
+    scenarios the row holds rather than naming them, because the column claims @SCN ids and they
+    have none; the untagged-scenario list names each one where it lives. The file and its header
+    code are read from the report itself, so a re-render from the saved JSON groups them the same.
+
     @unit @integration @SCN-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
       Given a target feature directory whose features carry codes alongside an uncoded one
@@ -196,6 +203,22 @@ Feature: The report renders the ledger as sectioned facts
       Given a corpus whose evidence cites a scenario no feature file names, beside an out-of-balance scenario
       When that corpus is reconciled and its report written
       Then the by-feature total line counts the phantom-scenario row as out of balance and not grouped by feature, and its counts add up to the header's out-of-balance and total
+
+    @unit @integration @SCN-RPT-031
+    Scenario: a feature file's scenarios carrying no @SCN code count together on one row named by that file, never one row each
+      Given a feature file with no feature code whose three scenarios carry no @SCN code
+      When that corpus is reconciled and its report written, then rendered again from its saved reconciliation
+      Then the by-feature cut holds one row, named by that file, counting all three as carrying no @SCN code
+      And no cell of the by-feature cut locates a scenario by its file and name
+      And the report rendered again from its saved reconciliation is the report first written
+
+    @unit @integration @SCN-RPT-032
+    Scenario: a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row
+      Given a feature file headed by a feature code, holding one scenario carrying its code, one carrying no @SCN code and one tagged only with an over-long code
+      When that corpus is reconciled and its report written, then rendered again from its saved reconciliation
+      Then the by-feature cut holds one row, the headed feature's, counting all three and naming only the one carrying its code
+      And no cell of the by-feature cut locates a scenario by its file and name
+      And the report rendered again from its saved reconciliation is the report first written
 
   Rule: the corpus census survives its own section's dissolution
 
@@ -338,22 +361,22 @@ Feature: The report renders the ledger as sectioned facts
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed
       And no cell-key legend precedes the ledger table — the grid speaks for itself
 
-  # Rule: Warnings flags the tests citing no scenario — RETIRED (@SCN-LDG-007).
-  # The cites-no-scenario anchor audit (was @SCN-RPT-012) is superseded by the bidirectional
+  # Rule: Warnings flags the tests citing no scenario — RETIRED.
+  # The cites-no-scenario anchor audit is superseded by the bidirectional
   # reconciler: a credit citing NO @SCN anchor now surfaces as a SUSPENSE-scenario
   # reconciliation row `(no scenario)` in the Ledger, carrying its locator on a
   # cites-no-scenario item, not a Warnings sub-part — so the detail lives in exactly one place
   # (no double-report). The `## Warnings` section itself has since dissolved entirely
-  # (markdown.ts SECTIONS). The suspense render is proven by @SCN-LDG-007
-  # (features/ledger.feature); the suspense COUNT survives in the Test volume balance-check
+  # (markdown.ts SECTIONS). The suspense render is proven in
+  # features/ledger.feature; the suspense COUNT survives in the Test volume balance-check
   # identity (summary.testVolume).
 
-  # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED (@SCN-LDG-006).
-  # The phantom-id anchor audit (was @SCN-RPT-013) is superseded by the bidirectional
+  # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED.
+  # The phantom-id anchor audit is superseded by the bidirectional
   # reconciler: a credit citing an UNKNOWN @SCN now surfaces as a PHANTOM-scenario
   # reconciliation row in the Ledger (outcome cites-unknown-scenario, carrying its id +
   # locator), not a Warnings sub-part — so the phantom detail lives in exactly one place (no
-  # double-report). The behaviour is proven by @SCN-LDG-006 (features/ledger.feature); the
+  # double-report). The behaviour is proven in features/ledger.feature; the
   # phantom COUNT survives in the Test volume balance-check identity.
 
   Rule: Warnings flags the untagged scenarios with their feature locators
@@ -487,10 +510,10 @@ Feature: The report renders the ledger as sectioned facts
       And the e2e credit posts to that scenario's ledger row
       And the scenario's E2e cell renders a count, not ∅
 
-    # The view-side mirror of @SCN-LDG-014. parseCucumber emits ONE observation per non-unit tier
-    # and each posts as its own credit (@SCN-LDG-022), so the two tiers are tallied independently
+    # The view-side mirror of the ledger's multi-tier rule. parseCucumber emits ONE observation per non-unit tier
+    # and each posts as its own credit, so the two tiers are tallied independently
     # with NO multi-tag-specific logic anywhere — there is no second derivation left to lose the
-    # second tier. The census that once re-derived these counts is RETIRED (3F-2102/3F-2104).
+    # second tier. The census that once re-derived these counts is RETIRED.
     @unit @integration @SCN-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
       Given a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102
