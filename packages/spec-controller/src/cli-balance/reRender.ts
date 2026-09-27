@@ -38,10 +38,8 @@ export function checkReRenderFlags(args: Record<string, string>): string | null 
   if (args["render-from-json"] === undefined) return null;
   const ignored = Object.keys(args).find((key) => !READ_BY_A_RE_RENDER.has(key));
   if (ignored === undefined) return null;
-  const stored =
-    ignored === "format" ? " A run under --store passes --format for its report files, so a re-render is not stored." : "";
   return (
     `--render-from-json re-renders a saved report and reads only --strict and --exit-zero beside it; ` +
-    `--${ignored} would be ignored. Remove it, or run balance without --render-from-json.${stored}`
+    `--${ignored} would be ignored. Remove it, or run balance without --render-from-json.`
   );
 }

@@ -34,6 +34,7 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 // lived here while `balance` was the only command; a second command needs them, and a second
 // copy of "what did the operator type" is the one thing this tree least wants two of.
 import {
+  asksForHelp,
   parseArgs,
   checkArgvShape,
   checkUnknownFlags,
@@ -231,16 +232,16 @@ export function checkRenderFromJson(
   return null;
 }
 
-export function runBalance(argv: string[]): void {
+export function runBalance(argv: string[]): boolean {
   // Answer `--help`/`-h` from the command/flag registry BEFORE any
   // parse or reconcile: render the balance command's per-command scope (a line per
   // registered flag — name + arg + description), leave process.exitCode at its default 0,
   // and return. This intercepts --help so it never falls through parseArgs as a stray flag
   // while balance runs anyway. The registry is the single source, so a flag that exists is
   // a flag that appears in help — no hand-kept list to drift.
-  if (argv.includes("--help") || argv.includes("-h")) {
+  if (asksForHelp(argv)) {
     process.stdout.write(renderCommandHelp(cliRegistry, "balance") + "\n");
-    return;
+    return false;
   }
 
   // Capture the run-start instant up front — the run provenance's UTC timestamp,
@@ -257,12 +258,12 @@ export function runBalance(argv: string[]): void {
   if (legacyJsonError) exitUsage(legacyJsonError);
 
   // A host modifier after the command is out of place, not unknown, so it is
-  // refused before the drift advice, through `process.exit` so a stored run is never stamped.
+  // refused before the drift advice.
   const misplacedModifierError = checkMisplacedHostModifiers(args, cliRegistry, "balance");
   if (misplacedModifierError) exitUsage(misplacedModifierError);
 
-  // Every token is a flag or the value of the flag before it, refused through
-  // `process.exit` so a stored run is never stamped, and before the unknown-flag check below.
+  // Every token is a flag or the value of the flag before it, refused before the unknown-flag
+  // check below.
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
   if (shapeError) exitUsage(shapeError);
 
@@ -280,16 +281,15 @@ export function runBalance(argv: string[]): void {
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
     process.exitCode = 2;
-    return;
+    return false;
   }
 
   // A flag that takes a value, given none, refused before anything reads
-  // the value `parseArgs` made up for it. `process.exit`, never a set status and a return: inside a
-  // stored run the return would reach the kept-run scaffold, which stamps a run.yaml.
+  // the value `parseArgs` made up for it.
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
   if (missingValueError) exitUsage(missingValueError);
 
-  if (renderSavedReport(args)) return;
+  if (renderSavedReport(args)) return false;
   refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
@@ -335,6 +335,7 @@ export function runBalance(argv: string[]): void {
   // Assigned only when NON-ZERO, so a balanced run still LEAVES process.exitCode at its default
   // rather than writing a 0 over it — the distinction the balanced-exit scenarios rest on.
   if (code !== 0) process.exitCode = code;
+  return true;
 }
 
 /**

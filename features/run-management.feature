@@ -130,3 +130,55 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | a directory named spec-reconciliation.json | spec-reconciliation.json | the destination is a directory |
         | a directory named run.yaml                 | run.yaml                 | the destination is a directory |
         | a run.yaml it may not write                | run.yaml                 | permission was denied          |
+
+  Rule: a stored run's run.yaml records only a run that wrote its report
+
+    run.yaml names the two reports a stored run writes. A run that writes neither keeps no
+    manifest, and does not announce a run directory as if output had landed there. Help is
+    answered before the store is touched, so it makes no store at all. A re-render keeps no run
+    and is refused before one starts, naming the store. A refused run may leave an empty
+    directory, a truthful record of a run that produced nothing. A manifest already under that
+    run-id belongs to an earlier run and is left as it was.
+
+    @unit @e2e @SCN-RMG-005
+    Scenario Outline: a stored run refused for an unknown flag leaves no run.yaml and prints no run directory, and an earlier run under the same run-id keeps its record
+      Given a store root holding <earlier>
+      When the operator stores a balance run under that run-id with a flag balance does not accept
+      Then the stored run is refused as a usage error, never reported as a verdict
+      And the stored run announces no run directory
+      And the refused run added, changed or removed no file under the store root
+
+      Examples:
+        | earlier                                   |
+        | nothing yet                               |
+        | an earlier kept run under the same run-id |
+
+    @unit @e2e @SCN-RMG-006
+    Scenario Outline: a stored balance --help answers the help before the store is touched, even under a store root that cannot be written
+      Given a store root that is <root>
+      When the operator asks for balance's help by its <name> name under that store root
+      Then the help is answered, as it is with no store root
+      And the store root is as it was before the run
+
+      Examples:
+        | name  | root           |
+        | long  | not yet made   |
+        | short | not yet made   |
+        | long  | a regular file |
+        | short | a regular file |
+
+    @unit @e2e @SCN-RMG-007
+    Scenario Outline: a stored --render-from-json re-render is refused naming --store, never a flag the operator did not give, and nothing is stored
+      Given a saved reconciliation that is <saved>
+      When the operator asks for it to be re-rendered under a store root <beside>
+      Then the re-render is refused as a usage error, naming the store as what it cannot take
+      And the refusal names no flag the operator did not give
+      And the stored re-render prints no report
+      And no store root is made
+
+      Examples:
+        | saved                     | beside                        |
+        | of an out-of-balance run  | with nothing else             |
+        | of an out-of-balance run  | strictly                      |
+        | of an out-of-balance run  | with a failing verdict zeroed |
+        | at a path that is missing | with nothing else             |

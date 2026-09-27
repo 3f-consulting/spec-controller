@@ -89,7 +89,7 @@ describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create,
 
   it("creates a root whose missing parents can be created, and runs the command", () => {
     const storeRoot = join(scratch, "missing", "store");
-    const route = vi.fn();
+    const route = vi.fn(() => true);
 
     executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route);
 
@@ -109,7 +109,7 @@ describe("[SCN-RMG-009] executeKeptRun refuses a run.yaml it cannot write, namin
   it("refuses a run.yaml that is already a directory, with EISDIR, after the command has run", () => {
     const { storeRoot, runYaml } = arrangeRunDir();
     mkdirSync(runYaml);
-    const route = vi.fn();
+    const route = vi.fn(() => true);
 
     expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route)).toThrow(Exited);
 
@@ -127,7 +127,7 @@ describe("[SCN-RMG-009] executeKeptRun refuses a run.yaml it cannot write, namin
     chmodSync(runYaml, 0o444);
 
     try {
-      expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, vi.fn())).toThrow(Exited);
+      expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, vi.fn(() => true))).toThrow(Exited);
 
       expect(process.exit).toHaveBeenCalledWith(2);
       expect(stderr.join("")).toContain(runYaml);

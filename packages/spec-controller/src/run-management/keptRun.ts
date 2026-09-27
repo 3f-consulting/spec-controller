@@ -109,12 +109,16 @@ export interface KeptRunPlan {
 }
 
 /**
- * Invokes the reconciliation tool with the given `--format <fmt>:<path>` specs. INJECTED so
- * the scaffold stays the tool's black-box caller (the real CLI subprocess in the
- * `@integration` arm) and holds no opinion on HOW the tool is run — only WHERE its outputs
- * land (the two file-dest paths the runner hands it).
+ * Invokes the reconciliation tool with the given `--format <fmt>:<path>` specs, and answers
+ * whether it wrote the report those specs name. INJECTED so the scaffold stays the tool's
+ * black-box caller (the real CLI subprocess in the `@integration` arm) and holds no opinion on
+ * HOW the tool is run — only WHERE its outputs land (the two file-dest paths the runner hands it).
+ *
+ * The answer is the command's own, and positive: only the command knows it wrote its report. The
+ * files' existence afterwards cannot say so, because an earlier run under the same run-id may
+ * have left them there.
  */
-export type RouteOutputs = (formatSpecs: readonly string[]) => void;
+export type RouteOutputs = (formatSpecs: readonly string[]) => boolean;
 
 /**
  * PURE planner: yield the run dir `<storeRoot>/<target>/<runId>/` and the two file-dest
@@ -209,20 +213,23 @@ export function serialiseRunManifest(manifest: RunManifest): string {
 /**
  * IMPURE runner: `mkdir -p` the run dir, route the tool's `--format` outputs into the two files
  * via the injected `route` — the document as `md:<documentPath>`, the reconciliation JSON as
- * `json:<reconciliationJsonPath>` — and stamp `run.yaml` from the spec + `meta`. Returns the
- * plan it realised. The `mkdir` is load-bearing: the tool's writer creates no directories, so the
- * scaffold creates the one the location-agnostic tool writes into.
+ * `json:<reconciliationJsonPath>` — and, only when the route answers that it wrote them, stamp
+ * `run.yaml` from the spec + `meta` and return the plan it realised. A route that wrote nothing
+ * gets no manifest and no plan back, so nothing names a run that did not happen, and an earlier
+ * run's manifest under the same run-id is left as it was. The `mkdir` is load-bearing: the tool's
+ * writer creates no directories, so the scaffold creates the one the location-agnostic tool
+ * writes into.
  */
 export function executeKeptRun(
   spec: KeptRunSpec,
   meta: RunManifestMeta,
   route: RouteOutputs
-): KeptRunPlan {
+): KeptRunPlan | undefined {
   const plan = planKeptRun(spec);
   writeOrRefuse("The stored run's directory could not be created", plan.runDir, () =>
     mkdirSync(plan.runDir, { recursive: true }),
   );
-  route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`]);
+  if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`])) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
   const manifestPath = join(plan.runDir, RUN_MANIFEST);
   writeOrRefuse("The stored run's run.yaml could not be written", manifestPath, () =>

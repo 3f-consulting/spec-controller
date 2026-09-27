@@ -7,7 +7,7 @@
  *
  * Commands: `balance` — the deterministic reconciliation of scenarios against
  * observed evidence, standalone on the public core + app layer (no engine). It also polices the
- * corpus's own scenario codes (3F-3635). `allocate` — a query, not a verdict: the next scenario code
+ * corpus's own scenario codes. `allocate` — a query, not a verdict: the next scenario code
  * for a feature part, which keeps no run and so takes no host modifier. The
  * `analyse` / `migrate` capabilities are a separate, closed offering built on the same core.
  *
@@ -40,16 +40,16 @@ import {
   type HostInvocation,
 } from "./host.js";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
+import { dispatchesUnstored, storedReRenderRefusal } from "./storedRun.js";
 
-/** Dispatch a command to its handler with the given (clean or store-wrapped) argv. */
-function runCommand(command: string, argv: string[]): void {
+/** Dispatch a command to its handler with the given (clean or store-wrapped) argv; true when it wrote its report. */
+function runCommand(command: string, argv: string[]): boolean {
   switch (command) {
     case "balance":
-      runBalance(argv);
-      return;
+      return runBalance(argv);
     case "allocate":
       runAllocate(argv);
-      return;
+      return false;
     default: {
       const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
       process.stderr.write(answer.stderr);
@@ -60,11 +60,11 @@ function runCommand(command: string, argv: string[]): void {
 
 /**
  * Refuse, at the usage status, what the leading tokens get wrong, before any command or stored run
- * starts, so nothing is written anywhere: a usage fault among them (@SCN-CLI-059), or modifiers
- * that would keep a run given to a command that keeps none.
+ * starts, so nothing is written anywhere: a usage fault among them, or modifiers
+ * that would keep a run given to a command, or a re-render, that keeps none.
  */
 function refuseLeadingFaults(inv: HostInvocation): void {
-  const refusal = inv.refusal ?? modifiersNotTakenRefusal(inv);
+  const refusal = inv.refusal ?? modifiersNotTakenRefusal(inv) ?? storedReRenderRefusal(inv);
   if (refusal === undefined) return;
   process.stderr.write(refusal + "\n");
   process.exit(2);
@@ -80,8 +80,8 @@ function main(hostArgv: string[]): void {
     return;
   }
 
-  // No store directive → dispatch the command directly; its output is unchanged.
-  if (inv.store === undefined) {
+  // No store directive, or a request for help → dispatch the command directly; its output is unchanged.
+  if (dispatchesUnstored(inv) || inv.store === undefined) {
     runCommand(command, inv.commandArgs);
     return;
   }
@@ -104,7 +104,7 @@ function main(hostArgv: string[]): void {
   const spec: KeptRunSpec = { storeRoot: inv.store, target, runId };
   // `mode` is the command's run kind; only `balance` ships today (analyse/migrate are the
   // private engine's, added when it lands).
-  // The TOOL's own identity (3F-1916) — which spec-controller produced this run, read
+  // The TOOL's own identity — which spec-controller produced this run, read
   // from the tool's OWN dir (never cwd, which is the target). "unknown" for a null SHA,
   // matching sourceSha's own fallback so run.yaml is internally consistent.
   const toolIdentity = resolveToolIdentity();
@@ -120,8 +120,8 @@ function main(hostArgv: string[]): void {
     runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs])),
   );
 
-  // The command's stdout was routed into the run dir, so tell the operator where it landed.
-  process.stdout.write(plan.runDir + "\n");
+  // The command's report was routed into the run dir, so tell the operator where it landed.
+  if (plan !== undefined) process.stdout.write(plan.runDir + "\n");
 }
 
 main(process.argv.slice(2));

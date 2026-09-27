@@ -79,8 +79,9 @@ When("the kept run persists its machine artefact", function () {
         1,
         `expected exit 1 (out-of-balance); got ${result.status}:\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
       );
+      return true;
     }
-  );
+  ) ?? assert.fail("the route wrote its report, so the run is kept");
 });
 
 Then("the persisted artefact is named spec-reconciliation.json", function () {
@@ -251,8 +252,9 @@ When("the run persists spec-reconciliation.json", function () {
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
+      return true;
     }
-  );
+  ) ?? assert.fail("the route wrote its report, so the run is kept");
   rmd003Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));
 });
 
@@ -371,8 +373,9 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
+      return true;
     }
-  );
+  ) ?? assert.fail("the route wrote its report, so the run is kept");
   rmd005Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));
 });
 
@@ -650,8 +653,9 @@ When("the report is serialised to spec-reconciliation.json", function () {
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
+      return true;
     }
-  );
+  ) ?? assert.fail("the route wrote its report, so the run is kept");
   rmd008Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));
 });
 

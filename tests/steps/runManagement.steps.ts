@@ -1,7 +1,6 @@
 /**
  * Step definitions for features/run-management.feature (the @RMG run-management feature).
  *
- * @SCN-RMG-001 — the bidirectional @integration evidence marker (Evidence Manifesto §9).
  * This arm exercises the REAL impure runner END-TO-END: executeKeptRun makes the run dir
  * under an INJECTED temp store root and routes the tool's --format outputs in by invoking
  * the REAL CLI as a black-box subprocess with the two file-dest --format specs. The
@@ -21,8 +20,6 @@
  *
  * Self-contained module-level outcome + distinct step text, so it shares no outcome with the
  * other steps files (Cucumber registers step definitions globally).
- *
- * Evidence: @SCN-RMG-001 — the run-management layer.
  */
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
@@ -55,7 +52,7 @@ const RUN_ID = "2026-07-01T00-00-00Z";
 // dir + routed outputs, not run.yaml, but the runner requires the metadata to stamp it).
 const META: RunManifestMeta = { sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.1.0", mode: "balance", date: "2026-07-01" };
 
-// @SCN-RMG-001 outcome (isolated per scenario by Cucumber).
+// This scenario's outcome (isolated per scenario by Cucumber).
 let storeRoot: string; // the INJECTED temp store root (outside the repo tree)
 let repoRoot: string; // the spec-controller checkout — the working tree that must gain nothing
 let repoStatusBefore: string; // the repo working-tree snapshot before the kept run
@@ -66,7 +63,6 @@ function gitPorcelain(cwd: string): string {
   return execFileSync("git", ["status", "--porcelain"], { cwd, encoding: "utf8" });
 }
 
-// @SCN-RMG-001
 Given("an injected store root and a target corpus to reconcile", function () {
   repoRoot = process.cwd();
   // The store root is INJECTED — a temp dir OUTSIDE the repo tree, so the "repo untouched"
@@ -85,7 +81,6 @@ Given("an injected store root and a target corpus to reconcile", function () {
   repoStatusBefore = gitPorcelain(repoRoot);
 });
 
-// @SCN-RMG-001
 When("a kept run is executed for that target", function () {
   const abs = (p: string): string => join(repoRoot, p);
   // The REAL impure runner: it makes the run dir and hands the injected tool-invoker the
@@ -112,18 +107,31 @@ When("a kept run is executed for that target", function () {
       undefined,
       `the tool subprocess failed to spawn: ${result.error?.message}`
     );
-    // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
-    // out-of-balance fixture exits 1 (the report is still written IN FULL first). Pure
-    // exit-expectation flip 0->1; every stored-artefact assertion is unchanged.
+    // This out-of-balance fixture exits 1; the report is still written IN FULL first.
     assert.equal(
       result.status,
       1,
       `expected exit 1 (out-of-balance); got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
     );
-  });
+    return true;
+  }) ?? assert.fail("the route wrote its report, so the run is kept");
 });
 
-// @SCN-RMG-001
+/**
+ * The nesting, hop by hop: <root>/<target>/<run-id>/<filename>. A flat <root>/<run-id> or
+ * <root>/<target> (a missing level) fails these.
+ */
+function assertNestedHopByHop(expectedDoc: string): void {
+  assert.equal(basename(expectedDoc), RECONCILIATION_DOCUMENT);
+  assert.equal(basename(dirname(expectedDoc)), RUN_ID, "the run-id level is missing/misplaced");
+  assert.equal(basename(dirname(dirname(expectedDoc))), TARGET, "the target level is missing/misplaced");
+  assert.equal(
+    dirname(dirname(dirname(expectedDoc))),
+    storeRoot,
+    "the nest is not rooted at the injected store root"
+  );
+}
+
 Then(
   // The '/' is escaped as '\/' so Cucumber Expressions read it as a literal slash (not
   // alternation); the feature step text keeps the plain <root>/<target>/<run-id>/ path.
@@ -145,16 +153,7 @@ Then(
       "reconciliation JSON path is not at the nested run dir"
     );
 
-    // Assert the nesting hop-by-hop: <root>/<target>/<run-id>/<filename> — a flat
-    // <root>/<run-id> or <root>/<target> (a missing level) fails these.
-    assert.equal(basename(expectedDoc), RECONCILIATION_DOCUMENT);
-    assert.equal(basename(dirname(expectedDoc)), RUN_ID, "the run-id level is missing/misplaced");
-    assert.equal(basename(dirname(dirname(expectedDoc))), TARGET, "the target level is missing/misplaced");
-    assert.equal(
-      dirname(dirname(dirname(expectedDoc))),
-      storeRoot,
-      "the nest is not rooted at the injected store root"
-    );
+    assertNestedHopByHop(expectedDoc);
 
     // The REAL files exist ON DISK at exactly that nested path (anti-watermelon: real files,
     // never a planKeptRun re-run), and carry the tool's real output (markdown / JSON).
@@ -179,7 +178,6 @@ Then(
   }
 );
 
-// @SCN-RMG-001
 Then("the repo working tree gains nothing", function () {
   // --- Assertion 2: LOCATION-AGNOSTIC teeth (TWO assertions, not one). ---
   // 2a: the outputs really landed UNDER the injected temp root.

@@ -190,8 +190,8 @@ Feature: spec-controller balance runs standalone
     A re-render reads the saved report, --strict and --exit-zero, and nothing else: it reconciles
     nothing, so a live input, a provenance override or an output destination given beside it would
     be silently ignored. Each is refused as a usage fault, naming the flag, before anything is
-    rendered. --help still answers first. A stored run passes --format for its report files, so a
-    re-render under --store is refused the same way.
+    rendered. --help still answers first. A re-render keeps no run, so under --store it is refused
+    before the run starts, naming --store.
 
     @unit @e2e @SCN-CLI-072
     Scenario Outline: a <flag> given beside --render-from-json exits 2 naming the flag, and nothing is rendered

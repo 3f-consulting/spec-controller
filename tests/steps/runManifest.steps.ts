@@ -1,14 +1,11 @@
 /**
- * Step definitions for @SCN-RMG-002 (features/run-management.feature) — a kept run stamps
- * run.yaml with the decided field set.
- *
- * @SCN-RMG-002 — the bidirectional @integration evidence marker (Evidence Manifesto §9):
- * grepping @SCN-RMG-002 returns this step-block + the Vitest [SCN-RMG-002] describe + the
- * feature scenario.
+ * Step definitions for features/run-management.feature — a kept run stamps run.yaml with the
+ * decided field set.
  *
  * This arm exercises the REAL impure runner: executeKeptRun makes the run dir under an
- * INJECTED temp store root (the `route` is a no-op — the --format routing is RMG-001's
- * proven concern; THIS scenario is the run.yaml stamp) and stamps run.yaml. The assertions
+ * INJECTED temp store root (the `route` writes nothing and answers that it wrote the report —
+ * the --format routing is the neighbouring scenario's concern; THIS one is the run.yaml stamp)
+ * and stamps run.yaml. The assertions
  * PARSE the REAL run.yaml off disk with a REAL YAML parser (`yaml.parse`) — anti-watermelon:
  * never a serialiseRunManifest re-run.
  *
@@ -17,9 +14,7 @@
  * assertion) — asserting only "under temp root" would let a write-into-the-repo bug pass.
  *
  * Self-contained module-level outcome + distinct step text (Cucumber registers step
- * definitions globally, so this shares no outcome with runManagement.steps.ts / @SCN-RMG-001).
- *
- * Evidence: @SCN-RMG-002 — the run-management layer.
+ * definitions globally, so this shares no outcome with runManagement.steps.ts).
  */
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
@@ -44,7 +39,7 @@ const RUN_ID = "2026-07-01T00-00-00Z";
 // The run.yaml manifest metadata the runner stamps (not derivable from the path spec).
 const META: RunManifestMeta = { sourceSha: "abc1234", toolSha: "13ee47f", toolVersion: "0.1.0", mode: "balance", date: "2026-07-01" };
 
-// @SCN-RMG-002 outcome (isolated per scenario by Cucumber).
+// This scenario's outcome (isolated per scenario by Cucumber).
 let storeRoot: string; // the INJECTED temp store root (outside the repo tree)
 let repoRoot: string; // the spec-controller checkout — the working tree that must gain nothing
 let repoStatusBefore: string; // the repo working-tree snapshot before the kept run
@@ -55,7 +50,6 @@ function gitPorcelain(cwd: string): string {
   return execFileSync("git", ["status", "--porcelain"], { cwd, encoding: "utf8" });
 }
 
-// @SCN-RMG-002
 Given("an injected store root and the run metadata for a kept run", function () {
   repoRoot = process.cwd();
   // The store root is INJECTED — a temp dir OUTSIDE the repo tree, so the "repo untouched"
@@ -70,14 +64,12 @@ Given("an injected store root and the run metadata for a kept run", function () 
   repoStatusBefore = gitPorcelain(repoRoot);
 });
 
-// @SCN-RMG-002
 When("a kept run is executed with that metadata", function () {
-  // The `route` is a no-op — the --format routing is RMG-001's proven concern; THIS scenario
-  // is the run.yaml stamp. executeKeptRun still mkdirs the run dir and stamps run.yaml.
-  plan = executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, META, () => {});
+  // The `route` writes nothing and answers that it wrote the report: the --format routing is the
+  // neighbouring scenario's concern, and THIS one is the run.yaml stamp.
+  plan = executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, META, () => true) ?? assert.fail("the route wrote its report, so the run is kept");
 });
 
-// @SCN-RMG-002
 Then(
   "run.yaml in the run directory parses back to schema_version 2, the run_id, target, source_sha, tool_sha, tool_version, mode, date, an empty purpose list, empty links, and the artefact filenames",
   function () {
@@ -90,7 +82,7 @@ Then(
     assert.equal(manifest.run_id, RUN_ID, "run_id is not the run-id");
     assert.equal(manifest.target, TARGET, "target is not the target name");
     assert.equal(manifest.source_sha, META.sourceSha, "source_sha is not the metadata SHA");
-    // The TOOL's identity (3F-1916).
+    // The TOOL's identity.
     assert.equal(manifest.tool_sha, META.toolSha, "tool_sha is not the metadata tool SHA");
     assert.equal(manifest.tool_version, META.toolVersion, "tool_version is not the metadata tool version");
     assert.equal(manifest.mode, META.mode, "mode is not the metadata mode");
@@ -105,7 +97,6 @@ Then(
   }
 );
 
-// @SCN-RMG-002
 Then("the repo working tree gains nothing from the run.yaml stamp", function () {
   // --- LOCATION-AGNOSTIC teeth (TWO assertions, not one). ---
   // Teeth 1: run.yaml really landed UNDER the injected temp root.

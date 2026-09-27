@@ -1,7 +1,7 @@
 /**
  * THE ONE READING OF A COMMAND'S ARGV, and the one bounding of it against the registry.
  *
- * WHY IT IS ITS OWN MODULE (3F-3300). Both halves lived inside `cli-balance/cli.ts` while
+ * WHY IT IS ITS OWN MODULE. Both halves lived inside `cli-balance/cli.ts` while
  * `balance` was the only command — `parseArgs` private to it, `checkUnknownFlags` exported for
  * its own `@unit` arm. A second command needs both, and the two ways of giving it them were
  * worse than moving them: copying `parseArgs` would put a second reading of argv in a tree whose
@@ -12,11 +12,16 @@
  * THE BOUNDING IS PER-COMMAND, which is what makes "accepted = registry = help" hold for every
  * command rather than for the one this code was written beside. `checkUnknownFlags` took the
  * registry and looked `balance` up inside itself; the command is a parameter now, exactly as it
- * became one for `renderCommandHelp` (3F-3298). @SCN-CLI-009's scenario is unchanged and still
+ * became one for `renderCommandHelp`. The unknown-flag scenario is unchanged and still
  * asks about `balance`: a command added later gets the same bounding BY CONSTRUCTION.
  */
 
 import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cli-registry.js";
+
+/** True when a command's argv asks for its help, wherever `--help` or `-h` stands in it. */
+export function asksForHelp(argv: readonly string[]): boolean {
+  return argv.includes("--help") || argv.includes("-h");
+}
 
 /**
  * Parse `--flag value` pairs from a command's argv into a record, keys with the `--` stripped.
@@ -28,7 +33,7 @@ import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cli-r
  * PERMISSIVE BY ITSELF, AND BOUNDED BY THE CALLER. It records whatever it is given — a flag no
  * registry names, the last of two copies, a word after a flag that takes none — and drops a word
  * that follows no flag. `checkArgvShape` and `checkUnknownFlags` below are what refuse those, before
- * anything reads the record (3F-3672). The split is deliberate — the parse has no opinion about which
+ * anything reads the record. The split is deliberate — the parse has no opinion about which
  * command it is reading for, and the bounding has nothing else to do.
  */
 export function parseArgs(argv: readonly string[]): Record<string, string> {
@@ -71,7 +76,7 @@ export function isMissingValue(next: string | undefined): boolean {
 }
 
 /**
- * A flag that takes a value, given none, is a usage fault (@SCN-CLI-058, 3F-3639). It reads the
+ * A flag that takes a value, given none, is a usage fault. It reads the
  * RAW argv, because `parseArgs` has already turned a missing value into the string "true" — which a
  * path flag then looked for on disk, `--target` recorded, and `--format` dropped on its way to a
  * verdict `--exit-zero` turned green. Returns the refusal for the first such flag, else null.
@@ -101,7 +106,7 @@ export function missingValueRefusal(given: string, flag: FlagSpec, scope: string
 }
 
 /**
- * The shape of a command's argv, read against its registry scope (3F-3672): every token is a flag,
+ * The shape of a command's argv, read against its registry scope: every token is a flag,
  * or the value of the flag before it, or a usage fault. Returns the refusal for the first token that
  * is neither, else null.
  */
@@ -206,7 +211,7 @@ export function isEqualsForm(token: string): boolean {
 }
 
 /**
- * The refusal for a flag written `--flag=value` (@SCN-CLI-065, 3F-3672): the form as given, and the
+ * The refusal for a flag written `--flag=value`: the form as given, and the
  * spelling that is read — the flag and its value as two arguments, or the flag alone when it takes
  * none. Never the unknown-flag pin advice: no version reads the form, so no pin cures it. Refused
  * rather than split, by ruling: one spelling means one reader of argv, where splitting would teach
@@ -228,8 +233,8 @@ export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, Flag
 /**
  * How many tokens after a flag are its value: one for a value flag given one, and — for a flag the
  * scope does not have — one for the word after it, exactly as `parseArgs` pairs them, so an unknown
- * flag and its word stay @SCN-CLI-009's to refuse. An empty value is consumed as one, so it stays
- * @SCN-CLI-058's missing value rather than becoming a stray argument.
+ * flag and its word stay the unknown-flag check's to refuse. An empty value is consumed as one, so it
+ * stays a missing value rather than becoming a stray argument.
  */
 function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined): number {
   if (next === undefined || isFlagShaped(next)) return 0;
@@ -272,11 +277,9 @@ function notAFlagRefusal(token: string, command: string): string {
 }
 
 /**
- * A host modifier given after the command is out of place, not unknown (@SCN-CLI-061, 3F-3639): the
- * flag exists, so @SCN-CLI-009's advice to bump a pin to a version that accepts it is false. Its own
- * check rather than a branch of `checkUnknownFlags`, because the caller refuses this one through
- * `process.exit` — the unknown-flag path sets a status and returns, which inside a stored run reaches
- * the scaffold that stamps a run.yaml (3F-3650). Returns the refusal for the first such flag, else null.
+ * A host modifier given after the command is out of place, not unknown: the
+ * flag exists, so the unknown-flag advice to bump a pin to a version that accepts it is false. Returns the
+ * refusal for the first such flag, else null.
  */
 export function checkMisplacedHostModifiers(
   args: Record<string, string>,
@@ -294,13 +297,13 @@ export function checkMisplacedHostModifiers(
 }
 
 /**
- * The registry-bounded flag check at a command's CLI edge (@SCN-CLI-009). A command accepts ONLY
+ * The registry-bounded flag check at a command's CLI edge. A command accepts ONLY
  * the flags its per-command registry scope LISTS (by `name` or `alias`); an unregistered flag — a
  * typo like `--strcit`, a stray `--bogus` — is a usage error, where the permissive parse above would
  * have recorded it. It bounds flag NAMES and nothing else: a word that is no flag, a value given to a
  * flag that takes none, a second copy, a `--flag=value` form, are `checkArgvShape`'s, which runs
- * first (@SCN-CLI-062–066, 3F-3672). This is the structural teeth behind "accepted = registry
- * = help": a flag cannot affect behaviour without a registry entry, and so (by @SCN-CLI-008's
+ * first. This is the structural teeth behind "accepted = registry
+ * = help": a flag cannot affect behaviour without a registry entry, and so (by the help-completeness
  * guard) without appearing in that command's help.
  *
  * PURE and `@unit`-testable: the parsed args (keys already `--`-stripped) plus the registry and
@@ -308,15 +311,14 @@ export function checkMisplacedHostModifiers(
  * naming it WITH its dashes — routed to stderr and the enumerated usage status 2 by the caller,
  * never 1, never a silent run — else null. The global `--store`/`--run-id` modifiers are consumed
  * by the top-level dispatcher when they come BEFORE the command; written after it they reach the
- * command, and `checkMisplacedHostModifiers` refuses them as out of place before this runs
- * (@SCN-CLI-061).
+ * command, and `checkMisplacedHostModifiers` refuses them as out of place before this runs.
  *
  * A COMMAND THE REGISTRY DOES NOT NAME ACCEPTS NOTHING, which is the honest reading rather than a
  * degenerate one: an unregistered command has no scope, so every flag given to it is outside it.
  * The dispatcher refuses such a command before this is ever reached, so the case is unreachable
  * today and stated here so it cannot become a silent "accept everything" later.
  *
- * IT NAMES THE VERSION THAT REFUSED, AND THAT IS FOR THE PINNED READER (3F-3105, @SCN-CLI-009).
+ * IT NAMES THE VERSION THAT REFUSED, AND THAT IS FOR THE PINNED READER.
  * A consumer pins spec-controller and then moves their own tree; the pinned reader is handed argv
  * it was published too early — or too late — to understand, and an unadorned "unknown flag" is
  * indistinguishable from a typo. Naming the running version makes version skew legible from the CI
@@ -331,7 +333,7 @@ export function checkMisplacedHostModifiers(
  * refusal is the tool's own, which makes it universal rather than local.
  *
  * EXCEPT FOR A FLAG THE COMMAND HAS RETIRED, where the bump is false advice: `retiredFlagRefusal`
- * below names the retirement and its replacement instead (3F-3528).
+ * below names the retirement and its replacement instead.
  *
  * THE STATUS DOES NOT MOVE. The caller still routes this to stderr and exit 2. A mistyped `--strcit`
  * is still a usage fault, and giving skew its own status would cost every adopter the ordinary
@@ -372,7 +374,7 @@ export function checkUnknownFlags(
 }
 
 /**
- * THE REFUSAL FOR A FLAG THE COMMAND HAS RETIRED (@SCN-CLI-023, 3F-3528), or `undefined` when the
+ * THE REFUSAL FOR A FLAG THE COMMAND HAS RETIRED, or `undefined` when the
  * flag is merely unregistered. The drift advice above is true of a flag newer than the pin and
  * false of a retired one: every earlier version accepts it and no later one will, so the only pin
  * that satisfies "bump the pin to a version that accepts it" is a downgrade back onto the route
