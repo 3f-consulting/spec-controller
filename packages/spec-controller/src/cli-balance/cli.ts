@@ -23,7 +23,14 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { checkReRenderFlags, reRender } from "./reRender.js";
+import { checkReRenderFlags } from "./reRender.js";
+import {
+  checkInputPaths,
+  checkInputShapes,
+  checkSavedReconciliation,
+  jsonInputsOf,
+  reRenderOrRefusal,
+} from "./unreadableInputs.js";
 import { statusFor } from "./exitStatus.js";
 import {
   verdictCode,
@@ -153,10 +160,8 @@ export function checkInputsExist(
 }
 
 /**
- * The JSON-BEARING input flags — the ones whose content is `JSON.parse`d, and so the only
- * ones whose content can throw. `--features` is Gherkin (parsed tolerantly) and `--ci` is
- * read as raw TEXT and scanned for `run:` steps — neither is JSON, neither can crash the
- * process, and on garbage both reconcile normally (verified).
+ * The JSON-BEARING input flags — the ones whose content is `JSON.parse`d. `--features` and `--ci`
+ * are read as Gherkin and YAML files on disk, and whether they can be read is `checkInputPaths`'s.
  */
 const JSON_INPUT_FLAGS = [
   "vitest", "cucumber", "package-json", "ci-steps",
@@ -174,8 +179,9 @@ const JSON_INPUT_FLAGS = [
  * PURE and `@unit`-testable like its sibling guards: reads the parsed args + an injected
  * `read` fn (no fs), returns the FIRST supplied-but-unparseable `(flag, path, failure)` as
  * a typed error naming all three — routed to stderr + exit 2 by `refuseUnreadableInputs` — else null.
- * An omitted flag is not an error, and an unreadable file (a race after the existence
- * check) reports as the same input fault rather than escaping as a crash.
+ * An omitted flag is not an error, and a file that cannot be read at all (a race after the
+ * existence check, a permission refused) is refused as one that could not be read, never as JSON
+ * that did not parse.
  */
 export function checkInputsParse(
   args: Record<string, string>,
@@ -185,16 +191,24 @@ export function checkInputsParse(
     const path = args[flag];
     if (path === undefined) continue;
 
+    let text: string;
     try {
-      JSON.parse(read(path));
+      text = read(path);
     } catch (err) {
-      // Both a parse failure and an unreadable file are the SAME input fault. Anything
-      // that escapes this catch lands on Node's default exit 1 — the collision itself.
-      const failure = err instanceof Error ? err.message : String(err);
-      return `The --${flag} report is not valid JSON: ${path} (${failure})`;
+      return `The --${flag} file could not be read: ${path} (${failureOf(err)})`;
+    }
+    try {
+      JSON.parse(text);
+    } catch (err) {
+      // Anything that escapes this catch lands on Node's default exit 1 — the collision itself.
+      return `The --${flag} report is not valid JSON: ${path} (${failureOf(err)})`;
     }
   }
   return null;
+}
+
+function failureOf(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 /**
@@ -364,7 +378,11 @@ function renderSavedReport(args: Record<string, string>): boolean {
 
   const rehydratePath = args["render-from-json"];
   if (rehydratePath === undefined) return false;
-  const saved = reRender(readFileSync(rehydratePath, "utf8"), args["strict"] !== undefined);
+  const savedJson = readFileSync(rehydratePath, "utf8");
+  const notSavedError = checkSavedReconciliation(rehydratePath, savedJson);
+  if (notSavedError) exitUsage(notSavedError);
+  const saved = reRenderOrRefusal(rehydratePath, savedJson, args["strict"] !== undefined);
+  if (typeof saved === "string") exitUsage(saved);
   process.stdout.write(saved.markdown + "\n");
   const code = statusFor(saved.code, args["exit-zero"] !== undefined);
   if (code !== 0) process.exitCode = code;
@@ -395,6 +413,15 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   // usage fault, sibling to a missing path and an unrecognised flag — never a verdict.
   const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
   if (unparseableInputError) exitUsage(unparseableInputError);
+
+  // A corpus or workflow path that is not the kind its flag reads, or may not be read, cannot be read at all.
+  const unreadablePathError = checkInputPaths(args);
+  if (unreadablePathError) exitUsage(unreadablePathError);
+
+  // Parsing is not reading: a report that parses but is not in the shape its reader expects would
+  // be read as nothing, or read until it threw, so it is refused here with where its shape is wrong.
+  const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), (path) => readFileSync(path, "utf8"));
+  if (misshapenInputError) exitUsage(misshapenInputError);
 
   // The FEATURE-CORPUS integrity checkpoint. The feature corpus is an
   // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that

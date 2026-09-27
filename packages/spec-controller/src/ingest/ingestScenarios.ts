@@ -3,10 +3,10 @@
  * and reads each file's header code into DiscoveredFeature records (split out of the old
  * spec/featureCodes.ts). The pure header parser (extractFeatureCode) lives here with its sole
  * consumer; the `scnId → feature-code` grammar helper is engine-side (packages/core/src/lib/
- * featureCode.ts); the duplicate-code lint is engine-side too since 3F-3313, as @SCN-STG-010 in
+ * featureCode.ts); the duplicate-code lint is engine-side too, in
  * parse/scenarioCodeErrors.ts, and no longer a private check under tests/checks/.
  *
- * NO PER-FILE LIST OF SCENARIO CODES (3F-3636). One used to ride here, read by a copy of the
+ * NO PER-FILE LIST OF SCENARIO CODES. One used to ride here, read by a copy of the
  * @SCN grammar of its own, and nothing but its own test read it; a scenario's code is read by the
  * engine's scenario walk, which is the reading the ledger's accounts are minted from.
  *
@@ -82,8 +82,7 @@ function featuresDir(): string {
 }
 
 /**
- * List the corpus directory, REFUSING an absent one by name rather than by `ENOENT` (@SCN-CLI-017,
- * 3F-3345).
+ * List the corpus directory, REFUSING an absent one by name rather than by `ENOENT`.
  *
  * Absence stays a REFUSAL AT THE READER — what changed is that it is typed, so a caller can decide.
  * `balance` opts in to reporting on a target that has no corpus (most targets have no `features/`
@@ -95,7 +94,7 @@ function featuresDir(): string {
  * a different fault and is not ours to reinterpret — it rethrows.
  *
  * A SUPPLIED `--features` never reaches here absent: `checkInputsExist` refuses it at the CLI edge
- * with exit 2 (@SCN-CLI-002). Supplied-but-absent is the operator mistyping; absent-by-default is
+ * with exit 2. Supplied-but-absent is the operator mistyping; absent-by-default is
  * the target's honest shape.
  */
 function corpusFileNames(dir: string): string[] {
@@ -108,8 +107,22 @@ function corpusFileNames(dir: string): string[] {
 }
 
 /**
+ * A feature file's text. A read the operating system refuses keeps its error, and gains the file's
+ * path when it has none: reading a directory fails with no path at all.
+ */
+function readFeatureSource(path: string): string {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (err) {
+    const errno = err as NodeJS.ErrnoException;
+    errno.path ??= path;
+    throw err;
+  }
+}
+
+/**
  * Discover every feature file on disk and its header code — REFUSING a corpus the Gherkin
- * parser rejects (@SCN-GPG-001, 3F-2817).
+ * parser rejects.
  *
  * The refusal lives HERE, in the one reader every corpus consumer already goes through, so a
  * consumer INHERITS it rather than restating it. It is not a second parser: it is the existing
@@ -117,7 +130,7 @@ function corpusFileNames(dir: string): string[] {
  * balance CLI's edge. One answer to "what is a feature file".
  *
  * WHY THE WHOLE CORPUS, NOT THE FIRST BAD FILE. `featureCorpusParseErrors` reports every
- * unreadable file and the balance CLI prints them all (@SCN-CLI-016). Refusing at the first
+ * unreadable file and the balance CLI prints them all. Refusing at the first
  * failure would silently narrow that message, so every file is parsed and the refusal is raised
  * once, carrying the lot in discovery order.
  *
@@ -130,7 +143,7 @@ export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature
     .sort()
     .map((name) => {
       const path = join(dir, name);
-      return { name, path, source: readFileSync(path, "utf8") };
+      return { name, path, source: readFeatureSource(path) };
     });
 
   const parseErrors = files.flatMap(({ path, source }) => parseErrorsIn(path, source));

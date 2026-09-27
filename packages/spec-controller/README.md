@@ -79,8 +79,12 @@ The whole report is written before the code is set, so a failing run still tells
 **Node's default is never one of these.** A run that cannot reconcile ends on an enumerated code of
 its own rather than falling out of the process — a crash that exits `1` would be indistinguishable,
 by status, from an honest disagreement. **An input the tool cannot read is part of `2`**: a mistyped
-path, an unparseable report or a corpus the Gherkin parser rejects are all the invocation being
-wrong, never a verdict about your code. **So is an output location it cannot write**: a `--format` path that is
+path, a path it is not permitted to read, a file where a directory belongs or the reverse, an
+unparseable report, a report that parses but is not in the shape its runner writes, a saved
+reconciliation it cannot render, or a corpus the Gherkin parser rejects are all the invocation
+being wrong, never a verdict about your code. The refusal names the input, the path, and what was
+wrong with it. A well-formed report that holds nothing, such as a Vitest run that matched no test
+file, is read, not refused. **So is an output location it cannot write**: a `--format` path that is
 read-only, a directory, under a regular file or in a directory that does not exist, and a
 `--store` root the run directory cannot be created under, are refused at `2`, naming the location and the operating system's reason, before any report is printed.
 

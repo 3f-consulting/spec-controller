@@ -227,9 +227,13 @@ Feature: spec-controller balance runs standalone
     materialise — the reconciliation still runs and can be trusted to say so. A malformed
     report cannot be reconciled at all.
 
-    Scope is the JSON-BEARING inputs. --ci is never JSON/YAML-parsed (it is read as text and
-    scanned for run: steps) and --features is Gherkin-parsed tolerantly, so neither can crash
-    the process: on garbage they reconcile normally and their exit 1 is a true verdict.
+    Scope is every input the run reads. A report that parses but is not in the shape its reader
+    expects is an input the tool cannot read too: read as nothing, it would reach a verdict about
+    evidence the tool threw away, and read as far as it goes, it crashed. The feature corpus and
+    the CI workflows are read from disk as a directory or a file, and a path the tool cannot open
+    as the kind its flag reads, or may not open at all, is the same fault. The one input read
+    tolerantly by design is a workflow's YAML: a workflow the reader cannot walk contributes no
+    steps, and the run reconciles without them.
 
     The rule reaches --render-from-json too (@SCN-CLI-015), the one flag the guard lane never
     reached: it returns BEFORE the input guards run, so it honoured neither — a missing path
@@ -292,6 +296,136 @@ Feature: spec-controller balance runs standalone
         | a corrupt tag line         |
         | a corrupt scenario keyword |
         | wholly unparseable         |
+
+    @unit @e2e @SCN-CLI-076
+    Scenario Outline: a Vitest report not in the Vitest reporter's shape is refused as unreadable, naming where its shape is wrong
+      Given a target whose Vitest report parses but holds <defect>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input and where its shape is wrong
+
+      Examples:
+        | defect                                       |
+        | no list of test results                      |
+        | a list where the report belongs              |
+        | test results that are not a list             |
+        | a test file that is not an object            |
+        | a test file whose assertions are not a list  |
+        | a test file whose name is not a string       |
+
+    @unit @e2e @SCN-CLI-077
+    Scenario Outline: a Cucumber report not in the Cucumber formatter's shape is refused as unreadable, naming where its shape is wrong
+      Given a target whose Cucumber report parses but holds <defect>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input and where its shape is wrong
+
+      Examples:
+        | defect                                          |
+        | an object where the list of features belongs    |
+        | a string where the list of features belongs     |
+        | a feature whose scenarios are not a list        |
+        | a scenario whose tags are not a list            |
+        | a scenario whose steps are not a list           |
+        | a feature whose location is not a string        |
+
+    @unit @e2e @SCN-CLI-078
+    Scenario Outline: a CI step record not in the shape of a record of step outcomes is refused as unreadable, naming where its shape is wrong
+      Given a target whose CI step record parses but holds <defect>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input and where its shape is wrong
+
+      Examples:
+        | defect                                              |
+        | a list where the record belongs                     |
+        | nothing where the record belongs                    |
+        | a scenario-coded step that is not an object         |
+        | a scenario-coded step whose outcome is not a string |
+
+    @unit @e2e @SCN-CLI-079
+    Scenario Outline: a package.json not in a manifest's shape is refused as unreadable, whether given or read by default
+      Given a target whose manifest, <how>, holds <defect>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input and where its shape is wrong
+
+      Examples:
+        | how             | defect                            |
+        | given by name   | a list where the manifest belongs |
+        | given by name   | scripts that are not a map        |
+        | given by name   | a script that is not a string     |
+        | read by default | a script that is not a string     |
+        | read by default | text that does not parse          |
+
+    @unit @e2e @SCN-CLI-080
+    Scenario Outline: a well-formed but empty report is read as empty, never refused
+      Given a target whose <input> is well formed and holds nothing
+      When the balance run reads that input
+      Then the run reads it and reaches its verdict
+
+      Examples:
+        | input           |
+        | Vitest report   |
+        | Cucumber report |
+        | CI step record  |
+
+    @unit @e2e @SCN-CLI-075
+    Scenario Outline: an input path that is not the kind of path its flag reads is refused as unreadable, naming the flag and the path
+      Given a target whose <input> path is <kind>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input it could not read and the path
+
+      Examples:
+        | input          | kind                                                     |
+        | feature corpus | a regular file                                           |
+        | feature corpus | a single feature file                                    |
+        | feature corpus | a directory holding a directory named as a feature file  |
+        | CI workflows   | a directory holding a directory named as a workflow file |
+
+    @unit @e2e @SCN-CLI-082
+    Scenario Outline: an input the tool is not permitted to read is refused as unreadable, naming the flag and the path
+      Given a target in which <input> is not permitted to be read
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input it could not read and the path
+      And the refusal says the tool was not permitted to read it
+
+      Examples:
+        | input                            |
+        | a feature file                   |
+        | the feature corpus directory     |
+        | the CI workflow file             |
+        | the CI workflows directory       |
+        | the package.json read by default |
+        | the Vitest report                |
+
+    @unit @e2e @SCN-CLI-074
+    Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
+      Given a saved report that parses but is <defect>
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input and where its shape is wrong
+
+      Examples:
+        | defect                              |
+        | a list, not a reconciliation        |
+        | a reconciliation with no ledger     |
+        | holding a section of the wrong kind |
+        | unreadable below its top            |
+
+    @e2e @SCN-CLI-081
+    Scenario Outline: a stored run given an input it cannot read in shape is refused and stores nothing
+      Given a stored run's target whose <input> is one the tool cannot read in shape
+      When a stored balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refused run leaves nothing in the store
+
+      Examples:
+        | input           |
+        | feature corpus  |
+        | Cucumber report |
 
   Rule: a target with no Gherkin corpus is reconciled, not refused
 
