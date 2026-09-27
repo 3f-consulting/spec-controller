@@ -97,6 +97,8 @@ Feature: Allocate the next scenario code for a feature part
 
     A part is a feature of the corpus when a feature file in its features directory is headed with it.
     History and test fixtures say which numbers a part has used, never whether the part exists.
+    A host modifier before allocate is refused, because allocate keeps no run; a request for
+    allocate's help is answered first, whatever stands before it.
 
     @SCN-ALC-010 @unit @e2e
     Scenario Outline: A part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else — <part>
@@ -164,3 +166,25 @@ Feature: Allocate the next scenario code for a feature part
         | --store             |
         | --run-id            |
         | --store and --run-id |
+
+    @SCN-ALC-016 @unit @e2e
+    Scenario Outline: a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing — <modifiers> <request>
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      When the author gives <modifiers> before allocate and asks it for its help <request>
+      Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code
+      And nothing is stored, in the store root or the repository
+
+      Examples:
+        | modifiers            | request                                                     |
+        | --store              | alone                                                       |
+        | --store              | by its short name, alone                                    |
+        | --store              | after a part                                                |
+        | --store              | by its short name, beside a flag the command does not take |
+        | --run-id             | alone                                                       |
+        | --run-id             | by its short name, alone                                    |
+        | --run-id             | after a part                                                |
+        | --run-id             | by its short name, beside a flag the command does not take |
+        | --store and --run-id | alone                                                       |
+        | --store and --run-id | by its short name, alone                                    |
+        | --store and --run-id | after a part                                                |
+        | --store and --run-id | by its short name, beside a flag the command does not take |

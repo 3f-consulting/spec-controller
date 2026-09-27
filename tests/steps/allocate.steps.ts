@@ -57,39 +57,33 @@ function allocate(cwd: string, args: readonly string[]): SpawnSyncReturns<string
 let repository = "";
 let answer: SpawnSyncReturns<string>;
 
-// @SCN-ALC-008
 Given("a repository whose feature file headed {word} carries the scenario code {word}", function (part: string, code: string) {
   repository = newRepository();
   writeInto(repository, `features/${part.toLowerCase()}.feature`, featureFile(part, [code]));
   commitAll(repository, "the corpus");
 });
 
-// @SCN-ALC-008
 When("the author asks for the next code for {word}", function (part: string) {
   answer = allocate(repository, [part]);
 });
 
-// @SCN-ALC-008
 Then("the answer is {word}, and nothing else", function (code: string) {
   assert.equal(answer.status, 0, `allocate did not answer: exit ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, `${code}\n`);
 });
 
-// @SCN-ALC-002
 Given("the repository's CI workflow has a step whose id is {word}", function (code: string) {
   const workflow = `name: CI\non: push\njobs:\n  ci:\n    runs-on: ubuntu-latest\n    steps:\n      - name: A check\n        id: ${code}\n        run: true\n`;
   writeInto(repository, ".github/workflows/ci.yml", workflow);
   commitAll(repository, "the workflow");
 });
 
-// @SCN-ALC-003
 Given("the repository has a test whose title cites {word}", function (code: string) {
   const test = `import { it } from "vitest";\n\nit("[${code}] does the thing", () => {});\n`;
   writeInto(repository, "src/thing.test.ts", test);
   commitAll(repository, "the test");
 });
 
-// @SCN-ALC-001
 Given(
   "a repository whose feature file headed {word} carries the scenario codes {word} and {word}",
   function (part: string, first: string, second: string) {
@@ -99,7 +93,6 @@ Given(
   },
 );
 
-// @SCN-ALC-001
 Given("a later commit deletes the scenario coded {word}", function (code: string) {
   const path = join(repository, "features", "one.feature");
   const kept = readFileSync(path, "utf8").split("\n\n").filter((block) => !block.includes(`@${code} `));
@@ -108,7 +101,6 @@ Given("a later commit deletes the scenario coded {word}", function (code: string
   assert.ok(!readFileSync(path, "utf8").includes(code), `the fixture still carries ${code}`);
 });
 
-// @SCN-ALC-015
 Given(
   "a later commit, whose message mentions {word}, retags the scenario coded {word}",
   function (mentioned: string, code: string) {
@@ -119,19 +111,17 @@ Given(
   },
 );
 
-/** A repository headed ONE carrying SCN-ONE-001 and `code`, the second scenario standing at line 8. */
+/** A repository headed ONE carrying the part's first code and `code`, the second scenario standing at line 8. */
 function repositoryCarrying(code: string): void {
   repository = newRepository();
   writeInto(repository, "features/one.feature", featureFile("ONE", ["SCN-ONE-001", code]));
   commitAll(repository, "the corpus");
 }
 
-// @SCN-ALC-005
 Given("a repository whose highest ONE code, {word}, is still carried by its feature file", function (code: string) {
   repositoryCarrying(code);
 });
 
-// @SCN-ALC-005
 Given("a repository whose highest ONE code, {word}, is deleted by a later commit", function (code: string) {
   repositoryCarrying(code);
   const path = join(repository, "features", "one.feature");
@@ -139,13 +129,11 @@ Given("a repository whose highest ONE code, {word}, is deleted by a later commit
   commitAll(repository, "retire a scenario");
 });
 
-// @SCN-ALC-005
 Then("beside the answer it names where {word} was seen: the file and line that carry it", function (code: string) {
   assert.equal(answer.status, 0, answer.stderr);
   assert.match(answer.stderr, new RegExp(`^highest seen: ${code}, features/one\\.feature:8$`, "m"));
 });
 
-// @SCN-ALC-005
 Then(
   "beside the answer it names where {word} was seen: the file and line that carried it, and the commit that did so",
   function (code: string) {
@@ -158,7 +146,6 @@ Then(
 /** The copy of the repository the author asks in, when it is not the repository itself. */
 let copy = "";
 
-// @SCN-ALC-004
 Given(
   "a repository whose feature file headed ONE carries {word}, and whose history once carried {word}",
   function (live: string, retired: string) {
@@ -171,7 +158,6 @@ Given(
   },
 );
 
-// @SCN-ALC-004
 Given(
   "the author's copy of it is a copy without git, whose packages and hidden directories mention {word}",
   function (code: string) {
@@ -184,7 +170,6 @@ Given(
   },
 );
 
-// @SCN-ALC-004
 Given("the author's copy of it is a clone one commit deep", function () {
   copy = join(mkdtempSync(join(tmpdir(), "allocate-clone-")), "clone");
   git(repository, ["clone", "-q", "--depth", "1", `file://${repository}`, copy]);
@@ -192,43 +177,36 @@ Given("the author's copy of it is a clone one commit deep", function () {
   assert.equal(git(copy, ["rev-list", "--count", "HEAD"]).trim(), "1");
 });
 
-// @SCN-ALC-004
 When("the author asks for the next code for {word} in that copy", function (part: string) {
   answer = allocate(copy, [part]);
 });
 
-// @SCN-ALC-004
 Then("beside the answer it states that no history was read, because the copy is not a git repository", function () {
   assert.match(answer.stderr, /^history: not a git repository — none read;/m);
 });
 
-// @SCN-ALC-004
 Then("beside the answer it states that history before the clone's first commit was not read", function () {
   const edge = git(copy, ["rev-parse", "--short", "HEAD"]).trim();
   assert.match(answer.stderr, new RegExp(`^history: shallow clone — history before ${edge} unread;`, "m"));
 });
 
-// @SCN-ALC-006
 Given("the author has since tagged a new scenario {word} in that file, not yet committed", function (code: string) {
   const path = join(repository, "features", "one.feature");
   writeFileSync(path, `${readFileSync(path, "utf8")}\n  @${code} @unit\n  Scenario: a new scenario\n    Given a step\n`);
   assert.notEqual(git(repository, ["status", "--porcelain"]).trim(), "", "the edit should be uncommitted");
 });
 
-// @SCN-ALC-006
 When("the author asks for the next code for {word} from a subdirectory holding no code", function (part: string) {
   const subdirectory = join(repository, "src", "deep");
   mkdirSync(subdirectory, { recursive: true });
   answer = allocate(subdirectory, [part]);
 });
 
-// @SCN-ALC-007
 Given("the author has written {word} into a new file not yet added to git", function (code: string) {
   writeInto(repository, "features/two.feature", featureFile("TWO", [code]));
   assert.match(git(repository, ["status", "--porcelain"]), /^\?\? features\/two\.feature$/m);
 });
 
-// @SCN-ALC-007
 Given("a file the repository ignores mentions {word}", function (code: string) {
   writeInto(repository, ".gitignore", "build/\n");
   writeInto(repository, "build/report.txt", `Cites ${code}.\n`);
@@ -253,7 +231,6 @@ const UNHEADED_PART: Record<string, () => void> = {
   },
 };
 
-// @SCN-ALC-010
 Given("a repository whose feature files are headed ONE and TWO, where {}", function (where: string) {
   const arrange = UNHEADED_PART[where];
   assert.ok(arrange !== undefined, `no fixture for: ${where}`);
@@ -264,30 +241,25 @@ Given("a repository whose feature files are headed ONE and TWO, where {}", funct
   arrange();
 });
 
-// @SCN-ALC-010
 Then("it is refused as an unknown part, and no code is given", function () {
   assert.equal(answer.status, 2, `expected the usage status, got ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, "");
   assert.match(answer.stderr, /unknown part/);
 });
 
-// @SCN-ALC-010
 Then("the refusal lists ONE and TWO as the parts the corpus carries, and no other part", function () {
   assert.match(answer.stderr, /^The parts this corpus's feature files carry: ONE, TWO\.$/m);
 });
 
-// @SCN-ALC-011
 When("the author asks for the next code for {word}, as a new part", function (part: string) {
   answer = allocate(repository, [part, "--new"]);
 });
 
-// @SCN-ALC-011
 Then("beside the answer it says nothing of the part being carried already", function () {
   assert.equal(answer.status, 0, answer.stderr);
   assert.doesNotMatch(answer.stderr, /already carries/);
 });
 
-// @SCN-ALC-011
 Then("beside the answer it notes that a feature file's header already carries {word}", function (part: string) {
   assert.match(answer.stderr, new RegExp(`^note: a feature file's header already carries ${part}, so --new was not needed$`, "m"));
 });
@@ -302,14 +274,12 @@ const MALFORMED_REQUEST: Record<string, readonly string[]> = {
   "the part ONE and a flag it does not take": ["ONE", "--bogus"],
 };
 
-// @SCN-ALC-012
 When("the author asks for the next code giving {}", function (request: string) {
   const args = MALFORMED_REQUEST[request];
   assert.ok(args !== undefined, `no arguments for: ${request}`);
   answer = allocate(repository, args);
 });
 
-// @SCN-ALC-012
 Then("it is refused as a usage error, never as an unknown part, and no code is given", function () {
   assert.equal(answer.status, 2, `expected the usage status, got ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, "");
@@ -326,14 +296,12 @@ const HELP_REQUEST: Record<string, readonly string[]> = {
   "beside a flag the command does not take": ["--bogus", "--help"],
 };
 
-// @SCN-ALC-013
 When("the author asks allocate for its help {}", function (request: string) {
   const args = HELP_REQUEST[request];
   assert.ok(args !== undefined, `no arguments for: ${request}`);
   answer = allocate(repository, args);
 });
 
-// @SCN-ALC-013
 Then("it answers with allocate's help, naming the feature part it takes and --new, and gives no code", function () {
   assert.equal(answer.status, 0, `expected success, got ${answer.status}\n${answer.stderr}`);
   assert.match(answer.stdout, /^spec-controller allocate — /);
@@ -352,7 +320,6 @@ function modifierArgs(modifiers: string): string[] {
   return modifiers.split(" and ").flatMap((modifier) => [modifier, values[modifier] ?? ""]);
 }
 
-// @SCN-ALC-014
 When("the author asks for the next code for {word} with {} before the command", function (part: string, modifiers: string) {
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...modifierArgs(modifiers), "allocate", part], {
     cwd: repository,
@@ -362,15 +329,45 @@ When("the author asks for the next code for {word} with {} before the command", 
   answer = result;
 });
 
-// @SCN-ALC-014
 Then("it is refused as a usage error naming {}, and no code is given", function (modifiers: string) {
   assert.equal(answer.status, 2, `expected the usage status, got ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, "");
   for (const modifier of modifiers.split(" and ")) assert.ok(answer.stderr.includes(modifier), answer.stderr);
 });
 
-// @SCN-ALC-014
 Then("nothing is stored, in the store root or the repository", function () {
   assert.equal(existsSync(storeRoot), false, `the store root was made: ${storeRoot}`);
   assert.equal(git(repository, ["status", "--porcelain"]).trim(), "");
+});
+
+/** The arguments each help request gives `allocate` after the host modifiers. */
+const HELP_AFTER_MODIFIERS: Record<string, readonly string[]> = {
+  alone: ["--help"],
+  "by its short name, alone": ["-h"],
+  "after a part": ["ONE", "--help"],
+  "by its short name, beside a flag the command does not take": ["--bogus", "-h"],
+};
+
+/** What `allocate` answers to the same request with nothing before it. */
+let answerAlone: SpawnSyncReturns<string>;
+
+When("the author gives {} before allocate and asks it for its help {}", function (modifiers: string, request: string) {
+  const args = HELP_AFTER_MODIFIERS[request];
+  assert.ok(args !== undefined, `no arguments for: ${request}`);
+  answerAlone = allocate(repository, args);
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...modifierArgs(modifiers), "allocate", ...args], {
+    cwd: repository,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `the binary failed to spawn: ${result.error?.message}`);
+  answer = result;
+});
+
+Then("it answers with allocate's help, exactly as it does with nothing before it, and gives no code", function () {
+  assert.equal(answerAlone.status, 0, `allocate alone did not answer its help\n${answerAlone.stderr}`);
+  assert.match(answerAlone.stdout, /^spec-controller allocate — /);
+  assert.equal(answer.status, 0, `expected success, got ${answer.status}\n${answer.stderr}`);
+  assert.equal(answer.stderr, "");
+  assert.equal(answer.stdout, answerAlone.stdout);
+  assert.doesNotMatch(answer.stdout, /^SCN-/m);
 });

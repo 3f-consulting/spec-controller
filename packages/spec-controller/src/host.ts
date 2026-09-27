@@ -12,6 +12,7 @@
  */
 
 import {
+  asksForHelp,
   equalsFormRefusal,
   givenTwiceRefusal,
   isEqualsForm,
@@ -236,13 +237,17 @@ export function answerUnknownCommand(command: string, help: string): UnknownComm
   };
 }
 
-/** The refusal for host modifiers given before a command that takes none, else undefined. */
+/**
+ * The refusal for host modifiers given before a command that takes none, else undefined. A request
+ * for that command's own help is answered instead, wherever the help token stands among its args:
+ * help runs nothing and keeps no run, so there is nothing for the modifiers to be refused from.
+ */
 export function modifiersNotTakenRefusal(
   inv: HostInvocation,
   commands: readonly CommandSpec[] = cliRegistry.commands,
 ): string | undefined {
   const entry = commands.find((command) => command.name === inv.command);
-  if (entry?.acceptsHostModifiers !== false) return undefined;
+  if (entry?.acceptsHostModifiers !== false || asksForHelp(inv.commandArgs)) return undefined;
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
   return (

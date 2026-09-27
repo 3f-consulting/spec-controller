@@ -475,7 +475,8 @@ grows past them (`999` is followed by `1000`).
 - **Exit codes:** `0` when it answers; `2` for a usage error (no part, a part not in canon's form,
   a second part, a flag it does not take, or a host modifier such as `--store` before it) or an
   unknown part. The message says which of the two it was, and an unknown part's refusal lists the
-  parts the feature files carry. It never refuses because history is short.
+  parts the feature files carry. It never refuses because history is short. `--help` or `-h`
+  anywhere among its arguments answers its help at `0`, even with a host modifier before it.
 
 **What it reads.** Every text file in the repository — tracked, and untracked files the repository
 does not ignore, since you allocate because you have just written a scenario — wherever you run it
