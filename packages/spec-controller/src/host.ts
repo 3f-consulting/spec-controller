@@ -9,8 +9,6 @@
  * holds the pure rules the impure dispatcher (`cli.ts`) drives — parsing the leading
  * options, building the wrapped command argv, and peeking the conventional provenance
  * flags — so the whole host contract is `@unit`-testable with no IO.
- *
- * @SCN-RMG-004 — features/run-management.feature.
  */
 
 import {
@@ -35,7 +33,7 @@ export interface HostInvocation {
   commandArgs: string[];
   /**
    * The usage fault in the leading tokens, when there is one: the host refuses it at exit 2 before
-   * any command or stored run starts (@SCN-CLI-059).
+   * any command or stored run starts.
    */
   refusal?: string;
 }
@@ -48,15 +46,36 @@ export interface HostInvocation {
  * --features f` yields the store + `balance` + `[--features, f]`, while `balance --store
  * /s` leaves `--store` in the command's args (a `--store` AFTER the command is the
  * command's own arg, never a host store directive) — the "global before command" contract.
- * A modifier with nothing after it is refused (@SCN-CLI-067); an empty argv is the bare help.
+ * A modifier with nothing after it is refused; an empty argv is the bare help. A `--help` or `-h`
+ * among the host's own tokens answers the top-level help ahead of any refusal beside it.
  */
 export function parseHostInvocation(
   argv: readonly string[],
   globalFlags: readonly FlagSpec[] = cliRegistry.global,
   commands: readonly string[] = cliRegistry.commands.map((command) => command.name),
 ): HostInvocation {
-  // The modifiers and the values they take are the registry's global scope, never a list kept here
-  // (@SCN-CLI-059): a modifier added later is read, and refused without its value, by construction.
+  const read = readHostTokens(argv, globalFlags, commands);
+  const help = argv.slice(0, hostTokenCount(argv, read)).find((token) => TOP_LEVEL_HELP.has(token));
+  return help === undefined ? read : { command: help, commandArgs: [] };
+}
+
+/**
+ * How many leading tokens are the host's own: those before the command it hands the rest to, or
+ * every token when it hands them to none, because it refused one or found no command.
+ */
+function hostTokenCount(argv: readonly string[], read: HostInvocation): number {
+  if (read.refusal !== undefined || read.command === undefined) return argv.length;
+  return argv.length - read.commandArgs.length - 1;
+}
+
+/** The host's tokens read in order: its modifiers, then the command and the command's own args. */
+function readHostTokens(
+  argv: readonly string[],
+  globalFlags: readonly FlagSpec[],
+  commands: readonly string[],
+): HostInvocation {
+  // The modifiers and the values they take are the registry's global scope, never a list kept here:
+  // a modifier added later is read, and refused without its value, by construction.
   const modifiers = valueFlagsOf(globalFlags);
   const values = new Map<string, string>();
   let i = 0;
@@ -91,10 +110,10 @@ interface HostRead {
 
 /**
  * The refusal a modifier earns where it stands, else undefined; `ahead` is its value and the token
- * after it. Given twice, it is never read as its last value (@SCN-CLI-064): `--store A --store B` used
- * to store under B without a word. Given no value, it is never handed the next token (@SCN-CLI-059):
+ * after it. Given twice, it is never read as its last value: `--store A --store B` used
+ * to store under B without a word. Given no value, it is never handed the next token:
  * `--store --run-id r1` used to store under a directory called `--run-id`. Given the command as its
- * value with no command after it, it has eaten the command (@SCN-CLI-066): `--store balance
+ * value with no command after it, it has eaten the command: `--store balance
  * --features f` used to blame `--features`, and `--store balance` alone answered help at exit 0. A
  * command name followed by the command is still a value: `--store balance balance …` is read.
  */
@@ -114,8 +133,8 @@ function modifierRefusal(
 
 /**
  * The refusal for host modifiers with nothing after them: every modifier given, in one line, and the
- * fix (@SCN-CLI-067). Given last, `--store <root>` used to answer the top-level help at exit 0 having
- * run nothing, a false green for a CI step that lost its command word (3F-3686). Help after a
+ * fix. Given last, `--store <root>` used to answer the top-level help at exit 0 having
+ * run nothing, a false green for a CI step that lost its command word. Help after a
  * modifier is a command here, and a bare `spec-controller` never reaches this.
  */
 function noCommandRefusal(given: readonly string[]): string {
@@ -137,8 +156,8 @@ function commandAsValueRefusal(token: string, modifier: FlagSpec, command: strin
 
 /**
  * The refusal a leading token that is no modifier earns, else undefined (it is the command). A
- * modifier written `--store=<root>` is a form that is not read (@SCN-CLI-065), never a flag out of
- * place; any other flag here is out of place, never a command (@SCN-CLI-060): `--exit-zero balance`
+ * modifier written `--store=<root>` is a form that is not read, never a flag out of
+ * place; any other flag here is out of place, never a command: `--exit-zero balance`
  * used to answer `unknown command "--exit-zero"`. The top-level help stays where it was.
  */
 function leadingFlagRefusal(
@@ -208,9 +227,7 @@ export interface UnknownCommandAnswer {
  * help, never the command's args, so no flag after the command can change the answer.
  *
  * An unknown command is a usage fault, so it exits 2, the published usage code
- * (packages/spec-controller/README.md), which `--exit-zero` never masks (3F-3649).
- *
- * @SCN-CLI-056 @SCN-CLI-057 — features/cli-balance.feature.
+ * (packages/spec-controller/README.md), which `--exit-zero` never masks.
  */
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {

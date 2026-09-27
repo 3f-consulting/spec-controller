@@ -286,7 +286,7 @@ A path is written as given: the directory it names must already exist, since `--
 
 ### Host modifiers — storing a run (`--store` / `--run-id`)
 
-`--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags. A host modifier needs a command, or `--help`, after it: given with nothing after it, it is refused at exit 2 and nothing runs.
+`--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags. A host modifier needs a command, or `--help`, after it: given with nothing after it, it is refused at exit 2 and nothing runs. A `--help` or `-h` among the tokens before the command answers the top-level help at exit 0, whatever else is given there, even a token that would otherwise be refused; after the command it is that command's own help.
 
 ```sh
 spec-controller [--store <root>] [--run-id <id>] balance [options]

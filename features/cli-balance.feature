@@ -485,7 +485,8 @@ Feature: spec-controller balance runs standalone
     The host reads its modifiers before the command, and the command reads its own flags after it.
     A flag on the wrong side is a usage fault that names the flag and where it belongs. It is never
     read as a command the host does not know, and never given the pin advice meant for a flag no
-    version accepts (3F-3639).
+    version accepts (3F-3639). A --help or -h among the host's own tokens still answers the
+    top-level help first, whatever else is out of place beside it.
 
     @SCN-CLI-060 @unit @e2e
     Scenario Outline: a flag given before the command is refused as a flag out of place, never as an unknown command — <flag>
@@ -628,13 +629,36 @@ Feature: spec-controller balance runs standalone
       And nothing is written to the store root or the working directory
 
       Examples:
-        | request                           |
-        | --help after --store              |
-        | help after --store                |
-        | -h after --store                  |
-        | --help after --run-id             |
-        | --help after --store and --run-id |
-        | nothing at all                    |
+        | request                                             |
+        | --help after --store                                |
+        | help after --store                                  |
+        | -h after --store                                    |
+        | --help after --run-id                               |
+        | --help after --store and --run-id                   |
+        | nothing at all                                      |
+        | --help after --store, given a command as its value  |
+        | -h after --store, given a command as its value      |
+        | --help after --run-id, given a command as its value |
+        | -h after --run-id, given a command as its value     |
+
+    @SCN-CLI-073 @unit @e2e
+    Scenario Outline: a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing — <request>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When the host is given <request>
+      Then it answers with the same top-level help as a bare invocation, and the success status
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | request                                                               |
+        | --help after a flag out of place                                      |
+        | --help after a flag out of place, before a command                    |
+        | --help after a modifier that took the command, and the target's flags |
+        | -h between a modifier that took the command and the target's flags   |
+        | --help after a modifier that took the command, and another modifier  |
+        | --help where a modifier's value goes                                  |
+        | --help after a modifier given twice                                   |
+        | --help after a modifier written --flag=value                          |
+        | -h as a modifier's value, before a command                            |
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 

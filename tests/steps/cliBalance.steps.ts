@@ -1976,6 +1976,10 @@ const HELP_REQUESTS: Record<string, (store: string) => string[]> = {
   "--help after --run-id": () => ["--run-id", "r1", "--help"],
   "--help after --store and --run-id": (store) => ["--store", store, "--run-id", "r1", "--help"],
   "nothing at all": () => [],
+  "--help after --store, given a command as its value": () => ["--store", "balance", "--help"],
+  "-h after --store, given a command as its value": () => ["--store", "balance", "-h"],
+  "--help after --run-id, given a command as its value": () => ["--run-id", "balance", "--help"],
+  "-h after --run-id, given a command as its value": () => ["--run-id", "balance", "-h"],
 };
 
 /** Spawn the built binary with the given argv, beside the empty store root. */
@@ -1989,6 +1993,44 @@ When("the top-level binary is asked for {}", function (request: string) {
   const argvOf = HELP_REQUESTS[request];
   assert.ok(argvOf !== undefined, `no request row named "${request}"`);
   controllerResult = spawnBesideStore(argvOf(storedRunRoot));
+});
+
+/**
+ * A help token among the host's own tokens, beside a token the host would otherwise refuse. The
+ * target's flags are real, so a row the host read as a run would reconcile and print a report.
+ */
+const HELP_AT_HOST_SCOPE: Record<string, (store: string, target: string[]) => string[]> = {
+  "--help after a flag out of place": (store) => ["--store", store, "--exit-zero", "--help"],
+  "--help after a flag out of place, before a command": () => ["--exit-zero", "balance", "--help"],
+  "--help after a modifier that took the command, and the target's flags": (_store, target) => [
+    "--store",
+    "balance",
+    ...target,
+    "--help",
+  ],
+  "-h between a modifier that took the command and the target's flags": (_store, target) => [
+    "--store",
+    "balance",
+    "-h",
+    ...target,
+  ],
+  "--help after a modifier that took the command, and another modifier": () => [
+    "--store",
+    "balance",
+    "--run-id",
+    "r1",
+    "--help",
+  ],
+  "--help where a modifier's value goes": () => ["--store", "--help"],
+  "--help after a modifier given twice": (store) => ["--store", store, "--store", store, "--help"],
+  "--help after a modifier written --flag=value": (store) => [`--store=${store}`, "--help"],
+  "-h as a modifier's value, before a command": (_store, target) => ["--run-id", "-h", "balance", ...target],
+};
+
+When("the host is given {}", function (request: string) {
+  const argvOf = HELP_AT_HOST_SCOPE[request];
+  assert.ok(argvOf !== undefined, `no request row named "${request}"`);
+  controllerResult = spawnBesideStore(argvOf(storedRunRoot, invocationArgs));
 });
 
 // The success status is 0; "the same top-level help" is byte-identity with a bare run, and the bare

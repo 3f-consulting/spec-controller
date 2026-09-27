@@ -1,6 +1,6 @@
 /**
- * The @unit arm of @SCN-CLI-067 — a host modifier with no command after it is refused before any
- * command or stored run starts, naming every modifier given (3F-3686). It used to answer the
+ * The @unit arm — a host modifier with no command after it is refused before any
+ * command or stored run starts, naming every modifier given. It used to answer the
  * top-level help at exit 0, reconciling nothing: a false green for a CI step that lost its command
  * word. The @e2e arm in tests/steps/cliBalance.steps.ts proves it through the real binary, and that
  * nothing is written.
@@ -55,14 +55,9 @@ describe("[SCN-CLI-067] the host refuses a modifier with no command after it, na
     expect(inv).toMatchObject({ store: "/s", runId: "r1", command: "balance" });
   });
 
-  // A4, pinned while still wrong (operator, 2026-09-25). The command-as-value line that decides these
-  // (host.ts, 3F-3672) is filed as a fault of its own — `--store balance --help` should answer help —
-  // and is not fixed here; neither case may move in passing.
   it("leaves the command taken as a modifier's value refused as before, never as a missing command", () => {
-    for (const argv of [["--store", "balance"], ["--store", "balance", "--help"]]) {
-      // "as its value" is the command-as-value refusal's meaning; the missing-command refusal never says it.
-      expect(parseHostInvocation(argv).refusal).toMatch(/as its value/i);
-    }
+    // "as its value" is the command-as-value refusal's meaning; the missing-command refusal never says it.
+    expect(parseHostInvocation(["--store", "balance"]).refusal).toMatch(/as its value/i);
   });
 
   it("leaves a command name followed by the bare help word read as the value, then help", () => {
