@@ -57,10 +57,11 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   runs is discovered, each carrying the code of the scenario it answers on its own step, and nought
   uncited. (The count that stood here is gone for the reason the paragraph below gives.)
   The residual that stood here is gone: specController.staticChecks stopped settling anything at
-  3F-3161, and 3F-3606 removed the last of it — the account that named a retired key on the report.
-  A manifest carrying the key is now passed over, named nowhere. That removal engaged no major
-  version: the compatibility commitment naming one was withdrawn (3F-3376), made to nobody, and no
-  consumer was ever measured routing credits through it.
+  3F-3161, and 3F-3606 removed the account that named it on the report as a retired key. A
+  manifest carrying the key now settles nothing, and the report names it as it names any key the
+  specController block does not read, with no word of what it once did. That removal engaged no
+  major version: the compatibility commitment naming one was withdrawn (3F-3376), made to nobody,
+  and no consumer was ever measured routing credits through it.
 
   What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
   the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
