@@ -2,13 +2,8 @@
  * Unit tests for the pure CLI-edge guards in the balance command (the runReconcile arm is
  * split out to ingest/ingestQualityChecks.test.ts with its function).
  *
- * The legacy-`--json` guard (@SCN-FMT-006) and the provenance target sourcing
- * (@SCN-RPT-001 Update — Fork A) — both PURE functions at the CLI edge.
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the
- * @SCN-FMT-006 / @SCN-RPT-001 ids matching features/output-format.feature and
- * features/report.feature, so a grep of an id returns both halves of the pair (each
- * @unit + its @integration Cucumber step-block over the REAL CLI subprocess).
+ * The legacy-`--json` guard and the provenance target sourcing — both PURE functions at the
+ * CLI edge.
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -24,7 +19,7 @@ import {
   sourceTarget,
 } from "./cli.js";
 import { cliRegistry } from "../cli-registry.js";
-// `checkUnknownFlags` MOVED TO THE SHARED ARGV MODULE (3F-3300) and took a `command`
+// `checkUnknownFlags` MOVED TO THE SHARED ARGV MODULE and took a `command`
 // parameter with it — the bounding is per-command now, so a second command gets it by
 // construction. What this arm asks is unchanged: `balance`, against `balance`'s scope.
 import { checkUnknownFlags } from "../cli-args.js";
@@ -136,7 +131,7 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
     (flag) => {
       // Teeth: the file EXISTS (checkInputsExist passed it), so only a readability check
       // can catch this. Without it the reader throws mid-parse and Node's default exit 1
-      // makes a CRASH indistinguishable from an out-of-balance VERDICT (3F-1742).
+      // makes a CRASH indistinguishable from an out-of-balance VERDICT.
       const path = `reports/${flag}.json`;
       const error = checkInputsParse({ [flag]: path }, () => "not valid json at all {{{");
 
@@ -157,11 +152,7 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
     expect(checkInputsParse(args, () => '{"ok": true}')).toBeNull();
   });
 
-  it("never reads --features or --ci: neither is JSON, and neither can crash the process", () => {
-    // Confirmed empirically at Discovery (3F-1742): --ci is read as raw TEXT and scanned
-    // for `run:` steps; --features is Gherkin-parsed tolerantly. On garbage input both
-    // reconcile normally and exit 1 as a TRUE verdict — they are not a third instance of
-    // the collision, so the guard must not touch them (a false exit 2 would be its own bug).
+  it("never reads --features or --ci: neither is JSON", () => {
     const read = (): string => {
       throw new Error("checkInputsParse must not read --features or --ci");
     };
@@ -173,8 +164,7 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
   });
 
   it("reports an empty file as unparseable — the /dev/null case that surfaced the bug", () => {
-    // `--vitest /dev/null` reads as "" and JSON.parse("") throws. This is the exact
-    // invocation that crashed to exit 1 during the 3F-1703 verification.
+    // `--vitest /dev/null` reads as "" and JSON.parse("") throws.
     const error = checkInputsParse({ vitest: "/dev/null" }, () => "");
     expect(error).not.toBeNull();
     expect(error).toContain("/dev/null");
@@ -195,9 +185,9 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
 
 describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cannot read", () => {
   it("returns a typed error naming the path when the saved report is MISSING", () => {
-    // The ENOENT case. @SCN-CLI-002 already promises exit 2 for a supplied-but-absent input
-    // path — but --render-from-json returns before that guard ever runs, so the CLI shipped
-    // a guard that half-honoured its own Rule (3F-1764). A `read` that throws is exactly how
+    // The ENOENT case. The existence guard already promises exit 2 for a supplied-but-absent
+    // input path — but --render-from-json returns before that guard ever runs, so the CLI shipped
+    // a guard that half-honoured its own Rule. A `read` that throws is exactly how
     // readFileSync behaves on an absent path.
     const missing = "saved/does-not-exist.json";
     const read = (): string => {
@@ -211,7 +201,7 @@ describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cann
   });
 
   it("returns a typed error naming the path when the saved report is UNPARSEABLE", () => {
-    // The SyntaxError case — the same fault as CLI-014, on the flag the lane never reached.
+    // The SyntaxError case — the same fault as an unparseable report, on the flag the lane never reached.
     const path = "saved/spec-reconciliation.json";
     const error = checkRenderFromJson(
       { "render-from-json": path },
@@ -245,7 +235,7 @@ describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cann
 
 describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
   it("emits the whole Evidence Reconciliation to stdout AND sets process.exitCode = 1, returning normally", () => {
-    // The ordering the gate MUST honour (@SCN-CLI-004): map the out-of-balance verdict via
+    // The ordering the gate MUST honour: map the out-of-balance verdict via
     // `process.exitCode = 1; return` — NOT `process.exit(1)`, which can truncate the
     // buffered report mid-write. This test proves the write happens IN FULL, THEN the exit
     // code is set, THEN runBalance RETURNS. Reaching the assertions at all is half the proof:
@@ -260,7 +250,7 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
       });
     try {
       // The shared out-of-balance fixture under the tool's own default --ci/--package-json:
-      // SCN-TGT-002's @integration obligation is missing (no --cucumber supplied), plus a
+      // one scenario's @integration obligation is missing (no --cucumber supplied), plus a
       // phantom scenario and a suspense row — out-of-balance many times over.
       runBalance([
         "--features",
@@ -286,7 +276,7 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
 
 describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
   it("emits the report in full AND sets process.exitCode = 4 — not the 1 the same run's out-of-balance verdict would otherwise give", () => {
-    // THE DOMINANCE ORDER (@SCN-CLI-012). The broken fixture's run is out-of-balance TOO —
+    // THE DOMINANCE ORDER. The broken fixture's run is out-of-balance TOO —
     // its `broken` item sits on the suspense row, so `isBalanced` is already false. That is
     // exactly why the order is load-bearing: unless `hasBrokenEvidence` is checked BEFORE
     // `isBalanced`, exit 4 is unreachable and the collection failure stays masked as an
@@ -295,7 +285,7 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
     //
     // The report must still flush IN FULL before the code is set — process.exitCode, never
     // process.exit (reaching these assertions at all is half the proof: a process.exit would
-    // tear the worker down and never return here). Same discipline as the CLI-004 gate.
+    // tear the worker down and never return here). Same discipline as the out-of-balance gate.
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
     const chunks: string[] = [];
@@ -333,7 +323,7 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
 
 describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, PRE-EMPTING the vacuously-balanced verdict", () => {
   it("emits the report in full AND sets process.exitCode = 5 — not the 0 the same run's vacuously-true balance verdict would otherwise give", () => {
-    // NOT @SCN-CLI-012's pre-emption one code further on, though the ticket predicted it would be.
+    // NOT the broken-evidence pre-emption one code further on.
     // An empty ledger fires NONE of the three predicates above it — no rows, so no row to carry a
     // broken item, a reconciling item or a Pending Item — so its position among them is
     // unobservable, and the prescribed plant (move it below `!isBalanced`) stayed GREEN. What it
@@ -347,7 +337,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
     //
     // The report must still flush IN FULL before the code is set — process.exitCode, never
     // process.exit (reaching these assertions at all is half the proof). Same discipline as the
-    // CLI-004 gate.
+    // out-of-balance gate.
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
     const chunks: string[] = [];
@@ -368,7 +358,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
         "tests/fixtures/nothing-to-reconcile/package.json",
         // AND `--ci` IS POINTED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
         // `.github/workflows`, so a run that omits it reads THIS repository's own pipeline; since
-        // @SCN-USG-004 made every step of it a candidate, that default put this repository's
+        // every step of it became a candidate, that default put this repository's
         // checks on a fixture's ledger. Naming the fixture is what makes the run about the
         // fixture — the isolation the omission used to get by accident, from a prefix rule that
         // found nothing in those workflows for a manifest that is not theirs.
@@ -395,12 +385,13 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
 
 describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
   it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
-    // The LENIENT DEFAULT (@SCN-CLI-010): a reconciliation balanced except for Pending Items
-    // is run-neutral without --strict — Pending Items partition off (slice 2 / @SCN-PND-008)
+    // The LENIENT DEFAULT: a reconciliation balanced except for Pending Items
+    // is run-neutral without --strict — Pending Items partition off,
     // contributing NO reconciling item, so `isBalanced` is true and the gate leaves
     // process.exitCode at 0. This is the predicate side of the @e2e real-binary scenario:
     // runBalance in-process over the pending-only fixture must NOT escalate. Reaching the
-    // assertions proves runBalance RETURNED (no truncating process.exit), mirroring CLI-004.
+    // assertions proves runBalance RETURNED (no truncating process.exit), mirroring the
+    // out-of-balance gate.
     const savedExitCode = process.exitCode;
     // Normalise the starting exit code so the assertion reflects THIS run, not vitest's
     // ambient state: the balanced-with-pending gate must LEAVE it 0, so start it at 0.
@@ -422,7 +413,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
         "tests/fixtures/pending-only/package.json",
         // AND `--ci` IS POINTED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
         // `.github/workflows`, so a run that omits it reads THIS repository's own pipeline; since
-        // @SCN-USG-004 made every step of it a candidate, that default put this repository's
+        // every step of it became a candidate, that default put this repository's
         // checks on a fixture's ledger. Naming the fixture is what makes the run about the
         // fixture — the isolation the omission used to get by accident, from a prefix rule that
         // found nothing in those workflows for a manifest that is not theirs.
@@ -436,7 +427,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
       expect(emitted).toMatch(/^# Evidence Reconciliation/m);
       expect(emitted).toMatch(/Pending Item/);
       // The teeth: NO reconciling item anywhere → the gate leaves the exit code at 0. A future
-      // --strict escalation (@SCN-CLI-011) must not leak into the no-strict default.
+      // --strict escalation must not leak into the no-strict default.
       expect(process.exitCode).toBe(0);
     } finally {
       writeSpy.mockRestore();
@@ -446,7 +437,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
 });
 
 // THE VERSION THE REFUSAL IS ABOUT. checkUnknownFlags NAMES the running version in its refusal
-// (3F-3105) so a pinned reader's skew is legible from the message alone, and the last arm below
+// so a pinned reader's skew is legible from the message alone, and the last arm below
 // asserts exactly that. It stays an obviously fake version — no release will ever carry it — so
 // `toContain` cannot be satisfied by anything but the interpolation under test; a real-looking
 // version could in principle collide with a substring the message already holds.
@@ -472,7 +463,7 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     // Teeth: an unregistered flag — a bare `--bogus`, or a typo like `--strcit` for --strict —
     // must NEVER be silently swallowed the way the old permissive parseArgs did. The predicate
     // returns a non-null message that NAMES the offending flag, which runBalance routes to
-    // stderr + exit 2 (usage, per 3F-1414's 0/1/2 taxonomy), never exit 1, never a silent
+    // stderr + exit 2 (usage, per the README's exit-code taxonomy), never exit 1, never a silent
     // reconcile against the wrong intent.
     const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
     expect(bogus).not.toBeNull();
@@ -484,7 +475,7 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
   });
 
   it("names the version that refused and the bump as the cure, so a pinned reader's skew is legible", () => {
-    // WHY THE REFUSAL SAYS MORE THAN THE FLAG (3F-3105). A consumer pins spec-controller and then
+    // WHY THE REFUSAL SAYS MORE THAN THE FLAG. A consumer pins spec-controller and then
     // moves their own tree; the pinned reader is handed argv it was published too early — or too
     // late — to understand, and a bare "unknown flag" is indistinguishable from a typo. Naming the
     // running version makes skew legible from the CI log alone, and naming the bump says what to
@@ -504,7 +495,7 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
 
 describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as nothing-to-validate, not missing", () => {
   it("returns null for an omitted flag even when other flags are supplied and present", () => {
-    // The positive boundary that keeps CLI-002 honest: absence-of-flag stays legal
+    // The positive boundary that keeps the existence guard honest: absence-of-flag stays legal
     // (reconcile whatever WAS supplied); only supplied-but-absent errors. Here --vitest
     // and --features are supplied AND present (`exists` → true for them), while
     // --cucumber / --ci / --package-json are OMITTED (undefined). The predicate must
@@ -527,7 +518,7 @@ describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as noth
 });
 
 /**
- * THE ANTI-DRIFT INVARIANT (@SCN-CLI-013) — the guard that would have CAUGHT 3F-1703 rather
+ * THE ANTI-DRIFT INVARIANT — the guard that would have CAUGHT the three-views drift rather
  * than fixed it.
  *
  * The bug was THREE VIEWS OF ONE RUN DISAGREEING. Each view was internally consistent, and
@@ -546,15 +537,12 @@ describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as noth
  * this guard blind to it. Pinning them TOGETHER is the point: no future change can move one
  * without moving the others.
  *
- * The @unit arm sees all three because `runBalance` is called IN-PROCESS (the established
- * @SCN-CLI-004 / @SCN-CLI-012 pattern): stdout is spied for the tally + the headline, and the
+ * The @unit arm sees all three because `runBalance` is called IN-PROCESS (the pattern the
+ * exit-code arms above establish): stdout is spied for the tally + the headline, and the
  * exit code is read off `process.exitCode` — the very variable the gate sets. The @e2e arm
  * (tests/steps/cliBalance.steps.ts) proves the same three views over the REAL subprocess, where
  * the exit code is the PROCESS's own status. Both arms are needed: only the subprocess proves the
  * code actually leaves the process, and only that view drifted unnoticed in the first place.
- *
- * Bidirectional evidence: the describe string carries @SCN-CLI-013, matching
- * features/cli-balance.feature.
  */
 describe("[SCN-CLI-013] the tally, the verdict headline and the process exit code name the same outcome", () => {
   /**
@@ -573,7 +561,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
         "--features", "tests/fixtures/balanced/features",
         "--vitest", "tests/fixtures/balanced/vitest.json",
         "--package-json", "tests/fixtures/balanced/package.json",
-        // Pointed at the fixture, which holds no workflow — see the note at @SCN-CLI-019.
+        // Pointed at the fixture, which holds no workflow — see the note in the nothing-to-reconcile arm.
         "--ci", "tests/fixtures/balanced",
       ],
       outOfBalance: 0,
@@ -601,13 +589,13 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
       // UNSOUND — the dominance arm. This run is out-of-balance TOO (the `broken` item sits on the
       // suspense row), so it pins that the headline follows the CLI's dominance order rather than
       // asking `isBalanced` first: a headline saying exit 1 over a process that exits 4 is exactly
-      // the drift (lived: 3F-1642).
+      // the drift.
       name: "an unsound run carrying a collection-failed suite",
       argv: [
         "--features", "tests/fixtures/broken/features",
         "--vitest", "tests/fixtures/broken/vitest.json",
         "--package-json", "tests/fixtures/broken/package.json",
-        // Pointed at the fixture, which holds no workflow — see the note at @SCN-CLI-019.
+        // Pointed at the fixture, which holds no workflow — see the note in the nothing-to-reconcile arm.
         "--ci", "tests/fixtures/broken",
       ],
       outOfBalance: 2,
@@ -675,7 +663,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
 });
 
 describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
-  /** A target whose corpus carries SCN-DUP-001 on two scenarios beside SCN-DUP-002, all cited passing. */
+  /** A target whose corpus carries one code on two scenarios beside a second code, all cited passing. */
   function duplicateTarget(): string {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
     mkdirSync(join(dir, "features"));
