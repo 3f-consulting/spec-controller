@@ -292,12 +292,12 @@ A path is written as given: the directory it names must already exist, since `--
 spec-controller [--store <root>] [--run-id <id>] balance [options]
 ```
 
-Storage is a cross-cutting concern of the host, not of `balance`. A leading `--store` turns any run into a **stored** run — the host writes `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest, and hands `balance` its own clean args unchanged (so a bare, no-`--store` run stays emit-only and byte-identical). Without `--store`, nothing is written to disk beyond what `--format …:<path>` requests. Missing parents of the root are created. A root the run directory cannot be created under (a regular file, a path under one, or a directory the tool may not write) is refused at exit `2`, naming the run directory and the operating system's reason, and no run directory is printed. A command's `--help` or `-h` is answered before the store is touched: nothing is written under the root, even one that cannot be written.
+Storage is a cross-cutting concern of the host, not of `balance`. A leading `--store` turns any run into a **stored** run — the host writes `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest, and hands `balance` its own clean args unchanged (so a bare, no-`--store` run stays emit-only and byte-identical). Without `--store`, nothing is written to disk beyond what `--format …:<path>` requests. `--run-id` names a stored run, so given without `--store` it is refused at exit 2 and nothing runs; a re-render given it is refused the same way, because a re-render is never stored. Missing parents of the root are created. A root the run directory cannot be created under (a regular file, a path under one, or a directory the tool may not write) is refused at exit `2`, naming the run directory and the operating system's reason, and no run directory is printed. A command's `--help` or `-h` is answered before the store is touched: nothing is written under the root, even one that cannot be written.
 
 | Modifier | Purpose |
 |---|---|
 | `--store <root>` | Store the run: write `<root>/<target>/<run-id>/` with the reconciliation outputs + a `run.yaml` manifest. Required to store; there is no default (a default would write inside the repo). |
-| `--run-id <id>` | Name the stored run (default: an ISO-8601 UTC timestamp). |
+| `--run-id <id>` | Name the stored run (default: an ISO-8601 UTC timestamp). Read only with `--store`: given without it, the run is refused at exit 2, because no run would be kept under the name. |
 
 ```sh
 spec-controller --store ~/spec-controller-runs --run-id 2026-07-09-ci balance \

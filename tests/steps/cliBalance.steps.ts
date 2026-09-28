@@ -2045,3 +2045,97 @@ Then("it answers with the same top-level help as a bare invocation, and the succ
   assert.ok(help.stdout.length > 0, "expected --help to print the top-level help");
   assert.equal(controllerResult.stdout, bare.stdout, `expected the top-level help; got:\n${controllerResult.stdout}`);
 });
+
+/**
+ * A run named with --run-id and given no store. Every row stands beside the empty store root, and
+ * the file row writes its report inside the working directory, so a run that went ahead leaves
+ * something behind to find. The re-render row reads a report saved elsewhere, before the run.
+ */
+const RUN_ID_WITHOUT_STORE: Record<string, (target: string[]) => string[]> = {
+  "before a live balance run": (target) => ["--run-id", "r1", "balance", ...target],
+  "before a live balance run, with --exit-zero": (target) => ["--run-id", "r1", "balance", ...target, "--exit-zero"],
+  "before a live balance run, with --strict": (target) => ["--run-id", "r1", "balance", ...target, "--strict"],
+  "before a live balance run that writes its report to a file": (target) => [
+    "--run-id",
+    "r1",
+    "balance",
+    ...target,
+    "--format",
+    "json:report.json",
+  ],
+  "before a balance re-render of a saved report": (target) => [
+    "--run-id",
+    "r1",
+    "balance",
+    "--render-from-json",
+    savedReportOf(target),
+  ],
+};
+
+/** The directory the re-render row's saved report stands in, removed once the run has read it. */
+let savedReportDir: string | undefined;
+
+/** Save the target's report as JSON in a directory of its own, and return its path. */
+function savedReportOf(target: string[]): string {
+  savedReportDir = mkdtempSync(join(tmpdir(), "scn-cli-083-saved-"));
+  const saved = join(savedReportDir, "saved.json");
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...target, "--format", `json:${saved}`], {
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  assert.ok(existsSync(saved), `expected the saved report at ${saved}\n${result.stderr}`);
+  return saved;
+}
+
+When("a run is named with --run-id and given no store, {}", function (shape: string) {
+  const argvOf = RUN_ID_WITHOUT_STORE[shape];
+  assert.ok(argvOf !== undefined, `no row for ${shape}`);
+  try {
+    const result = spawnBesideStore(argvOf(invocationArgs));
+    controllerResult = result;
+    cliResult = result;
+  } finally {
+    if (savedReportDir !== undefined) rmSync(savedReportDir, { recursive: true, force: true });
+    savedReportDir = undefined;
+  }
+});
+
+// The meaning, never the prose: one line names --run-id and says no run is kept under it, and the
+// refusal is none of its neighbours' and no crash.
+Then("the refusal names --run-id as naming a run that is not kept", function () {
+  const { stderr } = cliResult;
+  assert.ok(
+    stderr.split("\n").some((line) => line.includes("--run-id") && /no run is kept|keeps no run|not stored/i.test(line)),
+    `expected a line of stderr naming --run-id and saying no run is kept; got:\n${stderr}`,
+  );
+  assert.doesNotMatch(
+    stderr,
+    /unknown command|before the command|as its value|needs a value|no command followed|does not exist/i,
+    `stderr names another fault:\n${stderr}`,
+  );
+  assert.doesNotMatch(stderr, /^\s+at /m, `stderr carries a stack trace:\n${stderr}`);
+});
+
+/** balance's help by each of its names, after a run-id with no store, beside the empty store root. */
+const BALANCE_HELP_NAME: Record<string, string> = {
+  "by its long name": "--help",
+  "by its short name": "-h",
+};
+let balanceHelpAlone: SpawnSyncReturns<string>;
+
+When("balance's help is asked for {}, after --run-id with no store", function (request: string) {
+  const help = BALANCE_HELP_NAME[request];
+  assert.ok(help !== undefined, `no request row named "${request}"`);
+  balanceHelpAlone = spawnBesideStore(["balance", help]);
+  controllerResult = spawnBesideStore(["--run-id", "r1", "balance", help]);
+});
+
+// The success status and nothing on stderr; "as it does alone" is byte-identity with the same help
+// asked for with nothing before the command, which is itself held to be balance's help.
+Then("it answers with balance's help, exactly as it does with nothing before it, and the success status", function () {
+  assert.equal(balanceHelpAlone.status, 0, `balance's help alone did not answer\n${balanceHelpAlone.stderr}`);
+  assert.match(balanceHelpAlone.stdout, /--render-from-json/, "expected balance's help to list its own flags");
+  assert.equal(controllerResult.status, 0, `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`);
+  assert.equal(controllerResult.stderr, "", `expected nothing on stderr; got:\n${controllerResult.stderr}`);
+  assert.equal(controllerResult.stdout, balanceHelpAlone.stdout, `expected balance's help; got:\n${controllerResult.stdout}`);
+});

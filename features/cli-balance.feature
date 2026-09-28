@@ -656,7 +656,9 @@ Feature: spec-controller balance runs standalone
     A refusal inside a stored run leaves no run.yaml. --help still answers first, whatever else is
     given: it runs nothing and reaches no verdict, so --exit-zero has nothing to turn green.
     A host modifier needs a command after it, or help. Given last, it is refused, and a bare
-    spec-controller still answers help (3F-3686).
+    spec-controller still answers help (3F-3686). --run-id names a stored run. Given without
+    --store there is no run for it to name, so it is refused, and a request for help still
+    answers first.
 
     @SCN-CLI-062 @unit @e2e
     Scenario Outline: balance refuses a value given to a flag that takes none, naming both — <shape>
@@ -793,6 +795,35 @@ Feature: spec-controller balance runs standalone
         | --help after a modifier given twice                                   |
         | --help after a modifier written --flag=value                          |
         | -h as a modifier's value, before a command                            |
+
+    @SCN-CLI-083 @unit @e2e
+    Scenario Outline: the host refuses --run-id given without --store as a usage fault, naming it, and nothing runs or is written — <shape>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When a run is named with --run-id and given no store, <shape>
+      Then it answers that the invocation was wrong, with the usage status
+      And it prints nothing a pipeline could read as a report
+      And the refusal names --run-id as naming a run that is not kept
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | shape                                                      |
+        | before a live balance run                                  |
+        | before a live balance run, with --exit-zero                |
+        | before a live balance run, with --strict                   |
+        | before a live balance run that writes its report to a file |
+        | before a balance re-render of a saved report               |
+
+    @SCN-CLI-084 @unit @e2e
+    Scenario Outline: a request for balance's help after --run-id with no --store answers balance's help as it does alone, and writes nothing — <request>
+      Given a target that reconciles out-of-balance, and an empty store root
+      When balance's help is asked for <request>, after --run-id with no store
+      Then it answers with balance's help, exactly as it does with nothing before it, and the success status
+      And nothing is written to the store root or the working directory
+
+      Examples:
+        | request           |
+        | by its long name  |
+        | by its short name |
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 

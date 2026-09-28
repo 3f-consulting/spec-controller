@@ -72,7 +72,8 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     and never a flag inside balance, which stays emit-only. --store is required to store (no
     default: a default would write inside the repo, the committed-report leak); --run-id
     defaults to a timestamp. Without --store the host dispatches the command directly and its
-    output is unchanged.
+    output is unchanged, unless --run-id is given, which names a stored run and so is refused
+    (cli-balance.feature).
 
     The @unit proves the host rule in isolation — given --store the command is invoked wrapped
     (its clean args plus the store-dir --format specs), without --store it is dispatched

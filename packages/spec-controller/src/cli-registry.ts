@@ -211,7 +211,8 @@ const globalFlags: FlagSpec[] = [
   {
     name: "--run-id",
     arg: "<id>",
-    description: "Name the stored run (default: an ISO-8601 UTC timestamp).",
+    description:
+      "Name the stored run (default: an ISO-8601 UTC timestamp). Read only with --store: given without it, the run is refused, since no run would be kept under the name.",
   },
 ];
 

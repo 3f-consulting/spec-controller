@@ -40,7 +40,7 @@ import {
   type HostInvocation,
 } from "./host.js";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
-import { dispatchesUnstored, storedReRenderRefusal } from "./storedRun.js";
+import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 
 /** Dispatch a command to its handler with the given (clean or store-wrapped) argv; true when it wrote its report. */
 function runCommand(command: string, argv: string[]): boolean {
@@ -61,10 +61,12 @@ function runCommand(command: string, argv: string[]): boolean {
 /**
  * Refuse, at the usage status, what the leading tokens get wrong, before any command or stored run
  * starts, so nothing is written anywhere: a usage fault among them, or modifiers
- * that would keep a run given to a command, or a re-render, that keeps none.
+ * that would keep a run given to a command, or a re-render, that keeps none, or a run-id with no
+ * store to keep the run it names.
  */
 function refuseLeadingFaults(inv: HostInvocation): void {
-  const refusal = inv.refusal ?? modifiersNotTakenRefusal(inv) ?? storedReRenderRefusal(inv);
+  const refusal =
+    inv.refusal ?? modifiersNotTakenRefusal(inv) ?? storedReRenderRefusal(inv) ?? unstoredRunIdRefusal(inv);
   if (refusal === undefined) return;
   process.stderr.write(refusal + "\n");
   process.exit(2);
