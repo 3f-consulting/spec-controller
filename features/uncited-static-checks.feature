@@ -528,6 +528,81 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       Then the report names that key as one it does not recognise
       And the check is on the books as an uncited static check
 
+  Rule: a specController entry the tool cannot use is named on the report, and the run is not refused over it
+
+    THE SAME TWO WRONG ANSWERS AS AN UNRECOGNISED RUNNER KEY, REACHED BY THE VALUE RATHER THAN
+    THE KEY. A notChecks written as one string instead of a list, a runner written as a number,
+    a block written as anything but a block: each is something the consumer wrote and believes
+    took effect. Every reader of the block takes a value of the wrong kind as absent, which is the
+    safe direction for the books, and that is exactly why saying nothing is wrong: the report
+    reads as if the consumer had written nothing, and there is no line anywhere to correct it
+    from.
+
+    SO THE RUN IS NOT ABORTED OVER IT, for the reason the runner block's own Rule gives. The block
+    changes no verdict on its own, and costing a run its whole verdict over one mistyped value is
+    the other wrong answer. The entry is read as absent, and the report says so, naming where it
+    is, what kind it is, and what kind is read there.
+
+    AND ONLY THAT ENTRY IS TAKEN AS ABSENT. A wrong value in one place is not a reason to discard
+    what the consumer wrote correctly beside it, so the report is otherwise exactly the one the
+    same target gives without that entry.
+
+    A KEY THE BLOCK DOES NOT READ AT ALL IS THE SAME FACT ONE LEVEL UP. A misspelt key, or one
+    this tool once read and reads no longer, is something the consumer wrote and believes took
+    effect. It is named as a key the block does not read, in the same words whichever it is: a
+    retired key gets no wording of its own, because telling a consumer what a key USED to do is
+    the backward compatibility this tool does not offer. What it owes them is only that nothing
+    they wrote disappears without a line.
+
+    @unit @integration @SCN-USG-025
+    Scenario Outline: a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it
+      Given a target whose specController configuration sets <entry> to <written>
+      When the target's configuration is reconciled
+      Then the report names <entry> as <written>, where <read> is read
+      And the report is otherwise the one the same target gives without <entry>
+
+      Examples:
+        | entry                          | written   | read             |
+        | specController                 | a string  | an object        |
+        | specController.runners         | a list    | an object        |
+        | specController.runners.unit    | a number  | a string or null |
+        | specController.notChecks       | a string  | a list           |
+        | specController.notChecks[1]    | an object | a string         |
+        | specController.deferralTags    | an object | a list           |
+        | specController.deferralTags[0] | null      | a string         |
+
+    @unit @integration @SCN-USG-028
+    Scenario Outline: a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it
+      Given a target whose specController configuration also carries the key <key>
+      When the target's configuration is reconciled
+      Then the report names <key> as a key the specController block does not read, in the words it uses for any such key
+      And the report is otherwise the one the same target gives without the key <key>
+
+      Examples:
+        | key           |
+        | notCheck      |
+        | fitnessChecks |
+        | zzz           |
+
+    @unit @integration @SCN-USG-026
+    Scenario Outline: a specController block whose every entry is a kind its reader takes names nothing as the wrong kind
+      Given a target whose specController configuration gives <entry> the value <written>, a kind its reader takes
+      When the target's configuration is reconciled
+      Then the report names no specController entry as one it could not use
+
+      Examples:
+        | entry                       | written       |
+        | specController.runners.e2e  | null          |
+        | specController.notChecks    | an empty list |
+        | specController.deferralTags | an empty list |
+        | specController.runners.lint | a number      |
+
+    @unit @integration @SCN-USG-027
+    Scenario: a saved run re-rendered names the same specController entries its live report named
+      Given a target whose specController configuration holds an entry of a kind its reader does not take and a key the block does not read
+      When the target's configuration is reconciled and the saved run is re-rendered
+      Then the re-rendered report names the same specController entries as the live report did
+
   Rule: a step the manifest names a non-check is excluded, and the report says so
 
     THE THIRD EXCLUSION, AND THE ONLY ONE THAT IS THE CONSUMER'S OWN LIST. Not everything that

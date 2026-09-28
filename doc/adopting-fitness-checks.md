@@ -76,12 +76,12 @@ and no word for what the check is about, because the scenario's title says that 
 the identity the ledger reads. The sections below assume you are heading for `conformant`; if you
 are stopping at `annotated`, read them for the CI step and skip the scenario.
 
-**`specController.fitnessChecks` is not read, and is no longer named on the report either.** This
-page used to say the key was still accepted and reported as retired, and to promise that the day the
-reader stopped accepting it this page would say so in the same merge. This is that merge (`3F-3606`,
-operator ruling 2026-09-20: no backward compatibility). A `package.json` still carrying the key is
-now read exactly as one carrying any other key this tool does not know — it is passed over, and
-nothing on the report mentions it. The two artefacts above are the whole of what you author.
+**`specController.fitnessChecks` is not read.** This page used to say the key was still accepted and
+reported as retired. That stopped at `3F-3606` (operator ruling 2026-09-20: no backward
+compatibility). A `package.json` still carrying the key is read exactly as one carrying any other key
+this tool does not read: it is passed over, and named under `## Configuration not read` in the same
+words as a misspelling, with nothing said about what it once did. The two artefacts above are the
+whole of what you author.
 
 The scenario is **written beside the pipeline rather than derived from it**:
 

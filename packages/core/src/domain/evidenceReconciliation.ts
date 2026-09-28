@@ -3,7 +3,7 @@
  * Reconciliations taken together"*, and **the key concept the domain models**
  * (`double-entry-manifesto.md`). This module is its home.
  *
- * IT ARRIVED HERE FROM `reconcile/` (3F-2232). After 3F-2202/2203/2204 that module held no domain
+ * IT ARRIVED HERE FROM `reconcile/`. Once its rules had moved out, that module held no domain
  * rule — but it was still a named layer beside the domain doing the concept's own work, which is
  * the shape `functional-domain-modelling.md` rejects: *"orchestration is thin composition, not a
  * named layer."* Constructing a concept is the concept's business. The module's residual tell was
@@ -11,21 +11,21 @@
  * `domain/ledger` purely to preserve importers' paths, a shell around behaviour that had already
  * gone home. Every importer now points at the module that OWNS the symbol.
  *
- * (3F-2233 completes the move: the concept's TYPE, its `Summary`, and the factory that fuses this
+ * (The move is complete: the concept's TYPE, its `Summary`, and the factory that fuses this
  * fold with the summary tally. Today this module holds the fold alone.)
  *
  * The pure obligation-vs-observation join, keyed by one flat
  * `qualityCheck` (the two-axis `(kind, level)` grid collapsed). This module is THIN
  * COMPOSITION: the domain RULES it once held moved to the
- * concept modules that own them (3F-1994) — `reconcileEvidenceObligation` (the per-obligation
+ * concept modules that own them — `reconcileEvidenceObligation` (the per-obligation
  * outcome) to `domain/qualityCheckReconciliation`, `verdictFor` / `reconcilingItemsOf` (the
  * account roll-up) to `domain/scenarioReconciliation`, `isBalanced` / `hasPendingItems` /
  * `hasBrokenEvidence` (the whole-run predicates) to `domain/ledger`. `reconcile` is the fold that
  * WALKS the inputs, CALLS those rules, and BUILDS the rows; it is the orchestration, not their home.
  *
- * POSTING-DESTINATION left too (3F-2202) — WHERE an entry lands is canon's own glossary group
+ * POSTING-DESTINATION left too — WHERE an entry lands is canon's own glossary group
  * ("### Posting") and now lives on `domain/posting`: `postingOf`, the one citation route over both
- * axes (plus the no-evidence-obligation-static-check arm). The by-name half is gone (3F-2590).
+ * axes (plus the no-evidence-obligation-static-check arm). The by-name half is gone.
  * The fold no longer DECIDES a destination anywhere — it
  * asks the rule once per credit and files the answer. What remains is assembly: which rows exist,
  * in what order, holding which items.
@@ -44,8 +44,6 @@
  * item — no prioritisation, no picked winner ("missing beats failing" was a false
  * order that hid one of two genuinely different problems). The renderers list
  * every item.
- *
- * Parent: @SCN-LDG-001.
  */
 
 import type {
@@ -60,13 +58,13 @@ import type {
 } from "../model.js";
 import {
   evidenceObligationPairsOf,
-  // THE PENDING PARTITION (3F-2204) — the two exact complements over a scenario's obligations.
+  // THE PENDING PARTITION — the two exact complements over a scenario's obligations.
   evidenceObligationsOf,
   pendingItemsOf,
 } from "../model.js";
 import {
   reconcileEvidenceObligation,
-  // THE CREDIT-SIDE AND DEGENERATE OUTCOME RULES (3F-2204) — what an entry reconciles TO, as
+  // THE CREDIT-SIDE AND DEGENERATE OUTCOME RULES — what an entry reconciles TO, as
   // opposed to where it lands. `reconcile` asks; it no longer maps outcomes itself.
   noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
@@ -88,10 +86,10 @@ import type {
 import {
   verdictFor,
   reconcilingItemsOf,
-  // THE ROW-SHAPE RULE (3F-2204) — the both-missing degeneration and its pending clause.
+  // THE ROW-SHAPE RULE — the both-missing degeneration and its pending clause.
   qualityCheckReconciliationsOf,
 } from "./scenarioReconciliation.js";
-// THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
+// THE POSTING RULE — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
 import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posting.js";
@@ -105,9 +103,9 @@ type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
 
 /**
  * THE CITATION INDEX — the credits routed BY CITATION, held by the row each one names, plus the
- * phantom ids those credits MINTED, in first-seen order (@SCN-LDG-006).
+ * phantom ids those credits MINTED, in first-seen order.
  *
- * It became a thing of its own when the static axis started citing (@SCN-LNT-001). Before that
+ * It became a thing of its own when the static axis started citing. Before that
  * only test results filed here, and the filing could sit inline in the fold; now both axes file
  * the same way, and two blocks doing it would agree by copy — either could grow the
  * phantom-minting clause alone, which is the drift `evidenceObligationPairsOf` was extracted to
@@ -147,7 +145,7 @@ function citationIndex(): CitationIndex {
 interface RoutedCredits {
   /** The credits routed BY CITATION, plus the phantom ids they minted. */
   readonly citations: CitationIndex;
-  /** Proofs that never ran, from EITHER axis (@SCN-LDG-017, @SCN-LNT-026). */
+  /** Proofs that never ran, from EITHER axis. */
   readonly brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   /** Runtime credits that RAN and carried no `@SCN`. */
   readonly uncited: readonly RuntimeEvidenceObservation[];
@@ -156,7 +154,7 @@ interface RoutedCredits {
 }
 
 /**
- * THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
+ * THE ONE ROUTING PASS. Every credit is routed ONCE, by THE posting rule
  * (`domain/posting`), into the structures the fold reads. `reconcile` no longer DECIDES a
  * destination anywhere — it asks, and files the answer.
  *
@@ -165,7 +163,7 @@ interface RoutedCredits {
  * either could have grown an arm alone and nothing would have redded — the identical anaemia
  * `evidenceObligationPairsOf` was extracted to cure.
  *
- * ITS OWN FUNCTION, extracted at @SCN-LNT-026 when the static axis gained its second suspense
+ * ITS OWN FUNCTION, extracted when the static axis gained its second suspense
  * reason and took `reconcile` past the `complexity` and `max-lines-per-function` ceilings. Routing
  * is one idea with a name and the fold below is another; nothing about what it decides moved, and
  * the exception list is untouched — an exception buys no headroom.
@@ -187,7 +185,7 @@ interface SuspenseStreams {
 /**
  * ONE FITNESS CREDIT'S DESTINATION, filed.
  *
- * THE SPLIT ON THIS AXIS (@SCN-LNT-026), the twin of the runtime router's below. Both suspense
+ * THE SPLIT ON THIS AXIS, the twin of the runtime router's below. Both suspense
  * reasons post to suspense because neither names a row, and they stay in separate streams because
  * they are different facts with different remedies: a check nobody named RAN and wants an
  * obligation written for it; a broken one never ran and wants its harness fixed.
@@ -198,8 +196,8 @@ interface SuspenseStreams {
  * falls between the two arms: an observation that somehow took neither still lands in the second,
  * misfiled rather than vaporised.
  *
- * A CITING run files into the citation index like any other credit (@SCN-LNT-001) — exactly one
- * row, real or invented. There is no third destination left (3F-2590).
+ * A CITING run files into the citation index like any other credit — exactly one
+ * row, real or invented. There is no third destination left.
  */
 function routeFitnessCredit(
   observation: FitnessEvidenceObservation,
@@ -222,7 +220,7 @@ function routeFitnessCredit(
  * THE CITATION INDEX holds real AND invented ids alike — a phantom row reads its posted credits
  * from here too, so both citation-routed destinations file together.
  *
- * THE SPLIT (@SCN-LDG-017) — `broken` and `cites-nothing` both land on suspense because neither
+ * THE SPLIT — `broken` and `cites-nothing` both land on suspense because neither
  * names a scenario, but they are different facts with different remedies (fix the harness vs add
  * the `@SCN`), so their streams stay apart. The rule already told them apart.
  */
@@ -249,13 +247,13 @@ function routeCredits(
   evidenceObservations: readonly EvidenceObservation[],
   scenarioIds: ReadonlySet<string>
 ): RoutedCredits {
-  // THE CITATION INDEX holds BOTH axes now (@SCN-LNT-001): a fitness check's run cites the
+  // THE CITATION INDEX holds BOTH axes now: a fitness check's run cites the
   // scenario that raises its obligation, so it files here exactly as a test result does.
   const citations = citationIndex();
   // The three SUSPENSE streams, kept separate and each in observation order — the suspense row's
   // item order (broken first, then uncited, then the no-evidence-obligation static checks) is row
   // assembly, owned by the fold in `reconcile`, not a routing decision.
-  // BROKEN EVIDENCE FROM EITHER AXIS (@SCN-LNT-026). It was a runtime-only stream while `broken`
+  // BROKEN EVIDENCE FROM EITHER AXIS. It was a runtime-only stream while `broken`
   // was a runtime-only fact; a converted static check that did not run is the same fact about the
   // same kind of absence, so it lands in the same stream and renders through the same section.
   const streams: SuspenseStreams = {
@@ -281,7 +279,7 @@ function routeCredits(
  * ONE REAL SCENARIO'S ROW — the debit side reconciled against the observed evidence, the credit
  * side's no-evidence-obligation items beside it, and the row assembled from both.
  *
- * ITS OWN FUNCTION, extracted at @SCN-LNT-027 (3F-3472) when the fourth population took `reconcile`
+ * ITS OWN FUNCTION, extracted when the fourth population took `reconcile`
  * past the `max-lines-per-function` ceiling — `routeCredits`' own precedent, and the same seam.
  * Routing is one idea with a name, what each population RECONCILES to is another, and `reconcile`
  * is the ORDER they are filed in. Nothing any of them decides moved.
@@ -292,7 +290,7 @@ function scenarioRow(
   citations: CitationIndex,
   evidenceObligationPairs: ReadonlySet<string>
 ): ScenarioReconciliation {
-  // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `evidenceObligationsOf`
+  // THE PENDING PARTITION — `pendingItemsOf` and `evidenceObligationsOf`
   // are exact complements over the scenario's obligations, so nothing is dropped and nothing is
   // counted twice. Rule + rationale: `domain/journal`.
   const pendingItems: PendingItem[] = pendingItemsOf(d);
@@ -302,7 +300,7 @@ function scenarioRow(
     reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
   );
 
-  // The CREDIT side — NO-EVIDENCE-OBLIGATION (@SCN-LDG-008): a credit citing THIS real scenario at a
+  // The CREDIT side — NO-EVIDENCE-OBLIGATION: a credit citing THIS real scenario at a
   // quality-check it never named. Rule + rationale: `domain/qualityCheckReconciliation`.
   const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
     d.scnId,
@@ -311,7 +309,7 @@ function scenarioRow(
   );
 
   // The row's SUB-ROWS, degenerating to one `both-missing` item when the row reconciled to
-  // nothing either way (@SCN-LDG-009). Rule + rationale: `domain/scenarioReconciliation`.
+  // nothing either way. Rule + rationale: `domain/scenarioReconciliation`.
   const qualityCheckReconciliations = qualityCheckReconciliationsOf(
     reconciledEvidenceObligations,
     noEvidenceObligationItems,
@@ -321,15 +319,15 @@ function scenarioRow(
     scnId: d.scnId,
     kind: "scenario",
     verdict: verdictFor(qualityCheckReconciliations),
-    // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
+    // THE POSTED CREDITS — every credit CITING this scenario, whatever it
     // reconciles to above. The citation index holds every citing credit, so this includes one citing a
-    // PENDING quality-check, which reconciles `no-evidence-obligation` (3F-1858 — it used to reconcile to
+    // PENDING quality-check, which reconciles `no-evidence-obligation` (it used to reconcile to
     // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
     // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
     // must misfile an entry, never vaporise it. A fitness check's run is in here too and by the
-    // SAME route (3F-2590): it cites this scenario, so the citation index holds it like any other.
+    // SAME route: it cites this scenario, so the citation index holds it like any other.
     evidenceObservations: citations.creditsFor(d.scnId),
-    // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario RAISES, in document
+    // THE POSTED DEBITS — every obligation THIS scenario RAISES, in document
     // order, keyed by quality-check. The debit half of the same posting: where a credit is
     // routed by its citation, a debit needs no routing at all — the account IS the scenario.
     // Includes a PENDING obligation, which partitioned off above and earns NO reconciled row: it
@@ -342,8 +340,8 @@ function scenarioRow(
 }
 
 /**
- * The tagged scenarios grouped by the code they carry, in first-seen order — the ACCOUNTS
- * (@SCN-STG-013, 3F-3609). The ledger is keyed by the `@SCN`, so a code two scenarios carry is one
+ * The tagged scenarios grouped by the code they carry, in first-seen order — the ACCOUNTS.
+ * The ledger is keyed by the `@SCN`, so a code two scenarios carry is one
  * account, not two rows that would each take every citing credit. A code carried once is a group of
  * one, and builds exactly the row it always did.
  */
@@ -358,7 +356,7 @@ function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
 }
 
 /**
- * ONE ACCOUNT WHOSE CODE MORE THAN ONE SCENARIO CARRIES (@SCN-STG-013, 3F-3609) — a real account,
+ * ONE ACCOUNT WHOSE CODE MORE THAN ONE SCENARIO CARRIES — a real account,
  * every quality check reading `duplicate-scn-code` (rule + rationale:
  * `duplicateScnCodeReconciliationsOf`).
  *
@@ -387,28 +385,28 @@ function duplicateScnCodeRow(
 }
 
 /**
- * THE PHANTOM ROWS, assembled (@SCN-LDG-006). Extracted beside its siblings at 3F-3472; the
+ * THE PHANTOM ROWS, assembled. Extracted beside its siblings; the
  * routing that produced `citations.phantomIds` is `routeCredits`', and unchanged.
  */
 function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
-  // CREDIT-SIDE — PHANTOM scenarios (@SCN-LDG-006). One phantom Scenario Reconciliation per
+  // CREDIT-SIDE — PHANTOM scenarios. One phantom Scenario Reconciliation per
   // UNKNOWN cited id, in first-seen order, its Quality Check Reconciliation(s) carrying the
   // outcome `cites-unknown-scenario` (and the evidence observation's locator, ruling Q5), verdict
   // ALWAYS out-of-balance. Grouped AFTER the scenario rows.
   //
-  // `phantomIds` was ROUTED ABOVE (3F-2202) — this block only ASSEMBLES the rows. The scan that
+  // `phantomIds` was ROUTED ABOVE — this block only ASSEMBLES the rows. The scan that
   // stood here re-stated the citation index's four routing decisions verbatim, including the
   // fail-safe arms (a BROKEN credit mints no phantom row; an uncited credit is suspense, never
   // phantom); both now come from the one `postingOf` call.
   for (const scnId of citations.phantomIds) {
     const credits = citations.creditsFor(scnId);
-    // ASKED, not decided (3F-2204).
+    // ASKED, not decided.
     const items = citesUnknownScenarioReconciliationsOf(credits);
     rows.push({
       scnId,
       kind: "phantom-scenario",
-      // ASKED, not restated (3F-2204, the close-gate read). Canon says a phantom row is ALWAYS
+      // ASKED, not restated. Canon says a phantom row is ALWAYS
       // out-of-balance, and it is — BY CONSTRUCTION, because a phantom row exists only where a
       // credit minted it, so it always carries ≥1 `cites-unknown-scenario` item. Deriving the
       // verdict from the items keeps that a consequence of the rule rather than a constant asserted
@@ -419,7 +417,7 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
       // "real or INVENTED scenario", so a phantom account holds its postings like any other.
       evidenceObservations: [...credits],
       // A phantom account is MINTED BY A CREDIT — no scenario raises it, so nothing can have
-      // been named of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
+      // been named of it. Its debit side is empty by construction; the asymmetry
       // with the credit side is real, not an omission.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
@@ -431,8 +429,7 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
 }
 
 /**
- * THE SUSPENSE ROW, assembled (@SCN-LDG-007) — nil rows or one. Extracted beside its siblings at
- * 3F-3472; what lands on it is `routeCredits`' decision, and unchanged.
+ * THE SUSPENSE ROW, assembled — nil rows or one. Extracted beside its siblings; what lands on it is `routeCredits`' decision, and unchanged.
  */
 function suspenseScenarioRows(
   brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
@@ -440,11 +437,11 @@ function suspenseScenarioRows(
   noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
-  // THE SUSPENSE ROW (@SCN-LDG-007) — every entry that names no scenario aggregates into ONE row
+  // THE SUSPENSE ROW — every entry that names no scenario aggregates into ONE row
   // (sentinel scnId `(no scenario)`), grouped LAST, verdict always out-of-balance.
   //
-  // Its three streams were ROUTED by the posting rule (3F-2202); their OUTCOMES and their ORDER
-  // are the item concept's (3F-2204, `suspenseReconciliationsOf` — rule + rationale there). What
+  // Its three streams were ROUTED by the posting rule; their OUTCOMES and their ORDER
+  // are the item concept's (`suspenseReconciliationsOf` — rule + rationale there). What
   // is decided HERE is only whether the row exists at all: suspense is minted by a credit landing
   // on it, so no credit means no row.
   if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationStaticChecks.length > 0) {
@@ -455,12 +452,12 @@ function suspenseScenarioRows(
       // ASKED, not restated — same reason as the phantom row. The `if` above is what makes this
       // out-of-balance by construction: the row exists only when a credit landed on it.
       verdict: verdictFor(items),
-      // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
+      // The credits citing NO scenario post here — the uncited, the broken (it
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
       // no-evidence-obligation static checks. With the citation index this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationStaticChecks],
-      // Suspense is MINTED BY A CREDIT too — it raises nothing, so it names nothing
-      // (@SCN-LDG-023). It can therefore carry no Pending Item either.
+      // Suspense is MINTED BY A CREDIT too — it raises nothing, so it names nothing.
+      // It can therefore carry no Pending Item either.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
@@ -471,17 +468,17 @@ function suspenseScenarioRows(
 }
 
 /**
- * THE UNCODED-WORK ROWS, assembled (@SCN-LDG-021). Extracted beside its siblings at 3F-3472.
+ * THE UNCODED-WORK ROWS, assembled. Extracted beside its siblings.
  */
 function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
-  // UNCODED WORK (@SCN-LDG-021) — a scenario carrying no @SCN. It is REAL and ORDINARY
+  // UNCODED WORK — a scenario carrying no @SCN. It is REAL and ORDINARY
   // (`kind: "scenario"`, never phantom or suspense: it exists, and cucumber runs it); what is
   // absent is the CODE its obligation needs in order to link to an observation. It gets its own
   // out-of-balance row so the verdict can see it at all.
   //
   // The item's outcome, its scenario-scope shape and the synthesised `{}` obligation it carries
-  // are the item concept's (3F-2204, `noScnCodeReconciliations` — rule + rationale there).
+  // are the item concept's (`noScnCodeReconciliations` — rule + rationale there).
   for (const name of untaggedScenarios) {
     const items = noScnCodeReconciliations();
     rows.push({
@@ -495,7 +492,7 @@ function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioRec
       // An untagged scenario carries no @SCN, so no credit can cite it — nothing can post here.
       evidenceObservations: [],
       // It reaches the ledger by NAME, carrying no parsed obligations — so it posts no debits
-      // either (@SCN-LDG-023).
+      // either.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
@@ -514,15 +511,15 @@ export function reconcile(
   // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
   // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
   // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
-  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
+  // and `evidenceObligationPairs` is what they name at each quality-check.
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
-  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
+  // The NAMED pairs — the model's rule, built ONCE and shared with the census.
   // Pending obligations are excluded: a pending obligation names nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // ONE ORDER, WHATEVER THE RUNNERS REPORTED (@SCN-RMD-009, 3F-3495) — everything below reads
+  // ONE ORDER, WHATEVER THE RUNNERS REPORTED — everything below reads
   // the evidence in the order `inEvidenceOrder` fixes, never the order it arrived in.
   const observations = inEvidenceOrder(evidenceObservations);
-  // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
+  // THE ONE ROUTING PASS — asked of the posting rule, in one place, and read back as
   // four streams. What each of them then RECONCILES to is the fold's, below.
   const { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks } = routeCredits(
     observations,
@@ -546,7 +543,7 @@ export function reconcile(
 }
 
 // -------------------------------------------------------------------------
-// THE CONCEPT AND ITS FACTORY (3F-2233) — canon's Layer 1 owns its type, its summary and its
+// THE CONCEPT AND ITS FACTORY — canon's Layer 1 owns its type, its summary and its
 // construction. `reconcile` above builds the Ledger; `summaryOf` tallies it; `evidenceReconciliationOf`
 // is the two together, which is what the concept IS: "all Scenario Reconciliations taken together …
 // its summary carries the totals and its ledger the detail" (double-entry-manifesto L22/L60).
@@ -558,7 +555,7 @@ export function reconcile(
 // -------------------------------------------------------------------------
 
 /**
- * The materialised test-volume totals (RMD-005) — the runtime evidence-observation kind-counts
+ * The materialised test-volume totals — the runtime evidence-observation kind-counts
  * the markdown's `### Test volume` identity line derives, carried AS DATA. The identity
  * `totalEvidenceObservations = onScenario + onPhantomScenario + onSuspenseScenario` holds by
  * construction (one shared `runtimeObservationTally` fold), so a JSON consumer reads the balance
@@ -575,10 +572,10 @@ export interface TestVolumeTotals {
 }
 
 /**
- * The materialised static-check totals (RMD-005) — the static-check kind-counts the
+ * The materialised static-check totals — the static-check kind-counts the
  * markdown's `### Static checks` line derives, following the census shape exactly:
  * `runningStaticCheckCount` (the volume of running static checks) and `uncitedStaticCheckCount` (how many
- * of THOSE no `@fitness` cites — a subset of the first, @SCN-LNT-033). The named count is IMPLICIT
+ * of THOSE no `@fitness` cites — a subset of the first). The named count is IMPLICIT
  * (`running − uncited`) and is not carried (every named static check is already a reconciled
  * fitness sub-row); drawn from one population under one membership rule, it cannot go below nil.
  */
@@ -588,7 +585,7 @@ export interface StaticCheckTotals {
 }
 
 /**
- * ONE STEP THAT IS THE RECONCILER (@SCN-USG-014) — the step, as the report names one, and which
+ * ONE STEP THAT IS THE RECONCILER — the step, as the report names one, and which
  * half of the reconciler it is.
  *
  * TWO ROLES RATHER THAN A BARE LIST, because the two are different facts about a pipeline and a
@@ -608,7 +605,7 @@ export interface ReconcilerStep {
 }
 
 /**
- * ONE STEP RECOGNISED AS THE RUNNER OF ONE TIER (@SCN-USG-011) — the tier the target named it
+ * ONE STEP RECOGNISED AS THE RUNNER OF ONE TIER — the tier the target named it
  * for, the runner it named, and the step GitHub itself displays it as.
  *
  * BESIDE `StaticCheckTotals` RATHER THAN IN THE PARSE THAT PRODUCES IT, for the reason that one
@@ -625,8 +622,18 @@ export interface BehaviouralRunner {
   readonly step: string;
 }
 
+/** A specController entry whose value is a kind its reader does not take. */
+export interface WrongKindEntry {
+  /** Where it sits in the manifest — `specController.notChecks[1]`. */
+  readonly entry: string;
+  /** The kind written — `a string`, `null`. */
+  readonly is: string;
+  /** The kind its reader takes there. */
+  readonly reads: string;
+}
+
 /**
- * ONE JOB OF ONE WORKFLOW THIS RUN READ (@SCN-USG-020) — where the steps came from, and how many
+ * ONE JOB OF ONE WORKFLOW THIS RUN READ — where the steps came from, and how many
  * of them there were.
  *
  * BOTH FIGURES, because either alone is satisfiable by a reader that is wrong about the other.
@@ -655,7 +662,7 @@ export interface JobDiscoveryScope {
 }
 
 /**
- * WHAT BECAME OF EVERY STEP THIS RUN READ (@SCN-USG-018) — the population, the four dispositions,
+ * WHAT BECAME OF EVERY STEP THIS RUN READ — the population, the four dispositions,
  * and the total those four come to.
  *
  * BOTH TOTALS, AND `accountedFor` IS THE ONE THAT HAS TO BE CARRIED. A consumer of this structure
@@ -696,7 +703,7 @@ export interface Summary {
   scenarioReconciliations: ScenarioReconciliationTotals;
   evidenceObligations: EvidenceObligationTotals;
   /**
-   * The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
+   * The Pending Items tally — the count of Pending Items across the
    * reconciliation (one per deferred `<quality-check>pending` obligation, evidence-manifesto §11B),
    * SEPARATE from the scenario balanced / out-of-balance counts and the evidence-obligation counts.
    * A Pending Item is deferred, NOT out-of-balance, so it is NEVER folded into
@@ -707,10 +714,10 @@ export interface Summary {
    * like `fitness`); reads 0 when no scenario raises a pending obligation.
    */
   pending: number;
-  /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */
+  /** The runtime test-volume kind-counts — present when the evidenceObservations read is threaded. */
   testVolume?: TestVolumeTotals;
   /**
-   * The re-homed raw per-quality-check evidence-observation totals (@SCN-RMD-003, 3F-2102) — a
+   * The re-homed raw per-quality-check evidence-observation totals — a
    * materialised headline the Ledger folds (`runtimeObservationTally`), testVolume-adjacent. It
    * RE-HOMES onto `summary` the raw totals the retired `evidenceObservations` section used to
    * carry: a legitimate aggregate headline (per the done-criterion's fold-vs-store test — three
@@ -718,12 +725,12 @@ export interface Summary {
    * is (both gated on the observation read being threaded).
    */
   rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
-  /** The static-check kind-counts (RMD-005) — present when the guard read is threaded. */
+  /** The static-check kind-counts — present when the guard read is threaded. */
   staticChecks?: StaticCheckTotals;
-  /** The fitness-only evidence obligation tally (RMD-005) — always present (a pure balance derive). */
+  /** The fitness-only evidence obligation tally — always present (a pure balance derive). */
   fitness: FitnessTally;
   /**
-   * THE STEPS RECOGNISED AS BEHAVIOURAL RUNNERS (@SCN-USG-011), in the order the pipeline runs
+   * THE STEPS RECOGNISED AS BEHAVIOURAL RUNNERS, in the order the pipeline runs
    * them — what the target named, found where its pipeline invokes it.
    *
    * NOT A LEDGER FOLD, and it rides here because it is
@@ -736,7 +743,7 @@ export interface Summary {
    */
   behaviouralRunners?: readonly BehaviouralRunner[];
   /**
-   * WHAT THE TARGET SAID ABOUT EACH TIER (@SCN-USG-016) — `specController.runners` as written: the
+   * WHAT THE TARGET SAID ABOUT EACH TIER — `specController.runners` as written: the
    * runner's name where it named one, and `null` for a tier it says it has none. A tier the block
    * OMITS is absent from this record, and that third state is the whole reason the field exists.
    *
@@ -750,7 +757,7 @@ export interface Summary {
    */
   runnerTiers?: Readonly<Record<string, string | null>>;
   /**
-   * THE RUNNER BLOCK'S KEYS THAT ARE NOT ONE OF THE FOUR CANON TIERS (@SCN-USG-019) — what the
+   * THE RUNNER BLOCK'S KEYS THAT ARE NOT ONE OF THE FOUR CANON TIERS — what the
    * target wrote that this tool does not recognise, in the order the manifest wrote it.
    *
    * IT CARRIES A NON-EVENT, WHICH IS WHY IT HAS TO BE CARRIED AT ALL. An unrecognised key
@@ -767,7 +774,15 @@ export interface Summary {
    */
   unrecognisedRunnerKeys?: readonly string[];
   /**
-   * THE STEPS THE TARGET NAMES NON-CHECKS (@SCN-USG-015) — `specController.notChecks`' entries
+   * The specController entries whose value is a kind their reader does not take. Each was read as
+   * absent, which changes nothing else in this structure, so without this member the entry is
+   * simply gone. Present only when non-empty.
+   */
+  wrongKindConfiguration?: readonly WrongKindEntry[];
+  /** The specController block's keys that no reader reads, in the order the manifest wrote them. Present only when non-empty. */
+  unknownConfigurationKeys?: readonly string[];
+  /**
+   * THE STEPS THE TARGET NAMES NON-CHECKS — `specController.notChecks`' entries
    * that named a step of the pipeline this run read, each as the consumer wrote it.
    *
    * IT CARRIES A DISPOSITION, WHICH IS WHY IT IS CARRIED AT ALL. An excluded step reaches no
@@ -782,7 +797,7 @@ export interface Summary {
    */
   excludedSteps?: readonly string[];
   /**
-   * THE STEPS THAT ARE THE RECONCILER (@SCN-USG-014) — the step running this reconciliation and
+   * THE STEPS THAT ARE THE RECONCILER — the step running this reconciliation and
    * the step writing the record it reads, in the order the pipeline runs them.
    *
    * NOT `excludedSteps`, AND THE DIFFERENCE IS THE WHOLE REASON THIS IS A SEPARATE MEMBER. That
@@ -796,7 +811,7 @@ export interface Summary {
    */
   reconcilerSteps?: readonly ReconcilerStep[];
   /**
-   * THE `notChecks` ENTRIES THAT NAMED NO STEP (@SCN-USG-015) — in the order the manifest wrote
+   * THE `notChecks` ENTRIES THAT NAMED NO STEP — in the order the manifest wrote
    * them, and the other half of a total partition with `excludedSteps`.
    *
    * A LINE THAT MATCHES NOTHING IS A STALE EXCLUSION. The consumer renamed a step and the entry
@@ -812,7 +827,7 @@ export interface Summary {
    */
   unmatchedNotChecks?: readonly string[];
   /**
-   * THE SCOPE THIS RUN RANGED OVER (@SCN-USG-020) — one entry per job of every workflow `--ci`
+   * THE SCOPE THIS RUN RANGED OVER — one entry per job of every workflow `--ci`
    * resolved, sorted by workflow and then by job.
    *
    * IT CARRIES THE PROVENANCE OF EVERY OTHER FIGURE ON THE REPORT, which is why it has to be
@@ -822,7 +837,7 @@ export interface Summary {
    * pointed at the wrong file has nothing that says so. The tool makes no judgement about whether
    * a scope is the right one; stating it is the answer.
    *
-   * NOT THE ACCOUNTING IDENTITY, which is a separate claim over the same steps (@SCN-USG-018).
+   * NOT THE ACCOUNTING IDENTITY, which is a separate claim over the same steps.
    * That one asserts the dispositions sum to the steps read, so nothing was dropped; this one
    * asserts WHERE the steps came from. A reader satisfies either alone.
    *
@@ -831,7 +846,7 @@ export interface Summary {
    */
   discoveryScope?: readonly JobDiscoveryScope[];
   /**
-   * WHAT BECAME OF EVERY STEP THIS RUN READ (@SCN-USG-018) — the population, the four dispositions
+   * WHAT BECAME OF EVERY STEP THIS RUN READ — the population, the four dispositions
    * and the total they come to, so the axis's first non-negotiable is a figure a reader can check
    * rather than a sentence they have to take on trust.
    *
@@ -865,19 +880,19 @@ export interface EvidenceReconciliation {
   summary: Summary;
   ledger: Ledger;
   /**
-   * The corpus's scenario code errors (3F-3635) — present whenever a feature corpus was judged,
+   * The corpus's scenario code errors — present whenever a feature corpus was judged,
    * `[]` when it was judged clean, and absent when this reconciliation was composed from parsed
    * scenarios with no corpus to judge.
    */
   scenarioCodeErrors?: readonly ScenarioCodeError[];
-  /** The population those codes were judged over (3F-3666); present exactly when they are. */
+  /** The population those codes were judged over; present exactly when they are. */
   scenarioCodePopulation?: ScenarioCodePopulation;
 }
 
 /**
  * Materialise the summary totals from the balance — the aggregate the markdown's trial-balance
  * table derives, carried AS DATA so a later render-from-saved-JSON rebuilds it with zero
- * computation (the MATERIALISE ruling). THIN COMPOSITION (3F-2000): the LEDGER-PURE totals
+ * computation (the MATERIALISE ruling). THIN COMPOSITION: the LEDGER-PURE totals
  * (`scenarioReconciliations`, `evidenceObligations`, `pending`, `fitness`) come from `ledgerTally`
  * — the Ledger owns its own totals ("the summary is its totals") — and are MERGED here with the
  * census pass-throughs (`testVolume`, `staticChecks`), which are NOT Ledger-pure. The keys are
@@ -890,13 +905,13 @@ export function summaryOf(
   withStaticChecks: boolean
 ): Summary {
   const tally = ledgerTally(ledger);
-  // The runtime evidence-observation totals are a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
+  // The runtime evidence-observation totals are a FOLD OVER THE LEDGER —
   // the Ledger counts its own posted credits; the parallel census is RETIRED. `testVolume` and the
   // re-homed `rawByRuntimeQualityCheck` derive from THIS fold. The `withRuntimeObservations` flag is
   // now only the GATE (is the runtime-observation axis in play?) — the caller no longer threads a
   // census object at all (the assembler folds the Ledger it already has).
   const observations = runtimeObservationTally(ledger);
-  // The static-check totals are a FOLD OVER THE LEDGER too (3F-2118) — the Ledger counts its own
+  // The static-check totals are a FOLD OVER THE LEDGER too — the Ledger counts its own
   // posted static-check credits; the parallel static census is RETIRED. `staticChecks` derives from
   // THIS fold. The `withStaticChecks` flag is now only the GATE (is the static-check axis in play?) —
   // the caller no longer threads a census object at all (the assembler folds the Ledger it holds).
@@ -905,7 +920,7 @@ export function summaryOf(
     scenarioReconciliations: tally.scenarioReconciliations,
     evidenceObligations: tally.evidenceObligations,
     pending: tally.pending,
-    // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations
+    // The runtime test-volume kind-counts, materialised only when the evidenceObservations
     // read is threaded. The surface reads the fold's per-scenario-kind counts DIRECTLY (an identity
     // — the fold already groups by the scenario-kind the credit posted to). `onScenario` is every
     // credit posted to a scenario's account, which INCLUDES no-evidence-obligation as a subset
@@ -919,7 +934,7 @@ export function summaryOf(
     ...(withRuntimeObservations
       ? {
           testVolume: {
-            // ASKED, not re-derived (3F-2231) — the Ledger's fold computes this total and now
+            // ASKED, not re-derived — the Ledger's fold computes this total and now
             // returns it. The assembler summed the same record again for it, which is an adapter
             // owning a model number by copied arithmetic.
             totalEvidenceObservations: observations.total,
@@ -927,26 +942,26 @@ export function summaryOf(
             onPhantomScenario: observations.onPhantomScenario,
             onSuspenseScenario: observations.onSuspenseScenario,
           },
-          // The re-homed raw per-quality-check headline (@SCN-RMD-003) — a materialised Ledger
+          // The re-homed raw per-quality-check headline — a materialised Ledger
           // fold, sibling of `testVolume` and present on the SAME gate.
           rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
         }
       : {}),
-    // The static-check kind-counts (RMD-005), materialised only when the static-check axis is in
-    // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
+    // The static-check kind-counts, materialised only when the static-check axis is in
+    // play — now a FOLD OVER THE LEDGER (`staticObservationTally`), symmetric with the
     // runtime `testVolume` fold. The surface keeps the census shape exactly
     // (`{ runningStaticCheckCount, uncitedStaticCheckCount }`; named is implicit). The member detail
     // lives in the rows (named → each scenario's fitness sub-row; no-evidence-obligation → the suspense
     // row) — there is no census section (2.4).
     ...(withStaticChecks ? { staticChecks } : {}),
-    // The static-only fitness tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in
+    // The static-only fitness tally, a LEDGER-PURE derive from `ledgerTally` — LAST key in
     // document order (after the census pass-throughs).
     fitness: tally.fitness,
   };
 }
 
 /**
- * BUILD the Evidence Reconciliation from the journal — THE FACTORY (3F-2233).
+ * BUILD the Evidence Reconciliation from the journal — THE FACTORY.
  *
  * Journal inputs in, whole concept out: the fold posts every entry into the Ledger, and the tally
  * totals it. They are ONE act, not two stages a caller sequences — which is the point. While
@@ -958,7 +973,7 @@ export function summaryOf(
  * The two flags are GATES, not data — they state whether the runtime-observation and static-check
  * axes are in play for this run; the counts themselves are always folded from the Ledger.
  *
- * WHY THE TRAILING THREE ARE REQUIRED AND CARRY NO DEFAULTS (3F-2875). A gate that defaults to
+ * WHY THE TRAILING THREE ARE REQUIRED AND CARRY NO DEFAULTS. A gate that defaults to
  * `false` is a gate a caller can forget to state, and forgetting it CHANGES THE REPORT — the
  * summary then claims neither axis is in play, silently and plausibly. That is not a hypothetical:
  * when the defaults were removed, eleven call sites turned out to have been leaning on them. Every

@@ -48,6 +48,7 @@ import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
+import { configurationNotReadSection } from "./configurationNotRead.js";
 import { discoveryScopeSection } from "./discoveryScope.js";
 import { staticChecksSection } from "./staticChecks.js";
 import { behaviouralRunnersSection } from "./behaviouralRunners.js";
@@ -769,6 +770,8 @@ function ledgerTableLines(
 const SECTIONS: readonly SectionEmitter[] = [
   titleSection,
   provenanceSection,
+  // What of the manifest named in the provenance could not be used, before any cut it could colour.
+  configurationNotReadSection,
   runIntegritySection,
   // Beside the unsound stamp, and for its reason: a caveat on every cut below it.
   scenarioCodeErrorsSection,

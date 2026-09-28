@@ -109,11 +109,11 @@ out of balance, exactly as a `@unit` scenario with no test does; a step stating 
 scenario carries posts to a **phantom** row, and a step stating none posts to **suspense**. All
 three are faults a run says out loud.
 
-**`specController.fitnessChecks` is not read, and is no longer named on the report either.** Until
-`3F-3606` (operator ruling 2026-09-20: no backward compatibility) a run over a tree carrying the key
-printed one line under `### Static checks` naming it as retired. That line is gone, along with the
-account behind it: the key is now passed over exactly as any other key this tool does not know, and
-the two artefacts above are the whole of what you author.
+**`specController.fitnessChecks` is not read.** Until `3F-3606` (operator ruling 2026-09-20: no
+backward compatibility) a run over a tree carrying the key printed one line under `### Static checks`
+naming it as retired. That account is gone: the key is now treated exactly as any other key this tool
+does not read, named under `## Configuration not read` in the same words as a misspelling, with
+nothing said about what it once did. The two artefacts above are the whole of what you author.
 
 **One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
 `--ci-steps` is what points `balance` at it. That is wiring rather than declaration, so it is under
@@ -173,6 +173,12 @@ sold on. A runner is matched as a **whole shell token** — of the step's own co
 named on the report rather than dropped, and an entry matching no step is reported as stale.
 `balance` itself and its `toJSON(steps)` dump are excluded **by construction** — never write them.
 
+**Configuration the run cannot use is named, never dropped.** A `specController` entry of a kind its
+reader does not take (a `notChecks` written as one string, a runner written as a number) is read as
+absent, and a key the block does not read at all (a misspelling, or a key an older version read) is
+passed over. Neither refuses the run, and each is named under `## Configuration not read`, right
+after the run provenance, so the rest of the report is the one you would get without it.
+
 **What stays Node-shaped is where the configuration lives**, not what can be discovered: `runners`
 and `notChecks` sit under `specController` in a `package.json`, so a repository that has none adds a
 stub file. And the residue of the recognition rule is a **false positive you can see**: a suite run
@@ -212,7 +218,8 @@ The recognised set starts as `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`.
 
 **Your list extends the built-in set and never replaces it** — `@wip` defers whatever you configure.
 An entry may be written bare or with its `@`, and surrounding whitespace is ignored. A value that is
-not an array, or an entry that is not a string, is ignored rather than refused. A tag in neither
+not an array, or an entry that is not a string, is read as absent rather than refused, and named under
+`## Configuration not read`. A tag in neither
 list never defers the whole scenario, however much it looks like a deferral tag.
 
 **This is scenario scope, and it differs from `@<check>pending`.** `@integrationpending` defers only

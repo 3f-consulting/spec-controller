@@ -1,41 +1,48 @@
 /**
  * The TARGET's `specController.*` configuration, read into the rows and mints the
- * reconciler takes — the `resolve*` family, moved here from the app's ingest edge (3F-3087).
+ * reconciler takes — the `resolve*` family, moved here from the app's ingest edge.
  *
  * WHY THEY LIVE IN THE ENGINE. Every one of them is a pure function of a manifest object
  * somebody else already read off disk, and every one of them is the ONE reading of the key it
  * names — `bareTerm` is core's, so the reader and the thing it reads through belonged on the same
  * side of the package boundary. Sitting at the app
  * edge they were the reason a PUBLISHED module imported core's unpublished `/internal` subpath,
- * which is the fault 3F-3086 repairs; nothing about reading a parsed manifest ever needed the
+ * which was a fault; nothing about reading a parsed manifest ever needed the
  * edge that produced it.
  *
  * WHAT THE EDGE STILL OWES THEM, AND WHY IT IS A PARAMETER. One of these readings depends on
  * something the engine must not know: the deferral-tag STARTER SET is product policy the
  * application layer single-sources (`DEFAULT_DEFERRAL_TAGS`). It arrives as an argument, as data,
  * so the engine keeps knowing nothing about files (`lint:boundaries`' `core-imports-io` rule,
- * which was @SCN-EPG-001's `io-import` arm until 3F-3437; and 3F-2841's pattern: a project-owned
- * term arrives as an input).
+ * and the standing pattern that a project-owned term arrives as an input).
  *
  * DEFENSIVE THROUGHOUT, AND THAT IS THE FAMILY'S STANCE RATHER THAN LOCAL CHOICES PER RESOLVER.
  * Config is data from outside: a missing, non-object or array-shaped value resolves EMPTY, and a
  * malformed entry is dropped by the reading function it is handed to rather than thrown. A check
- * that throws on a typo produces no verdict at all.
+ * that throws on a typo produces no verdict at all. Dropped is not silent: `configurationNotRead`
+ * names every entry these readers take as absent, through the same predicates they read with.
  */
 
 import { bareTerm } from "../lib/bareTerm.js";
-// THE FOUR CANON TIERS, read from the ledger's own enumeration rather than restated here
-// (@SCN-USG-019). A second list of the same four would agree by coincidence, and this axis's
+// THE FOUR CANON TIERS, read from the ledger's own enumeration rather than restated here.
+// A second list of the same four would agree by coincidence, and this axis's
 // whole argument is that a list of names is the drift.
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import type { WrongKindEntry } from "../domain/evidenceReconciliation.js";
 
 /** Whether a value read out of a manifest is a block of named fields, rather than a list or scalar. */
 function isBlock(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const isTier = (key: string): boolean => (RUNTIME_QUALITY_CHECKS as readonly string[]).includes(key);
+
+const isRunner = (value: unknown): value is string | null => typeof value === "string" || value === null;
+
+const isListEntry = (value: unknown): value is string => typeof value === "string";
+
 /**
- * The steps the TARGET names NON-CHECKS (@SCN-USG-015, 3F-3343) — `specController.notChecks`, read
+ * The steps the TARGET names NON-CHECKS — `specController.notChecks`, read
  * as the fully-qualified `<workflow file>:<job id>:<step name>` entries the target wrote.
  *
  * IT IS THE CONSUMER'S OWN LIST, and that is the whole reason it may exist at all. Not everything
@@ -58,18 +65,18 @@ export function resolveNotChecks(packageJson: {
 }): readonly string[] {
   const configured = packageJson.specController?.notChecks;
   if (!Array.isArray(configured)) return [];
-  return [...new Set(configured.filter((entry): entry is string => typeof entry === "string"))];
+  return [...new Set(configured.filter(isListEntry))];
 }
 
 /**
- * Resolve the recognised deferral-tag set for the target (@SCN-PND-021) — the app's single-sourced
+ * Resolve the recognised deferral-tag set for the target — the app's single-sourced
  * starter set EXTENDED by the target `package.json`'s `specController.deferralTags`. Config
  * EXTENDS, never replaces: a project cannot un-recognise a built-in (`@wip` always defers).
  * Configured tags are bare names, `@`-stripped, consistent with the starter set; non-string /
  * non-array config is ignored defensively. `parseScenarios` then takes the union as its injected
  * `deferralTags` param.
  *
- * THE STARTER SET ARRIVES AS AN ARGUMENT AND IS NOT THE ENGINE'S TO HOLD (3F-3087). Which
+ * THE STARTER SET ARRIVES AS AN ARGUMENT AND IS NOT THE ENGINE'S TO HOLD. Which
  * community tags defer is product policy — an evolvable list of strings the application layer
  * single-sources as `DEFAULT_DEFERRAL_TAGS` — and a core-held copy would be a second statement of
  * it. So the union is computed here, where the config read is, and the policy is handed in.
@@ -84,8 +91,8 @@ export function resolveDeferralTags(
   const configured = packageJson.specController?.deferralTags;
   const extras = Array.isArray(configured)
     ? configured
-        .filter((tag): tag is string => typeof tag === "string")
-        // Through the ONE reading of what a term bare is (@SCN-TRM-001). This port had no trim at
+        .filter(isListEntry)
+        // Through the ONE reading of what a term bare is. This port had no trim at
         // all, so `"@wip  "` failed as well as `"  @wip"`, and a term that is nothing but
         // whitespace and a sigil is dropped here as an empty one already is.
         .map(bareTerm)
@@ -100,7 +107,7 @@ export function resolveDeferralTags(
 
 /**
  * WHAT A TARGET'S RUNNER BLOCK YIELDED — the entries keyed by a canon tier, and the keys that are
- * not one (@SCN-USG-019).
+ * not one.
  *
  * TWO HALVES RATHER THAN ONE RECORD, because the two are used for opposite things and neither may
  * be reached for the other. `tiers` is what a recognition can be run against; `unrecognisedKeys` is
@@ -116,15 +123,15 @@ export interface ResolvedRunners {
 }
 
 /**
- * The TARGET's BEHAVIOURAL RUNNERS (@SCN-USG-011, 3F-3343) — `specController.runners`, read as
+ * The TARGET's BEHAVIOURAL RUNNERS — `specController.runners`, read as
  * `tier → the name of the binary that tier's suite runs under`.
  *
  * THE SMALL CLOSED THING, NAMED, so the open one can be inferred. The set of names a quality check
  * might go by is unbounded and belongs to the consumer; the set of behavioural runners is one per
  * tier tag and the tiers are canon. Naming the closed set and deriving the rest is the move the
- * `@fitness` collapse already made one level in (3F-3139), and it cannot go stale by omission.
+ * `@fitness` collapse already made one level in, and it cannot go stale by omission.
  *
- * IT IS THE TARGET'S, for the reason the check registry and the ceilings are (@SCN-LNT-005): which
+ * IT IS THE TARGET'S, for the reason the check registry and the ceilings are: which
  * command runs a repository's unit suite is a fact about that repository, and a runner resolved
  * from this tool's own manifest would answer for a pipeline this run never looked at.
  *
@@ -133,7 +140,7 @@ export interface ResolvedRunners {
  * runner's NAME nor `null` is dropped rather than thrown. A manifest naming no runners is not an
  * error — it is a `new-client`, which is the state this axis is sold on.
  *
- * A NULL IS KEPT, AND IT IS THE THIRD STATE (@SCN-USG-016, 3F-3343). `"performance": null` is
+ * A NULL IS KEPT, AND IT IS THE THIRD STATE. `"performance": null` is
  * something the target SAID — we have no performance suite — and a tier the block omits is
  * something it never said. Dropping the null folds the first into the second and loses a fact we
  * were given, in the one direction nothing downstream can recover: after the fold, silence and a
@@ -141,7 +148,7 @@ export interface ResolvedRunners {
  * recognises no step, exactly as a missing key recognises none — so the ONLY place the two can be
  * told apart is this return value and the report rendered off it.
  *
- * THE KEY SET IS CLOSED, AND THE PARTITION IS THIS READER'S (@SCN-USG-019, 3F-3343). The block is
+ * THE KEY SET IS CLOSED, AND THE PARTITION IS THIS READER'S. The block is
  * keyed by TIER and the tiers are canon, which is exactly what makes the whole inversion possible:
  * the closed set is named because it is enumerable, and the open one is inferred from what is left.
  * A key outside the four is therefore not a runner for anything, and both obvious answers to it are
@@ -166,15 +173,67 @@ export function resolveRunners(packageJson: {
 }): ResolvedRunners {
   const configured = packageJson.specController?.runners;
   if (!isBlock(configured)) return { tiers: {}, unrecognisedKeys: [] };
-  const isTier = (key: string): boolean =>
-    (RUNTIME_QUALITY_CHECKS as readonly string[]).includes(key);
   return {
     tiers: Object.fromEntries(
       Object.entries(configured).filter(
-        (entry): entry is [string, string | null] =>
-          isTier(entry[0]) && (typeof entry[1] === "string" || entry[1] === null)
+        (entry): entry is [string, string | null] => isTier(entry[0]) && isRunner(entry[1])
       )
     ),
     unrecognisedKeys: Object.keys(configured).filter((key) => !isTier(key)),
+  };
+}
+
+/** What of a target's specController block this run could not use. */
+export interface ConfigurationNotRead {
+  /** The entries whose value is a kind their reader does not take, in the order the manifest wrote them. */
+  readonly wrongKinds: readonly WrongKindEntry[];
+  /** The block's keys no reader reads, a retired one no different from any other. */
+  readonly unknownKeys: readonly string[];
+}
+
+function kindOf(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "a list";
+  if (typeof value === "object") return "an object";
+  return `a ${typeof value}`;
+}
+
+const wrongKind = (entry: string, value: unknown, reads: string): WrongKindEntry => ({
+  entry,
+  is: kindOf(value),
+  reads,
+});
+
+function wrongKindsInList(value: unknown, at: string): WrongKindEntry[] {
+  if (!Array.isArray(value)) return [wrongKind(at, value, "a list")];
+  return value.flatMap((entry, i) => (isListEntry(entry) ? [] : [wrongKind(`${at}[${i}]`, entry, "a string")]));
+}
+
+function wrongKindsInRunners(value: unknown, at: string): WrongKindEntry[] {
+  if (!isBlock(value)) return [wrongKind(at, value, "an object")];
+  return Object.entries(value)
+    .filter(([key, runner]) => isTier(key) && !isRunner(runner))
+    .map(([key, runner]) => wrongKind(`${at}.${key}`, runner, "a string or null"));
+}
+
+/**
+ * The keys the block is read for, each with the account of what its reader takes as absent. The
+ * readers above decide with the same predicates, so an entry named here is exactly one they dropped.
+ */
+const BLOCK_READS: Readonly<Record<string, (value: unknown, at: string) => WrongKindEntry[]>> = {
+  runners: wrongKindsInRunners,
+  notChecks: wrongKindsInList,
+  deferralTags: wrongKindsInList,
+};
+
+export function configurationNotRead(packageJson: { specController?: unknown }): ConfigurationNotRead {
+  const block = packageJson.specController;
+  if (block === undefined) return { wrongKinds: [], unknownKeys: [] };
+  if (!isBlock(block)) return { wrongKinds: [wrongKind("specController", block, "an object")], unknownKeys: [] };
+  return {
+    unknownKeys: Object.keys(block).filter((key) => !Object.hasOwn(BLOCK_READS, key)),
+    wrongKinds: Object.entries(block).flatMap(([key, value]) =>
+      Object.hasOwn(BLOCK_READS, key) ? (BLOCK_READS[key] as (v: unknown, at: string) => WrongKindEntry[])(value, `specController.${key}`) : []
+    ),
   };
 }

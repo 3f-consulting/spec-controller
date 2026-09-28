@@ -1,22 +1,21 @@
 /**
  * THE RECONCILE COMPOSITION — a target's already-read sources reconciled into its Evidence
- * Reconciliation. The ONE entry point core's `.` barrel gains at 3F-3086, and the last step of
- * moving the composition off the app's ingest edge (3F-3087, 3F-3088).
+ * Reconciliation. The ONE entry point core's `.` barrel gains, and the last step of
+ * moving the composition off the app's ingest edge.
  *
  * WHY IT IS ONE FUNCTION AND NOT A SURFACE. `ingestQualityChecks.ts` is a published module, and it
  * reached nine core symbols through the unpublished `./internal` subpath to assemble this — which
  * is why an installed `spec-controller balance --help` threw ERR_PACKAGE_PATH_NOT_EXPORTED while
  * every gate in the workspace stayed green. Promoting those nine onto the public barrel would fix
- * the crash by freezing exactly the surface `3F-2837` un-published, and the registry-home question
+ * the crash by freezing exactly the surface that was un-published, and the registry-home question
  * (increment D) still governs their shape. So the CALLERS move to core's side of the boundary
  * instead, and the app reaches the whole composition through this one membership decision
- * (`3F-2804`). Nothing here is re-exported: the nine stay internal.
+ * Nothing here is re-exported: the nine stay internal.
  *
  * WHY THE ARGUMENTS ARE DATA AND NOT READERS. Everything below is already in memory by the time
  * the edge calls this — the feature bytes, the manifest object, the CI bytes, the CI run's own
  * record, the runtime observations. Handing a reader for any of them would move I/O into the
- * engine wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that
- * (@SCN-EPG-001's `io-import` arm until 3F-3437).
+ * engine wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that.
  *
  * THE TARGET ROOT DOES NOT CROSS. It is resolved at the edge and every remaining use of it is
  * there: relativising the runtime observations before they arrive.
@@ -25,7 +24,7 @@
  *
  * THE INPUT IS AN INLINE OBJECT TYPE, deliberately. A named exported interface would be a second
  * symbol on the public v1 surface for a shape only this function takes — one entry point means one
- * name. Nothing has reconciled that surface against a written-down list since 3F-3449, so the
+ * name. Nothing has reconciled that surface against a written-down list, so the
  * restraint is a judgement rather than something a guard would catch.
  */
 
@@ -42,6 +41,7 @@ import { stepAccounting } from "../parse/stepAccounting.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
 import {
+  configurationNotRead,
   resolveDeferralTags,
   resolveNotChecks,
   resolveRunners,
@@ -57,9 +57,9 @@ import type { EvidenceReconciliation } from "./renderInput.js";
  * internal note: this type is reachable from the barrel through `EvidenceReconciliationSources`,
  * so it is emitted into `dist/**\/*.d.ts` and ships under `files: ["dist"]`. A field listed here
  * tells an adopter's editor that the key is one this reader takes. `staticChecks` was still
- * listed after 3F-3161 stopped reading it and 3F-3396 deleted the tiebreak it settled — so the
+ * listed after the reader stopped reading it and the tiebreak it settled was deleted — so the
  * published types went on advertising a key nothing resolved, which is the same fault as a
- * document promising a retired shape still works, reached through the type surface (3F-3606).
+ * document promising a retired shape still works, reached through the type surface.
  */
 type TargetManifest = PackageJsonScripts & {
   specController?: {
@@ -71,9 +71,9 @@ type TargetManifest = PackageJsonScripts & {
 
 /**
  * THE THREE OBSERVATION STREAMS a `balance` run reconciles, in one place — a fourth, the
- * measurements, left with the measured axis (3F-3516).
+ * measurements, left with the measured axis.
  *
- * ITS OWN FUNCTION, extracted when the consumer's exclusion seam (@SCN-USG-015) took the
+ * ITS OWN FUNCTION, extracted when the consumer's exclusion seam took the
  * composition past the `max-lines-per-function` ceiling: the streams are one idea with a name, and
  * what is left above is the composition that reads a target and hands them to the factory. Nothing
  * about any of them changed in the move.
@@ -90,7 +90,7 @@ function observationStreams(
   isExcluded: StepExclusions["isExcluded"]
 ): EvidenceObservation[] {
   // WHICH CHECKS THE RUN'S OWN RECORD ANSWERS FOR, so the derivation reader does not answer them
-  // again (@SCN-LNT-021, @SCN-LNT-030; forced by @SCN-USG-004). A converted check used to be one
+  // again. A converted check used to be one
   // no discovery reader could SEE — its command is not a script of the manifest, so no prefix
   // reached it — and that accident is what kept one check from being observed twice. Under the
   // inverted membership rule every step is discovered, so the guarantee has to be a mechanism:
@@ -98,13 +98,13 @@ function observationStreams(
   // answer, and derivation answers the residue — the steps citing nothing.
   //
   // IT IS THE CITING STEPS AND NOT THE RECORD'S ENTRIES, and the difference is the one case that
-  // matters (3F-3582). A step whose `id:` is an `@SCN` that the record holds NO entry for is a
+  // matters. A step whose `id:` is an `@SCN` that the record holds NO entry for is a
   // check that did not run: nothing credits it, and its scenario's obligation reconciles `missing`.
   // Keyed on the record's entries instead, such a step would fall through to derivation and be
   // credited as merely WIRED IN — and the scenario would read SATISFIED over a check that never
   // ran. That is the false green the retired manifest list used to hold shut by supplying a
-  // denominator, and this is what holds it shut without one. Measured, not asserted: planted at
-  // 3F-3592, the entry-keyed spelling reads `balanced / satisfied` where this reads
+  // denominator, and this is what holds it shut without one. Measured, not asserted: planted,
+  // the entry-keyed spelling reads `balanced / satisfied` where this reads
   // `out-of-balance / missing`.
   //
   // NOT A FIFTH DISPOSITION AND NOT A DROP. The step is on the books either way; what this decides
@@ -123,7 +123,7 @@ function observationStreams(
       isExcluded,
       recordAnswersCitingSteps
     ),
-    // THE CONVERTED CHECKS' CREDITS (@SCN-LNT-021, @SCN-LNT-028) — the CI RUN'S OWN RECORD, the
+    // THE CONVERTED CHECKS' CREDITS — the CI RUN'S OWN RECORD, the
     // observation side, beside the workflow FILE the two config-reading observers above already
     // read. Two documents and two questions: the file says a check is wired into this pipeline
     // and which row its step cites, the record says what that step DID on this run. Neither can
@@ -136,7 +136,7 @@ function observationStreams(
     // it. The rows are the SAME reading the obligations were raised from, taken from `corpus`'s
     // own rows, so a credit can never cite an @SCN the debit side never read.
     //
-    // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED (@SCN-LNT-020). A run handed NO
+    // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED. A run handed NO
     // record is not a run handed a record carrying nothing, and those are opposite facts: the
     // first leaves the derivation stream to answer every citing step, the second hands them all
     // to the record. Both leave a scenario nothing cites reconciling `missing`; what differs is
@@ -167,7 +167,7 @@ export interface EvidenceReconciliationSources {
 }
 
 /**
- * One feature file's name and header code, paired BY INDEX with `featureSources` (3F-3635) — the
+ * One feature file's name and header code, paired BY INDEX with `featureSources` — the
  * `ciSourceNames` precedent. The edge knows which file a source came from; a source string does
  * not, and the scenario code errors are statements about files.
  */
@@ -181,21 +181,19 @@ export interface FeatureFileHeader {
  *
  * @param input.featureSources the target's `.feature` bytes, discovered and read ONCE at the edge —
  * one array rather than a directory, so the three readings a citing run needs are taken from the
- * same bytes and a citation can never be resolved against a corpus the ledger was not built from
- * (@SCN-LNT-009).
+ * same bytes and a citation can never be resolved against a corpus the ledger was not built from.
  * @param input.untaggedScenarios the corpus's untagged half, each by its `<feature> : <scenario>`
- * locator (@SCN-LDG-021). Parsed at the edge because the locator names the FILE, and the file is
+ * locator. Parsed at the edge because the locator names the FILE, and the file is
  * what the discovery knows and a source string does not.
- * @param input.packageJson the TARGET's manifest object (@SCN-LNT-005) — its `specController`
+ * @param input.packageJson the TARGET's manifest object — its `specController`
  * config and the `scripts` the `exists` read consults.
- * @param input.ciSources the target's workflow bytes, file-or-directory resolved at the edge
- * (@SCN-USG-006).
+ * @param input.ciSources the target's workflow bytes, file-or-directory resolved at the edge.
  * @param input.ciSourceNames the workflow FILE each of those sources was read from, in the same
- * order — the half of a `notChecks` entry the core cannot know (@SCN-USG-015). Mapped at the edge
+ * order — the half of a `notChecks` entry the core cannot know. Mapped at the edge
  * where the paths were already resolved, because the core holds no filesystem and `ciSourcePaths`
  * is explicit that keeping it that way is the point. Optional: a caller that supplies none names
  * no source, and a source with no name is one no entry can exclude.
- * @param input.reconcilerInvocation how this tool is invoked to reconcile (@SCN-USG-014) — the
+ * @param input.reconcilerInvocation how this tool is invoked to reconcile — the
  * step running it is the reconciler rather than one of the reconciled rows, and a citation on it
  * could never be satisfied. Set at the edge, which is where the command line is a known fact;
  * optional, and a run told none recognises no reconciling step, which is the safe direction — a
@@ -203,9 +201,9 @@ export interface FeatureFileHeader {
  * @param input.runtimeObservations the vitest / cucumber observations, parsed at the edge because
  * each source's fallback quality-check is the application layer's mapping, not the engine's.
  * @param input.deferralTags the application layer's STARTER deferral set, which a target's config
- * may only extend (@SCN-PND-021). Product policy, single-sourced there and never here.
- * @param input.ciStepRecord the CI RUN's own record of what each of its steps did (@SCN-LNT-021,
- * @SCN-LNT-028) — the CONVERTED checks' whole credit stream, and the observation side of the
+ * may only extend. Product policy, single-sourced there and never here.
+ * @param input.ciStepRecord the CI RUN's own record of what each of its steps did —
+ * the CONVERTED checks' whole credit stream, and the observation side of the
  * fitness axis, beside the workflow FILE this composition already reads for the derivation side. Two documents, two questions: the file says a check is wired in,
  * the record says what it did on this run. Optional, and absent means what it says — a run handed
  * no record of itself observes exactly what it observed before.
@@ -214,7 +212,7 @@ export interface FeatureFileHeader {
  * WHAT A TARGET SAID ABOUT ITS OWN PIPELINE — the two dispositions its manifest can name, the one
  * this tool names for itself, and the single seam discovery is asked through.
  *
- * ITS OWN FUNCTION, extracted when the scope account (@SCN-USG-020) took the composition past the
+ * ITS OWN FUNCTION, extracted when the scope account took the composition past the
  * `max-lines-per-function` ceiling — `observationStreams`'s precedent, and a real seam rather than
  * a cut for length: these are the readings taken off a target's WORKFLOWS, where everything left
  * above is taken off its CORPUS. Nothing about any of them changed in the move.
@@ -228,7 +226,7 @@ interface PipelineReadings {
 
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
   const { packageJson } = input;
-  // THE CONSUMER'S OWN EXCLUSIONS, RESOLVED ONCE (@SCN-USG-015), and both things this run does
+  // THE CONSUMER'S OWN EXCLUSIONS, RESOLVED ONCE, and both things this run does
   // with them come off that one reading: the seam the discovery reader is asked through, and the
   // account the report carries. Two resolutions would be free to describe two different manifests
   // in one report — a step excluded from the books and named nowhere, or named as excluded while
@@ -239,13 +237,13 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
     resolveNotChecks(packageJson)
   );
 
-  // THE TARGET'S OWN RUNNERS, RESOLVED ONCE (@SCN-USG-004, @SCN-USG-011), for the reason the two
+  // THE TARGET'S OWN RUNNERS, RESOLVED ONCE, for the reason the two
   // readings beside them are: what a run does with them is the membership rule the discovery
   // observer asks AND the account the report carries, and two resolutions would be free to name a
   // step the unit runner in one section while the books posted it as an uncited check in another.
   const runners = resolveRunners(packageJson);
 
-  // THE RECONCILER'S OWN STEPS (@SCN-USG-014), read off the same bytes and the same manifest, and
+  // THE RECONCILER'S OWN STEPS, read off the same bytes and the same manifest, and
   // read whatever the target configured — it is the one exclusion no consumer writes, and the one
   // that has to hold over a manifest saying nothing. Like the exclusions above, both things this
   // run does with it come off ONE reading: the seam discovery is asked through, and the account
@@ -264,7 +262,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   // runner is NOT one of them: it is the membership rule itself and the observer applies it, so
   // folding it in here would put the same question in two places.
   //
-  // ONE COMPOSITION, TWO READERS (@SCN-USG-020). The observer posts a check for every step this
+  // ONE COMPOSITION, TWO READERS. The observer posts a check for every step this
   // leaves in, and the scope census counts them per job — so a second composition would let the
   // report state a number of candidates for a job that the books beneath it never posted.
   return {
@@ -287,10 +285,10 @@ export function evidenceReconciliationFromSources(
   // WHAT THE TARGET SAID ABOUT ITS OWN PIPELINE, read once (see `pipelineReadings`).
   const { runners, exclusions, reconciler, isExcluded } = pipelineReadings(input);
 
-  // The feature corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
-  // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
+  // The feature corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones.
+  // An untagged scenario cannot be linked to an observation, so it reconciles
   // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
-  // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — nobody assembles a Ledger and leaves someone
+  // THE CONCEPT, BUILT BY ITS OWN FACTORY — nobody assembles a Ledger and leaves someone
   // downstream to total it. The two axis GATES are always on for a `balance` run: both the
   // runtime-observation and the static-check streams are threaded.
   const reconciliation = evidenceReconciliationOf(
@@ -301,13 +299,37 @@ export function evidenceReconciliationFromSources(
     true
   );
   return withScenarioCodeErrors(
-    withReaderAccounts(reconciliation, corpus, input, packageJson, runners, exclusions, reconciler, isExcluded),
+    withConfigurationAccount(
+      withReaderAccounts(reconciliation, corpus, input, packageJson, runners, exclusions, reconciler, isExcluded),
+      packageJson
+    ),
     input
   );
 }
 
 /**
- * THE CORPUS JUDGED AS A CHART OF ACCOUNT CLASSES (3F-3635) — whether each code is filed under
+ * What of the target's specController block this run read as absent, carried on the summary: a
+ * value read as absent posts no row and changes nothing else here, so without this it is gone.
+ * Only when there is something to name, so a well-formed block serialises byte-identically.
+ */
+function withConfigurationAccount(
+  reconciliation: EvidenceReconciliation,
+  packageJson: TargetManifest
+): EvidenceReconciliation {
+  const { wrongKinds, unknownKeys } = configurationNotRead(packageJson);
+  if (wrongKinds.length === 0 && unknownKeys.length === 0) return reconciliation;
+  return {
+    ...reconciliation,
+    summary: {
+      ...reconciliation.summary,
+      ...(wrongKinds.length > 0 ? { wrongKindConfiguration: wrongKinds } : {}),
+      ...(unknownKeys.length > 0 ? { unknownConfigurationKeys: unknownKeys } : {}),
+    },
+  };
+}
+
+/**
+ * THE CORPUS JUDGED AS A CHART OF ACCOUNT CLASSES — whether each code is filed under
  * its file's header, from the same bytes the ledger was built from. Only when the edge named the
  * files: a caller that handed over bare sources judged no corpus, and the field stays absent.
  */
@@ -329,7 +351,7 @@ function withScenarioCodeErrors(
  * built — the corpus's half-converted checks, what the target said about its runners and what a
  * run recognised off that, the reconciler's own steps, and the consumer's own exclusions.
  *
- * ITS OWN FUNCTION, extracted when the reconciler account (@SCN-USG-014) took the composition past
+ * ITS OWN FUNCTION, extracted when the reconciler account took the composition past
  * the `max-lines-per-function` ceiling — `observationStreams`'s precedent, and the same seam. Each
  * graft states its own reason for being a graft; what they share, and what this name says, is that
  * none of them is an obligation or an observation, so no row exists for any of them to be derived
@@ -373,7 +395,7 @@ function withReaderAccounts(
 }
 
 /**
- * THE ACCOUNTING IDENTITY (@SCN-USG-018) — what became of every step this run read, carried onto
+ * THE ACCOUNTING IDENTITY — what became of every step this run read, carried onto
  * the summary the factory built for the reason the four accounts beside it are: the factory's
  * inputs are the JOURNAL, and three of the four dispositions post no row at all.
  *
@@ -413,7 +435,7 @@ function withStepAccounting(
 }
 
 /**
- * THE SCOPE ACCOUNT (@SCN-USG-020) — which workflow files and which of their jobs this run read,
+ * THE SCOPE ACCOUNT — which workflow files and which of their jobs this run read,
  * with the steps each held and how many became candidates, carried onto the summary the factory
  * built for the reason the three accounts beside it are: the factory's inputs are the JOURNAL, and
  * a job is neither an obligation nor an observation. It is where the steps CAME FROM, so there is
@@ -446,7 +468,7 @@ function withScopeAccount(
 }
 
 /**
- * THE RECONCILER ACCOUNT (@SCN-USG-014) — the steps of the target's pipeline that ARE this
+ * THE RECONCILER ACCOUNT — the steps of the target's pipeline that ARE this
  * reconciliation, carried onto the summary the factory built rather than threaded through it, for
  * the reason the two accounts beside it are: the factory's inputs are the JOURNAL, and the
  * reconciler is neither an obligation nor an observation. It is the disposition a step got INSTEAD
@@ -472,7 +494,7 @@ function withReconcilerAccount(
 }
 
 /**
- * THE EXCLUSION ACCOUNT (@SCN-USG-015) — the steps the target named non-checks and the entries of
+ * THE EXCLUSION ACCOUNT — the steps the target named non-checks and the entries of
  * its list that named none, carried onto the summary the factory built rather than threaded
  * through it, for the reason the runner account beside it is: the factory's inputs are the
  * JOURNAL, and an excluded step is neither an obligation nor an observation. It is the disposition
@@ -502,8 +524,8 @@ function withExclusionAccount(
 }
 
 /**
- * THE RUNNER ACCOUNT — what the target SAID about each tier (@SCN-USG-016) and which steps a run
- * RECOGNISED off it (@SCN-USG-011), carried onto the summary the factory built rather than threaded
+ * THE RUNNER ACCOUNT — what the target SAID about each tier and which steps a run
+ * RECOGNISED off it, carried onto the summary the factory built rather than threaded
  * through it, for the reason the half-converted scenarios beside them are: the factory's inputs are
  * the JOURNAL, and a runner is neither an obligation nor an observation. It is the disposition a
  * step gets INSTEAD of reaching the books, so there is no row for it to be derived from.
@@ -518,7 +540,7 @@ function withExclusionAccount(
  * block nothing could be read out of — renders and serialises byte-identically to before.
  *
  * AND THAT IS WHAT A `new-client` IS OWED, settled by the scenario that was still open when this
- * graft was written (@SCN-USG-017). Such a target has named nothing, so nothing is taken out of
+ * graft was written. Such a target has named nothing, so nothing is taken out of
  * discovery and every step of its pipeline reaches the books as a candidate — which is the whole of
  * the report that state is sold on. It is the OBSERVER that owes them that, not this graft: there
  * is no runner to account for, and an account of four tiers nobody named would read as the tool
@@ -530,14 +552,14 @@ function withRunnerAccount(
   packageJson: TargetManifest,
   { tiers: runnerTiers, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
-  // THE PARTITION, NOT THE BLOCK (@SCN-USG-019). Only the entries keyed by a canon tier reach the
+  // THE PARTITION, NOT THE BLOCK. Only the entries keyed by a canon tier reach the
   // recognition below; a key outside the four is carried to the report instead, where it is named.
   // Reading the whole block would let a consumer take their own checks out of discovery one
-  // invented key at a time, which is the closure's whole subject — and since @SCN-USG-004 that is
+  // invented key at a time, which is the closure's whole subject — and that is
   // no longer only a reporting question: these tiers ARE the membership rule.
   //
   // RULE D, over the SAME manifest and the SAME CI bytes every other reading in this module comes
-  // from (@SCN-USG-011), and through the same `namedRunnersAt` the discovery observer asks. So a
+  // from, and through the same `namedRunnersAt` the discovery observer asks. So a
   // step named here as a runner is the same step that is not on the books as a fitness check.
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
     ciSources,
@@ -564,16 +586,16 @@ function withRunnerAccount(
  * The COMPLETE static stream the reconciliation consumes, from the RUNNING-check observer — the
  * static analogue of a runner emitting every test result, so nothing a gate runs is off the books.
  *
- * THE OBLIGATION-SIDE OBSERVER THIS COMPOSED ALONGSIDE IS RETIRED (3F-3161, @SCN-LNT-017). It
+ * THE OBLIGATION-SIDE OBSERVER THIS COMPOSED ALONGSIDE IS RETIRED. It
  * answered for every check the corpus obliged by a REGISTERED handle (`corpus.checkHandles`), and
  * that discovery went with the registry it was keyed from: every check now either states its own
  * row's code on its CI step, which the running-check observer already reads, or is a converted
  * `@fitness` row with no runnable script handle to be discovered by. There is no second observer
  * left to double-observe against.
  *
- * WHAT A SURVIVOR CITES IS THE TARGET'S OWN ANSWER (@SCN-LNT-031). A check whose CI step states the
+ * WHAT A SURVIVOR CITES IS THE TARGET'S OWN ANSWER. A check whose CI step states the
  * code of the configured row it runs posts to that row; one whose step states none cites no
- * scenario and the reconciliation folds it into the suspense row (@SCN-USG-001), which is where an
+ * scenario and the reconciliation folds it into the suspense row, which is where an
  * unattributed check is meant to surface. That is the state a consumer starts in, and it is the
  * report this axis's first useful sentence is made of.
  */
@@ -581,12 +603,12 @@ function checkObservations(
   corpus: TargetCorpus,
   ciSources: readonly string[],
   packageJson: TargetManifest,
-  // @SCN-USG-004 — the target's declared behavioural runners, resolved ONCE by the composition and
+  // The target's declared behavioural runners, resolved ONCE by the composition and
   // read by both the account the report carries and the membership rule below. Two resolutions
   // would be free to name a step the unit runner in one section while the books posted it as a
   // fitness check in the other.
   runnerTiers: Readonly<Record<string, string | null>>,
-  // @SCN-USG-015 — the consumer's own exclusions, reaching the DISCOVERY observer.
+  // The consumer's own exclusions, reaching the DISCOVERY observer.
   isExcluded: StepExclusions["isExcluded"],
   // Whether this run was handed its own CI step record, in which case every step that CITES an
   // `@SCN` is the record's to answer and derivation answers only the residue. Stated at the
@@ -599,12 +621,12 @@ function checkObservations(
       ciSources,
       packageJson,
       runnerTiers,
-      // THE CONSUMER'S OWN CITATION, WIRED (@SCN-LNT-031). The walk carries a check step's `id:`
+      // THE CONSUMER'S OWN CITATION, WIRED. The walk carries a check step's `id:`
       // and this observer reads it, and until this seam was passed the two met nowhere: every
       // discovered check on the live path cited nothing, so a fully annotated pipeline reconciled
       // exactly as an unannotated one — `new-client` reported over a target in `annotated`.
       //
-      // THE HANDLE IS DELIBERATELY NOT CONSULTED. A step's `id:` IS the citation (3F-3582);
+      // THE HANDLE IS DELIBERATELY NOT CONSULTED. A step's `id:` IS the citation;
       // reaching for the script's spelling to supply the half a CI step did not state is the
       // name-match this axis retired. A step with no code reaches no citation and posts to
       // suspense — which is `new-client`, unnarrowed.

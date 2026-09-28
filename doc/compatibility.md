@@ -24,16 +24,18 @@ does. There is one way to declare a fitness check, and it is two artefacts: a `@
 and its `@SCN` as the `id:` of the CI step that runs the check. See
 [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
-**A key this reader has no reading for is passed over — it is not read, and it is not named
-either.** `specController.checkRegistry` and `specController.staticChecks` stopped being read at
+**A key this reader has no reading for is passed over — it is not read, and it is named as a key
+the block does not read, in the same words whichever key it is.** `specController.checkRegistry` and `specController.staticChecks` stopped being read at
 `3F-3161`; a `fitnessChecks` row's `characteristic` at `3F-3525`; `specController.thresholds` and a
 row's `atLeast` / `atMost` at `3F-3506`; `specController.fitnessChecks` itself at `3F-3582`. For a
 time the report carried a line per retired key a manifest still held, so that a consumer who had
 written one in good faith would find out it no longer did anything. **That account was removed at
 `3F-3606`** (operator ruling, 2026-09-20: no backward compatibility — no third party consumes this
 package, and the one adopter adopts the current model whole). A manifest carrying any of those keys
-now reconciles to the same ledger and the same exit code as the same manifest without them, with
-nothing on the report either way.
+now reconciles to the same ledger and the same exit code as the same manifest without them. Since
+`3F-3777` each such key is named under `## Configuration not read` exactly as a misspelt key is, and
+nothing on the report says what it once did: a consumer who wrote it is told it took no effect,
+which is not backward compatibility.
 
 **The `--measurements` flag is the one retirement still answered out loud**, because a flag is
 given on a command line rather than sitting in a file: it is refused as retired, exit 2, and the
