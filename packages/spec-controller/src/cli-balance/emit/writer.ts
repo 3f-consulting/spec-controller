@@ -3,15 +3,15 @@
  * IO in the pipeline, to stdout or to a file.
  */
 
-import { writeFileSync } from "node:fs";
+import { unlinkSync, writeFileSync } from "node:fs";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { FeatureNames } from "@3f-consulting/spec-controller-core";
-import type { OutputFormat, OutputPlan, PlannedOutput } from "./format.js";
+import { sharedFileRefusal, type FileIdentity, type IdentifiedOutput, type OutputFormat, type OutputPlan, type PlannedOutput } from "./format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { probeWritable, writeOrRefuse } from "../../outputLocation.js";
+import { probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
@@ -35,17 +35,49 @@ function render(fmt: OutputFormat, p: OutputPayloads): string {
 }
 
 /**
- * Every file destination is proved writable before any output is emitted, so a refused run never
- * leaves a report behind, on stdout or in a file, whose headline names an exit the process does not
- * take. Writing files first and stdout last would not do: an earlier file would still be written.
+ * Every destination is vetted before any output is emitted, so a refused run never leaves a report
+ * behind, on stdout or in a file, whose headline names an exit the process does not take. Writing
+ * files first and stdout last would not do: an earlier file would still be written. The vetting
+ * refuses a destination that cannot be written, and two outputs that land on one regular file.
  */
-export function writeOutputs(plan: OutputPlan, payloads: OutputPayloads): void {
+export function writeOutputs(
+  plan: OutputPlan,
+  payloads: OutputPayloads,
+  stdoutFile: () => FileIdentity | undefined = stdoutIdentity,
+): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  for (const { output } of emissions) {
-    const dest = output.dest;
-    if (dest.kind === "file") writeOrRefuse(refusalSubject(output), dest.path, () => probeWritable(dest.path));
-  }
+  const refusal = vetDestinations(plan.outputs, stdoutFile);
+  if (refusal !== undefined) refuse(refusal);
   for (const { output, text } of emissions) emit(output, text);
+}
+
+/** The refusal the destinations earn, if any. Every file the vetting had to create is removed again first. */
+function vetDestinations(outputs: readonly PlannedOutput[], stdoutFile: () => FileIdentity | undefined): string | undefined {
+  const created: string[] = [];
+  try {
+    const identified: IdentifiedOutput[] = [];
+    for (const output of outputs) {
+      const probe = identify(output, stdoutFile, created);
+      if (typeof probe === "string") return probe;
+      identified.push({ output, identity: probe });
+    }
+    return sharedFileRefusal(identified);
+  } finally {
+    for (const path of created) unlinkSync(path);
+  }
+}
+
+/** The regular file an output lands on, or the refusal naming why its destination cannot be written. */
+function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefined, created: string[]): FileIdentity | undefined | string {
+  const dest = output.dest;
+  if (dest.kind === "stdout") return stdoutFile();
+  try {
+    const probed = probeDestination(dest.path);
+    if (probed.created !== undefined) created.push(probed.created);
+    return probed.identity;
+  } catch (err) {
+    return unwritableRefusal(refusalSubject(output), dest.path, err);
+  }
 }
 
 function refusalSubject(output: PlannedOutput): string {

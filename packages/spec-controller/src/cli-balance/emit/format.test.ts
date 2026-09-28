@@ -164,3 +164,23 @@ describe("[SCN-FMT-007] planOutput rejects an unknown format with a hint listing
     expect(planOutput(["json:x"]).ok).toBe(true);
   });
 });
+
+describe("[SCN-FMT-011] planOutput counts a --format path naming standard output as routed to stdout", () => {
+  const namesStdout = (path: string): boolean => path === "/dev/stdout" || path === "/dev/fd/1";
+
+  it("refuses the markdown report on stdout beside one at a path naming stdout", () => {
+    const result = planOutput(["md", "json:/dev/fd/1"], namesStdout);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("More than one output routes to stdout (md, json)");
+  });
+
+  it("refuses two paths that both name stdout", () => {
+    expect(planOutput(["md:/dev/stdout", "json:/dev/stdout"], namesStdout).ok).toBe(false);
+  });
+
+  it("plans one output at a path naming stdout, and a stdout output beside a path that does not", () => {
+    expect(planOutput(["md:/dev/stdout"], namesStdout).ok).toBe(true);
+    expect(planOutput(["md", "json:/dev/stderr"], namesStdout).ok).toBe(true);
+  });
+});

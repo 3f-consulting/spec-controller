@@ -21,7 +21,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify } from "yaml";
-import { writeOrRefuse } from "../outputLocation.js";
+import { firstSharingFile, refuse, writeOrRefuse } from "../outputLocation.js";
 
 /** The two artefact filenames a kept run routes the tool's outputs into. */
 export const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
@@ -99,6 +99,8 @@ export interface KeptRunSpec {
   readonly storeRoot: string;
   readonly target: string;
   readonly runId: string;
+  /** The file paths the command's own `--format` values name, which must not be a file the run writes. */
+  readonly formatPaths?: readonly string[];
 }
 
 /** The planned run: the run dir plus the two file-dest paths inside it. */
@@ -229,9 +231,16 @@ export function executeKeptRun(
   writeOrRefuse("The stored run's directory could not be created", plan.runDir, () =>
     mkdirSync(plan.runDir, { recursive: true }),
   );
+  const manifestPath = join(plan.runDir, RUN_MANIFEST);
+  const sharesManifest = firstSharingFile(manifestPath, spec.formatPaths ?? []);
+  if (sharesManifest !== undefined) {
+    refuse(
+      `A --format output names ${sharesManifest}, which is this stored run's own ${manifestPath}. ` +
+        `Give the report a path outside ${plan.runDir}.`,
+    );
+  }
   if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`])) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
-  const manifestPath = join(plan.runDir, RUN_MANIFEST);
   writeOrRefuse("The stored run's run.yaml could not be written", manifestPath, () =>
     writeFileSync(manifestPath, serialiseRunManifest(manifest)),
   );

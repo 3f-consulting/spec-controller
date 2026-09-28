@@ -132,6 +132,34 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | a directory named run.yaml                 | run.yaml                 | the destination is a directory |
         | a run.yaml it may not write                | run.yaml                 | permission was denied          |
 
+  Rule: a --format output never shares a file the stored run writes
+
+    A stored run writes its two reports and its run.yaml into its run directory. A --format given
+    beside the store that names one of those files would be overwritten by the store's own write,
+    or would overwrite it, and the run would end as if every report had landed. Such a run is
+    refused as a usage error before any report is written: no run directory is announced, no
+    run.yaml of this run is written, and an earlier run under the same run-id keeps its files.
+
+    @unit @e2e @SCN-RMG-010
+    Scenario Outline: a stored run given a --format naming its own report or run.yaml is refused naming the file, prints no run directory, and an earlier run under the same run id keeps its files
+      Given an out-of-balance target and a store root holding <earlier>
+      When the operator stores a run of it and also asks for the <format> report at the run directory's <file>
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names the run directory's <file>
+      And the refusal carries no stack trace
+      And no run directory is announced
+      And no file under the store root was added, changed or removed
+
+      Examples:
+        | earlier                                   | format   | file                     |
+        | nothing yet                               | json     | spec-reconciliation.md   |
+        | nothing yet                               | markdown | spec-reconciliation.json |
+        | nothing yet                               | markdown | spec-reconciliation.md   |
+        | nothing yet                               | markdown | run.yaml                 |
+        | an earlier kept run under the same run-id | json     | spec-reconciliation.md   |
+        | an earlier kept run under the same run-id | markdown | spec-reconciliation.json |
+        | an earlier kept run under the same run-id | markdown | run.yaml                 |
+
   Rule: a stored run's run.yaml records only a run that wrote its report
 
     run.yaml names the two reports a stored run writes. A run that writes neither keeps no

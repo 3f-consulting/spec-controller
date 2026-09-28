@@ -256,3 +256,18 @@ export function modifiersNotTakenRefusal(
     `Run 'spec-controller ${entry.name} …' without them.`
   );
 }
+
+/**
+ * The file paths a command's own `--format` values name: each value's text after its first colon,
+ * as `planOutput` reads it. A value with no colon goes to stdout and names no file.
+ */
+export function formatFilePaths(argv: readonly string[]): string[] {
+  const paths: string[] = [];
+  argv.forEach((token, index) => {
+    const value = argv[index + 1];
+    if (token !== "--format" || value === undefined) return;
+    const colon = value.indexOf(":");
+    if (colon !== -1) paths.push(value.slice(colon + 1));
+  });
+  return paths;
+}

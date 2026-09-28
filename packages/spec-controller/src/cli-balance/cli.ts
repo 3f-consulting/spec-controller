@@ -23,6 +23,7 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
+import { namesStdout } from "../outputLocation.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
@@ -338,7 +339,7 @@ export function runBalance(argv: string[]): boolean {
   // the SOLE output path: the tool emits via --format and holds no storage opinion — the
   // legacy runs/<target>/<ISO>/ auto-archive was removed, the
   // caller now routes stored runs (spec-controller's run-management layer).
-  const planResult = planOutput(collectFormatSpecs(argv));
+  const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) exitUsage(planResult.error);
   writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames });
 

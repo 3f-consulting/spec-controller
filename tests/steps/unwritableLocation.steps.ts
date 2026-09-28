@@ -1,9 +1,9 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const RUN_ID = "r1";
@@ -134,7 +134,7 @@ function restoreWritable(dir: string): void {
   }
 }
 
-After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-RMG-008 or @SCN-RMG-009" }, function () {
+After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010" }, function () {
   if (scratch === undefined) return;
   restoreWritable(scratch);
   rmSync(scratch, { recursive: true, force: true });
@@ -247,4 +247,212 @@ Then(/^the refusal names the run directory's (.+) and says (.+)$/, function (fil
   const path = join(storeRoot, TARGET, RUN_ID, file);
   assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
   assert.ok(run.stderr.includes(code), `the refusal does not give ${code}:\n${run.stderr}`);
+});
+
+/** The report file two outputs share, the second path to it, and each destination's bytes before the run. */
+let sharedFile: string;
+let secondPath: string;
+let firstPath: string;
+let thirdPath: string;
+let throughStdout = false;
+let sharedBefore: string | undefined;
+let namedOutputs: readonly [string, string];
+
+/** Each second path to the report file, built beside it; the first path is the one the operator names first. */
+const SECOND_PATH: Readonly<Record<string, (file: string, dir: string) => { first: string; second: string }>> = {
+  "the same path": (file) => ({ first: file, second: file }),
+  "the path spelled from the current folder": (file) => ({ first: file, second: `./${relative(process.cwd(), file)}` }),
+  "its absolute path": (file) => ({ first: relative(process.cwd(), file), second: file }),
+  "a path through a sibling folder and back": (file, dir) => {
+    mkdirSync(join(dir, "sibling"));
+    return { first: file, second: `${dir}/sibling/../shared.out` };
+  },
+  "a symbolic link to it": (file, dir) => {
+    symlinkSync(file, join(dir, "link.out"));
+    return { first: file, second: join(dir, "link.out") };
+  },
+  "a path through a link to its folder": (file) => {
+    symlinkSync(join(scratch!, "dir"), join(scratch!, "dir-link"));
+    return { first: file, second: join(scratch!, "dir-link", "shared.out") };
+  },
+  "a hard link to it": (file, dir) => {
+    linkSync(file, join(dir, "hard.out"));
+    return { first: file, second: join(dir, "hard.out") };
+  },
+  "where standard output is redirected": (file) => ({ first: file, second: file }),
+};
+
+Given(/^an out-of-balance target and a report file that (does not exist|holds an earlier run)$/, function (state: string) {
+  assertTargetOutOfBalance();
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-shared-"));
+  mkdirSync(join(scratch, "dir"));
+  sharedFile = join(scratch, "dir", "shared.out");
+  thirdPath = join(scratch, "dir", "third.json");
+  sharedBefore = state === "holds an earlier run" ? "an earlier run's report\n" : undefined;
+  if (sharedBefore !== undefined) writeFileSync(sharedFile, sharedBefore);
+});
+
+Given(/^a second path to that file that is (.+)$/, function (alias: string) {
+  const arrange = SECOND_PATH[alias];
+  assert.ok(arrange, `no second path is arranged for "${alias}"`);
+  ({ first: firstPath, second: secondPath } = arrange(sharedFile, join(scratch!, "dir")));
+  throughStdout = alias === "where standard output is redirected";
+});
+
+When(
+  /^the operator asks for the (markdown|json) report at the file and the (markdown|json) report at the second path, and a third report at a file of its own$/,
+  function (first: string, second: string) {
+    const firstFlag = FORMAT_FLAG[first]!;
+    const firstSpec = throughStdout ? firstFlag : `${firstFlag}:${firstPath}`;
+    const secondSpec = `${FORMAT_FLAG[second]}:${secondPath}`;
+    namedOutputs = [throughStdout ? `${firstFlag} on standard output` : firstSpec, secondSpec];
+    const args = ["balance", ...TARGET_ARGS, ...[firstSpec, secondSpec, `json:${thirdPath}`].flatMap((spec) => ["--format", spec])];
+    run = throughStdout ? specControllerInto(sharedFile, args) : specController(args);
+  },
+);
+
+/** Runs the CLI with its standard output appended to `file`, as a shell's `>>` would. */
+function specControllerInto(file: string, args: readonly string[]): Run {
+  const fd = openSync(file, "a");
+  try {
+    const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...args], { cwd: process.cwd(), encoding: "utf8", stdio: ["ignore", fd, "pipe"] });
+    assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
+    return { status: result.status, stdout: "", stderr: result.stderr };
+  } finally {
+    closeSync(fd);
+  }
+}
+
+Then("the refusal names both outputs that share the file", function () {
+  for (const output of namedOutputs) {
+    assert.ok(run.stderr.includes(output), `the refusal does not name ${output}:\n${run.stderr}`);
+  }
+});
+
+Then("every destination is left exactly as it was", function () {
+  if (sharedBefore === undefined) {
+    assert.equal(existsSync(sharedFile), false, `${sharedFile} was created by a refused run`);
+  } else {
+    assert.equal(readFileSync(sharedFile, "utf8"), sharedBefore, `${sharedFile} was overwritten by a refused run`);
+  }
+  assert.equal(existsSync(thirdPath), false, `${thirdPath} was created by a refused run`);
+});
+
+/** Where standard output goes for a run; undefined while it is a pipe the step reads. */
+let stdoutFile: string | undefined;
+
+Given(/^an out-of-balance target whose standard output is (a pipe|a file)$/, function (connectedTo: string) {
+  assertTargetOutOfBalance();
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-stdout-path-"));
+  stdoutFile = connectedTo === "a file" ? join(scratch, "stdout.txt") : undefined;
+});
+
+/** The `--format` spec that asks for `fmt` at a destination the scenario names. */
+function specAt(fmt: string, destination: string): string {
+  if (destination === "standard output") return fmt;
+  if (destination === "a link to /dev/stdout") {
+    const link = join(scratch!, "to-stdout");
+    if (!existsSync(link)) symlinkSync("/dev/stdout", link);
+    return `${fmt}:${link}`;
+  }
+  return `${fmt}:${destination}`;
+}
+
+const STDOUT_DESTINATION = "(standard output|/dev/stdout|/dev/fd/1|a link to /dev/stdout)";
+
+When(new RegExp(`^the operator asks for the markdown report at ${STDOUT_DESTINATION} and the json report at ${STDOUT_DESTINATION}$`), function (first: string, second: string) {
+  const args = ["balance", ...TARGET_ARGS, "--format", specAt("md", first), "--format", specAt("json", second)];
+  if (stdoutFile === undefined) {
+    run = specController(args);
+    return;
+  }
+  writeFileSync(stdoutFile, "");
+  run = specControllerInto(stdoutFile, args);
+});
+
+Then("the refusal says more than one output routes to standard output", function () {
+  assert.ok(run.stderr.includes("More than one output routes to stdout"), `the refusal does not say so:\n${run.stderr}`);
+});
+
+Then("no report reaches standard output", function () {
+  const printed = stdoutFile === undefined ? run.stdout : readFileSync(stdoutFile, "utf8");
+  assert.equal(printed, "", `a report reached standard output:\n${printed.slice(0, 400)}`);
+});
+
+/** A target that reconciles in balance on its own, read with no workflows, so its run exits on the balanced code. */
+const BALANCED_ARGS = [
+  "--features",
+  "tests/fixtures/balanced/features",
+  "--vitest",
+  "tests/fixtures/balanced/vitest.json",
+  "--package-json",
+  "tests/fixtures/balanced/package.json",
+  "--ci",
+  "tests/fixtures/balanced",
+];
+const BALANCED = 0;
+
+let linkPath: string;
+let linkTargetPath: string;
+
+Given("a balanced target and a link to a report file that does not exist yet", function () {
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-link-"));
+  linkTargetPath = join(scratch, "report.json");
+  linkPath = join(scratch, "link.json");
+  symlinkSync(linkTargetPath, linkPath);
+});
+
+When("the operator asks for the json report to be written at the link", function () {
+  run = specController(["balance", ...BALANCED_ARGS, "--format", `json:${linkPath}`]);
+});
+
+Then("the run succeeds and nothing is refused", function () {
+  assert.equal(run.status, BALANCED, `expected the balanced code; got ${run.status}\n${run.stderr}`);
+  assert.equal(run.stderr, "", `something reached stderr:\n${run.stderr}`);
+});
+
+Then("the json report is written into the file the link points to, and the link still points there", function () {
+  assert.ok(existsSync(linkTargetPath), `${linkTargetPath} was not written`);
+  assert.match(readFileSync(linkTargetPath, "utf8"), /^\{/, `${linkTargetPath} does not hold the json report`);
+  assert.ok(lstatSync(linkPath).isSymbolicLink(), `${linkPath} is no longer a link`);
+  assert.equal(readlinkSync(linkPath), linkTargetPath, `${linkPath} no longer points at ${linkTargetPath}`);
+});
+
+/** Every file under the store root, with its bytes, as it stood before the stored run. */
+let storeBefore: ReadonlyMap<string, string>;
+
+function filesUnder(root: string): Map<string, string> {
+  const files = new Map<string, string>();
+  if (!existsSync(root)) return files;
+  for (const entry of readdirSync(root, { recursive: true })) {
+    const path = join(root, String(entry));
+    if (statSync(path).isFile()) files.set(path, readFileSync(path, "utf8"));
+  }
+  return files;
+}
+
+Given(/^an out-of-balance target and a store root holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
+  assertTargetOutOfBalance();
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-store-shared-"));
+  storeRoot = join(scratch, "store");
+  if (earlier !== "nothing yet") {
+    const kept = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS]);
+    assert.equal(kept.status, OUT_OF_BALANCE, `the earlier kept run did not complete:\n${kept.stderr}`);
+    assert.ok(existsSync(join(storeRoot, TARGET, RUN_ID, "run.yaml")), "the earlier kept run left no run.yaml");
+  }
+  storeBefore = filesUnder(storeRoot);
+});
+
+When(/^the operator stores a run of it and also asks for the (markdown|json) report at the run directory's (.+)$/, function (format: string, file: string) {
+  const path = join(storeRoot, TARGET, RUN_ID, file);
+  run = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS, "--format", `${FORMAT_FLAG[format]}:${path}`]);
+});
+
+Then(/^the refusal names the run directory's (spec-reconciliation\.md|spec-reconciliation\.json|run\.yaml)$/, function (file: string) {
+  const path = join(storeRoot, TARGET, RUN_ID, file);
+  assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
+});
+
+Then("no file under the store root was added, changed or removed", function () {
+  assert.deepEqual(filesUnder(storeRoot), storeBefore, "the refused stored run changed the files under the store root");
 });

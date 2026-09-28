@@ -35,6 +35,7 @@ import {
   parseHostInvocation,
   wrapCommandArgv,
   peekFlag,
+  formatFilePaths,
   answerUnknownCommand,
   modifiersNotTakenRefusal,
   type HostInvocation,
@@ -103,7 +104,7 @@ function main(hostArgv: string[]): void {
       targetDir: features !== undefined ? dirname(features) : undefined,
     }) ?? "unknown";
 
-  const spec: KeptRunSpec = { storeRoot: inv.store, target, runId };
+  const spec: KeptRunSpec = { storeRoot: inv.store, target, runId, formatPaths: formatFilePaths(inv.commandArgs) };
   // `mode` is the command's run kind; only `balance` ships today (analyse/migrate are the
   // private engine's, added when it lands).
   // The TOOL's own identity — which spec-controller produced this run, read

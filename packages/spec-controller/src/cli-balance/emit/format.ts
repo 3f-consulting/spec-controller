@@ -67,7 +67,10 @@ export type PlanResult =
  * plans the same. Each planned output is markdown bound for stdout — the default human
  * report, like vitest/cucumber.
  */
-export function planOutput(formatSpecs: readonly string[]): PlanResult {
+export function planOutput(
+  formatSpecs: readonly string[],
+  namesStdout: (path: string) => boolean = () => false,
+): PlanResult {
   // No --format flag defaults to a single "md" spec — the default human report.
   const specs = formatSpecs.length === 0 ? ["md"] : formatSpecs;
   const outputs: PlannedOutput[] = specs.map((spec) => {
@@ -110,7 +113,9 @@ export function planOutput(formatSpecs: readonly string[]): PlanResult {
   // check would wrongly pass the former. Rejected with a typed error on the shared
   // PlanResult surface (the same surface FMT-006/007 raise), carrying the hint to give one
   // of the colliding outputs a `:<path>` so it writes to a file instead.
-  const stdoutBound = outputs.filter((o) => o.dest.kind === "stdout");
+  // A path that names standard output itself (/dev/stdout, /dev/fd/1) routes there as surely as a
+  // bare format does, so it is counted with the outputs bound for stdout.
+  const stdoutBound = outputs.filter((o) => o.dest.kind === "stdout" || namesStdout(o.dest.path));
   if (stdoutBound.length > 1) {
     const fmts = stdoutBound.map((o) => o.fmt).join(", ");
     return {
@@ -123,4 +128,44 @@ export function planOutput(formatSpecs: readonly string[]): PlanResult {
   }
 
   return { ok: true, plan: { outputs } };
+}
+
+/** The operating system's identity for a regular file: its device and inode, exact beyond 2^53. */
+export interface FileIdentity {
+  readonly dev: bigint;
+  readonly ino: bigint;
+}
+
+/** A planned output beside the identity of the regular file it lands on, when it lands on one. */
+export interface IdentifiedOutput {
+  readonly output: PlannedOutput;
+  readonly identity: FileIdentity | undefined;
+}
+
+/**
+ * The refusal for the first two outputs that land on one regular file, or undefined when none do.
+ * The file is known by its identity rather than its spelling, so a link, a `..`, a case the volume
+ * folds or the file standard output is redirected into all count. An output with no identity is
+ * not on a regular file, and writing such a destination twice loses nothing, so it is never compared.
+ */
+export function sharedFileRefusal(outputs: readonly IdentifiedOutput[]): string | undefined {
+  const onFiles = outputs.filter((o): o is IdentifiedOutput & { identity: FileIdentity } => o.identity !== undefined);
+  for (const [index, first] of onFiles.entries()) {
+    const second = onFiles.slice(index + 1).find((o) => sameFile(o.identity, first.identity));
+    if (second !== undefined) {
+      return (
+        `Two outputs name the same file: ${asGiven(first.output)} and ${asGiven(second.output)}. ` +
+        `Give each output a file of its own.`
+      );
+    }
+  }
+  return undefined;
+}
+
+function sameFile(a: FileIdentity, b: FileIdentity): boolean {
+  return a.dev === b.dev && a.ino === b.ino;
+}
+
+function asGiven(output: PlannedOutput): string {
+  return output.dest.kind === "stdout" ? `${output.fmt} on standard output` : `${output.fmt}:${output.dest.path}`;
 }

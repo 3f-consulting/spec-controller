@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, fstatSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, closeSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
@@ -53,6 +53,17 @@ const toFile = (path: string, fmt: "md" | "json" = "json"): OutputPlan => ({
 
 let scratch: string;
 let stderr: string[];
+
+/** Whether the temporary volume tells two names apart by case, as ext4 does and APFS by default does not. */
+function volumeIsCaseSensitive(): boolean {
+  const dir = mkdtempSync(join(tmpdir(), "spec-controller-case-"));
+  try {
+    writeFileSync(join(dir, "probe"), "");
+    return !existsSync(join(dir, "PROBE"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 beforeEach(() => {
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-writer-"));
@@ -163,4 +174,148 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
       expect(readFileSync(path, "utf8")).toBe("an earlier run's report\n");
     });
   }
+});
+
+describe("[SCN-FMT-010] two outputs that land on one regular file are refused before anything is written", () => {
+  const file = (fmt: "md" | "json", path: string): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
+  const EARLIER = "an earlier run's report\n";
+
+  function refused(plan: OutputPlan, stdoutIdentity?: () => { dev: bigint; ino: bigint } | undefined): string {
+    expect(() => writeOutputs(plan, payloads, stdoutIdentity)).toThrow(Exited);
+    expect(process.exit).toHaveBeenCalledWith(2);
+    expect(process.stdout.write).not.toHaveBeenCalled();
+    const refusal = stderr.join("");
+    expect(refusal.trimEnd().split("\n")).toHaveLength(1);
+    return refusal;
+  }
+
+  it("refuses two formats at one path that does not exist yet, and leaves no file behind", () => {
+    const path = join(scratch, "y.md");
+
+    const refusal = refused({ outputs: [file("md", path), file("json", path)] });
+
+    expect(refusal).toContain(`md:${path} and json:${path}`);
+    expect(readdirSync(scratch)).toEqual([]);
+  });
+
+  it("refuses the same format twice at one path", () => {
+    const path = join(scratch, "y.md");
+
+    expect(refused({ outputs: [file("md", path), file("md", path)] })).toContain(`md:${path} and md:${path}`);
+  });
+
+  it("leaves a file holding an earlier run as it was, and creates no third destination", () => {
+    const path = join(scratch, "y.md");
+    const third = join(scratch, "third.json");
+    mkdirSync(join(scratch, "sub"));
+    writeFileSync(path, EARLIER);
+
+    const refusal = refused({ outputs: [file("md", path), file("json", third), file("json", `${scratch}/sub/../y.md`)] });
+
+    expect(refusal).toContain("Two outputs name the same file");
+    expect(readFileSync(path, "utf8")).toBe(EARLIER);
+    expect(existsSync(third)).toBe(false);
+  });
+
+  it("refuses a path through a folder and back beside the plain path", () => {
+    mkdirSync(join(scratch, "sub"));
+    const path = join(scratch, "y.md");
+
+    expect(refused({ outputs: [file("md", path), file("json", `${scratch}/sub/../y.md`)] })).toContain(`${scratch}/sub/../y.md`);
+    expect(existsSync(path)).toBe(false);
+  });
+
+  it("refuses a symbolic link to the file, a path through a linked folder, and a hard link", () => {
+    const dir = join(scratch, "dir");
+    mkdirSync(dir);
+    const path = join(dir, "real.md");
+    writeFileSync(path, EARLIER);
+    symlinkSync(path, join(scratch, "link.md"));
+    symlinkSync(dir, join(scratch, "dir-link"));
+    linkSync(path, join(scratch, "hard.md"));
+
+    for (const alias of [join(scratch, "link.md"), join(scratch, "dir-link", "real.md"), join(scratch, "hard.md")]) {
+      stderr.length = 0;
+      vi.mocked(process.exit).mockClear();
+      expect(refused({ outputs: [file("md", path), file("json", alias)] })).toContain(`json:${alias}`);
+    }
+    expect(readFileSync(path, "utf8")).toBe(EARLIER);
+  });
+
+  it("refuses standard output beside the file it is redirected into", () => {
+    const path = join(scratch, "out.md");
+    writeFileSync(path, EARLIER);
+    const fd = openSync(path, "r");
+    const identity = fstatSync(fd, { bigint: true });
+    closeSync(fd);
+
+    const refusal = refused({ outputs: [{ fmt: "md", dest: { kind: "stdout" } }, file("json", path)] }, () => ({
+      dev: identity.dev,
+      ino: identity.ino,
+    }));
+
+    expect(refusal).toContain(`md on standard output and json:${path}`);
+    expect(readFileSync(path, "utf8")).toBe(EARLIER);
+  });
+
+  it.runIf(volumeIsCaseSensitive())("writes both reports when two spellings that differ only in case are two files on a case-sensitive volume", () => {
+    const lower = join(scratch, "y.md");
+    const upper = join(scratch, "Y.MD");
+
+    writeOutputs({ outputs: [file("md", lower), file("json", upper)] }, payloads);
+
+    expect(process.exit).not.toHaveBeenCalled();
+    expect(readFileSync(lower, "utf8")).toMatch(/^# /);
+    expect(readFileSync(upper, "utf8")).toMatch(/^\{/);
+  });
+
+  it("writes two outputs on two files, as before", () => {
+    const md = join(scratch, "y.md");
+    const json = join(scratch, "z.json");
+
+    writeOutputs({ outputs: [file("md", md), file("json", json)] }, payloads);
+
+    expect(process.exit).not.toHaveBeenCalled();
+    expect(readFileSync(md, "utf8")).toMatch(/^# /);
+    expect(readFileSync(json, "utf8")).toMatch(/^\{/);
+  });
+});
+
+describe("[SCN-FMT-012] a destination that is a link to a file not yet created is written through the link", () => {
+  it("writes the report into the file the link points to, and leaves the link pointing there", () => {
+    const target = join(scratch, "report.json");
+    const link = join(scratch, "link.json");
+    symlinkSync(target, link);
+
+    writeOutputs({ outputs: [{ fmt: "json", dest: { kind: "file", path: link } }] }, payloads);
+
+    expect(process.exit).not.toHaveBeenCalled();
+    expect(stderr).toEqual([]);
+    expect(readFileSync(target, "utf8")).toMatch(/^\{/);
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(link)).toBe(target);
+  });
+
+  it("removes the file it created through the link, not the link, when the run is refused for another destination", () => {
+    const target = join(scratch, "report.json");
+    const link = join(scratch, "link.json");
+    symlinkSync(target, link);
+    writeFileSync(join(scratch, "regular"), "");
+
+    expect(() =>
+      writeOutputs(
+        {
+          outputs: [
+            { fmt: "json", dest: { kind: "file", path: link } },
+            { fmt: "md", dest: { kind: "file", path: join(scratch, "regular", "report.md") } },
+          ],
+        },
+        payloads,
+      ),
+    ).toThrow(Exited);
+
+    expect(stderr.join("")).toContain("ENOTDIR");
+    expect(existsSync(target)).toBe(false);
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+  });
 });

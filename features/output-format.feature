@@ -41,6 +41,13 @@ Feature: Emit each output format to stdout or a caller-given path
       When the outputs are planned with a md:<path> spec and written to that path
       Then the rendered markdown report is written to that file and stdout stays empty
 
+    @unit @e2e @SCN-FMT-012
+    Scenario: a --format path that is a symlink to a file not yet created is written through the link
+      Given a balanced target and a link to a report file that does not exist yet
+      When the operator asks for the json report to be written at the link
+      Then the run succeeds and nothing is refused
+      And the json report is written into the file the link points to, and the link still points there
+
   Rule: multiple formats route independently in one invocation
 
     Several --format specs in one run each route to their own destination — so a caller
@@ -59,7 +66,9 @@ Feature: Emit each output format to stdout or a caller-given path
     stdout never carries two interleaved documents. Two outputs both bound for stdout —
     two different formats, OR the same format twice — are rejected with a non-zero exit
     and a hint to give one of them a :<path>. The check counts stdout-destined outputs
-    (≤ 1), so "--format md --format md" is caught, not only distinct formats.
+    (≤ 1), so "--format md --format md" is caught, not only distinct formats. A path that
+    names standard output itself (/dev/stdout, /dev/fd/1, or a link to either) routes to
+    stdout and is counted with it, whatever standard output is connected to.
 
     @unit @integration @SCN-FMT-005
     Scenario: two outputs both routed to stdout are rejected with a hint
@@ -67,6 +76,24 @@ Feature: Emit each output format to stdout or a caller-given path
       When the CLI is run with --format md and --format json
       Then the CLI exits non-zero
       And stderr hints to give one of the outputs a :<path>
+
+    @unit @e2e @SCN-FMT-011
+    Scenario Outline: a --format path naming stdout counts as routed to stdout, so beside another stdout output it is refused and no report is printed
+      Given an out-of-balance target whose standard output is <connected to>
+      When the operator asks for the markdown report at <first> and the json report at <second>
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal says more than one output routes to standard output
+      And the refusal carries no stack trace
+      And no report reaches standard output
+
+      Examples:
+        | connected to | first               | second                      |
+        | a pipe       | standard output     | /dev/stdout                 |
+        | a pipe       | /dev/stdout         | /dev/stdout                 |
+        | a pipe       | standard output     | /dev/fd/1                   |
+        | a pipe       | standard output     | a link to /dev/stdout       |
+        | a file       | standard output     | /dev/stdout                 |
+        | a file       | /dev/fd/1           | a link to /dev/stdout       |
 
   Rule: the legacy --json flag is rejected with a migration hint
 
@@ -139,3 +166,41 @@ Feature: Emit each output format to stdout or a caller-given path
         | a file that does not exist    | json     |
         | a file holding an earlier run | markdown |
         | a file holding an earlier run | json     |
+
+  Rule: two outputs never share one regular file, however it is named, and a run that asks for it is refused before anything is written
+
+    A file written twice keeps only the last report written into it, so a run that sent two of its
+    outputs to one file would exit as if both had been written when only one survives. Two outputs
+    share a file when both land on one regular file, whatever path names it: the same path twice,
+    the same format twice, a relative spelling beside an absolute one, a path through "..", a
+    symbolic link, a path through a linked directory, a hard link, or the file standard output is
+    redirected into. The file is recognised by the operating system's identity for it, not by the
+    spelling. Such a run is refused as a usage error before any report is emitted, so every
+    destination is left as it was. The refusal names both outputs as the operator gave them. A
+    destination that is not a regular file (a terminal, a pipe, a device) is never refused for being
+    shared, because writing it twice loses nothing.
+
+    @unit @e2e @SCN-FMT-010
+    Scenario Outline: two outputs naming one regular file are refused as a usage error naming both, and no destination is written or changed
+      Given an out-of-balance target and a report file that <state>
+      And a second path to that file that is <alias>
+      When the operator asks for the <first> report at the file and the <second> report at the second path, and a third report at a file of its own
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names both outputs that share the file
+      And the refusal carries no stack trace
+      And no report is printed
+      And every destination is left exactly as it was
+
+      Examples:
+        | state                     | alias                                     | first    | second   |
+        | does not exist            | the same path                             | markdown | markdown |
+        | does not exist            | the same path                             | markdown | json     |
+        | does not exist            | the same path                             | json     | markdown |
+        | holds an earlier run      | the same path                             | markdown | json     |
+        | does not exist            | the path spelled from the current folder  | markdown | json     |
+        | does not exist            | its absolute path                         | markdown | json     |
+        | does not exist            | a path through a sibling folder and back  | markdown | json     |
+        | holds an earlier run      | a symbolic link to it                     | markdown | json     |
+        | holds an earlier run      | a path through a link to its folder       | markdown | json     |
+        | holds an earlier run      | a hard link to it                         | markdown | json     |
+        | holds an earlier run      | where standard output is redirected       | markdown | json     |
