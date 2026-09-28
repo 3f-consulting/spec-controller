@@ -153,15 +153,10 @@ counts the credits the configured rows' steps post, each answered by its step's 
 prefixes** were retired by
 [3F-3343](3F-3343) — a widening, not a removal: a prefixed
 script is still observed, because every step is, so no major version was engaged
-(the reasoning is on that ticket). The **`specController.staticChecks` registry** is
-still honoured and is now inert, and its actual removal is
-[3F-3161](3F-3161)'s. **That removal no longer waits on a
-consumer and no longer engages a major version** — the compatibility commitment was withdrawn on
-2026-09-13 ([3F-3376](3F-3376)) because it was made to nobody,
-and measurement found no consumer routing credits through the registry at all. Stated here, in
-`features/uncited-static-checks.feature`, and in
-[`doc/adopting-fitness-checks.md`](./doc/adopting-fitness-checks.md), so a reader who meets
-the zero is not left to infer which one it is.
+(the reasoning is on that ticket). `specController.staticChecks` is not read. A manifest that
+carries it settles nothing, and the report names it under `## Configuration not read`, as it does
+any key the `specController` block does not read.
+[`doc/compatibility.md`](./doc/compatibility.md) records its retirement.
 
 ## Reports live outside the repo
 
