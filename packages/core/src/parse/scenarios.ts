@@ -16,16 +16,14 @@
  * tags found across the contiguous tag block.
  *
  * The `fitness` quality-check is raised by a scenario's `@fitness` axis tag ALONE, STEPS OR NONE
- * (`convertedFitnessObligationsOf`, @SCN-LNT-018): the tag says which axis a scenario is on and the
- * steps say nothing about it (3F-3115). The manifest list that once had to name the scenario as
- * well is retired (3F-3582), so the tag is the whole declaration. No set of registered check tags raises
- * one any more (3F-3561). The retired `@lint=<guard>` form — where the scenario
- * named a runnable npm script and the run was matched back to it BY NAME — raises nothing
- * (@SCN-LNT-007): it supplies no citation, so anything it raised could never be credited under
+ * (`convertedFitnessObligationsOf`): the tag says which axis a scenario is on and the
+ * steps say nothing about it. The manifest list that once had to name the scenario as
+ * well is retired, so the tag is the whole declaration. No set of registered check tags raises
+ * one any more. The retired `@lint=<guard>` form — where the scenario
+ * named a runnable npm script and the run was matched back to it BY NAME — raises nothing:
+ * it supplies no citation, so anything it raised could never be credited under
  * the one posting rule and would read `missing` for ever. The form is inert in the READER, which
  * is what makes it retired rather than merely unused.
- *
- * Parent: @SCN-LDG-001.
  */
 
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
@@ -35,16 +33,16 @@ import { SCN_ID_SOURCE } from "../lib/featureCode.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 /**
- * A BARE `@SCN` code — the `@` already stripped. Exported since 3F-3582 for the citation reader
+ * A BARE `@SCN` code — the `@` already stripped. Exported for the citation reader
  * beside it (`parse/fitnessCitations`), which asks the same question of a CI step's `id:`: a
  * second copy of this pattern there would agree with this one by coincidence, and what it decides
  * is whether a step states a citation at all.
  *
  * NO OPTIONAL SIGIL, deliberately, and that is what `SCN_TAG` in `parse/cucumber` is for instead.
- * `bareTerm` strips ONE leading `@` (@SCN-TRM-001), so a doubled sigil bares to `@SCN-…` and must
+ * `bareTerm` strips ONE leading `@`, so a doubled sigil bares to `@SCN-…` and must
  * NOT read as the un-doubled code: it is a different spelling, not whitespace.
  *
- * THE FEATURE PART IS TWO TO FIVE CHARACTERS, the NUMBER ANY WIDTH (evidence-manifesto §9A, 3F-3636).
+ * THE FEATURE PART IS TWO TO FIVE CHARACTERS, the NUMBER ANY WIDTH (evidence-manifesto §9A).
  * A longer or shorter feature part is not an @SCN, so it mints no account and cites nothing.
  */
 export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
@@ -56,8 +54,7 @@ export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
  * unrecognised `<x>pending` (or bare `pending`) is absent from the map → ignored. Unlike
  * `TAG_TO_QUALITY_CHECK`, this covers ALL FIVE quality-checks including `fitness` (a pending
  * fitness obligation is one-sided — no `staticCheck` payload). The fitness spelling follows the
- * quality check's name; the retired `lintpending` is not an alias, since no adopter writes it
- * (3F-3569).
+ * quality check's name; the retired `lintpending` is not an alias, since no adopter writes it.
  */
 const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
   fitnesspending: "fitness",
@@ -96,7 +93,7 @@ function tagLineTags(line: string): string[] | null {
 /**
  * `@SCN-FFF-NNN` — a raw scenario-id occurrence ANYWHERE in the source (tag line OR
  * the non-tag context — prose, comments, step text — the tag-line parser ignores).
- * The global flag counts every occurrence (@SCN-RPT-008).
+ * The global flag counts every occurrence.
  */
 const SCN_OCCURRENCE = new RegExp(`@${SCN_ID_SOURCE}`, "g");
 
@@ -127,7 +124,7 @@ function proseLineScnCodes(line: string): string[] {
  *
  * ITS OWN FUNCTION so `proseOnlyCodes` states the set difference and nothing else — the per-line
  * classification is a separate idea, and holding both in one body put it over the cognitive-
- * complexity standard (3F-3582, sub-issue 1). The sets are passed in rather than returned and
+ * complexity standard. The sets are passed in rather than returned and
  * merged because the union across files is load-bearing: a code tagged in one file and written in
  * prose in another is NOT prose-only, so every source accumulates into the same two sets.
  */
@@ -144,7 +141,7 @@ function collectScnCodes(source: string, tag: Set<string>, prose: Set<string>): 
 }
 
 /**
- * The PROSE-ONLY @SCN codes (@SCN-RPT-015) — codes that appear in non-tag
+ * The PROSE-ONLY @SCN codes — codes that appear in non-tag
  * context (prose / comments / step text) but are NEVER an @SCN tag ANYWHERE in the
  * corpus: dangling references. A CROSS-CORPUS set difference `proseCodes − tagCodes`
  * over ALL sources (unique, sorted): per source each line is inspected — a tag line
@@ -152,7 +149,7 @@ function collectScnCodes(source: string, tag: Set<string>, prose: Set<string>): 
  * matches (the leading `@` stripped) to the PROSE set. The union across files is
  * load-bearing: a code tagged in one file but mentioned in prose in another is NOT
  * prose-only. Distinct from `countScnOccurrences`'s raw count (occurrences, not unique
- * dangling codes). The bare code (e.g. `SCN-FOO-001`) is its own locator.
+ * dangling codes). The bare code (`SCN-<FFF>-<NNN>`) is its own locator.
  */
 export function proseOnlyCodes(sources: string[]): string[] {
   const tag = new Set<string>();
@@ -173,7 +170,7 @@ const SCENARIO_HEADER =
 
 /**
  * Parse the UNTAGGED scenarios — Gherkin scenario headers whose preceding contiguous
- * tag block carries no `@SCN` id (@SCN-RPT-014). Mirrors `parseScenarios`'s
+ * tag block carries no `@SCN` id. Mirrors `parseScenarios`'s
  * tag-block accumulation: a tag line accumulates the block; any non-tag line closes it.
  * At each scenario header, the just-accumulated block is checked for an `@SCN` — if it
  * has none, the scenario is untagged (returns its name). The obligation-side counterpart
@@ -209,14 +206,14 @@ export function parseUntaggedScenarios(source: string): string[] {
 export const FITNESS_AXIS_TAG = "fitness";
 
 /**
- * The obligation a CONVERTED check's scenario raises (@SCN-LNT-018) — one, at the quality check
+ * The obligation a CONVERTED check's scenario raises — one, at the quality check
  * `fitness`, keyed by the scenario's own `@SCN`.
  *
- * ONE @fitness SCENARIO IS ONE CHECK (3F-3525). The tag says which axis the scenario is on, exactly
+ * ONE @fitness SCENARIO IS ONE CHECK. The tag says which axis the scenario is on, exactly
  * as `@unit` does, and the scenario's TITLE says what the check is about; nobody mints
  * `@unit-parser`, and nothing classifies a fitness check further.
  *
- * THE TAG IS THE WHOLE DECLARATION, AND NOTHING GATES IT (3F-3582). A manifest list —
+ * THE TAG IS THE WHOLE DECLARATION, AND NOTHING GATES IT. A manifest list —
  * `specController.fitnessChecks` — once stood between the tag and the obligation: a scenario the
  * list did not name raised nothing, and the run said so in a census line rather than on the books.
  * That was the pre-retirement model surviving the characteristic's retirement, and it broke the
@@ -226,7 +223,7 @@ export const FITNESS_AXIS_TAG = "fitness";
  * and with no CI step citing its `@SCN` it reconciles `missing`.
  *
  * THE ONE ROUTE IN. The registered bare-tag arm that once raised the same obligation beside this
- * one left with `parseScenarios`' check-tag set (3F-3561), so a fitness obligation is raised here
+ * one left with `parseScenarios`' check-tag set, so a fitness obligation is raised here
  * and nowhere else.
  *
  * NO LOOKUP OF ANY KIND, which is what makes it the same KIND of rule as the tier arm beside it.
@@ -234,7 +231,7 @@ export const FITNESS_AXIS_TAG = "fitness";
  * somewhere else, so no second document can disagree about which check this is.
  *
  * OWED ONCE, BY CONSTRUCTION. The axis tag can reach one scenario twice, through its `Rule:` and
- * its `Feature:` (@SCN-LDG-020), and this is asked once per scenario whatever its tag list holds,
+ * its `Feature:`, and this is asked once per scenario whatever its tag list holds,
  * so the answer is one obligation or none. Two for one check would leave the second `missing` for
  * ever, since one run is one credit and can cite one `@SCN`.
  */
@@ -246,7 +243,7 @@ function convertedFitnessObligationsOf(tags: readonly string[]): EvidenceObligat
 
 /**
  * Derive a scenario's evidence obligations from its EFFECTIVE tags — its own PLUS everything it
- * inherits from its `Feature:` and any enclosing `Rule:` (@SCN-LDG-020). Unchanged in substance
+ * inherits from its `Feature:` and any enclosing `Rule:`. Unchanged in substance
  * from the tag-block reading it replaces; what changed is WHICH tags reach it.
  */
 function obligationsFromTags(
@@ -274,11 +271,11 @@ function obligationsFromTags(
       continue;
     }
   }
-  // The FITNESS obligation (@SCN-LNT-018), raised after the tier arms and BEFORE the deferral pass
+  // The FITNESS obligation, raised after the tier arms and BEFORE the deferral pass
   // below, so a deferred fitness scenario defers like any other rather than escaping through a later
   // arm.
   evidenceObligations.push(...convertedFitnessObligationsOf(tags));
-  // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
+  // SCENARIO-SCOPE community deferral: when the tag block carries a
   // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
   // empty by default; the app passes its starter policy ∪ config), the whole scenario is
   // deferred: mark EVERY obligation `pending: true`, overriding its observation-derived
@@ -288,7 +285,7 @@ function obligationsFromTags(
   // already-pending obligation.
   if (tags.some((t) => deferralTags.includes(t))) {
     if (evidenceObligations.length === 0) {
-      // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario raising ZERO obligations (a
+      // INTERPRETATION 2: a deferred scenario raising ZERO obligations (a
       // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
       // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticCheck`.
       // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
@@ -315,36 +312,12 @@ function obligationsFromTags(
  * did beside cucumber's own parse.
  */
 export interface TaggedScenario {
-  /** The bare scenario id, e.g. `SCN-LDG-001` (no leading @). */
+  /** The bare scenario id, `SCN-<FFF>-<NNN>` (no leading @). */
   scnId: string;
   /** The scenario's OWN tags first, then its inherited ones — bare, no leading @. */
   tags: readonly string[];
   /**
-   * The scenario's EXTENT in the source — 1-based and INCLUSIVE, so `lines.slice(startLine - 1,
-   * endLine)` is exactly this scenario's text (@SCN-SSM-010, 3F-3044). It rides on this walk for the
-   * reason the walk was extracted at all, sharpened by what an extent is FOR: a second pass over the
-   * same file would be free to disagree with this one about which scenario it is looking at, and the
-   * caller that wants an extent is asking which scenario some text belongs to — so a disagreeing
-   * second pass is precisely how that question gets the neighbour's answer.
-   *
-   * `startLine` is the lesser of the scenario's first OWN tag line and its keyword line — an
-   * inherited `Rule:`/`Feature:` tag is not part of this scenario's text. `endLine` is the line
-   * before the next block starts (a scenario, a `Rule:` — or its first tag line — a `Background:`,
-   * or EOF), TRIMMED BACK over trailing blank and comment lines.
-   *
-   * The trim is load-bearing rather than tidiness: without it a blank line or a comment sitting
-   * between two scenarios belongs to the preceding one, and an edit there reads as a change to a
-   * scenario it is not part of — neighbour-inheritance rebuilt at a smaller scale, which is the one
-   * outcome @SCN-SSM-010 rules out.
-   *
-   * Derived from AST locations rather than from step positions, so docstrings, data tables and
-   * `Examples:` blocks are covered with no special case.
-   */
-  startLine: number;
-  /** The last line of this scenario's text — see `startLine`. 1-based, inclusive. */
-  endLine: number;
-  /**
-   * The scenario's NAME as the AST gives it (@SCN-STG-017, 3F-3609) — what the report names a
+   * The scenario's NAME as the AST gives it — what the report names a
    * scenario by when its code is carried by another too, since the account keyed by that code
    * cannot say which scenarios stand behind it.
    */
@@ -357,7 +330,7 @@ export interface TaggedScenario {
  * An UNPARSEABLE source never yields an empty corpus. Silently returning zero scenarios is the
  * precise shape of the false-green this tool exists to prevent: an empty debit side balances against
  * anything. The app refuses an unreadable feature file at the ingest edge long before this
- * (@SCN-CLI-016: exit 2, halting before any reconcile), so the throw is unreachable in a real run —
+ * (exit 2, halting before any reconcile), so the throw is unreachable in a real run —
  * it is the floor that keeps a future caller from re-opening the hole quietly.
  */
 function parseFeatureDocument(source: string): GherkinDocument {
@@ -372,63 +345,6 @@ function parseFeatureDocument(source: string): GherkinDocument {
         `rather than silently. Cause: ${message}`
     );
   }
-}
-
-/** A Gherkin block as the extent reading needs it: where it sits, and where its own tags sit. */
-interface LocatedBlock {
-  location: { line: number };
-  tags?: readonly { location: { line: number } }[];
-}
-
-/** A blank line, or one carrying only a `#` comment — what a block's extent is trimmed back over. */
-const BLANK_OR_COMMENT = /^\s*(?:#.*)?$/;
-
-/**
- * Where a Gherkin block STARTS: its first own tag line if it has one, else its keyword line. Own
- * tags only — a tag inherited from an enclosing `Rule:` or from the `Feature:` sits in another
- * block's text, and claiming it here would give two blocks the same lines.
- */
-function blockStart(block: LocatedBlock): number {
-  return Math.min(block.location.line, ...(block.tags ?? []).map((t) => t.location.line));
-}
-
-/**
- * Every block start in the document, ascending — the BOUNDARIES one block's text ends at. Untagged
- * scenarios count: a block's extent has to stop at the next block whether or not that block is one
- * anybody can name.
- */
-function collectBlockStarts(children: readonly FeatureChild[], starts: number[]): void {
-  for (const child of children) {
-    if (child.rule) {
-      starts.push(blockStart(child.rule));
-      collectBlockStarts(child.rule.children as FeatureChild[], starts);
-      continue;
-    }
-    if (child.background) starts.push(blockStart(child.background));
-    if (child.scenario) starts.push(blockStart(child.scenario));
-  }
-}
-
-/**
- * Every block start in the document, ASCENDING — the boundaries `blockEnd` measures against. Read
- * off the SAME parse the tags come from (@SCN-SSM-010): one Gherkin parse, two walks of its
- * children, never a second read of the source.
- */
-function documentBlockStarts(document: GherkinDocument): number[] {
-  const starts: number[] = [];
-  collectBlockStarts((document.feature?.children ?? []) as FeatureChild[], starts);
-  return starts.sort((a, b) => a - b);
-}
-
-/**
- * Where the block starting at `start` ENDS: the line before the next boundary, or EOF, trimmed back
- * over trailing blank and comment lines so the gap between two scenarios belongs to neither.
- */
-function blockEnd(start: number, starts: readonly number[], lines: readonly string[]): number {
-  const next = starts.find((boundary) => boundary > start);
-  let end = Math.min(next !== undefined ? next - 1 : lines.length, lines.length);
-  while (end > start && BLANK_OR_COMMENT.test(lines[end - 1] ?? "")) end -= 1;
-  return end;
 }
 
 /**
@@ -448,7 +364,7 @@ function blockEnd(start: number, starts: readonly number[], lines: readonly stri
  *   exactly what an author does with a tier shared by every scenario beneath — was INVISIBLE. The
  *   obligation was never RAISED, so its missing evidence could never reconcile `missing`, and the
  *   run read BALANCED (exit 0) while cucumber named a tier nothing proved. Unlike the corrupt-
- *   file false-green (3F-1767), this one fires on WELL-WRITTEN files — which makes it likelier.
+ *   file false-green, this one fires on WELL-WRITTEN files — which makes it likelier.
  *
  *   OVER-READ. Any non-tag line flushed the accumulated block, so a tag block above a `Rule:` was
  *   emitted AS IF it were a scenario. The corpus did not merely miss scenarios — it INVENTED them.
@@ -456,7 +372,7 @@ function blockEnd(start: number, starts: readonly number[], lines: readonly stri
  * EVERY tag inherits, `@SCN` included: parity with cucumber is the goal, and excluding one would
  * invent a rule cucumber does not have. A hoisted `@SCN` therefore gives every scenario beneath it
  * the same id — a corpus-authoring fault, but a VISIBLE one (whether it should red is a deferred
- * policy question, 3F-1774's sibling).
+ * policy question).
  *
  * An UNPARSEABLE source THROWS, from `parseFeatureDocument` — it never yields an empty corpus, for
  * the reason recorded there.
@@ -466,12 +382,10 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
 
   const tagged: TaggedScenario[] = [];
   // The parser tokenises, so no whitespace ever reaches `tag.name` and this was never a defect —
-  // it takes the shared reading anyway so the count of readings stays at one (@SCN-TRM-001).
+  // it takes the shared reading anyway so the count of readings stays at one.
   const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
 
   const featureTags = bare(document.feature?.tags ?? []);
-  const lines = source.split(/\r?\n/);
-  const starts = documentBlockStarts(document);
 
   const collect = (children: readonly FeatureChild[], inherited: string[]): void => {
     for (const child of children) {
@@ -490,14 +404,7 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
       const scnTag = effective.find((t) => SCN_CODE.test(t));
       if (scnTag === undefined) continue;
 
-      const startLine = blockStart(child.scenario);
-      tagged.push({
-        scnId: scnTag,
-        tags: effective,
-        startLine,
-        endLine: blockEnd(startLine, starts, lines),
-        name: child.scenario.name,
-      });
+      tagged.push({ scnId: scnTag, tags: effective, name: child.scenario.name });
     }
   };
 
@@ -507,14 +414,14 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
 }
 
 /**
- * Parse the SCENARIO CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
- * 3F-1775), the same parser cucumber uses. So the scenarios spec-controller reconciles carry
+ * Parse the SCENARIO CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST, the
+ * same parser cucumber uses. So the scenarios spec-controller reconciles carry
  * EXACTLY the tags cucumber gives them: one reading of the file, not two.
  *
  * The corpus walk is `parseTaggedScenarios`'; this is the OBLIGATION rule applied over it. An
  * unparseable source still THROWS from the walk rather than yielding an empty corpus.
  *
- * NO THIRD PARAMETER AT ALL, AND THAT IS THE POINT (3F-3561, 3F-3582). It was once the target's
+ * NO THIRD PARAMETER AT ALL, AND THAT IS THE POINT. It was once the target's
  * bare check tags — the one place a registered word could raise a fitness obligation — and then
  * the target's `specController.fitnessChecks` rows, which gated whether a `@fitness` scenario
  * raised one at all. Both are retired. A fitness obligation is raised by the `@fitness` tag and by

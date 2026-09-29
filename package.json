@@ -15,7 +15,6 @@
     "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
-    "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
     "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\""

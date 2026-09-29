@@ -1,13 +1,13 @@
 /**
- * @unit for @SCN-LDG-020 — the corpus walk, read directly.
+ * The corpus walk, read directly.
  *
- * Bidirectional evidence: the describe carries the @SCN-LDG-020 id matching features/ledger.feature
+ * Bidirectional evidence: the describe's bracketed id matches features/ledger.feature
  * and the @integration steps in tests/steps/ledger.steps.ts. The tag-INHERITANCE cases live with
  * the obligation rule in scenarios.test.ts; what is pinned here is the walk's own output, now that
  * a second corpus reader consumes it instead of re-deriving inheritance for itself.
  *
  * Its own file rather than a further block in scenarios.test.ts, which was at the file-length
- * ceiling then in force (retired portfolio-wide on 2026-09-18, 3F-2320); the walk's own output is
+ * ceiling then in force (retired portfolio-wide on 2026-09-18); the walk's own output is
  * a claim of its own in any case.
  */
 
@@ -15,8 +15,8 @@ import { describe, it, expect } from "vitest";
 import { parseTaggedScenarios, type TaggedScenario } from "./scenarios.js";
 
 /**
- * The TAG reading alone. A scenario's EXTENT rides on the same walk (@SCN-SSM-010) and is pinned by
- * that scenario's own arm; dropping it here keeps these rows asserting exactly what they are about.
+ * The TAG reading alone. A scenario's NAME rides on the same walk and is pinned by its own
+ * scenario's arms; dropping it here keeps these rows asserting exactly what they are about.
  */
 const tagReading = (scenarios: readonly TaggedScenario[]) =>
   scenarios.map(({ scnId, tags }) => ({ scnId, tags }));

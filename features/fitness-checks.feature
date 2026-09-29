@@ -35,7 +35,7 @@ Feature: The fitness checks this repository declares, one scenario per check
 
   THE TAG NAMES THE AXIS AND THE TITLE NAMES THE CHECK. Every scenario here carries `@fitness` and
   nothing else about its subject: what the check asserts is its title's to say, its `@SCN` is its
-  identity, and the command that settles it is the one its CI step runs (3F-3525).
+  identity, and the command that settles it is the one its CI step runs.
 
   AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
   outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so
@@ -54,7 +54,7 @@ Feature: The fitness checks this repository declares, one scenario per check
 
   NOTHING HERE STATES A BAR, AND NEITHER DOES THIS FILE. Every obligation is answered by its
   step's outcome: a check that measures something holds its own bar — Stryker's
-  `thresholds.break`, `timeout` around a suite — and fails its step below it (3F-3506). Whether
+  `thresholds.break`, `timeout` around a suite — and fails its step below it. Whether
   the step succeeded is the ledger's sentence, never this file's — a scenario comparing its own
   measurement would be grading its own homework.
 
@@ -82,12 +82,6 @@ Feature: The fitness checks this repository declares, one scenario per check
     And no domain module imports an adapter layer
     And no domain module is named for a procedural layer
     And no suppression directive that suppresses nothing survives the run
-
-  @fitness @SCN-FIT-010
-  Scenario: every scenario a change touches is named by a sub-issue of the ticket it is on
-    Given the scenarios this change touches, read from the diff and from the checked-out tree
-    When each is asked which tracked work-item carries it
-    Then every one of them is named by a sub-issue of the ticket the change is on
 
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks

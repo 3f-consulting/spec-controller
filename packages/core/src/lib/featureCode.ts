@@ -5,16 +5,16 @@
  * alphanumerics. This is the ONE engine-side owner of parsing the `<FFF>` off a bare
  * scenario id; the impure feature-file discovery (`discoverFeatures`) lives in
  * ingest/ingestScenarios.ts. The duplicate-code lint was product-side in
- * tests/checks/featureCodes.ts until 3F-3313 and is now @SCN-STG-010, one of `balance`'s scenario
- * code errors in parse/scenarioCodeErrors.ts (3F-3635).
+ * tests/checks/featureCodes.ts and is now one of `balance`'s scenario
+ * code errors in parse/scenarioCodeErrors.ts.
  *
- * Reused by the by-feature report grouping (@SCN-RPT-006).
+ * Reused by the by-feature report grouping.
  */
 
 /**
  * Parse the feature code (the `<FFF>`) from a bare scenario id of the form
  * `SCN-<FFF>-<NNN>` (no leading `@`). Returns null when the id is malformed — which no reader in
- * the tool now hands it, since every one reads by this same grammar (3F-3636). The
+ * the tool now hands it, since every one reads by this same grammar. The
  * single owner of `scnId → feature-code` parsing — callers reuse this rather than
  * re-deriving a regex (Evidence Manifesto §9A: a scenario id is `SCN-<FFF>-<NNN>`
  * where `<FFF>` is 2–5 uppercase alphanumerics).
@@ -28,11 +28,10 @@ export function featureCodeOf(scnId: string): string | null {
 const FEATURE_PART_SOURCE = "[A-Z0-9]{2,5}";
 
 /**
- * THE ONE @SCN GRAMMAR, as a `RegExp` source with no anchors (evidence-manifesto §9A, 3F-3636):
+ * THE ONE @SCN GRAMMAR, as a `RegExp` source with no anchors (evidence-manifesto §9A):
  * `SCN-<FFF>-<NNN>`, the feature part two to five characters, the number any width. Every reader
  * in the tree builds its pattern from this — the tag, the Vitest citation, the Cucumber tag, the CI
- * step id, the prose mention, and the repository's own sub-issue gate — adding only its own
- * anchors, sigil or brackets. Six copies of this answer are how the readers drifted from canon
+ * step id and the prose mention — adding only its own anchors, sigil or brackets. Six copies of this answer are how the readers drifted from canon
  * and from `featureCodeOf`, one character class at a time.
  */
 export const SCN_ID_SOURCE = `SCN-${FEATURE_PART_SOURCE}-\\d+`;

@@ -12,13 +12,10 @@
  * cross-reference, in comments, headers and ticket references, so accepting it in a title
  * would leave the false-citation class open on the form most likely to appear by accident.
  *
- * Before this module the two citation readers each carried their own sigil-OPTIONAL regex
- * — `/\bSCN-[A-Z0-9]+-\d+\b/` in parse/vitest.ts and `/@?(SCN-[A-Z0-9]+-\d+)/g` in
- * tests/checks/scnSubIssueGate.ts — so any SCN-shaped token anywhere in a title was a
- * citation whatever it was doing there. On the runtime side that minted a phantom scenario
- * from fixture data; on the static side it let a prose mention vouch for a changed test
- * block, a false green. Two copies of the answer is how they drifted from canon and from
- * each other, so there is one copy now and both import it (3F-2368).
+ * Before this module the citation readers each carried their own sigil-OPTIONAL regex, so
+ * any SCN-shaped token anywhere in a title was a citation whatever it was doing there, and
+ * the runtime reader minted a phantom scenario from fixture data. Two copies of the answer is
+ * how they drifted from canon and from each other, so there is one copy.
  */
 
 import { SCN_ID_SOURCE } from "./featureCode.js";
@@ -30,9 +27,6 @@ import { SCN_ID_SOURCE } from "./featureCode.js";
  */
 const SCN_CITATION = new RegExp(`\\[(${SCN_ID_SOURCE})\\]`);
 
-/** The same, globally, for callers reading every citation on a line. */
-const SCN_CITATIONS = new RegExp(`\\[(${SCN_ID_SOURCE})\\]`, "g");
-
 /**
  * The FIRST bracketed scenario id cited in `text`, as a bare code, or null when `text`
  * cites none. An SCN-shaped token without its brackets is prose and yields null.
@@ -42,11 +36,3 @@ export function parseScnCitation(text: string): string | null {
   return match ? match[1]! : null;
 }
 
-/**
- * EVERY bracketed scenario id cited in `text`, as bare codes, in document order and
- * de-duplicated. The multi-citation read the scn-subissue gate needs, where one
- * `describe` line may vouch for more than one scenario.
- */
-export function parseScnCitations(text: string): string[] {
-  return [...new Set([...text.matchAll(SCN_CITATIONS)].map((match) => match[1]!))];
-}

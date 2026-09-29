@@ -1,6 +1,5 @@
 /**
- * THE ROUTE AN ADOPTER TAKES — every arm that spawns spec-controller spawns the BUILT binary
- * (3F-3424, under 3F-3253).
+ * THE ROUTE AN ADOPTER TAKES — every arm that spawns spec-controller spawns the BUILT binary.
  *
  * WHAT MOVED. These arms used to spawn `node_modules/.bin/tsx packages/spec-controller/src/cli.ts`.
  * They now spawn `node packages/spec-controller/dist/cli.js` — the file `bin` points at. The
@@ -21,17 +20,13 @@
  * **0.18s**; `node packages/spec-controller/dist/cli.js` doing the same costs **0.07s**; a bare
  * `node -e` costs 0.03s. 89 spawns in this suite went through the `tsx` entry, so ~10s of the
  * local run was TypeScript-on-the-fly start-up the built artefact does not pay. That is CPU, and
- * CPU is the thing a 2-core `ubuntu-latest` is short of: `3F-3422` measured that `parallel` bought
+ * CPU is the thing a 2-core `ubuntu-latest` is short of: a measurement showed that `parallel` bought
  * almost nothing there BECAUSE the cores were already busy, `tsx`/`esbuild`/`tsc` being themselves
  * threaded. On a saturated machine the only lever left is removing work.
  *
  * WHAT THIS BUYS HAS A PRICE, AND THE PRICE IS THAT `dist` IS NOW A PREREQUISITE. See the guard
  * below — a silent pass over a stale `dist` is the worst outcome available here, and is worse than
  * the seconds are worth.
- *
- * NOT EVERY SPAWN IN THE SUITE MOVED. `tests/checks/*Cli.ts` — `lintScnSubIssuesCli` and the
- * mutation CLIs — pay `tsx` start-up, more per spawn; they have no build output today and
- * giving them one is its own piece of machinery, ruled out of 3F-3424's scope.
  */
 
 import { BeforeAll } from "@cucumber/cucumber";
@@ -94,7 +89,7 @@ function newestMtime(dir: string): number {
 
 /**
  * THE FRESHNESS GUARD — `dist` must exist and must be at least as new as `src`, or this run stops
- * here with the cure named (3F-3424).
+ * here with the cure named.
  *
  * WHY THERE IS A GUARD AT ALL. CI runs `pnpm build` before `Cucumber`, so that route into this
  * suite builds first. Somebody
@@ -103,13 +98,13 @@ function newestMtime(dir: string): number {
  * built from some earlier tree. A green over a stale artefact is a green about code nobody has.
  * That is the worst outcome available here and it is worse than the seconds this ticket bought.
  *
- * WHY IT IS A GUARD AND NOT A `BeforeAll` THAT BUILDS, WHICH IS THE OPTION 3F-3424 ASKED BE
+ * WHY IT IS A GUARD AND NOT A `BeforeAll` THAT BUILDS, WHICH IS THE OPTION ONCE ASKED TO BE
  * MEASURED. **`BeforeAll` runs once per WORKER, not once per run** — probed on this tree under
  * `cucumber.js`'s `parallel: 2`: two hooks, two distinct pids, 2ms apart. So a hook that ran
  * `pnpm -r build` would run it N times CONCURRENTLY, which is two `tsc` processes writing the same
- * `packages/<pkg>/dist` at the same instant. That is not an arrangement that RETIRES 3F-3423's
+ * `packages/<pkg>/dist` at the same instant. That is not an arrangement that RETIRES the measured
  * shared-build exposure — it is that exposure manufactured on purpose, with a 2ms gap where the
- * two builds 3F-3423 measured sit 1.8-4.9s apart. It would also rebuild on every local run and in
+ * two builds measured sit 1.8-4.9s apart. It would also rebuild on every local run and in
  * CI, where the tree was already built one step earlier. A `stat` walk costs nothing, cannot
  * collide with anything, and refuses instead of papering over.
  *

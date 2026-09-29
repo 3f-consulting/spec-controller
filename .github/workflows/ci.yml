@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-# THE LADDER READS ONE THING IT DOES NOT OWN (3F-2765, 3F-3483): the verdict of the nightly
+# THE LADDER READS ONE THING IT DOES NOT OWN: the verdict of the nightly
 # mutation sweep, which the `Mutation score` step lists off `mutation.yml`'s own runs.
 # `actions: read` is what lets it, and the block is written out rather than left to the
 # repository default so that a default tightened elsewhere cannot reach this ladder: without the
@@ -14,7 +14,7 @@ permissions:
   contents: read
   actions: read
 
-# ONE RUN PER REF, AND A SUPERSEDED PULL-REQUEST RUN IS CANCELLED (3F-3457). Measured over
+# ONE RUN PER REF, AND A SUPERSEDED PULL-REQUEST RUN IS CANCELLED. Measured over
 # 2026-09-01..16: 644 of this repository's 744 workflow runs were `CI | pull_request`, 2,330 of
 # 2,738 billed minutes. The driver is the NUMBER of runs, not the length of one — every push to a
 # branch with an open pull request started a full run, and the earlier one kept going.
@@ -27,7 +27,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# A RED ABORTS THIS JOB AND SKIPS EVERY STEP BEHIND IT — RULED, NOT OVERLOOKED (3F-3042).
+# A RED ABORTS THIS JOB AND SKIPS EVERY STEP BEHIND IT — RULED, NOT OVERLOOKED.
 # Measured over the 200 runs to 0ef9263: 72 failed, and every one of the 72 left at least one gate
 # unreached — a median of three, as many as sixteen. Not one failed run ever completed the
 # self-reconciliation: 55 never reached it, and the other 17 reached it and it was the red. This is
@@ -42,22 +42,20 @@ concurrency:
 #
 # WHAT IT COSTS IS ROUND-TRIPS. A red build names one failure where it could have named four.
 # `mutation.yml` used to make the same trade for the sweep, leaving its measurement upload unguarded
-# so that a sweep that died left no number worth reaching (3F-2957); that upload left with the
-# producer that wrote it (3F-3505). Splitting these steps into independent jobs buys N checkouts and
+# so that a sweep that died left no number worth reaching; that upload left with the
+# producer that wrote it. Splitting these steps into independent jobs buys N checkouts and
 # N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
 #
 # AND THE FITNESS CHECK STEPS BELOW CARRY `if: always()`, WHICH MAKES THE PREMISE STRONGER RATHER
-# THAN NEEDING AN EXCEPTION FROM IT (3F-3271, under 3F-3252). A condition is not one thing. The
+# THAN NEEDING AN EXCEPTION FROM IT. A condition is not one thing. The
 # condition that would falsify the paragraph above is a NARROWING one — a step that a green run
-# skips, so `success` stops meaning it ran, which is exactly what `Lint scenario sub-issue match`
-# used to do before 3F-3165 (it is @SCN-FIT-010 now, and the case its condition existed for is
-# answered by the check itself with a third ending, absorbed in that step's own `run:` line). `always()` is the opposite: the DEFAULT is
+# skips, so `success` stops meaning it ran. `always()` is the opposite: the DEFAULT is
 # `if: success()`, so `always()` WIDENS — the step runs on a green build and also on a build that
 # has already redded. There is no run in which an `always()` step is skipped and an unconditional
 # one is not. `success` still means every step in this job ran, and now a red run means more of
 # them ran too.
 #
-# WHAT IS DELIBERATELY REVERSED IS THE COST TRADE, AND ONLY FOR THE CHECK STEPS. 3F-3042's trade
+# WHAT IS DELIBERATELY REVERSED IS THE COST TRADE, AND ONLY FOR THE CHECK STEPS. The trade
 # above — a red names one failure where it could have named four — stands everywhere else in this
 # file. It is reversed for the fitness check steps because those steps are INDEPENDENT of one
 # another: eslint's red says nothing about typecheck's, so stopping at the first tells a reader
@@ -65,10 +63,10 @@ concurrency:
 # is the reason it is worth paying. A fitness row with no entry in the run record is BROKEN evidence
 # and stamps the run unsound, so without `always()` one early red would report one `failing` and
 # nine `broken` — a worse account from a correct mechanism. The exceptions are the two runners,
-# `Test` and `Cucumber`: each is a suite's run-time check (SCN-FIT-012, SCN-FIT-013) and that
+# `Test` and `Cucumber`: each is a suite's run-time check and that
 # suite's runner at once, and neither takes `always()`, because a runner must never run over a
 # failed `Build` — its red would be the build's, reported as the suite's. `Test` keeps the default.
-# `Cucumber` runs whenever `Test` ran, pass or fail (3F-3636): an unrelated suite's red is not a
+# `Cucumber` runs whenever `Test` ran, pass or fail: an unrelated suite's red is not a
 # reason to go unrecorded. Its condition WIDENS `success()` as `always()` does, so the premise above
 # holds — every run on which the default would run it, it runs — and it stops short of `always()`
 # at exactly the failed build, where `Test` never ran.
@@ -79,27 +77,27 @@ concurrency:
 # would have MANUFACTURED the invisibility it set out to close — the shared CI parse walked
 # `jobs -> steps -> run` and discarded every other key of the step, so a swallowed step read as
 # enforced and the ledger balanced it. Do not put it on a step or on this job. A derived local
-# green-check used to refuse the attribute outright over this file; it left at 3F-3475, and what
+# green-check used to refuse the attribute outright over this file; it has since left, and what
 # enforces the rule now is the product's own reconciliation of this repository — measured there by
-# planting `continue-on-error: true` on SCN-FIT-011, which came back as the watermelon ("passing
+# planting `continue-on-error: true` on the typecheck step, which came back as the watermelon ("passing
 # but fabricated") and took the run out of balance. The fence is the ledger's, not a check of ours.
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    # A BOUND ON A HUNG JOB, NOT A PERFORMANCE BAR (3F-3457). Measured over 2026-09-01..16: 720
+    # A BOUND ON A HUNG JOB, NOT A PERFORMANCE BAR. Measured over 2026-09-01..16: 720
     # runs, mean 3.1 min, max 7.4 min — and ~6.6 min once this ticket's 50s of mutation steps left.
     # Fifteen is about twice the measured max, so an ordinarily slow run never trips it.
     #
     # WHAT IT IS FOR IS THE SIX-HOUR DEFAULT IT REPLACES. With no timeout a wedged job burns six
     # hours of a 3,000-minute monthly allowance before GitHub stops it — one hang costs more than
-    # this whole ticket saves in a month. The repository's actual run-time gates are @SCN-FIT-012
-    # and @SCN-FIT-013, the `timeout 75` and `timeout 150` the `Test` and `Cucumber` steps run their
+    # this whole ticket saves in a month. The repository's actual run-time gates are the
+    # two run-time rows, the `timeout 75` and `timeout 150` the `Test` and `Cucumber` steps run their
     # suites under; this number is not one of them and must not be read as one.
     timeout-minutes: 15
     steps:
-      # EVERY `uses:` IN THIS REPOSITORY NAMES A COMMIT, AND THE TAG IS A COMMENT (3F-3445,
-      # @SCN-FIT-021). A tag is a pointer its owner can move, so `@v7` says nothing about what this
+      # EVERY `uses:` IN THIS REPOSITORY NAMES A COMMIT, AND THE TAG IS A COMMENT. A tag is a
+      # pointer its owner can move, so `@v7` says nothing about what this
       # runner will actually fetch tomorrow — the same three words can resolve to a different tree
       # on the next run, with no commit here and nothing to review. The audit step at the foot of
       # this ladder reports an unpinned `uses:` at its highest severity, and eight of them were what
@@ -111,15 +109,15 @@ jobs:
       # TO THE REMOTE AFTER THIS STEP. `actions/checkout` otherwise leaves the job's token in
       # `.git/config`, where every later step of this job can read it and anything a dependency of
       # this build starts can read it too. Every git command this ladder runs is local to the
-      # checkout — `git diff`, `git merge-base`, `git log`, `git show` in `lintScnSubIssuesCli.ts`
-      # — and `fetch-depth: 0` is exactly what makes them local: the history they need is already
+      # checkout — the `git merge-base` and `git diff` the complexity gate's changed-file set is
+      # read by — and `fetch-depth: 0` is exactly what makes them local: the history they need is already
       # on the disk. A step added later that fetches or pushes would fail loudly on a private
       # repository rather than quietly, which is the right way round.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Full history so the scenario sub-issue guard can diff HEAD against
-          # the PR base ref (github.event.pull_request.base.sha). The default
-          # shallow checkout would not contain the base commit.
+          # Full history so the complexity gate's changed-file set can diff against
+          # the merge base with the PR base ref. The default shallow checkout would
+          # not contain the base commit.
           fetch-depth: 0
           persist-credentials: false
 
@@ -130,7 +128,7 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      # WHERE THIS RUN'S EVIDENCE LIVES, RESOLVED ONCE FOR EVERY STEP BELOW (3F-3099).
+      # WHERE THIS RUN'S EVIDENCE LIVES, RESOLVED ONCE FOR EVERY STEP BELOW.
       #
       # spec-controller used to write its own output into its own source tree, and three pieces of
       # apparatus existed only because it did — a `.gitignore` block, a hygiene check, and that
@@ -151,26 +149,26 @@ jobs:
       # AND IT SURVIVES BETWEEN THOSE STEPS BECAUSE THIS WORKFLOW STATES EXACTLY ONE JOB — verified
       # against the API rather than read off the indentation. One job is one runner filesystem.
       # Split it in two and the suites' reports stop reaching the read, which `balance` reds as a
-      # supplied-but-absent path (@SCN-CLI-002). The split that used to red NOTHING was the sweep
+      # supplied-but-absent path. The split that used to red NOTHING was the sweep
       # record a placement step carried across, which read as a lapsed nightly; it left with that
-      # step (3F-3504), and no check on this file's SHAPE was ever added for it, because that is
-      # exactly the control surface 3F-3099 exists to remove.
+      # step, and no check on this file's SHAPE was ever added for it, because that is
+      # exactly the control surface this pipeline exists to remove.
       #
       # IT IS NOT A CHECK, AND THE PRODUCT'S OWN DISCOVERY IS TOLD SO RATHER THAN LEFT TO GUESS.
       # Every `run:` step of this file is a candidate fitness check; this one is excused by name in
       # `specController.notChecks`, which is the one place that excuse is written. A derived local
-      # green-check used to have to be reasoned about here as well; it left at 3F-3475.
+      # green-check used to have to be reasoned about here as well; it has since left.
       - name: Resolve the evidence root
         run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # BUILT SO THE PUBLISHED SURFACE IS COMPILED ON A PULL REQUEST AT ALL (3F-2765). Nothing else
+      # BUILT SO THE PUBLISHED SURFACE IS COMPILED ON A PULL REQUEST AT ALL. Nothing else
       # in this ladder reads the built form, so before this step existed a `tsc -p` failure in
       # either package's build config reached main and was found by whoever next ran `pnpm build`.
       # That is now the whole of this step's reason, and the `pnpm rebuild` that used to follow it
-      # is gone with the other half (3F-2841): the bins existed for a measurement action that
+      # is gone with the other half: the bins existed for a measurement action that
       # reached its CLI by name, and this workflow calls no such action any more.
       # `build` carries no observed prefix and is not among the static checks package.json names,
       # so it joins the local ladder (which is derived from this file) without joining the ledger
@@ -182,10 +180,10 @@ jobs:
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # It lands under the job's evidence root, on the runner's own disk, because a
       # reconciliation report enumerates this codebase's gaps and is this run's OUTPUT — writing
-      # it into the source tree it is about is the defect 3F-3099 closes. The default reporter is
+      # it into the source tree it is about is a defect. The default reporter is
       # kept alongside so a failure is still readable in the log rather than only in JSON.
       #
-      # AND IT IS SCN-FIT-012'S CHECK AS WELL AS THE UNIT RUNNER, WHICH IS WHY IT CARRIES `timeout`
+      # AND IT IS THE UNIT RUN-TIME ROW'S CHECK AS WELL AS THE UNIT RUNNER, WHICH IS WHY IT CARRIES `timeout`
       # AND AN `id:`. The row's bar is the limit this step runs the suite under, in seconds: past it
       # GNU `timeout` exits 124, the step's `outcome` is `failure`, and the dump below carries that
       # to `balance` under this `id:`, which is the row's `@SCN`. No `if: always()`: a runner keeps
@@ -197,12 +195,12 @@ jobs:
       # STEP 2 — the observed @integration / @e2e stream. `--format json:` adds a
       # file formatter; the progress formatter stays on stdout.
       #
-      # AND IT IS SCN-FIT-013'S CHECK AS WELL AS THE BEHAVIOURAL RUNNER, for the reason `Test` is
-      # SCN-FIT-012's: the row's bar is the limit this step runs the suite under, in seconds; past
+      # AND IT IS THE BEHAVIOURAL RUN-TIME ROW'S CHECK AS WELL AS THE BEHAVIOURAL RUNNER, for the
+      # reason `Test` is the unit row's: the row's bar is the limit this step runs the suite under, in seconds; past
       # it GNU `timeout` exits 124, the step's `outcome` is `failure`, and the dump below carries
       # that to `balance` under this `id:`.
       #
-      # IT RUNS WHENEVER `Test` RAN, PASS OR FAIL (3F-3636). Under the default, a unit red skipped
+      # IT RUNS WHENEVER `Test` RAN, PASS OR FAIL. Under the default, a unit red skipped
       # this step, so a behavioural red that arrived with it was attested only locally — the CI log
       # held nothing for it. The condition reads `Test`'s own outcome rather than `always()`: a
       # failed `Build` leaves `Test` skipped, and a runner over a build that did not happen reports
@@ -213,11 +211,11 @@ jobs:
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
         run: timeout 150 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
-      # STEP 2b — THE FITNESS ROWS, AS ONE CI STEP EACH THAT CITES THEM (3F-3271, under
-      # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
+      # STEP 2b — THE FITNESS ROWS, AS ONE CI STEP EACH THAT CITES THEM (the second
+      # cucumber call they replaced is deleted).
       #
-      # THERE USED TO BE A `Cucumber (fitness)` STEP HERE, and what it did is now done by these
-      # ten. It was a SECOND cucumber call over its own profile: it ran every converted check's
+      # THERE USED TO BE A `Cucumber (fitness)` STEP HERE, and what it did is now done by the
+      # steps below. It was a SECOND cucumber call over its own profile: it ran every converted check's
       # command and wrote a report the ledger read as their credit stream. That is a second evidence
       # stream manufactured beside one that already existed — the run record this job's own dump
       # step writes — so it went with the pass.
@@ -254,13 +252,13 @@ jobs:
       # READABILITY. Each of these steps runs the handle — `pnpm lint:boundaries`, not
       # `pnpm exec depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages`,
       # which would run the identical check. Nothing reads the two spellings against each other any
-      # more (3F-3582 retired the manifest list), so keeping them the same is what makes that reading
+      # more (the manifest list is retired), so keeping them the same is what makes that reading
       # possible. Where the pipeline genuinely needs a different spelling it says so at the step, as
       # `Complexity` does for `pnpm exec`.
       #
       # THE SECOND REASON WAS MECHANICAL AND HAS GONE. A derived local green-check took its gate
       # list from the `run:` steps of this file that invoked a package.json script, so a step spelt
-      # around the handle silently dropped out of it. That derivation was deleted at 3F-3475, and
+      # around the handle silently dropped out of it. That derivation is deleted, and
       # nothing mechanical now notices the difference — which is stated here rather than left for a
       # reader to discover by changing one.
       - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
@@ -276,36 +274,13 @@ jobs:
         if: always()
         run: pnpm lint:boundaries
 
-      # THE THREE KEYS ARE THIS STEP'S OWN, AND THEY ARE THE ONLY COPY. `Cucumber (fitness)` used
-      # to carry the same block because the pass ran this check too; the pass is gone and this is
-      # what the check runs under. Without them it runs over an empty pull-request context, answers
-      # "I examined nothing" on every build, and is credited as having run — a check that stopped
-      # checking looks identical to a green. They are named on the STEP because `jobs.<id>.env`
-      # cannot reach the `github` context's pull_request fields on a push.
-      - name: Scenario sub-issue match
-        id: SCN-FIT-010
-        if: always()
-        env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-        # THE THIRD ENDING IS ABSORBED HERE, IN OUR OWN `run:` LINE, AND THAT IS THE WHOLE OF IT
-        # (3F-3252). This check answers "no pull request, so nothing to diff" with exit 3 rather
-        # than by skipping the step. A step record carries a STATUS and no exit code, so nothing
-        # downstream can tell that 3 from a real failure — and a row that DECLARED the code could
-        # only be read for whether it was named, which would forgive every skip and hatch a
-        # switched-off check into a green ledger. So the ledger learns nothing about endings, and
-        # exit 3 becomes an honest `success` the runner records. Change the code here and in
-        # `scnSubIssueGate.ts`'s NOT_EXAMINED_EXIT_CODE together; they are one decision.
-        run: pnpm lint:scn-subissues || [ $? -eq 3 ]
-
       - name: Typecheck
         id: SCN-FIT-011
         if: always()
         run: pnpm typecheck
 
       # `--pack pnpm` IS FIDELITY, NOT THE CHECK — AND THIS COMMENT CLAIMED THE OPPOSITE FOR TWO
-      # COMMITS (3F-3440, corrected after 3F-3443 measured it). It read "`--pack pnpm` IS THE WHOLE
+      # COMMITS, until a measurement corrected it. It read "`--pack pnpm` IS THE WHOLE
       # CHECK": pnpm's pack applies `publishConfig` wholesale and npm's does not, so pointed npm's
       # way the linter would answer about the WORKSPACE map and its green would be true of a
       # document the registry never sees.
@@ -330,7 +305,7 @@ jobs:
         if: always()
         run: pnpm lint:publint
 
-      # THE PACKER IS THE CHECK HERE, AND THE WRONG ONE GIVES A RED THAT MEANS NOTHING (3F-3443).
+      # THE PACKER IS THE CHECK HERE, AND THE WRONG ONE GIVES A RED THAT MEANS NOTHING.
       # `attw`'s own `--pack` runs `npm pack`, which does not apply `publishConfig` — so pointed at
       # the workspace directory it answers about `"." : "./src/index.ts"` and an `./internal`
       # subpath the published package does not have, and reports 💀 on every resolution. That red
@@ -339,7 +314,7 @@ jobs:
       # verified by reading the manifest back out of the .tgz — and hands attw the TARBALL, which is
       # also the artefact `release.yml` actually stages.
       #
-      # AND THE PACKER RULE DOES NOT GENERALISE TO THE STEP ABOVE (3F-3442). `publint` reads
+      # AND THE PACKER RULE DOES NOT GENERALISE TO THE STEP ABOVE. `publint` reads
       # `publishConfig` itself whichever packer it is given, so there the flag is fidelity. `attw`
       # 0.18.5 reads only the manifest in front of it. The rule is per-tool; do not carry either
       # half across.
@@ -355,7 +330,7 @@ jobs:
         run: pnpm lint:published-types
 
       # THE FIRST CHECK IN THIS FILE THAT IS NOT A COMMAND, AND THE `id:` IS WHAT KEEPS IT ON THE
-      # BOOKS (3F-3444, @SCN-USG-013). A `uses:` step states no command at all, so discovery names
+      # BOOKS. A `uses:` step states no command at all, so discovery names
       # it by the identity GitHub displays — this step's `name:` — and has no manifest handle to
       # reach a row through. The `id:` is the citation and the only one available to an action
       # step: without it this step is a candidate fitness check nothing cites, posts to the
@@ -364,7 +339,7 @@ jobs:
       # AND IT GETS NO `package.json` HANDLE MINTED FOR IT. The tool ships no Node entry point to
       # hang one on, and a handle invented so that an action step could be counted alongside `run:`
       # ones would be a convention invented to satisfy an arithmetic. (A derived local green-check
-      # used to do that counting; it left at 3F-3475, so there is not even an arithmetic now.)
+      # used to do that counting; it has since left, so there is not even an arithmetic now.)
       #
       # THE DOCKER IMAGE IS THE TOOL'S OWN DOCUMENTED FORM, PINNED TO AN EXACT VERSION. The npm
       # package spelled `actionlint` is a third-party wasm wrapper on an unrelated version line and
@@ -380,7 +355,7 @@ jobs:
         if: always()
         uses: docker://rhysd/actionlint:1.7.12
 
-      # THE AUDIT THIS FILE IS ITSELF A SUBJECT OF (3F-3445, @SCN-FIT-021). `actionlint` above asks
+      # THE AUDIT THIS FILE IS ITSELF A SUBJECT OF. `actionlint` above asks
       # whether Actions can RUN these three files; this asks whether running them is safe. Fifteen
       # findings answered "not entirely" the first time it read them, and they were cleared rather
       # than filtered: eight `uses:` references pinned to commits, `persist-credentials: false` on
@@ -389,7 +364,7 @@ jobs:
       # it changed.
       #
       # THE MAINTAINERS' OWN ACTION, WITH `advanced-security: false`, AND THE CONFIGURATION IS THE
-      # WHOLE OF WHY (3F-3445, operator ruling 2026-09-16). The action's DEFAULT is
+      # WHOLE OF WHY (operator ruling 2026-09-16). The action's DEFAULT is
       # `advanced-security: true`, which switches zizmor to SARIF and uploads the result to code
       # scanning; this repository is private with no Advanced Security, so the default is a step
       # that runs, finds, and leaves the job green — the watermelon this product exists to name.
@@ -453,13 +428,13 @@ jobs:
           advanced-security: false
           online-audits: false
 
-      # THE MUTATION ROW IS ANSWERED BY THE NIGHTLY SWEEP'S OWN VERDICT, NOT BY A NUMBER (3F-3483,
-      # proven in 3F-3484). A sweep costs 8-12 minutes against this ladder's ~2, so it runs nightly in
+      # THE MUTATION ROW IS ANSWERED BY THE NIGHTLY SWEEP'S OWN VERDICT, NOT BY A NUMBER. A
+      # sweep costs 8-12 minutes against this ladder's ~2, so it runs nightly in
       # `mutation.yml`, and Stryker ends that run in failure when the score falls below the break
       # threshold its own config states. This step asks stock `gh` for the newest completed
       # `mutation.yml` run on `main` created inside the last 26 hours, and passes only if that run
-      # concluded `success`. Like every row since 3F-3506, it names no bar, so the ledger reads it as
-      # it reads SCN-FIT-001: this step's outcome is the evidence, and no code of ours
+      # concluded `success`. Like every row, it names no bar, so the ledger reads it as
+      # it reads the complexity row: this step's outcome is the evidence, and no code of ours
       # stands between the sweep and the books. `--branch main` is the branch this ladder gates, so a
       # hand-dispatched sweep of another branch is never the one read.
       #
@@ -478,7 +453,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$(date -u -d '26 hours ago' +%FT%TZ)" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
 
-      # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER (3F-3252).
+      # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER.
       #
       # `outcome` IS PRE-`continue-on-error`; `conclusion` IS POST. A step marked
       # `continue-on-error: true` that actually failed reports `conclusion: success`, so a reader
@@ -512,7 +487,7 @@ jobs:
           printf 'step record: %s bytes, %s step(s) with an id:\n' \
             "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
 
-      # STEP 3 — THE SELF-RECONCILIATION GATE (3F-2351). spec-controller's
+      # STEP 3 — THE SELF-RECONCILIATION GATE. spec-controller's
       # own tree, put through spec-controller: the evidence obligations raised in features/
       # reconciled against the two streams above plus this file and package.json, with the
       # build depending on the verdict.
@@ -523,7 +498,7 @@ jobs:
       # and no step ever ran it, so that defect class had to be found twice by accident,
       # here. A report nobody is obliged to read is not a check.
       #
-      # It EXITS on the verdict rather than printing one (@SCN-CLI-004 / 3F-1414: 0
+      # It EXITS on the verdict rather than printing one (0
       # balanced, 1 out-of-balance, 2 usage). Report mode was the pre-agreed first rung and
       # is deliberately not where this stops: a step that exits 0 regardless is the
       # watermelon it exists to detect.
@@ -531,33 +506,33 @@ jobs:
       # It runs AFTER both suites because it consumes their output — a gate over reports
       # that were never emitted reports every obligation unobserved, which means "the suite
       # did not run", not "the code is wrong", so the CLI reds a supplied-but-absent
-      # `--vitest` or `--cucumber` as a usage fault (exit 2, @SCN-CLI-002) instead of
+      # `--vitest` or `--cucumber` as a usage fault (exit 2) instead of
       # dressing it as a verdict. That rule is the product's own and is asserted where it
       # lives; nothing here restates it.
       #
-      # IT IS NOT ON THE LEDGER IT COMPUTES, AND THE HANDLE IS HOW (3F-3113). This step used
+      # IT IS NOT ON THE LEDGER IT COMPUTES, AND THE HANDLE IS HOW. This step used
       # to carry a `lint:` prefix, cited by a stepless fitness scenario, so the run
       # that produced the ledger also posted a row asserting that ledger balanced — a second
       # arbiter for a fact that already has one, this step's own exit code. The scenario and
       # its registry entry are retired, and the handle moved OUT of the observed set to match:
       # runningStaticChecks observes a `package.json` script as a running static check only
       # when its name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step
-      # invokes it, and this command invokes no manifest script at all (3F-3476). Given one,
+      # invokes it, and this command invokes no manifest script at all. Given one,
       # spelled `lint:`, this step would cite nothing, post to the suspense row, and red on itself.
       #
-      # AND IT IS THE PRODUCT'S OWN BINARY, INVOKED THE WAY AN ADOPTER INVOKES IT (3F-3293).
+      # AND IT IS THE PRODUCT'S OWN BINARY, INVOKED THE WAY AN ADOPTER INVOKES IT.
       # It used to be a wrapper — a repository-local script, 325 lines of TypeScript resolving
       # seven scan surfaces before handing the argv on. No adopter can write that and none should,
       # so the exemplar stopped teaching it: the surfaces are flags on this line, `spec-controller`
       # is the pinned published binary and nothing else, and what this repository dogfoods is the
       # command a consumer types. The wrapper's evidence-report precondition went with it, because
-      # the CLI already holds that rule (@SCN-CLI-002) and a second implementation one level up is
+      # the CLI already holds that rule and a second implementation one level up is
       # the shape this repository keeps deleting.
       #
       # THE ONE OPTIONAL EVIDENCE FLAG IS PASSED ONLY WHERE THE FILE EXISTS, AND THAT CONDITIONAL
       # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--ci-steps` path the CLI is handed and cannot
       # find is a usage fault to it and exits 2 — the wrong verdict. Absent, the run reconciles as it
-      # did before there was a record (@SCN-LNT-027): a row whose step discovery reads as a check is
+      # did before there was a record: a row whose step discovery reads as a check is
       # credited from this file's text, a runner's row reconciles `missing`, and the run is out of
       # balance rather than unsound. `ci-steps.json` is written by the dump step above, so a
       # developer's machine never has one and a local run must not be called broken over it. The
@@ -565,11 +540,11 @@ jobs:
       #
       # THERE USED TO BE TWO. A `--measurements` expansion beside this one passed the credit stream
       # a row's own command wrote, and the one writer of that file was the mutation row's reader,
-      # which left with the placement it read (3F-3504). An expansion over a file nothing writes can
+      # which left with the placement it read. An expansion over a file nothing writes can
       # never fire, so it went too.
       #
       # ONE LINE, AND NO `package.json` SCRIPT BEHIND IT. Nothing here is discovered from a script
-      # name: 3F-3476 deleted the root `spec-controller` script and this command still reconciles.
+      # name: the root `spec-controller` script is deleted and this command still reconciles.
       # `reconcilerSteps` recognises this step by comparing `spec-controller balance` — the
       # invocation `ingest/ingestQualityChecks.ts` injects — as WHOLE ADJACENT shell tokens against
       # the command, following manifest scripts where a step invokes one and matching the command
@@ -578,7 +553,7 @@ jobs:
       #
       # THE ONE-LINE PART USED TO BE ENFORCED AND IS NOW A CONVENTION WITH ONE REMAINING STAKE.
       # A derived local green-check reported a multi-line `run:` as `unsupported` and redded
-      # outright; it left at 3F-3475, and the engine's own walk reads a multi-line block scalar on
+      # outright; it has since left, and the engine's own walk reads a multi-line block scalar on
       # purpose. What still depends on this being one line is `.github/actionlint.yaml`, whose
       # SC2046 suppression is pinned to one character column of this very command — move it and
       # that pattern stops matching and the gate REDS, which is the intended behaviour and is
