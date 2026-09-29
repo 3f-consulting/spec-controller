@@ -7,20 +7,6 @@
     "lint:gamma": "anemic-domain"
   },
   "specController": {
-    "notChecks": ["ci.yml:quality:Checkout"],
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CVT-001",
-        "command": "pnpm lint:alpha"
-      },
-      {
-        "scn": "SCN-CVT-002",
-        "command": "pnpm lint:beta"
-      },
-      {
-        "scn": "SCN-CVT-003",
-        "command": "pnpm lint:gamma"
-      }
-    ]
+    "notChecks": ["ci.yml:quality:Checkout"]
   }
 }

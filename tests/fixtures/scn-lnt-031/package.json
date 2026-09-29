@@ -6,16 +6,6 @@
     "lint:beta": "scn-subissues"
   },
   "specController": {
-    "notChecks": ["ci.yml:quality:Checkout"],
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CVT-001",
-        "command": "pnpm lint:alpha"
-      },
-      {
-        "scn": "SCN-CVT-002",
-        "command": "pnpm lint:beta"
-      }
-    ]
+    "notChecks": ["ci.yml:quality:Checkout"]
   }
 }

@@ -2,12 +2,12 @@
 Feature: a target's fitness corpus, whose one check found violations on the run recorded beside it
 
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
-  --features. The scenario carries the bare fitness axis tag and its own @SCN, and a row of that
-  repository's specController.fitnessChecks names it.
+  --features. The scenario carries the bare fitness axis tag and its own @SCN, and that
+  repository's CI states the @SCN as the `id:` of the step that runs its check.
 
   THE CHECK IS A BARE COMMAND AND NOT ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than
   load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is answered for its CONFIGURED
-  rows by that record, so the derivation reader does not credit them a second time (3F-3360).
+  rows by that record, so the derivation reader does not credit them a second time.
   Until the membership rule inverted, the isolation was the prefix set's accident — a command
   that is not a script matched no prefix — and an accident is not a guarantee.
 

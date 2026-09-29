@@ -4,16 +4,5 @@
   "scripts": {
     "build": "tsc"
   },
-  "specController": {
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CVT-001",
-        "command": "eslint"
-      },
-      {
-        "scn": "SCN-CVT-003",
-        "command": "mutation-score"
-      }
-    ]
-  }
+  "specController": {}
 }

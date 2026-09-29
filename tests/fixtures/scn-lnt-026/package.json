@@ -5,24 +5,6 @@
     "build": "tsc"
   },
   "specController": {
-    "notChecks": ["ci.yml:quality:Checkout"],
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CVT-001",
-        "command": "eslint"
-      },
-      {
-        "scn": "SCN-CVT-002",
-        "command": "scn-subissues"
-      },
-      {
-        "scn": "SCN-CVT-003",
-        "command": "jscpd"
-      },
-      {
-        "scn": "SCN-CVT-004",
-        "command": "doc-audit"
-      }
-    ]
+    "notChecks": ["ci.yml:quality:Checkout"]
   }
 }

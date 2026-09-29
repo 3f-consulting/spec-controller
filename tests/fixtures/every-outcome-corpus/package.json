@@ -6,12 +6,6 @@
     "test": "vitest run"
   },
   "specController": {
-    "fitnessChecks": [
-      {
-        "scn": "SCN-TOC-004",
-        "command": "pnpm guard:wm"
-      }
-    ],
     "runners": {
       "unit": "vitest"
     },

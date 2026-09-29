@@ -3,12 +3,6 @@
     "guard:cell-grid": "echo cell-grid-guard"
   },
   "specController": {
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CEL-001",
-        "command": "pnpm guard:cell-grid"
-      }
-    ],
     "notChecks": [
       "ci.yml:ci:pnpm install --frozen-lockfile"
     ]

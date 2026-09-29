@@ -5,19 +5,17 @@ Feature: a fixture target whose static check runs in a sibling workflow
   pipeline: ci.yml runs the suites and no static check at all, while nightly.yml runs
   lint:nightly on a schedule — the ordinary layout a slow gate ends up in.
 
-  The target CITES that check: its own specController.fitnessChecks configures one row —
-  SCN-TGS-001 — and the lint:nightly step in nightly.yml carries
-  that row's code as its own `id:`. So the running-check observer reads the citation
+  The target CITES that check: the lint:nightly step in nightly.yml carries the code of its
+  `@fitness` scenario as its own `id:`. So the running-check observer reads the citation
   directly off the step, under the @SCN the row names rather than the
   handle that ran. The point is that the cited set and the running set agree once every
   workflow is read. Read ci.yml alone and they disagree, and the disagreement is scored
   against the target: lint:nightly reports as a watermelon, a real gate called fabricated.
 
-  A CONFIGURED ROW AND A CODED STEP ARE TWO FACTS, and this fixture holds both
-  deliberately. Leaving the step uncoded would take the citation away for a second reason
-  — a step naming no row reaches nothing either — and the target could then go on passing
-  under a reader that never asked whether anything CITED the check. Holding both leaves the
-  workflow split as the only thing this scenario turns on.
+  THE STEP IS CODED DELIBERATELY. Leaving it uncoded would take the citation away for a
+  second reason — a step naming no scenario reaches nothing either — and the target could
+  then go on passing under a reader that never asked whether anything CITED the check.
+  Coding it leaves the workflow split as the only thing this scenario turns on.
 
   NO TIER TAG ON THE ROW, WHICH IS WHAT KEEPS THIS TARGET BALANCED. Every other @USG fixture
   is deliberately out of balance and reads exit 1; this one is asserted to exit 0, so the

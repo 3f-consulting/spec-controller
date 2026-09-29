@@ -4,10 +4,9 @@ Feature: a fixture target citing the check its CI runs, under no convention of o
   A FIXTURE target (NOT under features/) standing in for a codebase whose scripts are named the
   way its own team names them — domain-purity, carrying neither lint: nor guard: nor any other
   prefix this tool has ever recognised — and whose CI step carries the code of the row it
-  answers. This target's own specController.fitnessChecks configures one row — SCN-TGD-001,
-  for domain-purity's scenario — and the domain-purity step's `id:` states that row's code
-  directly, so the running-check observer reads the citation off the step and the credit posts
-  to SCN-TGD-001 rather than to suspense.
+  answers. The domain-purity step's `id:` states the code of domain-purity's `@fitness`
+  scenario directly, so the running-check observer reads the citation off the step and the
+  credit posts to that scenario rather than to suspense.
 
   ONE FACT APART FROM usg-guard, WHICH STILL ANSWERS THROUGH THE REGISTRY (this ticket's own
   sibling owns that fixture). The two targets' ci.yml and package.json are no longer

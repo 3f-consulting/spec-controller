@@ -5,12 +5,6 @@
     "test": "vitest run"
   },
   "specController": {
-    "fitnessChecks": [
-      {
-        "scn": "SCN-HCV-001",
-        "command": "eslint"
-      }
-    ],
     "runners": {
       "unit": "vitest"
     }

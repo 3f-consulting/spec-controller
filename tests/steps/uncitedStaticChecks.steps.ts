@@ -1,20 +1,18 @@
 /**
- * @SCN-USG-001 step defs — the uncited-static-check @integration arm.
+ * The uncited-static-check @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
- * test + cucumber; the target configures ONE fitnessChecks row for lint:foo and its
- * lint:foo step carries that row's code as its own `id:`) and asserts the persisted
+ * test + cucumber; its lint:foo step carries the code of the target's one `@fitness`
+ * scenario as its own `id:`) and asserts the persisted
  * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
  * uncited static check — proving the citedRow → runningStaticChecks → reconcile →
  * staticObservationTally → render → disk wiring over real files, not an in-memory
  * re-run (the anti-watermelon rule).
  *
  * WHAT MAKES A CHECK UNCITED HERE IS THE CITATION SEAM, not a lookup against an @lint=
- * spelling: lint:bar reaches no @SCN because its step carries no `id:` and no configured
- * row answers it, so its credit cites no scenario and lands on the suspense row. lint:foo
- * carrying an `id:` and lint:bar carrying none is what isolates that — a step whose `id:`
- * named no configured row would land in the same place for a reason the retired rule
- * could also produce.
- * // @SCN-USG-001
+ * spelling: lint:bar reaches no @SCN because its step carries no `id:`, so its credit
+ * cites no scenario and lands on the suspense row. lint:foo carrying an `id:` and lint:bar
+ * carrying none is what isolates that — a step whose `id:` named no scenario would land in
+ * the same place for a reason the retired rule could also produce.
  */
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
@@ -36,10 +34,9 @@ const USG_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg/package.json",
 };
 
-// @SCN-USG-004 — a second fixture target whose CI runs a script under NO convention of ours
-// (domain-purity) that its own registry maps to the bare check domain-purity and its corpus
-// carries nowhere. Distinct from USG_FIXTURE so the exact counts USG-001/002/003 assert over
-// that target stay intact.
+// A second fixture target whose CI runs a script under NO convention of ours
+// (domain-purity) that no step `id:` and no scenario of its corpus cites. Distinct from
+// USG_FIXTURE so the exact counts the usg scenarios assert over that target stay intact.
 //
 // ITS MANIFEST NAMES ITS RUNNERS AND ITS INSTALL STEP, because under the inverted rule those
 // steps are candidates like any other and a target that has configured nothing reports four uncited checks
@@ -52,10 +49,10 @@ const USG_GUARD_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-guard/package.json",
 };
 
-// @SCN-USG-005 — a third fixture target whose corpus CARRIES a configured row for the check
-// USG_GUARD_FIXTURE's own CI script runs (domain-purity), and whose CI step states that row's
-// code as its own `id:`. USG_GUARD_FIXTURE still answers through the registry (a sibling
-// sub-issue's fixture); the pair isolates the citation as the thing moving the verdict, and a
+// A third fixture target whose corpus CARRIES a `@fitness` scenario for the check
+// USG_GUARD_FIXTURE's own CI script runs (domain-purity), and whose CI step states that
+// scenario's code as its own `id:`. USG_GUARD_FIXTURE's step states none; the pair isolates
+// the citation as the thing moving the verdict, and a
 // second difference nobody meant has nowhere to drift in. The counts stay separable — here 1 run,
 // 0 uncited; there 1 run, 1 uncited — because the citation is what separates them.
 const USG_GUARD_NAMED_FIXTURE: UsgFixture = {
@@ -64,10 +61,10 @@ const USG_GUARD_NAMED_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-guard-named/package.json",
 };
 
-// @SCN-USG-006 — a fourth fixture target whose pipeline is SPLIT: ci.yml runs the suites and
-// no static check, nightly.yml runs lint:nightly, and the target CITES lint:nightly — its
-// specController.fitnessChecks configures one row for it and the lint:nightly step in
-// nightly.yml states that row's code as its own `id:`. Its `ci` is a DIRECTORY, which is what
+// A fourth fixture target whose pipeline is SPLIT: ci.yml runs the suites and
+// no static check, nightly.yml runs lint:nightly, and the target CITES lint:nightly — the
+// lint:nightly step in nightly.yml states its `@fitness` scenario's code as its own `id:`.
+// Its `ci` is a DIRECTORY, which is what
 // makes it distinct from the three above — every one of those supplies a single file, so none
 // of them can tell whether the reader is reading one source or many. Kept under workflows/
 // rather than .github/workflows/ so the fixture pins a directory rather than GitHub's layout.
@@ -83,36 +80,29 @@ let activeFixture: UsgFixture;
 let activeDir: string;
 let activeMd: string;
 
-// The SECOND target's tmp dir + report (@SCN-USG-016), which reads two targets in one scenario:
+// The SECOND target's tmp dir + report, for the scenario that reads two targets at once:
 // a tier stated to have no runner and a tier never named are one claim, and a single-target
 // reading of either half is satisfied by the reader that collapses them.
 let secondDir: string;
 let secondMd: string;
 
-// The vocabulary transition is complete: @SCN-USG-001, @SCN-USG-002 and (as of 3F-2294)
-// @SCN-USG-003 all say "checks", so the Cucumber-expression alternation ("guards/checks")
-// that spanned the flip has been dropped — this is plain step text again. (@SCN-USG-004 /
-// @SCN-USG-005 drive their own Givens over their own fixtures and never used it.)
 Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
   activeFixture = USG_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
 
-// @SCN-USG-001
-// @SCN-USG-002
 //
-// ONE PREMISE SHARED BY THE PAIR, which is the point rather than a saving. @SCN-USG-002 is
-// @SCN-USG-001's control over this same target, and a control is only one if the two runs
+// ONE PREMISE SHARED BY THE PAIR, which is the point rather than a saving. The attributed
+// scenario is the uncited one's control over this same target, and a control is only one if the two runs
 // differ in nothing: giving each its own sentence would let the two premises drift apart and
 // leave neither scenario able to say the citation was the thing that moved the verdict.
 Given("only lint:foo is cited by a fitness scenario", function () {
-  // The fixture configures ONE fitnessChecks row (SCN-TGT-001) and only
-  // the lint:foo step carries that row's code as its own `id:` — lint:bar's step carries none.
+  // Only the lint:foo step carries the code of the target's one `@fitness` scenario as its own
+  // `id:` — lint:bar's step carries none.
   // So the running-check observer reads lint:foo's citation off the step and reaches nothing
   // for lint:bar — the uncited static check.
 });
 
-// @SCN-USG-003
 //
 // THE PREMISE THIS SCENARIO IS ABOUT, said out loud rather than left to the fixture's own
 // comment. tests/fixtures/usg/ci.yml runs `pnpm test` and `pnpm cucumber` beside the two checks
@@ -120,7 +110,6 @@ Given("only lint:foo is cited by a fitness scenario", function () {
 // a scenario asserting "not test or cucumber" over a target that never ran them asserts nothing.
 Given("its CI also runs the test and cucumber suites", function () {});
 
-// @SCN-USG-003
 //
 // AND WHAT TAKES THOSE TWO STEPS OUT — the fact the exclusion now rests on, and the one this
 // Update added. tests/fixtures/usg/package.json names vitest for the unit tier and cucumber-js
@@ -132,13 +121,11 @@ Given("its CI also runs the test and cucumber suites", function () {});
 // a fixture that stopped naming them would not leave this premise merely unstated — it would
 // leave it visibly false in the artefact the Then reads.
 //
-// IT MOVES NO VERDICT YET, AND THE SCENARIO SAYS SO HONESTLY. Discovery still finds a check by
-// its script prefix, so these two steps were never counted and this Given cannot be what keeps
-// them out until 3F-3360 inverts the membership rule. Writing it now is what stops that switch
-// redding this scenario as collateral — the premise is in place before the mechanism needs it.
+// WHAT KEEPS THOSE SUITES OFF THE BOOKS IS THIS NAMING. Discovery reads every step that is not a
+// runner the manifest names, so a fixture that stopped naming them would put its test and
+// cucumber steps on the static-check axis.
 Given("its manifest names the unit and integration runners those suites run", function () {});
 
-// @SCN-USG-004
 Given(
   "a target whose CI runs the domain-purity script, a name matching no convention of ours",
   function () {
@@ -150,7 +137,6 @@ Given(
   }
 );
 
-// @SCN-USG-004
 Given("no fitness scenario cites domain-purity", function () {
   // The usg-guard fixture registers domain-purity → the bare check domain-purity, and its
   // target.feature carries no scenario tagged with that check. So the seam resolves the tag
@@ -159,7 +145,6 @@ Given("no fitness scenario cites domain-purity", function () {
   // separating this target from its cited twin.
 });
 
-// @SCN-USG-005
 Given("a target whose CI runs the domain-purity script under no convention of ours", function () {
   // The SAME script the twin's Given picks, in a target whose corpus configures a row for it
   // and whose CI step states that row's code. Two Givens rather than one shared step because
@@ -168,19 +153,17 @@ Given("a target whose CI runs the domain-purity script under no convention of ou
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg005-"));
 });
 
-// @SCN-USG-005
 Given("a fitness scenario cites domain-purity", function () {
-  // The usg-guard-named fixture configures one fitnessChecks row for domain-purity
-  // (SCN-TGD-001), and its CI step carries that row's code as its own `id:`. So the
-  // running-check observer reads the citation off the step, and the handle CI runs is
-  // attributed to that row instead of folding onto suspense. Coded-and-configured is the shape
-  // only the one posting rule can produce, and it is one `id:` apart from its uncited twin.
+  // The usg-guard-named fixture's domain-purity step carries the code of its `@fitness`
+  // scenario as its own `id:`. So the running-check observer reads the citation off the step,
+  // and the handle CI runs is attributed to that scenario instead of folding onto suspense. It
+  // is one `id:` apart from its uncited twin.
 });
 
 /**
  * Drive the REAL CLI over ONE fixture target in one tmp dir, and return the report it wrote.
  *
- * Extracted from the shared When below when @SCN-USG-016 arrived needing TWO targets read in one
+ * Extracted from the shared When below for the scenario that reads TWO targets in one
  * scenario — a tier stated to have no runner and a tier never named, whose reports carry the claim
  * only side by side. One body rather than two, so the pair cannot come to be driven differently:
  * a control read through a second code path is not a control.
@@ -203,10 +186,8 @@ function renderReportFor(fixture: UsgFixture, dir: string): string {
     encoding: "utf8",
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
-  // out-of-balance fixture (an uncited static-check in the suspense row) exits 1 —
-  // the report is still written IN FULL first. Pure exit-expectation flip 0->1; every
-  // rendered-content assertion is unchanged.
+  // An out-of-balance fixture (an uncited static-check in the suspense row) exits 1, and
+  // the report is still written IN FULL first.
   assert.equal(
     result.status,
     1,
@@ -265,7 +246,7 @@ function behaviouralRunnerRows(md: string): string[] {
  * Every line of the report's `### Behavioural runners` section, the recognised-runner table
  * included — the one slice both cuts of that section are read from.
  *
- * Extracted from `behaviouralRunnerRows` at @SCN-USG-016, which reads the OTHER cut: what the
+ * Extracted from `behaviouralRunnerRows` for the two-target scenario, which reads the OTHER cut: what the
  * report says about the tiers it recognised nothing at. Two readers slicing the section for
  * themselves would be two chances to scope it differently, and the scoping is the part that was
  * already measured wrong once — `### Test volume` opens its rows with a tier name too.
@@ -277,7 +258,7 @@ function behaviouralRunnersSectionLines(md: string): string[] {
 /**
  * Every line of ONE `###` section of the report, from its heading to the next one.
  *
- * The scoping rule itself, stated once. @SCN-USG-015 reads a second section the same way, and two
+ * The scoping rule itself, stated once. The consumer's-own-list scenario reads a second section the same way, and two
  * readers each slicing the report for themselves would be two chances to get the scoping wrong —
  * which is the part already measured wrong once, when a whole-report scan for a row opening with a
  * tier name answered a question about `### Test volume`.
@@ -293,7 +274,7 @@ function reportSectionLines(md: string, heading: string): string[] {
 /**
  * The `### Behavioural runners` lines that are NOT the recognised-runner table — the account of
  * the tiers no runner was recognised for, which is where a stated absence and a silence are told
- * apart (@SCN-USG-016).
+ * apart.
  */
 function behaviouralRunnerAccountLines(md: string): string[] {
   return behaviouralRunnersSectionLines(md).filter((line) => line.startsWith("- "));
@@ -346,16 +327,15 @@ Then(
   }
 );
 
-// @SCN-USG-004 — a CI script under no convention of ours (domain-purity) that no fitness scenario
+// A CI script under no convention of ours (domain-purity) that no fitness scenario
 // cites surfaces as an uncited static check. NOTHING FOUND IT BY ITS NAME: it is discovered
 // because it is a step the manifest named neither a runner nor a non-check, which is the whole of
 // the inverted rule. The citation seam is what left it uncited — the registry resolves the handle
 // to the bare check domain-purity and the corpus carries that tag nowhere, so the credit cites
 // nothing. It lands on the suspense row under the `fitness` quality-check — that value names the
-// fitness axis (canon's name for it since 3F-3525), and never a script convention.
+// fitness axis, and never a script convention.
 // `domain-purity` itself is a CI script NAME — a value the derivation matches on, not vocabulary —
-// so the handle is deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns
-// script names).
+// so the handle is deliberately untouched by the static-check rename.
 Then(
   "the Static checks section reports domain-purity as an uncited static check",
   function () {
@@ -372,7 +352,7 @@ Then(
         `here, because this target's script matches no convention of ours. Got:\n${activeMd}`
     );
 
-    // THE LANDING, ROW-SCOPED — the same reading @SCN-USG-001 gives the lint:-prefixed case.
+    // THE LANDING, ROW-SCOPED — the same reading the lint:-prefixed case gets.
     // "Posts to suspense" is a claim about WHERE the credit went, and a whole-report `includes`
     // cannot tell the suspense row from any other row that happens to carry the handle.
     const cells = ledgerRowCells(activeMd, "(no scenario)");
@@ -401,10 +381,10 @@ Then(
   }
 );
 
-// @SCN-USG-002 — the CITED check is attributed, not an uncited static check. Same target as
-// @SCN-USG-001, one fact apart: lint:foo's CI step carries the code of the configured row
-// (SCN-TGT-001) as its `id:`, and lint:bar's step carries none. So lint:foo must reach that
-// row and fold into the running volume, while its twin lands in suspense.
+// The CITED check is attributed, not an uncited static check. Same target as the uncited
+// scenario, one fact apart: lint:foo's CI step carries the code of the target's `@fitness`
+// scenario as its `id:`, and lint:bar's step carries none. So lint:foo must reach that
+// scenario's row and fold into the running volume, while its twin lands in suspense.
 Then(
   "lint:foo is attributed to the scenario citing it, not reported uncited",
   function () {
@@ -431,18 +411,17 @@ Then(
   }
 );
 
-// @SCN-USG-005 — the CITED script under no convention of ours is attributed, not an uncited
-// static check. The usg-guard-named fixture runs domain-purity in CI, configures one row for it
-// (SCN-TGD-001), and the domain-purity step's `id:` states that
-// row's code directly. So the running-check observer reads the citation off the step, and the
-// credit arrives carrying @SCN-TGD-001 and posts there.
+// The CITED script under no convention of ours is attributed, not an uncited
+// static check. The usg-guard-named fixture runs domain-purity in CI, and the domain-purity
+// step's `id:` states its `@fitness` scenario's code directly. So the running-check observer
+// reads the citation off the step, and the credit arrives carrying that code and posts there.
 //
 // THIS ARM IS NOT DISCOVERY'S READER, and the comment says so because the pair invites the
-// opposite assumption. Its twin @SCN-USG-004 reaches the axis through DISCOVERY, which since
-// 3F-3343 reads every step that is not a runner the manifest names, the reconciler, or a step the
+// opposite assumption. Its uncited twin reaches the axis through DISCOVERY, which reads every
+// step that is not a runner the manifest names, the reconciler, or a step the
 // consumer named a non-check. The plant that used to state the asymmetry — narrow the prefix set
-// to ["lint:"] (3F-2579) — has no prefix set left to narrow; narrowing DISCOVERY is what plays its
-// part, and it was run rather than reasoned (3F-3362): adding this target's own step to its
+// to ["lint:"] — has no prefix set left to narrow; narrowing DISCOVERY is what plays its
+// part, and it was run rather than reasoned: adding this target's own step to its
 // notChecks reds the twin's Then and leaves this one green.
 //
 // AND THE SPELLING CANNOT BE WHAT DECIDES, which the pair now shows rather than argues. This
@@ -451,13 +430,12 @@ Then(
 // is the citation each carries, which is the one posting rule.
 //
 // That handle itself is a CI script NAME — a value the derivation matches on, not
-// vocabulary — so it is deliberately untouched by the static-check rename (3F-1929; 3F-1852
-// owns script names).
+// vocabulary — so it is deliberately untouched by the static-check rename.
 Then(
   "domain-purity is attributed to the scenario citing it, not reported uncited",
   function () {
     // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row, on the terms
-    // @SCN-USG-002 reads its own cited twin. The fitness cut names the @SCN its step's `id:`
+    // the lint:foo case reads its own cited twin. The fitness cut names the @SCN its step's `id:`
     // names, satisfied; that line is not readable from a negative.
     assert.ok(
       activeMd.includes(
@@ -480,7 +458,7 @@ Then(
   }
 );
 
-// @SCN-USG-003 — test and cucumber CI steps are not candidate fitness checks, because the
+// Test and cucumber CI steps are not candidate fitness checks, because the
 // manifest names their runners. The usg fixture's ci.yml runs pnpm test + pnpm cucumber beside
 // the two checks, its package.json names vitest for unit and cucumber-js for integration, and
 // its test and cucumber scripts run exactly those — so both steps are this target's behavioural
@@ -489,7 +467,7 @@ Then(
   "only lint:foo and lint:bar are counted as fitness checks, not test or cucumber",
   function () {
     // THE TALLY IS THE TRIPWIRE, AND IT IS THE ONE THAT COVERS EVERY WAY IN. Measured by plant
-    // (3F-2578): registering `test` to the bare tag lint:foo already cites admits it through
+    // registering `test` to the bare tag lint:foo already cites admits it through
     // observedCheckHandles, and the ONLY reader-visible trace is this line moving 2 -> 3 — the
     // credit is attributed, so it never reaches suspense, and it raises no obligation, so it
     // never reaches the `### Fitness evidence obligations` cut either. A count is the whole of what
@@ -511,16 +489,14 @@ Then(
 );
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-006 — the split pipeline. Its own When, because this target is expected to
+// The split pipeline. Its own When, because this target is expected to
 // reconcile BALANCED (exit 0) once the reader sees both workflows, where every other
 // @USG fixture is deliberately out-of-balance; and because the exit code must be read
 // rather than asserted at that point, so the red lands on the Then with a message.
 // ---------------------------------------------------------------------------
 
-// @SCN-USG-006
 let siblingStatus: number | null;
 
-// @SCN-USG-006
 Given(
   "a target whose ci.yml runs no static check and whose nightly.yml runs lint:nightly",
   function () {
@@ -529,15 +505,13 @@ Given(
   },
 );
 
-// @SCN-USG-006
 Given("a fitness scenario cites lint:nightly", function () {
-  // The usg-sibling fixture registers lint:nightly → the bare check nightly, and its
-  // target.feature carries that tag on the stepless @SCN-TGS-001. So the seam resolves the
-  // handle to a scenario, and the script it resolves for is invoked in nightly.yml and
-  // nowhere in ci.yml — which is the whole of what separates this target from a watermelon.
+  // The usg-sibling fixture's lint:nightly step, in nightly.yml, carries the code of its
+  // stepless `@fitness` scenario as its own `id:`. So the seam reaches a scenario, and the
+  // step that cites it runs in nightly.yml and nowhere in ci.yml — which is the whole of what
+  // separates this target from a watermelon.
 });
 
-// @SCN-USG-006
 When(
   "the reconciliation report is rendered over the target's workflow directory",
   function () {
@@ -567,7 +541,7 @@ When(
   },
 );
 
-// @SCN-USG-007 — the credit-side mirror of the fixture above: the SAME split pipeline, but
+// The credit-side mirror of the fixture above: the SAME split pipeline, but
 // nothing cites the check nightly.yml runs. Its manifest registers lint:sweep → the bare check
 // sweep and its corpus carries that tag nowhere, so the seam is ASKED and answers nothing.
 // Separate from USG_SIBLING_FIXTURE because an uncited check folds a suspense row on, and that
@@ -578,7 +552,6 @@ const USG_SIBLING_UNCITED_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-sibling-uncited/package.json",
 };
 
-// @SCN-USG-007
 Given(
   "a target whose nightly.yml runs lint:sweep and whose ci.yml does not",
   function () {
@@ -587,7 +560,6 @@ Given(
   },
 );
 
-// @SCN-USG-007
 Given("no fitness scenario cites lint:sweep", function () {
   // The usg-sibling-uncited fixture registers lint:sweep → the bare check sweep, and its
   // target.feature carries no scenario tagged with that check. So the seam resolves the tag
@@ -596,7 +568,6 @@ Given("no fitness scenario cites lint:sweep", function () {
   // the only fact separating this target from its cited twin usg-sibling.
 });
 
-// @SCN-USG-007
 Then(
   "the Static checks section reports lint:sweep as an uncited static check",
   function () {
@@ -612,7 +583,7 @@ Then(
         `be made to go away without fixing anything. Got:\n${activeMd}`,
     );
 
-    // THE LANDING, ROW-SCOPED — the reading @SCN-USG-001 and @SCN-USG-004 give their own
+    // THE LANDING, ROW-SCOPED — the reading the two single-file uncited cases give their own
     // targets. "Posts to suspense" is a claim about WHERE the credit went, and a whole-report
     // `includes` cannot tell the suspense row from any other row carrying the handle.
     const cells = ledgerRowCells(activeMd, "(no scenario)");
@@ -649,11 +620,10 @@ Then(
   },
 );
 
-// @SCN-USG-008 — the control. Same tree as @SCN-USG-007; only the invocation differs, which
+// The control. Same tree as the credit-side mirror above; only the invocation differs, which
 // is the point: the widened default and the surviving narrowing are one flag apart.
-// @SCN-USG-008
 When("the reconciliation report is rendered for that target's ci.yml alone", function () {
-  // Deliberately NOT sharing @SCN-USG-006's When by extracting a helper: that step block
+  // Deliberately NOT sharing the split pipeline's When by extracting a helper: that step block
   // is another scenario's evidence, and reshaping it to serve this one would put a
   // parameter between that scenario and its own proof.
   const repoRoot = process.cwd();
@@ -676,16 +646,13 @@ When("the reconciliation report is rendered for that target's ci.yml alone", fun
   activeMd = readFileSync(reportPath, "utf8");
 });
 
-// @SCN-USG-008
 Then("lint:sweep is not counted among the running static checks", function () {
   // ONE DOOR NOW, WHERE THERE USED TO BE TWO. Widening ciSourcePathsOf so a file resolves to
   // its parent directory's workflows reads nightly.yml, and DISCOVERY finds lint:sweep there —
   // that is the door this arm still guards. A SECOND door — the manifest's own registry,
   // opened in `observedCheckHandles` so every registered handle was asked about regardless of
-  // carriage — used to reach lint:sweep without reading nightly.yml at all; this fixture's
-  // checkRegistry entry was kept for @SCN-USG-007's registered-but-uncarried shape (3F-2582)
-  // and doubled as that second door's guard. The registry route it opened retired whole
-  // (3F-3395), taking `observedCheckHandles` with it, so there is no second door left for this
+  // carriage — used to reach lint:sweep without reading nightly.yml at all. The registry
+  // route retired whole, taking `observedCheckHandles` with it, so there is no second door left for this
   // arm to guard against — the single remaining reading is discovery, scoped to the named file.
   assert.ok(
     activeMd.includes("0 static check(s) run, 0 uncited static check(s)"),
@@ -699,12 +666,11 @@ Then("lint:sweep is not counted among the running static checks", function () {
   );
 });
 
-// @SCN-USG-006
 Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
   function () {
     // THE ROW, BY ITS @SCN. The run holds the handle lint:nightly; the step's own `id:` is what
-    // joins it to the row — stating SCN-TGS-001 directly — so the fitness cut names SCN-TGS-001,
+    // joins it to the row — stating the scenario's code directly — so the fitness cut names that code,
     // satisfied. The handle names no row, which is why the retired name-match rule cannot
     // settle this obligation at all.
     assert.ok(
@@ -737,7 +703,7 @@ Then(
 );
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-011 — the BEHAVIOURAL RUNNER, recognised through the manifest. Its own fixture
+// The BEHAVIOURAL RUNNER, recognised through the manifest. Its own fixture
 // because every other @USG target is here to be DISCOVERED, and this one is here to be
 // recognised as the thing discovery is not about: sharing a target would leave the two
 // readings' fixtures free to answer for each other.
@@ -754,7 +720,6 @@ const USG_RUNNERS_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-runners/package.json",
 };
 
-// @SCN-USG-011
 Given("a target that names vitest its unit runner and runs pnpm test in CI", function () {
   activeFixture = USG_RUNNERS_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg011-"));
@@ -769,7 +734,6 @@ Given("a target that names vitest its unit runner and runs pnpm test in CI", fun
   );
 });
 
-// @SCN-USG-011
 Then(
   "the report names vitest the unit runner, recognised at the step that runs it",
   function () {
@@ -810,7 +774,7 @@ Then(
 );
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-012 — THE RULE'S TEETH over the whole reader. Its own fixture, because the two
+// THE RULE'S TEETH over the whole reader. Its own fixture, because the two
 // steps have to sit in ONE pipeline for the claim to mean anything: the check that names the
 // runner out of position and the suite step that runs it, read together.
 //
@@ -824,7 +788,6 @@ const USG_OUT_OF_POSITION_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-runner-out-of-position/package.json",
 };
 
-// @SCN-USG-012
 Given(
   "a target that names vitest its unit runner, runs its unit suite, and runs a check whose command writes a report named after that runner",
   function () {
@@ -852,7 +815,6 @@ Given(
   },
 );
 
-// @SCN-USG-012
 Then(
   "the report names the unit suite step its runner and no other, and the check is on the books as an uncited static check",
   function () {
@@ -884,7 +846,7 @@ Then(
 );
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-016 — A STATED ABSENCE AND A SILENCE, READ SIDE BY SIDE. Two fixture targets, and
+// A STATED ABSENCE AND A SILENCE, READ SIDE BY SIDE. Two fixture targets, and
 // the pair is the scenario: usg-runner-none's manifest says `"performance": null` and
 // usg-runner-unnamed's carries no performance key, and NOTHING ELSE about the two targets
 // differs. Their corpora and workflows are byte-identical and their scripts are the same, which
@@ -907,7 +869,6 @@ const USG_RUNNER_UNNAMED_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-runner-unnamed/package.json",
 };
 
-// @SCN-USG-016
 Given("a target that says it has no performance runner", function () {
   activeFixture = USG_RUNNER_NONE_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg016-none-"));
@@ -923,7 +884,6 @@ Given("a target that says it has no performance runner", function () {
   );
 });
 
-// @SCN-USG-016
 Given("a second target, alike but for saying nothing about performance", function () {
   secondDir = mkdtempSync(join(tmpdir(), "spec-controller-usg016-unnamed-"));
   const runners = runnersBlockOf(USG_RUNNER_UNNAMED_FIXTURE);
@@ -972,13 +932,11 @@ function runnersBlockOf(fixture: UsgFixture): Record<string, unknown> {
   return specController["runners"] as Record<string, unknown>;
 }
 
-// @SCN-USG-016
 When("the reconciliation report is rendered for both targets", function () {
   activeMd = renderReportFor(activeFixture, activeDir);
   secondMd = renderReportFor(USG_RUNNER_UNNAMED_FIXTURE, secondDir);
 });
 
-// @SCN-USG-016
 Then("the first target's report says it has no performance runner", function () {
   // THE RECOGNITION IS UNTOUCHED, first. A null in the block must not cost the target the tier it
   // DID name: a reader that threw on the null, or matched it against a command, either reports
@@ -1002,7 +960,6 @@ Then("the first target's report says it has no performance runner", function () 
   );
 });
 
-// @SCN-USG-016
 Then("the second target's report says its performance runner is unnamed", function () {
   assert.deepEqual(
     behaviouralRunnerAccountLines(secondMd),
@@ -1037,7 +994,7 @@ Then("the second target's report says its performance runner is unnamed", functi
 });
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-019 — THE KEY SET'S CLOSURE. Its own fixture, and the fixture's whole shape is that
+// THE KEY SET'S CLOSURE. Its own fixture, and the fixture's whole shape is that
 // the bogus key is NOT inert: `"lint": "eslint"` sits beside `"unit": "vitest"`, and the
 // pipeline runs `pnpm lint:rules` whose script body is `eslint`. A reader honouring any key
 // resolves that step through the manifest exactly as it resolves the unit suite's, and takes a
@@ -1062,7 +1019,6 @@ const USG_NOT_A_TIER_FIXTURE: UsgFixture = {
  */
 const CANON_TIERS = ["unit", "integration", "e2e", "performance"] as const;
 
-// @SCN-USG-019
 Given("a target whose runner block names a key that is not one of the four tiers", function () {
   activeFixture = USG_NOT_A_TIER_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg019-"));
@@ -1084,7 +1040,6 @@ Given("a target whose runner block names a key that is not one of the four tiers
   );
 });
 
-// @SCN-USG-019
 Given("that key names the command of a check its CI runs", function () {
   // THE KEY IS NOT INERT, and that is the difference between this scenario and a typo. `eslint`
   // is reachable from the `Rule check` step through the manifest hop, so a reader honouring the
@@ -1106,7 +1061,6 @@ Given("that key names the command of a check its CI runs", function () {
   );
 });
 
-// @SCN-USG-019
 Then("the report names that key as one it does not recognise", function () {
   // THE WHOLE ACCOUNT, not one line of it. A reader that says this of every key, or that says it
   // while ALSO honouring the key, satisfies an `includes`; only the set rules both out.
@@ -1134,7 +1088,6 @@ Then("the report names that key as one it does not recognise", function () {
   );
 });
 
-// @SCN-USG-019
 Then("the check is on the books as an uncited static check", function () {
   // THE PRESENCE THAT MAKES THE ABSENCE MEAN SOMETHING, and the reason the run is not aborted:
   // an unrecognised key costs the target nothing but a line on the report it can correct from.
@@ -1150,7 +1103,7 @@ Then("the check is on the books as an uncited static check", function () {
 });
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-015 — THE CONSUMER'S OWN LIST. Its own fixture, and its shape is a pair plus a stale
+// THE CONSUMER'S OWN LIST. Its own fixture, and its shape is a pair plus a stale
 // line: `Rule check` is named a non-check and must leave the books, `Sweep check` is named by
 // nothing and must stay on them, and `Circular-import check` is the Sweep check's old name — an
 // entry that now hides nothing at all.
@@ -1181,7 +1134,6 @@ function excludedStepLines(md: string): string[] {
   return reportSectionLines(md, "### Excluded steps").filter((line) => line.startsWith("- "));
 }
 
-// @SCN-USG-015
 Given("a target that names one check step of its pipeline a non-check", function () {
   activeFixture = USG_NOT_CHECKS_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg015-"));
@@ -1210,7 +1162,6 @@ Given("a target that names one check step of its pipeline a non-check", function
   );
 });
 
-// @SCN-USG-015
 Given("a sibling check step no entry of its names", function () {
   const workflow = workflowOf(USG_NOT_CHECKS_FIXTURE);
   assert.ok(
@@ -1225,7 +1176,6 @@ Given("a sibling check step no entry of its names", function () {
   );
 });
 
-// @SCN-USG-015
 Given("an entry that names no step its pipeline runs", function () {
   const entries = notChecksOf(USG_NOT_CHECKS_FIXTURE);
   const stale = entries[1];
@@ -1247,14 +1197,13 @@ Given("an entry that names no step its pipeline runs", function () {
   );
 });
 
-// @SCN-USG-015
 Then(
   "the report names the excluded step, and its check is off the books while the sibling's is on them",
   function () {
     // THE STEP IS NAMED. The set of excluded lines rather than one of them, because a reader that
     // named every step it read would satisfy an `includes` while excluding the control too.
     //
-    // TWO LINES SINCE THE MEMBERSHIP RULE INVERTED (@SCN-USG-004). The pipeline's install step is
+    // TWO LINES SINCE THE MEMBERSHIP RULE INVERTED. The pipeline's install step is
     // a candidate like any other now, so this target names it a non-check beside the check step it
     // was already naming — and the report accounts for both. The scenario's subject is the CHECK
     // step; the plumbing line is here because leaving it off would mean deleting the plumbing from
@@ -1287,7 +1236,6 @@ Then(
   },
 );
 
-// @SCN-USG-015
 Then("the report names the entry that matched no step", function () {
   // THE WHOLE SECTION, in order: the entry that matched a step and the entry that matched none,
   // each said differently. A reader printing one sentence for both has not told them apart, and a
@@ -1305,14 +1253,14 @@ Then("the report names the entry that matched no step", function () {
   );
 });
 
-// @SCN-USG-014 — THE RECONCILER, WHICH NOBODY CONFIGURES. Its own fixture, and the fixture's whole
+// THE RECONCILER, WHICH NOBODY CONFIGURES. Its own fixture, and the fixture's whole
 // shape is what its manifest does NOT contain: there is no `specController` block in it at all, so
 // nothing the consumer wrote can be doing the excluding. A pair of `notChecks` entries produces
 // this same report over this same pipeline, and the state in which the two answers differ is the
 // one every consumer's first run is in — nothing written.
 //
 // BOTH RECONCILER STEPS CARRY A PREFIX TODAY'S RULE ALREADY DISCOVERS, for the reason
-// @SCN-USG-015's do: only a lint:-prefixed script a run: step invokes reaches the books right now,
+// the consumer's-own-list scenario's do: only a lint:-prefixed script a run: step invokes reaches the books right now,
 // so a reconciler the current reader never saw could not be watched leaving them.
 // ---------------------------------------------------------------------------
 const USG_RECONCILER_FIXTURE: UsgFixture = {
@@ -1331,7 +1279,6 @@ function scriptsOf(fixture: UsgFixture): Record<string, string> {
   return manifestOf(fixture)["scripts"] as Record<string, string>;
 }
 
-// @SCN-USG-014
 Given(
   "a target whose pipeline runs the reconciliation and dumps the step record it reads",
   function () {
@@ -1368,7 +1315,6 @@ Given(
   },
 );
 
-// @SCN-USG-014
 Given("a manifest that says nothing about either step", function () {
   // THE WHOLE DISTINCTION, ASSERTED RATHER THAN INTENDED. A `notChecks` pair would produce the
   // same report over this same pipeline, so if the fixture ever grew one this scenario would go on
@@ -1382,7 +1328,6 @@ Given("a manifest that says nothing about either step", function () {
   );
 });
 
-// @SCN-USG-014
 Given("an ordinary check step of the same pipeline", function () {
   const workflow = workflowOf(USG_RECONCILER_FIXTURE);
   assert.ok(
@@ -1392,7 +1337,6 @@ Given("an ordinary check step of the same pipeline", function () {
   );
 });
 
-// @SCN-USG-014
 Then(
   "the report accounts for both steps as the reconciler, and neither is on the books while the ordinary check is",
   function () {
@@ -1431,7 +1375,6 @@ Then(
   },
 );
 
-// @SCN-USG-014
 Then("the report names nothing the target excluded", function () {
   // THE DISCRIMINATOR. By construction and by configuration produce the same books, and this is
   // the one line of the report that tells them apart: the consumer's own exclusion section is what
@@ -1444,7 +1387,7 @@ Then("the report names nothing the target excluded", function () {
   );
 });
 
-// @SCN-USG-013 — A QUALITY CHECK THAT IS AN ACTION. Its own fixture, and its whole shape is one
+// A QUALITY CHECK THAT IS AN ACTION. Its own fixture, and its whole shape is one
 // action step beside one command check. The action is the subject: it invokes no script of the
 // target's, so no handle can be read out of a command it does not have and nothing about a name
 // can reach it — what puts it on the books is that it is a STEP. The command check is the control,
@@ -1466,7 +1409,6 @@ function suspenseRowCredits(md: string): string {
   return cells[cells.length - 2] ?? "";
 }
 
-// @SCN-USG-013
 Given(
   "a target whose pipeline runs a quality check as an action rather than a command",
   function () {
@@ -1494,7 +1436,6 @@ Given(
   },
 );
 
-// @SCN-USG-013
 Given("a check step of the same pipeline that runs a command", function () {
   const workflow = workflowOf(USG_ACTION_FIXTURE);
   assert.ok(
@@ -1521,7 +1462,6 @@ Given("a check step of the same pipeline that runs a command", function () {
   );
 });
 
-// @SCN-USG-013
 Then(
   "the report posts the action to the suspense row, named by the action reference it uses",
   function () {
@@ -1553,7 +1493,6 @@ Then(
   },
 );
 
-// @SCN-USG-013
 Then("the command check is on the books beside it", function () {
   // TWO, NOT ONE AND NOT NONE. One says the reader found the command check and dropped the action,
   // or found the action and dropped the command check; none says it is blind.
@@ -1574,16 +1513,16 @@ Then("the command check is on the books beside it", function () {
 
 After({ tags: "@USG" }, function () {
   if (activeDir && existsSync(activeDir)) rmSync(activeDir, { recursive: true, force: true });
-  // @SCN-USG-016 reads a SECOND target in the same scenario; its dir is cleaned on the same hook.
+  // The two-target scenario reads a SECOND target; its dir is cleaned on the same hook.
   if (secondDir && existsSync(secondDir)) rmSync(secondDir, { recursive: true, force: true });
 });
 
-// @SCN-USG-017 — THE new-client STATE, which is what the free rung is sold on. Its own fixture,
+// THE new-client STATE, which is what the free rung is sold on. Its own fixture,
 // and the whole of what makes it one is that the manifest says NOTHING: no runners, no non-checks,
 // no static checks, no registry. So no step of its pipeline is taken out of discovery by anything,
 // and the report is the promise the product makes — every check the pipeline ran, listed.
 //
-// ITS OWN When, for the reason @SCN-USG-006's is its own: this scenario ASSERTS the exit code
+// ITS OWN When, for the reason the split pipeline's is its own: this scenario ASSERTS the exit code
 // rather than taking it as a precondition of being handed a report, so the status has to be read
 // and carried to a Then where a red can say what it was.
 // ---------------------------------------------------------------------------
@@ -1614,11 +1553,9 @@ const USG_NEW_CLIENT_CANDIDATES = [
 /** The target's own unit suite, which under a manifest naming no runner is a candidate like any other. */
 const USG_NEW_CLIENT_SUITE_HANDLE = "test";
 
-// @SCN-USG-017
 let newClientStatus: number | null;
 let newClientStderr: string;
 
-// @SCN-USG-017
 Given("a target whose configuration names no runners and no non-checks", function () {
   activeFixture = USG_NEW_CLIENT_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg017-"));
@@ -1634,7 +1571,6 @@ Given("a target whose configuration names no runners and no non-checks", functio
   );
 });
 
-// @SCN-USG-017
 Given("a pipeline of ordinary steps, the target's own test suite among them", function () {
   const workflow = workflowOf(USG_NEW_CLIENT_FIXTURE);
   // BOTH FORMS, or the claim is about run: steps and says so nowhere.
@@ -1660,7 +1596,6 @@ Given("a pipeline of ordinary steps, the target's own test suite among them", fu
   );
 });
 
-// @SCN-USG-017
 When("the target's first reconciliation is rendered", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
@@ -1690,7 +1625,6 @@ When("the target's first reconciliation is rendered", function () {
   activeMd = readFileSync(reportPath, "utf8");
 });
 
-// @SCN-USG-017
 Then(
   "the report posts every step of that pipeline to the suspense row, the test suite among them",
   function () {
@@ -1732,7 +1666,6 @@ Then(
   },
 );
 
-// @SCN-USG-017
 Then("the report asks the target to configure nothing", function () {
   // A MANIFEST THAT SAID NOTHING IS SUPPORTED, NOT INCOMPLETE — so the run says nothing on the
   // error channel at all. A first run that scolded its reader for the absence of a block would be
@@ -1756,11 +1689,10 @@ Then("the report asks the target to configure nothing", function () {
   }
 });
 
-// @SCN-USG-017
 Then("the run does not balance", function () {
   // THE STATE AS IT STANDS, ASSERTED RATHER THAN WORKED AROUND. A candidate citing nothing posts
   // to suspense, so a consumer who has configured nothing is out of balance on their first run.
-  // That is not this scenario's to soften — 3F-3100's reporter mode is what changes it — and a
+  // That is not this scenario's to soften — a reporter mode is what would change it — and a
   // fixture quietly arranged to balance would hide the one cost of the free rung's report.
   assert.equal(
     newClientStatus,
@@ -1774,13 +1706,13 @@ Then("the run does not balance", function () {
   );
 });
 
-// @SCN-USG-020 — THE SCOPE A RUN RANGED OVER. Its own fixture, and the whole of what makes it one
+// THE SCOPE A RUN RANGED OVER. Its own fixture, and the whole of what makes it one
 // is that its pipeline is not one file and not one job: ci.yml runs a single job, nightly.yml runs
 // two, and the report has to name all three. Every other @USG fixture is one workflow or one job
 // per workflow, so none of them can tell a reader that states its scope from one that states a
 // total.
 //
-// ITS `ci` IS A DIRECTORY, like @SCN-USG-006's — the resolution `--ci` already does, and the sorted
+// ITS `ci` IS A DIRECTORY, like the split pipeline's — the resolution `--ci` already does, and the sorted
 // one, which is half of why the section below can be sorted at all.
 // ---------------------------------------------------------------------------
 const USG_SCOPE_FIXTURE: UsgFixture = {
@@ -1815,7 +1747,6 @@ function scopeWorkflowOf(file: string): string {
   return readFileSync(join(process.cwd(), USG_SCOPE_FIXTURE.ci, file), "utf8");
 }
 
-// @SCN-USG-020
 Given("a target whose pipeline is two workflows, the second of them running two jobs", function () {
   activeFixture = USG_SCOPE_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg020-"));
@@ -1854,7 +1785,6 @@ Given("a target whose pipeline is two workflows, the second of them running two 
   );
 });
 
-// @SCN-USG-020
 Then(
   "the report names every workflow and every job it read, with the steps it read from each and how many of them became candidates",
   function () {
@@ -1872,7 +1802,6 @@ Then(
   },
 );
 
-// @SCN-USG-020
 Then("the scope it names reads in one settled order", function () {
   // SORTED, and the fixture is built so that sorting is observable: nightly.yml writes `sweep`
   // before `audit`, so a reader emitting jobs as it met them reds here while passing the arm
@@ -1887,7 +1816,7 @@ Then("the scope it names reads in one settled order", function () {
 });
 
 // ---------------------------------------------------------------------------
-// @SCN-USG-018 — THE ACCOUNTING IDENTITY. Its own fixture, and the whole of what makes it one is
+// THE ACCOUNTING IDENTITY. Its own fixture, and the whole of what makes it one is
 // that its pipeline holds ALL FOUR dispositions at once: three steps the manifest calls
 // non-checks, one running the runner it names, the reconciler's own pair, and four candidate
 // checks with an action among them. Every other @USG fixture has at most three of the four, so
@@ -1930,7 +1859,6 @@ function scopeStepsRead(md: string): number[] {
   return discoveryScopeRows(md).map((row) => Number(row.split("|").map((c) => c.trim())[3]));
 }
 
-// @SCN-USG-018
 Given(
   "a target whose pipeline holds every disposition this reader has — checks, the runner its manifest names, the reconciliation itself, and steps it calls non-checks",
   function () {
@@ -1980,7 +1908,6 @@ Given(
   },
 );
 
-// @SCN-USG-018
 Then(
   "the report states how many steps it read and how many of them it accounted for, and the two agree",
   function () {
@@ -2034,7 +1961,6 @@ Then(
   },
 );
 
-// @SCN-USG-018
 Then("each disposition carries the count that pipeline gives it", function () {
   // THE WHOLE ROW, not the total. A reader that attributed the action step to the excluded column
   // reports the same total and a different pipeline, and the identity alone cannot tell them

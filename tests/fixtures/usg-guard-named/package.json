@@ -5,12 +5,6 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "fitnessChecks": [
-      {
-        "scn": "SCN-TGD-001",
-        "command": "pnpm domain-purity"
-      }
-    ],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

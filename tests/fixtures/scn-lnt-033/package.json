@@ -6,14 +6,6 @@
     "lint:enforced": "anemic-domain"
   },
   "specController": {
-    "notChecks": ["ci.yml:quality:Checkout"],
-    "fitnessChecks": [
-      {
-        "scn": "SCN-CVT-001"
-      },
-      {
-        "scn": "SCN-CVT-002"
-      }
-    ]
+    "notChecks": ["ci.yml:quality:Checkout"]
   }
 }

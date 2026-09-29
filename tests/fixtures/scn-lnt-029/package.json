@@ -8,9 +8,6 @@
     "build": "tsup"
   },
   "specController": {
-    "staticChecks": [
-      "typecheck"
-    ],
     "notChecks": [
       "ci.yml:quality:Checkout",
       "ci.yml:quality:Set up Node",

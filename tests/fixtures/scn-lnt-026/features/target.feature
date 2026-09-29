@@ -2,12 +2,11 @@
 Feature: a converted target's fitness corpus, whose four checks ended four different ways on one run
 
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
-  --features. Each of its scenarios carries the bare fitness axis tag and its own @SCN, and a row
-  of that repository's specController.fitnessChecks names each of them with a
-  command. No word naming what a check is about appears anywhere in this file or on its rows (3F-3525), and
-  that repository configures no check registry at all — a scenario's own title says it.
+  --features. Each of its scenarios carries the bare fitness axis tag and its own @SCN, and that
+  repository's CI states each @SCN as the `id:` of the step that runs its check. No word naming
+  what a check is about appears anywhere in this file — a scenario's own title says it.
 
-  NO ROW CAN ASK FOR A SKIP, and no field remains with which to try (3F-3252), so the third step's
+  NO ROW CAN ASK FOR A SKIP, and no field remains with which to try, so the third step's
   skip is broken evidence by the only route there is.
 
   THE FOUR ROWS ARE OTHERWISE IDENTICAL IN SHAPE — static, one command
@@ -17,7 +16,7 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
   NONE OF THE FOUR COMMANDS IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than
   load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is
   answered for its CONFIGURED rows by that record, so the derivation reader does not credit them
-  a second time (3F-3360). Until the membership rule inverted, the isolation was the prefix set's
+  a second time. Until the membership rule inverted, the isolation was the prefix set's
   accident — a command that is not a script matched no prefix — and an accident is not a
   guarantee.
 
