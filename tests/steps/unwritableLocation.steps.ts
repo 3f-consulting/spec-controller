@@ -125,20 +125,27 @@ function assertTargetOutOfBalance(): void {
   assert.equal(targetStatus, OUT_OF_BALANCE, "the target must reconcile out of balance on its own");
 }
 
+/** Gives back write access under `dir`. A link is left alone: chmod would follow it out of the directory, to /dev/stdout among others. */
 function restoreWritable(dir: string): void {
   chmodSync(dir, 0o755);
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) restoreWritable(path);
+    const kind = lstatSync(path);
+    if (kind.isSymbolicLink()) continue;
+    if (kind.isDirectory()) restoreWritable(path);
     else chmodSync(path, 0o644);
   }
 }
 
 After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010" }, function () {
   if (scratch === undefined) return;
-  restoreWritable(scratch);
-  rmSync(scratch, { recursive: true, force: true });
+  const dir = scratch;
   scratch = undefined;
+  try {
+    restoreWritable(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 Given(/^an out-of-balance target and a report destination that is (.+)$/, function (location: string) {
