@@ -204,3 +204,52 @@ Feature: Emit each output format to stdout or a caller-given path
         | holds an earlier run      | a path through a link to its folder       | markdown | json     |
         | holds an earlier run      | a hard link to it                         | markdown | json     |
         | holds an earlier run      | where standard output is redirected       | markdown | json     |
+
+  Rule: no output lands on a file the run reads, however it is named, and a run that asks for it is refused before anything is written
+
+    A run reads its test reports, its record of the CI steps, its workflows, its feature files and
+    its manifest: some because it was pointed at them, and some because they sit where it looks by
+    default. A report written over one of them destroys it, and the run would still end on its
+    ordinary verdict; for a workflow or the step record, the next run would not notice either. Such
+    a run is refused as a usage error before any report is emitted, naming the report and the input
+    it would have overwritten. The input is recognised by the operating system's identity for the
+    file, as two outputs sharing a file are, so every spelling and every link counts, and so does
+    standard output appended into an input. A file the run does not read, beside an input or inside
+    one of its folders, is written as asked.
+
+    @unit @e2e @SCN-FMT-013
+    Scenario Outline: a --format naming a file the run reads as input is refused as a usage error naming the output and the input, and every input and destination is left as it was
+      Given a <verdict> target the run reads <input> from
+      And a path to that input that is <alias>
+      When the operator <runs> it and asks for the <format> report at that path, and a second report at a file of its own
+      Then the run is refused as a usage error, not a verdict, naming the report and the input it would overwrite
+      And the refusal is a single line with no stack trace
+      And nothing is printed
+      And every file of the target is left exactly as it was
+
+      Examples:
+        | verdict        | input                                                       | alias                                    | runs            | format   |
+        | balanced       | the unit test report                                        | its own path                             | runs            | json     |
+        | balanced       | the cucumber report                                         | its own path                             | runs            | markdown |
+        | balanced       | the record of the CI steps                                  | its own path                             | runs            | json     |
+        | balanced       | the manifest it was pointed at                              | its own path                             | runs            | json     |
+        | balanced       | the manifest it reads by default                            | its own path                             | runs            | json     |
+        | balanced       | a feature file of the corpus it was pointed at              | its own path                             | runs            | markdown |
+        | balanced       | a feature file of the corpus it reads by default            | its own path                             | runs            | json     |
+        | balanced       | the workflow file it was pointed at                         | its own path                             | runs            | json     |
+        | balanced       | a .yml workflow of the folder it was pointed at             | its own path                             | runs            | json     |
+        | balanced       | a .yaml workflow of the folder it was pointed at            | its own path                             | runs            | json     |
+        | balanced       | a workflow of the folder it reads by default                | its own path                             | runs            | json     |
+        | out-of-balance | the unit test report                                        | its own path                             | runs            | json     |
+        | balanced       | the unit test report                                        | the path spelled from the current folder | runs            | json     |
+        | balanced       | the unit test report                                        | its absolute path                        | runs            | json     |
+        | balanced       | the unit test report                                        | a path through a sibling folder and back | runs            | json     |
+        | balanced       | the unit test report                                        | a symbolic link to it                    | runs            | json     |
+        | balanced       | the unit test report                                        | a hard link to it                        | runs            | json     |
+        | balanced       | a workflow of the folder it reads by default                | a path through a link to its folder      | runs            | json     |
+        | balanced       | the unit test report, named through a symbolic link         | its own path                             | runs            | json     |
+        | balanced       | a feature file of the corpus, named through a linked folder | its own path                             | runs            | json     |
+        | balanced       | the unit test report                                        | where standard output is appended        | runs            | markdown |
+        | out-of-balance | the workflow file it was pointed at                         | where standard output is appended        | runs            | markdown |
+        | balanced       | the unit test report                                        | its own path                             | stores a run of | json     |
+        | balanced       | the manifest it reads by default                            | its own path                             | stores a run of | markdown |

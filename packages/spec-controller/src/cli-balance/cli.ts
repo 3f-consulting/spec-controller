@@ -23,7 +23,8 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { namesStdout } from "../outputLocation.js";
+import { namesStdout, stdoutIdentity } from "../outputLocation.js";
+import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
@@ -341,7 +342,8 @@ export function runBalance(argv: string[]): boolean {
   // caller now routes stored runs (spec-controller's run-management layer).
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) exitUsage(planResult.error);
-  writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames });
+  const payloads = { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames };
+  writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
 
   // Set after the report is written in full, never `process.exit`, so the buffered report is
   // flushed intact rather than truncated mid-write.

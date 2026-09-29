@@ -211,3 +211,27 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | of an out-of-balance run  | strictly                      |
         | of an out-of-balance run  | with a failing verdict zeroed |
         | at a path that is missing | with nothing else             |
+
+  Rule: a stored run never writes its own files over a file it reads
+
+    A stored run writes its two reports and its run.yaml into its run directory. When one of the
+    files the run reads already sits there under one of those names, the stored run would write
+    over its own input and still end on its verdict. Such a run is refused as a usage error before
+    anything is written, naming the file: no run directory is announced, no run.yaml of this run is
+    written, and an earlier run under the same run-id keeps its files.
+
+    @unit @e2e @SCN-RMG-011
+    Scenario Outline: a stored run whose report or run.yaml would land on one of its inputs is refused naming the file, prints no run directory, and every input is left as it was
+      Given a balanced target whose <input> is the <file> a stored run of it would write, over <earlier>
+      When the operator stores a run of it reading that input
+      Then the stored run is refused as a usage error, naming that file
+      And its refusal is a single line with no stack trace
+      And no kept run is announced
+      And every file of the target and its store is left exactly as it was
+
+      Examples:
+        | input                | file                     | earlier                                   |
+        | cucumber report      | spec-reconciliation.json | nothing yet                               |
+        | unit test report     | spec-reconciliation.md   | nothing yet                               |
+        | workflow file        | run.yaml                 | nothing yet                               |
+        | workflow file        | run.yaml                 | an earlier kept run under the same run-id |

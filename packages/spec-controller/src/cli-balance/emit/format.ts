@@ -162,6 +162,33 @@ export function sharedFileRefusal(outputs: readonly IdentifiedOutput[]): string 
   return undefined;
 }
 
+/** A file the run reads, as the refusal names it, beside the identity of the regular file it is, when it is one. */
+export interface IdentifiedInput {
+  readonly subject: string;
+  readonly path: string;
+  readonly identity: FileIdentity | undefined;
+}
+
+/**
+ * The refusal for the first output that lands on a regular file the run reads, or undefined when none
+ * does. The file is known by its identity, as two outputs sharing one are, so a link, a `..`, a case
+ * the volume folds or standard output appended into an input all count. Something that is not a
+ * regular file, on either side, is never compared.
+ */
+export function inputOverwriteRefusal(outputs: readonly IdentifiedOutput[], inputs: readonly IdentifiedInput[]): string | undefined {
+  for (const { output, identity } of outputs) {
+    if (identity === undefined) continue;
+    const read = inputs.find((input) => input.identity !== undefined && sameFile(input.identity, identity));
+    if (read !== undefined) {
+      return (
+        `An output would overwrite a file this run reads: ${asGiven(output)} is ${read.subject}, ${read.path}. ` +
+        `Give the report a file of its own.`
+      );
+    }
+  }
+  return undefined;
+}
+
 function sameFile(a: FileIdentity, b: FileIdentity): boolean {
   return a.dev === b.dev && a.ino === b.ino;
 }

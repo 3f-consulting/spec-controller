@@ -7,7 +7,7 @@ import { unlinkSync, writeFileSync } from "node:fs";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { FeatureNames } from "@3f-consulting/spec-controller-core";
-import { sharedFileRefusal, type FileIdentity, type IdentifiedOutput, type OutputFormat, type OutputPlan, type PlannedOutput } from "./format.js";
+import { inputOverwriteRefusal, sharedFileRefusal, type FileIdentity, type IdentifiedInput, type IdentifiedOutput, type OutputFormat, type OutputPlan, type PlannedOutput } from "./format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
@@ -38,21 +38,27 @@ function render(fmt: OutputFormat, p: OutputPayloads): string {
  * Every destination is vetted before any output is emitted, so a refused run never leaves a report
  * behind, on stdout or in a file, whose headline names an exit the process does not take. Writing
  * files first and stdout last would not do: an earlier file would still be written. The vetting
- * refuses a destination that cannot be written, and two outputs that land on one regular file.
+ * refuses a destination that cannot be written, two outputs that land on one regular file, and an
+ * output that lands on one of the files the run read.
  */
 export function writeOutputs(
   plan: OutputPlan,
   payloads: OutputPayloads,
   stdoutFile: () => FileIdentity | undefined = stdoutIdentity,
+  inputs: readonly IdentifiedInput[] = [],
 ): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  const refusal = vetDestinations(plan.outputs, stdoutFile);
+  const refusal = vetDestinations(plan.outputs, stdoutFile, inputs);
   if (refusal !== undefined) refuse(refusal);
   for (const { output, text } of emissions) emit(output, text);
 }
 
 /** The refusal the destinations earn, if any. Every file the vetting had to create is removed again first. */
-function vetDestinations(outputs: readonly PlannedOutput[], stdoutFile: () => FileIdentity | undefined): string | undefined {
+function vetDestinations(
+  outputs: readonly PlannedOutput[],
+  stdoutFile: () => FileIdentity | undefined,
+  inputs: readonly IdentifiedInput[],
+): string | undefined {
   const created: string[] = [];
   try {
     const identified: IdentifiedOutput[] = [];
@@ -61,7 +67,7 @@ function vetDestinations(outputs: readonly PlannedOutput[], stdoutFile: () => Fi
       if (typeof probe === "string") return probe;
       identified.push({ output, identity: probe });
     }
-    return sharedFileRefusal(identified);
+    return sharedFileRefusal(identified) ?? inputOverwriteRefusal(identified, inputs);
   } finally {
     for (const path of created) unlinkSync(path);
   }

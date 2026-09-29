@@ -23,6 +23,8 @@
 import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
+import { inputsReadBy, NODE_INPUT_READER } from "./cli-balance/inputsRead.js";
+import { parseArgs } from "./cli-args.js";
 import { runAllocate } from "./cli-allocate/cli.js";
 import { resolveSourceSha, resolveToolIdentity } from "./run-management/resolveRunInputs.js";
 import {
@@ -104,7 +106,13 @@ function main(hostArgv: string[]): void {
       targetDir: features !== undefined ? dirname(features) : undefined,
     }) ?? "unknown";
 
-  const spec: KeptRunSpec = { storeRoot: inv.store, target, runId, formatPaths: formatFilePaths(inv.commandArgs) };
+  const spec: KeptRunSpec = {
+    storeRoot: inv.store,
+    target,
+    runId,
+    formatPaths: formatFilePaths(inv.commandArgs),
+    inputs: inputsReadBy(parseArgs(inv.commandArgs), NODE_INPUT_READER),
+  };
   // `mode` is the command's run kind; only `balance` ships today (analyse/migrate are the
   // private engine's, added when it lands).
   // The TOOL's own identity — which spec-controller produced this run, read

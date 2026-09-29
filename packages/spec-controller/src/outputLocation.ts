@@ -1,4 +1,4 @@
-import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, unlinkSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync, unlinkSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 
 const USAGE_EXIT_CODE = 2;
@@ -31,6 +31,12 @@ export function refuse(message: string): never {
 export interface RegularFileIdentity {
   readonly dev: bigint;
   readonly ino: bigint;
+}
+
+/** A file a run reads, and how a refusal names it. */
+export interface ReadInput {
+  readonly subject: string;
+  readonly path: string;
 }
 
 /** What opening a destination found: the identity of the regular file it is, and the file it had to create, if any. */
@@ -90,6 +96,26 @@ function identityOrNone(path: string, created: string[]): RegularFileIdentity | 
 
 function sameIdentity(a: RegularFileIdentity | undefined, b: RegularFileIdentity): boolean {
   return a !== undefined && a.dev === b.dev && a.ino === b.ino;
+}
+
+/**
+ * The identity of the regular file a path a run reads leads to, through any links, or undefined when
+ * it leads to anything else or to nothing. The file is only looked at: an input is never opened for
+ * writing, and one that is not there cannot be overwritten.
+ */
+export function regularFileIdentity(path: string): RegularFileIdentity | undefined {
+  try {
+    return regularIdentity(statSync(path, { bigint: true }));
+  } catch {
+    return undefined;
+  }
+}
+
+/** The first of `inputs` that is the regular file at `path`, or undefined when none is, or nothing is there. */
+export function inputAt(path: string, inputs: readonly ReadInput[]): ReadInput | undefined {
+  const identity = regularFileIdentity(path);
+  if (identity === undefined) return undefined;
+  return inputs.find((input) => sameIdentity(regularFileIdentity(input.path), identity));
 }
 
 /** The identity of the regular file standard output is, when it is one. */

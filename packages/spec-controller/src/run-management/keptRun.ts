@@ -21,7 +21,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify } from "yaml";
-import { firstSharingFile, refuse, writeOrRefuse } from "../outputLocation.js";
+import { firstSharingFile, inputAt, refuse, writeOrRefuse, type ReadInput } from "../outputLocation.js";
 
 /** The two artefact filenames a kept run routes the tool's outputs into. */
 export const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
@@ -101,6 +101,8 @@ export interface KeptRunSpec {
   readonly runId: string;
   /** The file paths the command's own `--format` values name, which must not be a file the run writes. */
   readonly formatPaths?: readonly string[];
+  /** The files the command reads, which the run's own run.yaml must not be. */
+  readonly inputs?: readonly ReadInput[];
 }
 
 /** The planned run: the run dir plus the two file-dest paths inside it. */
@@ -237,6 +239,13 @@ export function executeKeptRun(
     refuse(
       `A --format output names ${sharesManifest}, which is this stored run's own ${manifestPath}. ` +
         `Give the report a path outside ${plan.runDir}.`,
+    );
+  }
+  const readManifest = inputAt(manifestPath, spec.inputs ?? []);
+  if (readManifest !== undefined) {
+    refuse(
+      `A file this stored run reads is its own ${manifestPath}: ${readManifest.path} is ${readManifest.subject}. ` +
+        `Give the store a root outside the files the run reads.`,
     );
   }
   if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`])) return undefined;
