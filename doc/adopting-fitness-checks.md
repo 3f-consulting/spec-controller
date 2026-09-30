@@ -77,7 +77,7 @@ the identity the ledger reads. The sections below assume you are heading for `co
 are stopping at `annotated`, read them for the CI step and skip the scenario.
 
 **`specController.fitnessChecks` is not read.** This page used to say the key was still accepted and
-reported as retired. That stopped at `3F-3606` (operator ruling 2026-09-20: no backward
+reported as retired. That stopped (operator ruling 2026-09-20: no backward
 compatibility). A `package.json` still carrying the key is read exactly as one carrying any other key
 this tool does not read: it is passed over, and named under `## Configuration not read` in the same
 words as a misspelling, with nothing said about what it once did. The two artefacts above are the
@@ -86,7 +86,7 @@ whole of what you author.
 The scenario is **written beside the pipeline rather than derived from it**:
 
 ```gherkin
-  @fitness @SCN-FIT-001
+  @fitness @SCN-XMPL-001
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
     Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
@@ -135,7 +135,7 @@ A check that is already a pipeline step needs nothing done to the command:
 
 ```yaml
       - name: Import boundaries
-        id: SCN-FIT-009
+        id: SCN-XMPL-002
         if: always()
         run: pnpm lint:boundaries
 ```
@@ -156,7 +156,7 @@ absence, so without it one failure would be reported as one failure and nine unk
 **Keep invoking the same handle the step already invoked.** Where you run a green-check derived from
 the pipeline file, spelling the step as the CLI behind the handle runs the identical check and
 silently drops it from that green-check the day the pass is deleted. spec-controller had exactly
-such a derivation and deleted it at 3F-3475 — the rule is yours to apply if you keep one.
+such a derivation and deleted it — the rule is yours to apply if you keep one.
 
 ### One dump step, at the end
 
@@ -214,8 +214,7 @@ behavioural runner your manifest named, is the reconciler itself, or is a step y
 — said by subtraction, so there is no rule anywhere about what a check is *called*. A bare
 `run: ruff`, a `cargo clippy`, a `uses: github/codeql-action/analyze`: each is read, and each posts.
 
-**The prefix rule this section used to describe is gone**, retired on 2026-09-12 by
-[3F-3343](3F-3343). It matched `package.json` script names
+**The prefix rule this section used to describe is gone**, retired on 2026-09-12. It matched `package.json` script names
 against a set of ours — `lint:`, `guard:` — which is a sample of an unbounded set that belongs to
 you, so a pipeline whose scripts are `lint`, `typecheck` and `audit` was one the reader could not see
 and said nothing about. **Nothing shaped like it replaced it.** The set that is closed is the
@@ -289,14 +288,14 @@ pnpm typecheck
 Exit 0 is the check passing. No runner, no `balance`, no ceremony. That matters most when a check
 reds: you debug it by running it, not by reading a report about it.
 
-**A run-time bar is the step that runs the suite, and it needs no number at all.** `SCN-FIT-012`
-and `SCN-FIT-013` hold the unit suite and the behavioural suite to a limit. The limit is
+**A run-time bar is the step that runs the suite, and it needs no number at all.** Two scenarios
+hold the unit suite and the behavioural suite to a limit. The limit is
 `timeout <seconds>` on the step that runs the suite, the step carries the scenario's `@SCN` as its
 `id:`, and nothing else names the limit:
 
 ```yaml
 - name: Test
-  id: SCN-FIT-012
+  id: SCN-XMPL-003
   run: timeout 75 pnpm test   # plus the reporter flags that write the suite's report
 ```
 
@@ -305,7 +304,7 @@ outcome as any other converted check's does. Nothing times the suite, nothing wr
 and nothing reads one back.
 
 **A scheduled check is the step that reads its verdict, and it needs no number either.**
-`SCN-FIT-002` holds this repository's domain core to a mutation score, and a sweep costs 8-12
+A scenario holds this repository's domain core to a mutation score, and a sweep costs 8-12
 minutes against a 2-minute ladder, so it runs nightly. The bar is Stryker's own
 `thresholds.break: 95`, so the nightly run concludes `failure` below it. The push step carries the
 scenario's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightly on `main`,
@@ -313,7 +312,7 @@ created inside the last 26 hours, concluded `success`. Nothing on your side name
 
 ```yaml
       - name: Mutation score
-        id: SCN-FIT-002
+        id: SCN-XMPL-004
         if: always()
         run: gh run list --workflow mutation.yml ...
 ```
@@ -341,8 +340,7 @@ else, such as a nightly sweep, is tempting to carry across as its number: a prod
 record, an upload, a placement on the push that checks the record's age, and a reader printing the
 number against a bar of its own. That is four pieces of your own code, and the scheduled run's own
 conclusion already says whether the number cleared the bar the tool was given. Read that
-conclusion in one step, as above. This repository built the four pieces, and deleted them
-(3F-3483).
+conclusion in one step, as above. This repository built the four pieces, and deleted them.
 
 **A run-time check does not need that shape either.** It is tempting to measure a suite's
 wall-clock where the suite runs — a timing wrapper around the step, writing a record — and read it
@@ -431,7 +429,7 @@ somebody moved the step — never that. The field could not name what it claimed
 **Say it in your own `run:` line**, where your CI records an honest success:
 
     - name: PR metadata
-      id: SCN-CHK-021
+      id: SCN-XMPL-005
       if: always()
       run: pnpm check:pr-metadata || [ $? -eq 3 ]
 
@@ -472,6 +470,7 @@ the numbers live in the canon pages below, and a copy here would drift from them
 | gate | what it binds |
 |---|---|
 | **Complexity and function length** | every function and module you touch measures inside an external standard, never your own current maximum. Canon: `technical-design/fitness-functions.md` → *Code-metric thresholds come from an external standard, never the code's own max*, and *The suite — the mandatory gates*. |
+| **CRAP** | no function in a file you touch is both tangled and under-tested: each is scored from its cyclomatic complexity and your unit suite's coverage of it, every function is reported on every run, and one scoring over the external standard in a file the change touches reds. Canon: `technical-design/fitness-functions.md` → *CRAP — complex code must be tested*. |
 | **Mutation** | your unit tests have teeth, measured per mutated scope against a held percentage, on a schedule rather than per push. Canon: `fitness-functions.md` → *Mutation thresholds are per-scope, and the bar is a held percentage*, and *When the score drops below the bar* — which forbids deleting code to raise a score. |
 | **Continuous delivery** | nothing publishes except a merge to `main`, and every package-changing merge publishes the next counter version with no stored credential. Canon: `technical-design/ci-and-release.md` and `technical-design/publishing-npm-packages.md` → *The model — every package-changing merge publishes, with no stored credential*. |
 | **Expand / contract** | a repository whose CI reads its own tree with its own pinned release changes that model in steps: the reader accepts both shapes and publishes, the bot moves the pin, the tree drops the old shape, and the reader stops accepting it only when no adopter still writes it. Canon: `publishing-npm-packages.md` → *Such a repository changes its own model in expand/contract steps*. |

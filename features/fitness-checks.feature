@@ -73,6 +73,13 @@ Feature: The fitness checks this repository declares, one scenario per check
     And every other function over the standard is reported without failing the run
     And no suppression directive that suppresses nothing survives the run
 
+  @fitness @SCN-FIT-022
+  Scenario: every function in a file the push touches scores under the external change-risk standard
+    Given this repository's source as this push leaves it, the unit suite's coverage of it, and the files the push touched
+    When the external change-risk standard is applied to every function in that source
+    Then every function in a file the push touched scores under the standard
+    And every other function over the standard is reported without failing the run
+
   @fitness @SCN-FIT-009
   Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
     Given this repository's own module graph, its source, and the names of its domain modules

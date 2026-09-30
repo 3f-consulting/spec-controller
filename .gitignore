@@ -14,5 +14,9 @@ build/
 .stryker-tmp/
 reports/
 
-# Operator-local working notes — never committed (swept into a slice PR by `git add -A`, 3F-2690).
+# Unit-suite coverage, which the CRAP step scores. The tool reads it only from
+# `coverage/`, and it enumerates the lines no test runs, as a mutation report does.
+coverage/
+
+# Operator-local working notes — never committed (swept into a slice PR by `git add -A`).
 CLAUDE.local.md

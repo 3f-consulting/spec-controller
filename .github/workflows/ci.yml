@@ -190,7 +190,7 @@ jobs:
       # its place at the head of the ladder.
       - name: Test
         id: SCN-FIT-012
-        run: timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
+        run: timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled
 
       # STEP 2 — the observed @integration / @e2e stream. `--format json:` adds a
       # file formatter; the progress formatter stays on stdout.
@@ -276,6 +276,33 @@ jobs:
         run: |
           pnpm exec eslint
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r pnpm exec eslint --max-warnings 0 --no-warn-ignored
+
+      - name: CRAP — complex code must be tested
+        id: SCN-FIT-022
+        # A function scoring 30 or more reds: Savoia's crap4j counts "30 or higher" as crappy
+        # (Artima, "The Code C.R.A.P. Metric Hits the Fan"). CRAP is cyclomatic complexity² ×
+        # (1 − coverage)³ + cyclomatic complexity, and the coverage kind is the lower of the
+        # function's statement and branch coverage from the unit suite, which is what the tool
+        # computes and what its `covKind` column names.
+        #
+        # The tool reds only on a score strictly GREATER than its threshold, so the threshold is
+        # 29.999999999999996, the largest double below 30: greater than it is exactly 30 or more.
+        # At `--threshold 30` an uncovered function of complexity 5, which scores exactly 30.0,
+        # would pass.
+        #
+        # The first line reports every function in both packages against the same threshold, so
+        # its `failed` rows are the functions over the standard, and reds only when the tool itself
+        # fails (exit 1); its breach exit, 2, is not a red here. The second is the gate, over
+        # the source files this push touched, found by the same stock line the complexity step
+        # uses. The tool's own `--changed` reads `git status`, which is empty on a clean checkout.
+        #
+        # It runs whenever `Test` ran, because `Test` writes the coverage it scores; with no
+        # coverage report the tool would run the suite itself.
+        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        shell: bash
+        run: |
+          pnpm exec crap-typescript --format text --threshold 29.999999999999996 packages || [ $? -eq 2 ]
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r pnpm exec crap-typescript --format text --threshold 29.999999999999996
 
       - name: Import boundaries
         id: SCN-FIT-009

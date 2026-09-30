@@ -36,10 +36,12 @@
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
     "@arethetypeswrong/cli": "0.18.5",
+    "@barney-media/crap-typescript": "1.0.0",
     "@cucumber/cucumber": "^12.9.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "4.1.10",
     "dependency-cruiser": "18.2.0",
     "eslint": "^9.39.5",
     "eslint-plugin-check-file": "3.3.2",
