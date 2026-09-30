@@ -1,7 +1,6 @@
 /**
- * Step definitions for the cross-repo portable-paths scenario (@SCN-RPT-016).
+ * Step definitions for the cross-repo portable-paths scenario.
  *
- * @SCN-RPT-016 — the bidirectional @integration evidence marker (Evidence Manifesto §9).
  * This arm exercises the WHOLE CLI binary as a subprocess from a cwd that is NOT the
  * target repo — the cross-repo case the prior cwd-stripping leaked. A temp TARGET repo is
  * built with Vitest / Cucumber reports whose locators are ABSOLUTE paths under that repo;
@@ -13,8 +12,6 @@
  * the target's paths aren't under the foreign cwd, so they leak verbatim.
  *
  * Self-contained module-level variables + distinct step text (Cucumber registers globally).
- *
- * Evidence: @SCN-RPT-016 — portable paths for cross-repo reconcile.
  */
 
 import { Given, When, Then, After } from "@cucumber/cucumber";
@@ -32,7 +29,40 @@ let outDir: string;
 let markdown: string;
 let jsonText: string;
 
-// @SCN-RPT-016
+function writeTargetReports(repo: string): void {
+  // Vitest report: an ABSOLUTE test-file locator under the target repo. One attributed
+  // assertion + one carrying no scenario code → a cites-no-scenario evidence observation
+  // whose absolute locator surfaces in the report (the leak vector).
+  const vitestLocator = join(repo, "src", "widget.test.ts");
+  writeFileSync(
+    join(repo, "vitest.json"),
+    JSON.stringify({
+      testResults: [
+        {
+          name: vitestLocator,
+          assertionResults: [
+            { fullName: "[SCN-TGT-001] the target unit scenario is proven", status: "passed" },
+            { fullName: "an ordinary unit test carrying no @SCN id", status: "passed" },
+          ],
+        },
+      ],
+    })
+  );
+
+  // Cucumber report: an ABSOLUTE feature uri under the target repo, one @smoke element
+  // carrying no @SCN → a cites-no-scenario evidence observation whose absolute locator surfaces too.
+  const cucumberLocator = join(repo, "features", "sample.feature");
+  writeFileSync(
+    join(repo, "cucumber.json"),
+    JSON.stringify([
+      {
+        uri: cucumberLocator,
+        elements: [{ tags: [{ name: "@smoke" }], steps: [{ result: { status: "passed" } }] }],
+      },
+    ])
+  );
+}
+
 Given(
   "a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
   function () {
@@ -41,7 +71,6 @@ Given(
     targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-target-")));
     mkdirSync(join(targetRepo, "features"), { recursive: true });
 
-    // A minimal feature corpus — one @SCN-tagged scenario so runReconcile produces a balance.
     writeFileSync(
       join(targetRepo, "features", "sample.feature"),
       [
@@ -57,37 +86,7 @@ Given(
       ].join("\n")
     );
 
-    // Vitest report: an ABSOLUTE test-file locator under the target repo. One attributed
-    // assertion (SCN-TGT-001) + one carrying no @SCN → a cites-no-scenario evidence observation
-    // whose absolute locator surfaces in the report (the leak vector).
-    const vitestLocator = join(targetRepo, "src", "widget.test.ts");
-    writeFileSync(
-      join(targetRepo, "vitest.json"),
-      JSON.stringify({
-        testResults: [
-          {
-            name: vitestLocator,
-            assertionResults: [
-              { fullName: "[SCN-TGT-001] the target unit scenario is proven", status: "passed" },
-              { fullName: "an ordinary unit test carrying no @SCN id", status: "passed" },
-            ],
-          },
-        ],
-      })
-    );
-
-    // Cucumber report: an ABSOLUTE feature uri under the target repo, one @smoke element
-    // carrying no @SCN → a cites-no-scenario evidence observation whose absolute locator surfaces too.
-    const cucumberLocator = join(targetRepo, "features", "sample.feature");
-    writeFileSync(
-      join(targetRepo, "cucumber.json"),
-      JSON.stringify([
-        {
-          uri: cucumberLocator,
-          elements: [{ tags: [{ name: "@smoke" }], steps: [{ result: { status: "passed" } }] }],
-        },
-      ])
-    );
+    writeTargetReports(targetRepo);
 
     // A foreign cwd — NOT the target repo, NOT spec-controller — so the reconcile is genuinely
     // cross-repo (cwd ≠ target), reproducing the leak the fix closes.
@@ -96,7 +95,6 @@ Given(
   }
 );
 
-// @SCN-RPT-016
 When(
   "the real CLI reconciles it from a foreign cwd and persists the markdown and JSON reports",
   function () {
@@ -122,9 +120,6 @@ When(
       undefined,
       `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
     );
-    // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
-    // out-of-balance fixture exits 1 (the report is still written IN FULL first). Pure
-    // exit-expectation flip 0->1; every content/path assertion is unchanged.
     assert.equal(
       result.status,
       1,
@@ -136,7 +131,6 @@ When(
   }
 );
 
-// @SCN-RPT-016
 Then(
   "the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root",
   function () {

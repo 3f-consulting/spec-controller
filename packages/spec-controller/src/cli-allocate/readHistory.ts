@@ -81,15 +81,22 @@ export function isGitRepository(cwd: string): boolean {
   return gitAnswer(cwd, ["rev-parse", "--git-dir"]) !== null;
 }
 
-/** How far back the history read can see from `cwd`. */
 export function historyBoundaryOf(cwd: string): HistoryBoundary {
   if (!isGitRepository(cwd)) return { kind: "not-a-repository" };
   if (gitAnswer(cwd, ["rev-parse", "--is-shallow-repository"]) !== "true") return { kind: "complete" };
-  const shallowFile = gitAnswer(cwd, ["rev-parse", "--git-path", "shallow"]) ?? "";
-  const shallowPath = shallowFile.startsWith("/") ? shallowFile : `${cwd}/${shallowFile}`;
+  return shallowBoundaryOf(cwd);
+}
+
+function shallowBoundaryOf(cwd: string): HistoryBoundary {
+  const shallowPath = shallowRecordPath(cwd);
   const record = readOrRefuse("the repository's history", shallowPath, () => readFileSync(shallowPath, "utf8"));
   const edge = record.split("\n")[0] ?? "";
   return { kind: "shallow", before: gitAnswer(cwd, ["rev-parse", "--short", edge]) ?? edge };
+}
+
+function shallowRecordPath(cwd: string): string {
+  const shallowFile = gitAnswer(cwd, ["rev-parse", "--git-path", "shallow"]) ?? "";
+  return shallowFile.startsWith("/") ? shallowFile : `${cwd}/${shallowFile}`;
 }
 
 /** Where the walk through the patch stands: the commit, each side's file, and each side's next line. */

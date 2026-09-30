@@ -1,9 +1,9 @@
 /**
- * Step definitions for @SCN-RPT-029 (features/report.feature) — WHICH spec-controller produced a
- * run, asked where a consumer asks it.
+ * Step definitions for the tool-identity scenario in features/report.feature — WHICH spec-controller
+ * produced a run, asked where a consumer asks it.
  *
- * WHY THIS ARM INSTALLS FOR REAL, AND WHY NO PROJECTION COULD HAVE CAUGHT THIS. The fault 3F-3418
- * states is a fact about a PATH: `import.meta.url` resolves to somewhere under the consumer's own
+ * WHY THIS ARM INSTALLS FOR REAL, AND WHY NO PROJECTION COULD HAVE CAUGHT THIS. The fault is a fact
+ * about a PATH: `import.meta.url` resolves to somewhere under the consumer's own
  * worktree, and `git -C` there walks up to the consumer's `.git` and answers with the consumer's
  * HEAD. A test that hands `resolveToolIdentity` a directory it invented is testing the predicate;
  * only a tarball really installed under a real repository is testing the premise the predicate is
@@ -19,7 +19,7 @@
  * segment; this arm is where that is measured rather than reasoned about.
  *
  * THE PACK-AND-INSTALL APPARATUS IS THIS ARM'S OWN, AND THAT IS A CHANGE OF OWNER RATHER THAN A
- * SECOND COPY (3F-3446). It was borrowed from the clean-room recipe, on the argument that a second
+ * SECOND COPY. It was borrowed from the clean-room recipe, on the argument that a second
  * spelling of a tarball name or an install argv would agree with the one reading by diligence and
  * then drift. That argument was exactly right while there WAS another reading; the release now
  * smokes its tarball in shell and the recipe has left the tree, so there is one spelling of each and
@@ -34,8 +34,6 @@
  * EVERYTHING IT WRITES IS A `mkdtemp` OUTSIDE ANY SOURCE TREE, and every room is asserted to stand
  * outside this repository — a directory inside it resolves through this tree's own `node_modules`
  * and its workspace links whatever the tarball says.
- *
- * Parent: 3F-3419, under 3F-3418.
  */
 
 import { After, Given, Then, When } from "@cucumber/cucumber";
@@ -70,7 +68,7 @@ const SIGNAL_EXIT_CODE_BASE = 128;
 /**
  * The code a spawned command's ending is worth, the way a shell would report it. It lived in
  * `tests/checks/measurementArtefact.ts`, the remnant of the measured producers, and moved here, to its
- * one caller, when that file left with the measured route (3F-3506).
+ * one caller, when that file left with the measured route.
  */
 function exitCodeOf(command: FinishedCommand): number {
   if (command.status !== null) return command.status;
@@ -82,8 +80,6 @@ function exitCodeOf(command: FinishedCommand): number {
   return 1;
 }
 
-// @SCN-RPT-029
-
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 /** The two packages this release packs, as directories under the workspace. */
@@ -92,7 +88,7 @@ const PACKAGE_DIRS = ["packages/core", "packages/spec-controller"] as const;
 /**
  * What the installed command is asked. A reconcile, because the line under test is rendered by one
  * — and over a corpus each room plants, because `--features` naming a directory that is not there
- * is a hard error at the CLI edge (@SCN-CLI-002) and would red this scenario in the vocabulary of a
+ * is a hard error at the CLI edge and would red this scenario in the vocabulary of a
  * mistyped flag.
  */
 const ASK = ["balance", "--features", "features"] as const;
@@ -295,12 +291,46 @@ interface Arrangement {
 let arranged: Arrangement;
 let reported: { insideARepository: Provenance; outsideEveryRepository: Provenance; throughASymlink: Provenance };
 
+interface LinkedRoom {
+  readonly toolCheckoutHead: string;
+  readonly linkingConsumer: string;
+  readonly linkingConsumerHead: string;
+  readonly linked: string;
+}
+
+function copyInstall(installedModules: string, into: string): void {
+  cpSync(installedModules, path.join(into, "node_modules"), { recursive: true, verbatimSymlinks: true });
+}
+
+function linkedRoom(installedModules: string, cliName: string): LinkedRoom {
+  const toolCheckout = scratch("tool-checkout");
+  // Lifted OUT of the tree that installed it, so its own directory carries no `node_modules`
+  // segment: that is the whole difference this room exists to measure.
+  cpSync(path.join(installedModules, cliName), toolCheckout, { recursive: true, verbatimSymlinks: true });
+  // COMMITTED BEFORE ITS DEPENDENCIES ARRIVE, which is both faster and what a real checkout looks
+  // like: the tool's own files are tracked and its node_modules is not.
+  const toolCheckoutHead = repositoryAt(toolCheckout, "the tool's own commit");
+  copyInstall(installedModules, toolCheckout);
+
+  const linkingConsumer = consumerRoom("linked");
+  const linkingConsumerHead = repositoryAt(linkingConsumer, "the linking consumer's own commit");
+  mkdirSync(path.join(linkingConsumer, "node_modules"), { recursive: true });
+  const linked = path.join(linkingConsumer, "node_modules", cliName);
+  symlinkSync(toolCheckout, linked, "dir");
+  assert.notEqual(
+    toolCheckoutHead,
+    linkingConsumerHead,
+    "the tool's checkout and the consumer linking it must sit on different commits, or the third room proves nothing",
+  );
+  return { toolCheckoutHead, linkingConsumer, linkingConsumerHead, linked };
+}
+
 Given(
   "this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool",
   function () {
-    // NO BUILD HERE (3F-3423): `builtCli.ts`'s freshness guard already refuses a run whose `dist`
-    // is absent or older than `src`, by name, for every scenario — and a second step building the
-    // same `repoRoot` under `parallel` is the one arrangement no scenario sharing it wanted.
+    // NO BUILD HERE: `builtCli.ts`'s freshness guard already refuses a run whose `dist` is absent or
+    // older than `src`, by name, for every scenario — and a second step building the same
+    // `repoRoot` under `parallel` is the one arrangement no scenario sharing it wanted.
     const packDir = scratch("pack");
     const packages: PackedPackage[] = PACKAGE_DIRS.map((dir) => {
       const packageDir = path.join(repoRoot, dir);
@@ -310,9 +340,6 @@ Given(
     const cli = packages.find((packed): packed is PackedPackage & { bin: string } => packed.bin !== undefined);
     assert.ok(cli !== undefined, "one of the packed packages installs the command these rooms run");
 
-    // ROOM 1 — the ordinary adopter, and the one that is wrong today. Every adopter installs into a
-    // git repository, so this is the case every adopter sees and the only case a consumer ever does.
-    // It is the arm the acceptance names, so it is a REAL npm install into a REAL repository.
     const gitRoom = consumerRoom("in-repo");
     const gitRoomHead = repositoryAt(gitRoom, "the consumer's own commit");
     const installed = roomPlan(packages, packDir, gitRoom, cli.bin);
@@ -320,49 +347,17 @@ Given(
     assert.equal(exitCodeOf(install), 0, `the packed tarballs must install into ${gitRoom}. It said:\n${install.stderr}`);
     const installedModules = path.join(gitRoom, "node_modules");
 
-    /**
-     * THE OTHER TWO ROOMS ARE COPIES OF THAT ONE INSTALL, AND THE REASON IS BOTH BUDGET AND
-     * ISOLATION. `SCN-FIT-013` gates the behavioural suite at 150s and the ladder was already
-     * reading 140.4s on CI before this scenario existed, so three installs is a cost this suite
-     * does not have. It is also the better arrangement: rooms 1 and 2 differ in exactly ONE thing
-     * — whether the directory is a git repository — and deriving the second from the first is what
-     * makes that the only difference rather than merely the intended one. What each room holds was
-     * really installed by npm from the really packed tarball; `verbatimSymlinks` keeps npm's
-     * relative `.bin` shim pointing where npm left it.
-     */
-    const copyInstall = (into: string): void =>
-      cpSync(installedModules, path.join(into, "node_modules"), { recursive: true, verbatimSymlinks: true });
-
-    // ROOM 2 — the control that was already right: the same artefact, outside any repository.
+    // The other two rooms are copies of that one install, not installs of their own: rooms 1 and 2
+    // then differ in exactly one thing, whether the directory is a git repository, and three
+    // installs would cost the behavioural suite's time budget.
     const plainRoom = consumerRoom("no-repo");
     assert.ok(
       !existsSync(path.join(plainRoom, ".git")),
       "the second room must not be a git repository — that is what makes it the control",
     );
-    copyInstall(plainRoom);
+    copyInstall(installedModules, plainRoom);
 
-    // ROOM 3 — the symmetric failure this fix must not trade for. A checkout of the tool with its
-    // own commit and its dependencies resolved inside it, as `npm link` really leaves one, reached
-    // from a consumer repository through a `node_modules` symlink. The checkout is the installed
-    // package lifted OUT of the tree that installed it, which is the whole difference: its own
-    // directory then carries no `node_modules` segment.
-    const toolCheckout = scratch("tool-checkout");
-    cpSync(path.join(installedModules, cli.name), toolCheckout, { recursive: true, verbatimSymlinks: true });
-    // COMMITTED BEFORE ITS DEPENDENCIES ARRIVE, which is both faster and what a real checkout looks
-    // like: the tool's own files are tracked and its node_modules is not.
-    const toolCheckoutHead = repositoryAt(toolCheckout, "the tool's own commit");
-    copyInstall(toolCheckout);
-
-    const linkingConsumer = consumerRoom("linked");
-    const linkingConsumerHead = repositoryAt(linkingConsumer, "the linking consumer's own commit");
-    mkdirSync(path.join(linkingConsumer, "node_modules"), { recursive: true });
-    const linked = path.join(linkingConsumer, "node_modules", cli.name);
-    symlinkSync(toolCheckout, linked, "dir");
-    assert.notEqual(
-      toolCheckoutHead,
-      linkingConsumerHead,
-      "the tool's checkout and the consumer linking it must sit on different commits, or the third room proves nothing",
-    );
+    const { toolCheckoutHead, linkingConsumer, linkingConsumerHead, linked } = linkedRoom(installedModules, cli.name);
 
     arranged = {
       insideARepository: { where: "the room that is a git repository", start: installed.run, ownHead: gitRoomHead },

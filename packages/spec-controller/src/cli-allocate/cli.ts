@@ -13,11 +13,18 @@ import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 
 export function runAllocate(argv: string[]): void {
-  if (argv.includes("--help") || argv.includes("-h")) {
+  if (asksForHelp(argv)) {
     process.stdout.write(renderCommandHelp(cliRegistry, "allocate") + "\n");
     return;
   }
-  const request = readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion);
+  answerOrRefuse(readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion));
+}
+
+function asksForHelp(argv: string[]): boolean {
+  return argv.includes("--help") || argv.includes("-h");
+}
+
+function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   if ("usageError" in request) {
     refuseUsage(request.usageError);
     return;
@@ -36,7 +43,6 @@ function refuseUsage(line: string): void {
   process.exitCode = 2;
 }
 
-/** Read the tree, its history and its parts, and write the answer to a well-formed request, or its refusal. */
 function answerRequest({ part, isNew }: AllocateRequest): void {
   const cwd = readOrRefuse("the working directory", "", () => process.cwd());
   const top = repositoryTop(cwd);
@@ -46,12 +52,14 @@ function answerRequest({ part, isNew }: AllocateRequest): void {
     refuseUsage(unknownPartRefusal(answer));
     return;
   }
-  const boundaryLine = historyBoundaryLine(historyBoundaryOf(cwd), answer);
-  if (boundaryLine !== null) process.stderr.write(boundaryLine + "\n");
+  writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
   process.stderr.write(highestSeenLine(answer) + "\n");
-  const note = alreadyHeadedNote(answer);
-  if (note !== null) process.stderr.write(note + "\n");
+  writeLineIfAny(alreadyHeadedNote(answer));
   process.stdout.write(answer.code + "\n");
+}
+
+function writeLineIfAny(line: string | null): void {
+  if (line !== null) process.stderr.write(line + "\n");
 }
 
 /** The tree and its history through git, or the tree alone by a walk where there is no repository. */
