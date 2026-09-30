@@ -265,9 +265,17 @@ jobs:
         id: SCN-FIT-001
         if: always()
         # `pnpm exec` rather than a bare `eslint`, because a `run:` shell has no
-        # `node_modules/.bin` on its PATH. What a pipeline needs to put a command on the PATH is
-        # the pipeline's business, and no other artefact states that command.
-        run: pnpm exec eslint
+        # `node_modules/.bin` on its PATH.
+        #
+        # The first line is the report: every violation in the population, at `warn`, exit 0. The
+        # second is the gate: the same config over the files this push touched, where any warning
+        # reds. `shell: bash` is what turns on pipefail — without it a `git diff` that cannot find
+        # `origin/main` hands `xargs` nothing, `xargs -r` runs nothing, and the gate greens in
+        # silence. `-r` is also what lets a push touching nothing gate nothing and pass.
+        shell: bash
+        run: |
+          pnpm exec eslint
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r pnpm exec eslint --max-warnings 0 --no-warn-ignored
 
       - name: Import boundaries
         id: SCN-FIT-009
