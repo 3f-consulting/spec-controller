@@ -1,0 +1,6 @@
+extends: existence
+message: "'%s' is a ticket ID; the ticket holds it, and the tree does not."
+level: error
+nonword: true
+tokens:
+  - 3F-[0-9]+

@@ -76,7 +76,7 @@ export default [
 
   {
     files: [`**/*.${SOURCE_FILES}`],
-    ignores: ["eslint.boundaries.mjs", `packages/*/src/**/*.${SOURCE_FILES}`],
+    ignores: ["eslint.boundaries.js", `packages/*/src/**/*.${SOURCE_FILES}`],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },

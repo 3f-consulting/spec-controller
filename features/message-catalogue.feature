@@ -26,7 +26,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   config back: its subject would be this repository's own Stryker configuration, which a reader
   who copies this corpus does not have. A widened exclusion reds nothing — what it still
   cannot do is make the catalogue lie. An accepted residual, not an oversight, and the same trade
-  `stryker.config.mjs` already carries in writing for the lost kill its own threshold cannot see.
+  `stryker.config.js` already carries in writing for the lost kill its own threshold cannot see.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
   mutate is a folder outside the domain — and the boundary gate's domain-imports-only-domain rule says

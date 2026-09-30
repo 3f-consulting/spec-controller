@@ -11,7 +11,7 @@ export const SPEC_CONTROLLER_BIN = join(repoRoot, "packages", "spec-controller",
 
 export const SPEC_CONTROLLER_ARGV: readonly string[] = [
   "--import",
-  pathToFileURL(join(repoRoot, "tests", "steps", "support", "coreFromDist.register.mjs")).href,
+  pathToFileURL(join(repoRoot, "tests", "steps", "support", "coreFromDist.register.js")).href,
   SPEC_CONTROLLER_BIN,
 ];
 

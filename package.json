@@ -15,7 +15,7 @@
     "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
-    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs .",
+    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.js .",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
     "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\""
   },
@@ -42,6 +42,7 @@
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "4.1.10",
+    "cloc": "2.6.0-cloc",
     "dependency-cruiser": "18.2.0",
     "eslint": "^9.39.5",
     "eslint-plugin-check-file": "3.3.2",

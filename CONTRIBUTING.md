@@ -95,7 +95,7 @@ reads any other converted check's.
 The mutation row — this repository's own domain-core mutation score — is a step-outcome row with no
 bar. `ci.yml`'s `Mutation score` step carries its `@SCN` as its `id:` and asks stock `gh` whether the
 newest `mutation.yml` run on `main`, created inside the last 26 hours, concluded `success`. The bar
-is the 95 `stryker.config.mjs` states as `thresholds.break`, and it is written nowhere else.
+is the 95 `stryker.config.js` states as `thresholds.break`, and it is written nowhere else.
 
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly (`.github/workflows/mutation.yml`).
 **The window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h** for a nightly. A lapsed,

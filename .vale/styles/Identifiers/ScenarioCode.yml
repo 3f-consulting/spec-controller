@@ -1,0 +1,6 @@
+extends: existence
+message: "'%s' is a scenario code; the scenario's tag line carries it, and nothing else does."
+level: error
+nonword: true
+tokens:
+  - '@?SCN-[A-Z0-9]{2,5}-[0-9]+'

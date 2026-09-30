@@ -14,7 +14,7 @@ spec-controller machinery to install, and there is no code of yours to write.
 The recipe below is the one this repository runs against itself, in
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml),
 [`.github/workflows/mutation.yml`](../.github/workflows/mutation.yml) and
-[`stryker.config.mjs`](../stryker.config.mjs). Every block is copied from those
+[`stryker.config.js`](../stryker.config.js). Every block is copied from those
 files rather than summarised, because a recipe that disagrees with the pipeline
 it came from is worse than no recipe.
 
@@ -34,7 +34,7 @@ It has three pieces, and none of them is a number crossing a run boundary:
 Mutation testing's community tool already has a gate. Stryker's
 `thresholds.break` ends the run non-zero when the score falls below it, which is
 Stryker's own documented CI shape. This repository states it in
-`stryker.config.mjs`:
+`stryker.config.js`:
 
 ```js
   thresholds: { break: 95 },

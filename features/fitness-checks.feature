@@ -146,3 +146,32 @@ Feature: The fitness checks this repository declares, one scenario per check
     Given every workflow file under .github/workflows
     When the community's workflow auditor reads each for the faults in its catalogue
     Then no workflow carries one this repository has not ruled on by name
+
+  Rule: a comment carries only what the code cannot say, and the build holds it to that on every run
+
+    @fitness @SCN-FIT-023
+    Scenario: no file in the tree is more than fifteen per cent comment lines
+      Given every file this repository tracks, apart from its test fixtures and its lockfile
+      When the community's line counter counts each file's comment lines and code lines
+      Then no file's comment lines are more than fifteen per cent of its non-blank lines
+      And each file over that share is named with its count
+
+    @fitness @SCN-FIT-024
+    Scenario: no comment, description or current-state document in the tree carries a ticket ID
+      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
+      When the community's prose linter reads each for the workspace's issue-key pattern
+      Then none of them carries a ticket ID
+      And a scenario's tag line, a test's title and a check step's identity are not read as any of them
+
+    @fitness @SCN-FIT-025
+    Scenario: no comment, description or current-state document in the tree carries a scenario code
+      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
+      When the community's prose linter reads each for a scenario code
+      Then none of them carries a scenario code
+      And a scenario's tag line, a test's title, a check step's identity and canon's placeholder notation are not read as one
+
+    @fitness @SCN-FIT-026
+    Scenario: no comment, description or current-state document in the tree narrates how the product used to be
+      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
+      When the community's prose linter reads each for a phrase this repository lists as narrating change
+      Then none of them narrates how the product came to be

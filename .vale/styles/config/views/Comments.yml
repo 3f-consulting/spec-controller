@@ -1,0 +1,4 @@
+engine: tree-sitter
+scopes:
+  - name: comment
+    expr: (comment)+ @comment

@@ -106,6 +106,50 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$(date -u -d '26 hours ago' +%FT%TZ)" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
 
+      - name: Comment share — no file over 15% comment lines
+        id: SCN-FIT-023
+        if: always()
+        shell: bash
+        # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
+        run: |
+          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > 0.15 { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+
+      - name: No ticket ID in a comment, description or document
+        id: SCN-FIT-024
+        if: always()
+        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        with:
+          version: "3.23.0"
+          filter: '.Name == "Identifiers.TicketId"'
+          glob: "!{**/node_modules/**,**/dist/**,.stryker-tmp/**,coverage/**,reports/**,build/**}"
+          filter_mode: nofilter
+          fail_on_error: true
+          reporter: github-annotations
+
+      - name: No scenario code in a comment, description or document
+        id: SCN-FIT-025
+        if: always()
+        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        with:
+          version: "3.23.0"
+          filter: '.Name == "Identifiers.ScenarioCode"'
+          glob: "!{**/node_modules/**,**/dist/**,.stryker-tmp/**,coverage/**,reports/**,build/**}"
+          filter_mode: nofilter
+          fail_on_error: true
+          reporter: github-annotations
+
+      - name: No narrated history in a comment, description or document
+        id: SCN-FIT-026
+        if: always()
+        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        with:
+          version: "3.23.0"
+          filter: '.Name == "History.Narrated"'
+          glob: "!{**/node_modules/**,**/dist/**,.stryker-tmp/**,coverage/**,reports/**,build/**}"
+          filter_mode: nofilter
+          fail_on_error: true
+          reporter: github-annotations
+
       - name: Dump this run's step record
         if: always()
         env:
