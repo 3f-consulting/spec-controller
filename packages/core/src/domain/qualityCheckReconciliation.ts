@@ -20,65 +20,9 @@ import {
 } from "./journal.js";
 import { QualityCheckFaultCode } from "./qualityCheckFault.js";
 import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
+import type { Outcome, SidePresence } from "./outcome.js";
 
-/**
- * The reconciled OUTCOME of a single quality-check evidence obligation — one
- * RECONCILING ITEM in the accounting frame (the per-evidenceObligation line explaining
- * why obligation and observation disagree). The rationalisation: the
- * per-evidenceObligation axis is the OUTCOME — `satisfied` (its `balanced` retired,
- * `balanced` being the scenario VERDICT's word), and the watermelon reads plainly
- * as `watermelon`.
- */
-export type Outcome =
-  | "satisfied" // required, present, and passing
-  | "failing" // required, present, but failing (runtime)
-  | "watermelon" // a static check that exists but is NOT wired into CI over the
-  // real source — green on the surface, red within; a "broken"-class
-  // outcome unique to the static kind.
-  | "missing" // required, but no matching result/static check observed
-  // CREDIT-SIDE (the bidirectional reconciler): an evidence observation
-  // (credit) reconciling against no evidence obligation. The credit-side union grows
-  // final-named across the LDG-006/007/008 sub-issues; LDG-006 lands the first:
-  | "cites-unknown-scenario" // a credit citing an @SCN no scenario matches —
-  // the reconciling item on a PHANTOM scenario (@SCN-LDG-006).
-  | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
-  // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
-  // uncited static-check (a `fitness` credit no evidence obligation names, ruling Q4).
-  | "broken" // a credit whose PROOF NEVER RAN — the harness broke before the behaviour was
-  // exercised, so it cites no @SCN and can be attributed to no scenario. READER-AGNOSTIC: a
-  // vitest suite that failed to collect (@SCN-LDG-017) OR a cucumber step matched by two or
-  // more definitions (@SCN-LDG-019). A SIBLING of `cites-no-scenario` (both land in suspense
-  // because they name no scenario), distinguished by broken-vs-completed. The scenario whose
-  // proof was in that harness still reads `missing` (honest at its own resolution), but the RUN
-  // now carries the fault — so the reader is sent to fix the harness, not to write a test that
-  // already exists.
-  | "no-evidence-obligation" // a credit citing a REAL scenario at a quality-check that scenario
-  // NEVER NAMED (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
-  // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
-  // row (carrying the evidence observation locator, ruling Q5): the credit posts to a real account,
-  // but against no evidence obligation. Fixes the latent `attributed` mis-count — a stray credit at a
-  // quality-check the scenario never named is no longer silently counted as reconciliation-matched-attributed.
-  // NEITHER-SIDE (the bidirectional reconciler's final outcome):
-  | "no-scn-code" // a DEBIT outcome (@SCN-LDG-021): a real scenario carrying no @SCN,
-  // so its Evidence Obligation has NO CODE for an Evidence Observation to link to. The scenario is
-  // ORDINARY — not phantom, not suspense; it exists and cucumber runs it — but its own Scenario
-  // Reconciliation is out-of-balance, because the obligation is UNLINKABLE. The DEBIT TWIN of
-  // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. UNCODED
-  // work: it can never reconcile satisfied, failing, or even `missing` — an obligation never
-  // RAISED cannot be ABSENT — so without this it was invisible to the verdict entirely.
-  | "duplicate-scn-code" // a DEBIT outcome (3F-3609): the Evidence Obligation's @SCN code is carried
-  // by another scenario too, so the code names ONE account two scenarios claim and no credit citing
-  // it can be attributed to either. It lands on EVERY quality check of that account, so the account
-  // is out-of-balance by the ordinary rule — no new verdict, no precedence. Not `broken`: the proofs
-  // ran; what fails is the attribution.
-  | "both-missing"; // a scenario that reconciles to ZERO rows on BOTH sides (no
-  // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
-  // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
-  // missing — the Scenario is untagged and uncited"). Detected by the reconciler emitting NOTHING either way (NOT a
-  // hard evidenceObligations.length === 0 map — a zero-evidence obligation scenario cited by a stray
-  // credit is `no-evidence-obligation`, @SCN-LDG-010). Retires the zero-evidence-scenario warning (@SCN-WRN-001
-  // Update): the zero-evidence scenario is now this out-of-balance row, never a separate axis.
-  // The verdict stays two-valued (out-of-balance VIA this reconciling item, never a third verdict).
+export type { Outcome, SidePresence } from "./outcome.js";
 
 /**
  * The canon description for each reconciling-item Outcome — the human-readable gloss a
@@ -91,18 +35,18 @@ export type Outcome =
  * Keyed by EVERY `Outcome` (a `Record<Outcome, …>`), so a new outcome cannot be added to the
  * union without a description here — the description can never silently diverge from the
  * outcome it names (the drift class this project has been burned by: the census, the views).
- * These phrasings ARE the original canon — later abbreviated to the handles; 3F-1626 restores
- * them. `satisfied` (the balanced outcome, excluded from the out-of-balance decomposition)
+ * These phrasings ARE the original canon — later abbreviated to the handles, and restored here.
+ * `satisfied` (the balanced outcome, excluded from the out-of-balance decomposition)
  * carries one for totality's sake.
  *
- * ⚠ KEY ORDER IS LOAD-BEARING (3F-1806). `OUT_OF_BALANCE_OUTCOMES` is DERIVED from these keys,
+ * ⚠ KEY ORDER IS LOAD-BEARING. `OUT_OF_BALANCE_OUTCOMES` is DERIVED from these keys,
  * and the renderer walks that list to emit the decomposition rows — so this map's key order IS
  * the report's row order (`missing` first: the headline cause, the one carrying the bare-level
  * split as Detail). Reordering these keys is a REPORT CHANGE, not a cosmetic tidy. The order
  * follows canon, grouped by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
  * no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, no-evidence-obligation), then
- * NEITHER (broken, both-missing). @SCN-RPT-019 now pins this SEQUENCE against the rendered `↳`
- * rows (3F-1926), so a reorder reds — the exhaustiveness guard alone proved MEMBERSHIP, not
+ * NEITHER (broken, both-missing). A render test pins this SEQUENCE against the rendered `↳`
+ * rows, so a reorder reds — the exhaustiveness guard alone proved MEMBERSHIP, not
  * order, and used not to catch one (which is how the order drifted before it was pinned).
  */
 export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
@@ -110,20 +54,20 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   missing: "Evidence Observation is missing",
   failing: "Evidence Observation is failing",
   watermelon: "Evidence Observation is passing but fabricated",
-  // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side — the
+  // The DEBIT TWIN of `cites-no-scenario`: same missing LINK, opposite side — the
   // scenario is real and ORDINARY, but carries no @SCN for an observation to link to.
   "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
-  // CANON VERBATIM, backticks stripped — double-entry-manifesto.md's Outcome table (3F-3609).
+  // CANON VERBATIM, backticks stripped — double-entry-manifesto.md's Outcome table.
   "duplicate-scn-code": "Evidence Obligation's @SCN code is carried by another Scenario",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
   // CANON VERBATIM — double-entry-manifesto.md:42, the Outcome column. The gloss is the outcome
   // SENTENCE, canon's checkably-true half where the handle is only a label, so it states the
-  // credit-side fact rather than echoing the handle's root. 3F-2308 landed the sentence; 3F-2300
-  // then renamed the HANDLE to match it — the old one was the last survivor of a word canon has
-  // retired — moving the emitted `byOutcome` key and every @SCN-LDG scenario that reads it.
+  // credit-side fact rather than echoing the handle's root. The HANDLE was renamed
+  // to match it — the old one was the last survivor of a word canon has
+  // retired — moving the emitted `byOutcome` key and every ledger scenario that reads it.
   "no-evidence-obligation": "Evidence Observation cites a Scenario with no matching Evidence Obligation",
-  // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
+  // GENERIC over its producers: `broken` has two instances
   // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
   // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection
   // error", so the gloss names what BOTH have in common: the proof exists and did not run.
@@ -140,20 +84,20 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
 /**
  * The out-of-balance reconciling-item outcomes, in report reading order — every `Outcome`
  * except `satisfied` (the BALANCED outcome, not part of the OUT-of-balance decomposition).
- * The renderer walks this to emit the summary's `↳` leaf rows (@SCN-RPT-019), each reconciling
+ * The renderer walks this to emit the summary's `↳` leaf rows, each reconciling
  * to the out-of-balance total exactly once (a FLAT list: the old debit/credit/neither grouping
  * emitted a `↳ <group>-side` subtotal AND its leaves at the same indent, so a naive column-sum
  * double-counted — the live 170 vs 85).
  *
- * DERIVED from the type-forced `OUTCOME_DESCRIPTION`, never hand-listed (3F-1806). It was a
+ * DERIVED from the type-forced `OUTCOME_DESCRIPTION`, never hand-listed. It was a
  * hand-maintained `readonly Outcome[]` in the renderer, which accepted a missing union member
- * SILENTLY: `broken` (@SCN-LDG-017) joined the union, tallied into `byOutcome`, compiled clean,
+ * SILENTLY: `broken` joined the union, tallied into `byOutcome`, compiled clean,
  * and would have been omitted from the table. Deriving the keys makes that omission IMPOSSIBLE
  * rather than merely CAUGHT — a new `Outcome` cannot compile without a description, and the
  * moment it has one it renders a leaf row with no change to the renderer.
  *
  * Lives in the model, not the renderer: which outcomes are out-of-balance is the model's rule,
- * not a presentation choice (`entity-owns-its-behaviour`). The @SCN-RPT-019 guard remains as the
+ * not a presentation choice (`entity-owns-its-behaviour`). The render test remains as the
  * end-to-end backstop — it renders real markdown and reads the rows back, deriving its
  * expectation from its OWN type-forced record (`double-entry`, not a re-read of this source).
  */
@@ -162,7 +106,7 @@ export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
 ).filter((outcome) => outcome !== "satisfied");
 
 /**
- * THE NOMINAL BRAND (@SCN-LDG-030, 3F-2016) — a module-private `unique symbol` phantom field.
+ * THE NOMINAL BRAND — a module-private `unique symbol` phantom field.
  * `QualityCheckReconciliation` is `QualityCheckReconciliationFields` PLUS a required field of this
  * symbol's type, so no object literal typechecks as a `QualityCheckReconciliation` OUTSIDE this
  * module — only `makeQualityCheckReconciliation` (which casts) can mint one. The brand symbol has
@@ -193,13 +137,13 @@ interface QualityCheckReconciliationFields {
   staticCheck?: string;
   outcome: Outcome;
   /**
-   * The DEBIT side of the two-sided reconciling item (@SCN-LDG-026): the evidence obligation
+   * The DEBIT side of the two-sided reconciling item: the evidence obligation
    * this item reconciles, carried on the reconciliation itself rather than joined from a
    * separate scenario-level array at print time. Present IFF the obligation Exists — every
    * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`), AND `no-scn-code`,
    * which carries a SYNTHESIZED scenario-scope obligation (an empty `{}`, no `qualityCheck` /
    * `staticCheck`): canon (`double-entry-manifesto.md` line 39) marks `no-scn-code` Obligation
-   * Exists, Observation None — the debit twin of `cites-no-scenario` (@SCN-LDG-029). ABSENT on the
+   * Exists, Observation None — the debit twin of `cites-no-scenario`. ABSENT on the
    * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `no-evidence-obligation`) and the
    * neither-side outcomes (`broken` / `both-missing`), where no obligation is in scope.
    * `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved everywhere the
@@ -207,7 +151,7 @@ interface QualityCheckReconciliationFields {
    */
   evidenceObligation?: EvidenceObligation;
   /**
-   * The CREDIT side of the two-sided reconciling item (@SCN-LDG-027): the evidence observation
+   * The CREDIT side of the two-sided reconciling item: the evidence observation
    * this item reconciles, carried on the reconciliation itself rather than joined from a
    * separate scenario-level array at print time. Present IFF the observation Exists — every
    * observation-bearing outcome: the two-sided debit outcomes (`satisfied` / `failing` /
@@ -216,7 +160,7 @@ interface QualityCheckReconciliationFields {
    * citing observation. ABSENT on `missing` (obligation Exists, observation None) and the
    * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no observation is in
    * scope. For a fitness `missing` the absent static check is FOUND as the negative fact
-   * `{exists:false}` — an ABSENCE, not an observation (@SCN-LDG-028) — so it is NOT carried here:
+   * `{exists:false}` — an ABSENCE, not an observation — so it is NOT carried here:
    * only a REAL observation (`exists:true`) is the credit side. `JSON.stringify` omits it when
    * undefined, so a byte-identical golden is preserved everywhere the observation is absent.
    */
@@ -230,7 +174,7 @@ interface QualityCheckReconciliationFields {
    */
   locator?: string;
   /**
-   * The WHAT-BROKE payload of a `broken` credit-side reconciling item (@SCN-LDG-017) — the
+   * The WHAT-BROKE payload of a `broken` credit-side reconciling item — the
    * collection error the runner reported, carried alongside the `locator` (the file to fix).
    * Present only on a `broken` item; every other outcome carries none.
    */
@@ -239,31 +183,21 @@ interface QualityCheckReconciliationFields {
 
 /**
  * A single evidenceObligation's reconciliation outcome — the branded reconciling item. The fields
- * intersected with the nominal brand (@SCN-LDG-030): mintable ONLY by
+ * intersected with the nominal brand: mintable ONLY by
  * `makeQualityCheckReconciliation`, so every QCR in the system has passed the (outcome,
  * side-presence) consistency check. The barrel (`index.ts`) re-exports this TYPE via
  * `model.ts`; the phantom field adds no exported SYMBOL, so the symbol NAMES on the public v1
  * surface are unchanged — but constructibility is deliberately NARROWED: QCRs are engine-minted,
  * and the type is exported for READING the reconciliation the engine produced, not for external
  * CONSTRUCTION (the smart constructor is unexported). That narrowed contract is stated executably
- * by the type-level guard in `index.test.ts` (@SCN-API-002, 3F-2040), not merely asserted here.
+ * by the type-level guard in `index.test.ts`, not merely asserted here.
  */
 export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
   readonly [qualityCheckReconciliationBrand]: typeof qualityCheckReconciliationBrand;
 };
 
 /**
- * Whether a canon-correct reconciling item CARRIES a given side — the value both halves of the
- * invariant are stated in: what the canon row required, and what the fields actually carried.
- *
- * Named rather than restated inline so the fault that reports a divergence (`qualityCheckFault.ts`)
- * is typed in the reconciliation's own vocabulary instead of re-spelling the two literals a third
- * and fourth time.
- */
-export type SidePresence = "Exists" | "None";
-
-/**
- * THE CANON OUTCOME-SIDE PROFILE (@SCN-LDG-030, 3F-2016) — the (outcome → side-presence) table
+ * THE CANON OUTCOME-SIDE PROFILE — the (outcome → side-presence) table
  * transcribed from canon (`double-entry-manifesto.md` lines 35-44), keyed by EVERY `Outcome` (a
  * `Record<Outcome, …>`), so a new outcome cannot join the union without STATING its side
  * profile here — the type-forced totality that makes this map the SINGLE SOURCE the invariant is
@@ -288,7 +222,7 @@ export const OUTCOME_SIDE_PROFILE: Record<
   "no-scn-code": { obligation: "Exists", observation: "None" },
   // Canon's Observation column reads "Any": that is the ACCOUNT's posted credits, which ride on the
   // row's `evidenceObservations`. The item reconciles no one credit (none can be attributed), so it
-  // carries none (3F-3609).
+  // carries none.
   "duplicate-scn-code": { obligation: "Exists", observation: "None" },
   "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
   "cites-no-scenario": { obligation: "None", observation: "Exists" },
@@ -298,7 +232,7 @@ export const OUTCOME_SIDE_PROFILE: Record<
 };
 
 /**
- * THE SMART CONSTRUCTOR (@SCN-LDG-030, 3F-2016) — the ONLY way to mint a
+ * THE SMART CONSTRUCTOR — the ONLY way to mint a
  * `QualityCheckReconciliation`. It takes `outcome` as GIVEN (a consistency check, NOT a
  * derivation — `missing`/`no-scn-code` share a profile, so the outcome cannot be recovered from
  * side-presence alone), looks up the canon row in `OUTCOME_SIDE_PROFILE`, and THROWS if the
@@ -318,7 +252,7 @@ export function makeQualityCheckReconciliation(
       code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
       outcome: fields.outcome,
       required: profile.obligation,
-      // The ternary STAYS in code (@SCN-MSG-001): it is parameter logic, not prose, so mutation
+      // The ternary STAYS in code: it is parameter logic, not prose, so mutation
       // still reaches it — and now an assertion does too, which is what kills it.
       actual: fields.evidenceObligation !== undefined ? "Exists" : "None",
     });
@@ -342,24 +276,24 @@ export function makeQualityCheckReconciliation(
  * config and manifest, not from a test file, so there is no file to send the reader to beyond the
  * check's own handle — which the item already carries. Reading the field off the union rather
  * than off `RuntimeEvidenceObservation` is what let those items widen to the static axis at all
- * (@SCN-LNT-001, since a citing static credit can now post to a real or a phantom row).
+ * (since a citing static credit can now post to a real or a phantom row).
  */
 function locatorOf(observation: EvidenceObservation): string | undefined {
   return observation.qualityCheck === "fitness" ? undefined : observation.locator;
 }
 
 /**
- * The outcomes a single credit can carry, WORST FIRST (3F-3552) — the order the several credits
+ * The outcomes a single credit can carry, WORST FIRST — the order the several credits
  * answering one obligation are read in.
  *
  * `failing` OUTRANKS `watermelon` because one credit's own ladder already asks the check's verdict
- * before its wiring (@SCN-LNT-028): a severed credit that failed reads `failing`. Reading several by
+ * before its wiring: a severed credit that failed reads `failing`. Reading several by
  * the same order keeps one ladder for one credit and for many, so a failed credit never reads one
  * way alone and another beside a severed sibling. EITHER outranks `satisfied`, because a credit
- * reading otherwise is not vouched for by a sibling that passed (@SCN-LNT-032, 3F-3547).
+ * reading otherwise is not vouched for by a sibling that passed.
  *
  * `missing` IS NOT HERE. It is not an outcome a credit carries: canon gives it no Observation, and
- * the `{exists:false}` record is an absence that carries nothing (@SCN-LDG-028). Where any real credit
+ * the `{exists:false}` record is an absence that carries nothing. Where any real credit
  * answers, the observation side Exists, so an absence never outranks one and is never named.
  */
 const CREDIT_PRECEDENCE: readonly CreditOutcome[] = ["failing", "watermelon", "satisfied"];
@@ -374,18 +308,18 @@ interface Answer<T> {
 }
 
 /**
- * THE ONE RULE FOR SEVERAL CREDITS (3F-3552), on every arm: each credit is read on its own, the
+ * THE ONE RULE FOR SEVERAL CREDITS, on every arm: each credit is read on its own, the
  * obligation reads the worst of those readings, and the item names the first credit carrying it.
  *
  * A runner emits one credit per test and a check can be run more than once, so one obligation is
  * routinely answered by several credits. None of them vouches for a sibling: a failed test is failing
- * whatever passed beside it (3F-3547), and a severed run is a watermelon whatever wired run of the same
- * check sits beside it (@SCN-LNT-032). "First failed, else first" was this rule's first half, written
+ * whatever passed beside it, and a severed run is a watermelon whatever wired run of the same
+ * check sits beside it. "First failed, else first" was this rule's first half, written
  * for the one arm that had a failure to find; it read the watermelon off whichever credit sorted first.
  *
  * The OUTCOME does not depend on the order the credits arrive in — it is the worst any of them
  * carries. The order decides only WHICH of the credits carrying it is named, and `reconcile` fixes
- * that order as evidence order (@SCN-RMD-009), so the name is deterministic too. When no credit
+ * that order as evidence order, so the name is deterministic too. When no credit
  * carries an outcome in the precedence, nothing answered, and the obligation reads `missing`.
  */
 function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutcome | undefined): Answer<T> {
@@ -398,7 +332,7 @@ function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutc
 
 /**
  * The static-check observations answering THIS scenario's `fitness` obligation — ONE ROUTE, the
- * citation, on both of its terms (@SCN-LNT-001).
+ * citation, on both of its terms.
  *
  * THE CREDIT CITES, and it is the same rule the runtime arm applies: an observation citing this
  * scenario's `@SCN` answers its obligation. That is what lets a FITNESS obligation reconcile at
@@ -406,15 +340,15 @@ function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutc
  * run knows only the runnable handle (`lint:feature-codes`), so nothing matches by name and
  * nothing ever could. The citation is the seam that already crossed between them.
  *
- * THE CITATION IS THE WHOLE ADDRESS (3F-3563). One `@fitness` scenario is one check, so a row
+ * THE CITATION IS THE WHOLE ADDRESS. One `@fitness` scenario is one check, so a row
  * raises at most one fitness obligation and the `@SCN` alone says which obligation a credit
  * answers — exactly as a runtime credit's `(scnId, quality-check)` does. The check word that
- * once told two fitness obligations on one row apart (@SCN-LNT-012's `checkTag` comparison) left
- * with the characteristic (3F-3525); several credits citing one row all answer its one obligation, and
- * `answerOf` reads the worst of them (@SCN-LNT-036/037/038).
+ * once told two fitness obligations on one row apart (a `checkTag` comparison) left
+ * with the characteristic; several credits citing one row all answer its one obligation, and
+ * `answerOf` reads the worst of them.
  *
- * NAME-MATCH IS GONE FROM HERE TOO (3F-2625). A by-handle fallback stood second, taken only for a
- * run that cited NOTHING. 3F-2590 retired the by-name route and removed `posting.ts`'s arm, but
+ * NAME-MATCH IS GONE FROM HERE TOO. A by-handle fallback stood second, taken only for a
+ * run that cited NOTHING. The by-name route was retired and removed `posting.ts`'s arm, but
  * never touched this file, so this half outlived the retirement it was written to announce — and
  * it was LIVE, not dead code. It compared an uncited observation's RUNNABLE handle against the
  * obligation's BARE tag, which differ for every prefixed check (`lint:feature-codes` vs
@@ -426,11 +360,11 @@ function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutc
  * SO A RUN THAT CITES NOTHING NOW ANSWERS NOTHING. It posts to SUSPENSE (`postingOf`), where a
  * check nobody named is meant to surface, and the obligation naming that check reads `missing` —
  * an honest pair, both halves loud. Pinned by plant, not by the absence of a symbol:
- * `uncitedFitnessCredit.test.ts`, @SCN-USG-001.
+ * `uncitedFitnessCredit.test.ts`.
  *
  * NO WORD IS COMPARED AT ALL. The observation's `staticCheck` is the runnable handle, and comparing
  * it with anything the obligation carries was the deleted by-name arm; the `checkTag` comparison
- * that replaced it left with the characteristic too (3F-3563). The citation is the one term.
+ * that replaced it left with the characteristic too. The citation is the one term.
  *
  * Lives beside `reconcileEvidenceObligation` rather than inside it: which observation answers an
  * obligation is one idea with a name, and the outcome mapping that follows it is another.
@@ -439,13 +373,13 @@ function fitnessCreditsCiting(
   scnId: string,
   evidenceObservations: readonly EvidenceObservation[]
 ): FitnessEvidenceObservation[] {
-  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LNT-036, @SCN-LNT-037): `answerOf` reads them all, so a
+  // EVERY MATCH IS KEPT, NOT THE FIRST: `answerOf` reads them all, so a
   // failed or severed credit beside a wired one that passed is what the obligation reads, wherever
   // it sorts.
   return evidenceObservations.filter(
     (o): o is FitnessEvidenceObservation =>
       isFitnessObservation(o) &&
-      // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS (@SCN-LNT-026). A proof that
+      // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS. A proof that
       // never ran can neither discharge an obligation nor fail it, so a broken credit is excluded
       // from the match entirely and its obligation reconciles `missing` by absence — while the
       // credit itself posts to suspense, where the reader is told what broke. The exclusion is
@@ -459,10 +393,10 @@ function fitnessCreditsCiting(
 
 /**
  * What ONE static-check credit carries on its own — the ladder `answerOf` ranks several by — or
- * `undefined` for an absence, which carries nothing (@SCN-LDG-028): alone, its obligation reads
+ * `undefined` for an absence, which carries nothing: alone, its obligation reads
  * `missing` because nothing answered it, not because the record carried a `missing` of its own.
  *
- * THE CHECK'S OWN VERDICT FIRST, WHERE THE OBSERVATION CARRIED ONE (@SCN-LNT-028), and the order is
+ * THE CHECK'S OWN VERDICT FIRST, WHERE THE OBSERVATION CARRIED ONE, and the order is
  * the rule rather than a convenience. `exists` and `enforcedOverRealSource` say a check is there and
  * is wired, which is exactly what a check that ran and found violations also is — so asked in the
  * other order the wiring facts would answer `satisfied` over a red and the verdict would never be
@@ -482,12 +416,12 @@ function staticOutcomeOf(credit: FitnessEvidenceObservation): CreditOutcome | un
 
 /**
  * Reconcile one STATIC-CHECK fitness obligation — the read-over-the-source arm, the fitness
- * axis's one route since its measured twin left (3F-3516). Every credit answering it is read by
- * `staticOutcomeOf`, and the obligation reads the worst of them (`answerOf`, 3F-3552).
+ * axis's one route since its measured twin left. Every credit answering it is read by
+ * `staticOutcomeOf`, and the obligation reads the worst of them (`answerOf`).
  *
  * NAMED FOR WHAT IT HOLDS. Every surviving fitness obligation carries the BARE CHECK TAG its
  * stepless scenario spells (`complexity`), never the runnable handle that invokes it
- * (`lint:complexity`) — the retired `@lint=<handle>` form raises nothing (@SCN-LNT-007). The old
+ * (`lint:complexity`) — the retired `@lint=<handle>` form raises nothing. The old
  * name `guard` read as the handle and was the tag, which is exactly the confusion that let an
  * observation's handle be compared against it.
  */
@@ -500,7 +434,7 @@ function reconcileStaticObligation(
     fitnessCreditsCiting(scnId, evidenceObservations),
     staticOutcomeOf
   );
-  // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the credit carrying the outcome, when one does. A
+  // The CREDIT side: the credit carrying the outcome, when one does. A
   // guard absent from both package.json and CI is FOUND as the negative fact `{exists:false}` — an
   // ABSENCE, not an observed piece of evidence — and it carries no outcome at all, so it is never the
   // credit named: `missing` carries NOTHING on the credit side (Obligation Exists,
@@ -538,7 +472,7 @@ export function reconcileEvidenceObligation(
   // never matches here). present+pass → satisfied; present+fail → failing;
   // absent → missing (a required ledger entry never recorded).
   //
-  // THE FAIL-SAFE (@SCN-LDG-017, operator-mandated): `broken` is checked BEFORE `status`. A
+  // THE FAIL-SAFE (operator-mandated): `broken` is checked BEFORE `status`. A
   // broken observation — one whose PROOF NEVER RAN — is excluded from the match entirely, so it
   // can NEVER reconcile as `satisfied` or `failing`: a proof that never ran can neither discharge
   // an obligation nor fail it. The obligation then finds no match and reconciles `missing` —
@@ -548,11 +482,11 @@ export function reconcileEvidenceObligation(
   // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
   // guard is what makes the fail-safe hold whatever it carries.
   //
-  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LDG-036), and `answerOf` reads them: a failed test
+  // EVERY MATCH IS KEPT, NOT THE FIRST, and `answerOf` reads them: a failed test
   // beside a passing one citing the same scenario is `failing`, wherever its file sorts.
   const { outcome, credit } = answerOf(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
-      // TWO SURVIVING MUTANTS LIVE ON THIS CLAUSE, KEPT DELIBERATELY (3F-2237). Stryker has no
+      // TWO SURVIVING MUTANTS LIVE ON THIS CLAUSE, KEPT DELIBERATELY. Stryker has no
       // equivalence detection, so a mutant no test can kill is indistinguishable from one nobody
       // has written yet. The argument is recorded here because a reader meeting this line has no
       // other way to recover that the clause is redundant ON PURPOSE.
@@ -570,7 +504,7 @@ export function reconcileEvidenceObligation(
       // both carrying `""` reconcile `satisfied` here and `missing` under the mutant. But that
       // input is out of domain — no member of `QualityCheck` spells `""`, and nothing in this
       // package emits it (every producer is a literal, a closed alternation, or a lookup hit), so
-      // it is reachable only by casting PAST the parameter type. 3F-2879 drew exactly that line: a
+      // it is reachable only by casting PAST the parameter type. The line is drawn exactly there: a
       // shape admitted by width subtyping WITH NO CAST is a real published-surface input and kills
       // (it killed `locatorOf`, and `fitnessCheckTagOf` with it); an out-of-domain value for a
       // typed field is not one, and pinning behaviour for it would assert a case no reader of this
@@ -585,7 +519,7 @@ export function reconcileEvidenceObligation(
       o.qualityCheck === req.qualityCheck &&
       o.scnId === scnId
   ), runtimeOutcomeOf);
-  // The CREDIT side (@SCN-LDG-027): the credit carrying the outcome, present for the two-sided
+  // The CREDIT side: the credit carrying the outcome, present for the two-sided
   // outcomes `satisfied` / `failing` and absent for `missing` — the conditional spread keeps
   // `missing` observation-free (obligation Exists, observation None).
   return makeQualityCheckReconciliation({
@@ -597,14 +531,14 @@ export function reconcileEvidenceObligation(
 }
 
 // ---------------------------------------------------------------------------
-// THE CREDIT-SIDE AND DEGENERATE ITEM RULES (3F-2204) — co-located here beside
+// THE CREDIT-SIDE AND DEGENERATE ITEM RULES — co-located here beside
 // `reconcileEvidenceObligation` because they answer the same question it does: what outcome does
 // an entry reconcile to, and which sides does that item carry? `reconcileEvidenceObligation`
 // answers it for a DEBIT matched against the observed evidence; these answer it for the entries
 // that match no obligation at all (the credit-side outcomes) and for the two degenerate rows
 // (no-scn-code, both-missing).
 //
-// They were inline `.map()` bodies in the `reconcile` fold. Posting-destination left in 3F-2202;
+// They were inline `.map()` bodies in the `reconcile` fold. Posting-destination left earlier;
 // this is the sibling class — WHAT an entry reconciles to, as opposed to WHERE it lands. Both are
 // domain rules, so neither belongs in the orchestration. `reconcile` keeps the walk and builds the
 // rows; the outcomes are asked for.
@@ -627,7 +561,7 @@ function fitnessCheckNameOf(observation: EvidenceObservation): string | undefine
 }
 
 /**
- * The NO-EVIDENCE-OBLIGATION items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
+ * The NO-EVIDENCE-OBLIGATION items on a real scenario's row — one per credit citing THIS
  * scenario at a quality-check it never named. The credit posts to a real row against NO
  * evidence obligation, so the item is CREDIT-ONLY (no obligation is in scope).
  *
@@ -635,7 +569,7 @@ function fitnessCheckNameOf(observation: EvidenceObservation): string | undefine
  * `(scnId, quality-check)` pair reconciles satisfied/failing via `reconcileEvidenceObligation` and
  * is NOT re-listed here. `evidenceObligationPairs` is the journal's rule (`evidenceObligationPairsOf`),
  * built once and shared — which is what makes a credit citing a PENDING pair land here rather than
- * nowhere (3F-1858: a pending obligation names nothing, so such a credit is no-evidence-obligation exactly
+ * nowhere (a pending obligation names nothing, so such a credit is no-evidence-obligation exactly
  * as when nothing was raised at all, and the run that used to read balanced over it now fails).
  */
 export function noEvidenceObligationReconciliationsOf(
@@ -646,7 +580,7 @@ export function noEvidenceObligationReconciliationsOf(
   return postedCredits
     .filter(
       (o) =>
-        // THE `(scnId, quality-check)` PAIR, on both axes alike (3F-3563): a row raises at most one
+        // THE `(scnId, quality-check)` PAIR, on both axes alike: a row raises at most one
         // fitness obligation, so a fitness credit citing it at `fitness` is answered or it is not.
         // Composed by the model's own `evidenceObligationPairKey`, the same spelling the set is
         // built with: a key built one way and read another is a bug in a new spelling.
@@ -663,7 +597,7 @@ export function noEvidenceObligationReconciliationsOf(
         // own obligations, which are named by the bare tag — like compared with like. The handle is
         // the fallback for a credit that carries no tag, so the item still names something.
         ...(fitnessCheckNameOf(o) !== undefined ? { staticCheck: fitnessCheckNameOf(o) } : {}),
-        // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles.
+        // The CREDIT side: the citing observation this item reconciles.
         evidenceObservation: o,
         ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
       })
@@ -671,7 +605,7 @@ export function noEvidenceObligationReconciliationsOf(
 }
 
 /**
- * The items on a PHANTOM row (@SCN-LDG-006) — one `cites-unknown-scenario` per credit citing an
+ * The items on a PHANTOM row — one `cites-unknown-scenario` per credit citing an
  * `@SCN` no scenario carries, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
  * so nothing can ever have been named of it, and no obligation is in scope.
  *
@@ -679,7 +613,7 @@ export function noEvidenceObligationReconciliationsOf(
  * (ruling Q5): a phantom item has no obligation to point a reader at instead. A runtime credit
  * carries its locator (the test file that cited); a FITNESS credit carries the CHECK THAT RAN —
  * it is read from a target's config, not from a test file, so it has no locator and the handle is
- * all there is. That half became reachable when the fitness axis started citing (@SCN-LNT-009);
+ * all there is. That half became reachable when the fitness axis started citing;
  * the suspense arm below already carried it, and the two unmatched-credit destinations must not
  * tell a reader different amounts about the same class of fault.
  */
@@ -700,14 +634,14 @@ export function citesUnknownScenarioReconciliationsOf(
 }
 
 /**
- * The items on the SUSPENSE row (@SCN-LDG-007) — every entry that names no scenario at all,
+ * The items on the SUSPENSE row — every entry that names no scenario at all,
  * in the ONE order canon fixes.
  *
  * THE ORDER IS THE RULE, not an accident of assembly. `broken` comes FIRST because a broken run's
  * other suspense items are downstream noise: the reader must be sent to the harness before being
  * asked to read anything the harness failed to produce.
  *
- * THE SPLIT (@SCN-LDG-017) is why `broken` and `cites-no-scenario` are separate arms rather than
+ * THE SPLIT is why `broken` and `cites-no-scenario` are separate arms rather than
  * one map over "everything uncited". Both land here because they name no scenario, but they are
  * distinguished by errored-vs-completed and their remedies differ: a `cites-no-scenario` test RAN
  * and forgot its citation (add the `@SCN`); a `broken` suite never ran at all (fix the harness).
@@ -720,7 +654,7 @@ export function citesUnknownScenarioReconciliationsOf(
  *   - a no-evidence-obligation static check carries its handle and its observation; it has no locator (a
  *     static check is read from config, not from a test file).
  *
- * THE BROKEN STREAM TAKES EITHER AXIS SINCE @SCN-LNT-026, AND THE ARM NEEDED NO BRANCH FOR IT.
+ * THE BROKEN STREAM TAKES EITHER AXIS, AND THE ARM NEEDED NO BRANCH FOR IT.
  * A converted static check that did not run carries the same two payload halves under the same
  * two names, so the map reads what the observation holds exactly as it does for a vitest suite
  * that failed to collect. What differs is only the `qualityCheck` the item then carries — `fitness`
@@ -761,7 +695,7 @@ export function suspenseReconciliationsOf(
 }
 
 /**
- * The item on an UNTAGGED scenario's row (@SCN-LDG-021) — the DEBIT twin of `cites-no-scenario`
+ * The item on an UNTAGGED scenario's row — the DEBIT twin of `cites-no-scenario`
  * (same missing link, opposite side; suspense stays credit-only).
  *
  * A scenario carrying no `@SCN` is REAL and ORDINARY — cucumber runs it — but its obligation has no
@@ -780,7 +714,7 @@ export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
 }
 
 /**
- * The items on an account whose `@SCN` code more than one scenario carries (@SCN-STG-013, 3F-3609).
+ * The items on an account whose `@SCN` code more than one scenario carries.
  *
  * EVERY QUALITY CHECK THE SHARERS NAME, EACH READING `duplicate-scn-code` — deferred ones included.
  * Two scenarios behind one code means no credit citing it can be attributed to either, and a
@@ -810,7 +744,7 @@ export function duplicateScnCodeReconciliationsOf(
 }
 
 /**
- * The degenerate BOTH-MISSING item (@SCN-LDG-009) — the NEITHER-side outcome, blank on both sides:
+ * The degenerate BOTH-MISSING item — the NEITHER-side outcome, blank on both sides:
  * no `qualityCheck` (it is neither a debit obligation nor a credit observation), no carried entry.
  * A scenario that reconciled to zero rows on BOTH sides posts exactly one of these, and is
  * out-of-balance through it.

@@ -23,7 +23,7 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { namesStdout, stdoutIdentity } from "../outputLocation.js";
+import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
 import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
@@ -248,7 +248,15 @@ export function checkRenderFromJson(
   return null;
 }
 
+/**
+ * The `balance` command. A refusal leaves on the usage code and answers that no report was written,
+ * after everything already written has drained.
+ */
 export function runBalance(argv: string[]): boolean {
+  return settlingRefusal(() => balance(argv), false);
+}
+
+function balance(argv: string[]): boolean {
   // Answer `--help`/`-h` from the command/flag registry BEFORE any
   // parse or reconcile: render the balance command's per-command scope (a line per
   // registered flag — name + arg + description), leave process.exitCode at its default 0,
@@ -271,17 +279,17 @@ export function runBalance(argv: string[]): boolean {
   // guard's typed error is routed to stderr + a non-zero exit, exactly as planOutput's error
   // is below (the shared typed-error surface).
   const legacyJsonError = checkLegacyJson(args);
-  if (legacyJsonError) exitUsage(legacyJsonError);
+  if (legacyJsonError) refuse(legacyJsonError);
 
   // A host modifier after the command is out of place, not unknown, so it is
   // refused before the drift advice.
   const misplacedModifierError = checkMisplacedHostModifiers(args, cliRegistry, "balance");
-  if (misplacedModifierError) exitUsage(misplacedModifierError);
+  if (misplacedModifierError) refuse(misplacedModifierError);
 
   // Every token is a flag or the value of the flag before it, refused before the unknown-flag
   // check below.
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
-  if (shapeError) exitUsage(shapeError);
+  if (shapeError) refuse(shapeError);
 
   // Registry-bounded flag NAMES: `balance` accepts ONLY the flags its registry
   // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a USAGE error:
@@ -303,7 +311,7 @@ export function runBalance(argv: string[]): boolean {
   // A flag that takes a value, given none, refused before anything reads
   // the value `parseArgs` made up for it.
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
-  if (missingValueError) exitUsage(missingValueError);
+  if (missingValueError) refuse(missingValueError);
 
   if (renderSavedReport(args)) return false;
   refuseUnreadableInputs(args);
@@ -341,7 +349,7 @@ export function runBalance(argv: string[]): boolean {
   // legacy runs/<target>/<ISO>/ auto-archive was removed, the
   // caller now routes stored runs (spec-controller's run-management layer).
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
-  if (!planResult.ok) exitUsage(planResult.error);
+  if (!planResult.ok) refuse(planResult.error);
   const payloads = { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames };
   writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
 
@@ -356,16 +364,6 @@ export function runBalance(argv: string[]): boolean {
 }
 
 /**
- * A usage or input fault: the message on stderr, then exit 2 — the enumerated usage code
- *, distinct from the out-of-balance verdict code 1. An
- * out-of-balance run must never masquerade as a usage error, nor the reverse.
- */
-function exitUsage(message: string): never {
-  process.stderr.write(message + "\n");
-  process.exit(2);
-}
-
-/**
  * Render-from-saved-JSON mode: the markdown a banked spec-reconciliation.json renders to, on
  * stdout, and the exit its saved verdict names — no reconcile, no live inputs. True when it
  * answered the run, so `runBalance` returns before any reconcile.
@@ -373,19 +371,19 @@ function exitUsage(message: string): never {
 function renderSavedReport(args: Record<string, string>): boolean {
   // Here rather than with the live-input guards, because this mode returns before they run.
   const ignoredFlagError = checkReRenderFlags(args);
-  if (ignoredFlagError) exitUsage(ignoredFlagError);
+  if (ignoredFlagError) refuse(ignoredFlagError);
   const unreadableSavedReportError = checkRenderFromJson(args, (path) =>
     readFileSync(path, "utf8"),
   );
-  if (unreadableSavedReportError) exitUsage(unreadableSavedReportError);
+  if (unreadableSavedReportError) refuse(unreadableSavedReportError);
 
   const rehydratePath = args["render-from-json"];
   if (rehydratePath === undefined) return false;
   const savedJson = readFileSync(rehydratePath, "utf8");
   const notSavedError = checkSavedReconciliation(rehydratePath, savedJson);
-  if (notSavedError) exitUsage(notSavedError);
+  if (notSavedError) refuse(notSavedError);
   const saved = reRenderOrRefusal(rehydratePath, savedJson, args["strict"] !== undefined);
-  if (typeof saved === "string") exitUsage(saved);
+  if (typeof saved === "string") refuse(saved);
   process.stdout.write(saved.markdown + "\n");
   const code = statusFor(saved.code, args["exit-zero"] !== undefined);
   if (code !== 0) process.exitCode = code;
@@ -404,7 +402,7 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   // exactly as the legacy-`--json` guard (the shared typed-error surface). An
   // omitted flag is legitimately optional and passes through untouched.
   const missingInputError = checkInputsExist(args, existsSync);
-  if (missingInputError) exitUsage(missingInputError);
+  if (missingInputError) refuse(missingInputError);
 
   // Input-READABILITY guard: existence is not enough. A report that is
   // PRESENT but UNPARSEABLE (`--vitest /dev/null`, truncated JSON, non-JSON) used to throw
@@ -415,16 +413,16 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   // reconcile, routing to the same stderr + exit 2 lane: an input the tool cannot read is a
   // usage fault, sibling to a missing path and an unrecognised flag — never a verdict.
   const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
-  if (unparseableInputError) exitUsage(unparseableInputError);
+  if (unparseableInputError) refuse(unparseableInputError);
 
   // A corpus or workflow path that is not the kind its flag reads, or may not be read, cannot be read at all.
   const unreadablePathError = checkInputPaths(args);
-  if (unreadablePathError) exitUsage(unreadablePathError);
+  if (unreadablePathError) refuse(unreadablePathError);
 
   // Parsing is not reading: a report that parses but is not in the shape its reader expects would
   // be read as nothing, or read until it threw, so it is refused here with where its shape is wrong.
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), (path) => readFileSync(path, "utf8"));
-  if (misshapenInputError) exitUsage(misshapenInputError);
+  if (misshapenInputError) refuse(misshapenInputError);
 
   // The FEATURE-CORPUS integrity checkpoint. The feature corpus is an
   // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that
@@ -445,10 +443,11 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   // can be read at all; parseScenarios then reads it exactly as cucumber would.
   const featureParseErrors = featureCorpusParseErrors(args["features"]);
   if (featureParseErrors.length > 0) {
-    for (const { file, message } of featureParseErrors) {
-      process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
-    }
-    process.exit(2);
+    refuse(
+      featureParseErrors
+        .map(({ file, message }) => `The --features corpus contains a feature file that could not be parsed: ${file}\n${message}`)
+        .join("\n"),
+    );
   }
 }
 

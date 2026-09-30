@@ -140,5 +140,5 @@ export { provenanceObject, projectProvenance, projectProvenanceObject } from "./
 export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, ProvenanceInput } from "./provenance/provenance.js";
 
 // --- Pure helpers ---
-export { featureCodeOf, isFeaturePart } from "./lib/featureCode.js";
+export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";

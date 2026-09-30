@@ -21,7 +21,7 @@
 
 // The one @SCN grammar (evidence-manifesto §9A), for the repository's own apparatus —
 // the step helpers — so it reads an id exactly as the product does.
-export { SCN_ID_SOURCE } from "./lib/featureCode.js";
+export { SCN_ID_SOURCE } from "./domain/featureCode.js";
 
 // `bareTerm` — the ONE reading of what a term BARE is: whitespace around it is not part of it, and
 // only a LEADING @ is a sigil. Shared because it was hand-copied seven times and the copies carried

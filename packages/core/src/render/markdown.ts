@@ -56,7 +56,7 @@ import { excludedStepsSection } from "./excludedSteps.js";
 import { reconcilerSection } from "./reconcilerSteps.js";
 import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
-import { featureCodeOf } from "../lib/featureCode.js";
+import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
 
 /** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */

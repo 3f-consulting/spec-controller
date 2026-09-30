@@ -51,17 +51,17 @@ import type {
   Scenario,
   FitnessEvidenceObservation,
   EvidenceObservation,
-  ScenarioReconciliation,
   PendingItem,
   RuntimeEvidenceObservation,
-  Ledger,
-} from "../model.js";
+} from "./journal.js";
+import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
+import type { Ledger } from "./ledger.js";
 import {
   evidenceObligationPairsOf,
   // THE PENDING PARTITION — the two exact complements over a scenario's obligations.
   evidenceObligationsOf,
   pendingItemsOf,
-} from "../model.js";
+} from "./journal.js";
 import {
   reconcileEvidenceObligation,
   // THE CREDIT-SIDE AND DEGENERATE OUTCOME RULES — what an entry reconciles TO, as
@@ -96,7 +96,7 @@ import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posti
 import { inEvidenceOrder } from "./evidenceOrder.js";
 // The `fitness` quality-check's own predicate, asked here to NARROW what the posting rule has already
 // routed — see the fitness arm below.
-import { isFitnessObservation } from "../model.js";
+import { isFitnessObservation } from "./journal.js";
 
 /** A destination that names ONE row — the two citation-routed `Posting` kinds. */
 type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };

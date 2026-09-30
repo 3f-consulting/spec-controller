@@ -125,23 +125,43 @@ export default {
     },
 
     /**
-     * `domainPurity`'s `adapter-import` — the INNER boundary, one level down from the package edge.
+     * A domain module imports only the domain — the INNER boundary, one level down from the package
+     * edge.
      *
      * A reconciliation concept reconciles; it does not parse a runner's output, render a report,
-     * assemble the document, or census the corpus. Those are the edges the domain sits inside,
-     * hexagonal — never the other way.
+     * assemble the document, or census the corpus, and it does not reach back out to the aggregation
+     * barrel or a helper beside it. Those are the edges the domain sits inside, hexagonal — never the
+     * other way. What a domain rule needs lives in the domain.
      *
-     * IT IS A DENYLIST OF THE FOUR ADAPTER LAYERS, NOT AN ALLOWLIST, which is the old check's shape
-     * carried across unchanged: the sibling domain modules and the pure aggregation roots
-     * (`../model.js`, `../provenance/…`, `../lib/…`) stay permitted, and a fifth adapter layer added
-     * later is permitted until it is named here.
+     * IT IS AN ALLOWLIST, NOT A DENYLIST OF ADAPTER LAYERS: a layer added outside the domain later is
+     * refused the day it appears, rather than permitted until someone names it here.
+     *
+     * TYPE-ONLY IMPORTS COUNT (`tsPreCompilationDeps` below), so a type the domain needs is declared
+     * in the domain. `$1` holds the `from` package, so a domain that grows in a second package is held
+     * to its own package's domain.
      */
     {
-      name: "domain-imports-adapter",
+      name: "domain-imports-only-domain",
       severity: "error",
-      comment: "a domain module must not import one of the core's adapter layers (parse, render, assemble, census)",
-      from: { path: "^packages/core/src/domain/", pathNot: "\\.test\\.ts$" },
-      to: { path: "^packages/core/src/(parse|render|assemble|census)/" },
+      comment: "a domain module must import only other domain modules — nothing outside its package's domain/",
+      from: { path: "^packages/([^/]+)/src/domain/", pathNot: "\\.test\\.ts$" },
+      to: { pathNot: "^packages/$1/src/domain/" },
+    },
+
+    /**
+     * No module reaches itself through its own imports. A cycle is two modules that can only be
+     * understood, tested or moved together, so the seam between them is not one.
+     *
+     * TYPE-ONLY EDGES COUNT, because `tsPreCompilationDeps` below makes them edges. A shared type
+     * both sides need goes to a leaf module both import, which is cheaper than a cycle nobody can
+     * see at runtime and everybody pays for when the modules have to be split.
+     */
+    {
+      name: "no-circular",
+      severity: "error",
+      comment: "a module must not reach itself through its own imports — move what both sides need to a leaf",
+      from: {},
+      to: { circular: true },
     },
   ],
   options: {

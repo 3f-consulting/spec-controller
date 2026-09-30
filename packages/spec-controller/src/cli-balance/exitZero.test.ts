@@ -1,5 +1,5 @@
 /**
- * The `--exit-zero` arm of `runBalance` (@SCN-CLI-021), in-process. Its own file rather than a
+ * The `--exit-zero` arm of `runBalance`, in-process. Its own file rather than a
  * block in `cli.test.ts` because that file sits at the 400-line standard the complexity gate holds a
  * touched file to.
  */
@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from "vitest";
 import { runBalance } from "./cli.js";
 
 /**
- * @SCN-CLI-021 (3F-3526) — `--exit-zero` moves the VERDICT codes (1, 3) to 0 and leaves the report
+ * `--exit-zero` moves the VERDICT codes (1, 3) to 0 and leaves the report
  * byte-identical. In-process, so the clock is pinned and the comparison is the whole stdout with no
  * mask: any byte the flag changed would show here, the provenance line included.
  */
@@ -44,7 +44,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
       code: 3,
     },
     {
-      // Every account balances, and one code is misfiled (3F-3635): a verdict-class 1, which
+      // Every account balances, and one code is misfiled: a verdict-class 1, which
       // --exit-zero moves like any other (operator ruling, 2026-09-24).
       verdict: "balanced-with-scenario-code-errors",
       argv: [
@@ -96,18 +96,10 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
 });
 
 /**
- * @SCN-CLI-022 (3F-3527) — `--exit-zero` never masks a run that could give no verdict. Usage (2)
- * leaves through `process.exit` before any reconcile, so `exit` is stubbed to throw and the code is
- * read off the throw; unsound (4) and nothing-to-reconcile (5) set `process.exitCode` like any
- * verdict and are read from there.
+ * `--exit-zero` never masks a run that could give no verdict. Usage (2), unsound (4) and
+ * nothing-to-reconcile (5) each set `process.exitCode`, and are read from there.
  */
 describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict", () => {
-  class Exited extends Error {
-    constructor(readonly code: number) {
-      super(`process.exit(${code})`);
-    }
-  }
-
   /** Run `balance --exit-zero` in-process; return the status it left and what it wrote to stderr. */
   function runWithExitZero(argv: readonly string[]): { exitCode: number; stderr: string } {
     const savedExitCode = process.exitCode;
@@ -120,17 +112,10 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
         errChunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
         return true;
       });
-    const exitSpy = vi.spyOn(process, "exit").mockImplementation((code) => {
-      throw new Exited(Number(code ?? 0));
-    });
     try {
       runBalance([...argv, "--exit-zero"]);
       return { exitCode: Number(process.exitCode ?? 0), stderr: errChunks.join("") };
-    } catch (err) {
-      if (err instanceof Exited) return { exitCode: err.code, stderr: errChunks.join("") };
-      throw err;
     } finally {
-      exitSpy.mockRestore();
       errSpy.mockRestore();
       outSpy.mockRestore();
       process.exitCode = savedExitCode;

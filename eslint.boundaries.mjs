@@ -26,6 +26,17 @@ import tseslint from "typescript-eslint";
 /** Stryker's global, its active-mutant variable, and the functions its instrumenter prepends. */
 const SANDBOX_NAMES = "/__stryker__|STRYKER_ACTIVE_MUTANT|stryNS_|stryCov_|stryMutAct_/";
 const SANDBOX_MESSAGE = "no code detects the mutation sandbox — name the tree a check reads instead";
+const SANDBOX_SELECTORS = [
+  { selector: `Identifier[name=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
+  { selector: `Literal[value=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
+  { selector: `TemplateElement[value.raw=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
+];
+const CLASS_MESSAGE = "a package declares no class but an Error subclass — a concept is a type and the functions over it";
+const CLASS_SELECTORS = [
+  { selector: 'ClassDeclaration:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
+  { selector: 'ClassExpression:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
+];
+const SOURCE_FILES = "{ts,mts,cts,js,mjs,cjs}";
 
 export default [
   /**
@@ -75,6 +86,31 @@ export default [
       "no-restricted-properties": [
         "error",
         { object: "Math", property: "random", message: "the engine reads no random number" },
+      ],
+    },
+  },
+
+  /**
+   * No package module ends the process with `process.exit`. It exits at once, so a report still
+   * buffered for stdout or a file can be cut off mid-write. A command sets `process.exitCode` and
+   * returns, or throws a usage refusal the command settles, and the process ends when what it wrote
+   * has drained.
+   *
+   * THE ENGINE IS LEFT OUT because its block above refuses the whole `process` global, and a second
+   * `no-restricted-properties` for its files would replace that block's `Math.random` entry rather
+   * than add to it. TESTS ARE EXEMPT: a test may stub `process.exit` to prove nothing calls it.
+   */
+  {
+    files: ["packages/*/src/**/*.ts"],
+    ignores: ["**/*.test.ts", "packages/core/src/**"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        { object: "process", property: "exit", message: "set process.exitCode and return, so what was written drains first" },
       ],
     },
   },
@@ -150,21 +186,43 @@ export default [
    *
    * IT READS EVERY SOURCE FILE, not just `packages/`, because detection is likeliest in the test
    * tree and the tool configs. This file is the one exception: its own pattern would match itself.
+   *
+   * PACKAGE SOURCE IS READ BY THE NEXT BLOCK INSTEAD, which carries these selectors too. Two blocks
+   * setting `no-restricted-syntax` for one file do not add up: the later block's options replace the
+   * earlier's. So each file is matched by exactly one of the two.
    */
   {
-    files: ["**/*.{ts,mts,cts,js,mjs,cjs}"],
-    ignores: ["eslint.boundaries.mjs"],
+    files: [`**/*.${SOURCE_FILES}`],
+    ignores: ["eslint.boundaries.mjs", `packages/*/src/**/*.${SOURCE_FILES}`],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     },
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        { selector: `Identifier[name=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
-        { selector: `Literal[value=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
-        { selector: `TemplateElement[value.raw=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
-      ],
+      "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS],
+    },
+  },
+
+  /**
+   * Package source detects no sandbox, as above, and declares no class but an `Error` subclass. A
+   * concept is a type and the pure functions over it (`functional-domain-modelling.md`); a class
+   * binds behaviour to a mutable instance instead. An `Error` subclass is the one exception, because
+   * `instanceof` against it is how a throw is told apart from any other.
+   *
+   * ONLY A DIRECT `extends Error` PASSES. A subclass of a subclass names its parent, not `Error`, and
+   * reds: whether it is still an error is a question the AST cannot answer without types, and a
+   * refusal hierarchy is itself the thing this rule keeps out.
+   *
+   * TESTS ARE INCLUDED. A test's stand-in for a thrown exit is an `Error` subclass too.
+   */
+  {
+    files: [`packages/*/src/**/*.${SOURCE_FILES}`],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS, ...CLASS_SELECTORS],
     },
   },
 ];

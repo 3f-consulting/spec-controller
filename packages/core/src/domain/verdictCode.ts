@@ -4,7 +4,7 @@
  * code another does not give.
  */
 
-import type { Ledger } from "../model.js";
+import type { Ledger } from "./ledger.js";
 import { hasBrokenEvidence, hasNothingToReconcile, hasPendingItems, isBalanced } from "./ledger.js";
 import { hasScenarioCodeErrors, type ScenarioCodeError } from "./scenarioCodeError.js";
 

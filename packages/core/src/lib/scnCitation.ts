@@ -1,6 +1,6 @@
 /**
  * The citation-form helper — the ONE owner of what a citation LOOKS LIKE in a Vitest
- * `describe`/`it` title. Sibling of `lib/featureCode.ts`, which owns the id GRAMMAR
+ * `describe`/`it` title. Sibling of `domain/featureCode.ts`, which owns the id GRAMMAR
  * (`SCN-<FFF>-<NNN>`, Evidence Manifesto §9A); this owns the wrapper that turns a
  * mention of that id into a citation.
  *
@@ -18,7 +18,7 @@
  * how they drifted from canon and from each other, so there is one copy.
  */
 
-import { SCN_ID_SOURCE } from "./featureCode.js";
+import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 
 /**
  * The bracketed citation. Captures the bare code so callers get `SCN-<FFF>-<NNN>` with no

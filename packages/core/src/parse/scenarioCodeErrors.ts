@@ -1,5 +1,5 @@
 /**
- * THE SCENARIO CODE ERRORS (3F-3635) — everything about a feature CODE binding to a feature FILE,
+ * THE SCENARIO CODE ERRORS — everything about a feature CODE binding to a feature FILE,
  * asked of the corpus `balance` reads. A code is an account number and its file the account class:
  * these rules say whether each code is filed under a class that exists, and whether each class
  * has exactly one number.
@@ -11,7 +11,7 @@
  * never seen.
  */
 
-import { featureCodeOf } from "../lib/featureCode.js";
+import { featureCodeOf } from "../domain/featureCode.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { parseTaggedScenarios } from "./scenarios.js";
 
@@ -32,7 +32,7 @@ export interface CorpusFile {
 }
 
 /**
- * A feature code carried by more than one feature file (@SCN-STG-010).
+ * A feature code carried by more than one feature file.
  *
  * THE FAULT IS THE PAIR, NOT EITHER FILE, which is why one finding names them all rather than
  * one finding naming each. Neither file is the offender: what is wrong is that a code names two
@@ -74,7 +74,7 @@ function headerFilesByCode(features: readonly CorpusFile[]): Map<string, string[
 }
 
 /**
- * What the by-feature cut did with a foreign id, and where the scenario could go (3F-3666). The cut
+ * What the by-feature cut did with a foreign id, and where the scenario could go. The cut
  * groups on the id's feature part, so the files carrying that part decide the row: one file's row,
  * a row no file stands behind, or one row several files share. The sentence names those files and
  * no other.
@@ -98,7 +98,7 @@ function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: strin
     );
   }
   // No file's header carries the code, so there is no file to move it to: a remedy naming one
-  // would send the author looking for a file the corpus lacks (3F-3666).
+  // would send the author looking for a file the corpus lacks.
   return (
     `${opening}it opens a row for ${named}, which no feature file carries as its header code, so ` +
     `that row stands for no file. ${recode}.`
@@ -106,7 +106,7 @@ function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: strin
 }
 
 /**
- * A scenario whose `@SCN` names a feature its own file is not (@SCN-STG-011).
+ * A scenario whose `@SCN` names a feature its own file is not.
  *
  * THE OTHER HALF OF THE PAIR ABOVE. That rule holds one code to one file; this one holds a
  * file's scenarios to the code that file carries.
@@ -126,12 +126,12 @@ function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: strin
  * AN UNCODED FILE RAISES NOTHING HERE: with no header there is nothing for an id to be foreign
  * TO, and the file itself is `no-feature-code`'s.
  *
- * THE `null` FROM `featureCodeOf` IS DEFENSIVE, NOT A LIMIT (3F-3636). The scenario walk reads an
+ * THE `null` FROM `featureCodeOf` IS DEFENSIVE, NOT A LIMIT. The scenario walk reads an
  * id by the same grammar `featureCodeOf` parses — a feature part of two to five characters — so
  * every scenario reaching this rule has a feature part. An id outside that grammar is no @SCN at
  * all: it mints no account here or anywhere else, which is what canon (evidence-manifesto §9A)
  * says of it. The skip stays so that a reader drifting from the grammar again fails quiet here
- * rather than throwing, and @SCN-STG-011's boundary pair is what would notice the drift.
+ * rather than throwing, and the misfiled-feature boundary pair is what would notice the drift.
  *
  * The tag walk is `parseTaggedScenarios`, which inherits Feature- and Rule-level tags exactly as
  * cucumber does. A hand-rolled scan of the tag lines is the second reading that walk was
@@ -161,12 +161,12 @@ export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioC
 }
 
 /**
- * A feature file carrying no header code while its scenarios carry codes (3F-3635; absorbs the
- * cancelled 3F-3314). The file is an account class with no number, so the by-feature cut files its
+ * A feature file carrying no header code while its scenarios carry codes. The file
+ * is an account class with no number, so the by-feature cut files its
  * scenarios under whatever their ids happen to name.
  *
  * "CARRIES A CODE" IS THE ACCOUNT READER'S ANSWER. `parseTaggedScenarios` is the walk the ledger's
- * accounts are minted from, and it reads an id by evidence-manifesto §9A's grammar (3F-3636). So a
+ * accounts are minted from, and it reads an id by evidence-manifesto §9A's grammar. So a
  * file headed `@TOOLONGCODE` whose scenario is coded `@SCN-TOOLONGCODE-001` raises nothing: neither
  * is a code, and the file holds no coded scenario. The same file over `@SCN-FIVEC-001` is listed.
  *
@@ -186,7 +186,7 @@ export function uncodedFeatureFiles(features: readonly CorpusFile[]): ScenarioCo
 }
 
 /**
- * The population a corpus's codes are judged over (3F-3666): every file read, coded or not, and
+ * The population a corpus's codes are judged over: every file read, coded or not, and
  * the distinct header codes among them.
  */
 export function scenarioCodePopulationOf(features: readonly CorpusFile[]): ScenarioCodePopulation {
@@ -194,7 +194,7 @@ export function scenarioCodePopulationOf(features: readonly CorpusFile[]): Scena
 }
 
 /**
- * Every scenario code error in this corpus, in a stable order (3F-3635).
+ * Every scenario code error in this corpus, in a stable order.
  */
 export function scenarioCodeErrorsOf(features: readonly CorpusFile[]): ScenarioCodeError[] {
   return [

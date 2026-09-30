@@ -4,9 +4,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 
-class Exited extends Error {
-  constructor(readonly code: string | number | null | undefined) {
-    super(`process.exit(${String(code)})`);
+/**
+ * The status a call leaves with: the exit code carried by whatever it threw, or `undefined` when it
+ * returned. The refusal is thrown for the command to settle, so the call itself
+ * carries the code.
+ */
+function usageStatusOf(run: () => unknown): number | undefined {
+  try {
+    run();
+    return undefined;
+  } catch (err) {
+    const code = (err as { exitCode?: unknown }).exitCode;
+    if (typeof code !== "number") throw err;
+    return code;
   }
 }
 
@@ -54,9 +64,6 @@ let stderr: string[];
 beforeEach(() => {
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-kept-run-"));
   stderr = [];
-  vi.spyOn(process, "exit").mockImplementation((code) => {
-    throw new Exited(code);
-  });
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(String(chunk));
     return true;
@@ -75,9 +82,8 @@ describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create,
       const storeRoot = arrange(scratch);
       const route = vi.fn();
 
-      expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route)).toThrow(Exited);
+      expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route))).toBe(2);
 
-      expect(process.exit).toHaveBeenCalledWith(2);
       expect(route).not.toHaveBeenCalled();
       const refusal = stderr.join("");
       expect(refusal).toContain(join(storeRoot, TARGET, RUN_ID));
@@ -91,11 +97,10 @@ describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create,
     const storeRoot = join(scratch, "missing", "store");
     const route = vi.fn(() => true);
 
-    executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route);
+    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route))).toBeUndefined();
 
     expect(route).toHaveBeenCalledOnce();
     expect(existsSync(join(storeRoot, TARGET, RUN_ID, "run.yaml"))).toBe(true);
-    expect(process.exit).not.toHaveBeenCalled();
   });
 });
 
@@ -111,10 +116,9 @@ describe("[SCN-RMG-009] executeKeptRun refuses a run.yaml it cannot write, namin
     mkdirSync(runYaml);
     const route = vi.fn(() => true);
 
-    expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route)).toThrow(Exited);
+    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route))).toBe(2);
 
     expect(route).toHaveBeenCalledOnce();
-    expect(process.exit).toHaveBeenCalledWith(2);
     const refusal = stderr.join("");
     expect(refusal).toContain(runYaml);
     expect(refusal).toContain("EISDIR");
@@ -127,9 +131,8 @@ describe("[SCN-RMG-009] executeKeptRun refuses a run.yaml it cannot write, namin
     chmodSync(runYaml, 0o444);
 
     try {
-      expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, vi.fn(() => true))).toThrow(Exited);
+      expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, vi.fn(() => true)))).toBe(2);
 
-      expect(process.exit).toHaveBeenCalledWith(2);
       expect(stderr.join("")).toContain(runYaml);
       expect(stderr.join("")).toContain("EACCES");
       expect(readFileSync(runYaml, "utf8")).toBe("an earlier run's manifest\n");

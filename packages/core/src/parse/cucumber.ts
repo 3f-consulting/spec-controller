@@ -9,18 +9,18 @@
  * runs whichever). An @e2e scenario proven via cucumber yields an e2e observation. The
  * caller-supplied level (the JS-ecosystem default, integration, set at the CLI edge)
  * survives only as the fallback for an UNTAGGED scenario. The reader classifies FOUR-WAY
- * (@SCN-PND-013, extended by @SCN-LDG-019): any AMBIGUOUS step → a `broken` observation (a broken
+ *: any AMBIGUOUS step → a `broken` observation (a broken
  * harness — two step definitions match, so the step cannot run); any failed step → a `failed`
  * observation; all passed → a `passed` observation; otherwise INCONCLUSIVE (undefined/pending/
  * skipped) → the scenario is DROPPED (no observation), so its obligation reconciles missing by
  * absence — pending is never inferred from status.
  *
- * Parent: @SCN-LDG-011 (the tag-derivation headline) over @SCN-LDG-001 (the foundation seam).
+ * It is the tag-derivation headline over the foundation seam.
  */
 
 import type { RuntimeQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { SCN_ID_SOURCE } from "../lib/featureCode.js";
+import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 
 /** The minimal shape of Cucumber-JS's JSON formatter output this reader depends on. */
 export type CucumberJsonReport = Array<{
@@ -31,7 +31,7 @@ export type CucumberJsonReport = Array<{
     tags?: Array<{ name?: string }>;
     steps?: Array<{
       /**
-       * The step's Gherkin keyword and text (@SCN-LDG-019) — previously unread. An AMBIGUOUS step
+       * The step's Gherkin keyword and text — previously unread. An AMBIGUOUS step
        * carries no `error_message` (its result object is exactly `{ status, duration }`), so the
        * reader has nothing to quote: it must NAME the step itself, from these two fields, when it
        * synthesises the broken observation's what-broke message.
@@ -39,7 +39,7 @@ export type CucumberJsonReport = Array<{
       keyword?: string;
       name?: string;
       /**
-       * A HOOK rather than one of the scenario's own steps (@SCN-LNT-026). Cucumber emits every
+       * A HOOK rather than one of the scenario's own steps. Cucumber emits every
        * `Before` / `After` it ran as a step of the scenario, marked `hidden` and carrying its own
        * status — so a reader asking "what did the report say about this SCENARIO" has to know
        * which entries the corpus actually wrote. This reader does not: a hook that fails or is
@@ -55,8 +55,8 @@ export type CucumberJsonReport = Array<{
  * Which tag on a REPORTED scenario is its `@SCN`.
  *
  * IT USED TO BE EXPORTED FOR A SECOND READER OF THIS SAME DOCUMENT — the fitness pass's own
- * cucumber report, read by `convertedFitnessCredits` (@SCN-LNT-021). That pass and that reader went
- * at 3F-3272: the converted checks' credits come off the CI run's own step record now, whose key IS
+ * cucumber report, read by `convertedFitnessCredits`. That pass and that reader are gone:
+ * the converted checks' credits come off the CI run's own step record now, whose key IS
  * the code, so nothing there has a tag line to read. The export stands because the corpus reader
  * beside it takes the same pattern.
  */
@@ -78,7 +78,7 @@ const TIER_TAG = /^@?(integration|e2e|performance)$/;
  * Derive the SET of levels a cucumber observation discharges from the cited scenario's own
  * tier tag(s), falling back to a single caller-supplied level when the scenario carries none.
  *
- * The MULTI-TAG RULE (@SCN-LDG-014, generalising @SCN-LDG-011): a cucumber observation discharges
+ * The MULTI-TAG RULE: a cucumber observation discharges
  * EVERY non-unit runtime obligation its cited scenario raises. So a scenario naming
  * `@integration @e2e` yields TWO levels from a SINGLE cucumber pass (integration + e2e); the caller
  * emits one observation per level. A single-tier scenario yields exactly ONE level (LDG-011/012/013
@@ -107,7 +107,7 @@ function deriveLevels(
 }
 
 /**
- * SYNTHESISE the what-broke message of an ambiguous step's `broken` observation (@SCN-LDG-019).
+ * SYNTHESISE the what-broke message of an ambiguous step's `broken` observation.
  *
  * Cucumber emits NO `error_message` for an ambiguous step — its result object is exactly
  * `{ "status": "ambiguous", "duration": 0 }` (the "Multiple step definitions match: …" detail is
@@ -129,9 +129,9 @@ function ambiguousMessage(step: { keyword?: string; name?: string }): string {
  * Parse a Cucumber JSON report into observed results, each levelled by DERIVING it from the
  * cited scenario's own tier tag (falling back to `fallbackQualityCheck` for an untagged
  * scenario). One result per scenario: those carrying an @SCN tag cite that scenario; those with
- * NO @SCN tag emit a null-scnId credit (@SCN-LDG-007 — previously DROPPED). A null-scnId credit
+ * NO @SCN tag emit a null-scnId credit (never dropped). A null-scnId credit
  * cites no scenario, so the reconciler folds it into the SUSPENSE row. A scenario is classified
- * THREE-WAY (@SCN-PND-013): passed (all steps passed) / failed (any step failed) / INCONCLUSIVE
+ * THREE-WAY: passed (all steps passed) / failed (any step failed) / INCONCLUSIVE
  * (otherwise) — an inconclusive scenario emits NOTHING, dropped so it reconciles missing by absence.
  */
 export function parseCucumberEvidenceObservations(
@@ -171,7 +171,7 @@ function scenarioObservations(
   const tags = scenario.tags ?? [];
   const scnId = citedScnIdOf(tags);
   const steps = scenario.steps ?? [];
-  // FOUR-WAY classification (@SCN-PND-013, extended by @SCN-LDG-019) — pending is NEVER
+  // FOUR-WAY classification — pending is NEVER
   // inferred from status. The DROP is what realises inconclusive→missing and the `broken`
   // FLAG is what realises ambiguous→suspense, so `EvidenceStatus` stays binary: no new
   // status, no reconciler change. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
@@ -179,14 +179,14 @@ function scenarioObservations(
   // stay honest: `undefined` (no step definition is written — the test genuinely IS absent),
   // `pending` (explicitly deferred), `skipped` (never ran).
   //
-  // THE AMBIGUOUS ARM IS ORDERED FIRST (@SCN-LDG-019) because cucumber halts the scenario at
+  // THE AMBIGUOUS ARM IS ORDERED FIRST because cucumber halts the scenario at
   // the ambiguous step — every step after it reads `skipped`, so the inconclusive drop would
   // otherwise swallow the ambiguity along with them. An ambiguous step is not a stub that
   // proved nothing but a BROKEN HARNESS: two step definitions match one step, so the proof
   // exists and cannot execute. Dropping it as inconclusive sent the reader the WRONG remedy —
   // write a test that already exists, rather than fix the colliding step definitions. It is
   // cucumber's instance of the `broken` outcome vitest's collection failure established
-  // (@SCN-LDG-017): evidence that NEVER MATERIALISED.
+  //: evidence that NEVER MATERIALISED.
   //
   // ONE observation for the whole scenario (never one per named tier): the harness broke ONCE,
   // so a multi-tier scenario posts ONE broken item, levelled at its first named tier. Unlike
@@ -195,7 +195,7 @@ function scenarioObservations(
   // @SCN; only its step could not run. The reconciler's fail-safe checks `broken` BEFORE
   // `status`, so it can never discharge (or fail) the obligation it cites; it posts to the
   // SUSPENSE row and the obligation reconciles `missing` BY ABSENCE (pinned in
-  // reconcile.test.ts [SCN-LDG-019], under BOTH status values).
+  // reconcile.test.ts, under BOTH status values).
   const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
   if (ambiguous) {
     return [{
@@ -215,7 +215,7 @@ function scenarioObservations(
   const status: EvidenceStatus = anyFailed ? "failed" : "passed";
   // One observation PER named non-unit tier: a cucumber run of an @integration @e2e
   // scenario discharges BOTH obligations, so it emits an integration AND an e2e observation
-  // (the multi-tag ruling's teeth, @SCN-LDG-014). A single-tier or untagged scenario emits
+  // (the multi-tag ruling's teeth). A single-tier or untagged scenario emits
   // exactly one. The levels are DERIVED from the scenario's own tier tags, not the input
   // source; the caller-supplied level is the fallback for an untagged scenario.
   return deriveLevels(tags, fallbackQualityCheck).map((level) => ({

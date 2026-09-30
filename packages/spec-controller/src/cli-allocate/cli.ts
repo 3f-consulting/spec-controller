@@ -19,16 +19,21 @@ export function runAllocate(argv: string[]): void {
   }
   const request = readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion);
   if ("usageError" in request) {
-    process.stderr.write(request.usageError + "\n");
-    process.exit(2);
+    refuseUsage(request.usageError);
+    return;
   }
   try {
     answerRequest(request);
   } catch (err) {
     if (!(err instanceof UnreadableInput)) throw err;
-    process.stderr.write(refusalLine(err) + "\n");
-    process.exit(2);
+    refuseUsage(refusalLine(err));
   }
+}
+
+/** A usage refusal: its line on stderr, and the usage status once everything written has drained. */
+function refuseUsage(line: string): void {
+  process.stderr.write(line + "\n");
+  process.exitCode = 2;
 }
 
 /** Read the tree, its history and its parts, and write the answer to a well-formed request, or its refusal. */
@@ -38,8 +43,8 @@ function answerRequest({ part, isNew }: AllocateRequest): void {
   const headerCodes = readHeaderCodes(join(top ?? cwd, "features"));
   const answer = nextScnCode({ part, headerCodes, isNew }, sightingsFrom(cwd, part, top));
   if (answer.kind === "unknown-part") {
-    process.stderr.write(unknownPartRefusal(answer) + "\n");
-    process.exit(2);
+    refuseUsage(unknownPartRefusal(answer));
+    return;
   }
   const boundaryLine = historyBoundaryLine(historyBoundaryOf(cwd), answer);
   if (boundaryLine !== null) process.stderr.write(boundaryLine + "\n");

@@ -143,13 +143,7 @@ describe("[SCN-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and nev
 });
 
 describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-render does not read exits 2 naming the flag, and nothing is rendered", () => {
-  class Exited extends Error {
-    constructor(readonly code: number) {
-      super(`process.exit(${code})`);
-    }
-  }
-
-  /** Run `balance` in-process with `process.exit` stubbed to throw; return the status, stdout and stderr. */
+  /** Run `balance` in-process; return the status it left, stdout and stderr. */
   function runRefusable(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
@@ -158,17 +152,10 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
     const text = (chunk: string | Uint8Array): string => (typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
     const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => out.push(text(chunk)) > 0);
     const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => err.push(text(chunk)) > 0);
-    const exitSpy = vi.spyOn(process, "exit").mockImplementation((code) => {
-      throw new Exited(Number(code ?? 0));
-    });
     try {
       runBalance([...argv]);
       return { exitCode: Number(process.exitCode ?? 0), stdout: out.join(""), stderr: err.join("") };
-    } catch (thrown) {
-      if (thrown instanceof Exited) return { exitCode: thrown.code, stdout: out.join(""), stderr: err.join("") };
-      throw thrown;
     } finally {
-      exitSpy.mockRestore();
       errSpy.mockRestore();
       outSpy.mockRestore();
       process.exitCode = savedExitCode;

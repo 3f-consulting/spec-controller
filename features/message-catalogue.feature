@@ -10,7 +10,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   are not a gap in the suite — they are the suite being asked a question it must refuse to answer.
 
   THE CURE IS TO MOVE THE QUESTION, NOT TO ANSWER IT (portfolio-endorsed 2026-08-26, and an adopter's repository
-  3F-2777 does the same for its state-model loader). A fault gets a CODE at the throw site and
+  does the same for its state-model loader). A fault gets a CODE at the throw site and
   carries its parameters as fields; the prose that renders it moves to a catalogue held as data,
   and the catalogue is excluded from the mutate glob. What remains on the mutated surface is the
   logic — which fault, and what its parameters are — and that logic is exactly what the suite can
@@ -22,7 +22,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   but the compiler: the catalogue is a mapped type over the fault codes, so a code cannot exist
   without a message and a template cannot reach for a parameter its fault does not carry, the way
   `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss. The exclusion ITSELF is held by
-  review alone, and that is said here rather than left to be found (3F-3479). A check used to read
+  review alone, and that is said here rather than left to be found. A check used to read
   the real stryker config back and red on an exclusion that had widened; its subject was this
   repository's own Stryker configuration, which a reader who copies this corpus does not have, so it
   left with the rest of our own check code. A widened exclusion now reds nothing — what it still
@@ -30,9 +30,8 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   `stryker.config.mjs` already carries in writing for the lost kill its own threshold cannot see.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
-  mutate is a folder outside the domain — and the boundary gate's domain-imports-adapter rule says
-  a domain module imports only the domain layer (the domain-purity guard said it until 3F-3438;
-  the rule that replaced it says the same thing from configuration). So the catalogue stays INSIDE
+  mutate is a folder outside the domain — and the boundary gate's domain-imports-only-domain rule says
+  a domain module imports only the domain layer. So the catalogue stays INSIDE
   the domain and leaves the mutated surface by CONFIG, which is the axis the problem is actually
   on: the mutate glob is a statement about what mutation testing can usefully ask, not about what
   the domain may depend on. Purity and mutability are two different questions and are answered in

@@ -3,6 +3,16 @@ import { dirname, resolve, sep } from "node:path";
 
 const USAGE_EXIT_CODE = 2;
 
+/**
+ * A run refused on the usage code. Its one line is already on stderr when it is thrown; the command
+ * running it settles the status (`settlingRefusal`), so the process ends by draining what was written
+ * rather than being cut off mid-write.
+ */
+export class UsageRefusal extends Error {
+  override readonly name = "UsageRefusal";
+  readonly exitCode = USAGE_EXIT_CODE;
+}
+
 export function unwritableRefusal(subject: string, path: string, err: unknown): string {
   const reason = err instanceof Error ? err.message : String(err);
   return `${subject}: ${path} (${reason})`;
@@ -16,15 +26,28 @@ export function writeOrRefuse(subject: string, path: string, write: () => void):
   try {
     write();
   } catch (err) {
-    process.stderr.write(unwritableRefusal(subject, path, err) + "\n");
-    process.exit(USAGE_EXIT_CODE);
+    refuse(unwritableRefusal(subject, path, err));
   }
 }
 
-/** Refuses the run on the usage code with one line, for a refusal decided before anything is written. */
+/** Refuses the run on the usage code with one line on stderr, then throws for the command to settle. */
 export function refuse(message: string): never {
   process.stderr.write(message + "\n");
-  return process.exit(USAGE_EXIT_CODE);
+  throw new UsageRefusal(message);
+}
+
+/**
+ * Runs a command and settles a usage refusal it throws: the status becomes the refusal's code and
+ * `refused` is answered. Anything else thrown is not a refusal, and propagates as it would have.
+ */
+export function settlingRefusal<T>(run: () => T, refused: T): T {
+  try {
+    return run();
+  } catch (err) {
+    if (!(err instanceof UsageRefusal)) throw err;
+    process.exitCode = err.exitCode;
+    return refused;
+  }
 }
 
 /** The operating system's identity for a regular file; anything else has none. */

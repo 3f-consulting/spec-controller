@@ -83,8 +83,11 @@ Feature: The fitness checks this repository declares, one scenario per check
     And no app module imports the engine anywhere but its published entry point
     And no module outside run-management and cli-allocate imports child_process
     And no file in the repository detects the mutation sandbox
-    And no domain module imports an adapter layer
+    And no domain module imports anything outside the domain
     And no domain module is named for a procedural layer
+    And no package module calls process.exit
+    And no module reaches itself through its own imports
+    And no package module declares a class that does not extend Error
     And no suppression directive that suppresses nothing survives the run
 
   @fitness @SCN-FIT-011

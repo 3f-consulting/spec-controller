@@ -4,9 +4,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 
-class Exited extends Error {
-  constructor(readonly code: string | number | null | undefined) {
-    super(`process.exit(${String(code)})`);
+/**
+ * The status a call leaves with: the exit code carried by whatever it threw, or `undefined` when it
+ * returned. The refusal is thrown for the command to settle, so the call itself
+ * carries the code.
+ */
+function usageStatusOf(run: () => unknown): number | undefined {
+  try {
+    run();
+    return undefined;
+  } catch (err) {
+    const code = (err as { exitCode?: unknown }).exitCode;
+    if (typeof code !== "number") throw err;
+    return code;
   }
 }
 
@@ -34,9 +44,6 @@ beforeEach(() => {
   runDir = join(storeRoot, TARGET, RUN_ID);
   runYaml = join(runDir, "run.yaml");
   stderr = [];
-  vi.spyOn(process, "exit").mockImplementation((code) => {
-    throw new Exited(code);
-  });
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(String(chunk));
     return true;
@@ -54,9 +61,8 @@ describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one o
     writeFileSync(runYaml, WORKFLOW);
     const route = vi.fn(() => true);
 
-    expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: runYaml }] }, meta, route)).toThrow(Exited);
+    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: runYaml }] }, meta, route))).toBe(2);
 
-    expect(process.exit).toHaveBeenCalledWith(2);
     expect(route).not.toHaveBeenCalled();
     const refusal = stderr.join("");
     expect(refusal).toContain(runYaml);
@@ -72,7 +78,7 @@ describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one o
     symlinkSync(runYaml, link);
     const route = vi.fn(() => true);
 
-    expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: link }] }, meta, route)).toThrow(Exited);
+    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: link }] }, meta, route))).toBe(2);
 
     expect(route).not.toHaveBeenCalled();
     expect(readFileSync(runYaml, "utf8")).toBe(WORKFLOW);
@@ -86,10 +92,9 @@ describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one o
       return true;
     });
 
-    executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: input }] }, meta, route);
+    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: input }] }, meta, route))).toBeUndefined();
 
     expect(route).toHaveBeenCalledOnce();
-    expect(process.exit).not.toHaveBeenCalled();
     expect(existsSync(runYaml)).toBe(true);
     expect(readFileSync(input, "utf8")).toBe(WORKFLOW);
   });

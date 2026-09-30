@@ -29,7 +29,7 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
-import { SCN_ID_SOURCE } from "../lib/featureCode.js";
+import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 /**

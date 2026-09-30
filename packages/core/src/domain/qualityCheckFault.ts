@@ -1,5 +1,5 @@
 /**
- * The QUALITY CHECK FAULT vocabulary (@SCN-MSG-001, 3F-2872) — what a refused minting carries
+ * The QUALITY CHECK FAULT vocabulary — what a refused minting carries
  * INSTEAD of a sentence.
  *
  * Stryker mutates every string literal in the domain, so an invariant that states its refusal as
@@ -15,7 +15,7 @@
  * with WHAT parameters.
  */
 
-import type { Outcome, SidePresence } from "./qualityCheckReconciliation.js";
+import type { Outcome, SidePresence } from "./outcome.js";
 
 /**
  * One member per throw site in `makeQualityCheckReconciliation`.
@@ -56,7 +56,7 @@ export interface ObservationSideDivergesFromCanonFault extends SideDivergence {
 /**
  * The discriminated union over every fault this concept can raise.
  *
- * Discriminated on `code` so the catalogue can be a mapped type over it (3F-2873): the compiler
+ * Discriminated on `code` so the catalogue can be a mapped type over it: the compiler
  * then refuses both a code with no message and a message reaching for a parameter its fault does
  * not carry. Completeness is not asserted; it is unconstructible otherwise.
  */

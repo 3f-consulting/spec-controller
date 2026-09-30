@@ -31,6 +31,7 @@ import {
   executeKeptRun,
   resolveRunId,
   type KeptRunSpec,
+  type RouteOutputs,
   type RunManifestMeta,
 } from "./run-management/keptRun.js";
 import {
@@ -44,6 +45,7 @@ import {
 } from "./host.js";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
+import { settlingRefusal } from "./outputLocation.js";
 
 /** Dispatch a command to its handler with the given (clean or store-wrapped) argv; true when it wrote its report. */
 function runCommand(command: string, argv: string[]): boolean {
@@ -56,7 +58,8 @@ function runCommand(command: string, argv: string[]): boolean {
     default: {
       const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
       process.stderr.write(answer.stderr);
-      process.exit(answer.exitCode);
+      process.exitCode = answer.exitCode;
+      return false;
     }
   }
 }
@@ -65,19 +68,20 @@ function runCommand(command: string, argv: string[]): boolean {
  * Refuse, at the usage status, what the leading tokens get wrong, before any command or stored run
  * starts, so nothing is written anywhere: a usage fault among them, or modifiers
  * that would keep a run given to a command, or a re-render, that keeps none, or a run-id with no
- * store to keep the run it names.
+ * store to keep the run it names. True when it refused.
  */
-function refuseLeadingFaults(inv: HostInvocation): void {
+function refuseLeadingFaults(inv: HostInvocation): boolean {
   const refusal =
     inv.refusal ?? modifiersNotTakenRefusal(inv) ?? storedReRenderRefusal(inv) ?? unstoredRunIdRefusal(inv);
-  if (refusal === undefined) return;
+  if (refusal === undefined) return false;
   process.stderr.write(refusal + "\n");
-  process.exit(2);
+  process.exitCode = 2;
+  return true;
 }
 
 function main(hostArgv: string[]): void {
   const inv = parseHostInvocation(hostArgv);
-  refuseLeadingFaults(inv);
+  if (refuseLeadingFaults(inv)) return;
   const command = inv.command;
 
   if (command === undefined || command === "help" || command === "--help" || command === "-h") {
@@ -127,9 +131,8 @@ function main(hostArgv: string[]): void {
     date: new Date().toISOString(),
   };
 
-  const plan = executeKeptRun(spec, meta, (formatSpecs) =>
-    runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs])),
-  );
+  const route: RouteOutputs = (formatSpecs) => runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs]));
+  const plan = settlingRefusal(() => executeKeptRun(spec, meta, route), undefined);
 
   // The command's report was routed into the run dir, so tell the operator where it landed.
   if (plan !== undefined) process.stdout.write(plan.runDir + "\n");

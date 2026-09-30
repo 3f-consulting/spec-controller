@@ -5,7 +5,7 @@
  * which of their words are scenario codes is the one shared grammar's question, answered here, so
  * the grammar is never restated in another dialect at the edge.
  */
-import { SCN_ID_SOURCE, featureCodeOf } from "../lib/featureCode.js";
+import { SCN_ID_SOURCE, featureCodeOf } from "./featureCode.js";
 
 /** A line of text the edge read, and where it read it: the commit, when only history carries it. */
 export interface ScnSighting {
