@@ -8,16 +8,6 @@ mechanism this tool reads today — a manifest key, a tag form, a flag, an exit
 code — may change in any release until `1.0`. If you build on it now, pin an
 exact version and read the changelog before you move.
 
-**This page previously made a stronger promise than the version number, and
-that was a mistake worth naming rather than quietly reversing.** From
-2026-09-05 it undertook that each of eight named mechanisms would be *removed
-only in a major version, after a replacement had shipped*. It was written
-before there was anyone to promise it to, and while the model underneath it was
-still being shaped: it needed correcting the day after it shipped, and ten times
-in the eight days that followed. A commitment maintained by hand against a
-moving model is one that gets broken quietly — so it is withdrawn deliberately
-instead, while withdrawing it still costs nobody anything.
-
 **What the reader reads today.** Three `specController` keys — `runners`, `notChecks` and
 `deferralTags` — and the `--ci-steps` record. [`how_to_use.md`](./how_to_use.md) says what each key
 does. There is one way to declare a fitness check, and it is two artefacts: a `@fitness` scenario,
@@ -27,12 +17,8 @@ and its `@SCN` as the `id:` of the CI step that runs the check. See
 **A key this reader has no reading for is passed over — it is not read, and it is named as a key
 the block does not read, in the same words whichever key it is.** `specController.checkRegistry`, `specController.staticChecks`, a `fitnessChecks` row's
 `characteristic`, `specController.thresholds`, a row's `atLeast` / `atMost`, and
-`specController.fitnessChecks` itself are no longer read. For a
-time the report carried a line per retired key a manifest still held, so that a consumer who had
-written one in good faith would find out it no longer did anything. **That account was removed**
-(operator ruling, 2026-09-20: no backward compatibility — no third party consumes this
-package, and the one adopter adopts the current model whole). A manifest carrying any of those keys
-now reconciles to the same ledger and the same exit code as the same manifest without them. Each
+`specController.fitnessChecks` itself are not read. A manifest carrying any of those keys
+reconciles to the same ledger and the same exit code as the same manifest without them. Each
 such key is named under `## Configuration not read` exactly as a misspelt key is, and
 nothing on the report says what it once did: a consumer who wrote it is told it took no effect,
 which is not backward compatibility.
@@ -41,10 +27,8 @@ which is not backward compatibility.
 given on a command line rather than sitting in a file: it is refused as retired, exit 2, and the
 refusal names what replaced it rather than a pin that would bring it back.
 
-**The observed script prefixes were already gone** before this page was rewritten
-— `lint:`/`guard:` discovery was retired and replaced with declared
-behavioural runners. The sentence claiming they were still honoured was written
-after that landed and was never true.
+**No script prefix is read.** A `lint:` or `guard:` prefix means nothing to the reader: every
+step is observed, and the declared behavioural runners are the only steps it names.
 
 **At `0.x` none of this is a promise.** Any of it may change in any release until
 `1.0`; pin an exact version and read the changelog.

@@ -22,7 +22,7 @@ Feature: The fitness checks this repository declares, one scenario per check
   Reading the pipeline alone would put the axis back to single-entry.
 
   THE CODE IS STORED, NEVER POSITIONAL. Each scenario's `@SCN` is the one its CI step states, chosen
-  when the check was added and never derived from where the scenario sits in this file, so
+  when the check is written and never derived from where the scenario sits in this file, so
   inserting one renumbers nothing and every citation elsewhere in the tree stays true. The
   numbering below is not contiguous for that reason, and that is the rule working rather than a
   gap.

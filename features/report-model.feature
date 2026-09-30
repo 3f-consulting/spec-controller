@@ -11,7 +11,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   the document as data (runProvenance → summary → evidenceObligations →
   staticChecks → evidenceReconciliation → evidenceObservations) — and serialises the
   JSON glue-free FROM it (render/json.ts collapses to JSON.stringify(assembleReport)).
-  (The `warnings` key was RETIRED entirely — a zero-evidence scenario is a
+  (There is no `warnings` key — a zero-evidence scenario is a
   both-missing row in evidenceReconciliation, not a separate axis.)
   The machine file is renamed ledger.json → spec-reconciliation.json (it is the machine
   form of the WHOLE document, parity with spec-reconciliation.md). The markdown renderer
@@ -152,8 +152,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 
     The by-feature cut names each feature in full ("slug (FFF)") via the feature titles
-    materialised onto the report model. Originally they sat under a top-level
-    `featureNames` key, a sibling of the reconciliation records; a later change MOVES them under a small
+    materialised onto the report model. They sit under a small
     top-level `metadata` object (report.metadata.featureNames) — presentation *metadata* (names),
     cleanly separated from the reconciliation records (summary / evidenceReconciliation /
     evidenceObservations / staticChecks), before the public contract freezes. assembleReport takes

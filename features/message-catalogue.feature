@@ -22,10 +22,9 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   but the compiler: the catalogue is a mapped type over the fault codes, so a code cannot exist
   without a message and a template cannot reach for a parameter its fault does not carry, the way
   `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss. The exclusion ITSELF is held by
-  review alone, and that is said here rather than left to be found. A check used to read
-  the real stryker config back and red on an exclusion that had widened; its subject was this
-  repository's own Stryker configuration, which a reader who copies this corpus does not have, so it
-  left with the rest of our own check code. A widened exclusion now reds nothing — what it still
+  review alone, and that is said here rather than left to be found. No check reads the Stryker
+  config back: its subject would be this repository's own Stryker configuration, which a reader
+  who copies this corpus does not have. A widened exclusion reds nothing — what it still
   cannot do is make the catalogue lie. An accepted residual, not an oversight, and the same trade
   `stryker.config.mjs` already carries in writing for the lost kill its own threshold cannot see.
 

@@ -19,33 +19,27 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows.
 
   WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION. Membership is a PROPERTY of the check — does it analyse source without executing it
-  and red the build on a violation — never a property of its name. It used to be DISCOVERED by
-  two naming heuristics, the lint:/guard: prefixes and the target's own
-  specController.staticChecks, and neither of them ever defined one. The prefixes are retired:
+  and red the build on a violation — never a property of its name. No naming heuristic decides it,
+  neither a lint:/guard: prefix nor the target's own specController.staticChecks:
   membership is decided by subtraction, and a run: step of the workflows --ci names is a
   candidate fitness check unless it runs a behavioural runner the manifest names, is the
   reconciler, or is a step the manifest names a non-check. install and checkout are steps like
   any other and leave by that third door; test and cucumber are the runtime axis's observed
   evidence and leave by the first, which is what the manifest's runners block says.
 
-  This line used to end "tsc deferred", and that deferral outlived its reason: `tsc --noEmit`
-  is static analysis on any reading, spec-controller ran it in CI throughout, and the report
-  said 11 checks run over a tree running twelve. A deferral recorded only in a feature preamble
-  is one nobody reads again. A public-api scenario now names typecheck, so it is on the books
-  rather than in a sentence.
+  `tsc --noEmit` is static analysis on any reading, and it is not deferred: a deferral recorded
+  only in a feature preamble is one nobody reads again. A public-api scenario names typecheck, so
+  it is on the books rather than in a sentence.
 
   `pnpm mutation` is still absent, and that is neither an oversight nor an exemption: it is a
   self-measuring threshold check — the pipeline measuring its own test strength — which belongs
   on an axis this tool has not built yet (the sibling of an adopter's repository's @ci-run-time). Ruling
   it "out of scope" is the dodge that feature file was written to reject.
 
-  THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS NO LONGER A ZERO OVER AN EMPTY SET. It was: a
-  migration moved every fitness command out of
-  .github/workflows/ci.yml and onto a specController.fitnessChecks row, and under the prefix rule
-  what was left to discover was almost nothing — so "0 uncited" said the discoverable set was
-  EMPTY rather than that a populated set had been checked and come back clean. Those two readings
-  are the fault this product exists to separate, and here they had collapsed onto one number: a
-  capability exercised by nothing, reporting green.
+  THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS A ZERO OVER A POPULATED SET. A zero over an empty
+  set would say the discoverable set was EMPTY rather than that a populated set had been checked
+  and come back clean. Those two readings are the fault this product exists to separate: collapsed
+  onto one number, they are a capability exercised by nothing, reporting green.
 
   IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
   ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
@@ -54,23 +48,18 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   The residual that stood here is gone: specController.staticChecks settles nothing,
   and no account names it on the report as a retired key. A
   manifest carrying the key now settles nothing, and the report names it as it names any key the
-  specController block does not read, with no word of what it once did. That removal engaged no
-  major version: the compatibility commitment naming one was withdrawn, made to nobody,
-  and no consumer was ever measured routing credits through it.
+  specController block does not read, with no word of what it once did. That engages no
+  major version: at 0.x no compatibility commitment names one.
 
   What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
   the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
   and only the uncited count is answered by discovery. Reading both as products of the same mechanism
   is the misreading this paragraph forecloses.
 
-  THE FIGURES THEMSELVES ARE NO LONGER WRITTEN HERE, AND WHILE THEY WERE THEY WENT STALE UNNOTICED.
-  This paragraph read "11 static check(s) run — eleven of the fourteen rows, the other
-  three being measured and so not static checks at all". The manifest carried FOUR measured rows and
-  not three, and had before that ticket opened; adding rows to it then made the sentence wrong a
-  second way. Nothing reconciles a number in a preamble against the tree it describes, which is
-  how it managed to be wrong twice without redding anything. A number in this prose is a second
-  reading of something nothing keeps it in step with, so the refusal to write one is adopted here
-  rather than the figures being corrected to today's, which would only restart the clock.
+  THE FIGURES THEMSELVES ARE NOT WRITTEN HERE, BECAUSE A FIGURE HERE GOES STALE UNNOTICED.
+  Nothing reconciles a number in a preamble against the tree it describes, so it can be wrong
+  without redding anything. A number in this prose is a second reading of something nothing keeps
+  it in step with, so none is written.
 
   The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
@@ -173,7 +162,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited static check
 
-    THE PREFIX NO LONGER FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET LEFT TO FIND WITH. Discovery
+    NO PREFIX FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET TO FIND WITH. Discovery
     once read a target's scripts through an observed prefix set — lint: and guard: —
     and this scenario's script carried guard: so that it would be found. The set of names a quality
     check might be given belongs to the consumer and is unbounded; a list of two was a sample of it,
@@ -352,7 +341,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     wrong readers produce it: one that drops the credit on the floor reports no uncited check
     either, and so does one that posts it to a scenario the corpus never wrote.
 
-    THE PAIR IS NOT SYMMETRIC, AND THE PLANT THAT USED TO SAY SO IS GONE WITH THE PREFIX SET. The
+    THE PAIR IS NOT SYMMETRIC. The
     asymmetry was stated as a narrowing of the observed prefixes — cut them to lint: and the twin
     reds while this arm stays green — and there is no prefix set to narrow. The
     asymmetry survives, because it was never about the prefixes: the twin reaches this axis
@@ -543,10 +532,10 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     what the consumer wrote correctly beside it, so the report is otherwise exactly the one the
     same target gives without that entry.
 
-    A KEY THE BLOCK DOES NOT READ AT ALL IS THE SAME FACT ONE LEVEL UP. A misspelt key, or one
-    this tool once read and reads no longer, is something the consumer wrote and believes took
+    A KEY THE BLOCK DOES NOT READ AT ALL IS THE SAME FACT ONE LEVEL UP. A misspelt key, or a
+    retired one, is something the consumer wrote and believes took
     effect. It is named as a key the block does not read, in the same words whichever it is: a
-    retired key gets no wording of its own, because telling a consumer what a key USED to do is
+    retired key gets no wording of its own, because telling a consumer what a retired key DID is
     the backward compatibility this tool does not offer. What it owes them is only that nothing
     they wrote disappears without a line.
 
@@ -715,8 +704,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     AND IT IS THE SHAPE A NON-NODE CONSUMER ARRIVES IN. A pipeline whose static analysis is CodeQL
     and whose dependency review is an action has no package.json script for either, so a run:-only
-    reading hands that consumer the same empty report the Node-shaped limit used to hand them, by
-    a different route.
+    reading hands that consumer an empty report, the one a Node-shaped limit would hand them by a
+    different route.
 
     THE ACTION REFERENCE IS THE NAME, AND IT IS GITHUB'S RATHER THAN ONE INVENTED HERE — the
     step's name: where it has one, else the uses: value. A run: step is named by the script it
@@ -825,13 +814,13 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     order a directory happened to be handed back in — the same reason the source resolution sorts.
 
     NOT THE ACCOUNTING IDENTITY, which is its own Rule. That one asserts the
-    dispositions sum to the steps read, so nothing the reader saw was dropped; this one asserts the
+    dispositions sum to the steps read, so nothing the reader saw goes missing; this one asserts the
     provenance — which files and which jobs those steps came from. A reader satisfies either alone:
     a correct sum over a scope it never names, or a named scope whose numbers do not add up.
 
     TWO WORKFLOWS, AND A SECOND FILE WHOSE JOBS DO NOT STAND ALONE, ARE THE CONTROL. A reader
-    reporting one row per workflow satisfies "names the workflows" while flattening the jobs
-    exactly as the walk used to; a reader naming only the job the checks are in satisfies "names
+    reporting one row per workflow satisfies "names the workflows" while flattening the jobs;
+    a reader naming only the job the checks are in satisfies "names
     the jobs" while hiding a job it ranged over for nothing. And the fixture's jobs are written in
     an order the sorted report has to change, so a reader emitting them as it met them reds rather
     than agreeing by coincidence.

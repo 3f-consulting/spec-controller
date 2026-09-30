@@ -21,7 +21,7 @@ Feature: spec-controller balance runs standalone
     A supplied `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
     whose path does not exist halts `balance` BEFORE reconciling — non-zero exit,
     stderr naming the flag and the missing path — never the silent zero-evidence
-    all-red report that a mistyped path used to produce. The five flags are
+    all-red report a mistyped path would otherwise produce. The five flags are
     Examples of one boundary behaviour; scope is existence only.
 
     @SCN-CLI-002 @unit @e2e
@@ -553,9 +553,9 @@ Feature: spec-controller balance runs standalone
     scope. So the rule reaches a flag added later with no new row. A value is missing when nothing
     follows the flag, when a flag follows it, or when it is empty. The invocation is refused at the
     usage status before any reconcile, report or store write, and --exit-zero cannot move it,
-    because a usage fault is not a verdict. Until now a missing value was read as the
-    word "true". A path flag went looking for a file called true, --target and --source-sha recorded
-    it, and --format dropped it and ran to a verdict that --exit-zero turned green.
+    because a usage fault is not a verdict. A missing value is never read as the word "true": a
+    path flag would go looking for a file called true, --target and --source-sha would record it,
+    and --format would drop it and run to a verdict that --exit-zero turned green.
 
     @SCN-CLI-058 @unit @e2e
     Scenario Outline: balance refuses <flag> given no value as a usage fault, naming the missing value — <shape>

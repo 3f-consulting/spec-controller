@@ -175,7 +175,7 @@ is a choice about your whole ladder, not about this row.
 Reading a verdict instead of a number is cheaper than carrying the number across,
 and it costs four things. They are named here so that nobody finds them later.
 
-- **The push no longer shows the score.** The row reads satisfied or failing,
+- **The push does not show the score.** The row reads satisfied or failing,
   and the number stays in the nightly's Stryker report.
 - **A lapsed schedule, a crashed sweep and a below-bar sweep all read the same.**
   All three fail the step. The nightly's own run is where they are told apart.

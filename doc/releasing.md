@@ -12,8 +12,7 @@ package-changing merge publishes, and the version is a counter*; this file is wh
 two packages*.
 
 **Read *When a publish returns `E401`* before your first release.** The trap in it is an
-authentication error whose cause is not authentication, and this file used to teach the exact
-opposite of what it now teaches.
+authentication error whose cause is not authentication.
 
 ---
 
@@ -76,7 +75,7 @@ The `release` job:
 
 Then the `tag` job creates `v<version>` on the commit that was built. It is its own job so the only
 token that can write to the repository never shares a runner with the build, and it starts no other
-workflow. **The tag records a release; it never causes one**, and nothing listens for tags any more.
+workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
 
 ### Two merges close together
 
@@ -139,11 +138,6 @@ Then compare the connection on npmjs.com against the run:
 
 npm does not validate any of these when the connection is saved, so a wrong one is only ever
 discovered here.
-
-*(This file previously taught the inverse — that an `E401` on the publish step meant an expired
-token and could never be a trusted-publisher problem. That was true of the shape it described and
-is exactly wrong about this one. Lived 2026-09-15, publishing `0.1.0-alpha.2`: six faults in one
-attempt, three of them chasing an authentication error that had no authentication cause.)*
 
 ---
 
@@ -247,7 +241,7 @@ with `spec-controller` alone it reds naming core. The exemption names packages, 
 unlike a version pin it needs no pruning; every other dependency stays
 under the policy in full.
 
-**When the model moves and the pinned reader can no longer read the tree**, the cure is the expand
+**When the model moves and the pinned reader cannot read the tree**, the cure is the expand
 merge in *A model change the pinned reader cannot read* below. The pin is never moved by hand to
 reach it.
 
@@ -371,6 +365,6 @@ raise a fitness obligation from the `@fitness` tag alone, and to accept a manife
 `specController.fitnessChecks` by naming it as a retired key. Its migrate step deletes that key from
 this repository's own `package.json` — and it waits, because the pinned reader cannot read a tree
 with no list at all until the bot's PR moves the pin to the expand merge's release. Written *at or
-after* that release, never as an equality: the pin lags and jumps. **The acceptance that example
-turns on was itself withdrawn later** — the reader no longer accepts the key or names it — which changes nothing about the
-ordering rule the example teaches: step 3 still cannot merge before the pin has moved.
+after* that release, never as an equality: the pin lags and jumps. **Today's reader neither accepts
+that key nor names it**, which changes nothing about the
+ordering rule the example teaches: step 3 cannot merge before the pin has moved.

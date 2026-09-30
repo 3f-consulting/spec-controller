@@ -343,7 +343,7 @@ Feature: The report renders the ledger as sectioned facts
     the pending pair is folded out of the active set — so a credit citing it reconciles the same
     NO-EVIDENCE-OBLIGATION way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
-    hand-written, so a fixture can no longer pin a shape the pipeline cannot emit —
+    hand-written, so a fixture cannot pin a shape the pipeline cannot emit —
     evidence-manifesto §11A), and through a REAL reconcile + render over a fixture target — the
     cell-rendering class needs both layers.
 
@@ -462,7 +462,7 @@ Feature: The report renders the ledger as sectioned facts
     views render. The E2e cell likewise reads its observation count STRAIGHT off those posted
     credits, never off a parallel tally.
 
-    The census's own four-way split went WITH the module: `attributed[]` no longer exists. The fold
+    There is no census four-way split and no `attributed[]`. The fold
     carries `rawByRuntimeQualityCheck` beside three per-account counts — `onScenario` (which absorbs
     both the matched-attributed and the no-evidence-obligation credits the census split apart),
     `onPhantomScenario` and `onSuspenseScenario` — and the per-credit outcome split now lives on the

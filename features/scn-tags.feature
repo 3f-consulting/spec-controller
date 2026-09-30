@@ -1,9 +1,8 @@
 @STG
 Feature: The @SCN scheme polices itself — the rules a target runs from the package it installed
 
-  The @SCN scheme is the mechanism the whole tool turns on, and every rule policing it used to
-  live under tests/checks/ — not in either package's published files, unreachable from another
-  repository by construction. So a target got the codes and inherited none of the policing. The
+  The @SCN scheme is the mechanism the whole tool turns on, and every rule policing it ships in
+  the package a target installs, so a target that gets the codes inherits the policing. The
   Rules here are `balance`'s: the command a target already runs is the one that polices its codes.
 
   AN @SCN IS AN ACCOUNT NUMBER, AND A FEATURE FILE IS ITS ACCOUNT CLASS. A code
@@ -126,9 +125,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     ordinary rule: no new verdict, no precedence. It is not `broken` — the proofs ran; what fails is
     the attribution.
 
-    Until now `balance` refused such a corpus as unreadable (exit 2), and one bad code blanked the
-    whole report. Reported on its account instead, it reds the run and leaves every other account
-    reconciling exactly as before.
+    `balance` does not refuse such a corpus as unreadable, so one bad code does not blank the
+    whole report. Reported on its account, it reds the run and leaves every other account
+    reconciling exactly as it would without it.
 
     @unit @integration @SCN-STG-013
     Scenario: Two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check

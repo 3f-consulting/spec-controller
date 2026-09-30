@@ -76,9 +76,7 @@ and no word for what the check is about, because the scenario's title says that 
 the identity the ledger reads. The sections below assume you are heading for `conformant`; if you
 are stopping at `annotated`, read them for the CI step and skip the scenario.
 
-**`specController.fitnessChecks` is not read.** This page used to say the key was still accepted and
-reported as retired. That stopped (operator ruling 2026-09-20: no backward
-compatibility). A `package.json` still carrying the key is read exactly as one carrying any other key
+**`specController.fitnessChecks` is not read.** A `package.json` still carrying the key is read exactly as one carrying any other key
 this tool does not read: it is passed over, and named under `## Configuration not read` in the same
 words as a misspelling, with nothing said about what it once did. The two artefacts above are the
 whole of what you author.
@@ -149,7 +147,7 @@ its own reasons stay off the books.
 
 **`if: always()` is not the fail-fast trade being abandoned.** The default is `if: success()`, so
 `always()` WIDENS: there is no run in which an `always()` step is skipped and an unconditional one
-is not. What it buys is that an early red no longer decides the report — check steps are independent
+is not. What it buys is that an early red does not decide the report — check steps are independent
 of one another, and a step the run record says was skipped is broken evidence rather than a quiet
 absence, so without it one failure would be reported as one failure and nine unknowns.
 
@@ -214,10 +212,9 @@ behavioural runner your manifest named, is the reconciler itself, or is a step y
 — said by subtraction, so there is no rule anywhere about what a check is *called*. A bare
 `run: ruff`, a `cargo clippy`, a `uses: github/codeql-action/analyze`: each is read, and each posts.
 
-**The prefix rule this section used to describe is gone**, retired on 2026-09-12. It matched `package.json` script names
-against a set of ours — `lint:`, `guard:` — which is a sample of an unbounded set that belongs to
-you, so a pipeline whose scripts are `lint`, `typecheck` and `audit` was one the reader could not see
-and said nothing about. **Nothing shaped like it replaced it.** The set that is closed is the
+**No rule matches `package.json` script names against a set of ours.** A set such as `lint:`,
+`guard:` is a sample of an unbounded set that belongs to you: a pipeline whose scripts are `lint`,
+`typecheck` and `audit` is one such a rule could not see. The set that is closed is the
 *behavioural runners* — one per tier, and the tiers are canon — so you name those and everything
 else is a candidate.
 
@@ -371,7 +368,7 @@ of a scenario whose steps no runner executes is a claim about its evidence, neve
 **It is a different thing from test validity, which is assumed rather than missing.** Whether a
 test is a good test is yours, as under CI, TDD and BDD (see *What spec-controller assumes*). Dead
 documentation is the part the process itself leaves open: a correct test, passing, under steps that
-no longer describe it.
+do not describe it.
 
 **A discovery axis with nothing to discover reports a vacuous zero, and annotating the pipeline is
 what ends it.** A capability exercised by nothing and reporting green is the exact fault this
@@ -435,11 +432,9 @@ somebody moved the step — never that. The field could not name what it claimed
 
 ### One limit, stated so you do not discover it
 
-**This section carried two, and the first has been retired rather than restated.** `new-client` was
-Node-shaped: the zero-annotation state found your checks by matching `package.json` script names
-against observed prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script derived
-nothing and its report was empty rather than useful. **That is no longer how discovery works.** A
-prefix list samples an unbounded set — the names your team gives its checks — and the set of
+**Discovery is not Node-shaped.** The zero-annotation state does not match `package.json` script
+names against prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script is
+discovered like any other. A prefix list would sample an unbounded set — the names your team gives its checks — and the set of
 *behavioural runners* is closed, one per tier, so you name those and **everything else in your
 pipeline is a candidate fitness check**. `ruff`, `mypy` and `cargo clippy` are discovered without one
 line of ours knowing those words. What that leaves is a false positive you can read and correct, not

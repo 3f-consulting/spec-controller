@@ -81,11 +81,9 @@ steps did. Nothing else declares it.
 and no word classifying a check at all, there is nothing for a check policing such words
 to police.
 
-**What a step left out of the local run costs you, nothing prints any more.** There was a
-mechanism here — a derived ladder that named every omission and its reason on every run, and
-redded on an exclusion excusing a step CI no longer ran. It left with the derivation,
-and so did `specController.ciOnlyExclusions`, which nothing reads. What is left is the pipeline
-itself: a step you did not run locally is a step you find out about on the pull request.
+**Nothing prints what a step left out of the local run costs you.** Nothing derives a local
+ladder from the pipeline, and nothing reads `specController.ciOnlyExclusions`. The pipeline
+itself is the check: a step you did not run locally is a step you find out about on the pull request.
 
 **The two run-time rows are not measured, and nothing here times a suite.** The unit suite's row
 and the behavioural suite's row are step-outcome rows: `ci.yml` runs each
@@ -149,8 +147,8 @@ is reporting. The number beside it is produced by a different mechanism and is n
 counts the credits the configured rows' steps post, each answered by its step's exit code.
 
 **Two retirements are in play here and they are not the same one.** The `lint:`/`guard:` **script
-prefixes** were retired — a widening, not a removal: a prefixed
-script is still observed, because every step is, so no major version was engaged. `specController.staticChecks` is not read. A manifest that
+prefixes** carry no meaning to the reader — a widening, not a removal: a prefixed
+script is observed, because every step is, so no major version is engaged. `specController.staticChecks` is not read. A manifest that
 carries it settles nothing, and the report names it under `## Configuration not read`, as it does
 any key the `specController` block does not read.
 [`doc/compatibility.md`](./doc/compatibility.md) records its retirement.

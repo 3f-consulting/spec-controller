@@ -34,7 +34,7 @@ node --version   # must be v22.x or higher
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
 - Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness check (see *Wiring into CI*).
-- Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are used to check that an UNCONVERTED static check is wired into CI over the real source.
+- Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are read to check that an UNCONVERTED static check is wired into CI over the real source.
 
 ---
 
@@ -136,10 +136,9 @@ The worked before/after, the migration checklist, and the traps:
 
 ### Naming your runners, and the one limit that remains
 
-**The zero-annotation state is no longer Node-shaped.** It used to find the checks it could by
-matching `package.json` script names against observed prefixes, so a pipeline with a bare `run: ruff`
-and no `package.json` script derived nothing. That prefix set is gone, retired on 2026-09-12, and **the replacement is not a longer list
-of names**: you name the commands that run your behavioural suites — a closed set of four, one per
+**The zero-annotation state is not Node-shaped.** It does not match `package.json` script names
+against prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script is discovered
+like any other, and **what you name is not a list of check names**: you name the commands that run your behavioural suites — a closed set of four, one per
 tier — and **every other step of the workflows `--ci` names is a candidate fitness check**, whatever
 it invokes and whether it is a `run:` step or a `uses:` action.
 
@@ -273,7 +272,7 @@ spec-controller balance --features ./features \
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
-| `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. The re-render exits the code the saved verdict names, and is strict if the saved run was or `--strict` is given beside it; `--exit-zero` composes as it does live. Every other flag beside it (a live input, `--target`, `--source-sha`, `--format`) is refused at exit `2`. A re-render keeps no run, so under `--store` it is refused at exit `2`, naming `--store`, and no store root is made. |
+| `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON — no reconcile, no live inputs. The re-render exits the code the saved verdict names, and is strict if the saved run was or `--strict` is given beside it; `--exit-zero` composes as it does live. Every other flag beside it (a live input, `--target`, `--source-sha`, `--format`) is refused at exit `2`. A re-render keeps no run, so under `--store` it is refused at exit `2`, naming `--store`, and no store root is made. |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
@@ -286,7 +285,7 @@ spec-controller balance --features ./features \
 - `--format json:out.json` → JSON to a file.
 - Repeat the flag to emit several at once: `--format md:report.md --format json:report.json`.
 
-At most one output may go to stdout in a single invocation. A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, or a link to either) counts as stdout, so `--format md --format json:/dev/stdout` is refused at exit `2` like `--format md --format json`. (The legacy `--json <path>` flag has been removed; use `--format json:<path>` instead.)
+At most one output may go to stdout in a single invocation. A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, or a link to either) counts as stdout, so `--format md --format json:/dev/stdout` is refused at exit `2` like `--format md --format json`. (There is no `--json <path>` flag; use `--format json:<path>`.)
 
 No two outputs may share one regular file, however the file is named: the same path twice, the same format twice, `./` or an absolute spelling beside a relative one, a path through `..`, a symbolic link, a path through a linked directory, a hard link, or the file stdout is redirected into. The file is recognised by the operating system's identity for it, so on a case-insensitive volume `report.md` and `REPORT.MD` are one file. Such a run is refused at exit `2`, naming both outputs, before anything is written. A destination that is not a regular file, such as `/dev/stderr` or `/dev/null`, may be given more than once, because writing it twice loses nothing.
 
@@ -376,7 +375,7 @@ Both carry a **provenance** header recording what was reconciled (target, source
 
 The outcome you are watching for is the **watermelon**: a static check that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
 
-**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict. Earlier releases refused such a corpus outright at exit `2` and printed no report; they no longer do.
+**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 **A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and says what it found under `## Scenario code errors` (`scenarioCodeErrors` in the JSON), just after `## Run integrity`. There are three errors:
 
@@ -466,7 +465,7 @@ spec-controller allocate <FFF>
 ```
 
 The code is one past the highest the repository has **ever** carried for that feature part, so a
-code that was retired is never handed out again: every old reference to it, in history, a chat or a
+retired code is never handed out again: every old reference to it, in history, a chat or a
 stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and
 grows past them (`999` is followed by `1000`).
 
@@ -518,9 +517,9 @@ packages carry codes of their own.
 
 **The verdict reads SCENARIO CODE ERRORS** — the corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one. `## Scenario code errors` names each by its handle and file, and says which fix it wants. Every account still reconciles, so the rest of the report is as it would be; the run exits `1` until the codes are filed correctly.
 
-**A row reads `duplicate-scn-code`** — two scenarios carry that `@SCN` code, and the report names them under *The corpus holds N scenarios in M accounts*. Give one of them a code of its own; an `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. Until then the run exits `1`.
+**A row reads `duplicate-scn-code`** — two scenarios carry that `@SCN` code, and the report names them under *The corpus holds N scenarios in M accounts*. Give one of them a code of its own; an `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 
-**`--json` rejected** — the legacy flag was removed; use `--format json:<path>`.
+**`--json` rejected** — there is no such flag; use `--format json:<path>`.
 
 ---
 

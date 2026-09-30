@@ -48,7 +48,7 @@ The types these functions take and return are exported alongside them, so a cons
 
 ## The surface is a contract
 
-This barrel is the whole public surface — the package publishes exactly one entrypoint, and what that entrypoint exports is the contract you build on. **Nothing checks it for drift.** A symbol quietly added to the barrel, or quietly dropped from it, reds no build today: the surface is not held against a written-down list, and a generated API report will be adopted at `1.0`, where the compatibility promise comes back. Until then: the package is at a `0.x` version and makes no compatibility promise — see [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md). Pin an exact version.
+This barrel is the whole public surface — the package publishes exactly one entrypoint, and what that entrypoint exports is the contract you build on. **Nothing checks it for drift.** A symbol quietly added to the barrel, or quietly dropped from it, reds no build today: the surface is not held against a written-down list, and a generated API report will be adopted at `1.0`, where the compatibility promise comes back. Before `1.0`, the package is at a `0.x` version and makes no compatibility promise — see [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md). Pin an exact version.
 
 Source, issues and history: [github.com/3f-consulting/spec-controller](https://github.com/3f-consulting/spec-controller).
 

@@ -1,0 +1,14 @@
+extends: existence
+message: "'%s' narrates how this came to be; state what is true now."
+level: error
+ignorecase: true
+tokens:
+  - used to
+  - no longer
+  - previously
+  - formerly
+  - originally
+  - any ?more
+  - (?:was|were|has been|have been|had been) (?:added|removed|replaced|retired|renamed|dropped|deleted|introduced|superseded|withdrawn|moved|changed)
+  - until (?:now|then|recently)
+  - (?:ever )?since then

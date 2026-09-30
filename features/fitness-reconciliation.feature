@@ -25,8 +25,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   tags its scenarios with a bare check word, has declared no check by it. The registry is read like
   any key the specController block does not read: it settles nothing, and the report names it under
   `## Configuration not read` in the words it uses for any such key, saying nothing of what it once
-  did. A bare check word raises no Evidence Obligation, since no set of
-  registered check tags is read any more. A check is its `@fitness` scenario, and nothing
+  did. A bare check word raises no Evidence Obligation, because no set of
+  registered check tags is read. A check is its `@fitness` scenario, and nothing
   else declares it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
@@ -95,9 +95,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     @unit @integration @SCN-LNT-007
     Scenario: a @lint=<check> tag raises no Evidence Obligation — the retired form is inert
 
-      THE RETIRED FORM IS INERT, WHICH IS A STRONGER CLAIM THAN "NOBODY WRITES IT ANY MORE". The
-      corpus sweep removed every @lint=<handle> tag this repository carried; that is a fact about
-      today's tree, and a fact about a tree is not a mechanism. What settles the form is the READER:
+      THE RETIRED FORM IS INERT, WHICH IS A STRONGER CLAIM THAN "NOBODY WRITES IT". This
+      repository carries no @lint=<handle> tag; that is a fact about today's tree, and a fact about
+      a tree is not a mechanism. What settles the form is the READER:
       the tag arm that turned @lint=<handle> into an obligation is gone, so the form names nothing
       however it is spelled and wherever it reappears.
 
@@ -212,11 +212,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       credit has always been able to carry between a test file's @SCN and the corpus, reached
       through a CI step's own id: instead.
 
-      IT IS ALSO WHERE A CODE NO MANIFEST ENTRY ANSWERED USED TO GO QUIET. While the citation was
-      resolved against specController.fitnessChecks, such a step cited nothing and fell to
-      suspense, which said a consumer had annotated nothing when in fact they had annotated
-      something wrong. The list is retired and the looked-and-missed case now reads as
-      one.
+      IT IS ALSO WHERE A CODE NO SCENARIO CARRIES IS HEARD. The citation is resolved against the
+      corpus, never against a manifest list, so such a step does not fall to suspense as if the
+      consumer had annotated nothing; the looked-and-missed case reads as one.
 
       THE CREDIT IS NEVER DROPPED. Dropping it is the one outcome the double entry forbids: every
       Evidence Observation posts somewhere, never nowhere. So the row is INVENTED, the credit posts
@@ -322,7 +320,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       THE SECOND OF THEM STOPPED BEING A BARE CREDIT WHEN THE THIRD THING CARRYING THE VERDICT WENT.
       While a pass ran the checks, a check that found violations reddened the run through the
       runner's exit code and its credit only had to say the check ran — so passed and failed were
-      honestly ONE answer, and this scenario's own text used to say so. A CI step's exit code reaches
+      honestly ONE answer. A CI step's exit code reaches
       this ledger nowhere, so the failed step's credit carries what it found and its row reds
       rather than balancing beside the row whose check passed.
 
@@ -401,7 +399,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     SCRIPT'S NAME. A CI step can state which scenario its check answers and nothing else: an id is
     a code, and reading a check's identity off the handle that ran would be the name-match this
     axis retired, in a new spelling. So the code is read from the step and that is the whole of it
-    — the manifest list it used to be checked against is retired, and a code no scenario
+    — no manifest list is read to check it against, and a code no scenario
     carries posts to a phantom rather than falling silent.
 
     AN id: THAT IS NOT AN @SCN STILL CITES NOTHING, which is the one thing the reader does check.
@@ -489,9 +487,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       THE SENTENCE SAYS RUN, SO THE NUMBER COUNTS WHAT RAN (change the
       count, not the word). A check behind continue-on-error runs: it is invoked, it analyses the
-      source, it reds, and its job carries on. The census used to leave it out because it enforces
-      nothing, and so printed one check fewer than had run, directly above a watermelon row for a
-      check that plainly had. Whether a check ENFORCES is already said where it can be said about
+      source, it reds, and its job carries on. Leaving it out because it enforces nothing would
+      print one check fewer than had run, directly above a watermelon row for a check that
+      plainly had. Whether a check ENFORCES is already said where it can be said about
       that one check — its own row reads the watermelon, by the rule above. The census is the other
       reading: a report of what ran, with no debit side. Folding enforcement into it as well said
       the same thing twice, and the second time it said it wrongly.

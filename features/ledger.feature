@@ -152,8 +152,8 @@ Feature: Ledger over obligation-vs-observation evidence
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes a credit-side
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
-    the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. This
-    fixes the latent attributed mis-count: countRuntimeEvidenceObservationKinds no longer silently counts a
+    the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
+    countRuntimeEvidenceObservationKinds never silently counts a
     stray credit at a never-raised quality-check as reconciliation-matched-attributed — no-evidence-obligation
     appears in summary.byOutcome, while the Test-volume attributed (credits citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
