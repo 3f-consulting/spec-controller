@@ -1,16 +1,3 @@
-/**
- * Unit tests for the provenance INPUT-PATH portability. The exact parallel of the evidenceObservations
- * locators for the provenance inputs: when RunContext carries a run root, the projection
- * relativizes each input path so a committed artefact never leaks an absolute
- * local/worktree path. Opt-in — no root means verbatim, so the existing ctx
- * fixtures stay unchanged.
- *
- * The impure resolveSourceSha / resolveTargetRoot arms moved
- * to run-management/resolveRunInputs.test.ts with their functions.
- *
- * Parent:.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   provenanceObject,
@@ -57,12 +44,6 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
   });
 });
 
-/**
- * The optional fitness stream — the CI step record — on the canonical input list. The isolation half of the pair: the @integration arm in
- * tests/steps/report.steps.ts runs the REAL CLI and reads the persisted block back, while
- * these arms pin the projection's ORDER and its additive JSON shape, which a rendered line
- * cannot show.
- */
 describe("[SCN-RPT-027] the provenance projection names the optional CI step record", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
@@ -120,15 +101,6 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
   });
 });
 
-/**
- * The canonical inputs a run did NOT receive. Naming
- * every stream a run was handed, which killed the "handed it and the block does not say so"
- * reading; it left the other one alive, because absence from a list only informs a reader who
- * already holds the list. These arms pin the derivation — the flags with no value, taken from
- * the SAME canonical list the Inputs line renders, so a flag can never be listed on one line
- * and missing from both. The rendering is provenanceSection.test.ts's arms; the persisted
- * line is its @integration arm.
- */
 describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "partly-handed-target",
@@ -177,10 +149,6 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
   });
 
   it("adds NOTHING to the JSON provenance object — absence is derivable, so it is not persisted", () => {
-    // GREEN BY DESIGN, and it is the pin for the half that must NOT move. provenance.ts's own
-    // rule is persist a fact on JSON iff it is not derivable; `inputs` plus the canonical flag
-    // list already fixes absence, so a second copy would agree with the first only until one of
-    // them was edited. This arm reds the moment someone persists it.
     const obj = provenanceObject(handed({ features: "features" }));
     expect(Object.keys(obj)).toEqual([
       "target",

@@ -1,19 +1,3 @@
-/**
- * Step definitions for the cross-repo portable-paths scenario.
- *
- * This arm exercises the WHOLE CLI binary as a subprocess from a cwd that is NOT the
- * target repo — the cross-repo case the prior cwd-stripping leaked. A temp TARGET repo is
- * built with Vitest / Cucumber reports whose locators are ABSOLUTE paths under that repo;
- * the CLI is run from a foreign temp cwd and persists spec-reconciliation.md + .json. The
- * persisted artefacts must carry NONE of the target's absolute paths — the
- * evidence-observation locators collapse to repo-relative and the input paths record
- * relative to the target root. Anti-watermelon: the real argv → resolveTargetRoot →
- * renderers → disk path runs; a CLI that relativized against cwd (the bug) REDS because
- * the target's paths aren't under the foreign cwd, so they leak verbatim.
- *
- * Self-contained module-level variables + distinct step text (Cucumber registers globally).
- */
-
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -22,7 +6,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
-// The temp TARGET repo (outside the run cwd) and the foreign cwd the CLI runs from.
 let targetRepo: string;
 let foreignCwd: string;
 let outDir: string;
@@ -30,9 +13,6 @@ let markdown: string;
 let jsonText: string;
 
 function writeTargetReports(repo: string): void {
-  // Vitest report: an ABSOLUTE test-file locator under the target repo. One attributed
-  // assertion + one carrying no scenario code → a cites-no-scenario evidence observation
-  // whose absolute locator surfaces in the report (the leak vector).
   const vitestLocator = join(repo, "src", "widget.test.ts");
   writeFileSync(
     join(repo, "vitest.json"),
@@ -49,8 +29,6 @@ function writeTargetReports(repo: string): void {
     })
   );
 
-  // Cucumber report: an ABSOLUTE feature uri under the target repo, one @smoke element
-  // carrying no @SCN → a cites-no-scenario evidence observation whose absolute locator surfaces too.
   const cucumberLocator = join(repo, "features", "sample.feature");
   writeFileSync(
     join(repo, "cucumber.json"),
@@ -66,8 +44,6 @@ function writeTargetReports(repo: string): void {
 Given(
   "a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
   function () {
-    // realpath so the path matches what the CLI derives (macOS /var → /private/var); a
-    // NON-git temp dir, so resolveTargetRoot falls back to dirname(--features) = targetRepo.
     targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-target-")));
     mkdirSync(join(targetRepo, "features"), { recursive: true });
 
@@ -88,8 +64,6 @@ Given(
 
     writeTargetReports(targetRepo);
 
-    // A foreign cwd — NOT the target repo, NOT spec-controller — so the reconcile is genuinely
-    // cross-repo (cwd ≠ target), reproducing the leak the fix closes.
     foreignCwd = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-cwd-")));
     outDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-out-")));
   }
@@ -134,9 +108,6 @@ When(
 Then(
   "the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root",
   function () {
-    // The load-bearing assertion: NEITHER surface may carry the target repo's absolute
-    // prefix. On the cwd-stripping bug the target's paths aren't under the foreign cwd, so
-    // relativizeToRoot keeps them verbatim → the prefix leaks → this REDS.
     assert.ok(
       !markdown.includes(targetRepo),
       `expected the persisted markdown to carry NONE of the target's absolute paths "${targetRepo}"; got:\n${markdown}`
@@ -146,10 +117,6 @@ Then(
       `expected the persisted JSON to carry NONE of the target's absolute paths "${targetRepo}"; got:\n${jsonText}`
     );
 
-    // Positive teeth — the paths are PRESENT, just relativized (proving relativisation
-    // happened, not that the locators simply vanished).
-    // Evidence-observation locator: the absolute .../src/widget.test.ts collapses to the
-    // repo-relative "src/widget.test.ts".
     assert.ok(
       markdown.includes("src/widget.test.ts"),
       `expected the markdown to carry the repo-relative locator "src/widget.test.ts"; got:\n${markdown}`
@@ -158,7 +125,6 @@ Then(
       runProvenance?: { inputs?: Record<string, string> };
       ledger?: { scenarioReconciliations: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }> };
     };
-    // Input paths record relative to the target root ("features", "vitest.json"), not absolute.
     assert.equal(
       parsed.runProvenance?.inputs?.features,
       "features",
@@ -169,8 +135,6 @@ Then(
       "vitest.json",
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
-    // The uncited-credit locators now live on the SUSPENSE row — they are
-    // repo-relative too (the where-to-fix survives the detail-into-rows move, ruling Q5).
     const suspense = (parsed.ledger?.scenarioReconciliations ?? []).find((s) => s.kind === "suspense-scenario");
     assert.ok(suspense, `expected a suspense-scenario row carrying the uncited credits; got:\n${jsonText}`);
     const locators = suspense!.qualityCheckReconciliations

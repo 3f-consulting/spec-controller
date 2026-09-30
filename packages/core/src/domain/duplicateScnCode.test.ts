@@ -1,25 +1,14 @@
-/**
- * @unit for the account-number Rule of features/scn-tags.feature (3F-3609): a code carried by more
- * than one scenario is ONE account, and every quality check on it reads `duplicate-scn-code`.
- *
- * Each describe carries its @SCN id, so a grep of the id returns both halves of the pair. The
- * @integration arms (tests/steps/scnAccounts.steps.ts) drive real Gherkin through the parser and
- * the CLI; these prove `reconcile()` over constructed scenarios.
- */
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import type { Ledger, ScenarioReconciliation } from "../model.js";
 
-/** The rows the ledger holds for a code — a real account is `kind: "scenario"`. */
 function accountsFor(ledger: Ledger, scnId: string): ScenarioReconciliation[] {
   return ledger.scenarioReconciliations.filter((r) => r.scnId === scnId);
 }
 
 describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
-  // The second sharer DEFERS an integration check: a pending declaration on the account cannot be
-  // attributed to either sharer any more than a credit can, so it reads duplicate-scn-code too.
   const ledger = reconcile(
     [
       { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -86,7 +75,6 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
 });
 
 describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
-  // Two FILES, each read by the real parser on its own, meeting in one corpus the way a target's do.
   const one = "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: in one\n    Given a thing\n";
   const two = "@TWO\nFeature: two\n\n  @unit @SCN-ONE-001\n  Scenario: in two\n    Given a thing\n";
   const ledger = reconcile([...parseScenarios(one), ...parseScenarios(two)], []);
@@ -104,7 +92,6 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one
 });
 
 describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality checks still never balance", () => {
-  // Each sharer's OWN check passes. Split into two rows, both would balance — the false green.
   const ledger = reconcile(
     [
       { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -135,7 +122,6 @@ describe("[SCN-STG-016] every credit citing a duplicated code posts to its one a
   const credits = [
     { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "passed", locator: "crd-pass.test.ts" },
     { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "failed", locator: "crd-fail.test.ts" },
-    // At a check NEITHER sharer names — still the account's, still unattributable.
     { qualityCheck: "e2e", scnId: "SCN-CRD-001", status: "passed", locator: "crd-e2e.spec.ts" },
   ] as const;
   const ledger = reconcile(

@@ -65,7 +65,7 @@ This is the whole of the push side, copied from `ci.yml`:
 
 ```yaml
       - name: Mutation score
-        id: SCN-FIT-002
+        id: SCN-<FFF>-<NNN>
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -76,7 +76,7 @@ Read it flag by flag:
 
 | part | what it decides |
 | -- | -- |
-| `id: SCN-FIT-002` | the step *is* the scenario's evidence. The run's own step record carries this `id` with the step's `outcome`, and `balance` reads that record. |
+| `id: SCN-<FFF>-<NNN>` | the step *is* the scenario's evidence. The run's own step record carries this `id` with the step's `outcome`, and `balance` reads that record. |
 | `if: always()` | the step runs even after an earlier check has redded, so the scenario's row on the ledger gets an outcome instead of reading `broken`. |
 | `GH_TOKEN` | the run's own token. `gh` needs a token in the environment to call the API at all. |
 | `--workflow mutation.yml` | which scheduled workflow to read. |
@@ -121,7 +121,7 @@ The check is declared by its `@fitness` scenario and the CI step whose `id:` is 
 
 ```yaml
       - name: Mutation score
-        id: SCN-FIT-002
+        id: SCN-<FFF>-<NNN>
         if: always()
         run: gh run list --workflow mutation.yml ...
 ```
@@ -139,7 +139,7 @@ scenario is in
 [`features/fitness-checks.feature`](../features/fitness-checks.feature):
 
 ```gherkin
-  @fitness @SCN-FIT-002
+  @fitness @SCN-<FFF>-<NNN>
   Scenario: the newest nightly mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
     Given the gated branch's nightly mutation sweeps that started inside the window before this push and have since finished
     When the newest of them is read for its verdict
@@ -155,14 +155,14 @@ The rest is the ordinary wiring every converted check shares: a dump of
 
 ## What a lapse looks like on a push
 
-**On an ordinary push, a failing `SCN-FIT-002` step reds the job, and the balance
+**On an ordinary push, a failing `Mutation score` step reds the job, and the balance
 step behind it does not run.** GitHub aborts a job at its first red and skips
 every later step that does not carry `if: always()`. The balance step carries no
-such condition in this repository, by a standing ruling (3F-3042): a merge is
+such condition in this repository, by a standing ruling: a merge is
 decided on a green run, and a green job is one in which every step ran. So you do
 not see a lapsed, crashed or below-bar sweep as a `failing` line on the ledger.
 You see a red job, with the `Mutation score` step as its red. This was measured
-on CI (3F-3503): the ledger's `failing` line for this row appeared only in a run
+on CI: the ledger's `failing` line for this row appeared only in a run
 instrumented to keep the balance step running behind the red.
 
 If you want the ledger line as well, give your balance step `if: always()`. That

@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readHeaderCodes } from "./readParts.js";
 
-/** What `read` throws, or a failure when it reads without throwing. */
 function thrownBy(read: () => unknown): unknown {
   try {
     read();
@@ -14,7 +13,6 @@ function thrownBy(read: () => unknown): unknown {
   throw new Error("expected the read to be refused, and it read");
 }
 
-/** A features directory holding one feature file headed ONE. */
 function corpus(): string {
   const dir = join(mkdtempSync(join(tmpdir(), "allocate-parts-")), "features");
   mkdirSync(dir);

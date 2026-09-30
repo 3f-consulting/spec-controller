@@ -15,7 +15,6 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
     ...wrongKinds.map(
       ({ entry, is, reads }) => `- \`${entry}\` is ${is} where ${reads} is read, so this run read it as absent.`
     ),
-    // One sentence for every unread key: a retired key is told nothing about what it once did.
     ...unknownKeys.map(
       (key) => `- \`specController.${key}\` is not a key the specController block reads, so this run read nothing from it.`
     ),

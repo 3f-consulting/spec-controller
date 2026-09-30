@@ -1,11 +1,3 @@
-/**
- * The @unit arms of @SCN-CLI-056 and @SCN-CLI-057 — the host's answer to a command it does not know (3F-3649).
- * The @e2e arm in tests/steps/cliBalance.steps.ts proves the same answer through the real binary.
- *
- * The WORDING is never asserted (features/message-catalogue.feature): the status is the contract, and
- * stderr is pinned by its shape — the line naming the command, then the help, and nothing between.
- */
-
 import { describe, it, expect } from "vitest";
 import { answerUnknownCommand, parseHostInvocation } from "./host.js";
 

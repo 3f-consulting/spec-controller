@@ -6,14 +6,14 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   repository by construction. So a target got the codes and inherited none of the policing. The
   Rules here are `balance`'s: the command a target already runs is the one that polices its codes.
 
-  AN @SCN IS AN ACCOUNT NUMBER, AND A FEATURE FILE IS ITS ACCOUNT CLASS (3F-3609, 3F-3635). A code
+  AN @SCN IS AN ACCOUNT NUMBER, AND A FEATURE FILE IS ITS ACCOUNT CLASS. A code
   two scenarios carry makes that account unreconcilable, so it is reported on the account's rows.
   A code filed under the wrong class leaves every account reconciling but falsifies the by-feature
   cut, so it is listed as a scenario code error and reds the run.
 
   WHAT THE LEDGER ALREADY SAYS IS NOT SAID TWICE. A tier-less unparked @SCN scenario reconciles
-  both-missing and is named by id in the report's own cut (3F-3308), and a tag the tool does not
-  read is a consumer's own tag, not a fault (the `unrecognised-tag` diagnosis left, 3F-3635). The
+  both-missing and is named by id in the report's own cut, and a tag the tool does not
+  read is a consumer's own tag, not a fault (the `unrecognised-tag` diagnosis left). The
   `tags` command that ran the older Rules here left the tool with them.
 
   Rule: a code filed under the wrong class, a class with no number, or two classes with one number is a scenario code error, listed in its own section
@@ -28,12 +28,12 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     THE CODE ARRIVES AND THE GRAMMAR IS READ ONCE. The file's header comes from the ingest edge,
     the reading the by-feature cut groups on; a scenario's `<FFF>` comes off its id through the
-    one helper that owns that grammar, and every reader takes the same grammar (3F-3636). An id
+    one helper that owns that grammar, and every reader takes the same grammar. An id
     whose feature part is longer than five characters is no @SCN, so it is no scenario code for
     these rules to judge — it is the one-grammar Rule below that says so.
 
     THE SECTION'S SENTENCES ARE CLAIMS ABOUT A POPULATION, so each is held by a corpus on which a
-    false one would show (3F-3666). A finding says where the by-feature cut counted the scenario,
+    false one would show. A finding says where the by-feature cut counted the scenario,
     and that depends on which files carry the code its id names: one, none or several. A clean
     statement counts files and codes, and those counts differ as soon as one file carries no code.
     A fixture where the counts agree cannot tell a true sentence from a false one.
@@ -187,7 +187,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     characters and the number any width. Every place the tool reads an id — a scenario's tag, a
     Vitest title's citation, a Cucumber scenario's tag, a CI step's id and a prose mention — takes
     that one grammar, so an id canon says is not an @SCN is not one anywhere, and no account,
-    citation or finding rests on it (3F-3636). Each scenario holds the bound from both sides in one
+    citation or finding rests on it. Each scenario holds the bound from both sides in one
     target: a feature part of two and of five characters is read, one of one and of six is not.
 
     @unit @integration @SCN-STG-024

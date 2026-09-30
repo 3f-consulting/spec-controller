@@ -1,20 +1,3 @@
-/**
- * Unit test for the static-observation tally — the Ledger fold that OWNS
- * the static-check counting (the retired static census's home, relocated here from
- * `census/staticEvidenceObservations.test.ts`).
- *
- * `staticObservationTally` walks the POSTED static-check CREDITS on the Ledger rows
- * and reads each off the row it posted to — the reconciler's own ruling, never re-classified. ONE
- * care-move the runtime fold does not need survives (the identity-dedupe went with the
- * by-name route it existed to correct):
- *   - FILTER TO WHAT RAN (`exists`, and not broken) — a watermelon RAN: its step is invoked and its
- *     job survives its red, so it is counted, and whether it enforces is its ROW's answer, not the
- *     census's (ruled 2026-09-17: change the count, not the word). A missing (absent)
- *     check STILL posts (posting is not classifying), but it did not run, so it is excluded.
- * The Ledger is BUILT BY `reconcile()` over a spanning corpus, never hand-written
- * (evidence-manifesto §11A): the fixture can only state posted-entry shapes the pipeline emits.
- */
-
 import { describe, it, expect } from "vitest";
 
 import { staticObservationTally } from "./ledger.js";
@@ -29,28 +12,12 @@ import type {
   ScenarioReconciliation,
 } from "../model.js";
 
-// THE MEMBERSHIP ARGUMENT — the target's declared behavioural runners, which is what the observed
-// prefix set used to be. This fixture's pipeline runs both suites, so it
-// has to name their runners or the two suite steps are candidates and the uncited count is three
-// rather than one — a `new-client` report, not the case this scenario is about.
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   unit: "vitest",
   integration: "cucumber-js",
 };
 
-
 describe("[SCN-USG-001] staticObservationTally folds the posted static-check credits, filtered to what ran", () => {
-  // A SPANNING corpus reconciling to every static-check credit shape, all four CITATION-ROUTED
-  // (the by-name route is gone, and the identity-dedupe with it):
-  //   foo   — RUNNING and cited by SCN-A: counted.
-  //   water — a WATERMELON (exists, not enforced) cited by SCN-C: the only producer
-  //           of that shape is a step whose red its job survives, so it RAN → counted.
-  //   absent— a MISSING check (absent) cited by SCN-D: posts but does NOT run → excluded. The one
-  //           care-move this fold still needs.
-  //   bar   — RUNNING and cited by nobody: the reconciler folds it to the SUSPENSE row → the 1
-  //           uncited static check.
-  // The obligation names the BARE check and the run names the RUNNABLE handle, so only the
-  // citation can join them. Built through reconcile(), so every row is a shape the pipeline emits.
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "fitness" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -66,20 +33,14 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   const tally = staticObservationTally(ledger);
 
   it("counts every check that ran, the watermelon included, and not the missing one", () => {
-    // lint:foo (cited, enforced), lint:water (cited, a watermelon: it ran and its job survived its
-    // red) and lint:bar (uncited, enforced) → 3. lint:absent (missing) posts but did NOT run, so
-    // the filter excludes it. Whether lint:water enforces is its row's answer.
     expect(tally.runningStaticCheckCount).toBe(3);
   });
 
   it("counts the fitness credits on the SUSPENSE row as the uncited static checks", () => {
-    // lint:bar cites no scenario — the reconciler folded it to the suspense row. It is
-    // the only uncited static check; every cited check sits on the row its run names.
     expect(tally.uncitedStaticCheckCount).toBe(1);
   });
 
   it("keeps named implicit — runningStaticCheckCount − uncitedStaticCheckCount (the named checks that ran)", () => {
-    // named is not on the surface; it is the implied remainder — here lint:foo and lint:water.
     expect(tally.runningStaticCheckCount - tally.uncitedStaticCheckCount).toBe(2);
   });
 
@@ -88,11 +49,6 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   });
 
   it("counts no runtime credit, whatever fields it arrives carrying", () => {
-    // THE STATIC SCOPING IS THE QUALITY-CHECK, NOT THE FIELDS. A runtime credit is not a
-    // static observation even when it carries `exists` and `enforcedOverRealSource` true — which
-    // `EvidenceObservation` admits from any consumer, with no cast, by width. Every runtime credit
-    // this repository's readers emit carries neither, so without this input the scoping clause is
-    // redundant by coincidence of absence and its removal changes no count.
     const runtimeCarryingGuardFields = {
       qualityCheck: "unit" as const,
       scnId: "SCN-A",
@@ -105,31 +61,6 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   });
 });
 
-/**
- * UNDER THE ONE POSTING RULE — what makes a check uncited is the CITATION,
- * not a lookup against a handle spelling.
- *
- * WHY THIS ARM EXISTS ALONGSIDE THE ONE ABOVE. That fixture INJECTS the seam's answer as a stamped
- * `scnId`, which is the right isolation for a fold: what the TALLY does with a routed credit is its
- * subject. This arm derives the same two credits from the REAL observers over a real CI source, so
- * it is also the proof that the answer the fold folds is one the pipeline actually produces.
- *
- * THE TWO SIDES NAME DIFFERENT WORDS, which is what makes the citation load-bearing rather than
- * decorative. The fitness obligation names the BARE check tag its stepless scenario carries (`foo`)
- * while the run names the RUNNABLE handle (`lint:foo`) — so a reader falling back to matching by
- * name joins nothing, leaves the obligation missing, and sends BOTH credits to suspense.
- *
- * BOTH CREDITS ARE DERIVED BY THE REAL OBSERVERS (evidence-manifesto §11A) over one CI source and
- * one scripts manifest, in exactly the two-reader split the CLI edge assembles: the obligation-side
- * reader answers for the check the corpus obliges and carries the citation; the running-check
- * observer adds the rest of what CI runs, and those cite nothing. The Ledger is then built by
- * `reconcile`, so every row is a shape the pipeline emits.
- *
- * TEETH. Dropping the `scnId` stamp from the cited credit reds this arm in three places at once —
- * the obligation reads missing, the suspense row gains a second credit, and the uncited count reads
- * 2. Dropping the uncited credit instead (the failure the never-dropped clause refuses) reds the
- * count and the row assertion while leaving the satisfied one green, which is why both are asserted.
- */
 describe("[SCN-USG-001] a static check no fitness scenario cites is banked on the suspense row and counted uncited", () => {
   const rowFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
@@ -152,33 +83,19 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // ONE stepless fitness scenario, raising its obligation against the BARE tag.
   const fitness: Scenario[] = [
     { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
 
-  // The seam's answer, injected: `lint:foo` resolves to the scenario carrying its check, `lint:bar`
-  // to nothing. Composing the registry and the corpus to reach that answer is `citationOfScript`'s
-  // own subject; what is under test here is what the posting rule and the tally do
-  // with the answer once it is null.
   const citedScn = (script: string): ScriptCitation | null =>
     script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
 
-  // ONE observer, split by handle. The obligation-side reader that used to build the
-  // citing half has been deleted, and it did not need replacing with a literal: the running-check
-  // observer emits the same `FitnessEvidenceObservation` shape, and this fixture's CI RUNS
-  // `pnpm lint:foo`, so the credit is still derived rather than seeded. Passing `citedScn` to the
-  // one call is what stamps the citation on `lint:foo` and leaves every other handle uncited,
-  // because the seam answers `null` for all of them.
   const runningCredits = runningStaticChecks([ci], pkg, SUITE_RUNNERS, citedScn);
   const citedCredits = runningCredits.filter((o) => o.staticCheck === "lint:foo");
   const uncitedCredits = runningCredits.filter((o) => o.staticCheck !== "lint:foo");
   const ledger: Ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
 
   it("derives one citing credit and one uncited credit from the CI source (the corpus is real, not seeded)", () => {
-    // Anti-vacuity: were either observer to drop its handle, the assertions below would run over a
-    // stream that never carried the thing they are about. Whole-list equality, so an observer that
-    // emitted the handle TWICE fails here rather than inflating a count downstream.
     expect(citedCredits).toEqual([
       {
         qualityCheck: "fitness",
@@ -194,9 +111,6 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   });
 
   it("posts the citing credit to the fitness scenario's row, satisfying its bare-tag obligation", () => {
-    // The control. Without it "1 uncited" is satisfied by a reader that attributes nothing and
-    // banks everything — and the bare tag / runnable handle asymmetry means only the citation can
-    // have joined these two.
     expect(rowFor(ledger, "SCN-TGT-001")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
@@ -208,9 +122,6 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   });
 
   it("banks the uncited credit on the suspense row as cites-no-scenario, naming the handle that ran", () => {
-    // NEVER DROPPED. Every Evidence Observation posts somewhere, so a check the seam cannot place
-    // is visible rather than absent — carrying the handle, which is a phantom-free row's only
-    // where-to-fix.
     expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
@@ -222,8 +133,6 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   });
 
   it("posts each credit to exactly one row — never dropped, never smeared", () => {
-    // A fallback from an unresolved citation to the handle would put the uncited credit on the
-    // fitness row too; the smear the one posting rule exists to end.
     const rowsHolding = (credit: unknown): (string | undefined)[] =>
       ledger.scenarioReconciliations
         .filter((r) => r.evidenceObservations.includes(credit as never))
@@ -240,49 +149,6 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   });
 });
 
-/**
- * A static check whose script name matches no
- * convention of ours that CI runs AND a fitness scenario CITES is ATTRIBUTED to that scenario's
- * row, never counted as an uncited static check.
- *
- * THE SEAM THIS OWNS, and why the uncited twin does not already cover it. Its twin pins the UNCITED
- * half; nothing pinned that the two sides MEET — that a handle under no convention of ours CI runs
- * and a corpus cites reconciles `satisfied` on that scenario's row, rather than vanishing or
- * landing on suspense.
- *
- * WHAT THE SPELLING BUYS IS NOTHING, AND THE HANDLE NOW CARRIES NO PREFIX AT ALL. The framing this
- * replaces argued that from the handle and the bare tag being DIFFERENT words
- * (`guard:domain-purity` against `domain-purity`), so that a reader matching by name joined
- * nothing. Prefix-free they are the same word and that argument is gone — deliberately, because
- * the pair left behind is a stronger statement of the same thing: the twin fixture runs
- * the same script under the same registry entry from a byte-identical manifest, so any reader
- * answering from the spelling answers the same way for both, and the two verdicts differ. The
- * name-joins-nothing tooth still has its own witnesses, where a handle and its bare tag are
- * genuinely different words: `lint:foo` → `foo` and `lint:nightly` →
- * `nightly`. It is not orphaned here; it is no longer THIS scenario's.
- *
- * THIS ARM IS NOT DISCOVERY'S READER. A handle whose registered tag a scenario carries reaches the
- * axis through the OBLIGATION-side reader, which has never consulted the discovery rule, and is
- * filtered out of the running-check stream so one run is not observed twice. Narrowing discovery
- * reds the uncited twin and leaves this green — measured against the prefix set, and
- * measured again against the thing that replaced it, a `notChecks` entry naming the
- * step.
- *
- * SO WHAT REDS THIS ARM IS THE CITATION AND ONLY THE CITATION, which is the pair's own claim.
- * Withdraw it (`citedScn` reaching no `@SCN`) and the credit carries no row: the derivation arm
- * reds on the missing terms, the attribution arm finds no reconciliation, the suspense arm finds
- * the row it says is absent, and the tally reads 1 run, 1 uncited. Measured — all four.
- *
- * THE CREDIT IS DRIVEN FOR REAL (evidence-manifesto §11A): DERIVED by the obligation-side observer
- * from a CI source and a scripts manifest, never hand-written, and the Ledger is built by
- * `reconcile`, so every row is a shape the pipeline emits. The import of `../parse/` from a domain
- * TEST is the established idiom here (`evidenceReconciliation.test.ts` reads the same layer) and is
- * outside `lint:boundaries`'s `domain-imports-only-domain` rule by construction: the rule's `from`
- * clause carries `pathNot: "\.test\.ts$"`.
- *
- * `domain-purity` is a script NAME — a value, not vocabulary — so the handle is deliberately
- * untouched by the static-check rename.
- */
 describe("[SCN-USG-005] a cited static check under no convention of ours is attributed to its scenario, never an uncited static check", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
@@ -304,21 +170,12 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // THE SEAM'S ANSWER, injected. Composing a registry and a corpus to reach it is
-  // `citationOfScript`'s own subject; what is under test here is what the posting
-  // rule does with an opaque handle under no convention of ours once the answer is an `@SCN`.
   const citedScn = (script: string): ScriptCitation | null =>
     script === "domain-purity" ? { scnId: "SCN-GRD-001" } : null;
 
-  // THE CREDIT — derived by the RUNNING-CHECK observer, carrying the citation the seam resolved
-  //. The obligation-side reader that used to build it has been deleted; this fixture's CI
-  // RUNS `pnpm domain-purity`, so the credit is still derived from the CI source rather than seeded.
-  // Filtered to the one handle because the observer reports every candidate step this pipeline runs,
-  // and what this arm is about is the attribution of THIS one.
   const credits = runningStaticChecks([guardCi], guardPkg, SUITE_RUNNERS, citedScn).filter(
     (o) => o.staticCheck === "domain-purity"
   );
-  // THE CORPUS — one stepless fitness scenario, raising its obligation against the BARE tag.
   const fitness: Scenario[] = [
     {
       scnId: "SCN-GRD-001",
@@ -336,17 +193,10 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
   };
 
   it("derives the citing credit from the CI source and the scripts manifest (the corpus is real, not seeded)", () => {
-    // Anti-vacuity: were the reader to drop the handle or the citation, the stream below would be
-    // empty or uncited and the attribution assertions would pass over nothing. Whole-list
-    // equality, so an emission of the handle TWICE fails here rather than inflating a count.
     expect(credits).toEqual([observation]);
   });
 
   it("posts it to the citing scenario's row, satisfying its bare-tag obligation — the ATTRIBUTED half", () => {
-    // The scenario's actual claim: attributed, and attributed HERE, on the row the citation
-    // names. The report's `### Static checks` section carries counts only, so no rendered surface
-    // can tell this from the credit landing on some OTHER row — which is exactly why this belongs
-    // at the unit layer.
     expect(accountFor(ledger, "SCN-GRD-001")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
@@ -359,8 +209,6 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
   });
 
   it("mints NO suspense row — a cited static check is never uncited, whatever it is called", () => {
-    // The negative half. A reader that reached no `@SCN` for the handle would have nowhere to
-    // place the credit, and this row is where the unplaceable credit then appears.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 

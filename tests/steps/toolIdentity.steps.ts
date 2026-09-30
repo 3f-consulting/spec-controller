@@ -1,41 +1,3 @@
-/**
- * Step definitions for the tool-identity scenario in features/report.feature — WHICH spec-controller
- * produced a run, asked where a consumer asks it.
- *
- * WHY THIS ARM INSTALLS FOR REAL, AND WHY NO PROJECTION COULD HAVE CAUGHT THIS. The fault is a fact
- * about a PATH: `import.meta.url` resolves to somewhere under the consumer's own
- * worktree, and `git -C` there walks up to the consumer's `.git` and answers with the consumer's
- * HEAD. A test that hands `resolveToolIdentity` a directory it invented is testing the predicate;
- * only a tarball really installed under a real repository is testing the premise the predicate is
- * about. That fault was invisible to 605 tests and thirteen gates for eleven weeks precisely
- * because every reading of it was a projection agreeing with itself.
- *
- * THREE ROOMS, AND THE THIRD IS THE ONE THAT KEEPS THE FIX HONEST. A guard answering `null`
- * everywhere would satisfy the first two and be exactly the symmetric failure the ticket names —
- * one wrong SHA traded for another, with nothing on the report to say which. So the third room is a
- * consumer reaching the tool through a `node_modules` SYMLINK to a checkout of itself, as `npm
- * link` really leaves it, and it must still report that checkout's commit. Node resolves module
- * symlinks, so the directory the tool sees is the checkout's own and carries no `node_modules`
- * segment; this arm is where that is measured rather than reasoned about.
- *
- * THE PACK-AND-INSTALL APPARATUS IS THIS ARM'S OWN, AND THAT IS A CHANGE OF OWNER RATHER THAN A
- * SECOND COPY. It was borrowed from the clean-room recipe, on the argument that a second
- * spelling of a tarball name or an install argv would agree with the one reading by diligence and
- * then drift. That argument was exactly right while there WAS another reading; the release now
- * smokes its tarball in shell and the recipe has left the tree, so there is one spelling of each and
- * it lives with its only consumer. A plan naming a tarball that is not on disk still fails as "no
- * such file", which reads exactly like a pack that never ran.
- *
- * WHAT IT ASKS IS ITS OWN, AND DELIBERATELY NOT `balance --help`. That ask resolves the whole module
- * graph and renders no provenance, which is what a smoke test wants and not what this is. This
- * scenario's whole subject is a rendered line, so it asks for a reconcile over a corpus each room
- * plants.
- *
- * EVERYTHING IT WRITES IS A `mkdtemp` OUTSIDE ANY SOURCE TREE, and every room is asserted to stand
- * outside this repository — a directory inside it resolves through this tree's own `node_modules`
- * and its workspace links whatever the tarball says.
- */
-
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -54,53 +16,31 @@ import { constants, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** How a spawned command ended, in the two fields `spawnSync` reports it in. */
 interface FinishedCommand {
-  /** The code it exited with, or null where it never exited under its own power. */
   readonly status: number | null;
-  /** The signal that killed it, or null where nothing did. */
   readonly signal: NodeJS.Signals | null;
 }
 
-/** What a signalled death is worth as an exit code, before the signal's own number. */
 const SIGNAL_EXIT_CODE_BASE = 128;
 
-/**
- * The code a spawned command's ending is worth, the way a shell would report it. It lived in
- * `tests/checks/measurementArtefact.ts`, the remnant of the measured producers, and moved here, to its
- * one caller, when that file left with the measured route.
- */
 function exitCodeOf(command: FinishedCommand): number {
   if (command.status !== null) return command.status;
-  // A command killed by a signal never exited and has no code of its own, so the shell's
-  // arithmetic answers for it — 128 + n, the spelling a CI log's reader already knows.
   if (command.signal !== null) return SIGNAL_EXIT_CODE_BASE + constants.signals[command.signal];
-  // Neither: it could not be started at all. The one reading that must be unreachable here is the
-  // one that greens the build.
   return 1;
 }
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** The two packages this release packs, as directories under the workspace. */
 const PACKAGE_DIRS = ["packages/core", "packages/spec-controller"] as const;
 
-/**
- * What the installed command is asked. A reconcile, because the line under test is rendered by one
- * — and over a corpus each room plants, because `--features` naming a directory that is not there
- * is a hard error at the CLI edge and would red this scenario in the vocabulary of a
- * mistyped flag.
- */
 const ASK = ["balance", "--features", "features"] as const;
 
-/** The two provenance lines each room is read for, and the answer an installed tool must give. */
 const TOOL_SHA_LINE = "- Tool SHA: ";
 const TOOL_VERSION_LINE = "- Tool version: ";
 const NO_CHECKOUT = "unknown (not a git checkout)";
 
 const planted: string[] = [];
 
-/** A temporary directory this arm owns, removed when the scenario ends. */
 function scratch(purpose: string): string {
   const dir = realpathSync(mkdtempSync(path.join(tmpdir(), `spec-controller-rpt029-${purpose}-`)));
   planted.push(dir);
@@ -111,16 +51,13 @@ After(function () {
   for (const dir of planted.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** A finished command, keeping both streams — the rendered report arrives on one of them. */
 type Ran = FinishedCommand & { stdout: string; stderr: string };
 
-/** Run a command to completion. */
 function finish(command: string, args: readonly string[], cwd: string): Ran {
   const done = spawnSync(command, [...args], { cwd, encoding: "utf8" });
   return { status: done.status, signal: done.signal, stdout: done.stdout ?? "", stderr: done.stderr ?? "" };
 }
 
-/** A git read that fails loudly — a fixture whose premise did not take is not a scenario result. */
 function git(args: readonly string[]): string {
   const done = finish("git", args, repoRoot);
   assert.equal(
@@ -131,7 +68,6 @@ function git(args: readonly string[]): string {
   return done.stdout.trim();
 }
 
-/** Make `dir` a git repository with one commit of its own, and answer that commit. */
 function repositoryAt(dir: string, subject: string): string {
   const inDir = (...args: string[]): string =>
     git(["-C", dir, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args]);
@@ -141,13 +77,6 @@ function repositoryAt(dir: string, subject: string): string {
   return inDir("rev-parse", "HEAD");
 }
 
-/**
- * A directory a consumer could be: its own manifest, and a corpus for the reconcile to read.
- *
- * THE "OUTSIDE THIS REPOSITORY" IS ASSERTED RATHER THAN INTENDED. The whole claim of this scenario
- * is about what the tool resolves where no checkout of this repository can help it, and a room that
- * had quietly acquired this tree as an ancestor would pass while proving the opposite.
- */
 function consumerRoom(purpose: string): string {
   const dir = scratch(purpose);
   assert.ok(!dir.startsWith(repoRoot), `a consumer room must stand outside this repository, and ${dir} does not`);
@@ -175,30 +104,18 @@ function consumerRoom(purpose: string): string {
   return dir;
 }
 
-/** A package this arm packs — the fields that decide what it becomes and what it installs. */
 interface PackedPackage {
-  /** The manifest name, scoped or not. */
   readonly name: string;
-  /** The manifest version, verbatim — a prerelease suffix travels into the tarball's name. */
   readonly version: string;
-  /** The command this package installs, where it installs one. */
   readonly bin?: string;
 }
 
-/** One command this arm runs, and the directory it is run in. */
 interface RoomCommand {
   readonly command: string;
   readonly args: readonly string[];
   readonly cwd: string;
 }
 
-/**
- * The package a directory holds, as this arm would pack it.
- *
- * THE FIRST `bin` ENTRY, AND ONLY WHERE THERE IS ONE. A package installing no command is ordinary —
- * the engine is one — and which of the packed packages installs the command the rooms start is the
- * caller's to find and to refuse, one assertion below.
- */
 function packedPackageAt(packageDir: string): PackedPackage {
   const manifest = JSON.parse(readFileSync(path.join(packageDir, "package.json"), "utf8")) as {
     name: string;
@@ -209,38 +126,18 @@ function packedPackageAt(packageDir: string): PackedPackage {
   return { name: manifest.name, version: manifest.version, ...(bin === undefined ? {} : { bin }) };
 }
 
-/**
- * The tarball a packed package becomes, spelled the way npm spells it.
- *
- * The leading sigil goes and the scope's slash flattens to a dash, which is the one thing here that
- * cannot come out right by accident: a scoped and an unscoped package sit side by side in this
- * release and only one of them keeps its own name.
- */
 function packedTarballName(packed: PackedPackage): string {
   const unscoped = packed.name.startsWith("@") ? packed.name.slice(1) : packed.name;
   return `${unscoped.split("/").join("-")}-${packed.version}.tgz`;
 }
 
-/**
- * The installer is `npm` AND THAT IS NOT AN OVERSIGHT IN A pnpm WORKSPACE. A consumer installs with
- * whatever they have, and npm is the one that hoists — which is what lets the core tarball at the
- * top of the tree satisfy the CLI's concrete dependency on it, so each room resolves the core this
- * arm just packed rather than whatever the registry is currently serving under that version.
- * `--prefer-offline` keeps a warm cache out of the network's way; the three quiet flags keep a
- * registry audit and a funding banner out of a step whose subject is neither.
- */
 const INSTALL_ARGV = ["install", "--prefer-offline", "--no-audit", "--no-fund", "--loglevel=error"] as const;
 
-/** What one room takes: the tarballs installed into it, and the installed command started there. */
 interface RoomPlan {
   readonly install: RoomCommand;
   readonly run: RoomCommand;
 }
 
-/**
- * Both commands for one room, derived together so nothing re-derives half of them — the install
- * places the command at a path only the tarball names decide, and the run starts it there.
- */
 function roomPlan(
   packages: readonly PackedPackage[],
   packDir: string,
@@ -254,7 +151,6 @@ function roomPlan(
   };
 }
 
-/** Pack one package into a destination, failing loudly rather than leaving an absent tarball. */
 function pack(packageDir: string, packDir: string): void {
   const packed = finish("pnpm", ["pack", "--pack-destination", packDir], packageDir);
   assert.equal(
@@ -264,15 +160,12 @@ function pack(packageDir: string, packDir: string): void {
   );
 }
 
-/** One room, arranged and ready to be run: what starts the tool there, and whose commit it sits on. */
 interface Room {
   readonly where: string;
   readonly start: RoomCommand;
-  /** The HEAD of the repository the room itself is, or null where it is not one. */
   readonly ownHead: string | null;
 }
 
-/** What one room reported once the tool had run in it. */
 interface Provenance {
   readonly toolSha: string;
   readonly toolVersion: string;
@@ -282,9 +175,7 @@ interface Arrangement {
   readonly insideARepository: Room;
   readonly outsideEveryRepository: Room;
   readonly throughASymlink: Room;
-  /** The commit of the checkout the third room reaches through its symlink. */
   readonly toolCheckoutHead: string;
-  /** The version both packed packages carry — what every room must still report. */
   readonly packedVersion: string;
 }
 
@@ -304,11 +195,7 @@ function copyInstall(installedModules: string, into: string): void {
 
 function linkedRoom(installedModules: string, cliName: string): LinkedRoom {
   const toolCheckout = scratch("tool-checkout");
-  // Lifted OUT of the tree that installed it, so its own directory carries no `node_modules`
-  // segment: that is the whole difference this room exists to measure.
   cpSync(path.join(installedModules, cliName), toolCheckout, { recursive: true, verbatimSymlinks: true });
-  // COMMITTED BEFORE ITS DEPENDENCIES ARRIVE, which is both faster and what a real checkout looks
-  // like: the tool's own files are tracked and its node_modules is not.
   const toolCheckoutHead = repositoryAt(toolCheckout, "the tool's own commit");
   copyInstall(installedModules, toolCheckout);
 
@@ -328,9 +215,6 @@ function linkedRoom(installedModules: string, cliName: string): LinkedRoom {
 Given(
   "this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool",
   function () {
-    // NO BUILD HERE: `builtCli.ts`'s freshness guard already refuses a run whose `dist` is absent or
-    // older than `src`, by name, for every scenario — and a second step building the same
-    // `repoRoot` under `parallel` is the one arrangement no scenario sharing it wanted.
     const packDir = scratch("pack");
     const packages: PackedPackage[] = PACKAGE_DIRS.map((dir) => {
       const packageDir = path.join(repoRoot, dir);
@@ -347,9 +231,6 @@ Given(
     assert.equal(exitCodeOf(install), 0, `the packed tarballs must install into ${gitRoom}. It said:\n${install.stderr}`);
     const installedModules = path.join(gitRoom, "node_modules");
 
-    // The other two rooms are copies of that one install, not installs of their own: rooms 1 and 2
-    // then differ in exactly one thing, whether the directory is a git repository, and three
-    // installs would cost the behavioural suite's time budget.
     const plainRoom = consumerRoom("no-repo");
     assert.ok(
       !existsSync(path.join(plainRoom, ".git")),
@@ -368,9 +249,6 @@ Given(
       },
       throughASymlink: {
         where: "the room reaching a checkout of the tool through a symlink",
-        // NOT the recipe's `.bin` shim: nothing installed this tool into this room, which is the
-        // whole arrangement. The entry is reached THROUGH the symlink deliberately — Node resolves
-        // it, and that resolution is the fact under test.
         start: { command: process.execPath, args: [path.join(linked, "dist", "cli.js"), ...ASK], cwd: linkingConsumer },
         ownHead: linkingConsumerHead,
       },
@@ -383,9 +261,6 @@ Given(
 When("each one runs a reconcile and the provenance it renders is read", function () {
   const read = (room: Room): Provenance => {
     const ran = finish(room.start.command, room.start.args, room.start.cwd);
-    // THE REPORT IS READ, NOT THE EXIT CODE. A reconcile over a corpus with no evidence is
-    // legitimately out-of-balance and exits non-zero; what this scenario is about is a line in what
-    // it printed. So the proof that the run happened at all is that the block is there.
     assert.ok(
       ran.stdout.includes("## Run provenance"),
       `the tool must render a report in ${room.where}. It said:\n${ran.stdout}\n${ran.stderr}`,
@@ -400,7 +275,6 @@ When("each one runs a reconcile and the provenance it renders is read", function
   };
 });
 
-/** One `- <fact>: ` line off a rendered markdown report, or a refusal naming the room it was read in. */
 function factOf(report: string, prefix: string, room: Room): string {
   const line = report.split("\n").find((candidate) => candidate.startsWith(prefix));
   assert.ok(
@@ -416,9 +290,6 @@ Then("the one installed inside a git repository reports no tool SHA, and does no
     NO_CHECKOUT,
     "an installed tool has no checkout of its own, whatever repository it is sitting inside",
   );
-  // THE STRONGER READING, AND NOT A RESTATEMENT OF THE LINE ABOVE. A guard answering with some OTHER
-  // wrong SHA would tell a reader nothing true while looking exactly like a genuine tool identity,
-  // and this is the assertion that refuses it.
   assert.notEqual(
     reported.insideARepository.toolSha,
     arranged.insideARepository.ownHead,

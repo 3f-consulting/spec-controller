@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { runBalance } from "./cli.js";
 import { cliRegistry } from "../cli-registry.js";
 
-/** Run `balance` in-process at a pinned instant; return what it printed and the status it left. */
 function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
   const savedExitCode = process.exitCode;
   process.exitCode = 0;
@@ -31,7 +30,6 @@ function runPinned(argv: readonly string[]): { stdout: string; exitCode: number 
 const scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
-/** A live run saved as markdown and JSON; returns the paths and the status the live run left. */
 function saveLive(name: string, argv: readonly string[]): { json: string; md: string; exitCode: number } {
   const json = join(scratch, `${name}.json`);
   const md = join(scratch, `${name}.md`);
@@ -53,7 +51,6 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved report byte-identi
   });
 });
 
-/** A fixture's own inputs, named from the tree root; `--ci` is pinned so no default reaches this tree's CI. */
 function fixtureArgv(fixture: string): string[] {
   const dir = `tests/fixtures/${fixture}`;
   const argv = ["--features", `${dir}/features`, "--ci", dir];
@@ -63,7 +60,6 @@ function fixtureArgv(fixture: string): string[] {
   return argv;
 }
 
-/** The `(exit N)` that ends the first non-empty line under the verdict heading. */
 function headlineExit(stdout: string): number | undefined {
   const after = stdout.split("### Run verdict")[1] ?? "";
   const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
@@ -95,7 +91,6 @@ describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its
 describe("[SCN-CLI-070] a re-render is strict when the saved run was strict or the re-render is given --strict", () => {
   const PENDING_ONLY = fixtureArgv("pending-only");
 
-  /** The saved report less its strictness record, as a report saved before it was recorded. */
   function unrecorded(path: string): string {
     const report = JSON.parse(readFileSync(path, "utf8")) as { runProvenance: Record<string, unknown> };
     delete report.runProvenance["strict"];
@@ -143,7 +138,6 @@ describe("[SCN-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and nev
 });
 
 describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-render does not read exits 2 naming the flag, and nothing is rendered", () => {
-  /** Run `balance` in-process; return the status it left, stdout and stderr. */
   function runRefusable(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
@@ -162,7 +156,6 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
     }
   }
 
-  // Derived from the registry, so a flag added to balance later is held here without an edit.
   const READ_BY_A_RE_RENDER = new Set(["--render-from-json", "--strict", "--exit-zero", "--help"]);
   const balance = cliRegistry.commands.find((command) => command.name === "balance");
   const refused = (balance?.flags ?? []).filter((flag) => !READ_BY_A_RE_RENDER.has(flag.name));

@@ -32,7 +32,6 @@ function baseManifest(): Record<string, unknown> {
   return JSON.parse(readFileSync(join(FIXTURE, "package.json"), "utf8")) as Record<string, unknown>;
 }
 
-/** `specController.notChecks[1]` → `["specController", "notChecks", 1]`. */
 function pathOf(entry: string): (string | number)[] {
   return entry.split(".").flatMap((part) => {
     const indexed = /^(.+)\[(\d+)\]$/.exec(part);
@@ -64,7 +63,6 @@ function withoutEntry(entry: string): Record<string, unknown> {
   return root;
 }
 
-/** The built CLI over the fixture's corpus and pipeline, reading `pkg` as the target's manifest. */
 export function renderWith(pkg: Record<string, unknown>, into: string, extra: readonly string[] = []): Rendered {
   mkdirSync(into, { recursive: true });
   const manifestPath = join(into, "package.json");
@@ -93,7 +91,6 @@ export function renderWith(pkg: Record<string, unknown>, into: string, extra: re
   return { status: result.status, stderr: result.stderr, md };
 }
 
-/** The lines under `## Configuration not read`, up to the next section; empty when it is absent. */
 export function configurationLines(md: string): string[] {
   const lines = md.split("\n");
   const start = lines.indexOf(SECTION);
@@ -102,7 +99,6 @@ export function configurationLines(md: string): string[] {
   return lines.slice(start + 1, end === -1 ? undefined : end).filter((line) => line.startsWith("- "));
 }
 
-/** The report with the section removed, and with the two lines that differ between any two runs. */
 function comparable(md: string): string {
   const lines = md.split("\n");
   const start = lines.indexOf(SECTION);
@@ -178,7 +174,6 @@ Then("the re-rendered report names the same specController entries as the live r
   assert.deepEqual(configurationLines(rerendered), live, `the re-render named something else:\n${rerendered}`);
 });
 
-/** The words the report uses for any key the block does not read, with only the key's name in it. */
 const unknownKeyLine = (key: string): string =>
   `- \`specController.${key}\` is not a key the specController block reads, so this run read nothing from it.`;
 

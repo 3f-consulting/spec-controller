@@ -40,7 +40,7 @@ node --version   # must be v22.x or higher
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved: `@SCN-ALC-001 @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-ALC-001`. Each piece of evidence then names the scenario it answers, **in the one form its runner's report carries**:
+A scenario's tag line says what it needs proved: `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. Each piece of evidence then names the scenario it answers, **in the one form its runner's report carries**:
 
 | the scenario asks for | the evidence | how it names the scenario |
 |---|---|---|
@@ -49,18 +49,18 @@ A scenario's tag line says what it needs proved: `@SCN-ALC-001 @unit @e2e` asks 
 | `@fitness` | a CI step | the step's `id:` is the code (see *Declaring a fitness check*, below) |
 
 ```ts
-describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
   it("offers the next code", () => { /* … */ });
 });
 ```
 
 ```yaml
       - name: Test
-        id: SCN-FIT-012
+        id: SCN-<FFF>-<NNN>
         run: pnpm test
 ```
 
-**Only these three forms are read.** `SCN-ALC-001` or `@SCN-ALC-001` in a test title without the square brackets, a code in a comment — including a `// @SCN-…` line in a step-definition file — or a code anywhere else names nothing. A test that names nothing still runs and is still reported: it lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. When a `@unit` scenario reads `missing` while its test passes, check the brackets first.
+**Only these three forms are read.** `SCN-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>` in a test title without the square brackets, a code in a comment — including a `// @SCN-…` line in a step-definition file — or a code anywhere else names nothing. A test that names nothing still runs and is still reported: it lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. When a `@unit` scenario reads `missing` while its test passes, check the brackets first.
 
 ---
 
@@ -76,7 +76,7 @@ and no step to write.
 CI already runs is the evidence, and nothing here runs the steps:
 
 ```gherkin
-  @fitness @SCN-FIT-001
+  @fitness @SCN-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
     Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
@@ -91,7 +91,7 @@ second artefact — there is no manifest list:
 
 ```yaml
       - name: Complexity
-        id: SCN-FIT-001
+        id: SCN-<FFF>-<NNN>
         if: always()
         run: eslint
 ```
@@ -109,8 +109,8 @@ out of balance, exactly as a `@unit` scenario with no test does; a step stating 
 scenario carries posts to a **phantom** row, and a step stating none posts to **suspense**. All
 three are faults a run says out loud.
 
-**`specController.fitnessChecks` is not read.** Until `3F-3606` (operator ruling 2026-09-20: no
-backward compatibility) a run over a tree carrying the key printed one line under `### Static checks`
+**`specController.fitnessChecks` is not read.** Until an operator ruling of 2026-09-20 (no
+backward compatibility), a run over a tree carrying the key printed one line under `### Static checks`
 naming it as retired. That account is gone: the key is now treated exactly as any other key this tool
 does not read, named under `## Configuration not read` in the same words as a misspelling, with
 nothing said about what it once did. The two artefacts above are the whole of what you author.
@@ -138,8 +138,7 @@ The worked before/after, the migration checklist, and the traps:
 
 **The zero-annotation state is no longer Node-shaped.** It used to find the checks it could by
 matching `package.json` script names against observed prefixes, so a pipeline with a bare `run: ruff`
-and no `package.json` script derived nothing. That prefix set is gone, retired on 2026-09-12 by
-[3F-3343](3F-3343), and **the replacement is not a longer list
+and no `package.json` script derived nothing. That prefix set is gone, retired on 2026-09-12, and **the replacement is not a longer list
 of names**: you name the commands that run your behavioural suites — a closed set of four, one per
 tier — and **every other step of the workflows `--ci` names is a candidate fitness check**, whatever
 it invokes and whether it is a `run:` step or a `uses:` action.
@@ -383,7 +382,7 @@ The outcome you are watching for is the **watermelon**: a static check that is g
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
-| `foreign-scn-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-ONE-002` in the file headed `@TWO` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
+| `foreign-scn-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
 | `no-feature-code` | a feature file carries no header code while its scenarios carry `@SCN` codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
 
@@ -401,10 +400,10 @@ The point of `spec-controller` is continuous reconciliation, so `balance` belong
 
 ```yaml
 - run: eslint
-  id: SCN-FIT-001
+  id: SCN-<FFF>-<NNN>
   if: always()
 - run: pnpm typecheck
-  id: SCN-FIT-011
+  id: SCN-<FFF>-<MMM>
   if: always()
 - if: always()
   run: echo '${{ toJSON(steps) }}' > ci-steps.json
@@ -462,8 +461,8 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 Ask the tool for the next scenario code instead of inventing one:
 
 ```bash
-spec-controller allocate PAY
-# SCN-PAY-013
+spec-controller allocate <FFF>
+# SCN-<FFF>-<NNN>
 ```
 
 The code is one past the highest the repository has **ever** carried for that feature part, so a
@@ -479,7 +478,7 @@ grows past them (`999` is followed by `1000`).
   no feature files. Its first code is `001`, or one past any number the repository already carries
   for the part. Given for a part a header already carries, it answers as usual and says so on stderr.
 - **stdout** carries the code and nothing else, so a script or an agent can consume it.
-- **stderr** says what the answer rests on: `highest seen: SCN-PAY-012, features/pay.feature:40`, with
+- **stderr** says what the answer rests on: `highest seen: SCN-<FFF>-<NNN>, features/<file>.feature:40`, with
   ` in <commit>` when only history carries it; `highest seen: none` for a first code; and, when
   history is short, `history: not a git repository — none read` or `history: shallow clone — history
   before <commit> unread`, each followed by what that risks.

@@ -1,9 +1,3 @@
-/**
- * Step definitions for the by-feature cut's scenarios carrying no @SCN code: a corpus is written to a
- * scratch directory, the built binary reconciles it there and saves its JSON, and the same binary
- * renders that JSON again. Running from the scratch directory keeps every default input off this tree.
- */
-
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -29,7 +23,6 @@ function balance(args: string[]): string {
   return result.stdout;
 }
 
-/** The by-feature table's data rows, each split into its cells. */
 function byFeatureRows(md: string): string[][] {
   const at = md.indexOf("### Out-of-balance by feature");
   assert.ok(at >= 0, `expected an out-of-balance-by-feature cut; got:\n${md}`);

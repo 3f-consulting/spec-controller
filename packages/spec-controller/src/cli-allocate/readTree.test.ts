@@ -19,7 +19,6 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
   });
 });
 
-/** Git run over a fixture, blind to the machine's own configuration. */
 function git(repo: string, args: readonly string[]): void {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
     cwd: repo,
@@ -29,7 +28,6 @@ function git(repo: string, args: readonly string[]): void {
   if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
 }
 
-/** A repository whose committed notes cite a code of part ONE, and whose untracked draft cites a higher one. */
 function templateRepository(): string {
   const repo = mkdtempSync(join(tmpdir(), "allocate-tree-"));
   git(repo, ["init", "-q", "-b", "main"]);
@@ -42,7 +40,6 @@ function templateRepository(): string {
   return repo;
 }
 
-/** The repository each test reads: made once, copied per test so git runs once for the file. */
 let template = "";
 
 beforeAll(() => {
@@ -55,7 +52,6 @@ function repositoryWithDraft(): string {
   return repo;
 }
 
-/** Permissions taken away by a test, given back after it. */
 const taken: Array<() => void> = [];
 
 function withhold(path: string, mode: number): void {
@@ -67,7 +63,6 @@ afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
-/** What `read` throws, or a failure when it reads without throwing. */
 function thrownBy(read: () => unknown): unknown {
   try {
     read();

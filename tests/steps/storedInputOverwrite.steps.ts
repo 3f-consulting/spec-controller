@@ -15,7 +15,6 @@ const FIXTURE = join(process.cwd(), "tests", "fixtures", "balanced");
 const WORKFLOW = "name: ci\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pnpm test\n";
 const MANIFEST = `${JSON.stringify({ name: "stored-input-target", private: true, scripts: { test: "vitest run" }, specController: { runners: { unit: "vitest" } } })}\n`;
 
-/** The flag each row's input is read through, and what a file of that kind holds. */
 const INPUT: Readonly<Record<string, { readonly flag: string; readonly content: (target: string) => string }>> = {
   "cucumber report": { flag: "--cucumber", content: () => "[]\n" },
   "unit test report": { flag: "--vitest", content: (target) => readFileSync(join(target, "vitest.json"), "utf8") },
@@ -47,7 +46,6 @@ function specController(argv: readonly string[]): Run {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-/** Every entry under `dir`: a file by its bytes, a link by where it points. */
 function entriesUnder(dir: string): Map<string, string> {
   const entries = new Map<string, string>();
   for (const entry of readdirSync(dir, { recursive: true })) {

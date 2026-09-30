@@ -14,13 +14,11 @@ const ctx: RunContext = {
 
 const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 
-/** The ledger and census a corpus of untagged scenarios produces: each is a `feature : scenario` row. */
 function uncodedCorpus(untagged: UntaggedScenario[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
   const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${u.scenario}`));
   return { reconciliation: reconciliationOf(ledger), census: evidenceObligations(0, 0, untagged) };
 }
 
-/** The by-feature table's data rows, each split into its cells. */
 function byFeatureRows(md: string): string[][] {
   const section = md.slice(md.indexOf("### Out-of-balance by feature"));
   const end = section.indexOf("\n#", 1);

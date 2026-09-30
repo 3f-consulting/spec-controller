@@ -1,13 +1,3 @@
-/**
- * The host's @unit arm of @SCN-CLI-064 — a host modifier given twice is refused before any command or
- * stored run starts, never read as its last value (3F-3672). The balance arm is in
- * cli-args.argvShape.test.ts; the @e2e arm in tests/steps/cliBalance.steps.ts proves both through the
- * real binary, and that no run is stored.
- *
- * The modifiers are read from the registry's global scope, never listed, and the wording is never
- * pinned (features/message-catalogue.feature).
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";

@@ -1,10 +1,3 @@
-/**
- * @SCN-STG-020 (3F-3635) — a misfiled account reconciles exactly as it would if correctly filed.
- * The scenario code errors are a whole-run fact about the corpus; they post nothing to any account.
- * Each misfiled corpus runs through the real composition beside its correctly filed twin, which
- * carries the same codes and the same credits.
- */
-
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
@@ -64,8 +57,6 @@ describe("[SCN-STG-020] a misfiled account reconciles exactly as it would if cor
       const right = reconcileCorpus(twin);
       expect(wrong.scenarioCodeErrors?.map((e) => e.kind)).toEqual([fault]);
       expect(right.scenarioCodeErrors).toEqual([]);
-      // Keyed by the code, as the ledger is: a twin files the same accounts in a different file
-      // order, and the order rows are listed in follows the files, not the accounts.
       expect(byCode(wrong)).toEqual(byCode(right));
       expect(wrong.summary).toEqual(right.summary);
     });

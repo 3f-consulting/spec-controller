@@ -86,7 +86,7 @@ whole of what you author.
 The scenario is **written beside the pipeline rather than derived from it**:
 
 ```gherkin
-  @fitness @SCN-XMPL-001
+  @fitness @SCN-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
     Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
@@ -135,7 +135,7 @@ A check that is already a pipeline step needs nothing done to the command:
 
 ```yaml
       - name: Import boundaries
-        id: SCN-XMPL-002
+        id: SCN-<FFF>-<NNN>
         if: always()
         run: pnpm lint:boundaries
 ```
@@ -295,7 +295,7 @@ hold the unit suite and the behavioural suite to a limit. The limit is
 
 ```yaml
 - name: Test
-  id: SCN-XMPL-003
+  id: SCN-<FFF>-<NNN>
   run: timeout 75 pnpm test   # plus the reporter flags that write the suite's report
 ```
 
@@ -312,7 +312,7 @@ created inside the last 26 hours, concluded `success`. Nothing on your side name
 
 ```yaml
       - name: Mutation score
-        id: SCN-XMPL-004
+        id: SCN-<FFF>-<NNN>
         if: always()
         run: gh run list --workflow mutation.yml ...
 ```
@@ -429,7 +429,7 @@ somebody moved the step — never that. The field could not name what it claimed
 **Say it in your own `run:` line**, where your CI records an honest success:
 
     - name: PR metadata
-      id: SCN-XMPL-005
+      id: SCN-<FFF>-<NNN>
       if: always()
       run: pnpm check:pr-metadata || [ $? -eq 3 ]
 

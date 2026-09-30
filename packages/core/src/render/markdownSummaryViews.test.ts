@@ -1,14 +1,3 @@
-/**
- * Unit tests for the markdown renderer — the summary views: out-of-balance by feature, the corpus
- * census, excluded occurrences, section order and test volume.
- *
- * SPLIT FROM `markdown.test.ts`, AND FOR A MECHANICAL REASON. That file measured 1341
- * code lines against the 400-line test ceiling then in force (since retired portfolio-wide; the
- * surviving thresholds live in `eslint.config.mjs`), and the complexity gate raises a touched file's standing findings to errors. No assertion
- * moved in the split. The file-local helpers below are copies of that file's own, which is this tree's
- * convention for test fixtures: a helper shared through a module under `src/` would ship in `dist`.
- */
-
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
@@ -18,14 +7,6 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
-/**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture.
- *
- * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
- * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
- * builds from JOURNAL inputs (what production does); these fixtures already hold a Ledger, so they
- * compose the concept around it rather than re-reconciling.
- */
 const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
   ledger,
@@ -43,31 +24,7 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-/**
- * Unit test for the markdown by-feature grouping.
- *
- * Proves the byFeatureSection in isolation: renderMarkdown groups the
- * verdict === "out-of-balance" scenarios under their feature code (the <FFF> parsed
- * from each scnId via the shared featureCodeOf parser in src/spec/featureCodes.ts —
- * reused, not re-derived) into a "## Out-of-balance by feature" section, one bullet
- * per feature in first-appearance (document) order with a per-feature count, the
- * balanced scenarios excluded. When no scenario is out of balance the section is
- * OMITTED entirely (the warningsSection / staticCheckSection precedent). Slotted
- * after staticCheckSection, before warningsSection.
- *
- * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Out-of-balance
- * by feature" / grouping / placement assertion reds (the genuine red→green). Markdown-only
- * — the grouped view is NOT duplicated into JSON (project design §3).
- */
 describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {
-  // Reconciler-built (§11A). Out-of-balance scenarios span two feature codes (LDG ×2, LNT ×1),
-  // interleaved with balanced ones that must NOT appear: SCN-LDG-001 balanced (unit satisfied),
-  // SCN-LDG-003 out-of-balance (unit missing), SCN-LNT-002 out-of-balance (fitness guard-lint
-  // watermelon), SCN-LDG-007 out-of-balance (integration failing), SCN-LNT-009 balanced (fitness
-  // guard-lint satisfied). Each fitness credit answers the @SCN it cites, so one handle carries two
-  // outcomes. Rows follow scenario-input order, so the out-of-balance document order is SCN-LDG-003,
-  // SCN-LNT-002, SCN-LDG-007 and the first-appearance feature order is LDG then LNT. RPT-006 threads
-  // no census, so no row here reaches evidenceCell.
   const spanning: Ledger = reconcile(
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -100,27 +57,18 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     const md = renderMarkdown(__er(spanning), ctx);
 
     expect(md).toContain("### Out-of-balance by feature");
-    // The total line: 3 of the 5 scenarios are out of balance.
-    // The ruled head: scenario rows, not "out-of-balance scenarios" — the old wording
-    // read as 5 out of balance.
     expect(md).toContain("3 of 5 scenario rows out of balance, grouped by feature.");
-    // The table header (FFF prefix only — full names are added separately).
     expect(md).toContain("| Feature | Count | Out-of-balance `@SCN` ids |");
-    // LDG carries two out-of-balance scenarios (SCN-LDG-003, SCN-LDG-007).
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    // LNT carries one (SCN-LNT-002).
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
 
   it("excludes the balanced scenarios (this is the discrepancy view)", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    // Bound the assertion to THIS section (heading to next section heading), so it is
-    // not fooled by the ledger that now follows and lists every scenario.
     const iSection = md.indexOf("### Out-of-balance by feature");
     const rest = md.slice(iSection + 1);
     const nextHeading = rest.search(/\n##/);
     const section = nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
-    // The balanced scenarios never surface in the by-feature grouping.
     expect(section).not.toContain("SCN-LDG-001");
     expect(section).not.toContain("SCN-LNT-009");
   });
@@ -131,7 +79,6 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     const iLnt = md.indexOf("| LNT |");
     expect(iTrb).toBeGreaterThanOrEqual(0);
     expect(iLnt).toBeGreaterThanOrEqual(0);
-    // LDG is first out-of-balance (SCN-LDG-003) so its row leads LNT's.
     expect(iTrb).toBeLessThan(iLnt);
   });
 
@@ -146,8 +93,6 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   });
 
   it("slots the by-feature section after the fitness section and before the ledger (no warnings section)", () => {
-    // A balance carrying static-check evidenceObligations and an out-of-balance scenario — so
-    // both summary-view sections render and their order can be asserted.
     const withAll: Ledger = reconcile(
       [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
       [{ qualityCheck: "fitness", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false }]
@@ -161,26 +106,20 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(iLedger).toBeGreaterThanOrEqual(0);
     expect(iStatic).toBeLessThan(iByFeature);
     expect(iByFeature).toBeLessThan(iLedger);
-    // The warnings section dissolved entirely.
     expect(md).not.toContain("## Warnings");
   });
 
   it("names each feature in full as '<slug> (<FFF>)' when a code→slug map is threaded", () => {
-    // The feature-name map (built from discoverFeatures: featureCode → filename slug).
     const featureNames = new Map([
       ["LDG", "ledger"],
       ["LNT", "fitness-evidence"],
     ]);
     const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
-    // Each Feature cell reads "<full-name> (<FFF>)" — the count + ids columns unchanged.
     expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
   });
 
   it("falls back to the bare FFF for an uncoded id the map doesn't cover", () => {
-    // The map covers LDG but NOT LNT — LNT stands in for an uncoded feature (an
-    // @SCN-LNT-* id whose LNT no file registers). featureCodeOf yields the FFF; the map
-    // misses; the cell renders the bare FFF (the earlier behaviour, preserved).
     const featureNames = new Map([["LDG", "ledger"]]);
     const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
     expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
@@ -188,21 +127,12 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   });
 
   it("renders the bare FFF when no feature-name map is threaded (the 4-arg back-compat path)", () => {
-    // The existing callers (and the JSON path) never thread featureNames; the by-feature
-    // cut stays byte-identical to its earlier form.
     const md = renderMarkdown(__er(spanning), ctx);
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
 });
 
-/**
- * Unit test for the by-feature total line's ungrouped rows.
- *
- * Reconciler-built (§11A): `reconcile` mints the phantom-scenario row for a credit citing an @SCN no
- * scenario names, and the suspense-scenario row for a credit citing none — the shapes a real run
- * produces, never hand-built rows.
- */
 describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
   const proven = { scnId: "SCN-BFP-001", evidenceObligations: [{ qualityCheck: "unit" as const }] };
   const unproven = { scnId: "SCN-BFP-002", evidenceObligations: [{ qualityCheck: "unit" as const }] };
@@ -249,22 +179,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   });
 });
 
-/**
- * Unit test for the markdown corpus census.
- *
- * Proves the census in isolation: EVERY scenario is a ledger row (a zero-obligation
- * scenario is a both-missing row, not a second axis), so the census is recoverable from
- * the ledger scenario-count ALONE. The dissolved census section is guarded POSITIVELY over
- * the whole top-level section set: one returning under ANY name reds as unexpected.
- */
 describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
-  // Reconciler-built (§11A): SCN-A balanced (unit satisfied); SCN-B out-of-balance
-  // (integration missing); SCN-C a genuine zero-obligation scenario cited by no credit →
-  // a both-missing row. All three are ledger rows — there is no second axis a scenario can
-  // land on — so the census total IS the ledger scenario-count, with nothing to sum in.
-  // The section list below is this renderer's FULL top-level emission for this fixture,
-  // transcribed from the render and re-proved by mutation when it moves: plant a standalone
-  // section into markdown.ts and this describe reds.
   const reconciliationFixture: Ledger = reconcile(
     [
       { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -275,8 +190,6 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   );
 
   it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
-    // Over a corpus it judged, as every `balance` run's is, so the scenario code errors
-    // section is among them — here stating the codes clean.
     const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [] }, ctx);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections).toEqual([
@@ -289,12 +202,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
 
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
-    // The ledger summary counts ALL three scenarios (1 balanced, 2 out-of-balance —
-    // SCN-C's both-missing row is one of them), so the census total is on the page directly.
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
-    // The zero-obligation scenario is a ledger row (a both-missing item), not a separate axis;
-    // that there is no second axis at all is the section-list assertion's job, not a second
-    // not-toContain here — the positive list forbids "## Warnings" by not listing it.
     expect(md).toContain("SCN-C");
     expect(md).toContain("⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited");
   });
@@ -312,19 +220,6 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   });
 });
 
-/**
- * Unit test for the markdown excluded-occurrence bullet.
- *
- * Proves the evidenceObligationsSection extension in isolation: when a EvidenceObligations is
- * threaded as the optional third arg, renderMarkdown(__er(balance, false, false), ctx, corpus) appends
- * "- M @SCN ids seen in non-tag context, excluded" to the LEDGER SUMMARY, after the
- * scenario-count bullet (the standalone census section dissolved). When no corpus is
- * threaded the 2-arg call is byte-green (the summary renders without the excluded bullet).
- *
- * Teeth: until the emitter reads the corpus arg, the excluded bullet is absent, so
- * its assertions red (the genuine red→green). The 2-arg omission case is the
- * back-compat guard (the existing byte/JSON guards pass the corpus to nothing).
- */
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
   const simple: Ledger = reconcile(
     [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
@@ -334,8 +229,6 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);
-    // The bullet now rides in the ledger summary (the standalone census section
-    // was dissolved).
     expect(md).toContain("## Scenario Reconciliations");
     expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
   });
@@ -351,32 +244,13 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("omits the excluded bullet when no corpus is threaded (the 2-arg call still renders the ledger summary)", () => {
     const md = renderMarkdown(__er(simple), ctx);
-    // The ledger summary scenario-count still renders.
     expect(md).toContain("- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance.");
-    // But the excluded bullet is absent, and the top-level section set is the renderer's
-    // known three — the dissolved census section has not returned under any name.
     expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
     expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
 });
 
-/**
- * Unit test for the reformatted report layout.
- *
- * Proves the summary-first / ledger-last structure in isolation: renderMarkdown opens
- * with `# Evidence Reconciliation` (not `# Ledger`), keeps `## Run provenance`
- * first, groups the derived cuts under `## Summary views` (run verdict →
- * evidence reconciliation → test volume → static checks → fitness evidence obligations →
- * out-of-balance by feature), and moves the
- * per-scenario `## Scenario Reconciliations` ledger to the END with its summary lines on top,
- * `## Warnings` last. A pure derive over the balance; markdown-only (the JSON surface
- * is unchanged by the reorg). The RPT-004/005/006/007 scenarios are updated in the
- * same change to the new heading levels / total lines / table form / dissolution.
- */
 describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
-  // Reconciler-built (§11A): a balanced scenario (unit satisfied), an out-of-balance one (unit
-  // missing), and one carrying a static-check watermelon — so the full section set renders and the
-  // summary-first / ledger-last ordering can be asserted.
   const reformatted: Ledger = reconcile(
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -391,12 +265,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 
   it("titles the report '# Evidence Reconciliation', not '# Ledger' or '# Spec reconciliation'", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
-    // The H1 opens the report — the report IS the reconciliation. "Ledger" names
-    // only the INPUT in canon; the reconciled OUTPUT is never titled "Ledger".
     expect(md.startsWith("# Evidence Reconciliation")).toBe(true);
-    // Neither prior H1 (the "# Ledger" original, nor the "# Spec reconciliation" interim)
-    // may appear as a line; the per-scenario rows now live under the "## Scenario
-    // Reconciliations" H2 (renamed from "## Ledger").
     const lines = md.split("\n");
     expect(lines).not.toContain("# Ledger");
     expect(lines).not.toContain("# Spec reconciliation");
@@ -414,13 +283,10 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       "### Out-of-balance by feature",
       "## Scenario Reconciliations",
     ].map((h) => md.indexOf(h));
-    // Every section is present...
     for (const i of order) expect(i).toBeGreaterThanOrEqual(0);
-    // ...and in strictly increasing document order.
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1]!).toBeLessThan(order[i]!);
     }
-    // The `## Warnings` section dissolved entirely — the ledger is now LAST.
     expect(md).not.toContain("## Warnings");
   });
 
@@ -431,44 +297,21 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
     expect(iLedger).toBeLessThan(iSummaryLine);
     expect(iSummaryLine).toBeLessThan(iTable);
-    // The ledger is the LAST major view (the warnings axis dissolved).
     expect(iTable).toBeGreaterThan(md.indexOf("### Out-of-balance by feature"));
   });
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
-    // The runtime evidenceObligation renders its bare LEVEL; the static (@fitness) evidenceObligation
-    // renders the tag word "fitness" — both level-less of the kind axis.
     expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ Evidence Observation is missing |");
     expect(md).toContain(
       "| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 Evidence Observation is passing but fabricated |"
     );
-    // The kind axis ("runtime" / "static") is never rendered in the report.
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static 🍉");
   });
 });
 
-/**
- * Unit test for the markdown Test volume cut.
- *
- * Proves the testVolumeSection in isolation: when a RuntimeEvidenceObservationKindCounts is threaded as
- * the 4th arg, renderMarkdown emits a "### Test volume" cut under Summary views — the
- * balancing identity line ("N evidenceObservations = a on scenarios + b on phantom scenarios + c on the suspense scenario", a derived
- * view) then a by-level evidenceObservation table with ALL four levels (e2e/performance zeros
- * shown — a fixed tally like Evidence reconciliation), levels read as lowercase tag words. When
- * no evidenceObservations is threaded the 3-arg call omits the cut (the back-compat guard).
- */
 describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObservations reconciliation", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A). The balance AND the census are
-  // PRODUCED by reconcile() + countRuntimeEvidenceObservationKinds() over ONE corpus, so the census
-  // cannot claim an attribution / phantom / suspense the ledger does not carry — which is exactly
-  // the shape this block used to embody (an all-empty SCN-A row beside a census asserting
-  // attributed 4 / phantom 1 / suspense 3, with NO phantom row anywhere). The corpus folds to the
-  // same kind-counts (raw 5 unit + 3 integration = 8; 4 attributed + 1 phantom + 3 suspense = 8):
-  //   SCN-A: @unit with 4 passing unit credits → attributed [{SCN-A, unit, 4}]
-  //   1 unit credit citing SCN-PHX-001 (no scenario carries it) → phantom 1 (raw unit 5)
-  //   3 integration credits citing NO scenario → suspense 3 (raw integration 3)
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
   ];

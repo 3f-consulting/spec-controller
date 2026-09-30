@@ -1,9 +1,3 @@
-/**
- * The host's @unit arm of @SCN-CLI-065 — a modifier written --flag=value before the command is refused
- * as a form that is not read, naming the spelling that is, never as a flag out of place (3F-3672). The
- * balance arm is in cli-args.argvShape.test.ts; the @e2e arm in tests/steps/cliBalance.steps.ts.
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";

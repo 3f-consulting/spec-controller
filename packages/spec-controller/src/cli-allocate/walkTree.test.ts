@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { walkTree } from "./readTree.js";
 
-/** Permissions taken away by a test, given back after it. */
 const taken: Array<() => void> = [];
 
 function withhold(path: string, mode: number): void {
@@ -16,7 +15,6 @@ afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
-/** What `read` throws, or a failure when it reads without throwing. */
 function thrownBy(read: () => unknown): unknown {
   try {
     read();
@@ -26,7 +24,6 @@ function thrownBy(read: () => unknown): unknown {
   throw new Error("expected the read to be refused, and it read");
 }
 
-/** A tree without git: a document under docs/ citing a code. */
 function tree(): string {
   const root = mkdtempSync(join(tmpdir(), "allocate-walk-"));
   mkdirSync(join(root, "docs"));

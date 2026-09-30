@@ -18,11 +18,9 @@ const TARGET_ARGS = [
   TARGET,
 ];
 
-/** The status the target reconciles to on its own: out of balance. */
 const OUT_OF_BALANCE = 1;
 const USAGE = 2;
 
-/** Each reason the scenarios name, as the operating system spells it. */
 const REASON_CODE: Readonly<Record<string, string>> = {
   "permission was denied": "EACCES",
   "a parent is not a directory": "ENOTDIR",
@@ -31,7 +29,6 @@ const REASON_CODE: Readonly<Record<string, string>> = {
   "the location already exists": "EEXIST",
 };
 
-/** Each store root a run directory cannot be created under, built under a scratch directory. */
 const STORE_ROOT: Readonly<Record<string, (dir: string) => string>> = {
   "a regular file": (dir) => {
     writeFileSync(join(dir, "regular"), "");
@@ -58,7 +55,6 @@ const STORE_ROOT: Readonly<Record<string, (dir: string) => string>> = {
   },
 };
 
-/** Each obstacle a run directory can already hold, built into `<root>/<target>/<run-id>`. */
 const RUN_DIRECTORY_OBSTACLE: Readonly<Record<string, (runDir: string) => void>> = {
   "nothing it may write into": (runDir) => chmodSync(runDir, 0o555),
   "a directory named spec-reconciliation.md": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.md")),
@@ -72,7 +68,6 @@ const RUN_DIRECTORY_OBSTACLE: Readonly<Record<string, (runDir: string) => void>>
 
 const FORMAT_FLAG: Readonly<Record<string, string>> = { json: "json", markdown: "md" };
 
-/** Each unwritable destination the scenarios name, built under a scratch directory. */
 const DESTINATION: Readonly<Record<string, (dir: string) => string>> = {
   "a read-only file": (dir) => {
     const path = join(dir, "read-only.json");
@@ -119,13 +114,11 @@ function specController(args: readonly string[]): Run {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-/** The target's own verdict, read once, so every refusal below is seen to outrank a real 1. */
 function assertTargetOutOfBalance(): void {
   targetStatus ??= specController(["balance", ...TARGET_ARGS]).status;
   assert.equal(targetStatus, OUT_OF_BALANCE, "the target must reconcile out of balance on its own");
 }
 
-/** Gives back write access under `dir`. A link is left alone: chmod would follow it out of the directory, to /dev/stdout among others. */
 function restoreWritable(dir: string): void {
   chmodSync(dir, 0o755);
   for (const entry of readdirSync(dir)) {
@@ -256,7 +249,6 @@ Then(/^the refusal names the run directory's (.+) and says (.+)$/, function (fil
   assert.ok(run.stderr.includes(code), `the refusal does not give ${code}:\n${run.stderr}`);
 });
 
-/** The report file two outputs share, the second path to it, and each destination's bytes before the run. */
 let sharedFile: string;
 let secondPath: string;
 let firstPath: string;
@@ -265,7 +257,6 @@ let throughStdout = false;
 let sharedBefore: string | undefined;
 let namedOutputs: readonly [string, string];
 
-/** Each second path to the report file, built beside it; the first path is the one the operator names first. */
 const SECOND_PATH: Readonly<Record<string, (file: string, dir: string) => { first: string; second: string }>> = {
   "the same path": (file) => ({ first: file, second: file }),
   "the path spelled from the current folder": (file) => ({ first: file, second: `./${relative(process.cwd(), file)}` }),
@@ -318,7 +309,6 @@ When(
   },
 );
 
-/** Runs the CLI with its standard output appended to `file`, as a shell's `>>` would. */
 function specControllerInto(file: string, args: readonly string[]): Run {
   const fd = openSync(file, "a");
   try {
@@ -345,7 +335,6 @@ Then("every destination is left exactly as it was", function () {
   assert.equal(existsSync(thirdPath), false, `${thirdPath} was created by a refused run`);
 });
 
-/** Where standard output goes for a run; undefined while it is a pipe the step reads. */
 let stdoutFile: string | undefined;
 
 Given(/^an out-of-balance target whose standard output is (a pipe|a file)$/, function (connectedTo: string) {
@@ -354,7 +343,6 @@ Given(/^an out-of-balance target whose standard output is (a pipe|a file)$/, fun
   stdoutFile = connectedTo === "a file" ? join(scratch, "stdout.txt") : undefined;
 });
 
-/** The `--format` spec that asks for `fmt` at a destination the scenario names. */
 function specAt(fmt: string, destination: string): string {
   if (destination === "standard output") return fmt;
   if (destination === "a link to /dev/stdout") {
@@ -386,7 +374,6 @@ Then("no report reaches standard output", function () {
   assert.equal(printed, "", `a report reached standard output:\n${printed.slice(0, 400)}`);
 });
 
-/** A target that reconciles in balance on its own, read with no workflows, so its run exits on the balanced code. */
 const BALANCED_ARGS = [
   "--features",
   "tests/fixtures/balanced/features",
@@ -425,7 +412,6 @@ Then("the json report is written into the file the link points to, and the link 
   assert.equal(readlinkSync(linkPath), linkTargetPath, `${linkPath} no longer points at ${linkTargetPath}`);
 });
 
-/** Every file under the store root, with its bytes, as it stood before the stored run. */
 let storeBefore: ReadonlyMap<string, string>;
 
 function filesUnder(root: string): Map<string, string> {

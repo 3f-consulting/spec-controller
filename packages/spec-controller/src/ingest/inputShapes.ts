@@ -1,14 +1,3 @@
-/**
- * The shape each JSON input `balance` reads must have before its reader is handed it: the fields
- * that reader goes on to read, and nothing more. A report is its producer's document, so a field
- * the reader never touches is never checked, and a well-formed empty report is still a report.
- *
- * A document that is not this shape is an input the tool cannot read. Read anyway, it either
- * throws part-way or is read as nothing and reaches a verdict about evidence it discarded, and
- * both of those end on the out-of-balance code.
- */
-
-/** A leaf kind, a list of one shape, a record of named fields, or a map whose entries share one. */
 export type Shape =
   | "string"
   | "number"
@@ -21,7 +10,6 @@ export type Shape =
 type Fields = Extract<Shape, { fields: unknown }>;
 type Entries = Extract<Shape, { entries: unknown }>;
 
-/** What the Vitest JSON reporter writes, as far as the Vitest reader reads it. */
 export const VITEST_REPORT: Shape = {
   fields: {
     testResults: {
@@ -38,7 +26,6 @@ export const VITEST_REPORT: Shape = {
   required: ["testResults"],
 };
 
-/** What the Cucumber JSON formatter writes, as far as the Cucumber reader reads it. */
 export const CUCUMBER_REPORT: Shape = {
   list: {
     fields: {
@@ -56,28 +43,13 @@ export const CUCUMBER_REPORT: Shape = {
   },
 };
 
-/**
- * A CI run's step record, as far as the step-record reader reads it: an object of steps keyed by
- * step id, of which it credits only those keyed by a scenario code, reading each one's `outcome`.
- * The key grammar is the reader's own, so a step it never credits is never checked.
- */
 export const CI_STEP_RECORD: Shape = {
   entries: { fields: { outcome: "string" } },
   keys: /^SCN-[A-Z0-9]{2,5}-\d+$/,
 };
 
-/**
- * A package.json, as far as the run reads it outside the `specController` block: an object whose
- * `scripts` are a map of commands. The `specController` block is left to its own resolvers, which
- * read a value they cannot use as absent rather than refuse the run over it.
- */
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };
 
-/**
- * A reconciliation this tool saved, at its top: the sections every one carries, and the optional
- * ones in their kind. Below the top the renderer is the reader, and a document it cannot render
- * is refused where it renders.
- */
 export const SAVED_RECONCILIATION: Shape = {
   fields: {
     runProvenance: { fields: {} },
@@ -107,10 +79,6 @@ function pathOf(where: string, key: string): string {
   return where === "" ? key : `${where}.${key}`;
 }
 
-/**
- * The first place `value` is not `shape`, said as the path to it and what was found there, or null
- * when the whole value is that shape. `where` is the path so far; the top level has none.
- */
 export function shapeFaultIn(value: unknown, shape: Shape, where = ""): string | null {
   if (shape === "anything") return null;
   const found = kindOf(value);

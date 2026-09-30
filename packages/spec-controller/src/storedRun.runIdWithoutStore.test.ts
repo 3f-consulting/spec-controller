@@ -1,9 +1,3 @@
-/**
- * The @unit arm of the refusal of --run-id given without --store. --run-id names a stored run, so
- * with no store there is no run for it to name. A live run is refused naming it; a re-render takes
- * the re-render's own refusal, which never asks for a --store it would refuse in turn. The wording
- * is not pinned; what is pinned is what each refusal names, and that a run with a store is untouched.
- */
 import { describe, expect, it } from "vitest";
 import { parseHostInvocation } from "./host.js";
 import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";

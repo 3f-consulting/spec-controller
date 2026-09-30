@@ -1,8 +1,3 @@
-/**
- * @unit for @SCN-STG-027 (3F-3636) — a CI step's `id:` is read as a citation by evidence-manifesto
- * §9A's grammar: a feature part of two to five characters, a number of any width. The ids straddle
- * both bounds, so the citations that ARE read show the reader was looking.
- */
 import { describe, it, expect } from "vitest";
 import { ciStepRecordCredits } from "./ciStepRecord.js";
 import { citationOfCitedRow } from "./fitnessCitations.js";

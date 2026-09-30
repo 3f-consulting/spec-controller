@@ -1,25 +1,4 @@
 #!/usr/bin/env node
-/**
- * The `spec-controller` binary — the top-level command host + dispatcher.
- *
- * Usage:
- *   spec-controller [--store <root>] [--run-id <id>] <command> [command-args]
- *
- * Commands: `balance` — the deterministic reconciliation of scenarios against
- * observed evidence, standalone on the public core + app layer (no engine). It also polices the
- * corpus's own scenario codes. `allocate` — a query, not a verdict: the next scenario code
- * for a feature part, which keeps no run and so takes no host modifier. The
- * `analyse` / `migrate` capabilities are a separate, closed offering built on the same core.
- *
- * Storage is a CROSS-CUTTING host modifier, not a command. A leading `--store <root>`
- * turns any command into a STORED run: the host wraps the command via the kept-run
- * scaffold — a named `<root>/<target>/<run-id>/` directory, the command's outputs routed
- * in, and a `run.yaml` manifest — and hands the command its own clean args, unchanged. So
- * `balance` stays emit-only (its default, no-store output is byte-identical); the store
- * opinion lives at the host, injected via `--store` (required — there is no default, a
- * default would write inside the repo). `--run-id` defaults to a timestamp.
- */
-
 import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
@@ -47,7 +26,6 @@ import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { settlingRefusal } from "./outputLocation.js";
 
-/** Dispatch a command to its handler with the given (clean or store-wrapped) argv; true when it wrote its report. */
 function runCommand(command: string, argv: string[]): boolean {
   switch (command) {
     case "balance":

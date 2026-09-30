@@ -8,7 +8,6 @@ import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const FEATURE = "@UIN\nFeature: a target\n\n  @unit @SCN-UIN-001\n  Scenario: it works\n    Given a thing\n";
 
-/** A throwaway target holding one feature, and the input under test beside it. */
 interface Target {
   readonly dir: string;
   readonly args: readonly string[];
@@ -113,7 +112,6 @@ Given("a target whose {} is well formed and holds nothing", function (input: str
   target = reportTarget(flag, file, document, "");
 });
 
-/** Each wrong kind of path, laid down in a fresh target: the arguments that hand it over, and the path. */
 const PATH_KINDS: Record<string, (dir: string) => readonly [readonly string[], string]> = {
   "feature corpus a regular file": (dir) => {
     writeFileSync(join(dir, "corpus.txt"), "not a directory\n");
@@ -136,7 +134,6 @@ Given("a target whose {} path is {}", function (input: string, kind: string) {
   target = { dir, args, named: path, where: args.find((arg) => arg.startsWith("--") && arg !== "--features") ?? "--features" };
 });
 
-/** Each input the run reads, laid down and then made unreadable: the arguments, and the path refused. */
 const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[], string, string]> = {
   "a feature file": (dir) => {
     chmodSync(join(dir, "features", "target.feature"), 0o000);
@@ -174,7 +171,6 @@ Given("a target in which {} is not permitted to be read", function (input: strin
   target = { dir, args, named, where };
 });
 
-/** Each way to break a reconciliation this tool saved, and what the refusal says about it. */
 const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string, unknown>) => unknown, string]> = {
   "a list, not a reconciliation": [() => [], "the top level is a list, not an object"],
   "a reconciliation with no ledger": [(saved) => ({ ...saved, ledger: undefined }), "ledger is missing"],
@@ -185,7 +181,6 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string
   "unreadable below its top": [(saved) => ({ ...saved, ledger: { scenarioReconciliations: [null] } }), "could not be rendered"],
 };
 
-/** A reconciliation the built tool saves over the target, so each row breaks a real one. */
 function savedReconciliation(dir: string): Record<string, unknown> {
   const run = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--features", "features", "--format", "json:good.json"], {
     cwd: dir,
@@ -202,7 +197,6 @@ Given("a saved report that parses but is {}", function (defect: string) {
   target = { dir, args: ["--render-from-json", "saved.json"], named: "saved.json", where };
 });
 
-/** Each input a stored run is handed that it cannot read in shape: the arguments, and the path. */
 const STORED: Record<string, (dir: string) => readonly [readonly string[], string]> = {
   "feature corpus": (dir) => {
     writeFileSync(join(dir, "corpus.txt"), "not a directory\n");
@@ -230,7 +224,6 @@ When("a stored balance run reads that input", function () {
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
 });
 
-/** Every file under a directory, at any depth, relative to it. */
 function filesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())

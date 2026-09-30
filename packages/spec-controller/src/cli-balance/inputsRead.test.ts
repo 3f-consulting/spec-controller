@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inputsReadBy, type InputReader } from "./inputsRead.js";
 
-/** A tree in which every path exists, each corpus holds one feature file, and a path ending in `.yml` is a workflow file, anything else a folder of two. */
 const reader: InputReader = {
   exists: () => true,
   featureFiles: (dir) => [`${dir}/a.feature`],

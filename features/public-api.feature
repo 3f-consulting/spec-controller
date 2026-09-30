@@ -5,7 +5,7 @@ Feature: The public core exposes its reconciliation for reading, not for constru
   entrypoint, and what that entrypoint exports is the contract a downstream
   consumer builds on. NOTHING IN THIS REPOSITORY HOLDS THAT BARREL TO A
   WRITTEN-DOWN LIST ANY MORE. The list, and the arm that reconciled the barrel
-  against it in both directions, left at 3F-3449 with the rest of the packaging
+  against it in both directions, left with the rest of the packaging
   checks this repository wrote for itself; the community's instrument for the
   job is a generated `api-extractor` report, and it is adopted at the 1.0
   boundary, where a stability promise exists again. Until then a symbol quietly

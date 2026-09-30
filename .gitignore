@@ -7,16 +7,9 @@ build/
 
 .claude/*.local.json
 
-# Mutation-testing output. `.stryker-tmp/` is the sandbox Stryker copies the tree
-# into per run; `reports/` holds the HTML/JSON mutation report, which enumerates
-# which domain lines no test kills — the same sensitivity class as a
-# reconciliation report, so it is never tracked either.
 .stryker-tmp/
 reports/
 
-# Unit-suite coverage, which the CRAP step scores. The tool reads it only from
-# `coverage/`, and it enumerates the lines no test runs, as a mutation report does.
 coverage/
 
-# Operator-local working notes — never committed (swept into a slice PR by `git add -A`).
 CLAUDE.local.md

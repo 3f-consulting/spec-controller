@@ -1,35 +1,5 @@
 name: Dependabot auto-merge
 
-# THE PIN PR MERGES ITSELF WHEN `ci` IS GREEN (3F-3529). This asks GitHub to merge the PR once
-# `main`'s required check passes. It does not merge anything itself, and it does not bypass `ci`.
-# `.github/dependabot.yml` limits Dependabot to the one dependency it may move: the self-pin.
-#
-# BUT ONLY A PR THAT MOVES THE PIN (3F-3530). The bot's first pin PR, #311, changed nothing but
-# `pnpm-lock.yaml` — the root pin stayed where it was — and this workflow armed it all the same,
-# because the author was the only thing it read. The step below reads what the PR changes and
-# refuses, before anything is armed, unless all four hold:
-#   - the changed files are exactly the root `package.json` and `pnpm-lock.yaml`;
-#   - the root `devDependencies["spec-controller"]` differs from the merge base's;
-#   - the new pin is an exact version, never a range (`doc/releasing.md`: the pin is never widened);
-#   - nothing else in the root `package.json` changes.
-# The lockfile's other entries are not read. Dependabot's pnpm update re-resolves in-range
-# transitive packages on every pin PR, and the operator accepted that churn only on a PR whose pin
-# really moves (2026-09-19); `ci` still gates it. A refusal fails this job, names the reason, and
-# withdraws any arming an earlier push to the same PR made.
-#
-# THE BASE IS THE MERGE BASE, NOT `pull_request.base.sha`. A `main` that moved after the PR opened
-# would otherwise read as a change to `package.json` the PR never made.
-#
-# NO CHECKOUT. Every read is `gh api` with this job's own token, so no code from the PR runs here,
-# and every value from the event reaches the script through `env:`, never through an expression
-# inside `run:`.
-#
-# THE GATE IS THE PR'S AUTHOR, NOT `github.actor`. `github.actor` is whoever triggered THIS event,
-# which a human re-running the job or pushing to the branch changes. zizmor's `bot-conditions` audit
-# names that as spoofable. `pull_request.user.login` is who opened the PR.
-#
-# `pull_request`, NOT `pull_request_target`. A Dependabot PR comes from this repository, so the
-# plain event already gets a token here, and `permissions:` can raise it for exactly this job.
 on: pull_request
 
 permissions: {}

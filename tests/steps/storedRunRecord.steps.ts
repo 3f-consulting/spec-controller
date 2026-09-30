@@ -34,7 +34,6 @@ function specController(args: readonly string[]): Run {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-/** Every file under `dir`, keyed by its path relative to it, with its bytes; empty when `dir` is absent. */
 function filesUnder(dir: string): Map<string, string> {
   const files = new Map<string, string>();
   if (!existsSync(dir)) return files;

@@ -4,8 +4,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   The static-check axis's UNCITED detection — the mirror of the
   runtime axis's cites-no-scenario evidence observations. The axis was once obligation→observation
   only, reading each check an obligation NAMED, and was structurally blind to the reverse: a check
-  that runs in CI which nothing cites — an unposted credit. That obligation-side reader was deleted
-  at 3F-3410, so the running-check observer below is now the whole of the axis's input.
+  that runs in CI which nothing cites — an unposted credit. That obligation-side reader is deleted,
+  so the running-check observer below is now the whole of the axis's input.
 
   The running-check observer emits every running CI check (the lint:* scripts a CI run: step
   invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
@@ -18,8 +18,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   mirror of RuntimeEvidenceObservationKindCounts. The report surfaces the counts under
   "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows.
 
-  WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION (3F-2495, settled at
-  3F-3343). Membership is a PROPERTY of the check — does it analyse source without executing it
+  WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION. Membership is a PROPERTY of the check — does it analyse source without executing it
   and red the build on a violation — never a property of its name. It used to be DISCOVERED by
   two naming heuristics, the lint:/guard: prefixes and the target's own
   specController.staticChecks, and neither of them ever defined one. The prefixes are retired:
@@ -32,35 +31,31 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   This line used to end "tsc deferred", and that deferral outlived its reason: `tsc --noEmit`
   is static analysis on any reading, spec-controller ran it in CI throughout, and the report
   said 11 checks run over a tree running twelve. A deferral recorded only in a feature preamble
-  is one nobody reads again — the arrangement this repository's own green-check twice wore a scar
-  from, at 3F-2402 and 3F-2444, before the whole of it was deleted at 3F-3475.
-  The scenario @SCN-API-002 now names typecheck, so it is on the books rather than in a
-  sentence. (That line must not START with the @-token: Gherkin reads a leading @ as a tag
-  line and reds with "A tag may not contain whitespace" — which is exactly what it did here.)
+  is one nobody reads again. A public-api scenario now names typecheck, so it is on the books
+  rather than in a sentence.
 
   `pnpm mutation` is still absent, and that is neither an oversight nor an exemption: it is a
   self-measuring threshold check — the pipeline measuring its own test strength — which belongs
-  on an axis this tool has not built yet (3F-2509, the sibling of an adopter's repository's @ci-run-time). Ruling
+  on an axis this tool has not built yet (the sibling of an adopter's repository's @ci-run-time). Ruling
   it "out of scope" is the dodge that feature file was written to reject.
 
-  THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS NO LONGER A ZERO OVER AN EMPTY SET (3F-3168, closed
-  at 3F-3343). It was: the 3F-3139 migration moved every fitness command out of
+  THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS NO LONGER A ZERO OVER AN EMPTY SET. It was: a
+  migration moved every fitness command out of
   .github/workflows/ci.yml and onto a specController.fitnessChecks row, and under the prefix rule
   what was left to discover was almost nothing — so "0 uncited" said the discoverable set was
   EMPTY rather than that a populated set had been checked and come back clean. Those two readings
   are the fault this product exists to separate, and here they had collapsed onto one number: a
-  capability exercised by nothing, reporting green. 3F-3074 recorded exactly this shape as a fault
-  when a consumer's tree produced it.
+  capability exercised by nothing, reporting green.
 
   IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
   ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
   runs is discovered, each carrying the code of the scenario it answers on its own step, and nought
   uncited. (The count that stood here is gone for the reason the paragraph below gives.)
-  The residual that stood here is gone: specController.staticChecks stopped settling anything at
-  3F-3161, and 3F-3606 removed the account that named it on the report as a retired key. A
+  The residual that stood here is gone: specController.staticChecks settles nothing,
+  and no account names it on the report as a retired key. A
   manifest carrying the key now settles nothing, and the report names it as it names any key the
   specController block does not read, with no word of what it once did. That removal engaged no
-  major version: the compatibility commitment naming one was withdrawn (3F-3376), made to nobody,
+  major version: the compatibility commitment naming one was withdrawn, made to nobody,
   and no consumer was ever measured routing credits through it.
 
   What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
@@ -68,8 +63,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   and only the uncited count is answered by discovery. Reading both as products of the same mechanism
   is the misreading this paragraph forecloses.
 
-  THE FIGURES THEMSELVES ARE NO LONGER WRITTEN HERE, AND WHILE THEY WERE THEY WENT STALE UNNOTICED
-  (3F-3440). This paragraph read "11 static check(s) run — eleven of the fourteen rows, the other
+  THE FIGURES THEMSELVES ARE NO LONGER WRITTEN HERE, AND WHILE THEY WERE THEY WENT STALE UNNOTICED.
+  This paragraph read "11 static check(s) run — eleven of the fourteen rows, the other
   three being measured and so not static checks at all". The manifest carried FOUR measured rows and
   not three, and had before that ticket opened; adding rows to it then made the sentence wrong a
   second way. Nothing reconciles a number in a preamble against the tree it describes, which is
@@ -103,7 +98,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     registered check no stepless fitness scenario carries, are different faults with different
     cures — register the handle, or write the check's fitness scenario — but at this seam they
     are the same non-answer, and the suspense row is where an uncited check is separated from a
-    miscited one (@SCN-LNT-009) rather than guessed at from a lookup miss. The target below holds
+    miscited one rather than guessed at from a lookup miss. The target below holds
     the SECOND, because it is the one only the new rule can produce: both its checks are
     registered, so the only difference between the cited one and the uncited one is whether a
     stepless fitness scenario carries the tag.
@@ -128,7 +123,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     the scenario's runnable handle back at it, and being attributed was a lookup hit on one
     string. Under the one posting rule the run resolves lint:foo through the target's registry to
     the bare check foo, and through its corpus to the scenario carrying that tag; the row it lands
-    on is SCN-TGT-001 and the check it lands under is foo — the BARE tag, not the handle that ran.
+    on is that scenario's and the check it lands under is foo — the BARE tag, not the handle that ran.
     Those two spellings never match, so the retired rule cannot post this row at all.
 
     WHICH IS WHY THE ASSERTION READS THE ATTRIBUTED ROW, not merely the absence of an uncited one.
@@ -149,7 +144,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE EXCLUSION SURVIVES THE RULE CHANGE; WHAT DRAWS IT HAS MOVED. What takes a pipeline step
     out of this axis is the target saying which commands run its behavioural suites: its
     manifest names one runner per tier, and a step invoking that runner — reached through the
-    manifest script the step runs (@SCN-USG-011) — is that tier's runner rather than a gate.
+    manifest script the step runs — is that tier's runner rather than a gate.
     This target names vitest for unit and cucumber-js for integration, and its test and
     cucumber scripts run exactly those, so both steps are recognised where CI invokes them.
 
@@ -178,8 +173,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited static check
 
-    THE PREFIX NO LONGER FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET LEFT TO FIND WITH. Until
-    3F-3343 discovery read a target's scripts through an observed prefix set — lint: and guard: —
+    THE PREFIX NO LONGER FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET LEFT TO FIND WITH. Discovery
+    once read a target's scripts through an observed prefix set — lint: and guard: —
     and this scenario's script carried guard: so that it would be found. The set of names a quality
     check might be given belongs to the consumer and is unbounded; a list of two was a sample of it,
     and a longer list would have been a bigger sample. So the membership rule is inverted: a step of
@@ -194,8 +189,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     what this scenario is about, and the reason it is now reachable is that the check is discovered
     at all.
 
-    THE CITED HALF IS WHAT MAKES IT MEAN SOMETHING, and it is the twin one Rule along
-    (@SCN-USG-005). A reader that reported every step as uncited would satisfy this scenario while
+    THE CITED HALF IS WHAT MAKES IT MEAN SOMETHING, and it is the twin one Rule along.
+    A reader that reported every step as uncited would satisfy this scenario while
     being useless; only a sibling target whose identically-unprefixed check IS attributed tells the
     two apart.
 
@@ -209,7 +204,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     THE LANDING IS READ ON THE ROW, not anywhere in the report. Posting to suspense is a claim
     about WHERE the credit went, and a whole-report search cannot tell the suspense row from any
-    other row that happens to mention the handle — the reading @SCN-USG-001 already scopes for the
+    other row that happens to mention the handle — the reading already scoped for the
     lint:-prefixed case. An unprefixed check lands exactly where a prefixed one lands, so this
     scenario asserts it in the same terms rather than settling for the absence of an attribution.
 
@@ -238,7 +233,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     tool in a tag, so satisfied was a lookup hit on the one string lint:nightly. Under the
     one posting rule the run resolves lint:nightly through the target's registry to the bare
     check nightly, and through its corpus to the stepless fitness scenario carrying that tag:
-    the row it lands on is SCN-TGS-001 and the check it lands under is nightly — the BARE
+    the row it lands on is that scenario's and the check it lands under is nightly — the BARE
     tag, not the handle that ran. Those two spellings never meet, so the retired rule cannot
     settle this obligation at all.
 
@@ -261,7 +256,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     already a check nobody has taken responsibility for; running it from a sibling workflow
     must not also make it invisible. Read ci.yml alone and the run simply is not there — no
     suspense row, no count, no red — so the tree reports a clean board over a gate nobody
-    owns. Since 3F-2306 the uncited verdict reds a build, which turns that omission into
+    owns. The uncited verdict reds a build, which turns that omission into
     something worse than a blind spot: moving a check into nightly.yml becomes a way to make
     a red go away without fixing anything.
 
@@ -339,7 +334,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   Rule: a CI check whose script name matches no convention of the tool's, that a fitness scenario cites, is attributed
 
-    THE CONTROL THAT MAKES THE RULE ABOVE MEAN SOMETHING. @SCN-USG-004 is satisfied on its own by
+    THE CONTROL THAT MAKES THE RULE ABOVE MEAN SOMETHING. The rule above is satisfied on its own by
     a reader that places nothing and calls every script it finds uncited; this is what stops that.
     Both targets run the same domain-purity script, a name matching no convention of ours, and
     both registries map it to the same bare check domain-purity — so the ONE fact left between
@@ -349,17 +344,17 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     WHICH IS WHY THE NAME CANNOT BE WHAT DECIDES, and the pair is what proves it rather than
     asserts it. The two targets run the same script under the same registry entry, so any reader
     answering from the handle's spelling answers the same way for both — and the two verdicts
-    differ. Whatever places this credit on SCN-TGD-001 is reading the corpus, which is the one
+    differ. Whatever places this credit on the fixture's scenario is reading the corpus, which is the one
     posting rule; the retired rule read a name, and a name is the thing these two targets share.
 
     THE ASSERTION READS THE ATTRIBUTED ROW, not the absence of an uncited one — the reading
-    that @SCN-USG-002 already gives its own cited twin. Absence is the weaker claim and several
+    already given to its own cited twin. Absence is the weaker claim and several
     wrong readers produce it: one that drops the credit on the floor reports no uncited check
     either, and so does one that posts it to a scenario the corpus never wrote.
 
     THE PAIR IS NOT SYMMETRIC, AND THE PLANT THAT USED TO SAY SO IS GONE WITH THE PREFIX SET. The
     asymmetry was stated as a narrowing of the observed prefixes — cut them to lint: and the twin
-    reds while this arm stays green — and since 3F-3343 there is no prefix set to narrow. The
+    reds while this arm stays green — and there is no prefix set to narrow. The
     asymmetry survives, because it was never about the prefixes: the twin reaches this axis
     through DISCOVERY, which now reads every step of the pipeline that is not a runner the
     manifest names, the reconciler, or a step the consumer named a non-check. This target reaches
@@ -367,8 +362,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     obligation-side observer, whatever discovery did — and is then filtered out of the
     running-check stream so that one run is not observed twice.
 
-    SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned
-    (3F-3362): name this target's own step a non-check and the twin's verdict is what goes, while
+    SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned:
+    name this target's own step a non-check and the twin's verdict is what goes, while
     this one is attributed exactly as before. The conclusion is STRONGER than the argument it
     lost — the old plant showed the seam blind to WHICH prefix a handle carried, and this handle
     now carries none at all and is attributed anyway.
@@ -408,7 +403,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     axis because the prefix rule never reached it, so what this scenario bought at the time was the
     READER — a step recognised as a runner leaves it NAMED rather than silent, the first half of
     the no-fifth-outcome rule the inversion needed before it could land. SINCE THE INVERSION THIS
-    RECOGNITION IS ALSO THE VERDICT (@SCN-USG-004): the prefix rule is gone, so what keeps a runner
+    RECOGNITION IS ALSO THE VERDICT: the prefix rule is gone, so what keeps a runner
     step off the static axis is this rule and nothing else. Both readings go through one
     comparison, so the report and the books cannot disagree about which step ran a runner.
 
@@ -439,7 +434,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     reverted. A guard whose teeth were reasoned about rather than watched is not a guard.
 
     THE CHECK STEP HERE IS AN ORDINARY ONE, deliberately. The reconciler's own step is excluded
-    too, but BY CONSTRUCTION and not by this rule (@SCN-USG-014) — sharing one fixture would leave
+    too, but BY CONSTRUCTION and not by this rule — sharing one fixture would leave
     two different exclusions free to answer for each other, and a green would say which of them
     was doing the work.
 
@@ -475,8 +470,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     attributed to that place, and a control is only one if it is otherwise identical.
 
     WHAT THIS DOES NOT ANSWER, kept out on purpose. A key that is not one of the four canon tiers
-    is its own scenario (SCN-USG-019). A target carrying no runner block at all is another
-    (SCN-USG-017), and its report is untouched here — this section speaks only for a target that
+    is its own scenario. A target carrying no runner block at all is another,
+    and its report is untouched here — this section speaks only for a target that
     has said something. A tier NAMED whose runner no step runs stays the open question the
     recognition section already deferred; naming a tier is not saying it has none.
 
@@ -621,7 +616,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     THERE IS NO WILDCARD FORM, ARGUED RATHER THAN OMITTED. A consumer wanting a whole workflow out
     narrows the CI input at the command line — a supported narrowing this file already pins one
-    Rule along (SCN-USG-008) — so a second way to say the same thing buys a grammar to specify, to
+    Rule along — so a second way to say the same thing buys a grammar to specify, to
     test and to explain. Exact-only can be widened later and breaks nobody; starting wide cannot
     be narrowed once somebody's manifest depends on it.
 
@@ -686,7 +681,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     BOTH STEPS ARE DISCOVERED BEFORE THIS RULE TAKES THEM OUT, which is what gives the scenario its
     teeth. Each invoked its command through a lint:-prefixed script, so both were found under the
     prefix rule of the day and both posted to the suspense row — wrong, and red; under the inverted
-    rule (@SCN-USG-004) they are found because they are steps, which is the same fact reached by a
+    rule they are found because they are steps, which is the same fact reached by a
     wider route. A fixture whose reconciler the reader could not see at all would leave this
     scenario green on its first run over a reader that had never looked at the step, which asserts
     nothing.
@@ -766,13 +761,13 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE TARGET'S OWN TEST SUITE IS A CANDIDATE, AND ASSERTING THAT IS THE POINT. With no runner
     named, pnpm test is a step like every other step and lands on the books as one. It is a false
     POSITIVE, it is the direction this axis chose deliberately, it is visible in the report, and it
-    is one line of the consumer's own configuration to correct (@SCN-USG-011). Quietly exempting it
+    is one line of the consumer's own configuration to correct. Quietly exempting it
     would take a rule about what a test step is CALLED or what it LOOKS like — a runner list of
     ours — which is the drift the whole inversion exists to remove, reinstated at the one step where
     it would look most reasonable.
 
     EVERY STEP THAT IS NOT THE RECONCILER, strictly. The reconciler and its step-record dump come
-    out by construction and hold over a manifest saying nothing (@SCN-USG-014), so "every step" is
+    out by construction and hold over a manifest saying nothing, so "every step" is
     never literally every step of every pipeline. This target's pipeline runs no reconciler at all,
     which is what keeps the claim here to exactly one thing: the steps that reach the books are the
     steps that are there, and the other exclusion has nothing to be confused with.
@@ -780,7 +775,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE FIRST RUN STILL REDS, AND THAT IS NOT SOFTENED HERE. A candidate citing nothing posts to
     suspense, so a consumer who has configured nothing is out of balance on their first run. That is
     the state as it stands, and it is asserted rather than worked around. --exit-zero moves the
-    exit status of that run and never the report this Rule pins (3F-3100).
+    exit status of that run and never the report this Rule pins.
 
     THE EXACT SET IS THE CONTROL, not a count. A reader that discovered nothing satisfies no part of
     this; a reader that dropped uses: steps, or one that guessed at a default runner for a block the
@@ -809,8 +804,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     STATING THE SCOPE IS THE ANSWER, not a consolation for not having a better one. A consumer
     pointed at the wrong thing reads the file and the job and the counts, knows on sight, and
-    corrects it by narrowing --ci (@SCN-USG-008) or by naming the steps that are not checks
-    (@SCN-USG-015). A wrong answer the report says out loud is one line of their own configuration;
+    corrects it by narrowing --ci or by naming the steps that are not checks.
+    A wrong answer the report says out loud is one line of their own configuration;
     a wrong answer it keeps to itself is the silence this axis exists to end.
 
     AND IT IS THE ANSWER TO THE QUIETER HALF — THE JOB THE TOOL NEVER LOOKED AT. Discovery reports
@@ -827,10 +822,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     why.
 
     SORTED, so two runs over one tree cannot differ and a diff of two reports never turns on the
-    order a directory happened to be handed back in — the same reason the source resolution sorts
-    (@SCN-USG-006).
+    order a directory happened to be handed back in — the same reason the source resolution sorts.
 
-    NOT THE ACCOUNTING IDENTITY, which is its own Rule (@SCN-USG-018). That one asserts the
+    NOT THE ACCOUNTING IDENTITY, which is its own Rule. That one asserts the
     dispositions sum to the steps read, so nothing the reader saw was dropped; this one asserts the
     provenance — which files and which jobs those steps came from. A reader satisfies either alone:
     a correct sum over a scope it never names, or a named scope whose numbers do not add up.
@@ -880,7 +874,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     where two dispositions read alike would let that error through in silence.
 
     AND BOTH FORMS OF STEP ARE AMONG THEM. One of the candidates is an action rather than a command,
-    because a `run:`-only reading is the historical shape of exactly this fault (@SCN-USG-013) and
+    because a `run:`-only reading is the historical shape of exactly this fault and
     the identity is what would have caught it as a shortfall rather than as nothing at all.
 
     @unit @integration @SCN-USG-018

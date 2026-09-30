@@ -6,7 +6,6 @@ import { CI_STEP_RECORD, CUCUMBER_REPORT, PACKAGE_MANIFEST, shapeFaultIn, VITEST
 
 const FIXTURES = fileURLToPath(new URL("../../../../tests/fixtures", import.meta.url));
 
-/** Every tracked report of one kind in the fixture tree: what the real runner wrote, kept. */
 function fixtureReports(file: string): Array<[string, unknown]> {
   return readdirSync(FIXTURES)
     .map((dir) => join(FIXTURES, dir, file))

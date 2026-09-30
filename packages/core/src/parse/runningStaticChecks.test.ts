@@ -1,23 +1,8 @@
-/**
- * Unit tests for the running-check observer (`parse/runningStaticChecks.ts`) — it emits a
- * FitnessEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
- * observer: the obligation-side one this header used to point at has been deleted. The CI-parse
- * primitive it reads enforcement off lives in `parse/checkScriptsRunInCI.ts`. reconcile's folding
- * of a no-evidence-obligation running static check onto the suspense row is pinned in
- * `domain/evidenceReconciliation.test.ts`.
- *
- * Parent: @SCN-USG-001 (the uncited static-check).
- */
-
 import { describe, it, expect } from "vitest";
 import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveRunners } from "./targetManifest.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
-// THE MEMBERSHIP ARGUMENT — the target's declared behavioural runners, which is what the observed
-// prefix set used to be (@SCN-USG-004, 3F-3343). A target that has named none has every step of
-// its pipeline reported as a candidate, so a fixture whose CI runs a suite has to say so or the
-// arm is asserting over a `new-client` report rather than over the case it is about.
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   unit: "vitest",
@@ -33,10 +18,6 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
       cucumber: "cucumber-js",
     },
   };
-  // THE PIPELINE IS ITS TWO CHECKS AND ITS TWO SUITES, and no plumbing. Under the inverted
-  // membership rule (@SCN-USG-004) a plumbing step is a candidate like any other and leaves by
-  // `notChecks`; keeping the install step here would put a third row in every assertion below and
-  // make this scenario about a disposition that is @SCN-USG-015's.
   const usgCi = [
     "jobs:",
     "  ci:",
@@ -47,12 +28,7 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // A running CI static check is emitted as a FitnessEvidenceObservation —
-  // exists + enforcedOverRealSource are true by construction (a step the pipeline runs). The
-  // static analogue of the runner emitting a passing test result.
   it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
-    // test + cucumber are the runtime axis's observed evidence, and what keeps them off this axis
-    // is the runner block this target names — not anything about how they are spelled.
     expect(runningStaticChecks([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
       { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
@@ -71,11 +47,6 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
 });
 
 describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
-  // ONE MANIFEST, READ BY BOTH HALVES OF THE SCENARIO. The observer takes the scripts; the
-  // recognition takes the runner block the SAME manifest carries. Two fixture objects would let
-  // the premise this scenario now rests on drift away from the target the claim is asserted over,
-  // and the claim would go on passing over a target that names no runner at all — which is
-  // precisely the shape this Update exists to stop being possible.
   const manifest = {
     scripts: { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" },
     specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
@@ -91,12 +62,6 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
   ].join("\n");
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
-    // THE PREMISE, ASSERTED THROUGH THE PRODUCT'S OWN READERS. The Given says this target's
-    // manifest names the unit and integration runners its test and cucumber scripts run; an
-    // unasserted Given is a sentence, and a claim resting on one rests on nothing. Not a second
-    // copy of @SCN-USG-011: that scenario pins what recognition IS (the manifest hop, the depth
-    // bound, the loop, the command position) over fixtures built to exercise each; this arm asks
-    // only whether THIS target is the target the Given describes.
     const { tiers } = resolveRunners(manifest);
     expect(recognisedRunners([ci2], pkg2, tiers)).toEqual([
       { tier: "unit", runner: "vitest", step: "pnpm test" },
@@ -105,22 +70,12 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
   });
 
   it("emits an observation for the check step alone — the two runner steps are excluded", () => {
-    // Only lint:foo is a running fitness check; test + cucumber — the two steps the arm above
-    // recognises as this target's runners — never enter the observed set. WHAT KEEPS THEM OUT IS
-    // THE RUNNER BLOCK, which since @SCN-USG-004 is the membership rule itself: pass NO_RUNNERS
-    // here and all three steps are candidates, which is the `new-client` report and is exactly
-    // what this scenario says a target naming its runners does not get.
     expect(runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers)).toEqual([
       { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
   it("does not let the citation stamp widen membership — a cited runner step is still excluded", () => {
-    // The observer learned to stamp an @SCN (3F-2568), and the stamp is applied AFTER the
-    // membership filter. Reaching for it earlier — or letting "the seam answered for this
-    // handle" stand in for membership — would put every CI step this reader can name onto the
-    // axis, which is exactly what test and cucumber must never be. citedScn answers for
-    // everything here, so the filter's placement is the only thing keeping them out.
     expect(
       runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
         scnId: "SCN-TGT-001",
@@ -132,24 +87,6 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
 });
 
 describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no convention of ours", () => {
-  // THE SWITCH, READ AT THE OBSERVER. `domain-purity` carries neither `lint:` nor `guard:` nor
-  // any other prefix this tool has ever recognised, so nothing about its NAME can find it. It is
-  // observed because it is a step of the pipeline the manifest did not name a runner and nothing
-  // excluded — the inverted membership rule, and the whole of this scenario.
-  //
-  // THE RUNNERS ARE WHAT KEEP THE COUNT AT ONE. `test` and `cucumber` run in this pipeline too
-  // and are no longer held off the axis by carrying no prefix; what holds them off is rule D over
-  // the runner block this manifest names (@SCN-USG-003, landed one sub-issue back). A fixture
-  // that named none would report three candidates, which is the `new-client` report and is
-  // @SCN-USG-017's, not this arm's.
-  //
-  // THE PLUMBING STEP IS GONE FROM THIS FIXTURE, deliberately. It was here to show that `install`
-  // is not a script and so could never match a prefix — a fact the retired rule owned. Under the
-  // inversion a plumbing step is a candidate like any other and leaves by `notChecks`
-  // (@SCN-USG-015); asserting that here would be a second scenario's claim wearing this one's tag.
-  //
-  // `domain-purity` is a script NAME — a value, not vocabulary — so the handle itself is
-  // deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns script names).
   const unprefixedManifest = {
     scripts: {
       "domain-purity": "echo domain-purity",
@@ -167,10 +104,6 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
     "      - run: pnpm test",
     "      - run: pnpm cucumber",
   ].join("\n");
-  // THE MEMBERSHIP ARGUMENT, NAMED ONCE, so these arms state the CLAIM — an unprefixed script is
-  // observed — separately from whatever is deciding membership. In the red it was the production
-  // prefix set and these calls found nothing, which was the fault; it is this target's runner
-  // block now, and every step that is not a runner is a candidate.
   const membership = SUITE_RUNNERS;
 
   it("emits a FitnessEvidenceObservation for a script no convention of ours reaches", () => {
@@ -187,17 +120,6 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
   });
 
   it("carries NO scnId key when the seam is asked and answers nothing — the uncited shape", () => {
-    // THE OTHER HALF OF UNCITED, and the only arm here that can see it. Every sibling calls the
-    // observer without a seam and reads its result with `toEqual`, so all of them pass against
-    // an observation carrying `scnId: undefined` — `toEqual` treats an undefined-valued key as
-    // absent. The source refuses that shape deliberately (`...(scnId !== null ? { scnId } : {})`
-    // rather than `scnId: scnId ?? undefined`, so an uncited observation's JSON stays
-    // byte-identical), and until this arm nothing held it to the refusal: swapping the spread for
-    // the coalesce reds this test and leaves its fifteen siblings green (measured, 3F-2579).
-    //
-    // Asked-and-answered-nothing is the fixture's registered-but-uncarried target reduced to one
-    // function: the registry resolves a bare check for the handle and the corpus carries it
-    // nowhere. What the observer must NOT do is fill the gap from the handle it already has.
     const observed = runningStaticChecks(
       [unprefixedCi],
       unprefixedPkg,
@@ -218,11 +140,6 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
 });
 
 describe("[SCN-USG-007] a static check running in ANY of a target's workflows is observed", () => {
-  // A pipeline split across files is ordinary — a slow sweep moved off the per-push
-  // ladder, a security scan on its own trigger. The observer reads a LIST of sources
-  // for exactly that reason; reading one document would let a check leave the books by
-  // being written down somewhere else, which since 3F-2306 is a way to make a red go
-  // away without fixing anything.
   const pkg: PackageJsonScripts = {
     scripts: { "lint:sweep": "echo sweep", test: "vitest run" },
   };
@@ -241,14 +158,6 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
   });
 
   it("emits one observation per STEP when two workflows invoke the same check", () => {
-    // A CANDIDATE IS A STEP, NOT A SCRIPT (@SCN-USG-004). This arm used to read the other way —
-    // one check however many steps ran it — and the inversion moved it, deliberately rather than
-    // as a side-effect. A step is what carries an `id:`, so it is what can cite a row, and a
-    // pipeline may have two steps running one script that answer two different fitness rows —
-    // this repository's once did. Folding them would hand the first row's credit to both and leave
-    // the second reading `missing` over a check that ran.
-    //
-    // What the two share is their HANDLE, which is where-to-fix and does not have to be unique.
     expect(runningStaticChecks([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([
       { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
@@ -256,9 +165,6 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
   });
 
   it("keeps a malformed workflow from discarding the commands of the ones beside it", () => {
-    // Parse tolerance is PER SOURCE. Joining the sources before parsing would let one
-    // unparseable file hide every other file's checks — a wider watermelon-hiding
-    // surface than the one the fail-safe parse was built to keep narrow.
     const malformed = "jobs:\n  - this: [is not\n    valid yaml";
 
     expect(runningStaticChecks([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
@@ -268,10 +174,6 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
 });
 
 describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by the action it uses", () => {
-  // A QUALITY CHECK CAN BE AN ACTION, and the common ones are: CodeQL's analyse step and a
-  // dependency review are actions rather than commands. A reader discarding every `uses:` step
-  // drops those checks and drops them without a word, which is the fault the inverted membership
-  // rule exists to end — arriving by a different route and wearing a parse limitation's clothes.
   const pkg: PackageJsonScripts = {
     scripts: { "domain-purity": "echo domain-purity", test: "vitest run" },
   };
@@ -287,9 +189,6 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   ].join("\n");
 
   it("observes an action step, named by the action it uses", () => {
-    // THE WHOLE SET RATHER THAN ONE MEMBER. A reader that gained the `uses:` half while losing the
-    // `run:` half satisfies any single `includes`, and so does one that let the runner step
-    // through beside them. Sorted by handle, which is this observer's own order.
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual([
       "Dependency review",
       "domain-purity",
@@ -298,19 +197,12 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 
   it("names an action step by its `name:` where it has one — GitHub's own order, not the reference", () => {
-    // THE IDENTITY IS GITHUB'S: `name:` first, else the `uses:` value. A consumer reading a report
-    // row or writing an exclusion copies the string already in front of them in their run log, so
-    // the two halves of the pipeline above are named the two different ways GitHub names them.
     const named = runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck);
     expect(named).toContain("Dependency review");
     expect(named).not.toContain("actions/dependency-review-action@v4");
   });
 
   it("reads the action step's own `continue-on-error`, rather than vouching for it", () => {
-    // AN ACTION STEP IS A STEP IN EVERY OTHER RESPECT TOO. A step whose red its job survives runs,
-    // reds and leaves the pipeline green, and that is as true of an action as of a command — a
-    // widening that admitted actions while assuming them enforced would bank the very watermelon
-    // @SCN-LNT-032 closed for commands.
     const severed = [
       "jobs:",
       "  ci:",
@@ -329,9 +221,6 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 
   it("still leaves the runner step out, whatever form the steps beside it take", () => {
-    // THE CONTROL ON THE WIDENING. A rule that admitted every step would satisfy the arms above
-    // while putting the target's own unit suite on the static axis — the one thing @SCN-USG-003
-    // says a target naming its runners does not get.
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).not.toContain(
       "pnpm test",
     );
@@ -339,17 +228,6 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
 });
 
 describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is named by the first it invokes", () => {
-  // ONE OBSERVATION PER CHECK STEP, which is @SCN-USG-001's own reading taken at its hardest
-  // input: a single CI `run:` block invoking two of the target's scripts is still ONE step this
-  // reader saw, so it yields ONE observation and there is one handle to choose. `handleOf`'s
-  // `invoked[0] ?? step.identity` is where that choice is made, and this is the ONLY arm in the
-  // tree that drives a multi-script step — nothing else exercises the fallback, so these teeth
-  // are load-bearing rather than incidental. Mutation-proved rather than staged red, because the
-  // behaviour it pins already ships — and proved by the NARROW mutant, which is the one that
-  // settles it: `invoked[invoked.length - 1]` is byte-identical for every single-script step and
-  // differs only here, so it reds exactly ONE test in the whole suite, this one, with Cucumber
-  // untouched (3F-3611). The obvious mutant, `invoked[1]`, reds eleven — `invoked[1]` is
-  // undefined for a single-script step — so it cannot tell a sole witness from a shared one.
   const pkg: PackageJsonScripts = {
     scripts: {
       "check:format": "prettier --check .",
@@ -370,8 +248,6 @@ describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is n
   ].join("\n");
 
   it("names the step by the first script it invokes, not the second", () => {
-    // ONE STEP, ONE OBSERVATION — a step invoking two scripts is still the one step this reader
-    // saw, so there is one handle to choose, never two credits for the same run.
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS)).toEqual([
       {
         qualityCheck: "fitness",

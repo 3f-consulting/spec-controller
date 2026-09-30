@@ -1,17 +1,7 @@
-/**
- * The @unit arm of @SCN-CLI-060 — a flag given before the command is refused as a flag out of place,
- * never read as a command (3F-3639). The @e2e arm in tests/steps/cliBalance.steps.ts proves it
- * through the real binary, and that nothing is stored.
- *
- * Every command flag the registry lists is tried in that place, so a flag added later is covered.
- * The wording is never pinned (features/message-catalogue.feature).
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
 
-/** Every flag a command takes, except the help the host answers itself in the same place. */
 const commandFlags = cliRegistry.commands
   .flatMap((command) => command.flags.map((flag) => flag.name))
   .filter((name) => name !== "--help");

@@ -1,11 +1,3 @@
-/**
- * @unit for @SCN-STG-017 (3F-3609) — the report states the corpus's scenarios against its accounts
- * whenever a code is carried by more than one scenario, and names the scenarios sharing each code.
- *
- * Bidirectional evidence: the describe carries the @SCN-STG-017 id matching features/scn-tags.feature.
- * The @integration arm (tests/steps/scnAccounts.steps.ts) drives the built CLI over a real corpus;
- * this arm proves the renderers over a census that carries the shared codes.
- */
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { renderJson } from "./json.js";
@@ -27,7 +19,6 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-// SCN-ONE-001 on two scenarios in two files, beside SCN-OWN-001 — three scenarios, two accounts.
 const ledger = reconcile(
   [
     { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },

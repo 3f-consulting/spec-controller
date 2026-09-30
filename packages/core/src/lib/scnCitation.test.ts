@@ -1,9 +1,3 @@
-/**
- * A Vitest title's bracketed citation is read by
- * evidence-manifesto §9A's grammar: a feature part of two to five characters, a number of any
- * width. The titles straddle both bounds, so the citations that ARE read show the reader was
- * looking when the ones that are not come back as nothing.
- */
 import { describe, it, expect } from "vitest";
 import { parseScnCitation } from "./scnCitation.js";
 

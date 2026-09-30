@@ -1,33 +1,8 @@
-/**
- * Unit tests for THE SCOPE DISCOVERY RANGED OVER (@SCN-USG-020) — the per-job census: which
- * workflow files and which jobs of them this run read, how many steps each held, and how many of
- * those steps are candidate fitness checks.
- *
- * WHAT IS PINNED HERE IS PROVENANCE, and it is not the accounting identity beside it
- * (@SCN-USG-018). That one asserts the dispositions sum to the steps read, so nothing the reader
- * saw was dropped; this one asserts WHICH files and WHICH jobs those steps came from. A reader
- * satisfies either alone — a correct sum over a scope it never names, or a named scope whose
- * numbers do not add up — so neither file asserts the other's claim.
- *
- * THE CANDIDATE FIGURE IS TAKEN FROM THE OBSERVER, NOT RE-DERIVED, and one arm below asserts
- * exactly that by comparing the census against what `runningStaticChecks` actually posts. A census
- * that answered "how many became candidates" out of its own reading of the membership rule would
- * be measuring its own arithmetic, and would go on agreeing with the report while disagreeing with
- * the books.
- *
- * ITS OWN FILE for the reason `stepExclusions.test.ts` and `recognisedRunners.test.ts` are:
- * `runningStaticChecks.test.ts` was near the 400-line file-length ceiling then in force (retired
- * portfolio-wide on 2026-09-18, 3F-2320), and these arms are a claim of their own in any case.
- *
- * Parent: @SCN-USG-020.
- */
-
 import { describe, it, expect } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
 import { runningStaticChecks } from "./runningStaticChecks.js";
 import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
 
-/** One job, four steps, in both forms — a `uses:`, a plumbing command, the suite, and a check. */
 const CI_YML = [
   "jobs:",
   "  ci:",
@@ -41,11 +16,6 @@ const CI_YML = [
   "        run: pnpm lint:rules",
 ].join("\n");
 
-/**
- * TWO jobs in ONE file, written `sweep` before `audit` — the order a sorted census has to change.
- * Written this way deliberately: with the jobs already in order, a reader emitting them as it met
- * them would agree with a reader that sorts, and the sorting arm below would assert nothing.
- */
 const NIGHTLY_YML = [
   "jobs:",
   "  sweep:",
@@ -60,7 +30,6 @@ const NIGHTLY_YML = [
   "        run: pnpm audit --audit-level=high",
 ].join("\n");
 
-/** A job whose every step something takes out of discovery — the job that contributes nothing. */
 const RELEASE_YML = [
   "jobs:",
   "  publish:",
@@ -81,21 +50,15 @@ const SCRIPTS = {
   },
 };
 
-/** The unit tier only — one named runner, so exactly one step of the pipeline is one. */
 const UNIT_RUNNER: Readonly<Record<string, string | null>> = { unit: "vitest" };
 
-/** No runner named at all, which is the `new-client` shape (@SCN-USG-017). */
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 
-/** The consumer's own exclusion seam, standing in for `stepExclusions`' answer over these steps. */
 const excluding =
   (...identities: readonly string[]) =>
   (step: CiWorkflowStep): boolean =>
     identities.includes(step.identity);
 
-// ---------------------------------------------------------------------------
-// @SCN-USG-020 — ONE ROW PER JOB, NAMING THE WORKFLOW IT CAME FROM.
-// ---------------------------------------------------------------------------
 describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read", () => {
   it("names every workflow and every job, with the steps it read from each", () => {
     expect(
@@ -115,14 +78,10 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
 
   it("counts a `uses:` step among the steps it read, because the walk reads one", () => {
     const [ci] = discoveryScope([CI_YML], ["ci.yml"], SCRIPTS, NO_RUNNERS);
-    // Four steps, of which one is an action — a census reading `run:` steps alone reports three.
     expect(ci).toEqual({ source: "ci.yml", job: "ci", steps: 4, candidates: 4 });
   });
 
   it("reports a job every step of which something took out, rather than dropping it", () => {
-    // THE QUIET JOB, which is half of what this scenario is for: a consumer needs to see a job the
-    // run ranged over that contributed nothing, and a census built out of the candidates alone has
-    // no row to put it on.
     expect(
       discoveryScope([RELEASE_YML], ["release.yml"], SCRIPTS, NO_RUNNERS, excluding("Build", "Publish"))
     ).toEqual([{ source: "release.yml", job: "publish", steps: 2, candidates: 0 }]);
@@ -133,11 +92,6 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
   });
 });
 
-// ---------------------------------------------------------------------------
-// @SCN-USG-020 — THE CANDIDATE FIGURE IS THE OBSERVER'S, and this is the arm that says so. A
-// census answering the membership question for itself measures its own arithmetic: it would go on
-// agreeing with the scope section while the books beneath it said something else.
-// ---------------------------------------------------------------------------
 describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones posted", () => {
   const sources = [CI_YML, NIGHTLY_YML];
   const names = ["ci.yml", "nightly.yml"];
@@ -163,15 +117,10 @@ describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones
   });
 });
 
-// ---------------------------------------------------------------------------
-// @SCN-USG-020 — SORTED, so two runs over one tree cannot differ and a diff of two reports never
-// turns on the order a directory happened to be handed back in.
-// ---------------------------------------------------------------------------
 describe("[SCN-USG-020] discoveryScope — one settled order", () => {
   const inOrder = discoveryScope([CI_YML, NIGHTLY_YML], ["ci.yml", "nightly.yml"], SCRIPTS, NO_RUNNERS);
 
   it("sorts the jobs of one workflow, whatever order the workflow writes them in", () => {
-    // nightly.yml writes `sweep` first; the census reports `audit` first.
     expect(inOrder.map((entry) => `${entry.source}:${entry.job}`)).toEqual([
       "ci.yml:ci",
       "nightly.yml:audit",
@@ -186,12 +135,6 @@ describe("[SCN-USG-020] discoveryScope — one settled order", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// @SCN-USG-020 — A SOURCE THIS RUN WAS GIVEN NO NAME FOR. The core holds no filesystem, so the
-// workflow names arrive as data from the CLI edge (`parse/stepNames`). A source named to nobody
-// can still be READ, and dropping its jobs would be the silence this axis exists to end — so the
-// row survives without the half of its name nobody supplied, the direction `reconcilerSteps` takes.
-// ---------------------------------------------------------------------------
 describe("[SCN-USG-020] discoveryScope — a source with no name", () => {
   it("keeps the job, and names no workflow for it", () => {
     expect(discoveryScope([CI_YML], [], SCRIPTS, NO_RUNNERS)).toEqual([

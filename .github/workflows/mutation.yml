@@ -1,66 +1,17 @@
 name: Mutation
 
-# Mutation testing over the domain core. NOT a per-push gate — it is a scheduled
-# sweep, deliberately kept OUT of ci.yml so the per-push ladder stays fast and
-# deterministic (3F-2178): measured, the sweep costs 8-12 minutes on a 2-core
-# runner against a ~2-minute ladder.
-#
-# The domain core is the only mutated scope: packages/core/src/domain/*.ts — the
-# posting / reconciliation / fold rules. The rest of the tree is not mutated; the
-# value concentrates in the pure logic and the run cost scales with the scope.
-#
-# THIS JOB'S CONCLUSION IS THE VERDICT THE PUSH READS (3F-3483). `stryker.config.mjs` states
-# `thresholds.break` as 95, typed there rather than read off package.json's SCN-FIT-002 row as it
-# was from 3F-3334, so a sweep scoring below 95 ends this job in failure. `ci.yml`'s `Mutation
-# score` step, carrying `id: SCN-FIT-002`, asks stock `gh` for the newest completed run of this
-# workflow on `main` created inside the last 26 hours and passes only if it concluded `success`.
-# The row names no bar (no row does, 3F-3506), so the ledger reads it by that step's outcome and no number crosses
-# from this run to the push. This job used to wrap the sweep in a score producer and upload the
-# record it wrote for a later push to place and read; the placement and its reader left at 3F-3504,
-# and the producer and its upload at 3F-3505.
-#
-# SO THE WHOLE JOB COUNTS, NOT JUST THE SWEEP. The push reads this run's conclusion, which is the
-# job's, so a step here that fails for a reason of its own — a report upload the Actions runtime
-# refused, say — reads on the push exactly as a sweep below its bar does. That is one of the costs
-# 3F-3484 named for reading a verdict instead of a number.
-#
-# AND THIS JOB NO LONGER ENDS ON A VERDICT OF ITS OWN BEYOND STRYKER'S (3F-3337, 3F-3457). It used
-# to close on a ratchet step reconciling the sweep against a banked record, and later on a
-# per-mutant comparison run on every push. Both are gone: a banked pair of counts was measured
-# blind by 113 kills, and a per-push, per-mutant comparison cost 50s of every CI run and was ours
-# rather than the community's. What gates mutation now is Stryker's own `thresholds.break`, which
-# is Stryker's documented CI shape.
 on:
   schedule:
-    # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
-    # the top-of-hour scheduling spike.
     - cron: "17 3 * * *"
   workflow_dispatch:
 
 jobs:
   mutation:
     runs-on: ubuntu-latest
-    # WRITTEN OUT BECAUSE A JOB THAT STATES NOTHING TAKES THE REPOSITORY DEFAULT, WHICH IS NOT A
-    # DECISION ANYBODY MADE HERE (3F-3445, @SCN-FIT-021). `ci.yml` has carried its own block since
-    # 3F-2765 for the same reason; this file had none, so the audit read it as running on whatever
-    # the repository setting happens to be — today read-only, and a setting somebody widens
-    # elsewhere would widen this nightly sweep with it, silently. `contents: read` is the
-    # checkout's and is the whole of what this job does with the repository token: the report upload
-    # below authenticates against the Actions runtime rather than against it, and nothing here
-    # writes anything back.
     permissions:
       contents: read
-    # A BOUND ON A HUNG SWEEP, DELIBERATELY GENEROUS (3F-3457). Measured over 2026-09-01..16: 18
-    # runs, mean 5.8 min, max 8.0 min — and CLIMBING, 4.5 min on 1 Sep to 7.9 min on 15 Sep as the
-    # suite grew. an-adopters-repository's equivalent sweep runs 21–27 min, which is where this one is
-    # heading. Twenty-five is about three times today's max so that ordinary growth never trips it;
-    # a tighter bound would red on the suite getting bigger, which is not a fault.
     timeout-minutes: 25
     steps:
-      # PINNED TO A COMMIT WITH THE RELEASE AS A COMMENT, AND `persist-credentials: false` ON THE
-      # CHECKOUT — the register above `ci.yml`'s own checkout carries the argument for both, and
-      # this job is the easier case: it runs Stryker over the source and uploads its report, and
-      # touches the remote nowhere at all.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -75,30 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # `pnpm mutation` IS `stryker run` AND NOTHING ELSE (3F-3505). It used to wrap the sweep in a
-      # score producer that derived a percentage from the mutant statuses and wrote it into a
-      # record for a later push to place. The push now reads this job's conclusion instead, and
-      # Stryker's own exit is that conclusion: non-zero below `thresholds.break`, or when the sweep
-      # itself dies. Nothing between the two needs a line of ours.
-      #
-      # NOTHING IS BUILT AHEAD OF THIS, AND NOTHING NEEDS TO BE (3F-2841). A `Build` and a
-      # `pnpm rebuild` stood here because the retired persist action reached its CLI by
-      # a bin name, and pnpm's `node_modules/.bin` entry for a workspace package points into a
-      # `dist/` that does not exist until the build runs. 3F-2810 removed that reason, left both
-      # steps standing and said so in this file, filing the decision for the slice that owned the
-      # pipeline; this is that slice, and it ruled them out. Stryker mutates
-      # `packages/core/src/domain/**` through the vitest runner, off source, so a `dist/` on disk
-      # could not change what is measured even while it was there.
       - name: Mutation test the domain core
         run: pnpm mutation
 
-      # The HTML report enumerates which domain lines no test kills — the same
-      # class of finding as a reconciliation report, so it is never committed
-      # (.gitignore) and is kept only as a build artefact for the operator.
-      #
-      # `if: always()` BECAUSE THE RUN THAT DIED, OR SCORED BELOW ITS BAR, IS THE ONE WHOSE REPORT AN
-      # OPERATOR MOST NEEDS. It is also where the score now lives: the push reads only whether this
-      # job succeeded, so the number is in this report and nowhere else.
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

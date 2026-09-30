@@ -1,12 +1,3 @@
-/**
- * Step definitions for @SCN-RMD-009 (features/report-model.feature, 3F-3495): a row reads its
- * evidence in one order, whatever order the runner reported it in.
- *
- * The REAL built CLI runs twice over one fixture corpus: once with the fixture's vitest report,
- * once with the same report's `testResults` reversed. Everything is read back off the two
- * persisted spec-reconciliation.json files, never a re-run of the renderer.
- */
-
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -36,7 +27,6 @@ let rmd009Dir: string;
 let rmd009Reports: string[] = [];
 let rmd009Parsed: Report[] = [];
 
-// @SCN-RMD-009
 Given(
   "a runner report citing one scenario from two test files, and the same report with its files listed the other way round",
   function () {

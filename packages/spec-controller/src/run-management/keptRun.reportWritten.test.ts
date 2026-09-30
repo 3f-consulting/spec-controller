@@ -26,7 +26,6 @@ afterEach(() => {
   rmSync(scratch, { recursive: true, force: true });
 });
 
-/** Every file under `dir`, keyed by its path relative to it, with its bytes. */
 function filesUnder(dir: string): Map<string, string> {
   const files = new Map<string, string>();
   for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
@@ -73,7 +72,6 @@ describe("[SCN-RMG-005] executeKeptRun stamps run.yaml only when the command wro
 });
 
 describe("[SCN-RMG-005] runBalance answers whether it wrote the report its --format specs name", () => {
-  /** Run `balance` in-process, silenced, and return its answer and the status it left. */
   function answer(argv: readonly string[]): { wrote: unknown; exitCode: number } {
     const savedExitCode = process.exitCode;
     process.exitCode = 0;

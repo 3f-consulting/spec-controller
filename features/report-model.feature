@@ -20,7 +20,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the reconciliation publishes as one glue-free whole-document report model
 
-    The foundation (@SCN-RMD-001). A single Report model + assembleReport(...)
+    The foundation. A single Report model + assembleReport(...)
     is built from the existing reconcile pieces, and render/json.ts serialises it
     glue-free (JSON.stringify(assembleReport(...))) — no per-key hand-assembly. The
     published machine artefact is spec-reconciliation.json. The report opens with
@@ -34,7 +34,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     the assembled sections) REDS. The @unit arm proves assembleReport + the glue-free
     serialisation in isolation.
 
-    And its summary totals count EVERY Scenario Reconciliation (3F-1724). The Evidence
+    And its summary totals count EVERY Scenario Reconciliation. The Evidence
     Reconciliation is all Scenario Reconciliations assembled, and the summary is its
     totals (the maintainers' private notes). Three row kinds — real, phantom,
     suspense — and phantom / suspense reconciliations are ALWAYS out-of-balance, so they
@@ -56,16 +56,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the ledger is the detail beside the summary's totals
 
-    The 3F-1138 error ONE LAYER DOWN. The document IS the Evidence Reconciliation, so a root
+    The document IS the Evidence Reconciliation, so a root
     key named `evidenceReconciliation` is the layer naming itself inside itself — and the grid
     it names is, by canon, the LEDGER. Root then reads as chain step 6 literally: "The summary
     has the totals and the ledger the detail."
 
-    Supersedes this scenario's own earlier framing. @SCN-RMD-002 was the 3F-1138 revert ("the
-    per-scenario reconciliation is the trial balance, not the ledger") and asserted the key
-    `evidenceReconciliation`, not `scenarios`. The "not scenarios" half HOLDS and is kept
-    verbatim — a phantom / suspense is not a scenario. The key itself is corrected to `ledger`:
-    an Update to canon, not a break routed around.
+    The key is not `scenarios` — a phantom / suspense is not a scenario — and it is `ledger`.
 
     Code identifiers and JSON keys are ONE vocabulary (manifesto line 3), so the model's
     `interface Ledger { scenarioReconciliations }` and the JSON `"ledger": { "scenarioReconciliations":
@@ -82,7 +78,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the runtime evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
-    Retire the runtime evidence-observation CENSUS (@SCN-RMD-003, 3F-2103). The counting is now a
+    Retire the runtime evidence-observation CENSUS. The counting is now a
     FOLD the Ledger owns (runtimeObservationTally): the raw per-quality-check totals re-home onto
     summary.rawByRuntimeQualityCheck (a materialised headline), and the persisted JSON carries NO
     evidenceObservations section. The per-(scnId, quality-check) attributed[] did NOT re-home — it
@@ -104,7 +100,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the static-check census is summary counts, no standalone section
 
-    The static-axis manifesto landing on the JSON surface (@SCN-RMD-004). The static-check census is
+    The static-axis manifesto landing on the JSON surface. The static-check census is
     summary.staticChecks COUNTS alone — a pure counter over the guard observations
     (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
     standalone member-list section (was guards, then staticChecks) COLLAPSED: the guard member
@@ -123,8 +119,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 
-    Completing "the whole document as one report model" (@SCN-RMD-005;
-    operator ruling 2026-07-02 — MATERIALISE). Slice 1 (RMD-001) materialised most of the
+    Completing "the whole document as one report model" (operator
+    ruling 2026-07-02 — MATERIALISE). Slice 1 (RMD-001) materialised most of the
     document, but three printed numbers were still renderer arithmetic, not model data: the
     Test-volume totals, the Static-check totals, and the fitness tally. This scenario materialises
     all three into report.summary so a JSON consumer reads them (slice 2 later reads rather than
@@ -137,8 +133,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     named count is implicit, running − uncited, and the completeness invariant is
     asserted inside the counter rather than on the surface. The fitness tally is the fitness-only
     evidence obligation cut (satisfied of total), under summary.fitness — summary.byOutcome is
-    kind-agnostic and cannot provide the fitness-only total, so it is materialised explicitly. (It
-    was summary.lint until 3F-3525, when the quality check took canon's name.) HELD (slice 5): the
+    kind-agnostic and cannot provide the fitness-only total, so it is materialised explicitly. HELD (slice 5): the
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
@@ -181,13 +176,13 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
 
-    The load-bearing proof that the JSON IS the model (@SCN-RMD-007). A seam reads a banked spec-reconciliation.json,
+    The load-bearing proof that the JSON IS the model. A seam reads a banked spec-reconciliation.json,
     JSON.parses it back into a Report, and renders the human markdown via renderReport — no
     RunContext, no live inputs, the JSON alone: the exported renderReportFromJson(json) + the CLI
     "--render-from-json <path>" mode (reads the file, prints the regenerated markdown to stdout,
     exits before any reconcile, on the code the saved verdict names). Drift-equality is the acceptance: the markdown regenerated from
     the saved JSON EQUALS the markdown rendered directly from the same run — the by-feature titles
-    included (why the feature-title model-completion, @SCN-RMD-006, is the enabling dependency).
+    included (why the feature-title model-completion is the enabling dependency).
     Its unit arm proves the parse→renderReport drift-equality over a corpus spanning the whole
     document (the three-way test-volume line, the materialised summary totals, and a coded
     out-of-balance feature, so the by-feature title path has teeth); its integration arm drives
@@ -212,11 +207,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     { qualityCheck, outcome } (runtime) / { qualityCheck: "fitness", staticCheck, outcome } (fitness),
     and the summary's missing split is renamed to missingByQualityCheck
     (same { subject, count } values, keyed by the flat quality-check). Kind / Level retire; the
-    two reconcile functions merge on the == fitness watermelon discriminator. The value was
-    spelled "lint" until 3F-3525: canon names the quality check fitness, and lint is a rejected
-    alias (double-entry-manifesto, Quality Check). The markdown surface
+    two reconcile functions merge on the == fitness watermelon discriminator. Canon names
+    the quality check fitness, and lint is a rejected alias (double-entry-manifesto, Quality Check). The markdown surface
     stays byte-identical (the renderer already labels each item by its tag word, which IS the
-    quality-check value), so the @SCN-RMD-007 round-trip still holds. HELD (slice 2):
+    quality-check value), so the round-trip still holds. HELD (slice 2):
     the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
     The @unit arm proves the reconcile → assemble shape in isolation; the @integration arm drives
     the REAL CLI over a corpus raising BOTH a runtime and a fitness evidence obligation, persists
@@ -234,7 +228,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
 
     A runner decides the order its report lists files in, and vitest's changes between two runs
-    over one unchanged tree (3F-3495). The ledger kept that order, so a row's posted credits moved,
+    over one unchanged tree. The ledger kept that order, so a row's posted credits moved,
     and so did the credit a reconciliation names — the first FAILED credit in evidence order, or,
     where none failed, the first. The books now read the evidence in an order the evidence itself
     fixes: quality check in tier order with fitness last, then location, then the scenario cited,

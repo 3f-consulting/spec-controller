@@ -25,15 +25,15 @@ and its `@SCN` as the `id:` of the CI step that runs the check. See
 [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
 **A key this reader has no reading for is passed over — it is not read, and it is named as a key
-the block does not read, in the same words whichever key it is.** `specController.checkRegistry` and `specController.staticChecks` stopped being read at
-`3F-3161`; a `fitnessChecks` row's `characteristic` at `3F-3525`; `specController.thresholds` and a
-row's `atLeast` / `atMost` at `3F-3506`; `specController.fitnessChecks` itself at `3F-3582`. For a
+the block does not read, in the same words whichever key it is.** `specController.checkRegistry`, `specController.staticChecks`, a `fitnessChecks` row's
+`characteristic`, `specController.thresholds`, a row's `atLeast` / `atMost`, and
+`specController.fitnessChecks` itself are no longer read. For a
 time the report carried a line per retired key a manifest still held, so that a consumer who had
-written one in good faith would find out it no longer did anything. **That account was removed at
-`3F-3606`** (operator ruling, 2026-09-20: no backward compatibility — no third party consumes this
+written one in good faith would find out it no longer did anything. **That account was removed**
+(operator ruling, 2026-09-20: no backward compatibility — no third party consumes this
 package, and the one adopter adopts the current model whole). A manifest carrying any of those keys
-now reconciles to the same ledger and the same exit code as the same manifest without them. Since
-`3F-3777` each such key is named under `## Configuration not read` exactly as a misspelt key is, and
+now reconciles to the same ledger and the same exit code as the same manifest without them. Each
+such key is named under `## Configuration not read` exactly as a misspelt key is, and
 nothing on the report says what it once did: a consumer who wrote it is told it took no effect,
 which is not backward compatibility.
 
@@ -42,7 +42,7 @@ given on a command line rather than sitting in a file: it is refused as retired,
 refusal names what replaced it rather than a pin that would bring it back.
 
 **The observed script prefixes were already gone** before this page was rewritten
-— `3F-3343` retired `lint:`/`guard:` discovery and replaced it with declared
+— `lint:`/`guard:` discovery was retired and replaced with declared
 behavioural runners. The sentence claiming they were still honoured was written
 after that landed and was never true.
 
@@ -61,7 +61,7 @@ after that landed and was never true.
 and it will then be a promise rather than a description — with a check that runs
 its own examples, so it cannot go stale unnoticed the way this one did.
 
-*Withdrawn 2026-09-13 (`3F-3376`), on the operator's ruling. The full text of
+*Withdrawn 2026-09-13, on the operator's ruling. The full text of
 the commitment as it stood is in this file's git history from `1697dc7`
 (2026-09-05) to `ef91282`; nothing is lost, and nothing that was true about the
 reader has changed.*

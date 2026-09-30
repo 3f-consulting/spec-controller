@@ -1,9 +1,3 @@
-/**
- * The `## Scenario code errors` section and the verdict it forces (3F-3635), rendered from a
- * reconciliation the real `reconcile()` produced — balanced, so the only fault on it is the code
- * error the corpus carries.
- */
-
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
@@ -20,7 +14,6 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-/** A balanced reconciliation of two satisfied accounts, carrying the given code errors. */
 function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(
     [
@@ -66,21 +59,17 @@ describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors,
 const DUPLICATE_LINE =
   "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.";
 
-/** The section's first statement: the clean line, or the error count. */
 function statementOf(md: string): string {
   const section = md.slice(md.indexOf("## Scenario code errors"));
   return section.split("\n\n")[1] ?? "";
 }
 
-/** The number the statement puts before `noun`, or undefined when it states none. */
 function countBefore(statement: string, noun: string): number | undefined {
   const match = new RegExp(`(\\d+) ${noun}s?\\b`).exec(statement);
   return match ? Number(match[1]) : undefined;
 }
 
 describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own count of feature files and of feature codes", () => {
-  // Every population here has counts that differ, save the last, so a sentence that states one
-  // count for both is caught (3F-3666).
   const populations = [
     { featureFiles: 3, featureCodes: 2 },
     { featureFiles: 1, featureCodes: 0 },

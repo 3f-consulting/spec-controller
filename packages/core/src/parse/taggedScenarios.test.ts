@@ -1,30 +1,11 @@
-/**
- * The corpus walk, read directly.
- *
- * Bidirectional evidence: the describe's bracketed id matches features/ledger.feature
- * and the @integration steps in tests/steps/ledger.steps.ts. The tag-INHERITANCE cases live with
- * the obligation rule in scenarios.test.ts; what is pinned here is the walk's own output, now that
- * a second corpus reader consumes it instead of re-deriving inheritance for itself.
- *
- * Its own file rather than a further block in scenarios.test.ts, which was at the file-length
- * ceiling then in force (retired portfolio-wide on 2026-09-18); the walk's own output is
- * a claim of its own in any case.
- */
-
 import { describe, it, expect } from "vitest";
 import { parseTaggedScenarios, type TaggedScenario } from "./scenarios.js";
 
-/**
- * The TAG reading alone. A scenario's NAME rides on the same walk and is pinned by its own
- * scenario's arms; dropping it here keeps these rows asserting exactly what they are about.
- */
 const tagReading = (scenarios: readonly TaggedScenario[]) =>
   scenarios.map(({ scnId, tags }) => ({ scnId, tags }));
 
 describe("[SCN-LDG-020] parseTaggedScenarios exposes the effective tag set the obligation rule reads", () => {
   it("puts the scenario's OWN tags first, then the inherited ones, outermost first", () => {
-    // Own tags lead — that is what makes a scenario's obligations read in the order its own tags
-    // name them. The order is the walk's, and a reader that re-derived it would be free to differ.
     const source = `@AAA @integration
 Feature: alpha
 

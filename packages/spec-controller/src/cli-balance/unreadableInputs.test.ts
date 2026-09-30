@@ -104,7 +104,6 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
   });
 });
 
-/** A throwaway directory holding one readable feature file and one readable workflow. */
 function targetOnDisk(): { features: string; ci: string } {
   const dir = mkdtempSync(join(tmpdir(), "input-paths-"));
   const features = join(dir, "features");
@@ -208,7 +207,6 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
   });
 });
 
-/** A reconciliation this tool saved: one uncoded scenario, no evidence, out of balance. */
 const SAVED = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"evidenceObligations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByRuntimeQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"staticChecks":{"runningStaticCheckCount":0,"uncitedStaticCheckCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 
 describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, and nothing is rendered", () => {

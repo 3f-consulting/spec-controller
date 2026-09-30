@@ -1,24 +1,3 @@
-/**
- * Unit test for the JSON report's provenance object (@SCN-RPT-002).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-002 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
- *
- * Proves the provenance projection on the machine surface in isolation:
- * renderJson(__er(balancedLedger), ctx) parses to an object that grows a top-level `provenance`
- * carrying the same non-derivable run facts as the markdown header — target, source
- * SHA, the UTC run timestamp, and the input paths/flags actually used — while the
- * reconciliation body (the ledger) is unchanged. The retired `warnings` key
- * is absent — a zero-evidence scenario is a `both-missing` row, not a separate axis.
- *
- * Teeth: until renderJson projects the ctx, `provenance` is absent, so every
- * provenance assertion reds (the genuine red→green). The body-intact assertion is
- * the regression guard — the reconciliation surface survives the new wrapper.
- *
- * Parent: (@SCN-RPT-002).
- */
-
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
 import type { Ledger } from "../model.js";
@@ -28,26 +7,11 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
-/**
- * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
- *
- * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
- * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
- * builds from JOURNAL inputs (what production does); these fixtures already hold a Ledger, so they
- * compose the concept around it rather than re-reconciling.
- */
 const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
   ledger,
 });
 
-
-/**
- * A minimal balanced ledger, RECONCILER-TRUE (evidence-manifesto §11A): one `@unit` scenario and
- * the passing credit that satisfies it, through the real `reconcile()`. A scenario that declares
- * nothing cannot reconcile `balanced` (it degenerates to `both-missing`), so the obligation is
- * what makes this the smallest honest balanced run.
- */
 const balancedLedger: Ledger = reconcile(
   [{ scnId: "SCN-RPT-002", evidenceObligations: [{ qualityCheck: "unit" }] }],
   [{ qualityCheck: "unit", scnId: "SCN-RPT-002", status: "passed" }],
@@ -72,13 +36,9 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.runProvenance.target).toBe("an-adopters-repository");
     expect(parsed.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
-    // The TOOL's identity, distinct from the target's sourceSha (3F-1916): which
-    // spec-controller produced this run.
     expect(parsed.runProvenance.toolSha).toBe("13ee47f271ace511efdb2511276284b4cb50c247");
     expect(parsed.runProvenance.toolVersion).toBe("0.1.0");
-    // Second-precision UTC, the same projection the markdown header renders.
     expect(parsed.runProvenance.runTimestamp).toBe("2026-06-27T08:17:53Z");
-    // The input paths/flags actually used, keyed by their canonical name.
     expect(parsed.runProvenance.inputs.features).toBe("../an-adopters-repository/features");
     expect(parsed.runProvenance.inputs.vitest).toBe("../an-adopters-repository/vitest-report.json");
   });
@@ -89,7 +49,6 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
     expect(parsed.ledger.scenarioReconciliations[0].scnId).toBe("SCN-RPT-002");
     expect(parsed.ledger.scenarioReconciliations[0].verdict).toBe("balanced");
-    // The `warnings` top-level key was RETIRED entirely.
     expect(parsed).not.toHaveProperty("warnings");
   });
 
@@ -109,32 +68,10 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   it("preserves a null tool SHA as JSON null (the tool is not a git checkout)", () => {
     const parsed = JSON.parse(renderJson(__er(balancedLedger), { ...ctx, toolSha: null }));
     expect(parsed.runProvenance.toolSha).toBeNull();
-    // The version is always present even when the SHA cannot be read.
     expect(parsed.runProvenance.toolVersion).toBe("0.1.0");
   });
 });
 
-/**
- * Unit test for the JSON evidenceObligations field (@SCN-RPT-008).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-008 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
- *
- * Proves the renderJson corpus projection in isolation: when a EvidenceObligations is
- * threaded as the optional third arg, renderJson emits
- * { provenance, evidenceObligations: { excludedOccurrences }, ...balance } — only the LONE
- * non-derivable corpus fact (scenarioCount is derivable from the balance;
- * rawScnOccurrences is derivable as scenarioCount + excludedOccurrences). The
- * evidenceObligations object is kept DISTINCT from provenance (run metadata) and the
- * reconciliation body. When no corpus is threaded the existing { provenance, ...balance }
- * shape is preserved (the RPT-002 guard stays green).
- *
- * Teeth: until renderJson projects the corpus, evidenceObligations is absent, so its
- * assertions red (the genuine red→green). The omission case is the RPT-002 guard.
- *
- * Parent: (@SCN-RPT-008).
- */
 describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object with the excluded count", () => {
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
 
@@ -161,34 +98,12 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
   it("omits evidenceObligations when no corpus is threaded (the RPT-002 guard stays green)", () => {
     const parsed = JSON.parse(renderJson(__er(balancedLedger), ctx));
     expect(parsed).not.toHaveProperty("evidenceObligations");
-    // Provenance + body survive intact.
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 });
 
-/**
- * Unit test for the JSON evidenceObservations object (@SCN-RPT-010).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-010
- * id matching features/report.feature, so a grep of the id returns both halves.
- *
- * Proves the renderJson evidenceObservations projection in isolation: when a RuntimeEvidenceObservationKindCounts is
- * threaded as the 4th arg, renderJson emits a `evidenceObservations` object carrying ONLY the
- * non-derivable atoms — rawByRuntimeQualityCheck, the per-(scnId, level) attributed counts, and the
- * phantomEvidenceObservation / suspenseEvidenceObservation remainder with locators (project design §3). The summary identity
- * is a DERIVED markdown-only view, so it is NOT serialised. The evidenceObservations object is kept
- * distinct from provenance / evidenceObligations / the reconciliation body; when no evidenceObservations is
- * threaded the existing shape is preserved (the RPT-002 / RPT-008 guards stay green).
- *
- * Parent: (@SCN-RPT-010) — the evidenceObservations-reconciliation spine.
- */
 describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals onto summary (no evidenceObservations section)", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance carries the posted credits the
-  // renderers fold (3F-2103 — the `evidenceObservations` section + its `attributed[]` are RETIRED):
-  //   SCN-A: @unit with 4 passing unit credits (raw unit 4; onScenario 4)
-  //   1 unit credit citing SCN-PHX-999 (no scenario carries it) → phantom (raw unit 5)
-  //   1 integration credit citing NO scenario → suspense (raw integration 1)
   const rpt010Scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rpt010Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -202,11 +117,8 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
 
   it("carries NO evidenceObservations section — the raw totals re-home onto summary.rawByRuntimeQualityCheck", () => {
     const parsed = JSON.parse(renderJson(__er(rpt010Balance, true, false), ctx));
-    // The section (with its `attributed[]` parallel store) is GONE — retired, not relocated.
     expect(parsed).not.toHaveProperty("evidenceObservations");
-    // Its raw per-quality-check totals re-home onto `summary` as a materialised Ledger fold.
     expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
-    // testVolume is present (the axis is in play), folded from the same Ledger.
     expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
     expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
     expect(parsed.summary.testVolume.onScenario).toBe(4);
@@ -214,8 +126,6 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
 
   it("the posted credits live on the ledger rows, not a parallel attributed[] store (retire, don't relocate)", () => {
     const parsed = JSON.parse(renderJson(__er(rpt010Balance, true, false), ctx));
-    // SCN-A's 4 unit credits are visible ON THE LEDGER ROW (@SCN-LDG-022) with full multiplicity —
-    // the attribution the retired `attributed[]` re-represented is checkable at its real source.
     const scnA = parsed.ledger.scenarioReconciliations.find((s: { scnId: string }) => s.scnId === "SCN-A");
     expect(scnA.evidenceObservations.filter((o: { qualityCheck: string }) => o.qualityCheck === "unit")).toHaveLength(4);
   });
@@ -237,19 +147,6 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
   });
 });
 
-/**
- * Unit test for the JSON evidenceObligations.untaggedScenarios (@SCN-RPT-014).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-014
- * id matching features/report.feature, so a grep of the id returns both halves.
- *
- * Proves the renderJson untagged-scenarios projection: `untaggedScenarios` is a NEW
- * non-derivable obligation-side datum, so (per §3, like `excludedOccurrences`) it persists
- * on the `evidenceObligations` object beside `excludedOccurrences`. The full {feature,
- * scenario} locators round-trip for machine consumers.
- *
- * Parent: (@SCN-RPT-014) — anchor audit: untagged scenarios.
- */
 describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenarios", () => {
   const evidenceObligations = {
     rawScnOccurrences: 10,
@@ -274,7 +171,6 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
     const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
     expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
     expect(parsed.evidenceObligations).toHaveProperty("untaggedScenarios");
-    // Still distinct from provenance and the reconciliation body.
     expect(parsed.runProvenance).not.toHaveProperty("untaggedScenarios");
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
@@ -287,18 +183,6 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
   });
 });
 
-/**
- * Unit test for the JSON evidenceObligations.proseOnlyCodes (@SCN-RPT-015).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-015
- * id matching features/report.feature, so a grep of the id returns both halves.
- *
- * Proves the renderJson prose-only-codes projection: a NEW non-derivable obligation-side
- * datum, so (per §3, like excludedOccurrences / untaggedScenarios) it persists on the
- * evidenceObligations object. The codes round-trip for machine consumers.
- *
- * Parent: (@SCN-RPT-015) — anchor audit: prose-only codes.
- */
 describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only codes", () => {
   const evidenceObligations = {
     rawScnOccurrences: 10,
@@ -327,27 +211,7 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
   });
 });
 
-/**
- * Unit test for the JSON report carrying a scenario's Pending Items (@SCN-PND-010).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-PND-010 id matching features/pending-items.feature, so a grep of the id returns
- * both halves of the pair.
- *
- * The markdown side is the genuine red→green of @SCN-PND-010 (the human renderer must
- * learn to emit the ⏳ pending label). This JSON side is the glue-free CONSISTENCY pin:
- * `renderJson` is `JSON.stringify(assembleRenderInput(__er(...)))`, and `assembleRenderInput` passes the
- * scenario reconciliations through verbatim under `ledger`, so a scenario's
- * `pendingItems` reach the machine surface WITHOUT any renderer glue. This test pins that
- * the two renderings stay consistent — the machine surface carries the same Pending Items
- * the human surface labels. Green-first (the glue-free path already carries the field); its
- * teeth are the deep-equality on the exact Pending Item, so a dropped/renamed field reds.
- *
- * Parent: (@SCN-PND-010).
- */
 describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () => {
-  // RECONCILER-TRUE (evidence-manifesto §11A): a scenario whose sole obligation is deferred
-  // pending reconciles balanced with one Pending Item and no sub-row on either side.
   const pendingBalance: Ledger = reconcile(
     [{ scnId: "SCN-PDX-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
     [],
@@ -357,33 +221,12 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
     const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));
     const row = parsed.ledger.scenarioReconciliations.find((s: { scnId: string }) => s.scnId === "SCN-PDX-001");
     expect(row).toBeDefined();
-    // The machine surface carries the same Pending Item the markdown labels — one IOU at
-    // the deferred integration check, one-sided (no outcome, not a reconciling item).
     expect(row.pendingItems).toEqual([{ qualityCheck: "integration" }]);
-    // A Pending Item is NOT a reconciling item: it stays out of reconcilingItems entirely.
     expect(row.reconcilingItems).toEqual([]);
   });
 });
 
-/**
- * Unit test for the JSON summary carrying the Pending Items tally (@SCN-PND-011).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-011 id
- * matching features/pending-items.feature, so a grep of the id returns both halves.
- *
- * The markdown side is the genuine red→green of @SCN-PND-011 (the human renderer must learn to
- * emit the Pending Items tally line). This JSON side is the glue-free CONSISTENCY pin: `renderJson`
- * is `JSON.stringify(assembleRenderInput(__er(...)))`, and the materialised `summary.pending` tally reaches
- * the machine surface WITHOUT any renderer glue, so the two renderings stay consistent — the
- * machine surface carries the same count the human surface renders. Its teeth are the exact count
- * on the exact key, so a dropped/renamed field reds.
- *
- * Parent: (@SCN-PND-011).
- */
 describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () => {
-  // RECONCILER-TRUE (evidence-manifesto §11A): SCN-PDX-001 defers both its obligations (two
-  // Pending Items, balanced); SCN-PDX-002 declares a unit obligation no credit meets (missing,
-  // out-of-balance) beside one deferred integration obligation (one Pending Item).
   const pendingBalance: Ledger = reconcile(
     [
       {
@@ -403,9 +246,7 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
 
   it("serialises summary.pending counting the Pending Items (glue-free consistency with markdown)", () => {
     const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));
-    // 2 (SCN-PDX-001) + 1 (SCN-PDX-002) = 3 Pending Items — the same tally the markdown renders.
     expect(parsed.summary.pending).toBe(3);
-    // The tally is SEPARATE from the verdict counts and never an evidence-obligation outcome.
     expect(parsed.summary.scenarioReconciliations.balanced).toBe(1);
     expect(parsed.summary.scenarioReconciliations.outOfBalance).toBe(1);
     expect(parsed.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");

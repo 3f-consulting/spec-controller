@@ -1,8 +1,3 @@
-/**
- * The @unit arm of the help control on the refusal of --run-id given without --store. A request for
- * a command's help runs nothing and keeps no run, so there is nothing for the run-id to be refused
- * from, wherever the help token stands among the command's args.
- */
 import { describe, expect, it } from "vitest";
 import { parseHostInvocation } from "./host.js";
 import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";

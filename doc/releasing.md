@@ -29,7 +29,7 @@ on `push` to `main` filtered to these paths:
 | `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what `dist` compiles to |
 
 A merge touching only `doc/`, `features/`, `tests/`, `.github/`, the root `package.json` or the
-lockfile publishes nothing. Replayed over the last 40 commits on `main` (3F-3529, 2026-09-18),
+lockfile publishes nothing. Replayed over the last 40 commits on `main` (2026-09-18),
 24 would have published and 16 would not. Among the 16 is every docs-only commit and the last
 by-hand pin move.
 
@@ -188,23 +188,23 @@ Both packages are **semver**, and both are on `0.x`.
 `package.json` at the workspace root carries `spec-controller` as an **exact published version** in
 `devDependencies`, and there is no root script of that name — so `pnpm spec-controller …` falls
 through to `node_modules/.bin/spec-controller` and runs the *installed* package. Measured on
-`3F-3476`'s branch with the script gone: the report's own provenance reads `Tool version:
+a branch with the script gone: the report's own provenance reads `Tool version:
 0.1.0-alpha.3` and `Tool SHA: unknown (not a git checkout)`, against `0.1.0-alpha.4` and this
 checkout's HEAD for the workspace build run over the same argv. The `ci.yml` step that invokes the
 tool (`Self-reconciliation balance`) goes through it, which is what makes this repository an
-ordinary adopter of its own product rather than a special case (`3F-3105`).
+ordinary adopter of its own product rather than a special case.
 
 **That pin is the single declaration of which reader judges this tree.** There is no second
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
 with the first only until somebody edits one of them.
 
-**The pin follows the registry by bot PR, within a day of a release publishing, weekends included (3F-3529, 3F-3530, 3F-3557).** `.github/dependabot.yml`
+**The pin follows the registry by bot PR, within a day of a release publishing, weekends included.** `.github/dependabot.yml`
 lets Dependabot move exactly this one dependency, and keeps it exact. `dependabot-auto-merge.yml`
 merges its PR once `ci` is green. The PR touches the root `package.json` and the lockfile, neither of
 which is in `release.yml`'s `paths:`, so its merge publishes nothing and cannot loop.
 
-**The bot sees the root pin only because `packages/spec-controller` is excluded from its view
-(3F-3530).** Dependabot's npm parser drops every manifest requirement whose name is also the name of
+**The bot sees the root pin only because `packages/spec-controller` is excluded from its
+view.** Dependabot's npm parser drops every manifest requirement whose name is also the name of
 a workspace package, and the workspace package here is named `spec-controller` — the name the root
 pins from the registry. The bot's first pin PR, #311, therefore moved no pin: it rewrote
 `pnpm-lock.yaml` alone and left the root at `0.1.0-alpha.3`. `exclude-paths: [packages/spec-controller]`
@@ -223,7 +223,7 @@ A refused PR fails that job with the reason and is left disarmed; `ci` still gat
 that passes.
 
 **Dependabot checks once a day, every day, weekends included, so no human act is needed in the
-pin loop (operator, 2026-09-19, 3F-3557).** The schedule is `interval: cron` with
+pin loop (operator, 2026-09-19).** The schedule is `interval: cron` with
 `cronjob: "0 22 * * *"`, which is 22:00 UTC on all seven days. `daily`, which this replaced, runs
 Monday to Friday only, so a release published on a Saturday waited for Monday or for a person. Once a
 day is as often as GitHub allows: its config check rejects any `cronjob` that fires more often than
@@ -244,7 +244,7 @@ and `@3f-consulting/spec-controller-core`, and nothing else. Measured over a Dep
 that pinned `0.1.0-alpha.12` three hours after it published: with no exemption the frozen install
 reds with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`, naming both entries; with both names it passes;
 with `spec-controller` alone it reds naming core. The exemption names packages, not versions, so
-unlike the version-pinned pair 3F-3529 removed it needs no pruning; every other dependency stays
+unlike a version pin it needs no pruning; every other dependency stays
 under the policy in full.
 
 **When the model moves and the pinned reader can no longer read the tree**, the cure is the expand
@@ -253,7 +253,7 @@ reach it.
 
 **Never widen the pin to escape a skew.** A range or a dist-tag would make the red go away by
 making the reader unpredictable, which is the failure this arrangement exists to end. This is a
-convention and no guard enforces it: measured at `3F-3476`, `grep -rn devDependencies --include='*.ts'`
+convention and no guard enforces it: measured once, `grep -rn devDependencies --include='*.ts'`
 returned two readers of the root `devDependencies` and both left with that slice, so nothing in the
 tree reds on a widened specifier.
 
@@ -308,7 +308,7 @@ that is a rule rather than an oversight:
 The self-reconciliation is a statement about this repository's own bookkeeping. The fitness axis is
 the same category row for row — complexity bars, corpus traceability, anemic-domain conformance,
 this suite's own mutation score, the duration of the observer. Not one of those says the tarball
-works. `SCN-FIT-011` is `pnpm typecheck`, and the release runs it directly, so the one
+works. The type-soundness row is `pnpm typecheck`, and the release runs it directly, so the one
 artefact-relevant member of the axis is covered on its own terms.
 
 Two things go wrong when a release does ask:
@@ -317,7 +317,7 @@ Two things go wrong when a release does ask:
   published* spec-controller and the model moves, the self-reconciliation reds — and the only cure is
   publishing a version that can read the new tree. A release path consulting the reconciliation
   would refuse to publish the cure for the disease.
-- **A lapsed cron blocks a release.** `SCN-FIT-002` is answered by the verdict of a **scheduled
+- **A lapsed cron blocks a release.** The mutation row is answered by the verdict of a **scheduled
   nightly sweep**, and its step fails when no sweep of `main` finished inside the last 26 hours. A
   release path that ran it would refuse to publish whenever the schedule had lapsed. The row's
   earlier shape, a record fetched from the nightly, was measured doing exactly that on a real
@@ -336,7 +336,7 @@ already passed all of them, because **every release run is a merge**. `release.y
 The reader that judges this tree is the **pinned published** spec-controller, so a change to the
 model it reads cannot land in one merge: on the branch that makes the change, the pinned reader is
 still the old one and `Self-reconciliation balance` reds. There was once a hatch here — a release
-started by hand from the branch, before it merged. It is gone (3F-3551), along with `release.yml`'s
+started by hand from the branch, before it merged. It is gone, along with `release.yml`'s
 manual trigger, and **nothing publishes except a merge to `main`.**
 
 A change like that lands as a **parallel change** — *expand–migrate–contract* — over two merges and
@@ -366,12 +366,11 @@ read the tree, so `main` reds. And if a newer reader turns the tree red, the bot
 goes red — that red is a finding about the tree, fixed in the tree, never by holding the pin back or
 publishing by hand.
 
-**Worked example — 3F-3582 and 3F-3603.** 3F-3582 taught the reader to raise a fitness obligation
-from the `@fitness` tag alone, and to accept a manifest still carrying `specController.fitnessChecks`
-by naming it as a retired key. Its migrate step, 3F-3603, deletes that key from this repository's own
-`package.json` — and it waits, because the pinned reader cannot read a tree with no list at all until
-the bot's PR moves the pin to 3F-3582's release. Written *at or after* that release, never as an
-equality: the pin lags and jumps. (Its predecessor pair, 3F-3525 and the cancelled 3F-3575, made the
-same shape one step earlier.) **The acceptance that example turns on was itself withdrawn later,
-by 3F-3606** — the reader no longer accepts the key or names it — which changes nothing about the
+**Worked example — retiring `specController.fitnessChecks`.** The expand merge taught the reader to
+raise a fitness obligation from the `@fitness` tag alone, and to accept a manifest still carrying
+`specController.fitnessChecks` by naming it as a retired key. Its migrate step deletes that key from
+this repository's own `package.json` — and it waits, because the pinned reader cannot read a tree
+with no list at all until the bot's PR moves the pin to the expand merge's release. Written *at or
+after* that release, never as an equality: the pin lags and jumps. **The acceptance that example
+turns on was itself withdrawn later** — the reader no longer accepts the key or names it — which changes nothing about the
 ordering rule the example teaches: step 3 still cannot merge before the pin has moved.

@@ -1,18 +1,3 @@
-/**
- * Ingest the target's quality-check inputs — the IMPURE reads behind the balance
- * command (split out of the old cli.ts). Reads evidence
- * obligations from the repo's feature files, observed evidence from the Vitest +
- * Cucumber result JSON, and the static-check evidence from the CI config + package.json,
- * turning each into the engine's in-memory model. The orchestration (arg parsing, the
- * output plan/write, main) stays in cli-balance/cli.ts; these are the file reads it calls.
- *
- * Configurable input paths (no adapter registry in v1 — the readers are named, not
- * registered). Missing result files are tolerated: their evidence is simply absent
- * (the scenario reconciles as missing for that level). The static check kind reads
- * `--ci` (a workflow file or a directory of them, default `.github/workflows`) +
- * `package.json` to observe each fitness check the corpus cites.
- */
-
 import { readFileSync, existsSync } from "node:fs";
 import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
@@ -43,12 +28,6 @@ import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
-// THE WHOLE COMPOSITION, THROUGH THE PUBLIC BARREL AND NOTHING ELSE. This module travels
-// in the tarball, and it once reached nine core symbols through the UNPUBLISHED
-// `./internal` subpath to assemble the reconciliation itself — which is why an installed
-// `spec-controller balance --help` threw ERR_PACKAGE_PATH_NOT_EXPORTED while every gate in this
-// workspace stayed green. The nine are still internal; what moved is
-// their CALLER. What is left here is the reads: this edge opens the files and hands the bytes over.
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -59,97 +38,28 @@ import type {
   EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
 
-/**
- * The per-input FALLBACK quality-check for each JS-ecosystem result source — the
- * source→quality-check mapping, SET at the CLI edge rather than hardcoded in the core
- * parsers / countRuntimeEvidenceObservationKinds. A second ecosystem (pytest / JUnit) sets its own here (or
- * via an adapter); the core never assumes a mapping. No CLI override flag yet — that
- * earns its place at the second ecosystem, not now.
- */
 const VITEST_QUALITY_CHECK: RuntimeQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
-/**
- * THIS TOOL, RUN TO RECONCILE — the invocation whose step is the
- * reconciler rather than one of the reconciled rows, SET at the CLI edge and injected into the
- * core like the prefixes above and the workflow names below.
- *
- * HOW THIS PRODUCT IS INVOKED IS THIS LAYER'S FACT. `spec-controller` is the `bin` this package
- * publishes and `balance` is the command that reconciles; the engine holds neither, and a core
- * that assumed them would be asserting something about a command line it never sees.
- *
- * BOTH TOKENS, AND THE SECOND IS NOT DECORATION. A step running the same binary for anything but
- * `balance` is an ordinary step of the pipeline being reconciled, so an invocation naming the
- * binary alone would take that step off the books. The comparison is whole, adjacent shell tokens
- * (`parse/commandRuns`), so this names the reconciliation and nothing else the tool can do.
- */
 const RECONCILER_INVOCATION = "spec-controller balance";
 
-/**
- * The reconciler's resolved input paths — the CLI options threaded to the readers.
- * Every path is optional; a missing result file is tolerated (its evidence is
- * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
- * static-check reader reads `exists` from (the --package-json seam):
- * default the tool's own cwd `package.json`; set it to reconcile ANOTHER repo's
- * static checks — required to render the historical watermelon correctly.
- */
 export interface ReconcileOptions {
   features?: string;
   vitest?: string;
   cucumber?: string;
   ci?: string;
   packageJson?: string;
-  /**
-   * The CI RUN'S OWN RECORD of what each of its steps did — the credit
-   * side of every CONVERTED fitness check, written by the consumer's own pipeline and by neither
-   * party to this reconciliation.
-   *
-   * KEPT APART FROM `ci` BECAUSE THE TWO DOCUMENTS ANSWER DIFFERENT QUESTIONS. The workflow FILE
-   * says a check is wired into this pipeline and which row its step cites — a fact about a
-   * repository, true between runs. This is one RUN's record: did it run this time, and what did it
-   * find. Optional like the other result files: a consumer whose pipeline dumps no record, or a
-   * local run with no pipeline at all, hands none, and the converted rows it would have answered
-   * read `missing`.
-   */
   ciSteps?: string;
 }
 
-/** Where the CI workflows are read from when `--ci` is not given. */
 export const DEFAULT_CI_PATH = ".github/workflows";
 
-/** The target's manifest when `--package-json` is not given: the one in the directory the run is in. */
 export const DEFAULT_PACKAGE_JSON = "package.json";
 
-/** Read + JSON-parse a file if present, else return undefined. */
 function readJsonIfPresent<T>(path: string | undefined): T | undefined {
   if (!path || !existsSync(path)) return undefined;
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
-/**
- * THE CORPUS `balance` READS — the shared discovery, with an ABSENT directory read as NO CORPUS.
- * The single place this command opts in.
- *
- * `new-client` is a supported adoption state, not a degraded one, and most targets have no
- * `features/` directory at all — so an absent DEFAULT corpus is the target's honest shape and
- * `balance` reports on it. Left to escape it was a raw `ENOENT` landing on Node's default exit 1,
- * the OUT-OF-BALANCE code, which is exactly the collision the unreadable-input guards closed on every
- * other input, alive on the one path each new consumer is guaranteed to take.
- *
- * ONE HELPER, NOT FIVE CATCHES, and that is the whole reason it exists: five readers each doing
- * this by hand is five chances for one to stay intolerant, and a run that reports on a corpus for
- * four of its readings and throws on the fifth is worse than one that throws. The translation is
- * also why `discoverFeatures` is not the place to be tolerant — see its own note, and
- * `MissingFeatureCorpusError`'s.
- *
- * IT IS `[]`, NOT A VERDICT. Zero rows is what the verdict reads as NOTHING TO RECONCILE, and a
- * corpus-less target that still has uncited credits keeps its suspense row and its exit 1
- * — this reader says what it found, never what the run means.
- *
- * A supplied-but-absent `--features` never arrives here: `checkInputsExist` refuses it at the CLI
- * edge, exit 2. The precedent is `ciSourcePathsOf`, which already answers an absent
- * DEFAULT `.github/workflows` with `[]` for the same reason — the default finding nothing is a fact
- * about the target, not a mistake by its author.
- */
 function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
   try {
     return featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
@@ -159,12 +69,6 @@ function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
   }
 }
 
-/**
- * The discovered feature corpus's SOURCES — read once so the two readings a citing run needs (the
- * obligations, and the corpus hop's `check tag → @SCN`) are taken from the same bytes. Two
- * discoveries could disagree about the corpus, and a citation resolved against a corpus the ledger
- * was not built from is exactly the phantom-row fault.
- */
 function featureSources(featuresDir: string | undefined): string[] {
   return balanceCorpus(featuresDir).map((f) => readFileSync(f.path, "utf8"));
 }
@@ -176,18 +80,6 @@ function scenariosFromFeatures(
   return featureSources(featuresDir).flatMap((source) => parseScenarios(source, deferralTags));
 }
 
-/**
- * The feature corpus's UNTAGGED half — the scenarios `parseScenarios`
- * discards because they carry no `@SCN`. They are REAL scenarios: cucumber runs them, so each
- * owns a real Evidence Obligation — but the obligation has no code for an Evidence Observation to
- * link to, so it can never be discharged. `reconcile` gives each its own out-of-balance row
- * (`no-scn-code`); before this read they were invisible to the ledger, and a run whose only fault
- * was an untagged scenario printed "N scenario(s) carry no @SCN tag" and exited 0 BALANCED.
- *
- * Each is handled by its `<feature> : <scenario>` locator — the SAME locator the untagged warning
- * prints — because a bare scenario name is not unique across the corpus, and the row must say
- * where to go.
- */
 function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
   return balanceCorpus(featuresDir).flatMap((f) =>
     parseUntaggedScenarios(readFileSync(f.path, "utf8")).map(
@@ -196,22 +88,6 @@ function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[
   );
 }
 
-/**
- * The feature corpus's INTEGRITY CHECKPOINT — validate every discovered
- * `.feature` with the REAL Gherkin parser and report the files it cannot read.
- *
- * The feature corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
- * never consulted a parser — so a malformed tag line silently deleted its scenario, and a corrupt
- * spec could read BALANCED. A file the parser rejects is one cucumber would refuse to run: the
- * CLI halts on it (exit 2) rather than reconciling a corpus that is a fiction.
- *
- * THIS IS NOW THE CATCH SITE, NOT THE CALL SITE. The validation moved
- * into `discoverFeatures`, which REFUSES an unreadable corpus rather than returning one, so every
- * corpus reader inherits the refusal instead of each restating it. What is left here is the
- * translation back into the list this CLI edge already prints — same files, same order, same
- * verbatim parser messages, so `balance`'s behaviour is unchanged. Anything that is not a corpus
- * refusal is not ours to interpret and rethrows.
- */
 export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
   try {
     balanceCorpus(featuresDir);
@@ -222,28 +98,17 @@ export function featureCorpusParseErrors(featuresDir: string | undefined): Gherk
   }
 }
 
-/** A read of the feature corpus or the CI workflows that the operating system refused. */
 export interface InputReadFault {
   readonly path: string;
   readonly reason: string;
 }
 
-/**
- * A read the operating system refused, as a fault naming the path; null for anything else. Every
- * refusal is the same fault to the run, whichever it is: a file where a directory is read or the
- * reverse, a path it is not permitted to read, or any other reason the OS gives.
- */
 function readFaultOf(err: unknown, path: string): InputReadFault | null {
   const errno = err as NodeJS.ErrnoException;
   if (!(err instanceof Error) || typeof errno.code !== "string") return null;
   return { path: errno.path ?? path, reason: err.message };
 }
 
-/**
- * The read of the feature corpus that failed, taken by the same discovery the reconcile uses, or
- * null when it reads. A file the Gherkin parser rejects is not this fault: it is reported by
- * `featureCorpusParseErrors`, after this.
- */
 export function corpusReadFault(featuresDir: string | undefined): InputReadFault | null {
   try {
     balanceCorpus(featuresDir);
@@ -256,7 +121,6 @@ export function corpusReadFault(featuresDir: string | undefined): InputReadFault
   }
 }
 
-/** The read of a CI workflow that failed, over the same files the reconcile reads, or null when they all read. */
 export function ciReadFault(ciPath: string | undefined): InputReadFault | null {
   const path = ciPath ?? DEFAULT_CI_PATH;
   try {
@@ -269,7 +133,6 @@ export function ciReadFault(ciPath: string | undefined): InputReadFault | null {
   }
 }
 
-/** One workflow file's read, whose failure carries the file's path, which reading a directory gives none of. */
 function readCiSource(source: string): void {
   try {
     readFileSync(source, "utf8");
@@ -280,18 +143,6 @@ function readCiSource(source: string): void {
   }
 }
 
-/**
- * Read the target's `feature-code → slug` map over the same `discoverFeatures` corpus
- * — each coded feature file's `@<FFF>` header (`featureCode`)
- * mapped to its filename `slug`, the full feature name. This is the mapping
- * `scenariosFromFeatures` discards (it keeps only the parsed scenarios). A sibling read to
- * the balance, threaded to `renderMarkdown` (via `writeOutputs`) as the 5th sibling arg
- * (markdown-only — the by-feature cut is markdown-only, so it is NOT serialised to JSON).
- * Uncoded files (`featureCode === null`) are omitted, so the by-feature emitter falls
- * back to the bare `FFF` for any id whose code no file registers. When two files carry one
- * code the map keeps the last, and that run lists `duplicate-feature-code` under Scenario code
- * errors and fails, so a report whose map is ambiguous never passes.
- */
 export function readFeatureNames(featuresDir?: string): Map<string, string> {
   const map = new Map<string, string>();
   for (const f of balanceCorpus(featuresDir)) {
@@ -300,16 +151,6 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
   return map;
 }
 
-/**
- * Read the scenario-corpus census over the discovered feature files (the same
- * `discoverFeatures` corpus `scenariosFromFeatures` reads): sum the raw @SCN
- * occurrences (`countScnOccurrences`) and the scenario count
- * (`parseScenarios(...).length`) across every file, and build the `EvidenceObligations`
- * sibling. Also collects the UNTAGGED scenarios
- * — `parseUntaggedScenarios` per file, each paired with its feature-file
- * locator, sorted by (feature, scenario). Read alongside the balance in `main()` and
- * threaded to the renderers via `writeOutputs`; `runReconcile` stays unchanged.
- */
 export function readEvidenceObligations(features?: string): EvidenceObligations {
   const featureFiles = balanceCorpus(features);
   let raw = 0;
@@ -330,19 +171,9 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   untagged.sort(
     (a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario)
   );
-  // The prose-only codes are a CROSS-CORPUS difference (a code tagged in any file isn't
-  // dangling), so it reads all sources at once — not per-file like the others.
   return evidenceObligations(raw, scenarioCount, untagged, proseOnlyCodes(sources), sharedScnCodesOf(files));
 }
 
-/**
- * Parse the target's RUNTIME observations ONCE — the tag-derived, per-tier observation set
- * fed to BOTH the reconciler and the runtime census, so the
- * two can never disagree. Each source's FALLBACK quality-check is set at the CLI edge
- * (vitest⇒unit, cucumber⇒integration); the parsers DERIVE the level from the cited scenario's tier
- * tag, using the fallback only for an untagged scenario. A missing report
- * contributes nothing. Root-relative so a phantom-scenario row's where-to-fix stays portable.
- */
 function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
   const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
@@ -352,20 +183,6 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
   return out;
 }
 
-/**
- * Reconcile obligation-vs-observation evidence into the Ledger for a target tree, from a SINGLE parse of
- * the runtime observations. The runtime evidence-observation
- * VIEWS (Test volume, the evidence grid) are no longer counted here: they are FOLDS the renderers
- * derive off THIS Ledger's posted credits (the runtime census is retired),
- * so they cannot drift from the verdict (they ARE the same rows). This function's job is now just
- * to produce the balance.
- */
-/**
- * The TARGET's manifest as the reconcile composition reads it — the `scripts` the `exists` read
- * consults, and the `specController` block its resolvers narrow. Every field of it is `unknown`
- * until the engine narrows it, so the type is a statement about what a manifest on disk IS rather
- * than a contract owed to anyone.
- */
 type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
@@ -375,32 +192,12 @@ type TargetManifest = PackageJsonScripts & {
 };
 
 export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
-  // Read the target's package.json ONCE — its `specController.*` config supplies the deferral-tag
-  // extension and the configured fitness rows, and its `scripts` back the `exists`
-  // read. The disk read stays at this impure edge; the engine takes the resolved values as
-  // injected params, staying pure.
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
-  // The TARGET repo root — the credit locators are made relative to it, so a phantom-scenario row's
-  // where-to-fix (ruling Q5) stays portable in a banked artefact. Resolved ONCE here and threaded,
-  // which is also what keeps `execFileSync` and `process.cwd()` out of the engine.
   const root = resolveTargetRoot({ features: opts.features });
-  // `--ci` names a workflow FILE or a DIRECTORY of them, and defaults to the directory
-  // A pipeline split across files enforces its checks just as one
-  // file does, and reading only ci.yml both invents watermelons for named checks enforced
-  // elsewhere and drops uncited ones off the books entirely. Path semantics carry the
-  // file-vs-directory distinction, so one flag stays one flag and an explicit file is still
-  // a narrowing.
   const ciPath = opts.ci ?? DEFAULT_CI_PATH;
-  // RESOLVED ONCE, READ TWICE. The engine takes anonymous source strings and holds
-  // no filesystem, so the mapping from a step's source index back to the workflow file it came
-  // from is made HERE, where the paths are already in hand — `ciSourcePaths.ts` is explicit that
-  // keeping the core that way is the point. Resolving the list twice would be two chances for the
-  // bytes and the names to fall out of the order they are paired by.
   const ciPaths = ciSourcePathsOf(ciPath);
 
-  // The corpus, discovered and read ONCE: its bytes, and — paired by index — which file each came
-  // from and the header code it carries, for the scenario code errors.
   const corpusFiles = balanceCorpus(opts.features).map((f) => ({
     slug: f.slug,
     featureCode: f.featureCode,
@@ -408,45 +205,18 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   }));
 
   return evidenceReconciliationFromSources({
-    // The corpus's bytes, read ONCE at this impure edge. The engine composes the three
-    // readings a citing run needs from this one array, so they cannot be assembled from two
-    // discoveries that disagree about the corpus.
     featureSources: corpusFiles.map((f) => f.source),
     featureFiles: corpusFiles.map(({ slug, featureCode }) => ({ slug, featureCode })),
-    // The untagged half by its `<feature> : <scenario>` locator — parsed here because the locator
-    // names the FILE, which the discovery knows and a source string does not.
     untaggedScenarios: untaggedScenariosFromFeatures(opts.features),
     packageJson,
     ciSources: ciPaths.map((path) => readFileSync(path, "utf8")),
-    // THE FILE, NOT THE PATH. A `notChecks` entry opens with the workflow's own name — `ci.yml`,
-    // `release.yml` — which is what a consumer reads at the head of their run log and the only
-    // half of the entry that does not come out of the workflow's own text. The directory it sits
-    // in is the caller's `--ci`, not the consumer's subject, so it is not part of what they write.
     ciSourceNames: ciPaths.map((path) => basename(path)),
-    // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it is
-    // undefined rather than empty, and that distinction reaches the reader: "no
-    // record" is a run nobody recorded, "a record holding nothing" is a run that recorded none of
-    // these steps, and those are opposite facts.
-    // STRUCTURALLY, NOT BY NAME: this module travels in the tarball and reaches core through the PUBLIC barrel alone, and
-    // `CiStepRecord` is not on it. The shape is the document's, which is the consumer's, so what is
-    // written here is what the file holds rather than a contract owed to anyone.
     ciStepRecord: readJsonIfPresent<Record<string, { outcome?: string; conclusion?: string }>>(
       opts.ciSteps
     ),
     runtimeObservations: parseRuntimeObservations(opts, root),
-    // The two things the engine's resolvers cannot hold, and each for its own reason: the
-    // starter deferral set is the application layer's own policy, and how this tool is invoked to
-    // reconcile is a fact about this product's command line. THE PREFIX SET USED TO SIT HERE AND IS GONE: the
-    // engine no longer decides a check's membership by its name, so there is no convention left
-    // for this edge to own.
     deferralTags: DEFAULT_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
   });
 }
 
-// The static-check kind-counts are no longer read as a parallel census:
-// the former `readStaticEvidenceObservationCounts` re-built the static check observations and
-// re-derived the running / uncited split from a second read of the CI config. That counting now
-// FOLDS onto the Ledger the reconciler already produced (`staticObservationTally`, an internal
-// domain fold the renderers apply), so it cannot drift from the verdict — it counts the SAME posted
-// static-check credits `runReconcile` banked. The census read is deleted, not relocated.

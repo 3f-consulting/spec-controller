@@ -1,11 +1,3 @@
-/**
- * Unit evidence for @SCN-RMD-009 (features/report-model.feature, 3F-3495): a row reads its evidence
- * in one order, whatever order the runner reported it in.
- *
- * Every case goes through the published `reconcile`, so what is pinned is what a caller of the
- * package sees, not a helper's return value.
- */
-
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";

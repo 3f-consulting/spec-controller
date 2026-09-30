@@ -6,11 +6,6 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 
-/**
- * The status a call leaves with: the exit code carried by whatever it threw, or `undefined` when it
- * returned. The refusal is thrown for the command to settle, so the call itself
- * carries the code.
- */
 function usageStatusOf(run: () => unknown): number | undefined {
   try {
     run();
@@ -31,7 +26,6 @@ const ctx: RunContext = {
 
 const payloads: OutputPayloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
 
-/** Each way a file destination can be unwritable, with the reason the operating system gives. */
 const UNWRITABLE: ReadonlyArray<readonly [string, (dir: string) => string, string]> = [
   ["a read-only file", (dir) => {
     const path = join(dir, "read-only.json");
@@ -64,7 +58,6 @@ const toFile = (path: string, fmt: "md" | "json" = "json"): OutputPlan => ({
 let scratch: string;
 let stderr: string[];
 
-/** Whether the temporary volume tells two names apart by case, as ext4 does and APFS by default does not. */
 function volumeIsCaseSensitive(): boolean {
   const dir = mkdtempSync(join(tmpdir(), "spec-controller-case-"));
   try {

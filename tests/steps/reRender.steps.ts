@@ -1,11 +1,3 @@
-/**
- * Step definitions for the re-render Rules of features/cli-balance.feature: a live run over a
- * fixture target saves its report, and the real binary re-renders it.
- *
- * Each live run stands in its fixture's own directory and names only the inputs that directory
- * holds, so no default resolved against the cwd reaches this tree's own CI or manifest.
- */
-
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
@@ -14,7 +6,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
-/** Each verdict a saved report can carry: the fixture that reconciles to it, and any live flag. */
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "all-balanced": { fixture: "balanced", flags: [] },
   "out-of-balance": { fixture: "evidence-observation", flags: [] },
@@ -34,7 +25,6 @@ function spawnController(args: string[], cwd: string): SpawnSyncReturns<string> 
   return result;
 }
 
-/** The inputs a fixture directory holds, named relative to it. */
 function fixtureInputs(dir: string): string[] {
   const args = ["--features", "features"];
   for (const [flag, file] of [["--vitest", "vitest.json"], ["--cucumber", "cucumber.json"], ["--package-json", "package.json"]]) {
@@ -43,7 +33,6 @@ function fixtureInputs(dir: string): string[] {
   return args;
 }
 
-/** Run the fixture live and save its report as JSON; the saved path is what the re-render reads. */
 function saveLiveRun(fixture: string, flags: string[]): string {
   const dir = join(process.cwd(), "tests", "fixtures", fixture);
   scratch ??= mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
@@ -53,7 +42,6 @@ function saveLiveRun(fixture: string, flags: string[]): string {
   return path;
 }
 
-/** The `(exit N)` that ends the first non-empty line under the verdict heading, and nowhere else. */
 function headlineExit(stdout: string): number {
   const after = stdout.split("### Run verdict")[1] ?? "";
   const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
@@ -68,7 +56,6 @@ Given(/^a saved reconciliation of a target that reconciles (.+)$/, function (ver
   savedReport = saveLiveRun(target.fixture, target.flags);
 });
 
-/** The same report as the live run saved it, less the strictness record a report saved before it lacks. */
 function withoutStrictRecord(path: string): string {
   const report = JSON.parse(readFileSync(path, "utf8")) as { runProvenance: Record<string, unknown> };
   assert.ok("strict" in report.runProvenance, "the live run recorded no strictness to remove");

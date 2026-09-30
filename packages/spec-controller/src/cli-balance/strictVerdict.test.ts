@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { runBalance } from "./cli.js";
 
-/** Run `balance` in-process; return what it printed and the status it left. */
 function runInProcess(argv: readonly string[]): { stdout: string; exitCode: number } {
   const savedExitCode = process.exitCode;
   process.exitCode = 0;
@@ -21,7 +20,6 @@ function runInProcess(argv: readonly string[]): { stdout: string; exitCode: numb
   }
 }
 
-/** The `(exit N)` that ends the first non-empty line under the verdict heading. */
 function headlineExit(stdout: string): number | undefined {
   const after = stdout.split("### Run verdict")[1] ?? "";
   const line = after.split("\n").find((l) => l.trim() !== "") ?? "";

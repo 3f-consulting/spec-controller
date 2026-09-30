@@ -1,12 +1,3 @@
-/**
- * The @unit arm of @SCN-CLI-061 — a host modifier given after the command is refused as out of
- * place, naming where it goes, with none of the pin advice an unregistered flag gets (3F-3639). The
- * @e2e arm in tests/steps/cliBalance.steps.ts proves it through the real binary.
- *
- * The modifiers are read from the registry's global scope, never listed; the wording is never pinned
- * (features/message-catalogue.feature).
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { checkMisplacedHostModifiers } from "./cli-args.js";

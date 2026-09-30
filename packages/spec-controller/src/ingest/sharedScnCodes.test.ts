@@ -1,9 +1,3 @@
-/**
- * @unit for @SCN-STG-017 (3F-3609) at the INGEST EDGE — `readEvidenceObligations` names every
- * code the corpus carries on more than one scenario, and who carries it, by `feature : scenario`.
- *
- * Bidirectional evidence: the describe carries the @SCN-STG-017 id matching features/scn-tags.feature.
- */
 import { describe, it, expect } from "vitest";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

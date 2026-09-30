@@ -1,9 +1,3 @@
-/**
- * The host's own tokens are those before the command it hands the rest to, or every token when it
- * hands them to none; a help token handed to a command stays the command's. The modifiers, the
- * commands and the command flags are read from the registry, never listed.
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
@@ -15,7 +9,6 @@ const commandFlags = [
   ...new Set(cliRegistry.commands.flatMap((command) => command.flags.map((flag) => flag.name))),
 ].filter((name) => !HELP.includes(name));
 
-/** Each way the host refuses its own tokens, with the help token placed beside the refused one. */
 function refusedWithHelp(help: string): string[][] {
   return [
     ...commandFlags.map((flag) => [flag, help]),

@@ -1,22 +1,11 @@
-/**
- * The @unit arms of 3F-3672's Rule — every argument to a command is read as what it is, or refused.
- * The @e2e arms in tests/steps/cliBalance.steps.ts prove the same refusals through the real binary.
- *
- * Which flags take a value, which take none and which repeat are read from the registry, never
- * listed here, so a flag registered later is asserted without a new row. The wording is never
- * pinned (features/message-catalogue.feature): only the token named and the kind of fault.
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkArgvShape } from "./cli-args.js";
 
 const balanceFlags: readonly FlagSpec[] = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
 
-/** Every balance flag once, each value flag with a value: an argv with nothing wrong in it. */
 const wellFormed: string[] = balanceFlags.flatMap((flag) => (flag.arg === undefined ? [flag.name] : [flag.name, "v"]));
 
-/** The registry with one more balance flag, as a later version would register it. */
 function withBalanceFlag(flag: FlagSpec): CliRegistry {
   return {
     ...cliRegistry,
@@ -26,7 +15,6 @@ function withBalanceFlag(flag: FlagSpec): CliRegistry {
   };
 }
 
-/** True when one line of the refusal names the token together with the kind of fault. */
 function namesOnOneLine(refusal: string | null, token: string, fault: RegExp): boolean {
   return (refusal ?? "").split("\n").some((line) => line.includes(token) && fault.test(line));
 }
@@ -124,7 +112,6 @@ describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused nam
 });
 
 describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice", () => {
-  /** True when the refusal names the form as not read, gives the spelling, and gives no other advice. */
   function refusesTheForm(refusal: string | null, written: string, spelling: string): boolean {
     return (
       namesOnOneLine(refusal, written, /not read/i) &&

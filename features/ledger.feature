@@ -39,10 +39,9 @@ Feature: Ledger over obligation-vs-observation evidence
 
     A runner emits one credit per test, so a scenario cited by several tests carries several
     credits at one quality check. Each is read on its own, and the obligation reads the worst of
-    those readings — failing over watermelon over satisfied — on every quality check (3F-3547,
-    3F-3552). A failed one is a failing observation whatever passed beside it, and nothing about
+    those readings — failing over watermelon over satisfied — on every quality check. A failed one is a failing observation whatever passed beside it, and nothing about
     where its file sorts may discharge it. The item names the first credit carrying that outcome
-    in the order the books read evidence in (@SCN-RMD-009); the rest stay posted on the row.
+    in the order the books read evidence in; the rest stay posted on the row.
 
     @unit @integration @SCN-LDG-036
     Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
@@ -87,11 +86,6 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a multi-evidence obligation out-of-balance scenario lists every reconciling item, none ranked
 
-    # The multi-evidence obligation proof of the verdict model: two
-    # evidence obligations in one scenario, failing one way AND missing the other. This is
-    # the case that observably distinguishes "report EVERY reconciling item" from
-    # the old "missing beats failing" prioritisation — both items must appear, with
-    # no ranking, exercising the (kind, level) multi-level keying.
     @unit @integration @SCN-LDG-004
     Scenario: a multi-evidence obligation scenario failing one level and missing another lists both reconciling items
       Given a scenario "SCN-LDG-004" requiring both unit-level and integration-level evidence
@@ -120,8 +114,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the ledger reports "SCN-PHM-999" as a phantom-scenario reconciliation with a cites-unknown-scenario item
       And the phantom-scenario "SCN-PHM-999" is out of balance
 
-    # A phantom item's SHAPE, one destination over from @SCN-LDG-008: it carries what the
-    # credit has a value for, and omits — not nulls — the keys it does not.
     @unit @integration @SCN-LDG-034
     Scenario: a phantom row's item carries the keys its credit has a value for and omits the rest
       Given a scenario "SCN-LDG-034" requiring unit-level evidence
@@ -173,8 +165,6 @@ Feature: Ledger over obligation-vs-observation evidence
       When the reconciler runs
       Then the ledger reports "SCN-LDG-008" with a no-evidence-obligation item at integration
 
-    # Detection keys on rows-emitted, not on `qualityCheckReconciliations.length === 0` — the
-    # both-missing boundary this scenario pins against @SCN-LDG-009.
     @unit @integration @SCN-LDG-010
     Scenario: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation, not both-missing
       Given a zero-evidence obligation scenario "SCN-LDG-010"
@@ -185,7 +175,7 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a scenario with zero rows on both sides is both-missing
 
-    The neither-side reconciling item (@SCN-LDG-009) — the last shape the
+    The neither-side reconciling item — the last shape the
     bidirectional reconciler emits. A scenario that reconciles to ZERO rows on
     BOTH sides — no evidence obligation AND no citing evidence observation — has nothing
     to balance in either direction. It posts one degenerate Quality Check Reconciliation,
@@ -206,7 +196,7 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a runtime observation's level is the cited scenario's own tier tag, not the input source
 
-    The headline of the tag-derivation fix (SCN-LDG-011). A runtime observation's
+    The headline of the tag-derivation fix. A runtime observation's
     level comes from the CITED scenario's own tier tag (integration / e2e /
     performance), NOT from the input source that produced it. Cucumber is an
     orchestrator ACROSS levels — a scenario names its tier by tag and cucumber runs
@@ -225,12 +215,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the scenario is balanced
       And it is not reported e2e-missing with a no-evidence-obligation integration observation
 
-    # The regression pin (SCN-LDG-012): the integration tier used to be correct by
-    # ACCIDENT — the old CUCUMBER_QUALITY_CHECK="integration" hardcode happened to agree
-    # with an @integration scenario. This pins that generalising the level to tag-DERIVATION
-    # did not regress the tier that used to be right-by-coincidence. The observation carries
-    # a CONTRASTING non-integration source (see the steps), so its integration level can only
-    # come from DERIVING the scenario's @integration tag — never from the source fallback.
     @unit @integration @SCN-LDG-012
     Scenario: an @integration scenario proven via cucumber satisfies its integration obligation
       Given a scenario tagged @integration
@@ -238,9 +222,6 @@ Feature: Ledger over obligation-vs-observation evidence
       When the ledger reconciles the target
       Then the integration obligation is satisfied and the scenario is balanced
 
-    # The @unit tag is inert for cucumber (vitest is the unit substrate, its level never derived),
-    # so cucumber does not double-count unit. No reconciler change — the ledger's (scnId, level)
-    # matching balances each tier.
     @unit @integration @SCN-LDG-013
     Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both tiers
       Given a scenario tagged @unit @e2e
@@ -249,10 +230,6 @@ Feature: Ledger over obligation-vs-observation evidence
       When the ledger reconciles the target
       Then both the unit and the e2e obligations are satisfied and the scenario is balanced
 
-    # Why discharging BOTH non-unit tiers from ONE cucumber pass is honest and not double-crediting
-    # (Evidence Manifesto §11): §11 complementarity is scoped to @unit-vs-the-run — different
-    # runners, isolation vs the integrated system — so @unit still needs its own vitest observation;
-    # it does NOT bite WITHIN the cucumber tiers. No new reconciling-item type, no flag.
     @unit @integration @SCN-LDG-014
     Scenario: an @integration @e2e scenario with one cucumber observation satisfies both non-unit tiers
       Given a scenario tagged @integration @e2e
@@ -260,10 +237,6 @@ Feature: Ledger over obligation-vs-observation evidence
       When the ledger reconciles the target
       Then both the integration and the e2e obligations are satisfied and the scenario is balanced
 
-    # @unit is not a cucumber-derivable tier (unit is vitest's substrate, never derived from a
-    # cucumber report), so the observation derives no level and falls back to the JS-ecosystem
-    # default (integration) — a check this scenario never named. Contrast the null-scnId suspense
-    # row of @SCN-LDG-007: this credit cites a REAL scenario, so it lands on that scenario's row.
     @unit @integration @SCN-LDG-015
     Scenario: a cucumber observation for a @unit-only scenario discharges nothing and is no-evidence-obligation
       Given a scenario tagged @unit only
@@ -272,25 +245,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the cucumber observation is reported no-evidence-obligation
       And the @unit obligation remains the scenario's only required evidence
 
-  # MOST-SPECIFIC-CITATION-WINS (SCN-LDG-016). Vitest's `fullName` is the ANCESTOR PATH
-  # (outermost describe → innermost it); the assertion's OWN name is `title`. The reader
-  # matched the FIRST @SCN in `fullName + " " + title`, so a grouping describe's bracket
-  # citation SHADOWED a self-citing child it: the leaf's own scenario reconciled `missing`
-  # while the ancestor took a spurious SECOND credit. Found by an adopter's repository CI dogfood
-  # (2026-07-13) — SCN-CLI-007 and SCN-CLI-041 false-red `missing` against passing,
-  # self-citing tests. The fix is leaf-title-first, ancestor-path fallback: most-specific-
-  # wins, done SEMANTICALLY (which name is the assertion's own) rather than positionally
-  # (rejected: last-match on the concatenation, which misfires when a leaf's prose names a
-  # second scenario after its own). Both halves of the rule reconcile in ONE pass, so they
-  # are ONE scenario: a two-assertion report — one self-citing leaf, one BARE sibling leaf
-  # beneath the same citing describe — exercises leaf-wins AND ancestor-fallback together.
-  # The Thens assert attribution-set IDENTITY, not a balance boolean: a bare "the ancestor
-  # is balanced" check is VACUOUS (the ancestor balances under the old code too — by BOTH
-  # leaves — and under the new one by the sibling alone). So they pin WHICH observation
-  # credits WHOM and HOW MANY, which is what locks the mirror symptom (the spurious double
-  # credit) a balance boolean would ship untested. Distinct step wording leaves
-  # LDG-011/012/013/014/015's steps byte-untouched; only the generic "the ledger reconciles
-  # the target" When is shared.
   Rule: a vitest assertion is attributed to the @SCN its own leaf cites, not its ancestor's
 
     @unit @integration @SCN-LDG-016
@@ -302,52 +256,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And the ancestor scenario carries exactly one crediting observation — the bare sibling leaf
       And both scenarios are balanced
 
-  # BROKEN, NOT ABSENT (SCN-LDG-017). A vitest file that fails to COLLECT reports
-  # `status: "failed"` with a message and ZERO assertionResults. The reader walked
-  # `assertionResults[]` only, so it saw nothing to emit — and the scenario whose proof lived in
-  # that file reconciled `missing`, indistinguishable from an unwritten test. A red harness
-  # masqueraded as a benign gap (found by an adopter's repository CI dogfood, 2026-07-13: SCN-HNS-002 read
-  # `missing` while its proving test existed and cited it correctly, the file having failed to
-  # collect on `Cannot find package '@cucumber/tag-expressions'`). The remedies differ — fix the
-  # harness vs write a test — so the ledger must distinguish them.
-  #
-  # Broken evidence names no test, so it cites no @SCN and CANNOT be attributed to any scenario:
-  # it is a sibling of `cites-no-scenario` (both land in suspense because they name no scenario),
-  # distinguished by broken-vs-completed. The scenario whose proof was in that harness STILL reads
-  # `missing` — honest at its own resolution (no evidence citing it arrived) — but the run now
-  # carries the fault, so the reader is sent to fix the harness rather than write a test that
-  # already exists.
-  #
-  # BOUNDARY: a runtime throw INSIDE a named `it` is attributable (vitest reports it with a name
-  # and status failed) and already lands as `failing`. `broken` is specifically the citation-less
-  # case — the harness broke before the behaviour was ever exercised.
-  #
-  # FAIL-SAFE (operator-mandated): `broken` is checked BEFORE `status`. A broken observation must
-  # NEVER reconcile as `failing` or `satisfied` — it names no scenario, so it can post to no
-  # scenario's row. Pinned in the @unit arm (reconcile.test.ts) under BOTH status values, not in
-  # the code alone.
-  #
-  # BROKEN IS READER-AGNOSTIC (SCN-LDG-019). @SCN-LDG-017 established `broken` over vitest's
-  # instance of it — a file that failed to COLLECT. The concept is not vitest's: it is evidence
-  # that NEVER MATERIALISED, reported as evidence that was never written. Cucumber has its own
-  # instance, and exactly one: a step whose harness is AMBIGUOUS — two step definitions match, so
-  # the step cannot run. The scenario cites its @SCN, the runner reports `ambiguous`, and the
-  # reader today DROPS it as inconclusive: the obligation reconciles `missing`, sending the reader
-  # to write a test that already exists while two step definitions collide.
-  #
-  # THE OTHER INCONCLUSIVE STATUSES STAY DROPPED, and stay honest: `undefined` (no step definition
-  # is written — the test genuinely is absent), `pending` (explicitly deferred), `skipped` (never
-  # ran). Only `ambiguous` is a BROKEN HARNESS: the proof exists and cannot execute.
-  #
-  # @SCN-PND-013's row `| ambiguous | missing |` STILL HOLDS — a bystander, not an Update. The
-  # fail-safe excludes a broken observation from the match whatever it carries, so the obligation
-  # still reconciles missing BY ABSENCE. What changes is that the run now also carries the broken
-  # item and is stamped unsound, so the reader is sent to the step definitions, not the test file.
-  #
-  # NOT DETECTABLE, AND NOT OWED: a step-definition module that FAILS TO LOAD. Cucumber exits
-  # before the formatter runs and writes NO JSON at all (probed, 2026-07-14) — there is no report
-  # for a reader to read. Already caught loudly at the CLI edge: @SCN-CLI-002 makes a
-  # supplied-but-absent --cucumber path a hard usage error.
   Rule: evidence that never materialised is broken, not absent
 
     @unit @integration @SCN-LDG-017
@@ -369,27 +277,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And the scenario whose proof was the ambiguous step still reads missing
       And the run reports broken evidence — an ambiguous harness makes the run unsound
 
-  # UNSOUND IS A PROPERTY OF THE RUN (SCN-LDG-018). @SCN-LDG-017 and @SCN-LDG-019 put broken
-  # evidence ON the ledger as a `broken` suspense item; this Rule reads the WHOLE run off it. If
-  # any PROOF NEVER RAN — a vitest suite that failed to collect, or a cucumber step matched by two
-  # or more definitions — the evidence never fully materialised, so every `missing` in that run is
-  # SUSPECT: it may be a broken proof rather than an absent one. Soundness is therefore a
-  # WHOLE-RUN predicate, `hasBrokenEvidence` — the existential twin of `hasPendingItems` (the same
-  # `some(row => some(item => item.outcome === X))` scan) — and NOT a third ScenarioVerdict (a
-  # scenario's own row stays honest at its own resolution) and NOT a stored flag.
-  #
-  # DERIVED, NEVER STORED: no soundness field is written onto the EvidenceReconciliation — the
-  # same no-drift reason `isBalanced` and `hasPendingItems` derive. Machine consumers read
-  # soundness off `summary.byOutcome.broken > 0`, type-forced into the JSON the moment `broken`
-  # joined the Outcome union.
-  #
-  # The three whole-run predicates are INDEPENDENT: a run may carry Pending Items and be perfectly
-  # sound; a run may carry broken evidence and no Pending Items. (A broken run is ALWAYS
-  # out-of-balance — the `broken` item sits on the suspense row — which is exactly why the CLI
-  # must check soundness BEFORE the balance verdict, @SCN-CLI-012.)
-  #
-  # "Unsound" is the RENDER HEADLINE word (@SCN-RPT-021), not the predicate's name — as
-  # "out-of-balance" is the headline for `isBalanced`.
   Rule: a run carrying broken evidence is unsound
 
     @unit @integration @SCN-LDG-018
@@ -400,24 +287,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And the run that merely defers an obligation reports no broken evidence — a Pending Item does not make a run unsound
       And soundness is derived from the reconciling items, never stored on the reconciliation
 
-  # THE PARSED CORPUS IS WHAT CUCUMBER RUNS (@SCN-LDG-020, 3F-1775). The corpus is the ledger's
-  # DEBIT side, and it was read by a hand-rolled TAG-LINE SCAN that saw only the contiguous tag
-  # block directly above a Scenario:. Gherkin does not work that way — a scenario INHERITS the
-  # tags of its Feature and of any enclosing Rule, and cucumber applies them.
-  #
-  # So an evidence tier hoisted to the Feature or Rule line — IDIOMATIC, VALID Gherkin, exactly
-  # what an author does with a tier shared by every scenario beneath — was INVISIBLE to
-  # spec-controller. The obligation was never raised, so its missing evidence could never
-  # reconcile `missing`, and the run read BALANCED (exit 0) while cucumber named a tier that
-  # nothing proved. A FALSE-GREEN ON WELL-WRITTEN FILES: the same fault class as the corrupt-file
-  # false-green (3F-1767), but triggered by good practice rather than by corruption — which makes
-  # it the likelier of the two to fire in the wild.
-  #
-  # The corpus is now extracted from the REAL Gherkin AST, so the scenarios spec-controller
-  # reconciles carry EXACTLY the tags cucumber gives them — one reading of the file, not two.
-  # Every tag inherits (@SCN included): parity is the goal, and excluding one would invent a rule
-  # cucumber does not have. A hoisted @SCN makes every scenario beneath share one id, and the
-  # ledger reports that as one account reading duplicate-scn-code (@SCN-STG-013, 3F-3609).
   Rule: a scenario's tags include the ones it inherits from its Feature and Rule
 
     @unit @integration @SCN-LDG-020
@@ -433,21 +302,6 @@ Feature: Ledger over obligation-vs-observation evidence
         | Feature  |
         | Rule     |
 
-  # UNCODED WORK IS NEVER INVISIBLE (@SCN-LDG-021, 3F-1774). A scenario carrying no @SCN raises
-  # no obligation, so it cannot reconcile satisfied, failing, or even `missing` — an obligation
-  # that was never RAISED cannot be ABSENT. It was simply not there.
-  #
-  # So the tool PRINTED the problem ("N scenario(s) carry no @SCN tag", @SCN-RPT-014) and then
-  # exited 0 BALANCED — naming a hole and certifying the run clean in the same breath, over a
-  # scenario cucumber runs and nothing proves.
-  #
-  # The scenario is REAL and ORDINARY — not phantom, not suspense: it exists, and cucumber runs it.
-  # What is absent is the @SCN CODE its Evidence Obligation needs in order to link to an Evidence
-  # Observation. So its OWN row reconciles out-of-balance, DEBIT-side, via `no-scn-code` — the debit
-  # twin of `cites-no-scenario` (same missing link, opposite side). Suspense stays credit-only.
-  #
-  # Exit 1, not 2: the corpus reads perfectly well. This is a FINDING about the corpus, not an
-  # input the tool cannot read (@SCN-CLI-014/015/016's lane).
   Rule: a scenario carrying no @SCN reconciles no-scn-code — uncoded work is never invisible
 
     @unit @integration @SCN-LDG-021
@@ -457,50 +311,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the untagged scenario has its own out-of-balance row, reconciling no-scn-code
       And the run is out-of-balance — a scenario the ledger cannot link is never a clean run
 
-  # EVERY ENTRY POSTS SOMEWHERE (@SCN-LDG-022, 3F-1846). The Ledger is the accounts with their
-  # POSTED ENTRIES — canon's "evidence obligations (debits) and evidence observations (credits)
-  # organised by real or invented scenario, keyed by quality-check" (double-entry-manifesto,
-  # Ledger entry + chain step 4). The model had inputs (scenarios, observations) and outputs (rows
-  # carrying outcomes) and NO ENTRIES IN BETWEEN: with nowhere for a posted entry to sit, an entry
-  # either became a Quality Check Reconciliation or CEASED TO EXIST.
-  #
-  # POSTING IS NOT CLASSIFYING. An entry posts here WHATEVER IT RECONCILES TO — the posting claim
-  # is indifferent to the outcome, and never depended on that outcome being right or wrong. The
-  # load-bearing case is the credit citing a PENDING quality-check: it posts and is findable
-  # whatever its outcome turns out to be. What that outcome IS belongs to the reconciler, not to
-  # this scenario — 3F-1858 makes this particular credit reconcile honestly as `no-evidence-obligation`, and
-  # this Rule reads identically on both sides of that change. That is the point: a
-  # misclassification should MISFILE an entry, not vaporise it.
-  #
-  # THE ACCOUNT IS THE SCENARIO RECONCILIATION (canon: "bookkeeping term: Account"). The same
-  # accounts live in the ledger before and after balancing off, gaining their verdict IN PLACE —
-  # this is NOT a pre-reconciliation input stage.
-  #
-  # THE POSTING RULE IS THE LINK TO AN ACCOUNT, never the outcome. A credit citing a REAL @SCN
-  # posts to that scenario's account; one citing an unknown @SCN posts to that phantom account; one
-  # citing NO scenario — uncited, or broken (it named no test, so it cites nothing whatever it
-  # structurally carries) — posts to SUSPENSE.
-  #
-  # A FITNESS credit cites too, and that is what closed the exception. This block used to record a
-  # WEAKER invariant — "every credit posts to AT LEAST ONE account, never to none", explicitly NOT
-  # exactly one — because the static axis was matched BY HANDLE and one run was evidence for every
-  # scenario naming it. Exactly-one was then only a RUNTIME property, true of the axis whose credit
-  # cites, and the universal had to be weakened to the weaker of the two.
-  #
-  # Under the one posting rule BOTH axes cite: a fitness check's run carries the @SCN of the
-  # fitness scenario that raises its obligation, so it names one row exactly as a test
-  # does. EXACTLY ONE IS NOW TRUE UNIVERSALLY, and it is a stronger claim than the one it replaces —
-  # "at least one" is silent about a double-post, and a double-post is a second copy of the same
-  # fact. (Neither half of the retired route survives: 3F-2590 removed `domain/posting.ts`'s
-  # by-name arm, and 3F-2625 the by-handle fallback that outlived it in
-  # `domain/qualityCheckReconciliation.ts`. This scenario reads identically on both sides of that —
-  # it asserts where credits POST, and the fallback answered obligations without moving a posting,
-  # which is exactly why it could survive a rule this scenario proves.)
-  #
-  # So the spanning corpus below spans BOTH fitness shapes: a CITED fitness credit, which posts to
-  # the one fitness scenario it cites, and an UNCITED one, which belongs to no row and posts to
-  # SUSPENSE where it reconciles `cites-no-scenario` — the same two destinations a runtime credit
-  # has, reached by the same rule.
   Rule: every evidence observation posts to exactly one ledger account, never to none — the credit cites, on both axes
 
     @unit @integration @SCN-LDG-022
@@ -512,12 +322,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
-    # POSTING SAYS WHERE A CREDIT LANDS; THIS SCENARIO IS THE SAME RULE READ AS AN OUTCOME. Two
-    # rows once could honestly share one characteristic word, and a match keyed on the word would
-    # hand one credit to both. The word is retired (3F-3525) and the rows below still carry it, so
-    # the fixture is the shape it guards: one credit, two rows, the credit citing only one of them.
-    # The credit cites on this axis exactly as it does on every other, so it can discharge only the
-    # row it names — the other reads missing, not absorbed and not left both-satisfied.
     @unit @integration @SCN-LDG-035
     Scenario: a static-check credit discharges only the obligation on the row whose @SCN it cites
       Given two fitness scenarios "SCN-AAA-001" and "SCN-AAA-002" whose rows share the retired characteristic word "complexity"
@@ -526,25 +330,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the row "SCN-AAA-001" reconciles satisfied, holding the credit
       And the row "SCN-AAA-002" reconciles missing, holding no credit
 
-  # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — the HEADLINE AGREEING WITH THE VERDICT
-  # (3F-1703), isolated so nothing else can produce it. This corpus is what makes that agreement
-  # falsifiable: every OTHER fitness fixture mixes its satisfied credit with another shape (broken /
-  # uncited / no-evidence-obligation) that independently mints the suspense row, so the run is
-  # out-of-balance for a reason that has nothing to do with the posting rule under test — and a
-  # rejected post-to-suspense treatment went 501/501 green against exactly that blind spot. A corpus
-  # whose ONLY fitness credit is one satisfied, citation-routed check removes every other cause:
-  # balanced, no suspense row, summary.outOfBalance 0 AGREEING with the balanced verdict. Break the
-  # agreement — mint a spurious empty out-of-balance suspense row — and summary.outOfBalance reads 1
-  # while isBalanced stays true: a failing run rendering a headline that reads as a pass, which is
-  # the 3F-1703 fault verbatim.
-  #
-  # RE-POINTED TO THE CITATION PATH (3F-2620), NOT RETIRED. The corpus used to reach its single
-  # satisfied credit through the named-guard route (`@lint=<handle>`, matched by name); it now
-  # reaches it through the one posting rule — a stepless fitness scenario carrying its bare check,
-  # whose run cites that scenario's @SCN. The ROUTE is what moved. What is asserted — the summary
-  # agreeing with the verdict on a balanced fitness-only corpus — is coverage no other scenario
-  # holds: the one posting rule's own scenarios are about which run credits which row, and say
-  # nothing about the headline.
   Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 
     @unit @integration @SCN-LDG-025
@@ -554,25 +339,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the fitness scenario reconciles satisfied and the run is balanced
       And there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict
 
-  # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
-  # unnamed (`byScn`, reconcile.ts), there is NO debit-side structure at all: `Scenario.
-  # evidenceObligations` is walked one scenario at a time in the `for (const d of scenarios)` loop
-  # and never indexed. The nearest thing is `evidenceObligationPairs` — a `Set<string>` of
-  # "<scnId> <qualityCheck>" MEMBERSHIP keys that carries no entries at all, existing only for the
-  # no-evidence-obligation pair-check.
-  #
-  # So the ledger's two sides arrive by different routes and neither is the accounts-with-entries
-  # canon describes. This scenario posts the obligations a scenario raises onto its account, keyed by
-  # quality-check — the other half of "every entry posts somewhere".
-  #
-  # The debits post as `evidenceObligations` — canon's vocabulary, NEVER `debits`, which is the
-  # bookkeeping ROOT of the metaphor rather than the vocabulary. The name is free because the
-  # misnomer that held it (typed `QualityCheckReconciliation[]` — sub-rows, not debits) is now
-  # `qualityCheckReconciliations`.
-  #
-  # A PENDING obligation is an evidence obligation that partitions off to a one-sided
-  # Pending Item and earns NO reconciled row. It posts like any other: posting is not classifying,
-  # and what pending DOES on the ledger is unchanged by this scenario.
   Rule: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
 
     @unit @integration @SCN-LDG-023
@@ -584,13 +350,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And the pending obligation is posted and findable, though it earns no reconciled row
       And the run's verdict and reconciling items are unchanged — debit-posting classifies nothing
 
-  # THE DEBIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-026, 3F-2005). Today a Quality Check
-  # Reconciliation is an outcome LABEL only — the evidence obligation it reconciles sits in a
-  # separate scenario-level array, joined by the markdown renderer at print time. This scenario
-  # brings the debit side onto the reconciliation itself: every debit-bearing outcome carries the
-  # `evidenceObligation` it reconciles, projected on the machine-readable JSON. The `missing` case
-  # isolates the pure debit — a required @unit obligation present, its matching observation absent —
-  # so the obligation is carried while the credit side stays absent (@SCN-LDG-027 adds the credit).
   Rule: a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)
     @unit @integration @SCN-LDG-026
     Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation
@@ -601,14 +360,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And it carries no evidence observation (the credit side is absent)
       And the JSON projects that evidence obligation on the reconciliation
 
-  # THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006). The debit half
-  # (@SCN-LDG-026) brought the evidence obligation onto the reconciliation; this scenario completes
-  # the two-sidedness by bringing the CREDIT side — every observation-bearing outcome carries the
-  # `evidenceObservation` it reconciles, projected on the machine-readable JSON. The `no-evidence-obligation`
-  # case isolates the pure credit — a credit citing a real scenario at a quality-check it never
-  # named — so the observation is carried while the obligation side stays absent (the mirror of
-  # LDG-026's pure debit). With both landed, `failing` vs `satisfied` vs `missing` is derivable
-  # BECAUSE the two-sided outcomes carry both — the point of the slice.
   Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
     @unit @integration @SCN-LDG-027
     Scenario: a no-evidence-obligation quality-check reconciliation carries its evidence observation and no obligation
@@ -619,11 +370,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And it carries no evidence obligation (the debit side is absent)
       And the JSON projects that evidence observation on the reconciliation
 
-  # FITNESS MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent
-  # static check is read as {exists:false} — an ABSENCE, not an observation. Canon (double-entry-manifesto
-  # line 36): missing = Obligation Exists, Observation None. Only a REAL observation (exists:true →
-  # satisfied/watermelon) is carried; the absent-guard record is not modelled as an observation.
-  # Uniform with the runtime missing path, which already carries none.
   Rule: a fitness missing reconciliation carries its obligation and no observation — an absent check is an absence
 
     @unit @integration @SCN-LDG-028
@@ -634,13 +380,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And it carries the evidence obligation it reconciles (the debit side)
       And it carries no evidence observation — an absent guard's {exists:false} is an absence, not an observation
 
-  # NO-SCN-CODE IS DEBIT-SIDE (@SCN-LDG-029, 3F-2016 / corrects 3F-1995). Canon (double-entry-
-  # manifesto line 39): no-scn-code = Obligation Exists, Observation None — the debit twin of
-  # cites-no-scenario. The scenario is real and ordinary but carries no @SCN, so its obligation has
-  # no code to link to; the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no
-  # qualityCheck / staticCheck — precedent: the scenario-scope pending obligation, journal.ts) and
-  # no observation. The scenario-level evidenceObligations array stays empty — census + markdown
-  # untouched.
   Rule: a no-scn-code reconciliation carries a scenario-scope evidence obligation and no observation
 
     @unit @integration @SCN-LDG-029
@@ -652,16 +391,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And it carries no evidence observation
       And the scenario-level evidence obligations stay empty, so the census and markdown are unchanged
 
-  # THE (OUTCOME, SIDE-PRESENCE) INVARIANT (@SCN-LDG-030, 3F-2016). Slice B made the two sides
-  # optional and attached them procedurally, but nothing tied outcome to side-presence — so a QCR
-  # could (and did) carry a canon-divergent pair, pinned green (the watermelon class this tool
-  # exists to catch, in its own output). The fix: a QCR is UNCONSTRUCTIBLE except via
-  # makeQualityCheckReconciliation, which enforces (outcome, side-presence) consistency with the
-  # canon outcome table (double-entry-manifesto.md lines 35-44). NOT naive derivation — missing and
-  # no-scn-code share (Exists, None); the three credit outcomes share (None, Exists) — a
-  # consistency constraint against the type-forced OUTCOME_SIDE_PROFILE map. The corpus arm reads
-  # EVERY outcome, not a counted ten: `duplicate-scn-code` (3F-3609) made the table eleven, and a
-  # count written into the prose would have gone false the same way.
   Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
 
     @unit @integration @SCN-LDG-030
@@ -672,29 +401,6 @@ Feature: Ledger over obligation-vs-observation evidence
       And constructing any outcome with a forbidden side throws — a divergent pair is unconstructible
       And when the real tool balances a corpus that exercises every outcome, every emitted Quality Check Reconciliation's sides match its canon row
 
-  # A CITATION IS BRACKETED (SCN-LDG-033, 3F-2368). The vitest reader matched
-  # /\bSCN-[A-Z0-9]+-\d+\b/ ANYWHERE in a describe/it title, so any SCN-shaped token was a
-  # citation whatever it was doing there. spec-controller's own corpus names scenario ids
-  # constantly — fixture data, cross-references, the prose of a test ABOUT citations — and
-  # each mention became a citation nobody wrote: a phantom scenario when the id names
-  # nothing real, a stolen credit when it names something else. 3F-2353 reworded the two
-  # instances that surfaced; the mechanism stayed, so the next prose mention re-opened it.
-  #
-  # The canon form is the BRACKET — evidence-manifesto.md: the Vitest describe/it string
-  # includes [SCN-007], while the // @SCN-007 marker is Cucumber's. vitest.ts's own module
-  # header has claimed the bracket since it was written; only its regex disagreed. Measured
-  # over the self-balance run before the change: 845 of 846 citations were already
-  # bracketed, 1 was a parenthesised prose cross-reference, 0 were bare. So the bracket
-  # costs one live mis-attribution to correct and closes the class for every fixture id,
-  # present and future — no fixture needs renaming, because prose is prose at the reader.
-  #
-  # THE @-FORM IS DELIBERATELY EXCLUDED, and that is the whole teeth of the rule: @SCN- is
-  # how this repository writes EVERY prose cross-reference, in comments, headers and ticket
-  # references. Accepting it in a title would leave the class half-open on the one form
-  # most likely to appear by accident.
-  #
-  # This scenario is the SUSPENSE arm — no citation anywhere in the chain. SCN-LDG-032 is
-  # the ancestor arm, where a citation does exist one level up.
   Rule: a vitest citation is the bracketed token — an SCN-shaped token in prose is prose
 
     @unit @integration @SCN-LDG-033
@@ -705,20 +411,6 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the assertion cites no scenario and its credit posts to the suspense row
       And neither prose-named id mints a phantom scenario
 
-    # THE ANCESTOR ARM (SCN-LDG-032). SCN-LDG-033 covers the chain with no citation
-    # anywhere; this covers the chain where one DOES exist, one level up. SCN-LDG-016
-    # established most-specific-citation-wins — a self-citing leaf overrides its ancestor —
-    # and the sigil-free reader let a leaf that merely MENTIONED an id in prose count as
-    # self-citing. So the mention SHADOWED the describe's real citation: the ancestor lost
-    # the credit it had earned and the prose-named id took one it had not. That is the very
-    # symptom SCN-LDG-016 retired, re-entering through the citation FORM rather than the
-    # match POSITION. Under the bracket rule a mention is invisible, so the leaf falls
-    # through to its ancestor exactly as a leaf naming nothing does — SCN-LDG-016's
-    # fallback half, now reached by a leaf whose title is full of scenario ids.
-    #
-    # The Thens count credits rather than reading a verdict, for SCN-LDG-016's reason: the
-    # ancestor renders `balanced` under both readers (by the shadowed leaf's stolen credit
-    # under the old one), so only attribution identity has teeth here.
     @unit @integration @SCN-LDG-032
     Scenario: a leaf naming a scenario id in prose does not override its describe's bracketed citation
       Given a scenario cited by an ancestor describe and a second scenario named only in a leaf's prose

@@ -1,8 +1,3 @@
-/**
- * The @e2e arms of features/allocate.feature. Each scenario builds a real repository in a temp
- * directory, with real git commits, and spawns the BUILT binary inside it, because what an author
- * gets is the installed command run in their own checkout.
- */
 import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
@@ -11,7 +6,6 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { basename, dirname, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
-/** Git run over a fixture, blind to the machine's own configuration so the fixture is the same everywhere. */
 function git(repo: string, args: readonly string[]): string {
   const result = spawnSync(
     "git",
@@ -22,32 +16,27 @@ function git(repo: string, args: readonly string[]): string {
   return result.stdout;
 }
 
-/** A fresh, empty repository in a temp directory. */
 function newRepository(): string {
   const repo = mkdtempSync(join(tmpdir(), "allocate-"));
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
 
-/** Write a file into the fixture, making its directories. */
 function writeInto(repo: string, path: string, text: string): void {
   mkdirSync(dirname(join(repo, path)), { recursive: true });
   writeFileSync(join(repo, path), text);
 }
 
-/** A feature file headed `part`, one scenario per code. */
 function featureFile(part: string, codes: readonly string[]): string {
   const scenarios = codes.map((code, i) => `  @${code} @unit\n  Scenario: scenario ${i + 1}\n    Given a step\n`);
   return `@${part}\nFeature: part ${part}\n\n${scenarios.join("\n")}`;
 }
 
-/** Commit everything in the fixture. */
 function commitAll(repo: string, message: string): void {
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", message]);
 }
 
-/** Run `spec-controller allocate …` inside the fixture. */
 function allocate(cwd: string, args: readonly string[]): SpawnSyncReturns<string> {
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "allocate", ...args], { cwd, encoding: "utf8" });
   assert.equal(result.error, undefined, `the binary failed to spawn: ${result.error?.message}`);
@@ -111,7 +100,6 @@ Given(
   },
 );
 
-/** A repository headed ONE carrying the part's first code and `code`, the second scenario standing at line 8. */
 function repositoryCarrying(code: string): void {
   repository = newRepository();
   writeInto(repository, "features/one.feature", featureFile("ONE", ["SCN-ONE-001", code]));
@@ -143,7 +131,6 @@ Then(
   },
 );
 
-/** The copy of the repository the author asks in, when it is not the repository itself. */
 let copy = "";
 
 Given(
@@ -216,7 +203,6 @@ Given("a file the repository ignores mentions {word}", function (code: string) {
   assert.doesNotMatch(git(repository, ["ls-files"]), /features\/two\.feature/, "the new file must stay untracked");
 });
 
-/** The ways a part can be carried somewhere without any feature file's header carrying it. */
 const UNHEADED_PART: Record<string, () => void> = {
   "no file mentions ZZZ": () => undefined,
   "a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004": () => {
@@ -264,7 +250,6 @@ Then("beside the answer it notes that a feature file's header already carries {w
   assert.match(answer.stderr, new RegExp(`^note: a feature file's header already carries ${part}, so --new was not needed$`, "m"));
 });
 
-/** The arguments each malformed request gives `allocate`. */
 const MALFORMED_REQUEST: Record<string, readonly string[]> = {
   "no part": [],
   "the part fit, in lower case": ["fit"],
@@ -287,7 +272,6 @@ Then("it is refused as a usage error, never as an unknown part, and no code is g
   assert.doesNotMatch(answer.stderr, /unknown part/);
 });
 
-/** The arguments each help request gives `allocate`. */
 const HELP_REQUEST: Record<string, readonly string[]> = {
   alone: ["--help"],
   "by its short name, alone": ["-h"],
@@ -310,10 +294,8 @@ Then("it answers with allocate's help, naming the feature part it takes and --ne
   assert.doesNotMatch(answer.stdout, /^SCN-/m);
 });
 
-/** Where a stored run would land, were one ever stored. */
 let storeRoot = "";
 
-/** The host modifiers each row gives before `allocate`, and their values. */
 function modifierArgs(modifiers: string): string[] {
   storeRoot = join(mkdtempSync(join(tmpdir(), "allocate-store-")), "store");
   const values: Record<string, string> = { "--store": storeRoot, "--run-id": "r1" };
@@ -340,7 +322,6 @@ Then("nothing is stored, in the store root or the repository", function () {
   assert.equal(git(repository, ["status", "--porcelain"]).trim(), "");
 });
 
-/** The arguments each help request gives `allocate` after the host modifiers. */
 const HELP_AFTER_MODIFIERS: Record<string, readonly string[]> = {
   alone: ["--help"],
   "by its short name, alone": ["-h"],
@@ -348,7 +329,6 @@ const HELP_AFTER_MODIFIERS: Record<string, readonly string[]> = {
   "by its short name, beside a flag the command does not take": ["--bogus", "-h"],
 };
 
-/** What `allocate` answers to the same request with nothing before it. */
 let answerAlone: SpawnSyncReturns<string>;
 
 When("the author gives {} before allocate and asks it for its help {}", function (modifiers: string, request: string) {
@@ -372,7 +352,6 @@ Then("it answers with allocate's help, exactly as it does with nothing before it
   assert.doesNotMatch(answer.stdout, /^SCN-/m);
 });
 
-/** The ways a path the allocator reads can be something other than the kind it reads there. */
 const WRONG_KIND: Record<string, (path: string) => void> = {
   "a regular file": (path) => {
     rmSync(path, { recursive: true, force: true });
@@ -388,7 +367,6 @@ Given("in that repository {word} is {}", function (path: string, kind: string) {
   make(join(repository, path));
 });
 
-/** The refusal line allocate writes for a path it could not read, or a failure naming what it wrote instead. */
 function refusalOf(result: SpawnSyncReturns<string>): string {
   const line = /^spec-controller allocate: usage error — .+ could not be read.*$/m.exec(result.stderr);
   assert.ok(line !== null, `expected a refusal naming what could not be read; got:\n${result.stderr}`);
@@ -402,7 +380,6 @@ Then("it is refused as a path allocate cannot read, and no code is given", funct
   refusalOf(answer);
 });
 
-/** Whether a refusal names `path` as the path it could not read, wherever the fixture lives. */
 function namesPath(refusal: string, path: string): boolean {
   return refusal.includes(`/${path} (`);
 }
@@ -412,10 +389,8 @@ Then("allocate's refusal names {word}", function (path: string) {
   assert.ok(namesPath(refusal, path), `expected the refusal to name ${path}; got:\n${refusal}`);
 });
 
-/** Every permission a scenario took away, given back after it so its temp directory can be removed. */
 const permissionsTaken: Array<() => void> = [];
 
-/** Take a path's permissions away for this scenario, recording how to give them back. */
 function withhold(path: string, mode: number): void {
   const before = statSync(path).mode & 0o7777;
   chmodSync(path, mode);
@@ -426,7 +401,6 @@ After(function () {
   while (permissionsTaken.length > 0) permissionsTaken.pop()?.();
 });
 
-/** A copy of a corpus that is not a git repository: its feature file, and a document that cites a code. */
 function copyWithoutGit(): string {
   const copy = mkdtempSync(join(tmpdir(), "allocate-plain-"));
   writeInto(copy, "features/one.feature", featureFile("ONE", ["SCN-ONE-003"]));
@@ -436,7 +410,6 @@ function copyWithoutGit(): string {
   return copy;
 }
 
-/** The mode that withholds each path: a directory entered but not listed, or nothing at all. */
 function withholdingMode(path: string): number {
   return path === "working directory" ? 0o311 : 0o000;
 }
@@ -482,7 +455,6 @@ Then("allocate's refusal says the working directory could not be read", function
   assert.match(refusalOf(answer), /the working directory could not be read/);
 });
 
-/** Each file a row writes a code into, and how: an untracked draft, or an edit not yet committed. */
 const CARRIER: Record<string, { path: string; write: (code: string) => void }> = {
   "an untracked file, drafts/new.md": {
     path: "drafts/new.md",
@@ -505,7 +477,6 @@ const CARRIER: Record<string, { path: string; write: (code: string) => void }> =
   },
 };
 
-/** What each row withholds, given the file that carries the code. */
 const WITHHELD: Record<string, (file: string) => void> = {
   "allocate is not permitted to read it": (file) => withhold(join(repository, file), 0o000),
   "allocate is not permitted to list its directory": (file) => withhold(dirname(join(repository, file)), 0o000),

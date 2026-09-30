@@ -1,14 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { nextScnCode, type Allocation, type AllocationRequest, type ScnSighting } from "./scnAllocation.js";
 
-/** The allocation for a part the headers carry, failing the test when it is refused instead. */
 function next(request: AllocationRequest, sightings: readonly ScnSighting[]): Allocation {
   const answer = nextScnCode(request, sightings);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);
   return answer;
 }
 
-/** A sighting of one line of text at a place in the tree. */
 function seen(text: string, path = "features/one.feature", line = 1): ScnSighting {
   return { text, path, line };
 }

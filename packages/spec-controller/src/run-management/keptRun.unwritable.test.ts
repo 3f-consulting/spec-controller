@@ -4,11 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 
-/**
- * The status a call leaves with: the exit code carried by whatever it threw, or `undefined` when it
- * returned. The refusal is thrown for the command to settle, so the call itself
- * carries the code.
- */
 function usageStatusOf(run: () => unknown): number | undefined {
   try {
     run();
@@ -31,7 +26,6 @@ const meta: RunManifestMeta = {
   date: "2026-09-26T00:00:00.000Z",
 };
 
-/** Each store root a run directory cannot be created under, with the reason the operating system gives. */
 const UNCREATABLE: ReadonlyArray<readonly [string, (dir: string) => string, string]> = [
   ["a regular file", (dir) => {
     writeFileSync(join(dir, "regular"), "");

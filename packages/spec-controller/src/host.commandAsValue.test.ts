@@ -1,12 +1,3 @@
-/**
- * The @unit arm of @SCN-CLI-066 — a host modifier that took the command as its value is refused before
- * any command or stored run starts, naming the modifier and the command (3F-3672). The @e2e arm in
- * tests/steps/cliBalance.steps.ts proves it through the real binary, and that nothing is written.
- *
- * The modifiers and the commands are read from the registry, never listed, and the wording is never
- * pinned (features/message-catalogue.feature).
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
@@ -14,7 +5,6 @@ import { parseHostInvocation } from "./host.js";
 const modifiers = cliRegistry.global.map((flag) => flag.name);
 const commands = cliRegistry.commands.map((command) => command.name);
 
-/** True when one line of the refusal names the modifier, the command, and that it was taken as the value. */
 function namesBoth(refusal: string | undefined, modifier: string, command: string): boolean {
   return (refusal ?? "")
     .split("\n")

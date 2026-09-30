@@ -14,7 +14,6 @@ const FIXTURE = join(process.cwd(), "tests", "fixtures", "balanced");
 const WORKFLOW = "name: ci\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pnpm test\n";
 const MANIFEST = `${JSON.stringify({ name: "input-overwrite-target", private: true, scripts: { test: "vitest run" }, specController: { runners: { unit: "vitest" } } })}\n`;
 
-/** The reports every run is handed, whichever input a row is about. */
 const REPORTS = ["--vitest", "vitest.json", "--cucumber", "cucumber.json", "--ci-steps", "ci-steps.json", "--target", "input-overwrite"];
 
 interface PointedAt {
@@ -24,7 +23,6 @@ interface PointedAt {
   readonly vitest?: string;
 }
 
-/** Each input a row names: the file the report is aimed at, what the run is pointed at, how the refusal names it, and any link the row needs first. */
 interface InputRow {
   readonly file: string;
   readonly pointedAt: PointedAt;
@@ -70,7 +68,6 @@ const INPUT: Readonly<Record<string, InputRow>> = {
 
 const APPENDED_STDOUT = "where standard output is appended";
 
-/** Each spelling of the input's path the report is aimed at, given the path relative to the target. */
 const ALIAS: Readonly<Record<string, (file: string, target: string) => string>> = {
   "its own path": (file) => file,
   "the path spelled from the current folder": (file) => `./${file}`,
@@ -127,7 +124,6 @@ function pointedArgs(pointedAt: PointedAt): string[] {
   return args;
 }
 
-/** A target holding every input a run can read, given or by default, reconciling to `verdict` on its own. */
 function buildTarget(dir: string, verdict: string): void {
   mkdirSync(join(dir, "features"));
   copyFileSync(join(FIXTURE, "features", "target.feature"), join(dir, "features", "target.feature"));
@@ -150,7 +146,6 @@ function specController(args: readonly string[], stdout: "pipe" | number = "pipe
   return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr };
 }
 
-/** Every entry under `dir`: a file by its bytes, a link by where it points. */
 function entriesUnder(dir: string): Map<string, string> {
   const entries = new Map<string, string>();
   for (const entry of readdirSync(dir, { recursive: true })) {

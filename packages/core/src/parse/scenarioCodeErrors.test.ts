@@ -1,13 +1,7 @@
-/**
- * The scenario code errors a corpus carries (3F-3635) — each rule over real feature-file text,
- * read the way the ingest edge hands it over: slug, header code and source.
- */
-
 import { describe, it, expect } from "vitest";
 import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
 import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 
-/** A feature file headed `@<code>` (or uncoded when `code` is null) holding one scenario per id. */
 function file(slug: string, code: string | null, ids: readonly string[]): CorpusFile {
   const header = code === null ? "" : `@${code}\n`;
   const scenarios = ids.map((id, i) => `  @unit @${id}\n  Scenario: s${i}\n    Given a thing\n`).join("\n");
@@ -23,7 +17,6 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
     expect(errors[0]).toMatchObject({ kind: "foreign-scn-code", files: ["two.feature"] });
     expect(errors[0]!.message).toContain("SCN-ONE-002");
     expect(errors[0]!.message).toContain("@TWO");
-    // The scenario that agrees with its file is not convicted with it.
     expect(errors[0]!.message).not.toContain("SCN-TWO-001");
   });
 
@@ -56,8 +49,6 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
   });
 
   it("lists a five-character foreign code, and not a six-character one, which is no scenario code at all (3F-3636)", () => {
-    // The boundary pair in one file: the five-character id is the positive control that shows the
-    // rule is looking, so the six-character id's silence is the grammar's, not a rule gone quiet.
     const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-FIVEC-001", "SCN-SIXCHR-001"])]);
     expect(errors.map((e) => e.kind)).toEqual(["foreign-scn-code"]);
     expect(errors[0]!.message).toContain("SCN-FIVEC-001");
@@ -73,7 +64,6 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
 });
 
 describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
-  /** The foreign finding's data, the header tags it names, and the files it names. */
   function foreignOf(files: readonly CorpusFile[]) {
     const foreign = scenarioCodeErrorsOf(files).find((e) => e.kind === "foreign-scn-code")!;
     return { foreign, namedFiles: [...new Set(foreign.message.match(/[\w-]+\.feature/g))] };
@@ -133,9 +123,7 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
       featureCode: null,
       source: `@TOOLONGCODE\nFeature: long\n\n  @unit @${scnId}\n  Scenario: s\n    Given a thing\n`,
     });
-    // Neither is a code (evidence-manifesto §9A: <FFF> is 2–5), so there is no coded scenario to name.
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-TOOLONGCODE-001")])).toEqual([]);
-    // The positive control: one character shorter, the scenario IS coded, and the header still is not.
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
   });
 

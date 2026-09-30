@@ -6,7 +6,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   Obligation: a whole-system property held against a threshold. In this repository the scenario
   carries `@fitness` and a freshly minted code; its TITLE says what the check is about, and the
   command that settles it is the one its own CI step runs, stating that code as its `id:`. One
-  such scenario is one check (3F-3525): nothing classifies it further.
+  such scenario is one check: nothing classifies it further.
 
   A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. It is
   authored like every other scenario in this corpus, steps and all, and what keeps it off the
@@ -25,8 +25,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   tags its scenarios with a bare check word, has declared no check by it. The registry is read like
   any key the specController block does not read: it settles nothing, and the report names it under
   `## Configuration not read` in the words it uses for any such key, saying nothing of what it once
-  did (3F-3161 stopped reading it). A bare check word raises no Evidence Obligation, since no set of
-  registered check tags is read any more (3F-3561). A check is its `@fitness` scenario, and nothing
+  did. A bare check word raises no Evidence Obligation, since no set of
+  registered check tags is read any more. A check is its `@fitness` scenario, and nothing
   else declares it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
@@ -36,8 +36,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   form, where a scenario named a runnable script and the run was matched back to it BY NAME — is
   the thing this feature retired, so the FILE took the right name and the code stayed put. Bare
   `@lint` survived for a while as GRAMMAR alone — recognised, raising nothing, kept because an
-  adopter's corpus still wrote it (3F-3525). It stopped being grammar at 3F-3606, when the wait
-  ended with the compatibility position; and since 3F-3635 no word a tool does not read is a
+  adopter's corpus still wrote it. It stopped being grammar when the wait
+  ended with the compatibility position, and no word a tool does not read is a
   corpus fault at all — it is a consumer's own tag.
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
@@ -53,12 +53,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   obligation this repository could never settle, so it would reconcile out-of-balance
   permanently, and correctly, given what the tag said. Nothing ever reads a handle from a
   tag here: the handles are constants in the step definitions, fed through planted
-  package.json / ci.yml fixtures. @SCN-LDG-028 tests the identical shape through the
+  package.json / ci.yml fixtures. A ledger scenario tests the identical shape through the
   fixture check ldg028-absent-guard and reconciles balanced. Their @unit and @integration
   obligations are untouched and still reconcile — the distinction from a deferral tag,
   which would take every obligation these scenarios name dark to silence one row each.
   AND lint:feature-codes IS ONE OF THOSE FIXTURE HANDLES. It was this repository's own check once;
-  the rules it carried are `balance`'s scenario code errors now (3F-3635), and the row, the script
+  the rules it carried are `balance`'s scenario code errors now, and the row, the script
   and the scenario left together. The handle survives here as a step-definition constant: a name no script
   in this repository answers to, and none may again, for exactly the reason the three above must
   never exist.
@@ -66,15 +66,13 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
   OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
   or THE REPOSITORY — and its step definition takes that subject rather than picking one for
-  itself. @SCN-FIT-009 says THIS REPOSITORY and is answered over this repository; what would tell
+  itself. A scenario that says THIS REPOSITORY is answered over this repository; what would tell
   a planted-tree scenario apart from it is a sentence a reviewer reads anyway, not a path buried
   in a step definition. A step definition that runs its check over a fixture while its scenario
   says the repository is then wrong IN THE DIFF, against that sentence.
 
-  THE PAIRING THIS PARAGRAPH USED TO DRAW HAS LOST ITS OTHER HALF, AND THE RULING HAS NOT MOVED.
-  It read @SCN-ANM-001 (planted trees) against @SCN-FIT-009 (this repository); the first retired
-  with its check at 3F-3288, so the planted side simply has no live example today. The rule is
-  unchanged and is the reason the example is not replaced with an invented one: what a fitness
+  THE PLANTED SIDE HAS NO LIVE EXAMPLE TODAY, AND THE RULING HAS NOT MOVED. It is the reason
+  no example is invented for it: what a fitness
   scenario is about is its own text's to say, whether or not a second scenario is standing beside
   it to contrast with.
 
@@ -91,7 +89,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     fitness check by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
     matched back to it by name. The bare-tags Correction (canon 2026-08-07) retired that spelling
     when the bare check tag took over, and a check is now declared by a @fitness scenario and
-    nothing else (3F-3525, 3F-3582). What this Rule holds is only that the retired spelling stays
+    nothing else. What this Rule holds is only that the retired spelling stays
     dead on every path a reader might be tempted to re-route it through.
 
     @unit @integration @SCN-LNT-007
@@ -112,7 +110,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       books.
 
       NOTHING IS CONFIGURED HERE, AND THAT IS WHAT THE CLAIM IS NOW ABOUT. No set of registered
-      check tags exists, and no manifest list either (3F-3582): the only route left that raises a
+      check tags exists, and no manifest list either: the only route left that raises a
       fitness obligation is the @fitness tag itself. So what this fixture shows is that the retired
       spelling does not put a scenario ON that axis — it is not a tag the reader translates, on any
       path, and there is nowhere else left for it to be re-routed through.
@@ -143,7 +141,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     carried lint:feature-codes in the retired tag form, because that was the only way the
     corpus could name spec-controller's own check at all — so the repository's obligation and
     this scenario's subject matter shared one tag line, and the row that proved the POSTING
-    RULE also stood as the row the real run posted to. 3F-2589 separated them: what the real
+    RULE also stood as the row the real run posted to. They are separated now: what the real
     check owes is raised by this repository's own `@fitness` scenario for it, authored in
     features/fitness-checks.feature beside its row, and what is proven here is the rule itself,
     over fixture data.
@@ -164,14 +162,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       would collapse the two.
 
       THE FITNESS OBLIGATION COMES FROM THE @fitness TAG, the unit obligation from the tier tag —
-      two readers, one scenario. Nothing here cites SCN-AAA-001 on the fitness axis, so that obligation
-      reconciles missing exactly as any obligation with no matching observation does (@SCN-LDG-028);
+      two readers, one scenario. Nothing here cites the scenario on the fitness axis, so that obligation
+      reconciles missing exactly as any obligation with no matching observation does;
       what this scenario holds is not which outcome the fitness axis lands on but that it lands on
       one independently of the unit axis beside it.
 
       THE SHAPE RULE IS NOT THIS SCENARIO'S. Whether one scenario may carry a tier tag and a
       fitness tag together was a question for the retired `tags` command, which left with its
-      rules (3F-3635); the fixture below carries both because a TWO-AXIS scenario is what this reads. What is settled here is only that the reconciler
+      rules; the fixture below carries both because a TWO-AXIS scenario is what this reads. What is settled here is only that the reconciler
       answers each obligation a scenario raises on its own axis.
 
       Given a @fitness scenario "SCN-AAA-001"
@@ -192,7 +190,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
     THE TWO DESTINATIONS ARE DIFFERENT FACTS, and telling them apart is the whole value of the rule.
     A credit citing NOTHING never looked, and lands in suspense — the tool's own uncited-check
-    axis (@SCN-USG-001), whose remedy is to register the check and write its fitness scenario. A credit
+    axis, whose remedy is to register the check and write its fitness scenario. A credit
     citing an @SCN the corpus does not carry LOOKED AND MISSED, so it mints the row it named and
     lands there; its remedy is to fix the citation. Folding either into the other sends a reader to
     the wrong cure.
@@ -207,7 +205,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       THE TWO DOCUMENTS CAN DISAGREE, which is what makes this a real fault rather than a
       hypothetical. Nothing asks the corpus anything at the citation seam: the step's id: is the
-      citation (@SCN-LNT-031), so a step can state an @SCN no scenario carries — mistyped on the
+      citation, so a step can state an @SCN no scenario carries — mistyped on the
       step, mistyped on the scenario, or the scenario renumbered, retired, or living in a feature
       file this run does not reconcile. The pipeline and the corpus are two documents one consumer
       authors separately, and nothing keeps them in step. It is the same disagreement a runtime
@@ -217,7 +215,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       IT IS ALSO WHERE A CODE NO MANIFEST ENTRY ANSWERED USED TO GO QUIET. While the citation was
       resolved against specController.fitnessChecks, such a step cited nothing and fell to
       suspense, which said a consumer had annotated nothing when in fact they had annotated
-      something wrong. The list is retired (3F-3582) and the looked-and-missed case now reads as
+      something wrong. The list is retired and the looked-and-missed case now reads as
       one.
 
       THE CREDIT IS NEVER DROPPED. Dropping it is the one outcome the double entry forbids: every
@@ -234,17 +232,17 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
 
-    ONE @fitness SCENARIO IS ONE CHECK (3F-3525; canon fitness-evidence.md, "The tag is the quality
+    ONE @fitness SCENARIO IS ONE CHECK (canon fitness-evidence.md, "The tag is the quality
     check; nothing else declares it"). Its quality check is fitness, exactly as unit is for a @unit
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
-    NOTHING ELSE DECLARES IT (3F-3582). A manifest list of fitness checks once stood between the
+    NOTHING ELSE DECLARES IT. A manifest list of fitness checks once stood between the
     tag and the obligation, and a scenario the list did not name raised nothing at all. The list is
     retired: an adopter writes the scenario and puts its @SCN on the CI step, and that is the whole
     declaration. Nothing reads more of a list entry than the scenario already carries.
 
-    THE CHARACTERISTIC THAT ONCE KEYED IT IS RETIRED TOO. The tag collapsed to @fitness (3F-3138)
+    THE CHARACTERISTIC THAT ONCE KEYED IT IS RETIRED TOO. The tag collapsed to @fitness
     and the word it carried - complexity, mutation - moved onto the manifest entry, where it went on
     keying the obligation and the credit. Nothing needed it: one scenario is one check, so its @SCN
     already says everything a word could.
@@ -258,7 +256,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     Scenario: a @fitness scenario raises exactly one fitness Evidence Obligation keyed by its own @SCN, from its tag alone, and two @fitness scenarios raise two
 
       KEYED BY THE @SCN, SO TWO CHECKS CANNOT MERGE. Each check is its own scenario and owes its own
-      obligation, and a run's step answers only the one whose @SCN it carries (@SCN-LDG-035). This
+      obligation, and a run's step answers only the one whose @SCN it carries. This
       repository's own checks once shared four words between twelve of them, which is what a word
       keying the obligation would have merged.
 
@@ -275,8 +273,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     @unit @integration @SCN-LNT-020
     Scenario: a @fitness scenario no CI step cites reconciles missing, its row is out of balance, and the run fails
 
-      THE SAME SENTENCE A @unit SCENARIO WITH NO TEST GETS, and that is the whole of the change
-      (3F-3582). The obligation is raised by the tag, so it exists whether or not anything runs the
+      THE SAME SENTENCE A @unit SCENARIO WITH NO TEST GETS, and that is the whole of the change.
+      The obligation is raised by the tag, so it exists whether or not anything runs the
       check. With no Evidence Observation citing its @SCN it reconciles missing, its row is out of
       balance, and the run fails — no new outcome is minted and none is needed.
 
@@ -298,14 +296,13 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   Rule: a check that did not run is broken evidence rather than an absent one
 
-    `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It has meant a proof that never ran
-    since @SCN-LDG-017 and @SCN-LDG-019: it posts to the suspense row carrying its where-to-fix and
+    `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It means a proof that never ran:
+    it posts to the suspense row carrying its where-to-fix and
     its what-broke and NO Evidence Observation, so the Evidence Obligation it cites reconciles
     `missing` by absence, and it stamps the run unsound. The verdict is the point rather than a side
     effect — a run that disagrees with itself is one thing, and a run over checks that did not run
     is another. A `missing` row alone would also have sent the reader the wrong remedy, write the
-    check rather than fix your hook, which is the misdirection @SCN-LDG-019 named when it stopped
-    dropping ambiguous steps as inconclusive.
+    check rather than fix your hook.
 
     @unit @integration @SCN-LNT-026
     Scenario: a check step's outcome credits its scenario only where it says what the check did, and every other reading is broken evidence rather than a credit
@@ -320,14 +317,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       A step is skipped when a condition went false, when the job was cancelled, or when somebody
       moved it. The declaration could only be read for whether it was named, never checked against
       anything, so it forgave every skip: `if: false` beside it read satisfied for ever. The field
-      is gone rather than guarded (3F-3252).
+      is gone rather than guarded.
 
       THE SECOND OF THEM STOPPED BEING A BARE CREDIT WHEN THE THIRD THING CARRYING THE VERDICT WENT.
       While a pass ran the checks, a check that found violations reddened the run through the
       runner's exit code and its credit only had to say the check ran — so passed and failed were
       honestly ONE answer, and this scenario's own text used to say so. A CI step's exit code reaches
       this ledger nowhere, so the failed step's credit carries what it found and its row reds
-      (@SCN-LNT-028) rather than balancing beside the row whose check passed.
+      rather than balancing beside the row whose check passed.
 
       THE DEFAULT IS `broken`, NOT THE CREDIT, so the arms are written the other way up from the
       obvious one. A status this reader cannot vouch for is a check whose running it cannot vouch
@@ -366,7 +363,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     AND KEEPING THE PLUMBING OFF THE BOOKS IS THE OTHER HALF OF THE SAME CLAIM. A pipeline checks
     out a tree, sets up a toolchain, installs dependencies and builds, and none of those is a
     quality check; a report banking them as checks would drown the sentence it exists to say. WHAT
-    DISCRIMINATES IS THE CONSUMER'S OWN LIST, and since 3F-3343 nothing else does: the tool held a
+    DISCRIMINATES IS THE CONSUMER'S OWN LIST, and nothing else does: the tool held a
     check heuristic — the scripts a manifest carried under a guard prefix or named as static checks
     — and retired it, because the set of names a check might be given belongs to the consumer and
     guessing at it is what made a pipeline named some other way invisible. So the target below says
@@ -404,8 +401,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     SCRIPT'S NAME. A CI step can state which scenario its check answers and nothing else: an id is
     a code, and reading a check's identity off the handle that ran would be the name-match this
     axis retired, in a new spelling. So the code is read from the step and that is the whole of it
-    (3F-3582) — the manifest list it used to be checked against is retired, and a code no scenario
-    carries posts to a phantom (@SCN-LNT-009) rather than falling silent.
+    — the manifest list it used to be checked against is retired, and a code no scenario
+    carries posts to a phantom rather than falling silent.
 
     AN id: THAT IS NOT AN @SCN STILL CITES NOTHING, which is the one thing the reader does check.
     Consumers put an id on a step for their own reasons — a counter, a step another step's if:
@@ -462,8 +459,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     Scenario: a check whose step or whose job carries continue-on-error reconciles as the watermelon, beside a sibling check whose red is the job's verdict
 
       THE ENGINE COMPUTED THIS FACT AND THREW IT AWAY, which is why the claim is held here rather
-      than left to the walk that produces it. `abortsJob` has been read off both carriers correctly
-      since 3F-3042, and every consumer it ever reached was under `tests/` — this repository's own
+      than left to the walk that produces it. `abortsJob` has been read off both carriers correctly,
+      and every consumer it ever reached was under `tests/` — this repository's own
       ladder, which never ships. So the guard that looked like the defence protected us and no
       consumer at all, while the published reader certified as satisfied precisely what this
       product itself calls the watermelon: green on the surface, red within.
@@ -490,7 +487,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     @unit @integration @SCN-LNT-033
     Scenario: the static-check census counts a check whose red its job survives as a check that ran, on both of its counts
 
-      THE SENTENCE SAYS RUN, SO THE NUMBER COUNTS WHAT RAN (3F-3280, ruled 2026-09-17: change the
+      THE SENTENCE SAYS RUN, SO THE NUMBER COUNTS WHAT RAN (change the
       count, not the word). A check behind continue-on-error runs: it is invoked, it analyses the
       source, it reds, and its job carries on. The census used to leave it out because it enforces
       nothing, and so printed one check fewer than had run, directly above a watermelon row for a
@@ -576,7 +573,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       THE STEP'S TWO FIELDS ARE HELD IN AGREEMENT HERE, DELIBERATELY. A record can report a step
       that failed while reporting the job it sat in as green, and WHICH of those two a reader must
-      take is a claim of its own with its own scenario (3F-3264). Settling both from one fixture
+      take is a claim of its own with its own scenario. Settling both from one fixture
       would let a reader that took the wrong field pass this arm on the strength of the right word,
       and a reader that posted the wrong word pass that one on the strength of the right field.
       This scenario settles the WORD, over a step whose failure nothing laundered.
@@ -607,7 +604,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       where the step's own result and the code it cites are written down together.
 
       THE FIXTURE IS WHAT EARNS THIS ARM, AND ITS SIBLING DECLINED IT ON PURPOSE. The failed step of
-      `@SCN-LNT-028` holds its two results in agreement, so a reader taking either one passes there;
+      the sibling holds its two results in agreement, so a reader taking either one passes there;
       here they disagree, and only the reader taking what the step did reds. Written against what
       the job was told, this same arm reports the row with no credit at all — which is precisely the
       green a swallowed red buys.
@@ -629,11 +626,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   Rule: a fitness obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
 
-    The behavioural axis's rule, on this axis too (@SCN-LDG-036): each credit is read on its own,
+    The behavioural axis's rule, on this axis too: each credit is read on its own,
     and the obligation reads the worst of those readings — failing over watermelon over satisfied —
-    whatever sorts first (3F-3547, 3F-3552). No credit vouches for a sibling: a failed credit is
+    whatever sorts first. No credit vouches for a sibling: a failed credit is
     failing whatever passed beside it, and a severed run is a watermelon whatever wired run of the
-    same check sits beside it (@SCN-LNT-032). The item names the first credit carrying that outcome
+    same check sits beside it. The item names the first credit carrying that outcome
     in evidence order. No reader in this product delivers two credits for one row and check today —
     the run's record holds one entry per step code, and a row is keyed by its code — so the
     published engine is where a consumer composing their own evidence meets it.

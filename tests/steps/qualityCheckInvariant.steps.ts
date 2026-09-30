@@ -1,21 +1,3 @@
-/**
- * @SCN-LDG-030 — a Quality Check Reconciliation's carried sides are consistent with its outcome
- * (the (outcome, side-presence) invariant, 3F-2016 / 3F-2031).
- *
- * Bidirectional evidence: the Given/When/Then carry the SCN-LDG-030 id, matching
- * features/ledger.feature's @SCN-LDG-030 scenario; the @unit arm lives in
- * packages/core/src/domain/qualityCheckReconciliation.test.ts.
- *
- * Two arms in one scenario:
- *  - IN-PROCESS construction — `makeQualityCheckReconciliation` mints a canon-correct pair for
- *    every outcome and REFUSES (throws on) any forbidden pair, expectations derived from the
- *    type-forced OUTCOME_SIDE_PROFILE map (never a hand-copied list).
- *  - THE ARTEFACT-VS-MANIFESTO GATE (@integration) — the REAL `spec-controller balance` binary is
- *    spawned over a corpus fixture that exercises every outcome; every emitted Quality Check Reconciliation's
- *    side-presence is checked against its canon row, and every outcome must be exercised. This
- *    verifies the object the real tool EMITS against canon, not a golden.
- */
-
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
@@ -29,9 +11,6 @@ import type { Outcome } from "../../packages/core/src/domain/qualityCheckReconci
 import type { EvidenceObligation, EvidenceObservation } from "../../packages/core/src/domain/journal.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
-// @SCN-LDG-030
-
-/** The every-outcome corpus fixture — shaped so the real reconcile emits EVERY outcome. */
 const EVERY_OUTCOME_CORPUS = {
   features: "tests/fixtures/every-outcome-corpus/features",
   vitest: "tests/fixtures/every-outcome-corpus/vitest.json",
@@ -40,7 +19,6 @@ const EVERY_OUTCOME_CORPUS = {
   packageJson: "tests/fixtures/every-outcome-corpus/package.json",
 };
 
-/** A REAL debit and a REAL credit — content is immaterial to the presence-only invariant. */
 const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
 const sampleObservation: EvidenceObservation = {
   qualityCheck: "unit",
@@ -51,11 +29,6 @@ const sampleObservation: EvidenceObservation = {
 let profile: typeof OUTCOME_SIDE_PROFILE;
 let constructedPresence: Record<string, { obligation: boolean; observation: boolean }> = {};
 
-/**
- * Spawn the REAL top-level binary (packages/spec-controller/dist/cli.js — the file `bin` points
- * at, spawned under `node` since 3F-3424) with the `balance`
- * subcommand — the standalone core + app pipeline, no in-process shortcut.
- */
 function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
   const result = spawnSync(
@@ -69,8 +42,6 @@ function spawnBalance(args: string[]): SpawnSyncReturns<string> {
 
 Given("the canon outcome-side profile OUTCOME_SIDE_PROFILE", function () {
   profile = OUTCOME_SIDE_PROFILE;
-  // Totality: the type-forced record keys every Outcome — all eleven, canon's table
-  // (double-entry-manifesto.md) since duplicate-scn-code (3F-3609).
   assert.equal(Object.keys(profile).length, 11, "expected eleven outcomes in OUTCOME_SIDE_PROFILE");
 });
 
@@ -107,8 +78,6 @@ Then(
   function () {
     for (const [outcomeKey, row] of Object.entries(profile)) {
       const outcome = outcomeKey as Outcome;
-      // FLIP the obligation side away from canon — carry it where the row says None, omit it where
-      // the row says Exists. A canon-inconsistent pair must be unconstructible.
       assert.throws(
         () =>
           makeQualityCheckReconciliation({
@@ -118,7 +87,6 @@ Then(
           }),
         `${outcomeKey}: a forbidden obligation side must be unconstructible`,
       );
-      // FLIP the observation side away from canon (the mirror).
       assert.throws(
         () =>
           makeQualityCheckReconciliation({
@@ -132,11 +100,6 @@ Then(
   },
 );
 
-/**
- * Every Quality Check Reconciliation the REAL tool emitted, checked against canon — the debit/credit
- * PRESENCE of each must match its OUTCOME_SIDE_PROFILE row — and the set of outcomes seen. Its own
- * function because the step that reads it is held to the line ceiling it would otherwise breach.
- */
 function outcomesCheckedAgainstCanon(report: {
   ledger: { scenarioReconciliations: { scnId: string; qualityCheckReconciliations: { outcome: string; evidenceObligation?: unknown; evidenceObservation?: unknown }[] }[] };
 }): Set<string> {
@@ -176,16 +139,11 @@ Then(
       "--package-json", EVERY_OUTCOME_CORPUS.packageJson,
       "--format", "json",
     ]);
-    // The corpus is deliberately out-of-balance AND unsound (it carries a broken proof), so the
-    // gate sets a NON-ZERO exit (4). The report JSON is flushed to stdout regardless (the CLI uses
-    // process.exitCode, not process.exit) — a non-zero status is EXPECTED here, not a spawn failure.
     assert.ok(
       result.stdout.trim().length > 0,
       `expected report JSON on stdout; stderr was: ${result.stderr}`,
     );
     const emittedOutcomes = outcomesCheckedAgainstCanon(JSON.parse(result.stdout));
-    // EVERY outcome is exercised — the corpus spans the whole table, read off the profile
-    // rather than a counted literal, so the next outcome cannot leave the corpus behind silently.
     const missingOutcomes = Object.keys(OUTCOME_SIDE_PROFILE).filter((o) => !emittedOutcomes.has(o));
     assert.deepEqual(
       missingOutcomes,

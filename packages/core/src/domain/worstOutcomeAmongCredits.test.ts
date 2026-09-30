@@ -1,21 +1,3 @@
-/**
- * @unit for @SCN-LDG-038 (features/ledger.feature) — ONE property over `reconcile` for the rule the
- * examples beside it pin case by case (3F-3547, 3F-3552): whatever credits answer one evidence
- * obligation, on either arm, in any arrival order and from any files, the obligation reads the worst
- * outcome among them, and the item names a credit carrying it.
- *
- * TWO ANCHORS, AND WHY THE ORACLE IS NOT SIMPLY `reconcile` OVER ONE CREDIT. That was the first
- * draft, and a plant dropping `watermelon` from the precedence passed it: a lone severed credit then
- * read `missing` through the same rule, so the oracle moved with the fault. So what one credit reads
- * on its own is STATED here, from the single-credit scenarios (@SCN-LNT-028, @SCN-LDG-028,
- * @SCN-LDG-017, @SCN-LNT-026), AND checked against `reconcile` over that credit alone on every run —
- * the statement cannot drift from the product, and the product cannot drag the statement with it.
- *
- * The examples in failedCreditAmongSeveral.test.ts prove the pairs already found; this covers the
- * orderings and mixtures nobody has tried — several credits, locators that collide and cross, and
- * credits the match excludes (`broken`) or reads as an absence (`exists: false`) mixed in.
- */
-
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 
@@ -26,13 +8,10 @@ import type { Outcome } from "./qualityCheckReconciliation.js";
 const SCN = "SCN-AAA-001";
 const CHECK = "complexity";
 
-/** The ruled order, worst first; `missing` is what an obligation reads when no credit answers it. */
 const WORST_FIRST: readonly Outcome[] = ["failing", "watermelon", "satisfied", "missing"];
 
-/** Few files, so locators collide as often as they cross, and absent as often as either. */
 const locator = fc.constantFrom(undefined, "a.feature", "m.feature", "z.feature");
 
-/** One arm of the rule: the obligation it answers, and any credit that can reach it. */
 interface Arm {
   obligation: EvidenceObligation;
   credit: fc.Arbitrary<EvidenceObservation>;
@@ -79,12 +58,6 @@ const ARMS: Record<"runtime" | "fitness", Arm> = {
   },
 };
 
-/**
- * What ONE credit reads on its own, as the single-credit scenarios state it: a proof that never ran
- * answers nothing (@SCN-LDG-017, @SCN-LNT-026); a behavioural credit is its status; a fitness credit
- * asks its own verdict first, then its wiring, then whether it exists at all (@SCN-LNT-028,
- * @SCN-LDG-028).
- */
 function readsAlone(credit: EvidenceObservation): Outcome {
   if ("broken" in credit && credit.broken) return "missing";
   if (credit.qualityCheck !== "fitness") return credit.status === "passed" ? "satisfied" : "failing";
@@ -93,7 +66,6 @@ function readsAlone(credit: EvidenceObservation): Outcome {
   return credit.exists ? "watermelon" : "missing";
 }
 
-/** The obligation's item, reconciled over exactly these credits. */
 function itemOf(arm: Arm, credits: EvidenceObservation[]) {
   const rows: Scenario[] = [{ scnId: SCN, evidenceObligations: [arm.obligation] }];
   const row = reconcile(rows, credits).scenarioReconciliations.find((r) => r.scnId === SCN)!;
@@ -105,7 +77,6 @@ function itemOf(arm: Arm, credits: EvidenceObservation[]) {
 const worstOf = (outcomes: readonly Outcome[]): Outcome =>
   WORST_FIRST.find((o) => outcomes.includes(o)) ?? "missing";
 
-/** An arm, its credits, and the same credits in another arrival order. */
 const armAndCreditsTwoWays = fc.constantFrom("runtime" as const, "fitness" as const).chain((arm) =>
   fc
     .array(ARMS[arm].credit, { maxLength: 6 })
@@ -120,7 +91,6 @@ describe("[SCN-LDG-038] whatever credits answer one evidence obligation, on eith
   it("reads the worst outcome any credit reads alone, names a credit reading it, and reads the same in any arrival order", () => {
     fc.assert(
       fc.property(armAndCreditsTwoWays, ({ arm, credits, reordered }) => {
-        // The statement of a lone credit's reading, held to the product's on every credit drawn.
         for (const credit of credits) expect(itemOf(ARMS[arm], [credit]).outcome).toBe(readsAlone(credit));
         const expected = worstOf(credits.map(readsAlone));
         const item = itemOf(ARMS[arm], credits);

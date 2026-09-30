@@ -1,21 +1,3 @@
-/**
- * Unit test for the EvidenceObligations builder (@SCN-RPT-008).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-008 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
- *
- * Proves evidenceObligations in isolation: it computes the excluded-occurrence delta —
- * excludedOccurrences = rawScnOccurrences − scenarioCount — the lone non-derivable
- * corpus fact (scenarioCount is derivable from the balance; rawScnOccurrences is
- * derivable as scenarioCount + excludedOccurrences).
- *
- * Teeth: until the builder lands, the stub returns zeros, so every delta assertion
- * reds (the genuine red→green).
- *
- * Parent: (@SCN-RPT-008).
- */
-
 import { describe, it, expect } from "vitest";
 import { evidenceObligations as buildEvidenceObligations } from "./evidenceObligations.js";
 

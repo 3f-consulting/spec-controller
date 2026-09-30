@@ -1,17 +1,6 @@
-/**
- * The `--exit-zero` arm of `runBalance`, in-process. Its own file rather than a
- * block in `cli.test.ts` because that file sits at the 400-line standard the complexity gate holds a
- * touched file to.
- */
-
 import { describe, it, expect, vi } from "vitest";
 import { runBalance } from "./cli.js";
 
-/**
- * `--exit-zero` moves the VERDICT codes (1, 3) to 0 and leaves the report
- * byte-identical. In-process, so the clock is pinned and the comparison is the whole stdout with no
- * mask: any byte the flag changed would show here, the provenance line included.
- */
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
   const EXAMPLES = [
     {
@@ -44,8 +33,6 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
       code: 3,
     },
     {
-      // Every account balances, and one code is misfiled: a verdict-class 1, which
-      // --exit-zero moves like any other (operator ruling, 2026-09-24).
       verdict: "balanced-with-scenario-code-errors",
       argv: [
         "--features", "tests/fixtures/scenario-code-error/features",
@@ -57,7 +44,6 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
     },
   ] as const;
 
-  /** Run `balance` in-process at a pinned instant; return what it printed and the status it left. */
   function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
@@ -95,12 +81,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
   }
 });
 
-/**
- * `--exit-zero` never masks a run that could give no verdict. Usage (2), unsound (4) and
- * nothing-to-reconcile (5) each set `process.exitCode`, and are read from there.
- */
 describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict", () => {
-  /** Run `balance --exit-zero` in-process; return the status it left and what it wrote to stderr. */
   function runWithExitZero(argv: readonly string[]): { exitCode: number; stderr: string } {
     const savedExitCode = process.exitCode;
     process.exitCode = 0;
@@ -129,7 +110,6 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
       "--vitest", missing,
     ]);
     expect(run.exitCode).toBe(2);
-    // The missing-path refusal, not the unknown-flag one — an unregistered --exit-zero also exits 2.
     expect(run.stderr).toContain("--vitest");
     expect(run.stderr).toContain(missing);
   });

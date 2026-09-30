@@ -56,7 +56,7 @@ A fitness check is a whole-system property — complexity, mutation score, type 
 
 ```yaml
       - name: Complexity
-        id: SCN-FIT-001
+        id: SCN-<FFF>-<NNN>
         if: always()
         run: eslint
 ```
@@ -73,10 +73,10 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a fitne
 
 ```yaml
 - run: eslint
-  id: SCN-FIT-001
+  id: SCN-<FFF>-<NNN>
   if: always()
 - run: pnpm typecheck
-  id: SCN-FIT-011
+  id: SCN-<FFF>-<MMM>
   if: always()
 - if: always()
   run: echo '${{ toJSON(steps) }}' > ci-steps.json

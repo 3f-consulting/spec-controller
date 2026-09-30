@@ -4,11 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 
-/**
- * The status a call leaves with: the exit code carried by whatever it threw, or `undefined` when it
- * returned. The refusal is thrown for the command to settle, so the call itself
- * carries the code.
- */
 function usageStatusOf(run: () => unknown): number | undefined {
   try {
     run();

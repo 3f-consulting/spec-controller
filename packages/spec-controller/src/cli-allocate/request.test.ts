@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { cliRegistry } from "../cli-registry.js";
 import { readRequest } from "./request.js";
 
-/** The usage error `argv` is, failing the test when it is read as a request instead. */
 function usageErrorOf(argv: readonly string[]): string {
   const read = readRequest(argv, cliRegistry, "0.0.0-test");
   if (!("usageError" in read)) throw new Error(`read as a request for ${read.part}`);

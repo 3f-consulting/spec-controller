@@ -1,33 +1,10 @@
-/**
- * Unit tests for the tags a scenario inherits from its Feature and Rule (@SCN-LDG-020), split out
- * of scenarios.test.ts at 3F-3559.
- *
- * Bidirectional evidence: each describe carries the @SCN id of its scenario (Evidence Manifesto §9).
- */
-
 import { describe, it, expect } from "vitest";
 import {
   parseScenarios,
 } from "./scenarios.js";
 
-/**
- * @unit for @SCN-LDG-020 (3F-1775) — the PARSED corpus is what CUCUMBER runs.
- *
- * Bidirectional evidence: the describe carries the @SCN-LDG-020 id matching
- * features/ledger.feature and the @integration steps in tests/steps/ledger.steps.ts.
- *
- * The corpus was read by a hand-rolled TAG-LINE SCAN that saw only the contiguous tag block
- * directly above a `Scenario:`. Gherkin does not work that way: a scenario INHERITS the tags of
- * its Feature and of any enclosing Rule, and cucumber applies them. A tier hoisted to the
- * Feature/Rule line — idiomatic, valid Gherkin — was therefore INVISIBLE, so its obligation was
- * never RAISED and its missing evidence could never reconcile `missing`: the run read BALANCED
- * while cucumber named a tier nothing proved. Extraction now comes from the real AST.
- */
 describe("[SCN-LDG-020] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
-    // THE HEADLINE. cucumber names unit AND integration of this scenario. The scan saw only
-    // @unit, so the integration obligation was never RAISED — and an obligation that was never
-    // raised can never reconcile `missing`.
     const source = `@AAA @integration
 Feature: alpha
 
@@ -64,9 +41,6 @@ Feature: alpha
   });
 
   it("does NOT invent a phantom scenario from a tag block above a Rule — the over-read (operator: give it teeth)", () => {
-    // THE SECOND BUG. Any non-tag line FLUSHED the accumulated block, so a tag block above a
-    // `Rule:` was emitted AS IF it were a scenario. The corpus did not merely under-read — it
-    // INVENTED. Exactly one real scenario lives here, and the AST knows it.
     const source = `@AAA
 Feature: alpha
 
@@ -80,15 +54,11 @@ Feature: alpha
     const scenarios = parseScenarios(source);
 
     expect(scenarios).toHaveLength(1);
-    // The one real scenario, carrying its OWN id and the tier inherited from the Rule.
     expect(scenarios[0]!.scnId).toBe("SCN-AAA-002");
     expect(scenarios[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 
   it("inherits a FITNESS obligation and a community deferral tag, like any other tag", () => {
-    // Inheritance is not tier-only: EVERY tag inherits, exactly as cucumber resolves them. The
-    // scenario beneath is STEPLESS; what raises the fitness obligation off the axis tag it
-    // inherits is the configured row naming it, never the shape (@SCN-LNT-018).
     const fitnessSource = `@AAA @fitness
 Feature: alpha
 
@@ -100,7 +70,6 @@ Feature: alpha
       { qualityCheck: "fitness" },
     ]);
 
-    // A deferral tag on the Feature defers every scenario beneath it — the whole-file @wip.
     const deferredSource = `@AAA @wip
 Feature: alpha
 
@@ -114,9 +83,6 @@ Feature: alpha
   });
 
   it("inherits an @SCN from the Rule — parity with cucumber, which inherits EVERY tag", () => {
-    // Operator ruling: follow cucumber. Excluding @SCN would invent a rule cucumber does not
-    // have. Both scenarios beneath therefore carry the inherited id — a corpus-authoring fault,
-    // but a VISIBLE one (whether it should red is the deferred policy question, 3F-1774's sibling).
     const source = `@AAA
 Feature: alpha
 
@@ -136,8 +102,6 @@ Feature: alpha
   });
 
   it("is BYTE-IDENTICAL on a file that uses no inheritance — the regression bar", () => {
-    // The whole existing corpus is of this shape (verified: no .feature hoists a tier), so the
-    // rewrite must not move a single obligation on it.
     const source = `@AAA
 Feature: alpha
 
@@ -161,12 +125,6 @@ Feature: alpha
     ]);
   });
   it("makes a duplicate scnId VISIBLE — two scenarios sharing an inherited @SCN are TWO scenarios, never deduped", () => {
-    // THE OPERATOR'S GUARDRAIL (3F-1775). A hoisted @SCN is inherited by every scenario beneath
-    // it, so two scenarios can carry one id. The parser must NOT quietly collapse them: if it did,
-    // the unproven scenario would vanish and the run would read balanced. It emits BOTH — and the
-    // ledger then keys them as ONE account whose every quality check reads duplicate-scn-code
-    // (@SCN-STG-013, 3F-3609), because evidence citing a duplicated id cannot be attributed to
-    // either scenario. The CLI no longer refuses the corpus over it (@SCN-STG-018).
     const source = `@AAA
 Feature: alpha
 
@@ -186,10 +144,6 @@ Feature: alpha
   });
 
   it("THROWS on unparseable source — an empty corpus balances against anything, so it never returns one", () => {
-    // The silent-empty-corpus is the false-green species itself: a debit side of zero balances
-    // against any evidence. @SCN-CLI-016 refuses such a file at the CLI edge long before this, so
-    // the throw is unreachable in a real run — it is the floor that stops a future caller
-    // re-opening the hole quietly.
     expect(() => parseScenarios("not gherkin at all {{{")).toThrow(/not valid Gherkin/);
   });
 });

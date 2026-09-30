@@ -29,8 +29,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
   Rule: a kept run stamps run.yaml with the decided fields
 
-    The run dir carries a run.yaml manifest: schema_version (2 — 3F-1916 added the tool
-    identity), run_id, target, source_sha, tool_sha, tool_version,
+    The run dir carries a run.yaml manifest: schema_version (2), run_id, target, source_sha, tool_sha, tool_version,
     mode (balance / analyse / migrate), date, purpose (a list of grouping slugs — empty by
     default, an ad-hoc run, curated by hand afterward), links, and the artefact filenames.
 

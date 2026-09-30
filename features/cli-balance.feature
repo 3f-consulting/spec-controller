@@ -51,7 +51,7 @@ Feature: spec-controller balance runs standalone
 
     `balance` is a GATE, not just a reporter: any out-of-balance reconciliation makes
     it exit EXACTLY `1` — not merely non-zero — so it reds a CI build and can't
-    masquerade as the usage error (`2`, @SCN-CLI-002). Out-of-balance is a domain
+    masquerade as the usage error (`2`). Out-of-balance is a domain
     derivation over the WHOLE reconciliation: out-of-balance iff ANY reconciling item
     exists anywhere — a scenario's out-of-balance items AND the suspense-row items
     (a static-check watermelon, a no-evidence-obligation credit, a phantom scenario) — NOT a scan
@@ -91,11 +91,10 @@ Feature: spec-controller balance runs standalone
 
   Rule: --strict escalates Pending Items to a run failure
 
-    Pending Items are run-neutral by default (the slice-2 partition, @SCN-PND-008); --strict
+    Pending Items are run-neutral by default; --strict
     is the opt-in that fails a run carrying them. This Rule pins the LENIENT DEFAULT first:
     a reconciliation that is balanced except for Pending Items exits 0 through the real binary
     when --strict is NOT given, so deferred work never reds a build unless the team opts in.
-    (The --strict escalation to exit 3 — distinct from out-of-balance's 1 — is @SCN-CLI-011.)
 
     @unit @e2e @SCN-CLI-010
     Scenario: an only-Pending-Items reconciliation with no --strict → balance exits 0
@@ -220,7 +219,7 @@ Feature: spec-controller balance runs standalone
     as an honest disagreement is precisely the meaning-collision the exit taxonomy exists
     to prevent (0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict /
     4 unsound / 5 nothing to reconcile). A present-but-unparseable report is an INPUT fault — sibling to a missing
-    path (@SCN-CLI-002) and an unrecognised flag (@SCN-CLI-009), both already exit 2 — so
+    path and an unrecognised flag, both already exit 2 — so
     it halts BEFORE reconciling, naming the file and the parse failure, and exits 2.
 
     Not 4 (unsound): unsound is a VALID, parseable report whose evidence didn't fully
@@ -235,10 +234,10 @@ Feature: spec-controller balance runs standalone
     tolerantly by design is a workflow's YAML: a workflow the reader cannot walk contributes no
     steps, and the run reconciles without them.
 
-    The rule reaches --render-from-json too (@SCN-CLI-015), the one flag the guard lane never
+    The rule reaches --render-from-json too, the one flag the guard lane never
     reached: it returns BEFORE the input guards run, so it honoured neither — a missing path
     crashed to ENOENT and a malformed file to SyntaxError, both landing on exit 1. Its
-    missing-path case was a live violation of @SCN-CLI-002's own shipped principle, which the
+    missing-path case was a live violation of the usage-error principle, which the
     CLI enforced for the five evidence flags and not for this one. MISSING and UNPARSEABLE
     are two Examples of the one boundary rule.
 
@@ -262,26 +261,6 @@ Feature: spec-controller balance runs standalone
         | defect      |
         | missing     |
         | unparseable |
-
-  # THE OBLIGATION SIDE of the same rule. The tool's inputs are not only
-  # the evidence reports; the FEATURE CORPUS is an input too — the ledger's DEBIT side. It was
-  # read by a hand-rolled TAG-LINE SCAN that never looked for a Scenario: header, so a malformed
-  # tag line simply stopped being a tag line and its scenario CEASED TO EXIST. One stray
-  # character — in a file cucumber itself rejects — deleted a failing row and turned an
-  # out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
-  # reconcile `missing`, because it was never RAISED to be missing: the run reads CLEANER THAN
-  # REALITY. That is the exact false-green this tool exists to prevent, aimed at itself.
-  #
-  # Every feature file is now VALIDATED by the real Gherkin parser — cucumber's own — before any
-  # reconcile. A file the parser rejects is an input the tool cannot read: exit 2, halt before
-  # reconciling, name the file and the parse failure. Never a verdict, and never a green.
-  #
-  # Validation is half the story: it decides whether a file can be READ. The corpus is then
-  # EXTRACTED from that same real AST, so what spec-controller reconciles IS what
-  # cucumber runs — Feature/Rule tag inheritance included. One reading of the file, not two.
-  #
-  # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether UNCODED work
-  # should red a run is a policy question, deliberately kept out of this bug fix.
 
     @unit @e2e @SCN-CLI-016
     Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
@@ -432,12 +411,12 @@ Feature: spec-controller balance runs standalone
     `new-client` is a supported adoption state, not a degraded one, and most targets have
     no `features/` directory at all. An absent DEFAULT corpus escaped as a raw ENOENT and
     landed on Node's default exit 1 — the out-of-balance code — which is the exact collision
-    that @SCN-CLI-014/015/016 closed on every other input, alive on the one path each new
+    closed on every other input, alive on the one path each new
     consumer is guaranteed to take. The corpus that is ABSENT and the corpus that holds NO
     SCENARIO are one answer, not two, and the report names the directory it examined.
 
     A SUPPLIED `--features` at a path that does not exist is untouched by this Rule and stays a
-    usage fault at exit 2 (@SCN-CLI-002): supplied-but-absent is the operator mistyping,
+    usage fault at exit 2: supplied-but-absent is the operator mistyping,
     absent-by-default is the target's honest shape.
 
     @SCN-CLI-017 @unit @e2e
@@ -491,8 +470,8 @@ Feature: spec-controller balance runs standalone
     The on-ramp for a new-client or annotated adopter: the gate's report, stated exactly,
     without the red. Gate stays the default. The flag is a CLI-edge suppression of the
     process status only and is never recorded, unlike --strict, which the saved report carries
-    — so the report, headline included, still names the code the GATE gives; @SCN-CLI-013's agreement is
-    between the headline and the gate, and holds unchanged with no flag.
+    — so the report, headline included, still names the code the GATE gives; the agreement
+    between the headline and the gate holds unchanged with no flag.
 
     @SCN-CLI-021 @unit @e2e
     Scenario Outline: under --exit-zero a <verdict> run prints the same report byte for byte and exits 0
@@ -525,7 +504,7 @@ Feature: spec-controller balance runs standalone
 
   Rule: a corpus-shape fault never pre-empts the report
 
-    A scenario code error (3F-3635) is a fault in how the corpus files its codes, not in what its
+    A scenario code error is a fault in how the corpus files its codes, not in what its
     accounts say, so it never stops the reconciliation. It takes the exit-1 rung ahead of the
     balance verdict — 5, 4, then 1 for scenario code errors, then 1 for out of balance, then 3 —
     and the report still carries every account, balanced or not.
@@ -562,10 +541,6 @@ Feature: spec-controller balance runs standalone
         | a name that is no command                  |
         | a name that is no command, as a stored run |
 
-    # --exit-zero moves only verdicts, and a usage fault is not one. Written after a
-    # command the host does not know, the flag reaches only that command's arguments, which the host
-    # never reads. Written before the command, it is a flag out of place, not a command.
-
     @SCN-CLI-057 @unit @e2e
     Scenario: --exit-zero after an unknown command never moves its usage status
       Given the spec-controller top-level binary
@@ -578,9 +553,9 @@ Feature: spec-controller balance runs standalone
     scope. So the rule reaches a flag added later with no new row. A value is missing when nothing
     follows the flag, when a flag follows it, or when it is empty. The invocation is refused at the
     usage status before any reconcile, report or store write, and --exit-zero cannot move it,
-    because a usage fault is not a verdict (@SCN-CLI-022). Until now a missing value was read as the
+    because a usage fault is not a verdict. Until now a missing value was read as the
     word "true". A path flag went looking for a file called true, --target and --source-sha recorded
-    it, and --format dropped it and ran to a verdict that --exit-zero turned green (3F-3639).
+    it, and --format dropped it and ran to a verdict that --exit-zero turned green.
 
     @SCN-CLI-058 @unit @e2e
     Scenario Outline: balance refuses <flag> given no value as a usage fault, naming the missing value — <shape>
@@ -619,7 +594,7 @@ Feature: spec-controller balance runs standalone
     The host reads its modifiers before the command, and the command reads its own flags after it.
     A flag on the wrong side is a usage fault that names the flag and where it belongs. It is never
     read as a command the host does not know, and never given the pin advice meant for a flag no
-    version accepts (3F-3639). A --help or -h among the host's own tokens still answers the
+    version accepts. A --help or -h among the host's own tokens still answers the
     top-level help first, whatever else is out of place beside it.
 
     @SCN-CLI-060 @unit @e2e
@@ -648,15 +623,15 @@ Feature: spec-controller balance runs standalone
 
   Rule: every argument is read as what it is, or refused as a usage fault before anything runs
 
-    The unknown-flag check (@SCN-CLI-009) bounds a flag's NAME against the registry. That alone let
+    The unknown-flag check bounds a flag's NAME against the registry. That alone let
     a value given to a flag that takes none, a word that is no flag at all, a second copy of a
     single-value flag, a flag spelled --flag=value, and a command read as a modifier's value all past
-    it, and three of those ran to a verdict --exit-zero turned green (3F-3672). Which flags take a value, which take none,
+    it, and three of those ran to a verdict --exit-zero turned green. Which flags take a value, which take none,
     and which may repeat are the registry's to say, so a flag added later is covered by construction.
     A refusal inside a stored run leaves no run.yaml. --help still answers first, whatever else is
     given: it runs nothing and reaches no verdict, so --exit-zero has nothing to turn green.
     A host modifier needs a command after it, or help. Given last, it is refused, and a bare
-    spec-controller still answers help (3F-3686). --run-id names a stored run. Given without
+    spec-controller still answers help. --run-id names a stored run. Given without
     --store there is no run for it to name, so it is refused, and a request for help still
     answers first.
 
@@ -870,11 +845,11 @@ Feature: spec-controller balance runs standalone
 
   Rule: a flag balance has retired is refused as retired, naming what replaced it — never as skew a pin can cure
 
-    An unregistered flag is refused with drift advice (@SCN-CLI-009): the pin and the tree
+    An unregistered flag is refused with drift advice: the pin and the tree
     have drifted, so bump the pin to a version that accepts it. That advice is true of a flag
     newer than the pin and false of a flag the product has retired, which every earlier
     version accepts and no later one will: the only pin that satisfies it is a downgrade back
-    onto the route the retirement removed (3F-3528). So a retired flag is refused as retired,
+    onto the route the retirement removed. So a retired flag is refused as retired,
     with the version that retired it and what took its place, and no pin is offered.
 
     The retired flags are data on the command's registry entry, beside the flags it accepts,

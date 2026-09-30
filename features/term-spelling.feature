@@ -17,11 +17,9 @@ Feature: Term spelling — a term names the same pair however its author spelled
 
   ONE RULE, SPELLED SEVEN TIMES, SO ONE BUG BECAME SEVEN. The correction is not the reordering;
   it is that a rule this small was hand-copied at all. dry's "a rule stated twice is a rule
-  obeyed in its laxest form" with the laxest form being all of them — the shape @SCN-API-004
-  ruled on for hand-transcribed lists and 3F-2960's Ruling 2 ruled on again. NOTHING MECHANICAL
-  HOLDS THE COUNT AT ONE, AND IT IS SAID HERE RATHER THAN LEFT TO BE FOUND (3F-3491). A scan over
-  this repository's own source used to, filed as part of this Rule's @unit evidence (3F-2988 stated
-  it as a Rule of its own; 3F-3226 retired that Rule and kept the scan). Its subject was our tree
+  obeyed in its laxest form" with the laxest form being all of them. NOTHING MECHANICAL
+  HOLDS THE COUNT AT ONE, AND IT IS SAID HERE RATHER THAN LEFT TO BE FOUND. A scan over
+  this repository's own source used to, filed as part of this Rule's @unit evidence. Its subject was our tree
   rather than the product, so a target adopting this axis inherited no such scan and a consumer's
   behaviour was being evidenced by a walk over the vendor's own files — which is what took it, and
   its walker with it. An eighth hand-copy is now one paste away and review is the whole of what

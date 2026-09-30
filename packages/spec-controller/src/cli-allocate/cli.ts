@@ -1,6 +1,3 @@
-/**
- * `spec-controller allocate <FFF>` — the next scenario code for a feature part, alone on stdout.
- */
 import { join } from "node:path";
 import { nextScnCode, type ScnSighting } from "@3f-consulting/spec-controller-core";
 import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
@@ -37,7 +34,6 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   }
 }
 
-/** A usage refusal: its line on stderr, and the usage status once everything written has drained. */
 function refuseUsage(line: string): void {
   process.stderr.write(line + "\n");
   process.exitCode = 2;
@@ -62,7 +58,6 @@ function writeLineIfAny(line: string | null): void {
   if (line !== null) process.stderr.write(line + "\n");
 }
 
-/** The tree and its history through git, or the tree alone by a walk where there is no repository. */
 function sightingsFrom(cwd: string, part: string, top: string | null): ScnSighting[] {
   return top !== null ? [...readTree(top, part), ...readHistory(cwd, part)] : walkTree(cwd, part);
 }

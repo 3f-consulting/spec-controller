@@ -1,10 +1,3 @@
-/**
- * A command that keeps no run takes no host modifier, and the host refuses one given before it. A
- * request for that command's own help is answered instead, wherever the help token stands among the
- * command's args. The modifiers and the commands that take none are read from the registry, never
- * listed, so a command that later stops taking modifiers is inside the rule without an edit here.
- */
-
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { valueFlagsOf } from "./cli-args.js";
@@ -17,7 +10,6 @@ const commandsTakingNone = cliRegistry.commands
   .filter((command) => command.acceptsHostModifiers === false)
   .map((command) => command.name);
 
-/** Every order of every non-empty set of the given modifiers. */
 function modifierPrefixes(names: readonly string[]): string[][] {
   if (names.length === 0) return [];
   return names.flatMap((name) => {
@@ -26,15 +18,12 @@ function modifierPrefixes(names: readonly string[]): string[][] {
   });
 }
 
-/** The args before which a modifier is given: each with its value. */
 const prefixes = modifierPrefixes(modifiers).map((names) => names.flatMap((name) => [name, "value"]));
 
-/** Where a help token may stand among a command's args. */
 function helpRequests(help: string): string[][] {
   return [[help], ["ONE", help], [help, "ONE"], ["fit", help], ["--bogus", help]];
 }
 
-/** Command args with no help token among them. */
 const NO_HELP = [["ONE"], ["ONE", "--new"], ["--bogus"], []];
 
 const answered = prefixes.flatMap((prefix) =>

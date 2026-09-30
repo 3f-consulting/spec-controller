@@ -18,7 +18,6 @@ const ctxOf = (strict: boolean): RunContext => ({
   strict,
 });
 
-/** The first non-empty line under the verdict heading: the only line that is the headline. */
 function headline(md: string): string {
   const after = md.split("### Run verdict")[1] ?? "";
   return after.split("\n").find((line) => line.trim() !== "") ?? "";

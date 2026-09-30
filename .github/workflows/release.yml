@@ -1,40 +1,5 @@
 name: Release
 
-# EVERY MERGE TO `main` THAT CHANGES A PUBLISHED PACKAGE PUBLISHES IT, IN ITS OWN RUN (3F-3529).
-# Nobody cuts a release. The portfolio rule is `the maintainers' private notes` → "Continuous
-# delivery: every package-changing merge publishes, and the version is a counter".
-#
-# THE `paths:` LIST IS WHAT A TARBALL IS MADE OF, AND NOTHING ELSE. Both manifests ship
-# `files: ["dist"]`, and npm adds `package.json` and `README.md`. `dist` is `tsc` over `src` minus
-# its `*.test.ts`, through a `tsconfig.build.json` that extends the root `tsconfig.json`. A merge that
-# touches only `doc/`, `features/`, `tests/`, `.github/`, the root `package.json` or the lockfile
-# changes no artefact, so it starts no run. Replayed over the last 40 commits on `main` (3F-3529,
-# 2026-09-18), 24 would have published. The other 16 would not, and among them is `2b94da2`, the last
-# by-hand pin move. That is the loop guard for the bot that now moves the pin: its PR touches the
-# root `package.json` and the lockfile and nothing here.
-#
-# `push: tags` IS GONE, ON PURPOSE. A tag RECORDS a release, from the `tag` job at the foot of this
-# file; it never causes one. And a tag made with the default token starts no workflow anyway, so a
-# release listening for one would never fire.
-#
-# AND THERE IS NO `workflow_dispatch` EITHER, SO A MERGE TO `main` IS THE ONLY THING THAT STARTS
-# THIS FILE (3F-3551). The trigger that used to be here published a branch that had not merged, at
-# the next counter number — a release that had passed none of `main`'s bars and that `main` never
-# contained. It went with the hatch it existed for: a model change the pinned reader cannot read
-# now lands as a parallel change over two merges, `doc/releasing.md` → "A model change the pinned
-# reader cannot read". A FAILED release run is re-run with `gh run rerun <id>`, which replays the
-# `push` event and needs no trigger of its own.
-#
-# THIS IS STILL ITS OWN FILE RATHER THAN A JOB IN `ci.yml` (3F-3249). That file runs on
-# `pull_request` too, and every step in it is unconditional, which is what lets a green there mean
-# every gate ran. A release inside it would need an `if:` to stay off pull requests.
-#
-# AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250).
-# Nothing below asks anything that is about THIS REPOSITORY rather than about the artefact — not the
-# self-reconciliation and not the fitness pass. A tree whose self-reconciliation reds can still be
-# released, which is what the expand step of a parallel change needs (3F-3551): the merge that
-# teaches the reader the new shape is the cure for the skew, and a release path consulting the
-# reconciliation would refuse to publish the cure for the disease.
 on:
   push:
     branches: [main]
@@ -46,86 +11,10 @@ on:
       - "packages/*/tsconfig.build.json"
       - "tsconfig.json"
 
-# ONE RELEASE AT A TIME, AND THE COUNTER IS READ INSIDE THAT ONE (3F-3529). GitHub runs one run of
-# this group and holds at most one pending. A newer pending run cancels the older pending one:
-# with merges A, B and C close together, A publishes, B is cancelled, and C publishes. C's commit
-# contains B's change, because squash merges keep `main` linear, so nothing goes unpublished and no
-# number is minted twice. `cancel-in-progress: false` matters here: cancelling a RUNNING release
-# could land between `Publish core` and `Publish the CLI`.
 concurrency:
   group: release
   cancel-in-progress: false
 
-# NO CREDENTIAL IS STORED ANYWHERE, AND THE ONE THAT USED TO PUBLISH IS GONE (3F-3441). The two
-# publish steps at the foot of the `release` job run `npm publish` under npm trusted publishing:
-# the job asks GitHub for a
-# short-lived OIDC id-token, npm exchanges it for a publish token scoped to the one package, and
-# that token dies with the run. `permissions: id-token: write` is what switches it on and is the
-# whole of the configuration. No secret, no `env:` on either publish step, nothing to rotate.
-#
-# THE MEASUREMENT COMES FIRST, BECAUSE THAT PARAGRAPH IS ONE THIS FILE ONCE CARRIED AND WAS WRONG
-# ABOUT. It read "THE IDENTITY IS MINTED PER RUN, AND THERE IS NO CREDENTIAL ANYWHERE IN THIS FILE"
-# while running the staging command, which never looks at OIDC — so the claim was true of the
-# permission and false of the release. What makes it true now is the COMMAND, and the command was
-# read rather than assumed. In `npm@11.19.1`:
-#
-#   lib/commands/publish.js:147    await oidc({ packageName: manifest.name, registry, opts, config })
-#   lib/utils/oidc.js              on GitHub Actions, returns early unless
-#                                  ACTIONS_ID_TOKEN_REQUEST_URL *and*
-#                                  ACTIONS_ID_TOKEN_REQUEST_TOKEN are both set — the two variables
-#                                  `id-token: write` produces, and the only thing that produces them.
-#                                  (A pre-supplied NPM_ID_TOKEN short-circuits that check; it is
-#                                  GitLab's route and nothing here sets it. Said rather than left
-#                                  out, because an over-general claim about npm's source is the
-#                                  exact fault the paragraph above is correcting.)
-#   lib/commands/stage/publish.js  zero references to oidc, in 11.19.1 and 12.0.2 alike
-#
-# THE CALL IS NOT GUARDED ON THE SPEC, WHICH IS WHY PUBLISHING A TARBALL AUTHENTICATES. Line 147
-# runs whatever `npm publish` was handed; for a file spec the manifest comes from
-# `pacote.manifest()` (line 292), so the name exchanged is the one inside the .tgz. The steps below
-# hand it the files packed above. The exchange is PER PACKAGE —
-# `/-/npm/v1/oidc/token/exchange/package/<name>` — so each of the two publishes authenticates on
-# its own account and each package needs its own trusted-publisher connection.
-#
-# THE npm THAT DOES THIS IS DECIDED BY `setup-node`'s NODE VERSION AND BY NOTHING ELSE. That action
-# has no npm-version input; it installs whatever npm the Node it fetches bundles. Trusted
-# publishing needs npm >= 11.5.1; measured against nodejs.org's own release index on 2026-09-16,
-# Node 22.23.2 bundles npm 10.9.8 and Node 24.21.0 bundles 11.19.0 — which is why the step below
-# pins 24. On 22 the exchange would not be attempted at all and the failure would
-# read as the one described three paragraphs down.
-#
-# AND THE EXCHANGED TOKEN OUTRANKS THE `.npmrc`, which is the part worth knowing when this fails.
-# `registry-url:` on `setup-node` is what puts an `.npmrc` on the runner, carrying that action's
-# placeholder `XXXXX-XXXXX-XXXXX-XXXXX`. On success `oidc.js` writes the exchanged token over it at
-# `user` scope, so the placeholder is harmless. It is still there, and it is what answers when the
-# exchange does not happen.
-#
-# `oidc()` NEVER THROWS, SO A BROKEN TRUSTED PUBLISHER LOOKS EXACTLY LIKE AN EXPIRED SECRET. Every
-# failure path inside it — wrong permissions, a refused exchange, connection fields that do not
-# match this run — logs at verbose or silly and returns `undefined`. The publish then authenticates
-# with the placeholder and dies `E401`, with nothing in a default-verbosity log to say an exchange
-# was even attempted. So: AN `E401` HERE MEANS THE TRUSTED PUBLISHER, and `--loglevel=verbose` is
-# where `oidc` says why. `doc/releasing.md` carries this at length, because the shape this replaced
-# had the exact inverse trap and three of its six faults were people chasing it.
-#
-# WHAT WAS GIVEN UP, NAMED RATHER THAN LEFT OUT. The shape this replaced put each version on the
-# registry unreachable, where nobody could install it until a maintainer approved it in person with
-# proof of presence — a second gate against this workflow publishing on their behalf, and the one
-# npm recommends keeping. That gate is gone. The trade is the operator's, 2026-09-16: "I see zero
-# reason to deviate from convention in this space", npm's advice noted and declined. The last human
-# act left with 3F-3529: a merge publishes. What stands between a merge and the registry is the
-# required `ci` on the pull request, `main`'s `strict` protection, and every gate below.
-#
-# PROVENANCE TURNS ITSELF ON, AND NOT YET. `oidc.js` sets `provenance` only when the id-token's own
-# payload carries `repository_visibility === 'public'`. This repository is private, so no attestation
-# is produced and no flag written here would produce one. Nothing to configure now and nothing to
-# remember at the flip: it starts appearing by itself.
-#
-# NOTHING AT THE WORKFLOW LEVEL; EACH JOB ASKS FOR ITS OWN (3F-3529). The `release` job holds
-# `contents: read` for the checkout and the tag read, and `id-token: write` for npm, in the one call
-# measured above. Every gate, the pack, the smoke and both publishes run there WITHOUT a write
-# token. The one write this workflow makes — the tag — happens in its own job, which holds
-# `contents: write` and nothing else, and runs no code from this repository.
 permissions: {}
 
 jobs:
@@ -136,50 +25,12 @@ jobs:
       id-token: write
     outputs:
       version: ${{ steps.counter.outputs.version }}
-    # A BOUND ON A HUNG RELEASE, AND THE LOOSEST OF THE THREE ON PURPOSE (3F-3457). Measured over
-    # 2026-09-01..16: 4 runs, mean 2.8 min, max 3.0 min. Fifteen is about five times that, and the
-    # slack is the asymmetry: this job talks to a registry, and killing it between `Publish core` and
-    # `Publish the CLI` leaves exactly the half-sent release the ordering below exists to prevent.
-    # Waiting on a slow network costs minutes; a severed publish costs a version number.
     timeout-minutes: 15
     steps:
-      # PINNED TO A COMMIT WITH THE RELEASE AS A COMMENT, AND `persist-credentials: false` — the
-      # register above `ci.yml`'s checkout carries the argument for both (3F-3445, @SCN-FIT-021).
-      # It matters more here than there: this job holds a registry credential, and a job token left
-      # in `.git/config` beside it doubles what a compromised dependency of this build could reach.
-      # Nothing in this job talks to the remote through git. It reads the tag list over the API
-      # with a read-only token, and it writes nothing back to the repository — the tag is the
-      # `tag` job's, under its own permission.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # `registry-url` IS WHAT WRITES THE `.npmrc` npm AUTHENTICATES AGAINST, and it is the only
-      # reason this action is configured at all beyond the Node version. No cache is asked for: a
-      # release runs rarely and the one thing it must not do is resolve a dependency out of a store
-      # somebody else's run filled.
-      #
-      # NODE 24 AND NOT 22, AND THE REASON IS THE npm THAT COMES WITH IT (review of 3F-2811, and it
-      # would have cost the first release). `setup-node` installs whatever npm the Node it fetches
-      # bundles and offers no input to choose one: Node 22 bundles npm 10.9.x, Node 24 bundles
-      # 11.19.x, and the trusted publishing this file's last two steps authenticate with needs
-      # >= 11.5.1. On 22 those steps would not attempt the token exchange at all. They would not say
-      # so either — `oidc()` is silent on every failure — so it would surface as `E401` and READ
-      # like the trusted-publisher configuration being wrong, which npm never validates at save
-      # time, so that is precisely the diagnosis nobody could have ruled out from the error.
-      #
-      # THE DIVERGENCE FROM `ci.yml` IS DELIBERATE AND IS NAMED RATHER THAN HIDDEN. That file runs on
-      # 22, so the gates below run on a NEWER runtime here than the ones that green a pull request.
-      # `engines` says `node >=22`, so both are runtimes a consumer may be on, and between the two
-      # files both are covered — but a release that reds on something 22 never sees is a real
-      # possibility and this comment is where a reader meets it.
-      # `package-manager-cache: false` IS THE SENTENCE THIS STEP'S COMMENT ABOVE ALREADY MAKES,
-      # NOW MADE TO THE RUNNER RATHER THAN TO A READER (3F-3445, @SCN-FIT-021). "No cache is asked
-      # for" was true of the `cache:` input and false of the file: `setup-node` caches the package
-      # manager unless this input says otherwise, so the release WAS restoring a store some other
-      # run of this repository filled — which is exactly the reading the audit reported, on a
-      # workflow that publishes, at its highest severity. A prose intention and an input are not
-      # the same thing, and the gap between them is what the audit found.
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
@@ -189,45 +40,12 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      # THE INSTALL IS A PRECONDITION OF THE PACK, AND THE REASON IS RESOLUTION RATHER THAN
-      # DEPENDENCIES (measured, 3F-3247). `pnpm pack` resolves `workspace:*` out of the INSTALLED
-      # link, not out of the workspace manifests, so a checkout with no `node_modules` fails
-      # outright with ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL. Nobody should later optimise this
-      # out of a job that "only packs".
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
 
-      # THE ARTEFACT GATES, AHEAD OF THE PACK. Everything from here to the pack is about the tree
-      # this release would send; everything after it is about the files it produced.
-      #
-      # THE FITNESS PASS IS NOT AMONG THEM, AND ITS ABSENCE IS THE RULE RATHER THAN AN OMISSION
-      # (3F-3250). The self-reconciliation was already excluded because it is a statement about
-      # THIS REPOSITORY'S BOOKKEEPING rather than about the artefact — and the fitness axis is that
-      # same category row for row: complexity bars, corpus traceability, anemic-domain conformance,
-      # this suite's own mutation score, the duration of the observer. Not one of them says the
-      # tarball works. Keeping the pass while excluding the reconciliation drew the line in two
-      # places in this one file, and the second place cost every real release: `SCN-FIT-002` prints
-      # a number a SCHEDULED sweep leaves behind, `ci.yml` fetches that record and this file had no
-      # equivalent, so on a runner starting cold the pass redded and the job died before it packed
-      # anything (measured, 3F-3249). One rule covers both: THE RELEASE PATH CONSULTS NOTHING THAT IS
-      # ABOUT THIS REPOSITORY RATHER THAN ABOUT THE ARTEFACT.
-      #
-      # NOTHING THAT SPEAKS TO THE TARBALL IS LOST WITH IT. `SCN-FIT-011` IS `pnpm typecheck`, and
-      # the step below runs it directly — the one artefact-relevant member of the axis is covered
-      # outside the pass. The repository bars are `ci.yml`'s, discharged on every merge to `main`
-      # before the merge can happen (`strict`). AND THERE IS NO RESIDUAL LEFT IN THAT (3F-3551):
-      # since the `workflow_dispatch` trigger went, every run of this file is a merge that cleared
-      # the whole ladder, so no release exists that `main` did not contain.
-      #
-      # AND NOT ONE OF THESE THREE CARRIES AN OBSERVED SCRIPT PREFIX, WHICH IS A CONSTRAINT ON THIS
-      # FILE RATHER THAN A COINCIDENCE (3F-3249, planted). The reconciliation's CI scan is the
-      # WORKFLOW DIRECTORY, not `ci.yml`, so a `lint:`- or `guard:`-prefixed script invoked from
-      # here would register a static check on spec-controller's own ledger that no scenario cites,
-      # and the self-reconciliation would red on it as uncited. It is also why the smoke below is invoked by
-      # path rather than through a script.
       - name: Typecheck
         run: pnpm typecheck
 
@@ -237,30 +55,6 @@ jobs:
       - name: Cucumber
         run: pnpm cucumber
 
-      # THE VERSION IS A COUNTER, AND IT LIVES IN THIS RUN'S WORKING COPY ONLY (3F-3529). `main` is
-      # protected, so nothing is committed back. The committed manifest names the LINE — everything
-      # before the last `.N` — and the operator's by-hand act is editing it: `0.2.0-alpha.0` or
-      # `1.0.0` starts a new line, and the first merge after publishes exactly that.
-      #
-      # THE HIGHEST NUMBER ALREADY ON THE LINE WINS, READ FROM THE REGISTRY AND THE TAGS TOGETHER.
-      # The registry alone can serve a stale packument for a moment after a publish. The tags alone
-      # miss a publish whose `tag` job failed. The union covers both, and it covers both PACKAGES:
-      # if core published and the CLI did not, the re-run takes the NEXT number for both, and the
-      # spent one is skipped rather than re-minted. Numbers compare as numbers (`alpha.10` beats
-      # `alpha.9`), and on a stable line the prereleases do not count.
-      #
-      # MEASURED BEFORE IT WAS WRITTEN HERE (3F-3529, 2026-09-18), in a clone at `1abdc39`:
-      # `base=0.1.0-alpha.5 max=5 next=0.1.0-alpha.6`. Both packed manifests then read
-      # `0.1.0-alpha.6`, and the CLI's names core at exactly `0.1.0-alpha.6` — `pnpm pack` rewrote
-      # `workspace:*` from the stamped manifest, so lockstep needs nothing more. The CLI reads its
-      # own version from its `package.json` at runtime, so stamping after the build is enough.
-      #
-      # NO `2>/dev/null` AND NO `|| true`, AND THE THREE READS ARE CHAINED WITH `&&`. If the
-      # registry or the API cannot be read, this step reds. A counter that quietly read less would
-      # re-mint a number npm refuses — later, and with a less useful error. The `&&` is load-bearing:
-      # inside `$( … )` bash clears `-e`, so with plain line breaks a failed `npm view` is swallowed
-      # whenever the last read succeeds. Measured under the runner's `bash -eo pipefail` (3F-3529):
-      # line breaks, first read failing: exit 0; `&&`: exit 1.
       - name: Stamp the next counter version on both packages
         id: counter
         env:
@@ -283,17 +77,6 @@ jobs:
           (cd packages/spec-controller && npm pkg set version="$v")
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
-      # PACKED ONCE, AND EVERY STEP BELOW READS THESE SAME FILES. `pnpm pack` performs the whole
-      # manifest transformation a publish performs — `workspace:*` resolved to the concrete version
-      # this workspace holds, `publishConfig` applied wholesale — so what lands here is byte for
-      # byte what the registry would receive. A second pack between the smoke and the staging would
-      # make the smoke a rehearsal of a different artefact, which is the fault this whole file
-      # exists to keep out of a release.
-      #
-      # `pnpm` PACKS AND `npm` PUBLISHES, AND THE SPLIT IS FORCED. pnpm cannot authenticate over
-      # OIDC (pnpm/pnpm#9812 open; #11513 reports it breaking on pnpm 11, which this repository
-      # runs), and npm never has to understand a workspace protocol because by the time it sees the
-      # artefact there is not one.
       - name: Pack both packages, once
         run: |
           rm -rf "$RUNNER_TEMP/release"
@@ -301,56 +84,6 @@ jobs:
           pnpm --dir packages/core pack --pack-destination "$RUNNER_TEMP/release"
           pnpm --dir packages/spec-controller pack --pack-destination "$RUNNER_TEMP/release"
 
-      # WHY THIS STEP EXISTS AT ALL, AND IT IS ABOUT THE RELEASE RATHER THAN ABOUT ANY CHECKER. Every
-      # gate in this repository resolves through the WORKSPACE manifest, and npm REPLACES that
-      # manifest's `exports` map with `publishConfig.exports` wholesale at publish time. The two
-      # readings differ nowhere except inside an installed tarball — which is how 3F-3086's published
-      # CLI threw ERR_PACKAGE_PATH_NOT_EXPORTED on its first command with every gate green behind it.
-      # So the tarballs are installed where no checkout can help them and the command is started
-      # there.
-      #
-      # SIX LINES OF SHELL, AND THEY USED TO BE A MODULE OF OURS (3F-3453). A 217-line recipe, a
-      # 122-line CLI over it and a 40-line manifest reader stood here, plus the @integration scenario
-      # that asserted the recipe by equality. Installing two tarballs into an empty directory and
-      # starting what they installed is what `npm` and a shell already do, and a release that
-      # verifies its artefact through apparatus this repository wrote is verifying its own apparatus
-      # at the same time.
-      #
-      # `npm`, NOT `pnpm`, AND THE CHOICE IS LOAD-BEARING. npm HOISTS, so the core tarball sitting at
-      # the top of this tree satisfies the CLI's now-concrete dependency on it — which means the
-      # smoke reads THE CORE THIS RELEASE JUST PACKED rather than whatever the registry is currently
-      # serving under that version. The three quiet flags keep a registry audit and a funding banner
-      # out of a step whose subject is neither; `--prefer-offline` keeps a warm cache out of the
-      # network's way.
-      #
-      # THE COMMAND IS REACHED BY PATH, `./node_modules/.bin/spec-controller`, WHICH IS THE POINT. A
-      # bare `spec-controller` could resolve to something the runner already had; this one can only
-      # be the bin the install just placed, and if the install placed nothing the line fails as "No
-      # such file or directory" rather than quietly running a stranger.
-      #
-      # BOTH DIRECTIONS WERE RUN BEFORE THIS REPLACED ANYTHING (3F-3453). Control, over the tarballs
-      # this tree packs: install 0, start 0. With `workspace:*` planted back into the packed CLI
-      # manifest: `npm error code EUNSUPPORTEDPROTOCOL`, install 1, and the start 127 because the
-      # command was never placed. The runner's default shell carries `-e`, so the step reds at the
-      # install; it would red at the start in any case.
-      # AND THE SUPPRESSION ON THE HEADER BELOW IS A FINDING THIS COMMIT CREATED THE VISIBILITY FOR,
-      # NOT ONE IT CREATED. `zizmor`'s `adhoc-packages` reports the `npm install` below as installing
-      # a package outside a lockfile — measured on this tree, 1 low, the audit's own words. The
-      # install itself is unchanged: the deleted CLI ran exactly this command, and the auditor could
-      # not see it because it sat behind `tsx tests/checks/cleanRoomInstallCli.ts`. Putting the
-      # recipe in shell is what handed it to the tool, which is an argument FOR the change rather
-      # than against it.
-      #
-      # IT IS SUPPRESSED BECAUSE THE FINDING'S CURE IS THIS STEP'S SUBJECT. A lockfile is the one
-      # thing a clean room must not have: the question being asked is what a STRANGER resolves, and
-      # a stranger installs these two tarballs with no lockfile of ours and takes whatever the
-      # registry serves for the CLI's transitive dependencies. Pinning that here would answer a
-      # question nobody has and stop answering the one 3F-3086 cost us. The two tarballs themselves
-      # are not ad hoc at all — they were packed twenty lines above, in this job, from this commit.
-      #
-      # THE COMMENT SITS ON THE `run: |` HEADER for the YAML reason argued in full at `Stage core`:
-      # inside a block scalar every line is content, so an ignore comment written beside the command
-      # is passed to bash and zizmor never sees it. It names ONE audit on ONE step.
       - name: Smoke the packed artefacts in a clean room
         run: | # zizmor: ignore[adhoc-packages]
           room="$RUNNER_TEMP/clean-room"
@@ -360,80 +93,18 @@ jobs:
           npm install --prefer-offline --no-audit --no-fund --loglevel=error "$RUNNER_TEMP/release"/*.tgz
           ./node_modules/.bin/spec-controller balance --help
 
-      # CORE FIRST, AND THE ORDER IS LOAD-BEARING. The CLI's packed manifest names core
-      # by a concrete version, so that version has to be resolvable the moment a consumer asks for
-      # it. Send the CLI first and the release is broken between its own two acts: for as long as
-      # the second one takes, `npm i spec-controller` resolves an engine nobody can fetch.
-      #
-      # AND THE TWO ARE NOT A TRANSACTION, WHICH IS WHERE THAT ORDER BITES. If core publishes and
-      # the CLI does not, core's version number is SPENT — npm never lets one be reused. The cure
-      # is re-running this run: the counter above reads core's spent number off the registry and
-      # takes the next one for both (3F-3529). `doc/releasing.md` carries it.
-      #
-      # NO SUPPRESSION SITS ON EITHER STEP, AND THAT IS THE POINT OF THE CHANGE (3F-3441). `zizmor`'s
-      # `use-trusted-publishing` reports an `npm publish` that authenticates from a stored secret and
-      # advises OIDC; these two take the advice, so there is nothing left to report. The two
-      # `# zizmor: ignore[use-trusted-publishing]` lines this file used to carry left with the reason
-      # for them. The `adhoc-packages` ignore on the clean-room smoke is a different audit on a
-      # different step and is untouched.
-      #
-      # AND NOTHING IN THIS JOB RUNS AFTER THESE TWO. Everything this release verified, it verified
-      # before this point, so a step behind them would be a change to the artefact nothing here has
-      # read. The `tag` job that follows changes no artefact; it records which commit was sent.
-      #
-      # `--tag` IS NOT OPTIONAL FOR A PRERELEASE, AND ITS ABSENCE COST THE FIRST ONE (measured, run
-      # 34941985755): `npm error You must specify a tag using --tag when publishing a prerelease
-      # version.` npm refuses to infer a dist-tag for a version carrying a prerelease identifier,
-      # because the inference it would have to make is the dangerous one — defaulting to `latest`
-      # would hand every `npm i spec-controller` an alpha. The core step failed and the CLI step
-      # never ran, so nothing reached the registry and nothing needed cleaning up.
-      #
-      # THE TAG IS DERIVED FROM THE VERSION, NEVER FIXED, AND THAT IS THE WHOLE POINT OF THESE FOUR
-      # LINES. A hard-coded `--tag alpha` is correct exactly until the first stable release, which it
-      # would then publish under `alpha` — a version nobody installing normally would ever receive,
-      # sent by a green run, with no guard anywhere that would notice. Deriving it means the
-      # manifest is the single declaration: bump to `0.1.0` and the tag becomes `latest` by itself.
-      #
-      # THE DERIVATION IS THE PRERELEASE IDENTIFIER AND NOTHING CLEVERER. `${v#*-}` takes everything
-      # after the first `-`, `${t%%.*}` drops the numeric suffix: `0.1.0-alpha.2` -> `alpha`,
-      # `2.0.0-rc.1` -> `rc`, `1.0.0-beta` -> `beta`. A version with no `-` has no identifier and is
-      # a real release, so it takes `latest`. That is the convention the registry already shows —
-      # vue carries alpha/beta/rc, vite alpha/beta, typescript beta/rc, react beta/rc/canary — and
-      # in none of them is `latest` ever a prerelease.
-      #
-      # `next` IS NOT ONE OF THESE. It is a pointer at an upcoming major line, not a prerelease
-      # identifier, so nothing here can ever set it and no procedure of ours asks anybody to.
-      #
-      # EACH STEP READS ITS OWN PACKAGE'S MANIFEST, the one the counter stamped and the pack read.
-      # The counter wrote one number into both, so the answers agree — and a step that took the
-      # counter's output instead would be naming a version it had not checked was the one packed.
       - name: Publish core
         run: |
           v="$(node -p "require('./packages/core/package.json').version")"
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz --tag "$t"
 
-      # THE CLI'S OWN EXCHANGE, NOT AN INHERITANCE FROM THE STEP ABOVE. npm exchanges the id-token
-      # per package, so this step authenticates on its own account against its own trusted-publisher
-      # connection. A release where only core's connection existed would green the step above and
-      # die here — which is the one asymmetry the ordering cannot protect against, and the reason
-      # the paragraph about a spent version number is written where it is.
       - name: Publish the CLI
         run: |
           v="$(node -p "require('./packages/spec-controller/package.json').version")"
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"
 
-  # THE TAG RECORDS WHAT WAS PUBLISHED; IT NEVER CAUSES A RELEASE (3F-3529). It runs only after both
-  # publishes succeeded, on the commit this run built, named for the version the counter stamped.
-  # It is its own job so that the only token that can write to this repository never shares a
-  # runner with the gates, the dependency install or the pack. No checkout and no git: one API call.
-  #
-  # IT STARTS NOTHING, AND THAT IS CORRECT. A ref made with the default token raises no workflow
-  # event, and nothing in this repository listens for a tag any more.
-  #
-  # IF THIS JOB FAILS, NOTHING IS LOST BUT THE RECORD. The version is already on the registry, and
-  # the next run's counter reads the registry too, so it does not re-mint the number.
   tag:
     needs: release
     runs-on: ubuntu-latest

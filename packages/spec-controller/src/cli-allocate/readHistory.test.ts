@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
 
-/** `git log -p` output as it reads with the default format: a commit header and message, then its patch. */
 const LOG_WITH_MESSAGE = [
   "commit 0123456789abcdef0123456789abcdef01234567",
   "Author: fixture <fixture@example.invalid>",
@@ -90,7 +89,6 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen — a remov
   });
 });
 
-/** Git run over a fixture, blind to the machine's own configuration. */
 function git(repo: string, args: readonly string[]): void {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
     cwd: repo,
@@ -100,7 +98,6 @@ function git(repo: string, args: readonly string[]): void {
   if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
 }
 
-/** A repository whose history once carried a code of part ONE that a later commit deleted. */
 function templateRepository(): string {
   const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
   git(repo, ["init", "-q", "-b", "main"]);
@@ -112,7 +109,6 @@ function templateRepository(): string {
   return repo;
 }
 
-/** The repository each test reads: made once, copied per test so git builds it once for the file. */
 let template = "";
 
 beforeAll(() => {
@@ -125,7 +121,6 @@ function repositoryWithHistory(): string {
   return repo;
 }
 
-/** Permissions taken away by a test, given back after it. */
 const taken: Array<() => void> = [];
 
 function withhold(path: string, mode: number): void {
@@ -138,7 +133,6 @@ afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
-/** What `read` throws, or a failure when it reads without throwing. */
 function thrownBy(read: () => unknown): unknown {
   try {
     read();

@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnSighting } from "@3f-consulting/spec-controller-core";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 
-/** The allocation for a part the headers carry, failing the test when it is refused instead. */
 function nextScnCode(request: AllocationRequest, sightings: readonly ScnSighting[]): Allocation {
   const answer = answerFor(request, sightings);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);

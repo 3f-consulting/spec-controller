@@ -1,9 +1,3 @@
-/**
- * The @unit arm of @SCN-ALC-014. allocate answers a query and keeps no run, so a host modifier before
- * it is refused rather than dropped without a word. The wording is not pinned; what is pinned is
- * that the refusal names every modifier given and the command, and that a command which does keep
- * runs is untouched.
- */
 import { describe, it, expect } from "vitest";
 import { parseHostInvocation, modifiersNotTakenRefusal } from "./host.js";
 

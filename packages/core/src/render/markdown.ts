@@ -1,24 +1,3 @@
-/**
- * The markdown renderer — the human-readable spec reconciliation: summary views up
- * top (the derived cuts OF the reconciliation), the per-scenario Scenario Reconciliations last.
- * Each Scenario Reconciliation row carries its binary VERDICT (balanced | out-of-balance) and the
- * LIST of EVERY reconciling item that holds it out of balance (no single
- * picked winner; an out-of-balance scenario lists all its non-balanced items, typed).
- *
- * A PURE PRESENTATION of the shared whole-document `EvidenceReconciliation` model: the JSON
- * renderer serialises that model, and this renderer projects the SAME model to markdown,
- * so the two outputs are one model in two renderings and cannot diverge. `renderMarkdown`
- * keeps its `(balance, ctx, …)` signature — it builds `assembleRenderInput(...)` internally
- * (mirroring `json.ts`) then delegates to `renderReport(report, featureNames)`, the
- * from-model pipeline (exposed for slice 3's render-from-saved-JSON path). Every section
- * emitter reads MATERIALISED fields off the report rather than recomputing them.
- *
- * The report IS the reconciliation; the per-scenario Evidence reconciliation is its core, and the
- * summary views — the Evidence reconciliation aggregate (the balance-check that verifies the accounts
- * agree), fitness evidence obligations, out-of-balance by feature — are cuts OF it. Layout
- * reorganised summary-first / ledger-last.
- */
-
 import type {
   ScenarioReconciliation,
   Outcome,
@@ -26,24 +5,13 @@ import type {
   Ledger,
   PendingItem,
 } from "../model.js";
-// The single source for the human-readable outcome gloss — rendered in place of the bare
-// handle wherever an outcome surfaces to a reader — and the DERIVED leaf list the
-// decomposition walks: both live in the model, so the renderer cannot drift from the
-// union. Internal core imports (NOT on the frozen v1 barrel).
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../census/evidenceObligations.js";
-// THE MODEL DERIVATIONS THE RENDERER READS — it projects these; it does not compute them.
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import { isScenario } from "../domain/scenarioReconciliation.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-// The run-integrity predicate — the existential scan for a `broken` reconciling
-// item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
-// headline-word (`hasBrokenEvidence` → "unsound"), exactly as `isBalanced` → "balanced".
-// The three WHOLE-RUN predicates the verdict headline asks — the SAME three the
-// CLI asks to set its exit code, in the SAME dominance order. The renderer never re-scans the
-// reconciliation for a verdict of its own, so the headline cannot drift from the code it names.
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
@@ -59,70 +27,32 @@ import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
 
-/** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
   "failing": "✗",
-  // The watermelon: green on the surface (a static check exists), red within (not wired
-  // into CI over the real source).
   "watermelon": "🍉",
   "missing": "∅",
-  // DEBIT-SIDE: a real, ordinary scenario carrying no @SCN, so its Evidence Obligation has no code
-  // for an Evidence Observation to LINK to. Not phantom, not suspense — the scenario
-  // exists and cucumber runs it. The debit twin of `cites-no-scenario`: same missing link, opposite
-  // side. It can never be proven, so its row is always out-of-balance.
   "no-scn-code": "🔗",
-  // DEBIT-SIDE: the account's @SCN code is carried by more than one scenario, so no credit
-  // citing it can be attributed to either — every quality check on the account reads this.
   "duplicate-scn-code": "⧉",
-  // CREDIT-SIDE: a credit citing an @SCN no scenario matches — the
-  // reconciling item on a phantom scenario.
   "cites-unknown-scenario": "👻",
-  // CREDIT-SIDE: a credit citing NO @SCN at all — the reconciling item on the
-  // suspense scenario.
   "cites-no-scenario": "❓",
-  // CREDIT-SIDE: evidence that NEVER RAN — a vitest suite that failed to collect before naming a
-  // test, or a cucumber step two or more step definitions match.
-  // Either way it posts to the suspense row: the credit can never discharge an obligation.
   "broken": "💥",
-  // CREDIT-SIDE: a credit citing a REAL scenario at a quality-check it never
-  // named — the no-evidence-obligation reconciling item on the real scenario's row.
   "no-evidence-obligation": "◇",
-  // NEITHER-SIDE: a scenario reconciling to zero rows on both sides — the
-  // degenerate both-missing reconciling item, blank on both sides.
   "both-missing": "⊘",
 };
 
-/** A short glyph per scenario verdict. */
 const VERDICT_GLYPH: Record<ScenarioVerdict, string> = {
   balanced: "✓",
   "out-of-balance": "✗",
 };
 
-/**
- * Render one reconciling item, labelled by its flat quality-check (the
- * label-=-tag rule): the `qualityCheck` value IS the tag word — a runtime item
- * is its bare level (`unit ✗ Evidence Observation is failing`,
- * `integration ∅ Evidence Observation is missing`, …); a fitness item is
- * `fitness 🍉 Evidence Observation is passing but fabricated`. The outcome renders as its
- * CANON DESCRIPTION (the single-sourced `OUTCOME_DESCRIPTION`) — never the bare
- * handle, which is meaningless to a human reading a CI log. The glyph is retained.
- */
 function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): string {
-  // The NEITHER-side both-missing item is blank on both sides — it names no
-  // quality-check (neither a debit evidence obligation nor a credit evidence observation), so it renders with
-  // its glyph + description alone, no leading subject.
   if (item.outcome === "both-missing") {
     return `${ITEM_GLYPH["both-missing"]} ${OUTCOME_DESCRIPTION["both-missing"]}`;
   }
-  // The `no-scn-code` item is SCENARIO-scope, like both-missing: without an @SCN
-  // code no observation can link at ANY tier, so it names no quality-check and renders with its
-  // glyph + description alone. (Debit-side, but subject-less — the missing thing is the LINK.)
   if (item.outcome === "no-scn-code") {
     return `${ITEM_GLYPH["no-scn-code"]} ${OUTCOME_DESCRIPTION["no-scn-code"]}`;
   }
-  // A `duplicate-scn-code` account whose sharers name NO quality check carries one
-  // scenario-scope item, like the two above: no subject to lead with, so none is invented.
   if (item.qualityCheck === undefined) {
     return `${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}`;
   }
@@ -131,30 +61,9 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
 
-/**
- * The credit arms of a reconciling item's where-to-fix, or `undefined` when none applies and the
- * item renders bare.
- */
 function creditSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
-  // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
-  // Q5): a fitness credit (the uncited static-check folded onto the suspense row, ruling
-  // Q4) shows its static check handle; a runtime credit (phantom `cites-unknown-scenario` or
-  // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
-  // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
-  //
-  // READ OFF THE CANON TABLE rather than listed here. A credit-side outcome is exactly one canon
-  // calls (Obligation None, Observation Exists) — `cites-no-scenario`, `cites-unknown-scenario`,
-  // `no-evidence-obligation` — and a hand-written list of the three would agree with
-  // `OUTCOME_SIDE_PROFILE` by copy rather than by construction, free to drift the day a fourth
-  // joins. (`broken` and `both-missing` are (None, None), so both terms are read.)
   const profile = OUTCOME_SIDE_PROFILE[item.outcome];
   const isCredit = profile.obligation === "None" && profile.observation === "Exists";
-  // The `broken` credit carries BOTH halves of its where-to-fix: the locator of the
-  // evidence that never ran (a test file, or a feature file) AND the message it carries. The
-  // message's HEADLINE LINE only — a vitest collection message is multi-line (message + stack) and
-  // a stack in a table cell would destroy the table; the full message is printed in the
-  // `## Run integrity` section above, which is where a reader diagnoses. Here the row stays
-  // legible without leaving the table.
   if (item.outcome === "broken") {
     const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
       .filter((part): part is string => part !== undefined && part.length > 0)
@@ -166,49 +75,18 @@ function creditSuffix(item: ScenarioReconciliation["reconcilingItems"][number]):
   return undefined;
 }
 
-/**
- * The first non-empty line of a runner message — its HEADLINE (`Error: Cannot find package
- * '@cucumber/tag-expressions' imported from …`), the line that names what broke. The rest is
- * the stack, which belongs in the fenced verbatim print, not in a table cell.
- */
 function headlineOf(message: string): string {
   return message.split("\n").map((line) => line.trim()).find((line) => line.length > 0) ?? "";
 }
 
-/**
- * Make an arbitrary runner-supplied string safe to sit INSIDE a markdown table cell: collapse
- * every run of whitespace to a single space, and escape the pipe — an unescaped `|` in a cell
- * silently splits it into two columns and corrupts the table from that row on. Defensive: the
- * text comes from the runner, not from us.
- */
 function cellSafe(text: string): string {
   return text.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
 }
 
-/**
- * Render a Pending Item — the one-sided IOU a deliberately-deferred
- * `<quality-check>pending` obligation raises (evidence-manifesto §11B). Labelled DISTINCT from
- * a reconciling item: the ⏳ marker + the explicit "pending" word read as neither
- * balanced-clean (the `—` placeholder) nor an error (a reconciling item's ✗/∅/🍉 outcome). It
- * is NEVER run through `renderItem` and never enters the reconciling-item list — a Pending
- * Item is a structurally distinct category, never one of the out-of-balance leaf outcomes.
- */
 function renderPendingItem(item: PendingItem): string {
-  // A `qualityCheck`-less Pending Item is SCENARIO-SCOPE — a whole-scenario
-  // deferral (a bare `@wip` raising no obligations) owing NO specific check. Render `⏳ pending`
-  // alone; an obligation-scope Pending Item names its owed check (`⏳ pending: <check>`).
   return item.qualityCheck === undefined ? "⏳ pending" : `⏳ pending: ${item.qualityCheck}`;
 }
 
-/**
- * The exceptions cell for a Scenario Reconciliation row — its reconciling items
- * (the errors an out-of-balance verdict carries) and its Pending Items (the deferred IOUs),
- * each rendered as its OWN distinctly-labelled group and then joined. The two groups are built
- * separately, so a Pending Item is never folded into the reconciling-item list nor mistaken for
- * an error. A row with neither renders the em-dash placeholder; a balanced-with-pending row
- * shows its ⏳ pending group alone (distinct from the clean-balanced `—`). A row with no
- * `pendingItems` renders byte-identically to before (reconciling items only, or `—`).
- */
 function renderRowExceptions(s: ScenarioReconciliation): string {
   const reconciling = s.reconcilingItems.map(renderItem).join("; ");
   const pending = (s.pendingItems ?? []).map(renderPendingItem).join("; ");
@@ -216,94 +94,22 @@ function renderRowExceptions(s: ScenarioReconciliation): string {
   return groups.length === 0 ? "—" : groups.join("; ");
 }
 
-/**
- * Render one scenario row: its id, its binary verdict, and its exceptions cell — EVERY
- * reconciling item followed by any Pending Item (labelled distinct). A balanced scenario with
- * neither is rendered as an em-dash placeholder.
- */
 function renderScenario(s: ScenarioReconciliation): string {
   return `| ${s.scnId} | ${VERDICT_GLYPH[s.verdict]} ${s.verdict} | ${renderRowExceptions(s)} |`;
 }
 
-/**
- * A section-emitter — one ordered slab of the report over the shared `EvidenceReconciliation` model (+ the
- * markdown-only `featureNames` label lookup). An empty array OMITS the section (so a cut
- * vanishes when its data is empty). Each emitter opens with its heading and ends with a
- * trailing blank line; `renderReport` flat-maps the ordered list and joins, so the blanks
- * separate the sections cleanly.
- */
 type SectionEmitter = (report: RenderInput) => string[];
 
-/**
- * The target-derived `feature-code → slug` map — a markdown-only render arg (NOT
- * serialised by `renderJson`, NOT part of the shared `EvidenceReconciliation` model). Built by
- * `readFeatureNames` over `discoverFeatures`: each coded feature file's `@<FFF>` header maps
- * to its filename slug. Display enrichment for the by-feature cut (keyed on the `FFF` already
- * in every `scnId`), not a non-derivable machine fact — so it stays off the JSON surface.
- */
 export type FeatureNames = ReadonlyMap<string, string>;
 
-/** The report title — the report IS the reconciliation (the Evidence reconciliation is its core). */
-// The report IS the reconciliation. "Ledger" names only the INPUT in canon (evidence
-// entries by scenario); the rendered document is the reconciled OUTPUT, never "Ledger"
-// (double-entry-manifesto). Renamed from "# Ledger" → "# Spec reconciliation" → here.
 const titleSection: SectionEmitter = () => ["# Evidence Reconciliation", ""];
 
-/**
- * The RUN-INTEGRITY stamp — the customer-visible payoff of the `broken`
- * reconciling item, and the ONLY place the word **"unsound"** appears. The renderer
- * asks `hasBrokenEvidence` and prints the headline word: predicate-name ≠ headline-word, the
- * `isBalanced` / "balanced" precedent.
- *
- * WHY IT SITS HERE — after provenance, BEFORE the summary views. The stamp is not one more cut
- * of the reconciliation; it is a caveat ON all of them. A behaviour that was never exercised
- * reconciles `missing` whether its proof is ABSENT or merely BROKEN, so a `missing` row in an
- * unsound run cannot be read as "write the test" — the reader must know that before reading a
- * single count. Every other section keeps its summary-first / ledger-last position.
- *
- * WHAT IT PRINTS. The broken evidence's locator (the WHERE) and its message in a fenced block
- * (the WHAT) — multi-line, stack included where there is one, because that is what the reader
- * diagnoses from and a table cell cannot hold it.
- *
- * TWO PRODUCERS, ONE SHAPE, NO BRANCH. `broken` now has two instances — a vitest suite
- * that failed to COLLECT, and a cucumber step two or more step definitions match —
- * so the copy here is GENERIC: an ambiguous step is neither a "suite" nor a "collection error",
- * and a renderer that called it one would be the tool lying about what broke, in the one place the
- * reader will ever see it. The renderer needs no per-reader branch: it prints what the ITEM
- * CARRIES. Where the runner gives its own words (vitest's collection error) the message IS those
- * words, passed through VERBATIM; where the runner gives none (cucumber emits no `error_message`
- * for an ambiguous step) the READER synthesised the diagnosis upstream. The difference is resolved
- * before the renderer sees it.
- *
- * THE BOUNDED SOFTENING of the earlier "print verbatim — the tool does not interpret" stance
- * (operator-mandated; exactly three clauses, no further): pass the runner's words through where it
- * gives them; STATE the diagnosis — WHAT BROKE — where it does not; PRESCRIBE NO CURE, either way.
- * The renderer may name WHAT failed and WHERE. It may never say how to fix it. The gloss stays
- * REMEDY-NEUTRAL: what broke is equally a missing dependency, a syntax error, a bad import, a
- * top-level throw, or two colliding step definitions, so the report never guesses the cure (never
- * `pnpm install`, and never "delete one of the step definitions"). The one remedy that always
- * holds — fix the harness and regenerate — is the one it gives, carrying the parent's fuller
- * `OUTCOME_DESCRIPTION` gloss through to the reader; it POINTS, it does not diagnose a remedy.
- *
- * OMIT-WHEN-EMPTY (the Pending Items tally precedent): a run carrying no broken evidence
- * returns `[]`, so a SOUND report is byte-identical to the pre-slice output — no stray empty
- * section. Markdown-only: a machine consumer reads soundness as `summary.byOutcome.broken > 0`,
- * already type-forced into the JSON, so no new JSON field is owed.
- */
 const runIntegritySection: SectionEmitter = (report) => {
-  // The predicate is the single source of the verdict — the renderer never re-derives
-  // "is this run sound?" with its own scan, so the stamp cannot drift from the CLI's exit 4,
-  // which asks the same predicate.
   if (!hasBrokenEvidence({ scenarioReconciliations: report.ledger.scenarioReconciliations })) return [];
-  // ASKED, not derived — which items are broken is a model query, and it is the same
-  // scan `hasBrokenEvidence` above is now derived from, so the stamp and the list cannot disagree.
-  // Taking `.length` of a list you were handed is projection, not derivation.
   const brokenItems = brokenItemsOf({
     scenarioReconciliations: report.ledger.scenarioReconciliations,
   });
   const count = brokenItems.length;
-  // GENERIC over both producers — the count-phrase names what a collection-failed vitest suite and
-  // an ambiguous cucumber step have in common (the proof did not run), never one kind's idiom.
   const proofs =
     count === 1
       ? "1 proof never ran, so the behaviour it proves was never exercised."
@@ -317,16 +123,8 @@ const runIntegritySection: SectionEmitter = (report) => {
     "",
   ];
   for (const item of brokenItems) {
-    // WHERE the evidence broke — a test file (vitest) or a feature file (cucumber). A `broken`
-    // observation always carries its locator (the reader's WHERE-to-fix); the fallback keeps the
-    // section honest if one ever does not.
     lines.push(`- \`${item.locator ?? "(evidence not named by the runner)"}\` — what broke:`);
     lines.push("");
-    // WHAT broke, exactly as the item carries it: the runner's own words VERBATIM where the runner
-    // gave them (vitest — every line, stack included, unedited: the tool does not interpret the
-    // error), and the reader's synthesised diagnosis where it gave none (cucumber's ambiguous step
-    // has no `error_message` to quote). No branch — one shape, resolved upstream. Either way the
-    // line names what failed; it never prescribes the cure.
     lines.push("```text");
     lines.push(...(item.message ?? "(no message reported by the runner)").split("\n"));
     lines.push("```");
@@ -335,54 +133,14 @@ const runIntegritySection: SectionEmitter = (report) => {
   return lines;
 };
 
-/**
- * The Summary-views parent heading — the derived cuts OF the reconciliation
- * (Evidence reconciliation, fitness evidence obligations, out-of-balance by feature)
- * read as cuts of the reconciliation, not a separate reconciliation. Always rendered (the
- * Evidence reconciliation beneath it are always present).
- */
 const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
 
-/**
- * Evidence reconciliation (supersedes the `Axis |
- * Count` shape) — a SUBJECTS-AS-ROWS table: each subject (Scenario Reconciliation, Evidence
- * obligation) on its own row with its own Total, and balanced / out-of-balance as COLUMNS (both
- * subjects report into the same binary, so the "Verdict"/"outcome"/"Axis" words retire).
- *
- * The first subject is the SCENARIO RECONCILIATION — the manifesto's collection, ALL three row
- * kinds (scenario, phantom, suspense) — not `Scenario`, which names only the real thing.
- * Because the row is a pure presentation of `summary.scenarioReconciliations`, whose
- * totals count every row (a phantom / suspense reconciliation is always
- * out-of-balance), a run whose only out-of-balance row is the suspense reconciliation renders
- * `N+1 | N | 1`, never `N | N | 0`. The subject's out-of-balance column therefore agrees with
- * `isBalanced` and with the exit code — the three views that disagreed in an adopter's repository 17-36-50Z run,
- * where a failing run's tally read `141 | 141 | 0` and looked like a clean board.
- * The evidence-obligation out-of-balance is decomposed IN PLACE into its reconciling-item
- * causes — three nested (`↳`) rows in canonical order (missing,
- * failing, the watermelon),
- * populating the out-of-balance column only and ALWAYS shown (a zero cause is itself a
- * fact). The missing row carries the bare-level split as Detail — missing
- * evidenceObligations grouped by subject, counting evidence obligations not scenarios.
- *
- * The scenario-verdict and evidence-obligation out-of-balance counts diverge ON PURPOSE:
- * one out-of-balance scenario can carry several missing evidenceObligations (a double
- * arm — the live 43 scenarios vs 44 evidenceObligations). The reshape presents that as a
- * granularity fact, not a contradiction. The nested causes reconcile to the evidenceObligation
- * out-of-balance. No bold. A pure presentation of the report's materialised
- * `summary.scenarioReconciliations` / `summary.evidenceObligations` totals; markdown-only.
- */
 const evidenceReconciliationSection: SectionEmitter = (report) => {
   const scenarioReconciliations = report.summary.scenarioReconciliations;
   const evidenceObligations = report.summary.evidenceObligations;
   const totalEvidenceObligations = evidenceObligations.total;
-  // The evidenceObligation out-of-balance is the sum of the three non-balanced outcomes — the
-  // total the nested causes reconcile to.
   const evidenceObligationsOutOfBalance = evidenceObligations.outOfBalance;
-  // A five-cell row; an empty string renders as an empty cell (the Total/Balanced cells
-  // of a nested cause row, and the Detail cell of a subject row).
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
-  // The bare-level split of the missing evidenceObligations, materialised on
-  // the report as `{ subject, count }[]` in canonical order — rendered `43 unit + 1 integration`.
   const missingSplit = evidenceObligations.missingByQualityCheck
     .map(({ subject, count }) => `${count} ${subject}`)
     .join(" + ");
@@ -392,9 +150,6 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(["Subject", "Total", "Balanced", "Out-of-balance", "Detail"]),
     row(["---", "---", "---", "---", "---"]),
     row([
-      // The subject is the SCENARIO RECONCILIATION — the manifesto's COLLECTION (scenario,
-      // phantom and suspense rows alike), not `Scenario`, which names only the real thing
-      // (`scenarios` is in the manifesto's retired column).
       "Scenario Reconciliation",
       String(scenarioReconciliations.total),
       String(scenarioReconciliations.balanced),
@@ -409,67 +164,25 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
       "",
     ]),
   ];
-  // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
-  // out-of-balance leaf outcomes in canonical order — ten since `duplicate-scn-code`
-  // (`no-scn-code` among them). The list is DERIVED from the type-forced
-  // OUTCOME_DESCRIPTION, so a new Outcome renders here with no edit to this file;
-  // its ROW ORDER is that map's key order, which is therefore load-bearing. Each a
-  // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
-  // total exactly once. No debit/credit/neither grouping: the grouping emitted a subtotal
-  // `↳ <group>-side` row AND its leaf rows at the same `↳` indent, so a naive column-sum
-  // double-counted (the live 170 vs 85). `missing` carries the bare-level split as Detail.
-  // Every outcome is ALWAYS rendered, including a zero count (a zero cause is itself a fact).
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    // The Subject cell shows the outcome's CANON DESCRIPTION, not the bare handle
-    // — single-sourced from OUTCOME_DESCRIPTION so it cannot drift from the outcome it names.
     lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
-  // The Pending Items tally — a SEPARATE line, NEVER an out-of-balance leaf of
-  // its own, at any leaf count (endorsed at every leaf count so far —
-  // the constraint is categorical, not arithmetic): a Pending
-  // Item is deferred, not out-of-balance, so it is
-  // tallied apart from BOTH the balanced and out-of-balance counts and the `↳` leaf
-  // decomposition above — its own line, never a `↳` row under the out-of-balance table. Read
-  // off the materialised `summary.pending`; rendered only when the run genuinely carries Pending
-  // Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
   lines.push(...pendingTally(report.summary.pending));
   lines.push("");
   return lines;
 };
 
-/** The Pending Items tally line, preceded by its blank — or nothing at all when none is pending. */
 function pendingTally(pending: number): string[] {
   return pending > 0
     ? ["", `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`]
     : [];
 }
 
-/**
- * Fitness evidence obligations (re-cut under Summary views with a total line,
- * labelled by the quality check) — lifts every fitness evidence obligation out of the per-scenario
- * trial balance into its OWN `### Fitness evidence obligations` table `| Scenario | Outcome |`,
- * one row per obligation in document order, each `outcome` carrying its `ITEM_GLYPH` glyph (so a
- * 🍉 watermelon reads at a glance). The total line STATES how many of them reconcile satisfied —
- * read off the report's materialised `summary.fitness` tally. Omitted entirely (returns `[]`) when
- * no scenario names a fitness obligation. A pure derive over the ledger rows; markdown-only.
- *
- * NO CHECK COLUMN. The table once printed the characteristic an obligation was keyed by;
- * one `@fitness` scenario is one check, what it is about is its scenario's title, and no report
- * rolls a check up by a word. The `@SCN` is the row's whole identity.
- */
 const fitnessSection: SectionEmitter = (report) => {
-  // Scenario rows only — a fitness evidence obligation is an obligation-side thing. The suspense
-  // row's fitness credit (an uncited check, cites-no-scenario) is NOT an evidence obligation, so it
-  // stays out of this table + tally; it surfaces on the suspense row's reconciling items.
-  // ASKED, not derived — the obligation-side fitness sub-rows are a model list, and it is
-  // the SAME list `summary.fitness` is tallied from, so the table and its total line cannot
-  // disagree.
   const rows = fitnessReconciliationsOf({
     scenarioReconciliations: report.ledger.scenarioReconciliations,
   }).map(
-    // The Outcome cell shows the canon DESCRIPTION, not the bare handle
-    // (single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
     ({ scnId, reconciliation: r }) =>
       `| ${scnId} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
   );
@@ -487,14 +200,7 @@ const fitnessSection: SectionEmitter = (report) => {
   ];
 };
 
-/**
- * Out-of-balance by feature: the out-of-balance scenario rows, one table row per feature in
- * first-appearance order, so a reader sees where the discrepancies concentrate. Everything it groups
- * by is read off the report itself, so a re-render from the saved JSON groups identically.
- */
 const byFeatureSection: SectionEmitter = (report) => {
-  // A phantom or suspense row names no feature file, so the table cannot place it; the sentence
-  // still counts it, which is what keeps the sentence adding up to the header.
   const rows = report.ledger.scenarioReconciliations;
   const scenarios = rows.filter(isScenario);
   const groups = outOfBalanceByFeature(
@@ -517,7 +223,6 @@ const byFeatureSection: SectionEmitter = (report) => {
   ];
 };
 
-/** One feature's out-of-balance scenarios: the ones with an `@SCN` code by id, the rest by count. */
 interface FeatureGroup {
   ids: string[];
   uncoded: number;
@@ -525,11 +230,6 @@ interface FeatureGroup {
 
 type ScenarioRows = RenderInput["ledger"]["scenarioReconciliations"];
 
-/**
- * The out-of-balance scenario rows grouped by the feature each belongs to, in first-appearance order.
- * A row carrying no code belongs to its file's feature when the file is headed by a code, and to the
- * file itself when it is not.
- */
 function outOfBalanceByFeature(
   scenarios: ScenarioRows,
   untagged: readonly UntaggedScenario[],
@@ -541,7 +241,6 @@ function outOfBalanceByFeature(
   for (const s of scenarios) {
     if (s.verdict !== "out-of-balance") continue;
     const uncoded = carriesNoScnCode(s);
-    // An uncoded row the census does not place keeps its own id as its group, so none is dropped.
     const key = (uncoded ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
     const group = groups.get(key) ?? { ids: [], uncoded: 0 };
     if (uncoded) group.uncoded += 1;
@@ -555,7 +254,6 @@ function carriesNoScnCode(row: ScenarioRows[number]): boolean {
   return row.reconcilingItems.some((item) => item.outcome === "no-scn-code");
 }
 
-/** The by-feature table, or no lines at all when no scenario row is out of balance. */
 function byFeatureTableLines(
   groups: ReadonlyMap<string, FeatureGroup>,
   featureNames: Readonly<Record<string, string>> | undefined,
@@ -571,10 +269,6 @@ function byFeatureTableLines(
   return lines;
 }
 
-/**
- * The ids, then how many carry no code. They are counted, never named: the column claims `@SCN` ids,
- * and a scenario's name spliced into a comma-joined id list could itself hold a comma.
- */
 function idsCell(group: FeatureGroup): string {
   const ids = group.ids.join(", ");
   if (group.uncoded === 0) return ids;
@@ -582,12 +276,6 @@ function idsCell(group: FeatureGroup): string {
   return ids === "" ? uncoded : `${ids} and ${uncoded}`;
 }
 
-/**
- * The rows no feature can group, ASKED of the model's own sub-counts rather than re-counted here: the
- * phantom and suspense rows are always out of balance (`ScenarioReconciliationTotals`), and these are
- * the same sub-counts the header's Scenario Reconciliation row is made of — so the sentence adds up
- * to the header by construction. Zeros dropped; the ledger's own order.
- */
 function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
   return [
     ...(totals.phantom > 0 ? [`${totals.phantom} phantom-scenario row(s)`] : []),
@@ -595,41 +283,21 @@ function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconcili
   ];
 }
 
-/** The sentence's tail naming the ungrouped rows, or nothing when every out-of-balance row is grouped. */
 function ungroupedTail(ungrouped: readonly string[]): string {
   return ungrouped.length > 0
     ? `; ${ungrouped.join(" and ")} out of balance, not grouped by feature (no feature file names them)`
     : "";
 }
 
-/**
- * The ledger (moved to the END) — the per-scenario table, with its summary lines on top: the
- * verdict tally bullet, and (when an evidence-obligation census is threaded) the
- * excluded-occurrence bullet relocated here from the dissolved corpus-census section (Q1a). When
- * the evidence-observation aggregate is threaded, the row gains corpus-driven evidence columns
- * between Scenario and Verdict, each a four-way obligation×observation cell; without the aggregate
- * the original three-column ledger is preserved (the 2-/3-arg callers stay green). Markdown-only.
- * The verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's noun for
- * the reconciled OUTPUT collection (scenario + phantom + suspense), never "scenario(s)"
- * ("scenarios" is a Rejected alias).
- */
 const ledgerSection: SectionEmitter = (report) => {
-  // Group the scenario rows first, then the PHANTOM rows, then the SUSPENSE row as
-  // distinct blocks at the END (ruling Q3) — a phantom/suspense is not a
-  // scenario, so it never mingles with the scenario verdict rows.
   const scenarioRows = report.ledger.scenarioReconciliations.filter(
     isScenario
   );
   const phantomRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "phantom-scenario");
   const suspenseRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
-  // The runtime-observation axis is IN PLAY iff the summary carries the test-volume fold
-  // (the gate that was the retired `evidenceObservations` section's
-  // presence). When it is, the ledger gains the corpus-driven evidence columns.
   const withObservations = report.summary.testVolume !== undefined;
   return [
-    // The reconciled per-scenario OUTPUT table — "Scenario Reconciliations", not "Ledger"
-    // ("Ledger" is the INPUT concept in canon; double-entry-manifesto).
     "## Scenario Reconciliations",
     "",
     ...ledgerTallyLines(report.summary.scenarioReconciliations),
@@ -640,25 +308,16 @@ const ledgerSection: SectionEmitter = (report) => {
   ];
 };
 
-/** The ledger's verdict tally bullet, and the phantom / suspense sub-counts broken out of it. */
 function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
   const lines = [
-    // The headline verdict tally counts EVERY Scenario Reconciliation — scenario, phantom and
-    // suspense alike (the scenario-only "ruling Q3" is retracted).
     `- ${totals.total} Scenario Reconciliation(s): ${totals.balanced} balanced, ` +
       `${totals.outOfBalance} out-of-balance.`,
   ];
-  // The phantom (P) count is broken out as a SUB-COUNT of the tally above — it is counted
-  // INSIDE total / out-of-balance (a phantom reconciliation is always out-of-balance), and
-  // named here so a reader sees what makes up the total.
   if (totals.phantom > 0) {
     lines.push(
       `- ${totals.phantom} phantom-scenario(s): cited by an evidence observation, named by no feature.`
     );
   }
-  // The suspense (S) count is broken out the same way — credits citing no scenario at all
-  // (uncited evidence observations + uncited static-checks), aggregated into one row,
-  // counted INSIDE the tally above.
   if (totals.suspense > 0) {
     lines.push(
       `- ${totals.suspense} suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".`
@@ -667,17 +326,8 @@ function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliation
   return lines;
 }
 
-/**
- * The scenario-corpus CENSUS — obligation-side facts on report.evidenceObligations.
- * These re-homed here from the dissolved `## Warnings` section: they are census
- * facts, NOT warnings and NOT reconciling items, so they ride in the ledger summary co-located
- * with the excluded-occurrence bullet (the evidenceObligations census view). Facts only —
- * count + locator.
- */
 function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, accounts: number): string[] {
   const lines = [`- ${census.excludedOccurrences} @SCN ids seen in non-tag context, excluded`];
-  // Untagged scenarios — Gherkin scenarios with no @SCN tag, located by
-  // `feature : scenario`. Sorted defensively (a hand-built corpus fixture may be unsorted).
   const untagged = census.untaggedScenarios;
   if (untagged.length > 0) {
     const sorted = [...untagged].sort(
@@ -689,8 +339,6 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, ac
     }
   }
   lines.push(...sharedScnCodeLines(census.sharedScnCodes ?? [], accounts));
-  // Prose-only codes — @SCN ids mentioned in prose but never tagged anywhere
-  // (the dangling references). The bare code is its own locator. Sorted, after untagged.
   const proseOnly = census.proseOnlyCodes;
   if (proseOnly.length > 0) {
     lines.push(`- ${proseOnly.length} @SCN code(s) appear only in prose, never as a tag:`);
@@ -701,13 +349,6 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, ac
   return lines;
 }
 
-/**
- * The codes more than one scenario carries: the corpus's scenarios stated
- * against its accounts, then each code with the scenarios behind it. The account a code names reads
- * `duplicate-scn-code` on the rows and cannot say who stands behind it, so this is where they are
- * named. The scenario count is DERIVED — each shared code is one account standing for its sharers —
- * so nothing is persisted that the ledger and this list could disagree about.
- */
 function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number): string[] {
   if (shared.length === 0) return [];
   const scenarios = accounts + shared.reduce((extra, code) => extra + code.scenarios.length - 1, 0);
@@ -719,10 +360,6 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
   ];
 }
 
-/**
- * The per-scenario table: with the corpus-driven evidence columns between Scenario and Verdict when
- * the runtime-observation axis is in play and any column appears, else the original three columns.
- */
 function ledgerTableLines(
   scenarios: readonly ScenarioReconciliation[],
   withObservations: boolean
@@ -752,96 +389,35 @@ function ledgerTableLines(
   return lines;
 }
 
-/**
- * The ordered section list (project design §2; reorganised summary-first / ledger-last,
- * test volume added): title → provenance → the run-integrity stamp (only when the run is
- * unsound) → Summary views
- * (Evidence reconciliation, test volume, fitness evidence obligations, out-of-balance by feature)
- * → the ledger. The `## Warnings` section was RETIRED entirely: the
- * no-evidence scenario (the earlier zero-evidence warning) is now a `both-missing` ledger
- * row, and the scenario-corpus
- * census facts (untagged scenarios / prose-only codes) re-homed into the ledger summary.
- *
- * The run-integrity stamp precedes the summary views because it is a caveat ON
- * them, not another cut OF them — an unsound run's `missing` counts cannot be taken at face
- * value. It omits itself entirely on a sound run, so the ordering above is unchanged for
- * every report that carries no broken evidence.
- */
 const SECTIONS: readonly SectionEmitter[] = [
   titleSection,
   provenanceSection,
-  // What of the manifest named in the provenance could not be used, before any cut it could colour.
   configurationNotReadSection,
   runIntegritySection,
-  // Beside the unsound stamp, and for its reason: a caveat on every cut below it.
   scenarioCodeErrorsSection,
   summaryViewsSection,
-  // The verdict OPENS the summary — before any cut of the reconciliation, so a
-  // reader meets the bottom line first and a failing run can never LOOK like a passing one.
   runVerdictSection,
   evidenceReconciliationSection,
   testVolumeSection,
-  // The scope discovery ranged over, ahead of the static-check census rather than
-  // among the dispositions below it: it is not one of the things a step became, it is the pipeline
-  // every figure under it was read from. A reader meets what was read before what was found.
   discoveryScopeSection,
   staticChecksSection,
-  // The steps recognised as behavioural runners, beside the static-check counts
-  // rather than among them: a runner is what a step was recognised as INSTEAD of reaching that
-  // census, so it belongs next to it and never inside it.
   behaviouralRunnersSection,
-  // The steps that are the reconciler, between the two: it is the disposition
-  // nobody configured, so it reads after what the target named its runners and before the list the
-  // consumer wrote — the tool accounting for itself before it accounts for their instructions.
   reconcilerSection,
-  // The steps the target named non-checks, after the runners for the same reason
-  // those follow the census: all three are dispositions a step got INSTEAD of reaching the books,
-  // and they read in the order the reader meets them — what ran the suites, what this tool took
-  // out of its own books, then what the consumer took out.
   excludedStepsSection,
-  // What became of every step the run read, last of the pipeline cuts because it
-  // is the one that counts what the four above it named. A reader meets the dispositions and then
-  // the figure saying they are all of them — which is the axis's first non-negotiable, stated as
-  // something checkable rather than as a sentence taken on trust.
   stepAccountingSection,
   fitnessSection,
   byFeatureSection,
   ledgerSection,
 ];
 
-/**
- * Render the whole-document report model to markdown — the from-model pipeline,
- * a PURE PRESENTATION over the same `EvidenceReconciliation` the JSON serialises. Exposed for slice 3's
- * render-from-saved-JSON path: a consumer rebuilds a `EvidenceReconciliation` from banked JSON and
- * renders the human view off it, with no `RunContext` in hand. Needs NO external map — the
- * feature titles are read off `report.metadata.featureNames` (nested under
- * `metadata`), so the by-feature cut names each feature in full from the model alone.
- */
 export function renderReport(report: RenderInput): string {
   return SECTIONS.flatMap((section) => section(report)).join("\n");
 }
 
-/**
- * Regenerate the markdown from a banked `spec-reconciliation.json` ALONE
- * — the render-from-saved-JSON seam. `JSON.parse` the stored whole-document report back into a
- * `EvidenceReconciliation` and render it via `renderReport`: no `RunContext`, no live inputs, the JSON is the
- * whole document. Drift-equality is the acceptance — the markdown from the saved JSON equals the
- * markdown rendered directly from the same run (the by-feature titles included, which is why the
- * feature-title model-completion is the enabling dependency). The load-bearing proof
- * that the JSON is the model, not a lossy projection.
- */
 export function renderReportFromJson(json: string): string {
   return renderReport(JSON.parse(json) as RenderInput);
 }
 
-/**
- * Render the reconciliation to markdown. Keeps its `(balance, ctx, …)` signature (mirroring
- * `json.ts`): it assembles the shared whole-document report from the reconcile pieces —
- * threading the live `featureNames` title source INTO `assembleRenderInput`, so the titles
- * land on the model — then delegates to `renderReport`. So `writer.ts` and the unit tests are
- * untouched, the markdown stays byte-identical (same slugs, now model-sourced), and it is
- * provably a presentation of the same model the JSON serialises.
- */
 export function renderMarkdown(
   evidenceReconciliation: EvidenceReconciliation,
   ctx: RunContext,

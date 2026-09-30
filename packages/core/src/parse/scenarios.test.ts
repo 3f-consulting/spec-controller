@@ -1,22 +1,3 @@
-/**
- * Unit test for raw-occurrence counting (@SCN-RPT-008).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
- * @SCN-RPT-008 id matching features/report.feature, so a grep of the id returns
- * both halves of the pair.
- *
- * Proves countScnOccurrences in isolation: it matches every @SCN-FFF-NNN occurrence
- * across the WHOLE source — including the non-tag-line context (prose, comments, step
- * text) the tag-line parseScenarios deliberately ignores — so the delta against
- * parseScenarios(...).length is precisely the ids seen in non-tag context. parseScenarios
- * is unchanged (its existing tests stay green).
- *
- * Teeth: until the counter lands, the stub returns 0, so every count assertion reds
- * (the genuine red→green).
- *
- * Parent: @SCN-RPT-008.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   countScnOccurrences,
@@ -26,21 +7,9 @@ import {
   proseOnlyCodes,
 } from "./scenarios.js";
 
-
-/**
- * Give a fixture the `Feature:` header every real feature file has.
- *
- * These fixtures were written as headerless FRAGMENTS, which the old hand-rolled tag-line scan
- * tolerated because it never parsed Gherkin at all. The corpus is now read from the real Gherkin
- * AST (@SCN-LDG-020), and a headerless fragment is NOT valid Gherkin — cucumber rejects it
- * outright ("expected: #Tag..."), and @SCN-CLI-016 refuses such a file at the CLI edge. So the
- * fixtures gain the header they always implicitly needed; every assertion below is unchanged.
- */
 const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
-  // Two TAG-LINE occurrences (@SCN-RPT-001, @SCN-LDG-003) plus two NON-tag mentions
-  // (the same @SCN-RPT-001 in prose, @SCN-LNT-005 in a comment). Raw = 4; read as scenarios = 2.
   const source = [
     "@RPT @SCN-RPT-001",
     "Scenario: a thing",
@@ -56,7 +25,6 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
   });
 
   it("the delta over parseScenarios length is exactly the non-tag occurrences", () => {
-    // parseScenarios reads 2 tag-line scenarios; raw counts 4; excluded = 2.
     const scenarios = parseScenarios(asFeature(source)).length;
     expect(scenarios).toBe(2);
     expect(countScnOccurrences(source) - scenarios).toBe(2);
@@ -67,19 +35,6 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
   });
 });
 
-/**
- * Unit test for parseUntaggedScenarios (@SCN-RPT-014).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-014
- * id matching features/report.feature, so a grep of the id returns both halves.
- *
- * Proves the new obligation-side parse: it counts Gherkin scenario headers (Scenario /
- * Scenario Outline / Scenario Template / Example — NOT Examples:) and returns the names
- * of those whose preceding contiguous tag block carries no @SCN, mirroring parseScenarios's
- * block logic. Asserts REAL parser output, not a hand-seeded list (evidence-manifesto §11A).
- *
- * Parent: @SCN-RPT-014 — anchor audit: untagged scenarios.
- */
 describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SCN tag", () => {
   const source = [
     "@UNT",
@@ -123,11 +78,10 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "  @SCN-EX-001",
       "  Example: a tagged example",
       "    Given a step",
-      "    Examples:", // the data-table keyword — must NOT count as a scenario
+      "    Examples:",
       "      | a |",
       "      | 1 |",
     ].join("\n");
-    // Only the untagged "Example:" is returned; the tagged one and the Examples: table are not.
     expect(parseUntaggedScenarios(ex)).toEqual(["a bare example with no anchor"]);
   });
 
@@ -144,23 +98,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 });
 
-/**
- * Unit test for proseOnlyCodes (@SCN-RPT-015).
- *
- * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-015
- * id matching features/report.feature, so a grep of the id returns both halves.
- *
- * Proves the cross-corpus difference: a code is prose-only iff it appears in non-tag
- * context AND is never an @SCN tag ANYWHERE across the sources. The cross-file union is
- * load-bearing — a code tagged in one file but prosed in another is NOT dangling. Asserts
- * REAL parser output, not a hand-seeded list (evidence-manifesto §11A).
- *
- * Parent: @SCN-RPT-015 — anchor audit: prose-only codes.
- */
 describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose but never tagged anywhere", () => {
-  // File A tags AAA-001 (and prose-mentions it — legitimate) and prose-mentions a
-  // dangling DNG-001. File B tags BBB-002, prose-mentions AAA-001 (tagged in A —
-  // NOT dangling, the cross-file union) and a dangling DNG-002.
   const sourceA = [
     "@RPT @SCN-AAA-001",
     "Scenario: a tagged scenario",
@@ -182,9 +120,7 @@ describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose
   });
 
   it("excludes a code tagged in ANY file even when prosed in another (cross-file union)", () => {
-    // AAA-001 is tagged in A and prosed in BOTH A and B — still not prose-only.
     expect(proseOnlyCodes([sourceA, sourceB])).not.toContain("SCN-AAA-001");
-    // BBB-002 is tagged (and not prosed) — not in the prose set at all.
     expect(proseOnlyCodes([sourceA, sourceB])).not.toContain("SCN-BBB-002");
   });
 
@@ -198,12 +134,6 @@ describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose
   });
 });
 
-/**
- * @unit for @SCN-STG-024 (3F-3636) — a scenario's @SCN tag is read by evidence-manifesto §9A's
- * grammar: a feature part of two to five characters. The four scenarios straddle both bounds, so
- * the ids that ARE read (two and five characters) are what show the reader was looking when the
- * ids that are NOT (one and six) come back as nothing.
- */
 describe("[SCN-STG-024] a scenario tagged with a feature part outside two to five characters carries no @SCN code", () => {
   const source = [
     "Feature: bounds",
@@ -235,11 +165,6 @@ describe("[SCN-STG-024] a scenario tagged with a feature part outside two to fiv
   });
 });
 
-/**
- * @unit for @SCN-STG-028 (3F-3636) — a prose mention of an @SCN (a step, a comment) is read by
- * evidence-manifesto §9A's grammar, so the non-tag-context count and the prose-only audit count
- * only ids with a feature part of two to five characters.
- */
 describe("[SCN-STG-028] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
   const source = [
     "Feature: prose",

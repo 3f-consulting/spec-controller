@@ -1,7 +1,3 @@
-/**
- * What an `allocate` invocation asks for, read against the command's registry scope, or the usage
- * error it is. A usage error is worded as one, so it is never taken for an unknown part.
- */
 import { isFeaturePart } from "@3f-consulting/spec-controller-core";
 import {
   checkArgvShape,
@@ -12,13 +8,11 @@ import {
 } from "../cli-args.js";
 import type { CliRegistry } from "../cli-registry.js";
 
-/** A well-formed request: the part, and whether it is asked for as new. */
 export interface AllocateRequest {
   readonly part: string;
   readonly isNew: boolean;
 }
 
-/** The request `argv` makes, or the usage error it is, worded for stderr. */
 export function readRequest(
   argv: readonly string[],
   registry: CliRegistry,
@@ -29,7 +23,6 @@ export function readRequest(
   return { part: positionalArguments(argv, registry, "allocate")[0] ?? "", isNew: argv.includes("--new") };
 }
 
-/** The first refusal the argv earns against the registry, the same checks `balance` makes, in its order. */
 function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): string | null {
   const args = parseArgs(argv);
   return (
@@ -39,7 +32,6 @@ function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion
   );
 }
 
-/** The refusal for the part given, or null when it is a feature part in canon's form. */
 function partRefusal(part: string | undefined): string | null {
   if (part === undefined) return "no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code.";
   if (isFeaturePart(part)) return null;
