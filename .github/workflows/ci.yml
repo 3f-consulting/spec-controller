@@ -250,7 +250,7 @@ jobs:
       #
       # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, AND THE REASON IS NOW ONLY
       # READABILITY. Each of these steps runs the handle — `pnpm lint:boundaries`, not
-      # `pnpm exec depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages`,
+      # `pnpm exec depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs .`,
       # which would run the identical check. Nothing reads the two spellings against each other any
       # more (the manifest list is retired), so keeping them the same is what makes that reading
       # possible. Where the pipeline genuinely needs a different spelling it says so at the step, as

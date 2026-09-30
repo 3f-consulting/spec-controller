@@ -75,10 +75,14 @@ Feature: The fitness checks this repository declares, one scenario per check
 
   @fitness @SCN-FIT-009
   Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
-    Given this repository's own module graph and the names of its domain modules
+    Given this repository's own module graph, its source, and the names of its domain modules
     When the installed boundary tools read them
-    Then no engine module imports the app package, the check tree, or a node IO builtin
+    Then no engine module imports the app package or a node IO builtin
     And no engine module references the process global
+    And no engine module reads the clock or a random number
+    And no app module imports the engine anywhere but its published entry point
+    And no module outside run-management and cli-allocate imports child_process
+    And no file in the repository detects the mutation sandbox
     And no domain module imports an adapter layer
     And no domain module is named for a procedural layer
     And no suppression directive that suppresses nothing survives the run

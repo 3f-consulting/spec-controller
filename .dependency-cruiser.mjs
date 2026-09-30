@@ -1,41 +1,27 @@
 /**
- * THE IMPORT-BOUNDARY HALF OF `pnpm lint:boundaries` — the CI step carrying `id: SCN-FIT-009`
- * (@SCN-FIT-009, 3F-3288/3F-3436).
+ * THE IMPORT-BOUNDARY HALF OF `pnpm lint:boundaries` — the CI step for the import-boundary
+ * fitness check. Configuration only: no rule logic is written here, so an adopter copies the file.
  *
- * WHAT THIS REPLACED, AND WHY IT IS A DELETION RATHER THAN A REWRITE. Three hand-written checks —
- * `enginePurity.ts` (107), `domainPurity.ts` (88), `anemicDomain.ts` (93) plus its CLI (52) — asked
- * questions about this repository's own import graph by matching regular expressions over
- * comment-stripped source. They worked. The cost was that `tests/checks/` ships to nobody, so an
- * adopter of spec-controller who wanted a purity boundary had to write one again. The operator's
- * ruling of 2026-09-13 is that every build-your-own fitness check converts to a third-party one;
- * this file and `eslint.boundaries.mjs` are the whole of the replacement, and no rule logic is
- * written here — only configuration.
+ * A RULE JUDGES THE MODULE A SPECIFIER RESOLVES TO, NOT THE SPECIFIER. A relative escape
+ * `../../spec-controller/src/host.js` is reported as `packages/spec-controller/src/host.ts`, and a
+ * dynamic `await import("node:fs")` is an edge like any other. A comment produces no edge, so prose
+ * naming a forbidden module is never a false positive.
  *
- * THE RESOLUTION IS A STRENGTHENING, NOT A RESTATEMENT. The old checks matched the SPECIFIER; this
- * matches the MODULE the specifier resolves to. A relative escape `../../spec-controller/src/host.js`
- * is reported as `packages/spec-controller/src/host.ts` — an answer about the graph rather than about
- * the string — and a dynamic `await import("node:fs")`, which the old regex could not see at all, is
- * an edge like any other. Comment-stripping, which the old checks needed so a doc-comment naming
- * `process.cwd()` was not a false positive, has no analogue here: a comment produces no edge.
- *
- * THE SCOPE MATCHES WHAT THE OLD CHECKS WALKED. `collectSourceFiles` (left at 3F-3491) took `*.ts`
- * under the subtree and skipped `*.test.ts` and `*.d.ts`, so every `from` below carries
- * `pathNot: "\\.test\\.ts$"`.
- * (There is no `.d.ts` under `packages/core/src`, so that half of the old filter is not live and is
- * deliberately not restated — a config term with no population is a term nobody can red.)
+ * TESTS ARE EXEMPT unless a rule says otherwise: each `from` carries `pathNot: "\\.test\\.ts$"`,
+ * so a unit test beside a module may reach what the module itself may not. The one exception,
+ * `child-process-outside-its-homes`, says why beside it.
  *
  * WHAT IS NOT HERE, AND THE MEASUREMENT THAT PUT IT SOMEWHERE ELSE. A `forbidden` rule is evaluated
  * per dependency EDGE, so a module with no imports cannot violate one. A planted, dependency-free
  * `packages/core/src/domain/operations.ts` PASSED a `{ from: <anemic pattern>, to: {} }` rule and
  * redded the same file the instant it imported one thing. Inert data is the anemic split's own end
  * state, so that rule would have been blind exactly where it matters most. The procedural-layer
- * filename rule therefore lives in `eslint.boundaries.mjs`, in `check-file/filename-blocklist`,
- * which visits FILES. The `process` global is invisible to a module graph for the same structural
- * reason and lands there too, in `no-restricted-globals`. Two tools, one gate, one claim — and the
- * split is measured rather than stylistic.
+ * filename rule therefore lives in `eslint.boundaries.mjs`, which visits FILES, and so do the claims
+ * that need no import at all: the `process` global, the clock, and naming the mutation sandbox. Two
+ * tools, one gate — and the split is measured rather than stylistic.
  *
- * FOUR RULES HERE, NOT FIVE. `domain → app` needs no rule of its own: the domain is inside the core,
- * so `core-imports-app` already refuses it. That was measured, not assumed.
+ * NO `domain → app` RULE. It needs none of its own: the domain is inside the core, so
+ * `core-imports-app` already refuses it. That was measured, not assumed.
  */
 export default {
   forbidden: [
@@ -74,39 +60,68 @@ export default {
     },
 
     /**
-     * `enginePurity`'s `impure-import`, check-tree half — the term 3F-3188 had to add when the
-     * checks moved out from under the app package and the package match stopped covering them for
-     * free.
+     * The app reaches the engine only through the engine's published entry point, so the engine
+     * can change anything behind that entry without breaking the app.
      *
-     * A core module must not import the check tree. Both homes reach the same verdict in the old
-     * check because the reason is one reason; they are two rules here because the resolved paths
-     * are two paths, and a rule names what it refuses.
+     * THE `to.path` MATCHES THE RESOLVED MODULE, NOT THE SPECIFIER. The workspace resolves
+     * `@3f-consulting/spec-controller-core` to `packages/core/src/index.ts` and its `/internal`
+     * subpath to `packages/core/src/internal.ts`, so the rule refuses every module under core's
+     * `src/` or `dist/` except the entry itself. That catches the `/internal` subpath and a relative
+     * escape into core's source by one pattern. The installed and unresolved forms are named beside
+     * it, for the reason `core-imports-app` gives.
+     *
+     * A TEST IS EXEMPT, as for every rule here: a unit test may pin an internal it exercises.
      */
     {
-      name: "core-imports-checks",
+      name: "app-imports-core-internals",
       severity: "error",
-      comment: "a core module must not import the check tree at tests/checks/",
-      from: { path: "^packages/core/src/", pathNot: "\\.test\\.ts$" },
-      to: { path: "^tests/checks/" },
+      comment: "an app module must import the engine only through its published entry point",
+      from: { path: "^packages/spec-controller/src/", pathNot: "\\.test\\.ts$" },
+      to: {
+        path: [
+          "^packages/core/(src|dist)/",
+          "^node_modules/@3f-consulting/spec-controller-core/",
+          "^@3f-consulting/spec-controller-core/",
+        ],
+        pathNot: ["^packages/core/src/index\\.ts$", "^packages/core/dist/index\\.(js|d\\.ts)$"],
+      },
     },
 
     /**
-     * `enginePurity`'s `io-import` — keeps the engine testable with data alone.
+     * A core module imports no node IO builtin — keeps the engine testable with data alone.
      *
      * `dependencyTypes: ["core"]` scopes the match to node builtins, so a local module whose path
      * happens to begin with one of these words cannot trip it.
      *
-     * IT REACHES ONE FORM THE OLD CHECK DID NOT. The old regex was `^node:(?:fs|child_process|process)`
-     * — `node:`-prefixed only — so a bare `import "fs"` passed it. The optional prefix here catches
-     * both, and `(/|$)` carries the sub-path forms (`node:fs/promises` resolves to `fs/promises`)
-     * while refusing a longer word that merely starts the same way.
+     * The optional `node:` prefix catches the bare form too, and `(/|$)` carries the sub-path forms
+     * (`node:fs/promises` resolves to `fs/promises`) while refusing a longer word that merely starts
+     * the same way. `child_process` is not named here: `child-process-outside-its-homes` refuses it
+     * for the core and for everything else outside its two homes, so naming it twice would report
+     * one import twice.
      */
     {
       name: "core-imports-io",
       severity: "error",
       comment: "a core module must not import a node IO builtin — the engine stays testable with data alone",
       from: { path: "^packages/core/src/", pathNot: "\\.test\\.ts$" },
-      to: { dependencyTypes: ["core"], path: "^(node:)?(fs|child_process|process)(/|$)" },
+      to: { dependencyTypes: ["core"], path: "^(node:)?(fs|process)(/|$)" },
+    },
+
+    /**
+     * Spawning a process is the edge's business, and only two edges do it: run-management reads
+     * git for a run's inputs, and the allocate command reads the tree and its history. Anywhere
+     * else, a `child_process` import is a new edge nobody designed.
+     *
+     * THE `from` HAS NO TEST EXEMPTION, unlike the rules above. Every test that spawns a process
+     * already sits in one of the two homes, so the exemption would guard nothing and would let a
+     * test elsewhere start spawning unnoticed.
+     */
+    {
+      name: "child-process-outside-its-homes",
+      severity: "error",
+      comment: "only run-management and cli-allocate may import child_process",
+      from: { path: "^packages/", pathNot: "^packages/spec-controller/src/(run-management|cli-allocate)/" },
+      to: { dependencyTypes: ["core"], path: "^(node:)?child_process$" },
     },
 
     /**

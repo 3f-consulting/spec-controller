@@ -1,6 +1,5 @@
 /**
- * THE FILE-SHAPED HALF OF `pnpm lint:boundaries` — the two boundary claims a module graph cannot
- * see (@SCN-FIT-009, 3F-3288/3F-3436).
+ * THE FILE-SHAPED HALF OF `pnpm lint:boundaries` — the boundary claims a module graph cannot see.
  *
  * WHY THERE ARE TWO TOOLS BEHIND ONE GATE, AND WHY IT IS A MEASUREMENT RATHER THAN A PREFERENCE.
  * `dependency-cruiser` evaluates a `forbidden` rule per dependency EDGE, so a module with no
@@ -8,33 +7,35 @@
  * PASSED a `{ from: <anemic pattern>, to: {} }` rule there and redded the same file the instant it
  * imported one thing — and inert data is the anemic split's own END STATE, so that rule would have
  * been blind exactly where it matters most. `process.cwd()` needs no import at all, so there is no
- * edge to judge. ESLint visits FILES. Both rules live here for that one reason.
+ * edge to judge; neither does reading the clock, or naming the mutation sandbox. ESLint visits
+ * FILES, and every rule here lives here for that one reason.
  *
  * WHY THIS IS A SECOND CONFIG RATHER THAN A BLOCK IN `eslint.config.mjs`. The root config IS the
- * `SCN-FIT-001` check — the complexity one — and whose `MEASURED_GLOBS` export is
- * that check's own answer to which files it judges. Boundary rules there would make one command
+ * complexity check, and its `MEASURED_GLOBS` export is that check's own answer to which files it
+ * judges. Boundary rules there would make one command
  * assert two unrelated claims under one citation, and would put rules into a config whose scope is
  * another check's measurement. One gate, one claim.
  *
- * NO PRESET, NO `recommended`, NO STYLE RULES — the same discipline the root config keeps. Two
- * rules, both of them a claim this repository already made and enforced by hand.
+ * NO PRESET, NO `recommended`, NO STYLE RULES — the same discipline the root config keeps. Every
+ * rule is a claim this repository already makes of itself.
  */
 
 import checkFile from "eslint-plugin-check-file";
 import tseslint from "typescript-eslint";
 
+/** Stryker's global, its active-mutant variable, and the functions its instrumenter prepends. */
+const SANDBOX_NAMES = "/__stryker__|STRYKER_ACTIVE_MUTANT|stryNS_|stryCov_|stryMutAct_/";
+const SANDBOX_MESSAGE = "no code detects the mutation sandbox — name the tree a check reads instead";
+
 export default [
   /**
-   * A SUPPRESSION CANNOT OUTLIVE ITS REASON (3F-2320), here as in `eslint.config.mjs`.
+   * A SUPPRESSION CANNOT OUTLIVE ITS REASON, here as in `eslint.config.mjs`.
    *
    * The ruling (`fitness-functions.md` → *A suppression cannot outlive its reason*) is about the
    * linter, not about either check, so both configs set it and neither is the exception. An
    * `eslint-disable` that suppresses nothing is a claim that has stopped being true; ESLint 9
    * defaults it to `"warn"`, which exits 0 and so cannot be told from no directive at all at the
    * step's recorded outcome. An object with no `files` key matches every file this config lints.
-   *
-   * This is the ONLY thing 3F-2320 changed here. That ticket's scope statement rules this file's
-   * RULES out and this setting in, because the setting is mandatory everywhere.
    */
   { linterOptions: { reportUnusedDisableDirectives: "error" } },
 
@@ -47,19 +48,16 @@ export default [
   { ignores: ["**/dist/**", ".stryker-tmp/**", "**/node_modules/**"] },
 
   /**
-   * `enginePurity`'s `io-global` arm — a core module must not reference the `process` global, so the
-   * engine stays testable with data alone.
+   * The engine reads no ambient input — not the `process` global, not the clock, not a random
+   * number — so the same data in gives the same answer out, and the engine stays testable with
+   * data alone. The instant a run started arrives as an argument; a `Date` used only as a TYPE is
+   * not a read and passes.
    *
-   * THE TEST EXCLUSION IS THE OLD CHECK'S SCOPE, CARRIED. `collectSourceFiles` (left at 3F-3491)
-   * skipped `*.test.ts`, so the arms beside the engine have always been free to read
-   * `process.cwd()`; keeping that exemption is fidelity, and removing it would be a behaviour
-   * change wearing a conversion's clothes.
+   * TESTS ARE EXEMPT. A test beside the engine may read `process.cwd()` or build a fixed
+   * `new Date("…")` fixture; neither makes the engine it tests impure.
    *
-   * WHAT REPLACED THE OLD COMMENT-STRIPPING. The hand-written check matched `\bprocess\s*\.` over
-   * source text and had to strip comments first, because three production files under this root
-   * name `process.cwd()` in a doc comment and nowhere else. ESLint reads the AST: a comment is not
-   * an identifier, and neither is a property named `process` on someone else's object. The false
-   * positive the stripping existed to prevent cannot arise.
+   * ESLint reads the AST, so a comment naming `process.cwd()` is not an identifier, and neither is a
+   * property named `process` or `Date` on someone else's object.
    */
   {
     files: ["packages/core/src/**/*.ts"],
@@ -72,6 +70,11 @@ export default [
       "no-restricted-globals": [
         "error",
         { name: "process", message: "the engine stays testable with data alone" },
+        { name: "Date", message: "the engine reads no clock — the instant arrives as an argument" },
+      ],
+      "no-restricted-properties": [
+        "error",
+        { object: "Math", property: "random", message: "the engine reads no random number" },
       ],
     },
   },
@@ -129,6 +132,38 @@ export default [
           "**/src/domain/**/*-{operations,service,manager}{,.test}.ts": "*.ts",
           "**/src/domain/**/*{Operations,Service,Manager}{,.test}.ts": "*.ts",
         },
+      ],
+    },
+  },
+
+  /**
+   * No file in the repository detects the mutation sandbox. Stryker runs the suite inside a copy
+   * of the tree, and code that asks whether it is standing in that copy — by Stryker's global, its
+   * active-mutant variable, or the functions its instrumenter prepends — behaves differently under
+   * mutation than in CI, so the mutation score stops measuring the code that ships. A check handed
+   * the wrong tree is fixed by naming the tree it reads, never by detecting where it stands.
+   *
+   * THREE NODE KINDS, because detection can spell the name three ways: as an identifier
+   * (`process.env.__STRYKER_ACTIVE_MUTANT__`, `globalThis.__stryker__`), as a string
+   * (`process.env["…"]`), or inside a template literal. A comment is not a node, so prose that
+   * names the sandbox passes.
+   *
+   * IT READS EVERY SOURCE FILE, not just `packages/`, because detection is likeliest in the test
+   * tree and the tool configs. This file is the one exception: its own pattern would match itself.
+   */
+  {
+    files: ["**/*.{ts,mts,cts,js,mjs,cjs}"],
+    ignores: ["eslint.boundaries.mjs"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        { selector: `Identifier[name=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
+        { selector: `Literal[value=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
+        { selector: `TemplateElement[value.raw=${SANDBOX_NAMES}]`, message: SANDBOX_MESSAGE },
       ],
     },
   },
