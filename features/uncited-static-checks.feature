@@ -96,7 +96,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a CI check no fitness scenario cites is reported as an uncited static check
       Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is cited by a fitness scenario
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the Static checks section reports lint:bar as an uncited static check
 
   Rule: a check a fitness scenario cites is attributed, not an uncited static check
@@ -125,7 +125,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a check a fitness scenario cites is attributed, not an uncited static check
       Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is cited by a fitness scenario
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then lint:foo is attributed to the scenario citing it, not reported uncited
 
   Rule: a step invoking a runner the manifest names is not a candidate fitness check
@@ -157,7 +157,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       And its CI also runs the test and cucumber suites
       And its manifest names the unit and integration runners those suites run
       And only lint:foo is cited by a fitness scenario
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then only lint:foo and lint:bar are counted as fitness checks, not test or cucumber
 
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited static check
@@ -201,7 +201,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: an uncited check whose script name carries no prefix of ours is an uncited static check
       Given a target whose CI runs the domain-purity script, a name matching no convention of ours
       And no fitness scenario cites domain-purity
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the Static checks section reports domain-purity as an uncited static check
 
   Rule: a static check is observed wherever in the workflows it runs
@@ -361,7 +361,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited static check
       Given a target whose CI runs the domain-purity script under no convention of ours
       And a fitness scenario cites domain-purity
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then domain-purity is attributed to the scenario citing it, not reported uncited
 
   Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
@@ -399,7 +399,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-011
     Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest
       Given a target that names vitest its unit runner and runs pnpm test in CI
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report names vitest the unit runner, recognised at the step that runs it
 
   Rule: a runner's name occurring anywhere but the command position leaves the step a candidate
@@ -430,7 +430,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-012
     Scenario: a check step naming a runner in a path or an argument is a candidate, never excluded as the runner
       Given a target that names vitest its unit runner, runs its unit suite, and runs a check whose command writes a report named after that runner
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report names the unit suite step its runner and no other, and the check is on the books as an uncited static check
 
   Rule: a tier whose runner is null has no runner; a tier the block omits has not been told
@@ -468,7 +468,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a null runner reports the tier as having none, and an absent key reports it as unnamed
       Given a target that says it has no performance runner
       And a second target, alike but for saying nothing about performance
-      When the reconciliation report is rendered for both targets
+      When the reconciliation report is rendered from both targets' files
       Then the first target's report says it has no performance runner
       And the second target's report says its performance runner is unnamed
 
@@ -509,7 +509,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a runners key that is not one of the four tiers is reported, never silently honoured
       Given a target whose runner block names a key that is not one of the four tiers
       And that key names the command of a check its CI runs
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report names that key as one it does not recognise
       And the check is on the books as an uncited static check
 
@@ -542,7 +542,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-025
     Scenario Outline: a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it
       Given a target whose specController configuration sets <entry> to <written>
-      When the target's configuration is reconciled
+      When the target's configuration is reconciled from its package.json
       Then the report names <entry> as <written>, where <read> is read
       And the report is otherwise the one the same target gives without <entry>
 
@@ -559,7 +559,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-028
     Scenario Outline: a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it
       Given a target whose specController configuration also carries the key <key>
-      When the target's configuration is reconciled
+      When the target's configuration is reconciled from its package.json
       Then the report names <key> as a key the specController block does not read, in the words it uses for any such key
       And the report is otherwise the one the same target gives without the key <key>
 
@@ -572,7 +572,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-026
     Scenario Outline: a specController block whose every entry is a kind its reader takes names nothing as the wrong kind
       Given a target whose specController configuration gives <entry> the value <written>, a kind its reader takes
-      When the target's configuration is reconciled
+      When the target's configuration is reconciled from its package.json
       Then the report names no specController entry as one it could not use
 
       Examples:
@@ -585,7 +585,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-027
     Scenario: a saved run re-rendered names the same specController entries its live report named
       Given a target whose specController configuration holds an entry of a kind its reader does not take and a key the block does not read
-      When the target's configuration is reconciled and the saved run is re-rendered
+      When the target's configuration is reconciled from its package.json and the saved run is re-rendered
       Then the re-rendered report names the same specController entries as the live report did
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
@@ -634,7 +634,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       Given a target that names one check step of its pipeline a non-check
       And a sibling check step no entry of its names
       And an entry that names no step its pipeline runs
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report names the excluded step, and its check is off the books while the sibling's is on them
       And the report names the entry that matched no step
 
@@ -684,7 +684,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       Given a target whose pipeline runs the reconciliation and dumps the step record it reads
       And a manifest that says nothing about either step
       And an ordinary check step of the same pipeline
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report accounts for both steps as the reconciler, and neither is on the books while the ordinary check is
       And the report names nothing the target excluded
 
@@ -726,7 +726,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a `uses:` step is a candidate fitness check, reported by the action it uses
       Given a target whose pipeline runs a quality check as an action rather than a command
       And a check step of the same pipeline that runs a command
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report posts the action to the suspense row, named by the action reference it uses
       And the command check is on the books beside it
 
@@ -775,7 +775,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: a target with no runners block reports every step of its pipeline as a candidate
       Given a target whose configuration names no runners and no non-checks
       And a pipeline of ordinary steps, the target's own test suite among them
-      When the target's first reconciliation is rendered
+      When the target's first reconciliation is rendered from its files
       Then the report posts every step of that pipeline to the suspense row, the test suite among them
       And the report asks the target to configure nothing
       And the run does not balance
@@ -828,7 +828,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-020
     Scenario: the report names the workflows, the jobs and the step count discovery ranged over
       Given a target whose pipeline is two workflows, the second of them running two jobs
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report names every workflow and every job it read, with the steps it read from each and how many of them became candidates
       And the scope it names reads in one settled order
 
@@ -869,6 +869,6 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     @unit @integration @SCN-USG-018
     Scenario: candidates, runners, the reconciler and the excluded sum to the steps read
       Given a target whose pipeline holds every disposition this reader has — checks, the runner its manifest names, the reconciliation itself, and steps it calls non-checks
-      When the reconciliation report is rendered for the target
+      When the reconciliation report is rendered from the target's files
       Then the report states how many steps it read and how many of them it accounted for, and the two agree
       And each disposition carries the count that pipeline gives it

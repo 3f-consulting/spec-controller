@@ -187,7 +187,7 @@ function corpusAudit(): { excludedOccurrences: number } {
 }
 
 Given(
-  "a target whose only scenario mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters",
+  "a target whose only feature file holds one scenario that mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters",
   function () {
     const [one, six] = OUTSIDE;
     const [two, five] = INSIDE;

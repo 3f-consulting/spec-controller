@@ -756,7 +756,7 @@ When(
   },
 );
 
-Then("every one of them is told the same verdict by the same sentence", function () {
+Then("every one of them prints the same verdict to stdout, in the same sentence", function () {
   assert.equal(noCorpusRuns.length, 3, "expected all three shapes to have been run");
   const first = noCorpusRun(0);
   const firstLine = verdictLineOf(first.stdout, first.shape);

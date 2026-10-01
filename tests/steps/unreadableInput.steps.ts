@@ -93,7 +93,7 @@ const MANIFEST: Record<string, readonly [string, string]> = {
   "text that does not parse": ["{not json", "is not valid JSON"],
 };
 
-Given("a target whose manifest, {}, holds {}", function (how: string, defect: string) {
+Given("a target whose package.json, {}, holds {}", function (how: string, defect: string) {
   const [text, where] = rowOf(MANIFEST, defect);
   const dir = targetDir();
   writeFileSync(join(dir, "package.json"), text);
@@ -190,7 +190,7 @@ function savedReconciliation(dir: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(dir, "good.json"), "utf8")) as Record<string, unknown>;
 }
 
-Given("a saved report that parses but is {}", function (defect: string) {
+Given("a saved report file that parses but is {}", function (defect: string) {
   const [broken, where] = rowOf(NOT_A_SAVED_RECONCILIATION, defect);
   const dir = targetDir();
   writeFileSync(join(dir, "saved.json"), JSON.stringify(broken(savedReconciliation(dir))));
@@ -230,7 +230,7 @@ function filesUnder(dir: string): string[] {
     .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1));
 }
 
-Then("the refused run leaves nothing in the store", function () {
+Then("the refused run leaves nothing in the store root", function () {
   assert.deepEqual(filesUnder(store), [], "a refused run must store nothing: no run.yaml and no report");
 });
 
