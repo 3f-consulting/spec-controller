@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { SCN_ID_SOURCE } from "@3f-consulting/spec-controller-core/internal";
 
 interface CodeRun {
   status: number;
@@ -25,6 +24,8 @@ interface CodeRun {
   markdown: string;
 }
 
+const SCN_ID = /SCN-[A-Z0-9]{2,5}-\d+/g;
+
 let files: Record<string, string> = {};
 let uncited = new Set<string>();
 let run: CodeRun;
@@ -40,7 +41,7 @@ function featureFile(code: string | null, ids: readonly string[]): string {
 }
 
 function citedIds(): string[] {
-  const ids = new Set(Object.values(files).flatMap((source) => source.match(new RegExp(SCN_ID_SOURCE, "g")) ?? []));
+  const ids = new Set(Object.values(files).flatMap((source) => source.match(SCN_ID) ?? []));
   return [...ids].filter((id) => !uncited.has(id));
 }
 

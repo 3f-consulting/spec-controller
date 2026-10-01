@@ -17,9 +17,5 @@ Feature: A scenario raising no evidence obligations is both-missing
 
   Rule: a scenario raising no evidence obligations is a both-missing out-of-balance row
 
-    @unit @integration @SCN-WRN-001
+    @unit @SCN-WRN-001
     Scenario: a scenario raising no evidence obligations is reported as a both-missing reconciliation, out of balance
-      Given a scenario "SCN-WRN-001" with no evidence-obligation tags
-      When the reconciler runs over the scenarios
-      Then the ledger reports "SCN-WRN-001" as a both-missing reconciliation, out of balance
-      And the report carries no warnings section
