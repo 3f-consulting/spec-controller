@@ -15,7 +15,8 @@
     "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
-    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.js .",
+    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.js --rule 'no-restricted-imports: off' .",
+    "lint:seam": "eslint --config eslint.boundaries.js --rule 'no-restricted-syntax: off' tests/steps",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
     "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\""
   },

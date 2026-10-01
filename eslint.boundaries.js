@@ -13,6 +13,11 @@ const CLASS_SELECTORS = [
   { selector: 'ClassDeclaration:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
   { selector: 'ClassExpression:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
 ];
+const SEAM_MESSAGE = "a step reaches the product through a seam: spawn the CLI, touch files, run git; never import its modules";
+const SEAM_PATTERNS = [
+  { regex: "^(\\.\\.?/)+packages(/|$)", message: SEAM_MESSAGE },
+  { regex: "^@3f-consulting/spec-controller-core(/|$)", message: SEAM_MESSAGE },
+];
 const SOURCE_FILES = "{ts,mts,cts,js,mjs,cjs}";
 
 export default [
@@ -94,6 +99,17 @@ export default [
     },
     rules: {
       "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS, ...CLASS_SELECTORS],
+    },
+  },
+
+  {
+    files: [`tests/steps/**/*.${SOURCE_FILES}`],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-imports": ["error", { patterns: SEAM_PATTERNS }],
     },
   },
 ];

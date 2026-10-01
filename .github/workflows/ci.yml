@@ -69,6 +69,11 @@ jobs:
         if: always()
         run: pnpm lint:boundaries
 
+      - name: Evidence layers cross a seam
+        id: SCN-FIT-027
+        if: always()
+        run: pnpm lint:seam
+
       - name: Typecheck
         id: SCN-FIT-011
         if: always()

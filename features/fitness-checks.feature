@@ -111,3 +111,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-026
     Scenario: no comment, description or current-state document in the tree narrates how the product used to be
+
+  Rule: a second evidence layer reaches the product only through a seam
+
+    @fitness @SCN-FIT-027
+    Scenario: no step definition imports the product's own modules, by a path into its packages or by its core package's name
