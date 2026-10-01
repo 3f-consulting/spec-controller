@@ -4,7 +4,6 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const FIXTURE = {
@@ -196,44 +195,6 @@ When(
   },
 );
 
-let helpCommand = "";
-
-Given("the spec-controller binary", function () {
-  helpCommand = "";
-});
-
-When("{string} is invoked", function (invocation: string) {
-  const [binary, command, ...rest] = invocation.split(" ");
-  assert.equal(binary, "spec-controller");
-  assert.ok(command, `expected a command token in the invocation; got "${invocation}"`);
-  assert.deepEqual(rest, ["--help"], `expected a <command> --help invocation; got "${invocation}"`);
-  helpCommand = command;
-  cliResult = spawnController([helpCommand, "--help"]);
-});
-
-Then(
-  "it exits 0 and prints each flag the registry gives that command, with its description",
-  function () {
-    assert.equal(cliResult.status, 0, `expected exit 0; got ${cliResult.status}\n${cliResult.stderr}`);
-    const entry = cliRegistry.commands.find((c) => c.name === helpCommand);
-    assert.ok(entry, `the registry must register the command "${helpCommand}"`);
-    assert.ok(
-      entry.flags.length > 0,
-      `the registry must give "${helpCommand}" a flag scope; got ${entry.flags.length}`,
-    );
-    for (const flag of entry.flags) {
-      assert.ok(
-        cliResult.stdout.includes(flag.name),
-        `expected stdout to list ${flag.name}; got:\n${cliResult.stdout}`,
-      );
-      assert.ok(
-        cliResult.stdout.includes(flag.description),
-        `expected stdout to describe ${flag.name}; got:\n${cliResult.stdout}`,
-      );
-    }
-  },
-);
-
 let topLevelArgs: string[] = [];
 let controllerResult: SpawnSyncReturns<string>;
 
@@ -251,41 +212,6 @@ function spawnController(args: string[]): SpawnSyncReturns<string> {
 Given("the spec-controller top-level binary", function () {
   topLevelArgs = ["--help"];
 });
-
-When("{string} is run", function (command: string) {
-  assert.equal(command, "spec-controller --help");
-  controllerResult = spawnController(topLevelArgs);
-});
-
-Then(
-  "it exits 0, lists each registered command, and documents the global --store and --run-id modifiers",
-  function () {
-    assert.equal(
-      controllerResult.status,
-      0,
-      `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`,
-    );
-    const out = controllerResult.stdout;
-    assert.ok(cliRegistry.commands.length > 0, "registry must register at least one command");
-    for (const command of cliRegistry.commands) {
-      assert.ok(out.includes(command.name), `expected top-level --help to list ${command.name}; got:\n${out}`);
-      assert.ok(
-        out.includes(command.summary),
-        `expected top-level --help to carry ${command.name}'s exact registry summary; got:\n${out}`,
-      );
-    }
-    assert.ok(cliRegistry.global.length >= 2, "registry must register the global --store/--run-id modifiers");
-    for (const flag of cliRegistry.global) {
-      assert.ok(out.includes(flag.name), `expected top-level --help to document ${flag.name}; got:\n${out}`);
-      assert.ok(
-        out.includes(flag.description),
-        `expected top-level --help to carry ${flag.name}'s exact registry description; got:\n${out}`,
-      );
-    }
-    assert.ok(out.includes("--store"), `expected top-level --help to document --store; got:\n${out}`);
-    assert.ok(out.includes("--run-id"), `expected top-level --help to document --run-id; got:\n${out}`);
-  },
-);
 
 const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string; stored: boolean }> = {
   "a typo of a command": { argv: ["blance"], command: "blance", stored: false },

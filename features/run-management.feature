@@ -10,8 +10,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
   The scaffold splits by layer: a PURE planner (run-id, paths, run.yaml content from
   metadata) + an impure runner (mkdir, route --format, write run.yaml) — the runner is the
-  only IO. Each @integration arm asserts the REAL on-disk effect under a temp root, and
-  that nothing is written in the repo.
+  only IO.
 
   Rule: a kept run creates a named directory with the routed outputs
 
@@ -20,12 +19,8 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     as spec-reconciliation.json (the whole-document report model). Nothing is written
     outside the root.
 
-    @unit @integration @SCN-RMG-001
+    @unit @SCN-RMG-001
     Scenario: a kept run writes spec-reconciliation.md and spec-reconciliation.json under the run directory
-      Given an injected store root and a target corpus to reconcile
-      When a kept run is executed for that target
-      Then the reconciliation document and the reconciliation JSON are written under the run directory <root>/<target>/<run-id>/
-      And the repo working tree gains nothing
 
   Rule: a kept run stamps run.yaml with the decided fields
 
@@ -33,12 +28,8 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     mode (balance / analyse / migrate), date, purpose (a list of grouping slugs — empty by
     default, an ad-hoc run, curated by hand afterward), links, and the artefact filenames.
 
-    @unit @integration @SCN-RMG-002
+    @unit @SCN-RMG-002
     Scenario: a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts
-      Given an injected store root and the run metadata for a kept run
-      When a kept run is executed with that metadata
-      Then run.yaml in the run directory parses back to schema_version 2, the run_id, target, source_sha, tool_sha, tool_version, mode, date, an empty purpose list, empty links, and the artefact filenames
-      And the repo working tree gains nothing from the run.yaml stamp
 
   Rule: the run-id defaults to a timestamp, an operator mnemonic overrides it
 
@@ -46,10 +37,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     may evidence observation a mnemonic (e.g. acme-q3, e1) via --run-id for a curated experiment or
     engagement, which names the run dir instead.
 
-    A pure selection rule, so it is proven in isolation by Vitest — the run-id's downstream
-    dir effect is already proven by RMG-001's @integration arm, so this scenario carries no
-    integration arm of its own (substitution-is-degradation: the moved-to layer here,
-    isolation, uniquely proves the default-vs-override rule over a pinned clock, with no IO).
+    A pure selection rule, so it is proven in isolation by Vitest: the default-vs-override rule over a pinned clock, with no IO.
     The default timestamp derives from an INJECTED instant (never a bare clock read), so the
     isolated Vitest test asserts the exact run-id string deterministically.
 

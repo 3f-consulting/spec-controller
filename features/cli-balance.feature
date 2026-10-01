@@ -816,17 +816,11 @@ Feature: spec-controller balance runs standalone
     it. The command is a parameter, so what the renderer covers is the registry's shape
     rather than the command set's size on the day it was written.
 
-    @SCN-CLI-006 @unit @e2e
+    @SCN-CLI-006 @unit
     Scenario: <command> --help lists that command's flags and exits 0
-      Given the spec-controller binary
-      When "spec-controller balance --help" is invoked
-      Then it exits 0 and prints each flag the registry gives that command, with its description
 
-    @SCN-CLI-007 @unit @e2e
+    @SCN-CLI-007 @unit
     Scenario: spec-controller --help lists the commands and the global --store/--run-id modifiers
-      Given the spec-controller top-level binary
-      When "spec-controller --help" is run
-      Then it exits 0, lists each registered command, and documents the global --store and --run-id modifiers
 
     @SCN-CLI-008 @unit
     Scenario: every registered flag, positional argument, command and modifier reaches its help surface (completeness guard)

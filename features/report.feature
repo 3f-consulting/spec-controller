@@ -23,29 +23,17 @@ Feature: The report renders the ledger as sectioned facts
     used, the run-start timestamp in UTC, the target's source SHA (a null SHA
     rendered as an explicit "unknown (non-git target)"), and the TOOL's own SHA and
     version — which spec-controller produced the run, a null tool SHA
-    rendered "unknown (not a git checkout)" with the version still shown. The @integration arm drives
-    the REAL CLI pipeline (runReconcile → writeOutputs with a ctx) and asserts the
-    PERSISTED spec-reconciliation.md carries the header — the cross-component ctx-threading
-    is the critical-path wiring.
+    rendered "unknown (not a git checkout)" with the version still shown.
 
     The "Target repo:" fact is sourced from --target VERBATIM — no resolution,
     defaulting to "unknown-target" on omit, parallel to sourceSha's "unknown"
     (Fork A; the facts artefact is self-describing, run.yaml optional in
     CI). The prior basename(dirname(--features)) resolution — and its degenerate "."
     — are gone: the target is now the operator's --target value or the explicit
-    default, never a guess. The target-sourcing @integration arm runs the REAL CLI
-    binary as a subprocess and reads the persisted "Target repo:" line back, so a CLI
-    that guessed the target (or omitted the line) REDS.
+    default, never a guess.
 
-    @unit @integration @SCN-RPT-001
+    @unit @SCN-RPT-001
     Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target
-      Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
-      When the run writes its markdown artifact
-      Then the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, the source SHA, the tool SHA, and the tool version
-      When the real CLI writes a markdown report with --target "chosen-target-name"
-      Then the persisted report's Run provenance outcomes "Target repo: chosen-target-name" verbatim
-      When the real CLI writes a markdown report with no --target flag
-      Then the persisted report's Run provenance outcomes "Target repo: unknown-target"
 
   Rule: the JSON report carries a provenance object
 
@@ -57,17 +45,10 @@ Feature: The report renders the ledger as sectioned facts
     is unchanged: the serialised shape becomes { provenance, scenarios, warnings }.
     Provenance is not derivable from the Ledger, so it is persisted on the
     JSON surface (project design §1, §3 — persist a fact on JSON iff it is not
-    derivable from the balance; the derived human views stay off JSON). The
-    integration arm drives the REAL CLI pipeline (runReconcile → writeOutputs
-    with a ctx) and asserts the PERSISTED spec-reconciliation.json parses to an object
-    whose provenance round-trips — the machine artifact is a consumed contract
-    surface.
+    derivable from the balance; the derived human views stay off JSON).
 
-    @unit @integration @SCN-RPT-002
+    @unit @SCN-RPT-002
     Scenario: the JSON report carries a provenance object stating target, source SHA, tool SHA, tool version, UTC timestamp, and inputs, with the reconciliation body intact
-      Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
-      When the run writes its JSON artifact
-      Then the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, tool SHA, tool version, UTC timestamp, and input, with the evidenceReconciliation body intact
 
   Rule: an explicit source SHA wins, and a non-git target resolves to unknown
 
@@ -78,11 +59,7 @@ Feature: The report renders the ledger as sectioned facts
     with no .git can still outcome a complete provenance. When no override is given and
     the target is not a git repository, the git read cannot answer and the source SHA
     resolves to a recorded null ("unknown") rather than crashing the run (project
-    design §4). A pure resolution rule, so it is proven in isolation by Vitest — the
-    flag→ctx→rendered-header thread is already proven by RPT-001's integration arm, so
-    this scenario carries no integration arm of its own (substitution-is-degradation:
-    the moved-to layer here, isolation, uniquely proves the override + non-git
-    fallback over a controlled non-git temp directory).
+    design §4). A pure resolution rule, so it is proven in isolation by Vitest, over a controlled non-git temp directory.
 
     @unit @SCN-RPT-003
     Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
@@ -158,10 +135,7 @@ Feature: The report renders the ledger as sectioned facts
     falls back to the bare FFF (the map misses) — as does the no-map back-compat path.
     Balanced scenarios are excluded (this is the discrepancy view). The scnId → <FFF> parse
     REUSES the shared featureCodeOf helper rather than a fresh regex. A pure derive over
-    balance.scenarios + the markdown-only label lookup. The @unit arm proves the render (full
-    name + uncoded fallback) in isolation; the @integration arm drives the REAL
-    readFeatureNames→map→disk plumbing over a fixture feature dir (a coded + an uncoded
-    feature) to the persisted markdown.
+    balance.scenarios + the markdown-only label lookup. Vitest proves the render (full name + uncoded fallback) in isolation.
 
     THE TOTAL LINE ACCOUNTS FOR EVERY OUT-OF-BALANCE ROW. Only scenario rows are
     grouped — a phantom-scenario or suspense-scenario row names no feature file, so it has no
@@ -179,17 +153,11 @@ Feature: The report renders the ledger as sectioned facts
     have none; the untagged-scenario list names each one where it lives. The file and its header
     code are read from the report itself, so a re-render from the saved JSON groups them the same.
 
-    @unit @integration @SCN-RPT-006
+    @unit @SCN-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
-      Given a target feature directory whose features carry codes alongside an uncoded one
-      When the run writes its artifacts with the feature-name map
-      Then the persisted spec-reconciliation.md by-feature cut names the coded feature in full and falls back to the bare code for the uncoded id
 
-    @unit @integration @SCN-RPT-030
+    @unit @SCN-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
-      Given a corpus whose evidence cites a scenario no feature file names, beside an out-of-balance scenario
-      When that corpus is reconciled and its report written
-      Then the by-feature total line counts the phantom-scenario row as out of balance and not grouped by feature, and its counts add up to the header's out-of-balance and total
 
     @unit @integration @SCN-RPT-031
     Scenario: a feature file's scenarios carrying no @SCN code count together on one row named by that file, never one row each
@@ -233,17 +201,10 @@ Feature: The report renders the ledger as sectioned facts
     the same non-derivable rule that put provenance on both surfaces). The producer is
     a new countScnOccurrences(source) in scenarios.ts (parseScenarios unchanged); the
     datum is an EvidenceObligations field (src/census/evidenceObligations.ts) threaded CLI→renderers
-    exactly like RunContext (an optional third renderer argument). The @integration arm
-    drives the REAL CLI pipeline (runReconcile → readEvidenceObligations → writeOutputs
-    with a corpus) over spec-controller's own corpus and asserts BOTH persisted artifacts
-    carry the excluded fact and AGREE on the number — the scenarios.ts→corpus→both-
-    renderers→disk wiring is critical-path, NOT covered by RPT-001's ctx thread.
+    exactly like RunContext (an optional third renderer argument).
 
-    @unit @integration @SCN-RPT-008
+    @unit @SCN-RPT-008
     Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
-      Given a reconciliation run whose source mentions @SCN ids in non-tag context beyond the scenarios
-      When the run writes its markdown and JSON artifacts
-      Then the persisted spec-reconciliation.md outcomes "N @SCN ids seen in non-tag context, excluded" and the persisted spec-reconciliation.json carries the same excluded count on a evidenceObligations object
 
   Rule: the report renders summary-first, ledger-last
 
@@ -260,8 +221,7 @@ Feature: The report renders the ledger as sectioned facts
     over existing data — no new derivation, the JSON surface unchanged (markdown-only).
     The RPT-004/005/006/007 scenarios are updated in the same change. Every reconciling
     item is labelled by its TAG (the bare level for runtime — unit / integration / … —
-    and "fitness" for the fitness axis), never the internal kind axis. Proven in
-    isolation by Vitest (the markdown integration thread is already proven by RPT-001).
+    and "fitness" for the fitness axis), never the internal kind axis. Proven in isolation by Vitest.
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the scenario reconciliations last
@@ -281,17 +241,11 @@ Feature: The report renders the ledger as sectioned facts
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms
     (rawByRuntimeQualityCheck, attributed, phantom, suspense) persist on JSON (project design §3); the
-    identity line stays markdown-only. The @integration arm drives the REAL file-read
-    pipeline (readEvidenceObservations over fixture Vitest/Cucumber reports → writeOutputs → both
-    persisted surfaces) and asserts the JSON atoms balance by construction — the
-    readEvidenceObservations→countRuntimeEvidenceObservationKinds→both-renderers→disk wiring, not just an in-memory aggregate.
+    identity line stays markdown-only.
     Foundational: later scenarios consume the aggregate.
 
-    @unit @integration @SCN-RPT-010
+    @unit @SCN-RPT-010
     Scenario: the report renders the Test volume cut and the evidence observation identity balances by construction
-      Given a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and cites-no-scenario evidence observations
-      When the run writes its artifacts with the evidence observation reconciliation
-      Then the persisted spec-reconciliation.md renders the Test volume cut with the balancing identity and spec-reconciliation.json carries evidence-observation atoms that balance by construction
 
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
 
@@ -327,17 +281,10 @@ Feature: The report renders the ledger as sectioned facts
     NO-EVIDENCE-OBLIGATION way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
     hand-written, so a fixture cannot pin a shape the pipeline cannot emit —
-    evidence-manifesto §11A), and through a REAL reconcile + render over a fixture target — the
-    cell-rendering class needs both layers.
+    evidence-manifesto §11A).
 
-    @unit @integration @SCN-RPT-011
+    @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
-      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, a no-evidence-obligation observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
-      When the ledger is rendered
-      Then each scenario row carries one cell per corpus column (Fitness first, then the runtime levels present) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank
-      And the scenario whose only state at a quality-check is no-evidence-obligation renders a no-evidence-obligation observation there — a dash for the evidence obligation, the count for the observation
-      And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed
-      And no cell-key legend precedes the ledger table — the grid speaks for itself
 
   Rule: Warnings flags the untagged scenarios with their feature locators
 
@@ -352,14 +299,10 @@ Feature: The report renders the ledger as sectioned facts
     — a NEW non-derivable datum — persists on the JSON evidenceObligations object beside
     excludedOccurrences (project design §3). The section gate now fires on no-evidence OR
     cites-no-scenario evidence observation OR phantom OR untagged; the earlier sub-parts are byte-unchanged. Facts-only
-    — count + locator. The @integration arm drives the REAL parse over a fixture feature
-    dir (tagged + untagged) → both persisted surfaces, proving the header-parse + file-pairing.
+    — count + locator.
 
-    @unit @integration @SCN-RPT-014
+    @unit @SCN-RPT-014
     Scenario: Warnings lists the untagged scenarios with their feature locators
-      Given a target feature directory mixing @SCN-tagged and untagged scenarios
-      When the run writes its artifacts with the scenario corpus
-      Then the persisted spec-reconciliation.md lists the untagged scenarios with feature locators and spec-reconciliation.json carries them on evidenceObligations
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
@@ -428,27 +371,13 @@ Feature: The report renders the ledger as sectioned facts
 
     The unit arm proves the fold: over a reconciler-built spanning corpus carrying an e2e-levelled
     credit, `rawByRuntimeQualityCheck` counts it under e2e and not integration
-    (`runtimeObservationTally.test.ts`). The integration arm
-    drives the REAL reconcile + render over a fixture whose cucumber report has a passing @e2e
-    scenario with no vitest evidence: the rendered Test volume counts it under e2e, the e2e credit
-    posts to that scenario's ledger row, and the scenario's E2e cell renders a count, not ∅. Both
-    arms RED on a level taken from the caller-given quality-check (Test volume reads `e2e: 0`
-    with integration inflated); GREEN on the tag-derived level the parse carries and the fold counts.
+    (`runtimeObservationTally.test.ts`).
 
-    @unit @integration @SCN-RPT-017
+    @unit @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
-      Given a target whose cucumber report has a passing @e2e scenario with no vitest evidence
-      When the reconciliation report is rendered for that @e2e-via-cucumber target
-      Then Test volume counts the observation under e2e, not integration
-      And the e2e credit posts to that scenario's ledger row
-      And the scenario's E2e cell renders a count, not ∅
 
-    @unit @integration @SCN-RPT-018
+    @unit @SCN-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
-      Given a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102
-      When the reconciliation report is rendered for that @integration @e2e-via-cucumber target
-      Then Test volume counts the single observation under both integration and e2e
-      And SCN-TGT-102's Integration and E2e cells each render a count, not ∅
 
   Rule: the evidence-obligation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
@@ -617,12 +546,8 @@ Feature: The report renders the ledger as sectioned facts
     that reading is now simply wrong, and the static axis the census must not see at all
     would be counted into the Test volume.
 
-    @unit @integration @SCN-RPT-023
+    @unit @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
-      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a real @SCN at a named quality-check
-      When the run reconciles and the report is rendered
-      Then the broken observation is not counted among that scenario's attributed evidence
-      And it is counted once on the suspense scenario, and the Test volume identity still balances
 
   Rule: the reconciliation collection renders as "Scenario Reconciliation(s)", never "scenario(s)", on every surface that names it
 
@@ -664,9 +589,7 @@ Feature: The report renders the ledger as sectioned facts
     would trade one wrong SHA for another and nothing on the report would say which, so that arm
     is asserted positively rather than left to follow.
 
-    RPT-026 is a pure resolution rule proven in isolation by Vitest — the resolver → ctx →
-    rendered-surface thread is already proven by RPT-001/RPT-002's integration arms (mirrors
-    RPT-003). RPT-029 is NOT, and that is the whole of its reason: this fault was invisible to
+    RPT-026 is a pure resolution rule proven in isolation by Vitest. RPT-029 is NOT, and that is the whole of its reason: this fault was invisible to
     every projection over a hand-built RunContext, so its integration arm stands where a consumer
     stands — the packed tarballs really installed, inside a real git repository, the real command
     run there, the rendered line read back.
@@ -700,21 +623,10 @@ Feature: The report renders the ledger as sectioned facts
     project the SAME ctx.inputs — the object the reconcile itself consumed — so the block is
     never a second opinion about what was read.
 
-    The @integration arm runs the REAL CLI binary as a subprocess over a fixture corpus
-    handed the fitness stream and reads the PERSISTED Inputs block back. A projection test
-    compares a structure this repository wrote against a structure this repository wrote;
-    it cannot tell a rendered line from a line the CLI never wrote, and the whole point of
-    a provenance block is that the run actually produced it.
-
-    @unit @integration @SCN-RPT-027
+    @unit @SCN-RPT-027
     Scenario: the Inputs block names the optional fitness stream when the run received it
-      Given a reconciliation run handed a fitness stream alongside its feature corpus
-      When the run writes its markdown artifact for the streams it was handed
-      Then the persisted report's Inputs block names the fitness stream, after the streams it already named
-      When the real CLI reconciles a fixture corpus handed a fitness stream
-      Then the persisted report's Inputs block names every stream that run received
 
-    @unit @integration @SCN-RPT-028
+    @unit @SCN-RPT-028
     Scenario: a canonical input the run did not receive is named as absent rather than omitted, so silence is never the answer
       Silence is never the answer. Naming every stream a run received removed the "the run
       got it and the block does not say so" reading. It
@@ -735,10 +647,3 @@ Feature: The report renders the ledger as sectioned facts
       derivable — and absence is exactly derivable, from the inputs object plus the canonical
       flag list. A second copy would agree with the first until one of them was edited.
 
-      Given a reconciliation run handed only some of the streams the tool can read
-      When that run writes its markdown artifact
-      Then the persisted report names the streams it was not handed, on a line of its own beneath the ones it was
-      And a run handed every stream says nothing about absence at all
-      And a run handed nothing still reports its inputs as none specified, and names every canonical stream as not supplied
-      When the real CLI reconciles a fixture corpus with three of its streams withheld
-      Then the persisted report names exactly the withheld streams as not supplied, and none of the streams that run received

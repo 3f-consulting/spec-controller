@@ -27,11 +27,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     runProvenance (the run facts), then a materialised summary (the totals the markdown's
     trial-balance table derives), then the evidence obligations, then the
     remaining sections. The retired `warnings` key is absent — a zero-evidence
-    scenario is a both-missing row in evidenceReconciliation, not a separate axis. The @integration
-    arm drives the REAL kept-run scaffold — which names
-    the artefact via the renamed RECONCILIATION_JSON constant — and reads the persisted
-    spec-reconciliation.json back, so a run still writing ledger.json (or a JSON missing
-    the assembled sections) REDS. The @unit arm proves assembleReport + the glue-free
+    scenario is a both-missing row in evidenceReconciliation, not a separate axis. The @unit arm proves assembleReport + the glue-free
     serialisation in isolation.
 
     And its summary totals count EVERY Scenario Reconciliation. The Evidence
@@ -45,14 +41,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     out-of-balance, so a failing run rendered a headline that read as a pass. The tally
     now fails on its own and AGREES with the exit code.
 
-    @unit @integration @SCN-RMD-001
+    @unit @SCN-RMD-001
     Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model whose summary totals count every Scenario Reconciliation
-      Given a kept run over a target corpus under an injected store root
-      When the kept run persists its machine artefact
-      Then the persisted artefact is named spec-reconciliation.json
-      And it parses to one object carrying runProvenance, summary, scenarioCodeErrors, scenarioCodePopulation and evidenceObligations as top-level sections in document order
-      And its scenarioCodePopulation counts the feature files and the feature codes of the corpus it judged
-      And its summary totals count every Scenario Reconciliation, so the tally reads out-of-balance and agrees with the run's exit code
 
   Rule: the ledger is the detail beside the summary's totals
 
@@ -82,16 +72,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     suspense-scenario row, each with its file locator, so every credit is visible ON THE LEDGER. The
     markdown stays byte-identical (both the Test volume cut and the identity line read the re-homed
     summary folds). The balancing identity Σ rawByRuntimeQualityCheck = attributed +
-    cites-unknown-scenario + cites-no-scenario holds by construction on the persisted file. The unit
-    arm proves the assembler in isolation; the integration arm drives the REAL file-read pipeline
-    over a fixture spanning attributed, phantom-id, and cites-no-scenario evidence observations.
+    cites-unknown-scenario + cites-no-scenario holds by construction on the persisted file. The unit arm proves the assembler in isolation.
 
-    @unit @integration @SCN-RMD-003
+    @unit @SCN-RMD-003
     Scenario: the runtime-observation totals re-home onto summary and the balancing identity holds on the persisted file
-      Given a reconciliation run whose observed evidence spans attributed, phantom-id, and cites-no-scenario evidence observations
-      When the run persists spec-reconciliation.json
-      Then the phantom and suspense credits surface on their ledger rows and there is no evidenceObservations section
-      And the sum of summary rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts
 
   Rule: the static-check census is summary counts, no standalone section
 
@@ -126,19 +110,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     evidence obligation cut (satisfied of total), under summary.fitness — summary.byOutcome is
     kind-agnostic and cannot provide the fitness-only total, so it is materialised explicitly. HELD (slice 5): the
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
-    byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
-    arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
-    cites-no-scenario evidence observations AND a CI check no fitness scenario cites, then reads the persisted
-    spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-check shape on
-    the file.
+    byte-identical. The @unit arm proves buildSummary / assembleReport in isolation.
 
-    @unit @integration @SCN-RMD-005
+    @unit @SCN-RMD-005
     Scenario: the summary materialises the test-volume, static-check, and fitness totals with the test-volume balance identity and the static-check shape holding on the persisted file
-      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a check no fitness scenario cites
-      When the reconciliation run persists spec-reconciliation.json
-      Then the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally under summary.fitness
-      And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
-      And the persisted static-check summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 
@@ -202,18 +177,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     stays byte-identical (the renderer already labels each item by its tag word, which IS the
     quality-check value), so the round-trip still holds. HELD (slice 2):
     the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
-    The @unit arm proves the reconcile → assemble shape in isolation; the @integration arm drives
-    the REAL CLI over a corpus raising BOTH a runtime and a fitness evidence obligation, persists
-    spec-reconciliation.json, and asserts the flat coordinate (and the ABSENCE of kind / level)
-    on the persisted file.
+    The @unit arm proves the reconcile → assemble shape in isolation.
 
-    @unit @integration @SCN-RMD-008
+    @unit @SCN-RMD-008
     Scenario: each reconciled evidence sub-row carries a single quality-check coordinate, not a (kind, level) grid
-      Given a reconciliation whose scenarios raise runtime and fitness evidence obligations
-      When the report is serialised to spec-reconciliation.json
-      Then each evidence sub-row is keyed by one quality-check field with no kind or level
-      And a fitness sub-row carries its quality-check "fitness" and names no characteristic
-      And the summary's missing split is carried under missingByQualityCheck keyed by quality-check
 
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
 

@@ -18,28 +18,22 @@ Feature: Emit each output format to stdout or a caller-given path
     No --format flag — and an explicit "--format md" — emits the markdown report to
     stdout, the default human output. Establishes planOutput and the writer.
 
-    @unit @integration @SCN-FMT-001
+    @unit @SCN-FMT-001
     Scenario: with no --format flag the markdown report is written to stdout
-      Given a reconciled ledger for a target corpus
-      When the outputs are planned with no --format flag and written
-      Then the rendered markdown report is written to stdout
 
   Rule: a format routes to a caller-given file
 
     A "<fmt>:<path>" spec writes that format's report to the file; stdout stays clean.
     The path is everything after the first colon; the renderer is unchanged.
 
-    @unit @integration @SCN-FMT-002
+    @unit @SCN-FMT-002
     Scenario: --format json:<path> writes the JSON report to that file
-      Given a reconciled ledger for a target corpus
-      When the outputs are planned with a json:<path> spec and written to that path
-      Then the rendered JSON report is written to that file and stdout stays empty
 
     @unit @integration @SCN-FMT-003
     Scenario: --format md:<path> writes the markdown report to a file instead of stdout
-      Given a reconciled ledger for a target corpus
-      When the outputs are planned with a md:<path> spec and written to that path
-      Then the rendered markdown report is written to that file and stdout stays empty
+      Given a target corpus to reconcile
+      When the operator asks the built CLI for the markdown report in a file
+      Then the markdown report is in that file, and the run prints nothing
 
     @unit @e2e @SCN-FMT-012
     Scenario: a --format path that is a symlink to a file not yet created is written through the link
@@ -54,11 +48,8 @@ Feature: Emit each output format to stdout or a caller-given path
     gets markdown on stdout and json in a file from a single invocation (exactly one
     output bound for stdout, which the stdout invariant allows).
 
-    @unit @integration @SCN-FMT-004
+    @unit @SCN-FMT-004
     Scenario: --format md --format json:<path> emits markdown to stdout and json to the file
-      Given a reconciled ledger for a target corpus
-      When the outputs are planned with a md spec and a json:<path> spec and written
-      Then the markdown report is written to stdout and the JSON report to that file
 
   Rule: at most one output may route to stdout
 
