@@ -141,10 +141,6 @@ scenario is in
 ```gherkin
   @fitness @SCN-<FFF>-<NNN>
   Scenario: the newest nightly mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
-    Given the gated branch's nightly mutation sweeps that started inside the window before this push and have since finished
-    When the newest of them is read for its verdict
-    Then it cleared the break threshold its runner states
-    And a window holding no such sweep fails the check rather than passing it
 ```
 
 The rest is the ordinary wiring every converted check shares: a dump of

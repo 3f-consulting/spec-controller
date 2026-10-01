@@ -2,8 +2,8 @@
 Feature: The fitness checks this repository declares, one scenario per check
 
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
-  authored like every other scenario in this corpus: a tag line carrying `@fitness` and a freshly
-  minted code, a title saying what the check asserts, and steps saying it in Given/When/Then. The
+  a tag line carrying `@fitness` and a freshly minted code, and a title saying what the check
+  asserts. It has no Given/When/Then, because nothing here runs it. The
   CI step that already runs the check takes that same code as its `id:`, in the pipeline this
   repository was running anyway. Neither half is derived from the
   other, which is what makes them two books rather than one read twice: a scenario derived from the
@@ -39,18 +39,18 @@ Feature: The fitness checks this repository declares, one scenario per check
 
   AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
   outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so
-  Cucumber selects none of these scenarios and no step definition stands behind their steps — the
-  same arrangement `@unit` already has with vitest. So a scenario here is authored like every other
-  scenario in this corpus, steps and all: the steps are the SPECIFICATION, saying what the check
-  asserts of this tree, and the check's own command — run as a step of the pipeline under this
-  scenario's code — is the EVIDENCE. It is still a DECLARED OBLIGATION rather than a test, because
-  nothing here runs it: the pipeline records what that step did, and `balance` reads the record.
+  Cucumber selects none of these scenarios. A scenario Cucumber does not select carries no
+  Given/When/Then and no step definition, here as for a `@unit`-only scenario: the title is the
+  SPECIFICATION, saying what the check asserts of this tree, and the check's own command — run as a
+  step of the pipeline under this scenario's code — is the EVIDENCE. It is a DECLARED OBLIGATION
+  rather than a test, because nothing here runs it: the pipeline records what that step did, and
+  `balance` reads the record.
 
-  WHAT A STEP HERE MAY NOT DO IS GRADE THE RUN. "Then the check passes", or "Then the build is
-  green", is the scenario raising the obligation and answering it in the same breath — BOTH SIDES
-  OF THE ENTRY, which is the one thing double entry cannot allow. A `Then` states the PROPERTY
-  ASSERTED, as a `@unit` scenario's does; whether this push cleared it is the ledger's sentence,
-  taken from the record.
+  WHAT A TITLE HERE MAY NOT DO IS GRADE THE RUN. "the check passes", or "the build is green", is the
+  scenario raising the obligation and answering it in the same breath — BOTH SIDES OF THE ENTRY,
+  which is the one thing double entry cannot allow. The title states the PROPERTY ASSERTED, as a
+  `@unit` scenario's does; whether this push cleared it is the ledger's sentence, taken from the
+  record.
 
   NOTHING HERE STATES A BAR, AND NEITHER DOES THIS FILE. Every obligation is answered by its
   step's outcome: a check that measures something holds its own bar — Stryker's
@@ -67,111 +67,47 @@ Feature: The fitness checks this repository declares, one scenario per check
 
   @fitness @SCN-FIT-001
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
-    Given this repository's source as this push leaves it, and the files the push touched
-    When the external complexity standard is applied across that source
-    Then every function the push touched measures inside the standard
-    And every other function over the standard is reported without failing the run
-    And no suppression directive that suppresses nothing survives the run
 
   @fitness @SCN-FIT-022
   Scenario: every function in a file the push touches scores under the external change-risk standard
-    Given this repository's source as this push leaves it, the unit suite's coverage of it, and the files the push touched
-    When the external change-risk standard is applied to every function in that source
-    Then every function in a file the push touched scores under the standard
-    And every other function over the standard is reported without failing the run
 
   @fitness @SCN-FIT-009
   Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
-    Given this repository's own module graph, its source, and the names of its domain modules
-    When the installed boundary tools read them
-    Then no engine module imports the app package or a node IO builtin
-    And no engine module references the process global
-    And no engine module reads the clock or a random number
-    And no app module imports the engine anywhere but its published entry point
-    And no module outside run-management and cli-allocate imports child_process
-    And no file in the repository detects the mutation sandbox
-    And no domain module imports anything outside the domain
-    And no domain module is named for a procedural layer
-    And no package module calls process.exit
-    And no module reaches itself through its own imports
-    And no package module declares a class that does not extend Error
-    And no suppression directive that suppresses nothing survives the run
 
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
-    Given the whole tree — source, tests, step definitions and checks alike
-    When the type-checker is run over it
-    Then it reports no error
 
   @fitness @SCN-FIT-012
   Scenario: the unit suite finishes inside the limit its step runs it under
-    Given the unit suite as this push runs it
-    When it is run under the limit its step states
-    Then it finishes inside that limit
 
   @fitness @SCN-FIT-013
   Scenario: the behavioural suite finishes inside the limit its step runs it under
-    Given the behavioural suite as this push runs it
-    When it is run under the limit its step states
-    Then it finishes inside that limit
 
   @fitness @SCN-FIT-002
   Scenario: the newest nightly mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
-    Given the gated branch's nightly mutation sweeps that started inside the window before this push and have since finished
-    When the newest of them is read for its verdict
-    Then it cleared the break threshold its runner states
-    And a window holding no such sweep fails the check rather than passing it
 
   @fitness @SCN-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve
-    Given each package as its own pack would send it — its publish-time manifest standing in for its workspace manifest, wholesale
-    When the npm community's package linter reads what each one offers a consumer
-    Then every entry point either manifest publishes resolves to a file its own tarball carries
-    And no field either manifest publishes is one the ecosystem cannot read
 
   @fitness @SCN-FIT-019
   Scenario: the packed engine's declarations resolve for every consumer the package says it serves
-    Given the engine's tarball, as this release would send it
-    When every module resolution the package offers is followed to the declarations it lands on
-    Then each one lands on declarations the tarball carries, under the conditions the manifest named
 
   @fitness @SCN-FIT-020
   Scenario: every workflow file this repository runs is one GitHub Actions can execute as written
-    Given every workflow file under .github/workflows
-    When the community's workflow linter reads each against the Actions schema, its expression language and its shell
-    Then no workflow names a key, an expression, a context or a shell construct Actions would refuse
 
   @fitness @SCN-FIT-021
   Scenario: no workflow file this repository runs carries a CI security fault the community's auditor knows
-    Given every workflow file under .github/workflows
-    When the community's workflow auditor reads each for the faults in its catalogue
-    Then no workflow carries one this repository has not ruled on by name
 
   Rule: a comment carries only what the code cannot say, and the build holds it to that on every run
 
     @fitness @SCN-FIT-023
     Scenario: no file in the tree is more than fifteen per cent comment lines
-      Given every file this repository tracks, apart from its test fixtures and its lockfile
-      When the community's line counter counts each file's comment lines and code lines
-      Then no file's comment lines are more than fifteen per cent of its non-blank lines
-      And each file over that share is named with its count
 
     @fitness @SCN-FIT-024
     Scenario: no comment, description or current-state document in the tree carries a ticket ID
-      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
-      When the community's prose linter reads each for the workspace's issue-key pattern
-      Then none of them carries a ticket ID
-      And a scenario's tag line, a test's title and a check step's identity are not read as any of them
 
     @fitness @SCN-FIT-025
     Scenario: no comment, description or current-state document in the tree carries a scenario code
-      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
-      When the community's prose linter reads each for a scenario code
-      Then none of them carries a scenario code
-      And a scenario's tag line, a test's title, a check step's identity and canon's placeholder notation are not read as one
 
     @fitness @SCN-FIT-026
     Scenario: no comment, description or current-state document in the tree narrates how the product used to be
-      Given every comment, every Feature, Rule and Scenario description line, and every current-state document in the tree, apart from its test fixtures and its logs
-      When the community's prose linter reads each for a phrase this repository lists as narrating change
-      Then none of them narrates how the product came to be

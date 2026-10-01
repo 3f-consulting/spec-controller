@@ -26,9 +26,3 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
 
     @unit @SCN-GPG-001
     Scenario: the shared feature-file discovery refuses a corpus the parser rejects, naming every unreadable file and the parser's own words
-      Given a feature corpus holding one well-formed file and two files the Gherkin parser rejects
-      When a reader discovers that corpus
-      Then the discovery refuses the corpus instead of returning it
-      And the refusal names both unreadable files, not only the first
-      And it carries each file's parse failure in the parser's own words
-      And nothing of the corpus is handed back, so the well-formed file cannot be read past the refusal

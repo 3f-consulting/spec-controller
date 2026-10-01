@@ -830,10 +830,6 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-008 @unit
     Scenario: every registered flag, positional argument, command and modifier reaches its help surface (completeness guard)
-      Given the two-scope command/flag registry and its two help renderers
-      Then no flag and no positional argument the registry gives any command is missing from that command's --help render
-      And no global modifier and no registered command is missing from the top-level --help render
-      And a registry entry that its help surface omits reds the guard
 
     @SCN-CLI-009 @unit @e2e
     Scenario: an unregistered flag to balance is a usage error

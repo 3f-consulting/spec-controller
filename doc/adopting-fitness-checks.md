@@ -31,11 +31,12 @@ evidence observation — to the test that claimed it — the evidence obligation
 reflects the behaviour the business wants is yours to ensure, as it is under CI, TDD and BDD; the
 tool does not try to establish that a test is a good test.
 
-**Dead documentation is a gap in this process**, and it is the first thing under
-[*What this leaves open*](#what-this-leaves-open-stated-rather-than-left-to-be-found): wherever the
-runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario's steps are
-never executed. The ledger proves a scenario is linked to evidence and that the evidence passed.
-**It does not prove the evidence tests what the steps say.**
+**A title can drift from its check, and that is a gap in this process**, the first thing under
+[*What this leaves open*](#what-this-leaves-open-stated-rather-than-left-to-be-found). Wherever the
+runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — the scenario carries no
+Given/When/Then, so no unexecuted step can read as a test. The ledger proves a scenario is linked
+to evidence and that the evidence passed. **It does not prove the evidence tests what the title
+says.**
 
 ---
 
@@ -61,12 +62,12 @@ scenario. **Your pipeline does not change to get here.** The command is the same
 carrying the same id; what changes is that the `@SCN` now names a scenario that exists, so something
 demands the credit your check was already producing. The phantom becomes real.
 
-**You write the scenario exactly as you write a `@unit` one** — steps, and a tag naming its axis.
-Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumber is filtered on
-`@integration`, `@e2e` and `@performance`, so it selects neither. The steps are the specification;
-the runner your CI already calls is what produces the evidence. That is the dead-documentation gap
-named above: nothing executes those steps, so nothing reds if they come to say something the check
-does not. Getting here from `annotated` is either your own work or `migrate`'s.
+**You write the scenario exactly as you write a `@unit`-only one** — a tag naming its axis and a
+title, with no Given/When/Then. Cucumber is filtered on `@integration`, `@e2e` and `@performance`,
+so it selects neither, and a scenario Cucumber does not select carries no steps. The title is the
+specification; the runner your CI already calls is what produces the evidence. That is the gap
+named above: nothing reds if the title comes to say something the check does not. Getting here
+from `annotated` is either your own work or `migrate`'s.
 
 **There are two artefacts and no third: the `@fitness` scenario, and its `@SCN` as the `id:` of the
 CI step that runs the check.** The scenario raises the obligation — from its tag, exactly as a
@@ -86,19 +87,15 @@ The scenario is **written beside the pipeline rather than derived from it**:
 ```gherkin
   @fitness @SCN-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
-    Given this repository's source as this push leaves it, and the files the push touched
-    When the external complexity standard is applied across that source
-    Then every function the push touched measures inside the standard
-    And every other function over the standard is reported without failing the run
-    And no suppression directive that suppresses nothing survives the run
 ```
 
-**That is the whole scenario — a tag line, a title, and steps.** A fitness scenario is a
-**declared obligation, not a test**, and nothing runs it: the check is a step of your pipeline, the
-pipeline records what that step did, and `balance` reads the record. What its steps must not do is
-**grade the run** — "Then the check passes", or "Then the build is green", would make the scenario
-both sides of the entry at once. A `Then` states the property asserted, exactly as a `@unit`
-scenario's does; whether this push cleared it is the ledger's sentence.
+**That is the whole scenario — a tag line and a title, with no Given/When/Then.** A fitness
+scenario is a **declared obligation, not a test**, and nothing runs it: the check is a step of your
+pipeline, the pipeline records what that step did, and `balance` reads the record. Cucumber does not
+select it, so it carries no steps and no step definition. What its title must not do is **grade the
+run** — "the check passes", or "the build is green", would make the scenario both sides of the entry
+at once. The title states the property asserted, exactly as a `@unit` scenario's does; whether this
+push cleared it is the ledger's sentence.
 
 **Two things to write, and that is the point.** A scenario emitted from the pipeline it is
 reconciled against cannot disagree with it — that is one author wearing double-entry's clothes, and
@@ -355,20 +352,21 @@ nothing about another's.
 
 ## What this leaves open, stated rather than left to be found
 
-**Dead documentation is a gap, and it is in this process.** A scenario whose steps no runner
-executes is pure documentation: nothing reads the steps against the check that answers them, so the
-two drift and nothing reds. This holds wherever the runner is somewhere other than Cucumber —
-`@unit`, `@performance` and `@fitness`, as most trees run them. Where Cucumber runs the steps
+**A title can drift from its check, and that gap is in this process.** A scenario Cucumber does
+not select carries no Given/When/Then, so it cannot hold unexecuted steps posing as a test. That
+holds wherever the runner is somewhere other than Cucumber — `@unit`, `@performance` and
+`@fitness`, as most trees run them. Its title is still prose: nothing reads it against the check
+that answers it, so the two can drift and nothing reds. Where Cucumber runs the steps
 (`@integration` and `@e2e`, and `@performance` wherever your Cucumber selects it), they are executed
 and cannot drift from the run: that is living documentation. The ledger proves a scenario is linked
-to evidence and that the evidence passed. **It does not prove the evidence tests what the steps
-say.** The gap is stated, not solved: nothing in this release closes it, and a green reconciliation
-of a scenario whose steps no runner executes is a claim about its evidence, never about its prose.
+to evidence and that the evidence passed. **It does not prove the evidence tests what the title
+says.** The gap is stated, not solved: nothing in this release closes it, and a green reconciliation
+of a scenario Cucumber does not run is a claim about its evidence, never about its title.
 
 **It is a different thing from test validity, which is assumed rather than missing.** Whether a
-test is a good test is yours, as under CI, TDD and BDD (see *What spec-controller assumes*). Dead
-documentation is the part the process itself leaves open: a correct test, passing, under steps that
-do not describe it.
+test is a good test is yours, as under CI, TDD and BDD (see *What spec-controller assumes*). A
+drifted title is the part the process itself leaves open: a correct test, passing, under a title
+that does not describe it.
 
 **A discovery axis with nothing to discover reports a vacuous zero, and annotating the pipeline is
 what ends it.** A capability exercised by nothing and reporting green is the exact fault this
@@ -529,7 +527,7 @@ is that every number lives in one of them and in no copy.
    [`how_to_use.md`](./how_to_use.md).
 
 2. **Write the scenario** — in your fitness corpus, carrying `@fitness` and a freshly minted `@SCN`,
-   with a title saying what the check is about and steps saying it in Given/When/Then. **That is
+   with a title saying what the check is about, and no Given/When/Then. **That is
    the first of the two artefacts, and there is no row to write beside it**: the tag raises the
    obligation, so nothing has to name the scenario for it to be owed. A check that produces a number
    applies its own bar and exits non-zero below it, and nothing you author names one.

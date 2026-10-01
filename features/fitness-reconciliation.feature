@@ -2,16 +2,16 @@
 Feature: Reconcile every fitness function as a fitness scenario citing its own @SCN
 
   The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration / e2e /
-  performance tests, each an EXAMPLE with steps), a fitness scenario DECLARES one Evidence
+  performance tests, each an EXAMPLE), a fitness scenario DECLARES one Evidence
   Obligation: a whole-system property held against a threshold. In this repository the scenario
   carries `@fitness` and a freshly minted code; its TITLE says what the check is about, and the
   command that settles it is the one its own CI step runs, stating that code as its `id:`. One
   such scenario is one check: nothing classifies it further.
 
-  A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. It is
-  authored like every other scenario in this corpus, steps and all, and what keeps it off the
-  runners is its TAG rather than its shape. What a step may not do is GRADE THE RUN: "Then the
-  check passes" would have one row raise the obligation and answer it — BOTH SIDES OF THE ENTRY,
+  A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. What keeps
+  it off the runners is its TAG, and because Cucumber does not select it, it carries a title and
+  tags and no Given/When/Then. What its title may not do is GRADE THE RUN: "the check passes"
+  would have one row raise the obligation and answer it — BOTH SIDES OF THE ENTRY,
   which is the one thing double entry cannot allow. A property a scenario was written to hold is
   one it holds because the scenario says so, never because somebody gave it a runnable example.
 

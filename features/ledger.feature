@@ -59,10 +59,6 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-038
     Scenario: whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it
-      Given any set of credits answering one evidence obligation, at a behavioural quality check or at a fitness check, arriving in any order and from any files
-      When the reconciler runs
-      Then the obligation reads the worst outcome any one of those credits reads on its own
-      And the credit its item names is one of them, and reads that same outcome on its own
 
   Rule: a scenario that requires a level with no matching result is out of balance
 

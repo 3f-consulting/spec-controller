@@ -86,10 +86,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-003
     Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
-      Given a target directory that is itself a git repository and an explicit source SHA override
-      When the source SHA is resolved
-      Then the explicit override is returned verbatim, not the git HEAD of that directory
-      And resolving over a non-git target directory with no override returns a recorded unknown
 
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
@@ -122,10 +118,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-004
     Scenario: the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns
-      Given a reconciliation balance whose scenarios carry a double missing arm, so the out-of-balance scenario and evidence obligation counts diverge
-      When the markdown report is rendered
-      Then it carries a "### Evidence reconciliation" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
-      And a balance of N real balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
 
   Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
@@ -148,9 +140,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-005
     Scenario: the markdown report lists the fitness evidence obligations as their own section
-      Given a reconciliation balance whose scenarios raise fitness evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
-      When the markdown report is rendered
-      Then it carries a "### Fitness evidence obligations" section with a total line and a table listing each fitness evidence obligation's scenario and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
@@ -232,9 +221,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
-      Given a reconciliation balance carrying scenarios alongside zero-obligation scenarios, over a corpus it judged
-      When the markdown report is rendered
-      Then it emits exactly its known top-level sections — run provenance, scenario code errors, summary views and scenario reconciliations — and the census is recoverable as the ledger scenario-count
 
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 
@@ -279,9 +265,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the scenario reconciliations last
-      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a fitness evidence obligation, and a zero-evidence warning
-      When the markdown report is rendered
-      Then it opens with "# Evidence Reconciliation" and "## Run provenance", groups the derived cuts under "## Summary views", and renders the "## Scenario Reconciliations" table last with its summary lines on top
 
   Rule: the report reconciles the test evidence observation — raw = attributed + suspense
 
@@ -523,13 +506,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-019
     Scenario: the obligation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
-      Given a reconciliation balance whose out-of-balance obligations span debit, credit, and neither outcomes
-      When the markdown report is rendered
-      Then the Evidence obligation out-of-balance decomposes into exactly the ten leaf outcome rows
-      And the leaf rows cover every Outcome member except satisfied
-      And their counts sum to the evidence-obligation out-of-balance total
-      And no debit-side / credit-side / neither-side group row is present
-      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — debit block, credit block, neither
 
   Rule: the markdown renders each outcome's canon description in place of the bare handle
 
@@ -550,10 +526,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-020
     Scenario: the markdown renders each outcome's canon description, not the bare handle
-      Given a reconciliation balance whose scenarios span the runtime, fitness, credit, and neither-side outcomes
-      When the markdown report is rendered
-      Then the summary decomposition rows, the per-scenario reconciling items, and the fitness-obligation table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
-      And the bare outcome handle appears nowhere in the markdown
 
   Rule: the canon gloss for every outcome is the manifesto's Outcome text, verbatim
 
@@ -567,7 +539,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-025
     Scenario Outline: the <handle> outcome glosses as the manifesto's canon text
-      Then the outcome "<handle>" glosses as "<canon text>"
 
       Examples:
         | handle                 | canon text                                                                                                               |
@@ -622,15 +593,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-021
     Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
-      Given a balance whose suspense row carries a broken credit for a collection-failed vitest suite
-      And a balance whose suspense row carries a broken credit for an ambiguous cucumber step
-      When the markdown report is rendered
-      Then each report is stamped unsound, above the summary views
-      And each names its own broken evidence — the file or the feature — and neither miscalls the other's failure a collection failure
-      And it prints the runner's error verbatim where the runner gives one, and states the diagnosis itself where it does not
-      And it sends the reader to fix the harness and regenerate, prescribing no cure for the error itself
-      And the suspense row's broken item carries the same locator, distinguishing a broken proof from an absent one
-      And a balance carrying no broken credit renders byte-identically to the pre-slice output
 
   Rule: the summary opens with the run's verdict
 
@@ -655,14 +617,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
-      Given a reconciliation whose verdict is broken, out-of-balance, or balanced
-      When the markdown report is rendered
-      Then the summary opens with a verdict line naming the outcome and the exit code it maps to
-      And a run carrying broken evidence reads UNSOUND and exit 4, pre-empting the balance verdict
-      And the UNSOUND gloss is reader-agnostic — a proof that never ran, not a vitest suite that failed to collect
-      And an out-of-balance run reads OUT-OF-BALANCE and exit 1, never as a pass
-      And a balanced run reads BALANCED and exit 0
-      And a balanced run carrying Pending Items notes exit 3 under --strict, conditionally and unasserted
 
   Rule: a proof that never ran is attributed to no scenario, even when it cites one
 
@@ -711,10 +665,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-024
     Scenario: the reconciliation collection is named "Scenario Reconciliation(s)" on every surface, never "scenario(s)"
-      Given a reconciliation balance carrying real, phantom and suspense reconciliation rows
-      When the markdown report is rendered
-      Then the reconciliation-collection Subject cell reads "Scenario Reconciliation"
-      And the headline verdict tally reads "N Scenario Reconciliation(s): X balanced, Y out-of-balance", never "N scenario(s):"
 
   Rule: the tool identity is the tool's OWN checkout — an installed tool has none, whatever repository it is sitting inside
 
@@ -750,9 +700,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-026
     Scenario: resolveToolIdentity reads the tool's own repo HEAD, and falls back to a null SHA with the version still present when the tool is not a git checkout
-      Given the tool resolves its own identity from its own directory
-      Then the tool SHA is the spec-controller checkout HEAD, and the version is present, when run from the repo
-      And the tool SHA is null but the tool version is still present when the tool is not a git checkout
 
     @unit @integration @SCN-RPT-029
     Scenario: a spec-controller resolved out of node_modules reports no tool SHA though the tree it sits in is a git repository, while one running from a checkout of itself still reports that checkout's HEAD

@@ -19,7 +19,3 @@ Feature: The public core exposes its reconciliation for reading, not for constru
 
     @unit @SCN-API-002
     Scenario: an external consumer cannot construct a QualityCheckReconciliation
-      Given the frozen v1 barrel exports the QualityCheckReconciliation type but not its constructor
-      When external code assembles a QCR-shaped object literal and assigns it to QualityCheckReconciliation
-      Then it is a type error — the nominal brand makes the engine the only mint
-      And the barrel still exposes the type for reading the reconciliation the engine produced

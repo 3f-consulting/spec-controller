@@ -45,17 +45,8 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
 
     @unit @SCN-MSG-001
     Scenario: a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what was required
-      Given an outcome whose canon row disagrees with the sides the reconciliation carries
-      When that reconciliation is minted
-      Then minting is refused
-      And the refusal names its fault by code, and names which of the two sides diverged
-      And the refusal carries the outcome, the side-presence canon required of that side, and the side-presence actually carried
 
   Rule: every fault code has a message that names its fault
 
     @unit @SCN-MSG-002
     Scenario: the catalogue is total over the fault codes with no empty entry
-      Given a sample fault for every code a domain invariant can raise
-      When each sample's message is rendered from the catalogue
-      Then every code renders a message that is not blank
-      And each message carries every parameter its own fault supplied

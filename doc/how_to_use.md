@@ -14,7 +14,7 @@ Feature files are not a precondition. You need none to start: a project that has
 
 **Test validity is assumed.** spec-controller reconciles a result to the test that claimed it. Whether that test reflects the behaviour the business wants is yours to ensure, as it is under CI, TDD and BDD; the tool does not try to establish that a test is a good test.
 
-**Dead documentation is a gap, and it is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario's steps are never executed, so nothing reads them against the check that answers them and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the steps say.** See [*What this leaves open*](./adopting-fitness-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found).
+**A title can drift from its check, and that gap is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario carries no Given/When/Then, so no unexecuted step reads as a test; its title is still prose that nothing reads against the check that answers it, and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the title says.** See [*What this leaves open*](./adopting-fitness-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found).
 
 ---
 
@@ -72,17 +72,13 @@ them is a cucumber step definition**. There is no fitness profile to configure, 
 and no step to write.
 
 **1. A scenario, tagged `@fitness`, carrying an `@SCN`.** You write it exactly as you write a
-`@unit` one — steps, and a tag naming its axis. Its steps are the specification; the command your
-CI already runs is the evidence, and nothing here runs the steps:
+`@unit`-only one — a tag naming its axis and a title, and no Given/When/Then, because Cucumber
+does not select it. Its title is the specification; the command your CI already runs is the
+evidence:
 
 ```gherkin
   @fitness @SCN-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
-    Given this repository's source as this push leaves it, and the files the push touched
-    When the external complexity standard is applied across that source
-    Then every function the push touched measures inside the standard
-    And every other function over the standard is reported without failing the run
-    And no suppression directive that suppresses nothing survives the run
 ```
 
 **2. That scenario's `@SCN` as the `id:` of the CI step that already runs the check.** The check

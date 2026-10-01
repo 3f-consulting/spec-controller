@@ -55,10 +55,6 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @SCN-RMG-003
     Scenario: the run-id is an ISO timestamp by default and an operator mnemonic overrides it
-      Given an injected clock instant and no operator --run-id
-      When the run-id is resolved
-      Then it is that instant as a filesystem-safe ISO-8601 UTC timestamp — no colons, no milliseconds
-      And resolving with an operator --run-id mnemonic instead returns that mnemonic verbatim, ignoring the clock
 
   Rule: the operator can store any command's run from the shipped tool
 

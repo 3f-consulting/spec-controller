@@ -70,11 +70,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-002
     Scenario: the ledger serialises under the top-level key ledger, beside summary, carrying each account's posted entries
-      Given a reconciliation whose accounts carry posted entries and their quality check reconciliations
-      When the report is serialised to JSON
-      Then the grid of Scenario Reconciliations is carried under the top-level key ledger, beside summary — never under evidenceReconciliation, and never scenarios
-      And each account carries its posted evidence obligations and evidence observations alongside its reconciling items
-      And each quality check reconciliation keeps its outcome field with the reconciliation-outcome literals unchanged
 
   Rule: the runtime evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
@@ -112,10 +107,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-004
     Scenario: the static-check census is summary counts with no standalone section
-      Given a reconciliation run whose derived running-check set includes a check no fitness scenario cites
-      When the report is serialised to JSON
-      Then the static-check census carries no standalone staticChecks (or guards) section
-      And the static-check counts are carried under summary.staticChecks as runningStaticCheckCount and uncitedStaticCheckCount
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 
