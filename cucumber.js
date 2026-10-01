@@ -1,8 +1,11 @@
-export default {
+const tags = "@integration or @e2e or @performance";
+
+const common = {
   paths: ["features/**/*.feature"],
   require: ["tests/steps/**/*.ts"],
   requireModule: ["tsx/cjs"],
-  tags: "@integration or @e2e or @performance",
-
-  parallel: 2,
 };
+
+export default { ...common, tags, parallel: 2 };
+
+export const outside = { ...common, tags: `not (${tags})` };

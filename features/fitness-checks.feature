@@ -116,3 +116,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-027
     Scenario: no step definition imports the product's own modules, by a path into its packages or by its core package's name
+
+  Rule: every Given, When and Then in the corpus is one Cucumber runs
+
+    @fitness @SCN-FIT-028
+    Scenario: no scenario outside the tag filter Cucumber runs under carries a step
