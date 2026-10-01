@@ -225,6 +225,5 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     Scenario: A prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context, beside mentions of two and five characters that are
       Given a target whose only scenario mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters
       When balance reconciles that grammar target
-      Then the report counts two @SCN ids seen in non-tag context, and lists the two- and five-character codes as appearing only in prose
-      And it counts and lists neither the one- nor the six-character id
+      Then the report counts two @SCN ids seen in non-tag context
       And the grammar target lists no scenario code error

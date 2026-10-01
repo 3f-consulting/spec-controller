@@ -38,33 +38,6 @@ export function countScnOccurrences(source: string): number {
   return (source.match(SCN_OCCURRENCE) ?? []).length;
 }
 
-function tagLineScnCodes(tags: readonly string[]): string[] {
-  return tags.filter((tag) => SCN_CODE.test(tag));
-}
-
-function proseLineScnCodes(line: string): string[] {
-  return [...line.matchAll(SCN_OCCURRENCE)].map((match) => match[0].slice(1));
-}
-
-function collectScnCodes(source: string, tag: Set<string>, prose: Set<string>): void {
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    const tags = line === "" ? null : tagLineTags(line);
-    if (tags === null) {
-      for (const code of proseLineScnCodes(line)) prose.add(code);
-      continue;
-    }
-    for (const code of tagLineScnCodes(tags)) tag.add(code);
-  }
-}
-
-export function proseOnlyCodes(sources: string[]): string[] {
-  const tag = new Set<string>();
-  const prose = new Set<string>();
-  for (const source of sources) collectScnCodes(source, tag, prose);
-  return [...prose].filter((code) => !tag.has(code)).sort();
-}
-
 const SCENARIO_HEADER =
   /^(?:Scenario Outline|Scenario Template|Scenario|Example):\s*(.*)$/;
 

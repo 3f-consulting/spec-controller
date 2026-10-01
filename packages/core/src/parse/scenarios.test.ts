@@ -4,7 +4,6 @@ import {
   parseScenarios,
   parseTaggedScenarios,
   parseUntaggedScenarios,
-  proseOnlyCodes,
 } from "./scenarios.js";
 
 const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
@@ -98,42 +97,6 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 });
 
-describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose but never tagged anywhere", () => {
-  const sourceA = [
-    "@RPT @SCN-AAA-001",
-    "Scenario: a tagged scenario",
-    "  Given @SCN-AAA-001 is referenced again in prose (legitimate — it IS tagged)",
-    "  # see also @SCN-DNG-001 — a dangling reference, never tagged",
-  ].join("\n");
-  const sourceB = [
-    "@RPT @SCN-BBB-002",
-    "Scenario: another tagged scenario",
-    "  Given the rule mentions @SCN-AAA-001 (tagged in file A — not dangling)",
-    "  # and @SCN-DNG-002 — dangling, never tagged anywhere",
-  ].join("\n");
-
-  it("returns only the codes that are prosed AND never tagged across the whole corpus", () => {
-    expect(proseOnlyCodes([sourceA, sourceB])).toEqual([
-      "SCN-DNG-001",
-      "SCN-DNG-002",
-    ]);
-  });
-
-  it("excludes a code tagged in ANY file even when prosed in another (cross-file union)", () => {
-    expect(proseOnlyCodes([sourceA, sourceB])).not.toContain("SCN-AAA-001");
-    expect(proseOnlyCodes([sourceA, sourceB])).not.toContain("SCN-BBB-002");
-  });
-
-  it("excludes a code tagged and prosed in the SAME file (not dangling)", () => {
-    const single = [
-      "@SCN-SAME-001",
-      "Scenario: tagged and mentioned",
-      "  Given @SCN-SAME-001 is also in prose here",
-    ].join("\n");
-    expect(proseOnlyCodes([single])).toEqual([]);
-  });
-});
-
 describe("[SCN-STG-024] a scenario tagged with a feature part outside two to five characters carries no @SCN code", () => {
   const source = [
     "Feature: bounds",
@@ -176,9 +139,5 @@ describe("[SCN-STG-028] a prose mention of a feature part outside two to five ch
 
   it("counts the tag and the two- and five-character mentions, and not the one- or six-character ones", () => {
     expect(countScnOccurrences(source)).toBe(3);
-  });
-
-  it("lists only the two- and five-character mentions as prose-only codes", () => {
-    expect(proseOnlyCodes([source])).toEqual(["SCN-AB-001", "SCN-FIVEC-001"]);
   });
 });

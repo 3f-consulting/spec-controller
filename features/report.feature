@@ -361,33 +361,6 @@ Feature: The report renders the ledger as sectioned facts
       When the run writes its artifacts with the scenario corpus
       Then the persisted spec-reconciliation.md lists the untagged scenarios with feature locators and spec-reconciliation.json carries them on evidenceObligations
 
-  Rule: Warnings flags the prose-only @SCN codes — mentioned but never tagged
-
-    Anchor audit — prose-only codes, the fifth and final
-    `## Warnings` sub-part, completing the @SCN anchor census. A new cross-corpus
-    `proseOnlyCodes` classifies every @SCN occurrence as a tag or a prose mention, then
-    returns `proseCodes − tagCodes` — the codes mentioned in non-tag context (prose,
-    comments, step text) that are NEVER an @SCN tag ANYWHERE across the corpus. The
-    cross-file union is load-bearing: a code tagged in one file but prosed in another is
-    NOT dangling. This is the ~10 unique DANGLING references, distinct from the census's
-    "167 @SCN occurrences" line (which counts every non-tag occurrence, not the unique
-    untagged difference) — so it reads as a refinement, not a contradiction. `## Warnings`
-    gains a fifth sub-part listing the prose-only-code count + bare `- SCN-<FFF>-<NNN>` codes
-    (sorted). The datum lives on EvidenceObligations.proseOnlyCodes and — a NEW non-derivable
-    obligation-side datum — persists on the JSON evidenceObligations object beside
-    excludedOccurrences / untaggedScenarios (project design §3). The section gate now fires
-    on no-evidence OR cites-no-scenario evidence observation OR phantom OR untagged OR prose-only; the earlier sub-parts
-    are byte-unchanged and render first. Facts-only — bare codes, no interpretation. The
-    integration arm drives the REAL cross-corpus parse over a fixture feature dir (a tagged
-    code also prosed, plus a dangling prose-only code) → both persisted surfaces, proving the
-    tag-vs-prose classification on real files.
-
-    @unit @integration @SCN-RPT-015
-    Scenario: Warnings lists the prose-only @SCN codes mentioned but never tagged
-      Given a target feature directory mentioning an @SCN code only in prose
-      When the run writes its artifacts with the scenario corpus over that directory
-      Then the persisted spec-reconciliation.md lists the prose-only code and spec-reconciliation.json carries it on evidenceObligations
-
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
     The portability fix. The portable-path design (provenance inputs /

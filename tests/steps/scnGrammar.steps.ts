@@ -181,8 +181,8 @@ Then("the one- and six-character step ids post no credit at all", function () {
   assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantoms; got ${JSON.stringify(rows)}`);
 });
 
-function corpusAudit(): { excludedOccurrences: number; proseOnlyCodes: string[] } {
-  return (grammarRun.report as unknown as { evidenceObligations: { excludedOccurrences: number; proseOnlyCodes: string[] } })
+function corpusAudit(): { excludedOccurrences: number } {
+  return (grammarRun.report as unknown as { evidenceObligations: { excludedOccurrences: number } })
     .evidenceObligations;
 }
 
@@ -201,17 +201,7 @@ Given(
   },
 );
 
-Then(
-  "the report counts two @SCN ids seen in non-tag context, and lists the two- and five-character codes as appearing only in prose",
-  function () {
-    assert.equal(corpusAudit().excludedOccurrences, INSIDE.length, `got ${JSON.stringify(corpusAudit())}`);
-    assert.deepEqual([...corpusAudit().proseOnlyCodes].sort(), [...INSIDE].sort(), `got ${JSON.stringify(corpusAudit())}`);
-    assert.match(grammarRun.markdown, /- 2 @SCN ids seen in non-tag context, excluded/);
-  },
-);
-
-Then("it counts and lists neither the one- nor the six-character id", function () {
-  for (const id of OUTSIDE) {
-    assert.ok(!corpusAudit().proseOnlyCodes.includes(id), `expected ${id} not listed; got ${JSON.stringify(corpusAudit())}`);
-  }
+Then("the report counts two @SCN ids seen in non-tag context", function () {
+  assert.equal(corpusAudit().excludedOccurrences, INSIDE.length, `got ${JSON.stringify(corpusAudit())}`);
+  assert.match(grammarRun.markdown, /- 2 @SCN ids seen in non-tag context, excluded/);
 });

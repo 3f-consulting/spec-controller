@@ -73,7 +73,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
 });
 
 describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object with the excluded count", () => {
-  const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
+  const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
   it("carries evidenceObligations.excludedOccurrences when a corpus is threaded", () => {
     const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
@@ -156,7 +156,6 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
       { feature: "alpha.feature", scenario: "a scenario with no anchor" },
       { feature: "beta.feature", scenario: "another untagged scenario" },
     ],
-    proseOnlyCodes: [],
   };
 
   it("carries evidenceObligations.untaggedScenarios with the feature : scenario locators", () => {
@@ -180,34 +179,6 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
       renderJson(__er(balancedLedger, false, false), ctx, { ...evidenceObligations, untaggedScenarios: [] })
     );
     expect(parsed.evidenceObligations.untaggedScenarios).toEqual([]);
-  });
-});
-
-describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only codes", () => {
-  const evidenceObligations = {
-    rawScnOccurrences: 10,
-    scenarioCount: 7,
-    excludedOccurrences: 3,
-    untaggedScenarios: [],
-    proseOnlyCodes: ["SCN-BAR-013", "SCN-FOO-001"],
-  };
-
-  it("carries evidenceObligations.proseOnlyCodes with the dangling codes", () => {
-    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
-    expect(parsed.evidenceObligations.proseOnlyCodes).toEqual(["SCN-BAR-013", "SCN-FOO-001"]);
-  });
-
-  it("keeps proseOnlyCodes beside excludedOccurrences / untaggedScenarios on the evidenceObligations object", () => {
-    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, evidenceObligations));
-    expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
-    expect(parsed.evidenceObligations).toHaveProperty("untaggedScenarios");
-    expect(parsed.evidenceObligations).toHaveProperty("proseOnlyCodes");
-    expect(parsed.runProvenance).not.toHaveProperty("proseOnlyCodes");
-  });
-
-  it("emits an empty proseOnlyCodes array when there are none", () => {
-    const parsed = JSON.parse(renderJson(__er(balancedLedger, false, false), ctx, { ...evidenceObligations, proseOnlyCodes: [] }));
-    expect(parsed.evidenceObligations.proseOnlyCodes).toEqual([]);
   });
 });
 

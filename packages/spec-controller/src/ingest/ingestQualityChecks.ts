@@ -6,7 +6,6 @@ import {
   parseScenarios,
   countScnOccurrences,
   parseUntaggedScenarios,
-  proseOnlyCodes,
   sharedScnCodesOf,
 } from "@3f-consulting/spec-controller-core";
 import {
@@ -156,11 +155,9 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   let raw = 0;
   let scenarioCount = 0;
   const untagged: UntaggedScenario[] = [];
-  const sources: string[] = [];
   const files: { feature: string; source: string }[] = [];
   for (const f of featureFiles) {
     const source = readFileSync(f.path, "utf8");
-    sources.push(source);
     files.push({ feature: `${f.slug}.feature`, source });
     raw += countScnOccurrences(source);
     scenarioCount += parseScenarios(source).length;
@@ -171,7 +168,7 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   untagged.sort(
     (a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario)
   );
-  return evidenceObligations(raw, scenarioCount, untagged, proseOnlyCodes(sources), sharedScnCodesOf(files));
+  return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files));
 }
 
 function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {

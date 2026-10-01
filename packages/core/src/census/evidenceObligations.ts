@@ -15,7 +15,6 @@ export interface EvidenceObligations {
   scenarioCount: number;
   excludedOccurrences: number;
   untaggedScenarios: UntaggedScenario[];
-  proseOnlyCodes: string[];
   sharedScnCodes?: SharedScnCode[];
 }
 
@@ -23,7 +22,6 @@ export function evidenceObligations(
   raw: number,
   scenarioCount: number,
   untaggedScenarios: UntaggedScenario[] = [],
-  proseOnlyCodes: string[] = [],
   sharedScnCodes: SharedScnCode[] = []
 ): EvidenceObligations {
   return {
@@ -31,7 +29,6 @@ export function evidenceObligations(
     scenarioCount,
     excludedOccurrences: raw - scenarioCount,
     untaggedScenarios,
-    proseOnlyCodes,
     ...(sharedScnCodes.length > 0 ? { sharedScnCodes } : {}),
   };
 }

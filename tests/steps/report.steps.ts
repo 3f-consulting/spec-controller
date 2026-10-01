@@ -675,62 +675,6 @@ After({ tags: "@SCN-RPT-014" }, function () {
   if (runsRoot014 && existsSync(runsRoot014)) rmSync(runsRoot014, { recursive: true, force: true });
 });
 
-const PROSEONLY_FEATURES = "tests/fixtures/proseonly/features";
-let runsRoot015: string;
-let md015: string;
-let json015: string;
-
-Given("a target feature directory mentioning an @SCN code only in prose", function () {
-  runsRoot015 = mkdtempSync(join(tmpdir(), "spec-controller-rpt015-"));
-});
-
-When("the run writes its artifacts with the scenario corpus over that directory", function () {
-  const opts = { features: PROSEONLY_FEATURES };
-  const balance = runReconcile(opts);
-  const evidenceObligations = readEvidenceObligations(PROSEONLY_FEATURES);
-  const ctx015: RunContext = {
-    target: "proseonly-fixture",
-    inputs: {},
-    runStart: new Date("2026-06-27T08:17:53.000Z"),
-    sourceSha: null,
-  };
-  const runDir = persistReport(runsRoot015, { balance, ctx: ctx015, evidenceObligations });
-  md015 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
-  json015 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
-});
-
-Then(
-  "the persisted spec-reconciliation.md lists the prose-only code and spec-reconciliation.json carries it on evidenceObligations",
-  function () {
-    assert.ok(
-      !md015.includes("## Warnings"),
-      `expected NO "## Warnings" section (dissolved); got:\n${md015}`
-    );
-    assert.ok(
-      md015.includes("1 @SCN code(s) appear only in prose, never as a tag:") &&
-        md015.includes("- SCN-POC-999"),
-      `expected the prose-only code SCN-POC-999 to be listed; got:\n${md015}`
-    );
-    assert.ok(
-      !md015.includes("- SCN-POC-001"),
-      `expected the tagged SCN-POC-001 NOT to be flagged prose-only; got:\n${md015}`
-    );
-
-    const parsed = JSON.parse(json015) as {
-      evidenceObligations?: { proseOnlyCodes?: string[] };
-    };
-    assert.deepEqual(
-      parsed.evidenceObligations?.proseOnlyCodes,
-      ["SCN-POC-999"],
-      `expected spec-reconciliation.json evidenceObligations.proseOnlyCodes = ["SCN-POC-999"]; got:\n${json015}`
-    );
-  }
-);
-
-After({ tags: "@SCN-RPT-015" }, function () {
-  if (runsRoot015 && existsSync(runsRoot015)) rmSync(runsRoot015, { recursive: true, force: true });
-});
-
 const BYFEATURE_FEATURES = "tests/fixtures/byfeature/features";
 let runsRoot006: string;
 let md006: string;

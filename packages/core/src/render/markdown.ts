@@ -339,13 +339,6 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, ac
     }
   }
   lines.push(...sharedScnCodeLines(census.sharedScnCodes ?? [], accounts));
-  const proseOnly = census.proseOnlyCodes;
-  if (proseOnly.length > 0) {
-    lines.push(`- ${proseOnly.length} @SCN code(s) appear only in prose, never as a tag:`);
-    for (const code of [...proseOnly].sort()) {
-      lines.push(`  - ${code}`);
-    }
-  }
   return lines;
 }
 

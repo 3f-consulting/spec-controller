@@ -253,10 +253,8 @@ tree reds on a widened specifier.
 
 - **`0.x` says the surface may still move.** A minor bump on `0.x` may carry a breaking change, and
   a consumer who cannot absorb one should pin exactly rather than by caret.
-- **The frozen public contract is the CLI's flags and the core barrel** — what
-  `@3f-consulting/spec-controller-core` exports from its main entry point. Breaking either is a
-  major-version event whatever the leading digit says. The `./internal` subpath is *not* part of it:
-  the workspace offers it and `publishConfig` drops it at publish time, so a consumer never had it.
+- **The `./internal` subpath is never published.** The workspace offers it and `publishConfig`
+  drops it at publish time, so a consumer never has it.
 - The two packages are released **in lockstep at the same version**. The CLI's dependency on core is
   written `workspace:*` in this tree and rewritten to that exact version by `pnpm pack`, so a
   release that sent one without the other would leave a package naming an engine the registry does

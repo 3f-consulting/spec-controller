@@ -39,7 +39,6 @@ const evidenceObligations: EvidenceObligations = {
   scenarioCount: 2,
   excludedOccurrences: 2,
   untaggedScenarios: [],
-  proseOnlyCodes: [],
 };
 
 const featureNames = new Map([["CHK", "checkout"]]);

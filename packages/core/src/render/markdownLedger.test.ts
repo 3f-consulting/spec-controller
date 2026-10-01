@@ -125,7 +125,6 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the na
       { feature: "alpha.feature", scenario: "a scenario with no anchor" },
       { feature: "beta.feature", scenario: "another untagged scenario" },
     ],
-    proseOnlyCodes: [],
   };
 
   it("lists the untagged-scenario count + feature : scenario locators, with NO warnings section", () => {
@@ -154,53 +153,6 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the na
   it("omits the untagged census when no corpus is threaded (back-compat)", () => {
     const md = renderMarkdown(__er(balanced), ctx);
     expect(md).not.toContain("carry no @SCN tag");
-    expect(md).not.toContain("## Warnings");
-  });
-});
-
-describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the named-corpus census", () => {
-  const balanced: Ledger = reconcile(
-    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }],
-  );
-  const evidenceObligations = {
-    rawScnOccurrences: 0,
-    scenarioCount: 0,
-    excludedOccurrences: 0,
-    untaggedScenarios: [],
-    proseOnlyCodes: ["SCN-FOO-001", "SCN-BAR-013"],
-  };
-
-  it("lists the prose-only-code count + the bare codes, with NO warnings section", () => {
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
-    expect(md).not.toContain("## Warnings");
-    expect(md).toContain("2 @SCN code(s) appear only in prose, never as a tag:");
-    expect(md).toContain("- SCN-FOO-001");
-    expect(md).toContain("- SCN-BAR-013");
-  });
-
-  it("sorts the codes", () => {
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
-    expect(md.indexOf("SCN-BAR-013")).toBeLessThan(md.indexOf("SCN-FOO-001"));
-  });
-
-  it("renders the prose-only census after the untagged census within the ledger summary", () => {
-    const evidenceObligationsAll = {
-      ...evidenceObligations,
-      untaggedScenarios: [{ feature: "x.feature", scenario: "an untagged one" }],
-    };
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligationsAll);
-    expect(md).not.toContain("## Warnings");
-    const iUntagged = md.indexOf("carry no @SCN tag");
-    const iProse = md.indexOf("appear only in prose, never as a tag");
-    expect(iUntagged).toBeGreaterThanOrEqual(0);
-    expect(iProse).toBeGreaterThanOrEqual(0);
-    expect(iUntagged).toBeLessThan(iProse);
-  });
-
-  it("omits the prose-only census when no corpus is threaded (back-compat)", () => {
-    const md = renderMarkdown(__er(balanced), ctx);
-    expect(md).not.toContain("appear only in prose");
     expect(md).not.toContain("## Warnings");
   });
 });

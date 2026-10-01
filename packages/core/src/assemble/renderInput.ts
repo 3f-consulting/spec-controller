@@ -20,7 +20,6 @@ export type {
 export interface EvidenceObligationsSection {
   excludedOccurrences: number;
   untaggedScenarios: UntaggedScenario[];
-  proseOnlyCodes: string[];
   sharedScnCodes?: SharedScnCode[];
 }
 
@@ -52,7 +51,6 @@ export function assembleRenderInput(
           evidenceObligations: {
             excludedOccurrences: evidenceObligations.excludedOccurrences,
             untaggedScenarios: evidenceObligations.untaggedScenarios,
-            proseOnlyCodes: evidenceObligations.proseOnlyCodes,
             ...(evidenceObligations.sharedScnCodes && evidenceObligations.sharedScnCodes.length > 0
               ? { sharedScnCodes: evidenceObligations.sharedScnCodes }
               : {}),

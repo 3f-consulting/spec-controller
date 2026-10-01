@@ -15,7 +15,7 @@ export type {
   Ledger,
 } from "./model.js";
 
-export { parseScenarios, countScnOccurrences, parseUntaggedScenarios, proseOnlyCodes } from "./parse/scenarios.js";
+export { parseScenarios, countScnOccurrences, parseUntaggedScenarios } from "./parse/scenarios.js";
 
 export { evidenceObligations } from "./census/evidenceObligations.js";
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./census/evidenceObligations.js";

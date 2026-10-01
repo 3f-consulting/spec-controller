@@ -225,7 +225,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
     [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
   );
-  const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
+  const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);

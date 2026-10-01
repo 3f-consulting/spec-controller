@@ -37,7 +37,6 @@ const evidenceObligations: EvidenceObligations = {
   scenarioCount: 7,
   excludedOccurrences: 3,
   untaggedScenarios: [],
-  proseOnlyCodes: [],
 };
 
 describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
