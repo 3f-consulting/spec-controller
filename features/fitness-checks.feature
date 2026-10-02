@@ -121,3 +121,6 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-028
     Scenario: no scenario outside the tag filter Cucumber runs under carries a step
+
+    @fitness @SCN-FIT-029
+    Scenario: every step definition matches a step in a scenario Cucumber runs
