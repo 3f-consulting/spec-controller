@@ -100,7 +100,7 @@ function renderReportFor(fixture: UsgFixture, dir: string): string {
   return readFileSync(reportPath, "utf8");
 }
 
-When("the reconciliation report is rendered from the target's files", function () {
+When("the reconciliation report is rendered for the target", function () {
   activeMd = renderReportFor(activeFixture, activeDir);
 });
 
@@ -657,7 +657,7 @@ function runnersBlockOf(fixture: UsgFixture): Record<string, unknown> {
   return specController["runners"] as Record<string, unknown>;
 }
 
-When("the reconciliation report is rendered from both targets' files", function () {
+When("the reconciliation report is rendered for both targets", function () {
   activeMd = renderReportFor(activeFixture, activeDir);
   secondMd = renderReportFor(USG_RUNNER_UNNAMED_FIXTURE, secondDir);
 });
@@ -1169,7 +1169,7 @@ Given("a pipeline of ordinary steps, the target's own test suite among them", fu
   );
 });
 
-When("the target's first reconciliation is rendered from its files", function () {
+When("the target's first reconciliation is rendered", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   const reportPath = join(activeDir, "spec-reconciliation.md");

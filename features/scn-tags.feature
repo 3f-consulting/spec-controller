@@ -87,7 +87,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     @unit @integration @SCN-STG-020
     Scenario: A misfiled account reconciles exactly as it would if correctly filed
-      Given three targets, one misfiling a scenario code across its feature files in each of the three ways, and each one's correctly filed twin
+      Given three targets, one misfiling a scenario code in each of the three ways, and each one's correctly filed twin
       When balance reconciles each target and its twin
       Then each target's accounts reconcile exactly as its twin's do
       And only the scenario code errors tell them apart
@@ -111,7 +111,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     Scenario: A corpus with no feature file is never stated clean: the section says no feature file was judged, and the run still exits 5
       Given a target whose feature directory holds no feature file
       When balance reconciles that target
-      Then the run exits 5, with nothing to reconcile
+      Then the run has nothing to reconcile
       And the report's scenario code errors section says no feature file was judged, stating no code clean and no count
       And the report saved as JSON re-renders the same section
 
@@ -145,7 +145,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     Scenario: A duplicated code is exit 1 with the rest of the report complete, never a refused corpus
       Given a target whose corpus carries one @SCN on two scenarios beside a scenario of its own, every scenario cited by passing evidence
       When the target runs balance over it
-      Then the run exits 1, failing as out of balance, not as an input it cannot read
+      Then the run fails as out of balance, not as an input it cannot read
       And the report reconciles the scenario of its own exactly as it does in the same corpus without the duplicate
       And nothing says the corpus was refused
 
@@ -200,7 +200,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     @unit @integration @SCN-STG-028
     Scenario: A prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context, beside mentions of two and five characters that are
-      Given a target whose only feature file holds one scenario that mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters
+      Given a target whose only scenario mentions, in a step and a comment, untagged ids with feature parts of one, two, five and six characters
       When balance reconciles that grammar target
       Then the report counts two @SCN ids seen in non-tag context
       And the grammar target lists no scenario code error

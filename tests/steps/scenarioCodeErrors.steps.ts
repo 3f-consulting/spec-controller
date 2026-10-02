@@ -346,7 +346,7 @@ const MISFILED_PAIRS: { misfiled: Record<string, string>; twin: Record<string, s
 let pairRuns: { misfiled: CodeRun; twin: CodeRun }[] = [];
 
 Given(
-  "three targets, one misfiling a scenario code across its feature files in each of the three ways, and each one's correctly filed twin",
+  "three targets, one misfiling a scenario code in each of the three ways, and each one's correctly filed twin",
   function () {
     pairRuns = [];
   },
@@ -429,7 +429,7 @@ Given("a target whose feature directory holds no feature file", function () {
   files = {};
 });
 
-Then("the run exits 5, with nothing to reconcile", function () {
+Then("the run has nothing to reconcile", function () {
   assert.equal(run.status, 5, `expected exit 5, nothing to reconcile; got ${run.status}. stderr: ${run.stderr}`);
 });
 

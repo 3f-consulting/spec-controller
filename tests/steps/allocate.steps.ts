@@ -56,7 +56,7 @@ When("the author asks for the next code for {word}", function (part: string) {
   answer = allocate(repository, [part]);
 });
 
-Then("the answer on stdout is {word}, and nothing else", function (code: string) {
+Then("the answer is {word}, and nothing else", function (code: string) {
   assert.equal(answer.status, 0, `allocate did not answer: exit ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, `${code}\n`);
 });
@@ -117,13 +117,13 @@ Given("a repository whose highest ONE code, {word}, is deleted by a later commit
   commitAll(repository, "retire a scenario");
 });
 
-Then("on stderr, beside the answer, it names where {word} was seen: the file and line that carry it", function (code: string) {
+Then("beside the answer it names where {word} was seen: the file and line that carry it", function (code: string) {
   assert.equal(answer.status, 0, answer.stderr);
   assert.match(answer.stderr, new RegExp(`^highest seen: ${code}, features/one\\.feature:8$`, "m"));
 });
 
 Then(
-  "on stderr, beside the answer, it names where {word} was seen: the file and line that carried it, and the commit that did so",
+  "beside the answer it names where {word} was seen: the file and line that carried it, and the commit that did so",
   function (code: string) {
     const deleting = git(repository, ["log", "-1", "--format=%h"]).trim();
     assert.equal(answer.status, 0, answer.stderr);
@@ -286,7 +286,7 @@ When("the author asks allocate for its help {}", function (request: string) {
   answer = allocate(repository, args);
 });
 
-Then("it answers with allocate's help, naming the feature part it takes and --new, and gives no code, with the success status", function () {
+Then("it answers with allocate's help, naming the feature part it takes and --new, and gives no code", function () {
   assert.equal(answer.status, 0, `expected success, got ${answer.status}\n${answer.stderr}`);
   assert.match(answer.stdout, /^spec-controller allocate — /);
   assert.match(answer.stdout, /<FFF>/);
@@ -343,7 +343,7 @@ When("the author gives {} before allocate and asks it for its help {}", function
   answer = result;
 });
 
-Then("it answers with allocate's help, exactly as it does with nothing before it, and gives no code, with the success status", function () {
+Then("it answers with allocate's help, exactly as it does with nothing before it, and gives no code", function () {
   assert.equal(answerAlone.status, 0, `allocate alone did not answer its help\n${answerAlone.stderr}`);
   assert.match(answerAlone.stdout, /^spec-controller allocate — /);
   assert.equal(answer.status, 0, `expected success, got ${answer.status}\n${answer.stderr}`);

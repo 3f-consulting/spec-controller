@@ -324,7 +324,7 @@ Feature: spec-controller balance runs standalone
 
     @unit @e2e @SCN-CLI-079
     Scenario Outline: a package.json not in a manifest's shape is refused as unreadable, whether given or read by default
-      Given a target whose package.json, <how>, holds <defect>
+      Given a target whose manifest, <how>, holds <defect>
       When the balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict
       And the refusal names the input and where its shape is wrong
@@ -382,7 +382,7 @@ Feature: spec-controller balance runs standalone
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
-      Given a saved report file that parses but is <defect>
+      Given a saved report that parses but is <defect>
       When the balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict
       And the refusal names the input and where its shape is wrong
@@ -399,7 +399,7 @@ Feature: spec-controller balance runs standalone
       Given a stored run's target whose <input> is one the tool cannot read in shape
       When a stored balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict
-      And the refused run leaves nothing in the store root
+      And the refused run leaves nothing in the store
 
       Examples:
         | input           |
@@ -430,7 +430,7 @@ Feature: spec-controller balance runs standalone
     Scenario: an absent corpus and a corpus holding no scenario reach the same verdict by the same sentence
       Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario
       When "spec-controller balance" is invoked over each of those targets through the CLI binary
-      Then every one of them prints the same verdict to stdout, in the same sentence
+      Then every one of them is told the same verdict by the same sentence
       And that sentence names the corpus directory it examined
 
   Rule: a run with nothing to reconcile has no verdict to give, and says so

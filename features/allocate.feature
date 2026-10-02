@@ -19,34 +19,34 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries the scenario codes SCN-ONE-001 and SCN-ONE-005
       And a later commit deletes the scenario coded SCN-ONE-005
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-006, and nothing else
+      Then the answer is SCN-ONE-006, and nothing else
 
     @SCN-ALC-002 @unit @e2e
     Scenario: A code carried only on a CI step id is never offered again
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the repository's CI workflow has a step whose id is SCN-ONE-007
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-008, and nothing else
+      Then the answer is SCN-ONE-008, and nothing else
 
     @SCN-ALC-003 @unit @e2e
     Scenario: A code carried only in a test title is never offered again
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the repository has a test whose title cites SCN-ONE-007
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-008, and nothing else
+      Then the answer is SCN-ONE-008, and nothing else
 
     @SCN-ALC-015 @unit @e2e
     Scenario: A code that appears only in a commit message is not retired
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And a later commit, whose message mentions SCN-ONE-900, retags the scenario coded SCN-ONE-001
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-002, and nothing else
+      Then the answer is SCN-ONE-002, and nothing else
 
     @SCN-ALC-005 @unit @e2e
     Scenario Outline: stderr names where the highest code was seen — <where>
       Given a repository whose highest ONE code, SCN-ONE-005, is <carried>
       When the author asks for the next code for ONE
-      Then on stderr, beside the answer, it names where SCN-ONE-005 was seen: <place>
+      Then beside the answer it names where SCN-ONE-005 was seen: <place>
 
       Examples:
         | where                                  | carried                           | place                                                        |
@@ -58,7 +58,7 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries SCN-ONE-001, and whose history once carried SCN-ONE-005
       And the author's copy of it is <copy>
       When the author asks for the next code for ONE in that copy
-      Then the answer on stdout is SCN-ONE-002, and nothing else
+      Then the answer is SCN-ONE-002, and nothing else
       And beside the answer it states that <boundary>
 
       Examples:
@@ -71,7 +71,7 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the author has since tagged a new scenario SCN-ONE-007 in that file, not yet committed
       When the author asks for the next code for ONE from a subdirectory holding no code
-      Then the answer on stdout is SCN-ONE-008, and nothing else
+      Then the answer is SCN-ONE-008, and nothing else
 
     @SCN-ALC-007 @e2e
     Scenario: A code written into a file not yet added to git is never offered again
@@ -79,7 +79,7 @@ Feature: Allocate the next scenario code for a feature part
       And the author has written SCN-ONE-007 into a new file not yet added to git
       And a file the repository ignores mentions SCN-ONE-900
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-008, and nothing else
+      Then the answer is SCN-ONE-008, and nothing else
 
   Rule: the code is printed alone, in canon's form, and the number never runs out
 
@@ -87,13 +87,13 @@ Feature: Allocate the next scenario code for a feature part
     Scenario: The code is printed alone on stdout, zero-padded to three digits
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-7
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-008, and nothing else
+      Then the answer is SCN-ONE-008, and nothing else
 
     @SCN-ALC-009 @unit @e2e
     Scenario: A part whose highest code is 999 is offered 1000
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-999
       When the author asks for the next code for ONE
-      Then the answer on stdout is SCN-ONE-1000, and nothing else
+      Then the answer is SCN-ONE-1000, and nothing else
 
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
 
@@ -119,7 +119,7 @@ Feature: Allocate the next scenario code for a feature part
     Scenario Outline: --new admits a part no feature file's header carries, and on a part a header does carry it answers as usual with a note on stderr — <part>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks for the next code for <part>, as a new part
-      Then the answer on stdout is <answer>, and nothing else
+      Then the answer is <answer>, and nothing else
       And beside the answer <note>
 
       Examples:
@@ -146,7 +146,7 @@ Feature: Allocate the next scenario code for a feature part
     Scenario Outline: allocate --help answers first, listing <FFF> and --new, and exits 0 whatever else is given — <request>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks allocate for its help <request>
-      Then it answers with allocate's help, naming the feature part it takes and --new, and gives no code, with the success status
+      Then it answers with allocate's help, naming the feature part it takes and --new, and gives no code
 
       Examples:
         | request                               |
@@ -173,7 +173,7 @@ Feature: Allocate the next scenario code for a feature part
     Scenario Outline: a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing — <modifiers> <request>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author gives <modifiers> before allocate and asks it for its help <request>
-      Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code, with the success status
+      Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code
       And nothing is stored, in the store root or the repository
 
       Examples:

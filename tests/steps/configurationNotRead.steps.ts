@@ -115,7 +115,7 @@ Given("a target whose specController configuration sets {word} to {}", function 
   manifest = withEntry(entry, KINDS[written]);
 });
 
-When("the target's configuration is reconciled from its package.json", function () {
+When("the target's configuration is reconciled", function () {
   rendered = renderWith(manifest, join(dir, "with"));
 });
 
@@ -156,7 +156,7 @@ Given(
   },
 );
 
-When("the target's configuration is reconciled from its package.json and the saved run is re-rendered", function () {
+When("the target's configuration is reconciled and the saved run is re-rendered", function () {
   const saved = join(dir, "with", "report.json");
   rendered = renderWith(manifest, join(dir, "with"), ["--format", `json:${saved}`]);
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--render-from-json", saved], {

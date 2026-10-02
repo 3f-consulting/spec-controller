@@ -97,7 +97,7 @@ When("the target runs balance over it", function () {
   stg018Run = runBalanceOver(corpusDir!);
 });
 
-Then("the run exits 1, failing as out of balance, not as an input it cannot read", function () {
+Then("the run fails as out of balance, not as an input it cannot read", function () {
   assert.equal(stg018Run.status, 1, `expected exit 1 (out of balance); got ${stg018Run.status}. stderr: ${stg018Run.stderr}`);
 });
 
