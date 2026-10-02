@@ -299,8 +299,9 @@ outcome as any other converted check's does. Nothing times the suite, nothing wr
 and nothing reads one back.
 
 **A scheduled check is the step that reads its verdict, and it needs no number either.**
-A scenario holds this repository's domain core to a mutation score, and a sweep costs 8-12
-minutes against a 2-minute ladder, so it runs nightly. The bar is Stryker's own
+A scenario holds each of this repository's gated source scopes to a mutation score, one job per
+scope, and the slowest job (the domain core) costs 12-16 minutes against a 2-minute ladder, so it
+runs nightly. The bar is Stryker's own
 `thresholds.break: 95`, so the nightly run concludes `failure` below it. The push step carries the
 scenario's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightly on `main`,
 created inside the last 26 hours, concluded `success`. Nothing on your side names the bar:

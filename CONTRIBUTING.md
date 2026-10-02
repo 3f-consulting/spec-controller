@@ -92,12 +92,13 @@ row names no bar. A suite past its limit fails its step, and the ledger reads th
 reads any other converted check's.
 
 **The mutation row is not measured either, and it reads a verdict no local run takes.**
-The mutation row — this repository's own domain-core mutation score — is a step-outcome row with no
+The mutation row — this repository's own per-scope mutation scores — is a step-outcome row with no
 bar. `ci.yml`'s `Mutation score` step carries its `@SCN` as its `id:` and asks stock `gh` whether the
 newest `mutation.yml` run on `main`, created inside the last 26 hours, concluded `success`. The bar
 is the 95 `stryker.config.js` states as `thresholds.break`, and it is written nowhere else.
 
-A mutation sweep costs 8-12 minutes on CI, so it runs nightly (`.github/workflows/mutation.yml`).
+The sweep runs one job per gated scope, each held to that 95 on its own; the domain core's job costs
+12-16 minutes on CI and the provenance job about 2, so it runs nightly (`.github/workflows/mutation.yml`).
 **The window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h** for a nightly. A lapsed,
 crashed or below-bar sweep fails the step, and on an ordinary push that reds the job before the
 self-reconciliation runs, so the lapse shows as a red job rather than a `failing` line. The recipe,

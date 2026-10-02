@@ -10,7 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 25
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scope: core-domain
+            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/qualityCheckFaultMessages.ts"
+            timeout: 35
+          - scope: core-provenance
+            mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts"
+            timeout: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -26,13 +36,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Mutation test the domain core
-        run: pnpm mutation
+      - name: Mutation test ${{ matrix.scope }}
+        run: pnpm mutation --mutate "$MUTATE"
+        env:
+          MUTATE: ${{ matrix.mutate }}
 
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: mutation-report
+          name: mutation-report-${{ matrix.scope }}
           path: reports/mutation/
           retention-days: 14

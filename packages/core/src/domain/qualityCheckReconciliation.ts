@@ -162,7 +162,6 @@ export function reconcileEvidenceObligation(
 
   const { outcome, credit } = answerOf(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
-      o.qualityCheck !== "fitness" &&
       o.broken !== true &&
       o.qualityCheck === req.qualityCheck &&
       o.scnId === scnId

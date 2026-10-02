@@ -40,22 +40,40 @@ Stryker's own documented CI shape. This repository states it in
   thresholds: { break: 95 },
 ```
 
-So the nightly workflow does nothing clever. It runs the sweep, and the job ends
-in failure when the sweep scores below 95 or dies:
+So the nightly workflow does nothing clever. It runs one job per gated scope,
+each sweeping that scope alone, and a job ends in failure when its sweep scores
+below 95 or dies. One strong scope cannot carry a weak one, because each is
+scored on its own:
 
 ```yaml
-      - name: Mutation test the domain core
-        run: pnpm mutation
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scope: core-domain
+            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/qualityCheckFaultMessages.ts"
+            timeout: 35
+          - scope: core-provenance
+            mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts"
+            timeout: 5
+```
+
+```yaml
+      - name: Mutation test ${{ matrix.scope }}
+        run: pnpm mutation --mutate "$MUTATE"
+        env:
+          MUTATE: ${{ matrix.mutate }}
 ```
 
 `pnpm mutation` is `stryker run` and nothing else. Keep the report as an
 artefact with `if: always()`. The push reads only whether the run succeeded, so
 the score lives in that report and nowhere else.
 
-**The whole job's conclusion is what the push reads, not just the sweep's.** Any
-step in the scheduled job that fails for a reason of its own reads on the push
-exactly as a sweep below its bar does. Keep that job to the check and its
-report.
+**The whole run's conclusion is what the push reads, not just a sweep's.** Any
+step in any of the scheduled jobs that fails for a reason of its own reads on
+the push exactly as a sweep below its bar does. Keep each job to the check and
+its report.
 
 ---
 
@@ -172,11 +190,11 @@ Reading a verdict instead of a number is cheaper than carrying the number across
 and it costs four things. They are named here so that nobody finds them later.
 
 - **The push does not show the score.** The row reads satisfied or failing,
-  and the number stays in the nightly's Stryker report.
+  and each scope's number stays in that scope's Stryker report.
 - **A lapsed schedule, a crashed sweep and a below-bar sweep all read the same.**
   All three fail the step. The nightly's own run is where they are told apart.
 - **A failed report upload reads as a mutation failure.** The step reads the
-  whole scheduled job's conclusion, not the sweep step's.
+  whole scheduled run's conclusion, not the sweep steps'.
 - **The window's headroom is unchanged:** about 1.4 h, measured over six nights.
   GitHub starts a scheduled run late by an amount that varies from night to
   night, and a push that lands after last night's run has aged past 26 h, but

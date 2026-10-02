@@ -45,7 +45,7 @@ export interface ProvenanceFacts {
 }
 
 function formatUtc(instant: Date): string {
-  return instant.toISOString().replace(/\.\d+Z$/, "Z");
+  return instant.toISOString().replace(/\.\d+Z/, "Z");
 }
 
 function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
