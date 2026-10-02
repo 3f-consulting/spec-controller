@@ -539,6 +539,59 @@ Then(
   },
 );
 
+const USG_RUNNER_PIPED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-runner-piped/features",
+  ci: "tests/fixtures/usg-runner-piped/ci.yml",
+  packageJson: "tests/fixtures/usg-runner-piped/package.json",
+};
+
+Given(
+  "a target that names cucumber-js its integration runner, runs its integration suite, and runs a check that hands that runner's output to another command",
+  function () {
+    activeFixture = USG_RUNNER_PIPED_FIXTURE;
+    activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg029-"));
+    const workflow = readFileSync(join(process.cwd(), USG_RUNNER_PIPED_FIXTURE.ci), "utf8");
+    const checkCommand = workflow
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("pnpm exec cucumber-js"));
+    assert.ok(
+      checkCommand !== undefined && checkCommand.split(/\s+/).includes("cucumber-js"),
+      `the usg-runner-piped fixture's check step must run the integration runner as a whole ` +
+        `token, or the token rule never claims it and this target poses none of this ` +
+        `scenario's question. Got:\n${workflow}`,
+    );
+    assert.ok(
+      checkCommand.split(/\s+/).includes("|"),
+      `the check step must hand the runner's output to another command. Got: ${checkCommand}`,
+    );
+  },
+);
+
+Then(
+  "the report names the integration suite step its runner and no other, and the check is on the books as an uncited static check",
+  function () {
+    const rows = behaviouralRunnerRows(activeMd);
+    assert.deepEqual(
+      rows,
+      ["| integration | cucumber-js | Cucumber |"],
+      `expected the integration runner recognised at the suite step and NOWHERE else. The ` +
+        `check step pipes the runner's output into jq and awk, which pass its verdict; ` +
+        `recognising it as the runner deletes a gate from this report and says nothing. ` +
+        `Got ${JSON.stringify(rows)} in:\n${activeMd}`,
+    );
+    assert.ok(
+      activeMd.includes("1 static check(s) run, 1 uncited static check(s)"),
+      `expected the check step counted as a running static check and reported uncited. Got:\n${activeMd}`,
+    );
+    assert.ok(
+      activeMd.includes("Evidence Observation cites no Scenario (Unused step definitions)"),
+      `expected the check banked on the suspense row: a candidate that cites nothing is ` +
+        `surfaced, never dropped. Got:\n${activeMd}`,
+    );
+  },
+);
+
 const USG_RUNNER_NONE_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-runner-none/features",
   ci: "tests/fixtures/usg-runner-none/ci.yml",

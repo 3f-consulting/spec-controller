@@ -220,7 +220,8 @@ else is a candidate.
 no `package.json` at all has every step of its pipeline on the books. Recognising a *runner* is the
 half that is not — but it is smaller than it sounds. A runner is matched as a **whole shell token of
 the step's own command** first, so `pytest -q` and `poetry run pytest tests/` are both recognised
-with no manifest script involved. What needs your `package.json` is the second clause, the hop
+with no manifest script involved, so long as no later command in the pipeline reads its
+output. What needs your `package.json` is the second clause, the hop
 through a script alias — `pnpm test` → `vitest` — and that clause exists precisely because Node
 pipelines are the ones that hide the runner behind an alias. What genuinely stays Node-shaped is
 narrower still: **the place you write the configuration.** `runners` and `notChecks` live under
@@ -514,6 +515,13 @@ is that every number lives in one of them and in no copy.
    The alias hop is there because a real pipeline runs `pnpm test`, not `vitest`. Whole tokens are
    load-bearing rather than fastidious: a substring rule excludes a step whose *path argument*
    happens to contain a runner's name, and a step wrongly excluded is invisible.
+
+   **A runner is matched only in the last stage of a pipeline.** A step that hands the runner's
+   output to another command — `cucumber-js --dry-run --format usage-json | jq … | awk …` — is
+   using the runner as a tool, and the command that reads it passes the verdict, so the step is a
+   candidate check, not your suite. The same holds inside a manifest script the step invokes. A
+   `|` inside a quoted argument reads as a pipe too, which costs one `notChecks` line, never a
+   check gone silent.
 
    **`notChecks` is your list of steps that are neither runners nor checks** — a checkout, an
    install, an artefact upload, a deploy. An entry is `<workflow file>:<job id>:<step name>` and is

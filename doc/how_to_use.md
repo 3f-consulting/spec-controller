@@ -159,7 +159,9 @@ report distinguishes from omitting the key, which it reads back as *you have not
 outside the four is reported as unrecognised, excludes nothing, and does not abort the run. **No
 block at all is not an error**: every step becomes a candidate, which is the report the free state is
 sold on. A runner is matched as a **whole shell token** — of the step's own command, or of the
-`package.json` script it invokes, following aliases three deep — and never as a substring.
+`package.json` script it invokes, following aliases three deep — and never as a substring. It is
+matched only in the last stage of a pipeline: a step that pipes the runner's output into another
+command is a check that uses the runner, and is reported as one.
 
 **`notChecks` is your list of steps that are neither runners nor checks.** Entries are
 `<workflow file>:<job id>:<step name>`, matched **exactly**: no prefix form, no glob, no bare name.
@@ -509,7 +511,7 @@ packages carry codes of their own.
 
 **My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
-**A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, or one buried in a quoted argument to a wrapper, is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
+**A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, one buried in a quoted argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`), is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
 
 **The verdict reads SCENARIO CODE ERRORS** — the corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one. `## Scenario code errors` names each by its handle and file, and says which fix it wants. Every account still reconciles, so the rest of the report is as it would be; the run exits `1` until the codes are filed correctly.
 

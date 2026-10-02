@@ -180,6 +180,80 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
   });
 });
 
+describe("[SCN-USG-029] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
+  const stepRunning = (...lines: string[]): string =>
+    [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - name: Gate",
+      "        run: |",
+      ...lines.map((line) => `          ${line}`),
+    ].join("\n");
+
+  const integration = { integration: "cucumber-js" };
+  const noScripts = { scripts: {} };
+  const asTheRunner = [{ tier: "integration", runner: "cucumber-js", step: "Gate" }];
+
+  it("leaves a check piping the runner's output into another command a candidate", () => {
+    expect(
+      recognisedRunners(
+        [stepRunning("pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'")],
+        noScripts,
+        integration
+      )
+    ).toEqual([]);
+  });
+
+  it("leaves a check piping the runner's output and its errors into another command a candidate", () => {
+    expect(
+      recognisedRunners([stepRunning("cucumber-js --dry-run |& tee dry-run.log")], noScripts, integration)
+    ).toEqual([]);
+  });
+
+  it("leaves a check whose pipe follows a line continuation a candidate", () => {
+    expect(
+      recognisedRunners(
+        [stepRunning("cucumber-js --dry-run --format usage-json \\", "  | jq -r '.[]'")],
+        noScripts,
+        integration
+      )
+    ).toEqual([]);
+  });
+
+  it("leaves a check whose manifest script pipes the runner's output a candidate", () => {
+    expect(
+      recognisedRunners(
+        [stepRunning("pnpm lint:steps")],
+        { scripts: { "lint:steps": "cucumber-js --dry-run --format usage-json | jq -r '.[]'" } },
+        integration
+      )
+    ).toEqual([]);
+  });
+
+  it("still recognises the runner where its failure falls through to another command — the || control", () => {
+    expect(
+      recognisedRunners([stepRunning("cucumber-js || echo the suite failed")], noScripts, integration)
+    ).toEqual(asTheRunner);
+  });
+
+  it("still recognises the runner in a pipeline's last stage, where nothing reads its output", () => {
+    expect(
+      recognisedRunners([stepRunning("echo start | cucumber-js")], noScripts, integration)
+    ).toEqual(asTheRunner);
+  });
+
+  it("still recognises the runner on an unpiped line of a step whose other line pipes", () => {
+    expect(
+      recognisedRunners(
+        [stepRunning("git ls-files features | wc -l", "pnpm cucumber")],
+        { scripts: { cucumber: "cucumber-js" } },
+        integration
+      )
+    ).toEqual(asTheRunner);
+  });
+});
+
 describe("[SCN-USG-016] resolveRunners — a null runner, a named one, and a tier the block omits", () => {
   it("keeps a null runner as the target's own statement, and reads an omitted tier as no entry", () => {
     const resolved = resolveRunners({

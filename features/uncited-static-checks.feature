@@ -433,6 +433,33 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered from the target's files
       Then the report names the unit suite step its runner and no other, and the check is on the books as an uncited static check
 
+  Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
+
+    THE RUNNER IS THE COMMAND HERE, AND THE STEP IS STILL A CHECK. A gate can run the declared
+    runner itself, in a dry run or a listing, and hand what it prints to a filter that passes the
+    verdict. The runner's name is then a whole token of the step's command, so the token rule
+    alone would take the step for the suite and drop the gate from the books with nothing said.
+
+    WHAT TELLS THEM APART IS WHO READS THE RUNNER'S OUTPUT. A suite step's output is read by
+    nobody in the step: the reconciler reads its report later. A gate's output is the next
+    command's input. So a runner is recognised only in the last stage of a pipeline, in the step's
+    own command and in any manifest script it follows. Measured over every pipeline in the
+    portfolio, no suite step pipes its runner onward, and both gates of this shape do.
+
+    CUTTING A COMMAND TO ITS LAST STAGE CAN ONLY REMOVE A RUNNER MATCH, NEVER ADD ONE, so every
+    misreading lands on the side a consumer can see: a step reported as a check is one line of
+    notChecks, and a check reported as the runner is a gate deleted from the report.
+
+    THE SUITE STEP IN THIS TARGET IS THE CONTROL. A reader that recognised no runner at all would
+    put the check on the books too; the suite step still named the runner is what shows the rule
+    discriminates rather than going blind.
+
+    @unit @integration @SCN-USG-029
+    Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner
+      Given a target that names cucumber-js its integration runner, runs its integration suite, and runs a check that hands that runner's output to another command
+      When the reconciliation report is rendered from the target's files
+      Then the report names the integration suite step its runner and no other, and the check is on the books as an uncited static check
+
   Rule: a tier whose runner is null has no runner; a tier the block omits has not been told
 
     TWO FACTS THAT ARE OPPOSITE, AND THE CLAIM IS THE DISTINCTION. A null runner is something the

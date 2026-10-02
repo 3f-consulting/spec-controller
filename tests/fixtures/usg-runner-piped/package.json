@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "cucumber": "cucumber-js"
+  },
+  "specController": {
+    "runners": {
+      "integration": "cucumber-js"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
+  }
+}

@@ -9,16 +9,29 @@ import {
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
 
+const UP_TO_LAST_PIPE = /^.*(?<!\|)\|(?!\|)/;
+
+function finalStages(command: string): string {
+  return command
+    .replace(/\\\r?\n/g, " ")
+    .split(/\r?\n/)
+    .map((line) => line.replace(UP_TO_LAST_PIPE, ""))
+    .join("\n");
+}
+
 function namedRunnersAt(
   step: CiWorkflowStep,
   scripts: Readonly<Record<string, string>>,
   runners: Readonly<Record<string, string | null>>
 ): readonly (readonly [string, string])[] {
   if (!("runs" in step)) return [];
-  const command = step.runs;
+  const command = finalStages(step.runs);
+  const unpiped = Object.fromEntries(
+    Object.entries(scripts).map(([name, body]) => [name, finalStages(body)])
+  );
   return Object.entries(runners).filter(
     (entry): entry is [string, string] =>
-      entry[1] !== null && commandRuns(command, entry[1], scripts)
+      entry[1] !== null && commandRuns(command, entry[1], unpiped)
   );
 }
 
