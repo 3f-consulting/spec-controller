@@ -51,8 +51,8 @@ importers:
         specifier: 0.3.24
         version: 0.3.24
       spec-controller:
-        specifier: 0.1.0-alpha.47
-        version: 0.1.0-alpha.47
+        specifier: 0.1.0-alpha.49
+        version: 0.1.0-alpha.49
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -102,8 +102,8 @@ importers:
 
 packages:
 
-  '@3f-consulting/spec-controller-core@0.1.0-alpha.47':
-    resolution: {integrity: sha512-RqZ2kSzB2K5r3ZjHmZec5uGxEaCve7KI4AmrB/ROFYyj/06Yoz3LiMDxvqzEll9b6aRj2GPDMQYIAvz8OhEtnA==}
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.49':
+    resolution: {integrity: sha512-TYP55OMMKqt18k3448nRxBbuD2misjQFm/1W45ZrgX+2gqYVS95VRh2TSIjcNS8Luf2y/mweG6LLPctH8dxTBg==}
     engines: {node: '>=22'}
 
   '@andrewbranch/untar.js@1.0.4':
@@ -2208,6 +2208,10 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  source-map-js@1.2.2:
+    resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
+    engines: {node: '>=0.10.0'}
+
   source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
 
@@ -2231,8 +2235,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.0-alpha.47:
-    resolution: {integrity: sha512-J/p9prPTzVQIkx6rkN0+E+e7/hmO8AQE3+NUoFD6urMdepUdw74cYEVsWG8zkkeN0mXcE1YG7CEnLeL18X1y9g==}
+  spec-controller@0.1.0-alpha.49:
+    resolution: {integrity: sha512-DfFzbby/IX/aBlqHBsubwSgkx0o3n1C7+K9vFvxe+9QO7HPi+N8R9RmyI7mTKJbwrwQaiZ2DRqxDtE5SBNhGPg==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -2606,7 +2610,7 @@ packages:
 
 snapshots:
 
-  '@3f-consulting/spec-controller-core@0.1.0-alpha.47':
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.49':
     dependencies:
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
@@ -4547,7 +4551,7 @@ snapshots:
     dependencies:
       nanoid: 3.3.19
       picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   prelude-ls@1.2.1: {}
 
@@ -4724,6 +4728,8 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
+  source-map-js@1.2.2: {}
+
   source-map-support@0.5.21:
     dependencies:
       buffer-from: 1.1.2
@@ -4747,9 +4753,9 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.0-alpha.47:
+  spec-controller@0.1.0-alpha.49:
     dependencies:
-      '@3f-consulting/spec-controller-core': 0.1.0-alpha.47
+      '@3f-consulting/spec-controller-core': 0.1.0-alpha.49
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
       yaml: 2.9.0
