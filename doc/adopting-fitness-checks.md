@@ -520,6 +520,11 @@ on `workflow_dispatch`, never per push. The shared `stryker.config.js` holds the
   test in another package that reaches core through its name kills nothing.
 - Survivors are killed through tests of the behaviour that uses the code, citing the scenario they
   exercise. A test that restates data by hand is never the fix.
+- Stryker's Vitest runner sets `pool: 'threads'` whatever your Vitest config says, and
+  `process.chdir()` throws in a worker thread. A test that needs a working directory therefore stubs
+  the code's read of it (`vi.spyOn(process, "cwd")`) or passes the directory as an argument. It never
+  moves the process. A test passing under `pnpm test` is not proof it runs in the mutation run, so
+  prove a new test under a Stryker run of its scope.
 
 **An equivalent mutant is removed, not suppressed.**
 - Stryker's `// Stryker disable next-line <Mutator>` silences every mutant of that mutator on the
