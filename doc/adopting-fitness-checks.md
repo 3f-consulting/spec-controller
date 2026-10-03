@@ -482,6 +482,74 @@ is that every number lives in one of them and in no copy.
 
 ---
 
+## How spec-controller runs each gate — the specifics a copy needs
+
+*The table above names each gate and its canon. This section records how spec-controller's own
+tree runs a gate, in the detail that settles questions you would otherwise meet one at a time. It
+describes the tree as it is. The reason behind each point is in spec-controller's decision log; ask
+for an entry by its title.*
+
+### Mutation
+
+**What it runs.** `.github/workflows/mutation.yml` runs Stryker with the Vitest runner, nightly and
+on `workflow_dispatch`, never per push. The shared `stryker.config.js` holds the bar,
+`thresholds.break`, and nothing scope-specific.
+
+**One scope, one job, one bar.**
+- A scope is one directory under a package's `src`, or a package's top-level files taken together.
+  It is never a single file, which has no stable score.
+- Each scope is one entry in the workflow's `strategy.matrix.include`. The entry carries the scope's
+  name, its `mutate` globs and its own `timeout`. The globs reach Stryker through `env:`, never
+  interpolated into the command. The job runs `pnpm mutation --mutate "$MUTATE"`.
+- `fail-fast: false`, so one red scope still reports every other.
+- Each job uploads its report as an artifact named after its scope.
+- A scope's timeout is about twice its measured duration on the CI runner, never above 60 minutes.
+  Measure it on CI. A local run at a different concurrency does not predict it.
+
+**A scope joins green or not at all.**
+- A scope is added by one `include` entry in the change that brings it to the bar, never before.
+- The installing evidence is a `workflow_dispatch` of the workflow on `main` after the merge,
+  concluding `success`.
+- The bar is never lowered, and a scope is never added below it.
+- When two changes together alter what the nightly measures, their pull requests stack and merge
+  back to back, away from the cron, so no nightly runs half of the pair.
+
+**Kills count from the code's real consumers.**
+- `vitest.config.ts` aliases the core package's name, and its `/internal` subpath, to the package
+  source. Without the alias, Stryker's sandbox resolves the package name to unmutated source, so a
+  test in another package that reaches core through its name kills nothing.
+- Survivors are killed through tests of the behaviour that uses the code, citing the scenario they
+  exercise. A test that restates data by hand is never the fix.
+
+**An equivalent mutant is removed, not suppressed.**
+- Stryker's `// Stryker disable next-line <Mutator>` silences every mutant of that mutator on the
+  line, including mutants your tests already kill. So the code that makes a mutant equivalent is
+  removed instead: a redundant clause, an anchor that changes no match, an early return the code
+  below already covers. Each removal is behaviour-preserving, and the reconciliation report stays
+  byte-identical across it.
+- Where the construct is load-bearing, it stays, and its equivalent stands as an unsuppressed
+  survivor recorded against the scope.
+- The check: every mutant the report marks `Ignored` is one no test kills. Read it from the job's
+  artifact.
+
+**What the bar claims, and what it does not.**
+- A scope at or over the bar is green with survivors still standing. A survivor a test could kill is
+  recorded, and is not chased above the bar.
+- Below the bar, the canon's remedy applies (`fitness-functions.md` → *When the score drops below the
+  bar*). Prose in a string literal moves to a catalogue keyed by a code, and the catalogue file is
+  excluded from that scope's `mutate`, as the domain scope's message catalogue is.
+- A test that kills a mutant no other test kills is never a deletion candidate, whatever else
+  it duplicates.
+
+**How it reaches the Ledger.** A push step reads the newest finished nightly on `main` inside the
+freshness window, by its workflow conclusion, as *What you have afterwards* above shows. The run is
+green only if every scope's job is green, so adding a scope changes nothing on the push side.
+
+**The plant.** Point one matrix entry's globs at a weaker directory, dispatch the workflow, and only
+that job reds while the others stay green. Restore it before merge.
+
+---
+
 ## Converting an existing check — the checklist
 
 1. **Name your behavioural runners, and the steps that are not checks.** This comes first because it
