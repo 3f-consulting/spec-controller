@@ -136,7 +136,6 @@ function withConfigurationAccount(
   packageJson: TargetManifest
 ): EvidenceReconciliation {
   const { wrongKinds, unknownKeys } = configurationNotRead(packageJson);
-  if (wrongKinds.length === 0 && unknownKeys.length === 0) return reconciliation;
   return {
     ...reconciliation,
     summary: {
@@ -248,7 +247,6 @@ function withExclusionAccount(
   exclusions: StepExclusions
 ): EvidenceReconciliation {
   const { excluded, unmatchedEntries } = exclusions;
-  if (excluded.length === 0 && unmatchedEntries.length === 0) return reconciliation;
   return {
     ...reconciliation,
     summary: {
@@ -271,9 +269,6 @@ function withRunnerAccount(
     runnerTiers
   );
   const named = Object.keys(runnerTiers).length > 0;
-  if (behaviouralRunners.length === 0 && !named && unrecognisedKeys.length === 0) {
-    return reconciliation;
-  }
   return {
     ...reconciliation,
     summary: {

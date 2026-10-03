@@ -57,6 +57,9 @@ scored on its own:
           - scope: core-provenance
             mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts"
             timeout: 5
+          - scope: core-assemble
+            mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts"
+            timeout: 8
 ```
 
 ```yaml
