@@ -541,8 +541,20 @@ on `workflow_dispatch`, never per push. The shared `stryker.config.js` holds the
 - A scope at or over the bar is green with survivors still standing. A survivor a test could kill is
   recorded, and is not chased above the bar.
 - Below the bar, the canon's remedy applies (`fitness-functions.md` → *When the score drops below the
-  bar*). Prose in a string literal moves to a catalogue keyed by a code, and the catalogue file is
-  excluded from that scope's `mutate`, as the domain scope's message catalogue is.
+  bar*). Prose in a string literal moves into the package's message catalogue.
+
+**One message catalogue per package, one guard for them all.**
+- A catalogue is an object keyed by an enum of message codes and typed exhaustive
+  (`{ readonly [C in Code]: … }`), so the compiler refuses a code with no entry. Its values are
+  static prose, or templates whose parameters stay on the tested surface.
+- Each package has one catalogue, and every scope in the package adds its codes to it rather than
+  starting its own. Core's lives in its domain directory, because the domain imports nothing
+  outward and the other core directories may import the domain. The app's lives in its own package.
+- One catalogue cannot serve both packages. Core may not import the app, and the app reaches core
+  only through its published entry, which carries no app prose.
+- Each catalogue file is excluded from its scope's `mutate` by name.
+- One test reads every catalogue in the tree and fails on an empty entry, and one scenario states
+  that rule. Test files sit outside both import rules, so one file can read both packages.
 - A test that kills a mutant no other test kills is never a deletion candidate, whatever else
   it duplicates.
 
