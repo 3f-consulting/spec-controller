@@ -5,6 +5,7 @@ import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mk
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { STORED_RUN_FILE_INTENT, storedRunFile } from "./support/storedRunFile.js";
 
 const RUN_ID = "r1";
 const TARGET = "unwritable";
@@ -57,10 +58,10 @@ const STORE_ROOT: Readonly<Record<string, (dir: string) => string>> = {
 
 const RUN_DIRECTORY_OBSTACLE: Readonly<Record<string, (runDir: string) => void>> = {
   "nothing it may write into": (runDir) => chmodSync(runDir, 0o555),
-  "a directory named spec-reconciliation.md": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.md")),
-  "a directory named spec-reconciliation.json": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.json")),
-  "a directory named run.yaml": (runDir) => mkdirSync(join(runDir, "run.yaml")),
-  "a run.yaml it may not write": (runDir) => {
+  "a directory where the saved reconciliation, in markdown, goes": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.md")),
+  "a directory where the saved reconciliation, in JSON, goes": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.json")),
+  "a directory where the run manifest goes": (runDir) => mkdirSync(join(runDir, "run.yaml")),
+  "a run manifest it may not write": (runDir) => {
     writeFileSync(join(runDir, "run.yaml"), "an earlier run's manifest\n");
     chmodSync(join(runDir, "run.yaml"), 0o444);
   },
@@ -169,7 +170,7 @@ Then("the refusal carries no stack trace", function () {
   assert.equal(run.stderr.trimEnd().split("\n").length, 1, `the refusal is not one line:\n${run.stderr}`);
 });
 
-Then("no report is printed", function () {
+Then("no report is produced", function () {
   assert.equal(run.stdout, "", `a report reached stdout:\n${run.stdout.slice(0, 400)}`);
 });
 
@@ -206,7 +207,7 @@ Then("the markdown report destination is left exactly as it was", function () {
   }
 });
 
-Given(/^an out-of-balance target and a store root that is (.+)$/, function (location: string) {
+Given(/^an out-of-balance target and a run store that is (.+)$/, function (location: string) {
   assertTargetOutOfBalance();
   const arrange = STORE_ROOT[location];
   assert.ok(arrange, `no store root is arranged for "${location}"`);
@@ -214,7 +215,7 @@ Given(/^an out-of-balance target and a store root that is (.+)$/, function (loca
   storeRoot = arrange(scratch);
 });
 
-When("the operator stores a run of it under that root", function () {
+When("the operator stores a run of it under that run store", function () {
   run = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS]);
 });
 
@@ -230,7 +231,7 @@ Then("no run directory is announced", function () {
   assert.equal(run.stdout, "", `stdout announced something:\n${run.stdout}`);
 });
 
-Given(/^an out-of-balance target and a store root whose run directory already holds (.+)$/, function (obstacle: string) {
+Given(/^an out-of-balance target and a run store whose run directory already holds (.+)$/, function (obstacle: string) {
   assertTargetOutOfBalance();
   const arrange = RUN_DIRECTORY_OBSTACLE[obstacle];
   assert.ok(arrange, `no obstacle is arranged for "${obstacle}"`);
@@ -241,10 +242,10 @@ Given(/^an out-of-balance target and a store root whose run directory already ho
   arrange(runDir);
 });
 
-Then(/^the refusal names the run directory's (.+) and says (.+)$/, function (file: string, reason: string) {
+Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the run directory and says (.+)$`), function (file: string, reason: string) {
   const code = REASON_CODE[reason];
   assert.ok(code, `no operating-system code is named for "${reason}"`);
-  const path = join(storeRoot, TARGET, RUN_ID, file);
+  const path = join(storeRoot, TARGET, RUN_ID, storedRunFile(file));
   assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
   assert.ok(run.stderr.includes(code), `the refusal does not give ${code}:\n${run.stderr}`);
 });
@@ -277,7 +278,7 @@ const SECOND_PATH: Readonly<Record<string, (file: string, dir: string) => { firs
     linkSync(file, join(dir, "hard.out"));
     return { first: file, second: join(dir, "hard.out") };
   },
-  "where standard output is redirected": (file) => ({ first: file, second: file }),
+  "where the default report destination is redirected": (file) => ({ first: file, second: file }),
 };
 
 Given(/^an out-of-balance target and a report file that (does not exist|holds an earlier run)$/, function (state: string) {
@@ -294,7 +295,7 @@ Given(/^a second path to that file that is (.+)$/, function (alias: string) {
   const arrange = SECOND_PATH[alias];
   assert.ok(arrange, `no second path is arranged for "${alias}"`);
   ({ first: firstPath, second: secondPath } = arrange(sharedFile, join(scratch!, "dir")));
-  throughStdout = alias === "where standard output is redirected";
+  throughStdout = alias === "where the default report destination is redirected";
 });
 
 When(
@@ -337,7 +338,7 @@ Then("every destination is left exactly as it was", function () {
 
 let stdoutFile: string | undefined;
 
-Given(/^an out-of-balance target whose standard output is (a pipe|a file)$/, function (connectedTo: string) {
+Given(/^an out-of-balance target whose default report destination is (a pipe|a file)$/, function (connectedTo: string) {
   assertTargetOutOfBalance();
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-stdout-path-"));
   stdoutFile = connectedTo === "a file" ? join(scratch, "stdout.txt") : undefined;
@@ -365,11 +366,11 @@ When(new RegExp(`^the operator asks for the markdown report at ${STDOUT_DESTINAT
   run = specControllerInto(stdoutFile, args);
 });
 
-Then("the refusal says more than one output routes to standard output", function () {
+Then("the refusal says more than one output goes to the same place", function () {
   assert.ok(run.stderr.includes("More than one output routes to stdout"), `the refusal does not say so:\n${run.stderr}`);
 });
 
-Then("no report reaches standard output", function () {
+Then("nothing reaches the default report destination", function () {
   const printed = stdoutFile === undefined ? run.stdout : readFileSync(stdoutFile, "utf8");
   assert.equal(printed, "", `a report reached standard output:\n${printed.slice(0, 400)}`);
 });
@@ -424,7 +425,7 @@ function filesUnder(root: string): Map<string, string> {
   return files;
 }
 
-Given(/^an out-of-balance target and a store root holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
+Given(/^an out-of-balance target and a run store holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
   assertTargetOutOfBalance();
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-store-shared-"));
   storeRoot = join(scratch, "store");
@@ -436,16 +437,16 @@ Given(/^an out-of-balance target and a store root holding (nothing yet|an earlie
   storeBefore = filesUnder(storeRoot);
 });
 
-When(/^the operator stores a run of it and also asks for the (markdown|json) report at the run directory's (.+)$/, function (format: string, file: string) {
-  const path = join(storeRoot, TARGET, RUN_ID, file);
+When(new RegExp(`^the operator stores a run of it and also asks for the (markdown|json) report at (${STORED_RUN_FILE_INTENT}) in the run directory$`), function (format: string, file: string) {
+  const path = join(storeRoot, TARGET, RUN_ID, storedRunFile(file));
   run = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS, "--format", `${FORMAT_FLAG[format]}:${path}`]);
 });
 
-Then(/^the refusal names the run directory's (spec-reconciliation\.md|spec-reconciliation\.json|run\.yaml)$/, function (file: string) {
-  const path = join(storeRoot, TARGET, RUN_ID, file);
+Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the run directory$`), function (file: string) {
+  const path = join(storeRoot, TARGET, RUN_ID, storedRunFile(file));
   assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
 });
 
-Then("no file under the store root was added, changed or removed", function () {
+Then("no file under the run store was added, changed or removed", function () {
   assert.deepEqual(filesUnder(storeRoot), storeBefore, "the refused stored run changed the files under the store root");
 });

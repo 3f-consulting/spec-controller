@@ -37,7 +37,7 @@ When("the coded-corpus reconciliation run persists its machine artefacts", funct
   rmd006Md = readFileSync(mdPath, "utf8");
 });
 
-Then("the persisted spec-reconciliation.json carries the feature titles keyed by feature code", function () {
+Then("the saved reconciliation, in JSON, carries the feature titles keyed by feature code", function () {
   const metadata = rmd006Json.metadata as { featureNames?: Record<string, string> } | undefined;
   assert.ok(
     metadata?.featureNames,
@@ -59,7 +59,7 @@ Then("the persisted spec-reconciliation.json carries the feature titles keyed by
   );
 });
 
-Then("the persisted spec-reconciliation.md names each out-of-balance feature in full, sourced from the model", function () {
+Then("the saved reconciliation, in markdown, names each out-of-balance feature in full, sourced from the model", function () {
   assert.ok(
     rmd006Md.includes("| config-vocabulary-lint (CVL) | 1 | SCN-CVL-001 |"),
     `expected the coded out-of-balance feature named in full; got:\n${rmd006Md}`
@@ -82,7 +82,7 @@ let rmd007SavedStatus: number | null;
 let rmd007RegeneratedStatus: number | null;
 
 Given(
-  "a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render",
+  "a reconciliation run saved in JSON alongside its direct markdown render",
   function () {
     const repoRoot = process.cwd();
     const abs = (p: string): string => join(repoRoot, p);
@@ -110,7 +110,7 @@ Given(
   }
 );
 
-When("the markdown is regenerated from the saved spec-reconciliation.json alone", function () {
+When("the markdown is regenerated from the saved reconciliation's JSON alone", function () {
   const repoRoot = process.cwd();
   const regen = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--render-from-json", rmd007JsonPath], { cwd: rmd007Dir, encoding: "utf8" });
   rmd007RegeneratedStatus = regen.status;
@@ -133,7 +133,7 @@ Then("the regenerated markdown names the coded out-of-balance feature in full", 
   );
 });
 
-Then("the regeneration exits the code the saved run exited", function () {
+Then("the regeneration ends with the same exit as the run that saved it", function () {
   assert.equal(
     rmd007RegeneratedStatus,
     rmd007SavedStatus,

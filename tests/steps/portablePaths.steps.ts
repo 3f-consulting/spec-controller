@@ -42,7 +42,7 @@ function writeTargetReports(repo: string): void {
 }
 
 Given(
-  "a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
+  "a target repo outside the run's working directory whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
   function () {
     targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-target-")));
     mkdirSync(join(targetRepo, "features"), { recursive: true });
@@ -70,7 +70,7 @@ Given(
 );
 
 When(
-  "the real CLI reconciles it from a foreign cwd and persists the markdown and JSON reports",
+  "balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON",
   function () {
     const repoRoot = process.cwd();
     const mdPath = join(outDir, "spec-reconciliation.md");
@@ -106,7 +106,7 @@ When(
 );
 
 Then(
-  "the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root",
+  "the saved reconciliation, in both markdown and JSON, carries none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root",
   function () {
     assert.ok(
       !markdown.includes(targetRepo),

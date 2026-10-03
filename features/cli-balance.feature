@@ -11,9 +11,9 @@ Feature: spec-controller balance runs standalone
   @SCN-CLI-001 @e2e
   Scenario: balance reconciles a target and emits the Evidence Reconciliation to stdout
     Given a target with scenarios and a Vitest report of what ran
-    When "spec-controller balance" is invoked over that target through the CLI binary
-    Then the command exits zero
-    And it prints the Evidence Reconciliation to stdout
+    When balance is asked to reconcile that target
+    Then the run ends on the balanced verdict
+    And it reports the Evidence Reconciliation
     And the reconciliation reports the target's scenarios
 
   Rule: A supplied input path that does not exist is a hard error, not silent empty evidence.
@@ -26,25 +26,25 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-002 @unit @e2e
     Scenario Outline: a supplied-but-missing <flag> exits non-zero and names the path
-      Given a target, and <flag> pointing at a path that does not exist
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits non-zero
-      And stderr names <flag> and the missing path
+      Given a target, and the <flag> pointing at a path that does not exist
+      When balance is asked to reconcile that target
+      Then the run is rejected for the missing path
+      And the rejection names the <flag> and the missing path
       And nothing is reconciled
 
       Examples:
-        | flag           |
-        | --vitest       |
-        | --cucumber     |
-        | --features     |
-        | --ci           |
-        | --package-json |
+        | flag                   |
+        | Vitest report option   |
+        | Cucumber report option |
+        | feature corpus option  |
+        | CI workflows option    |
+        | manifest option        |
 
     @SCN-CLI-003 @unit @e2e
     Scenario: an omitted optional input flag is not an error
       Given a target with scenarios and a Vitest report
-      When "spec-controller balance" is invoked with no --cucumber flag through the CLI binary
-      Then the command exits zero
+      When balance is asked to reconcile that target without the Cucumber report option
+      Then the run ends on the balanced verdict
       And it reconciles the scenarios against the supplied evidence
 
   Rule: balance's exit code reflects the reconciliation verdict.
@@ -61,15 +61,15 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-004 @unit @e2e
     Scenario: an out-of-balance reconciliation exits 1
       Given a target that reconciles out-of-balance
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 1
-      And it prints the Evidence Reconciliation to stdout
+      When balance is asked to reconcile that target
+      Then the run ends on the out-of-balance verdict
+      And it reports the Evidence Reconciliation
 
     @SCN-CLI-005 @unit @e2e
     Scenario: an all-balanced reconciliation exits 0
       Given a target that reconciles all-balanced
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 0
+      When balance is asked to reconcile that target
+      Then the run ends on the balanced verdict
 
   Rule: an unsound run pre-empts the balance verdict
 
@@ -85,9 +85,9 @@ Feature: spec-controller balance runs standalone
     @unit @e2e @SCN-CLI-012
     Scenario: a run whose vitest report carries a collection-failed suite exits 4, not 1
       Given a target whose vitest report carries a collection-failed suite
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 4
-      And it prints the Evidence Reconciliation to stdout
+      When balance is asked to reconcile that target
+      Then the run ends on the unsound verdict
+      And it reports the Evidence Reconciliation
 
   Rule: --strict escalates Pending Items to a run failure
 
@@ -99,19 +99,19 @@ Feature: spec-controller balance runs standalone
     @unit @e2e @SCN-CLI-010
     Scenario: an only-Pending-Items reconciliation with no --strict → balance exits 0
       Given a target whose only exception is Pending Items
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 0
-      And it prints the Evidence Reconciliation to stdout
+      When balance is asked to reconcile that target
+      Then the run ends on the balanced verdict
+      And it reports the Evidence Reconciliation
       And the reconciliation reports a Pending Item
 
     @unit @e2e @SCN-CLI-011
     Scenario: an only-Pending-Items reconciliation with --strict → balance exits 3, and its verdict headline names exit 3
       Given a target whose only exception is Pending Items
-      When "spec-controller balance" is invoked with --strict over that target through the CLI binary
-      Then the command exits with status 3
-      And it prints the Evidence Reconciliation to stdout
+      When balance is asked to reconcile that target under the strict option
+      Then the run ends on the pending verdict
+      And it reports the Evidence Reconciliation
       And the reconciliation reports a Pending Item
-      And the verdict headline reads PENDING and names exit 3
+      And the verdict headline reads PENDING and names the exit it ends with
 
   Rule: the printed verdict agrees with the process exit code
 
@@ -127,11 +127,11 @@ Feature: spec-controller balance runs standalone
     @unit @e2e @SCN-CLI-013
     Scenario: the tally, the verdict headline and the process exit code name the same outcome
       Given a target whose only out-of-balance row is the suspense reconciliation
-      When "spec-controller balance" is invoked over that target through the CLI binary
+      When balance is asked to reconcile that target
       Then the trial-balance table counts 1 out-of-balance Scenario Reconciliation
-      And the verdict headline reads OUT-OF-BALANCE and names exit 1
-      And the command exits with status 1
-      And the tally, the verdict headline and the process exit code agree
+      And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
+      And the run ends on the out-of-balance verdict
+      And the tally, the verdict headline and the run's exit agree
 
   Rule: a re-render exits the verdict its saved reconciliation carries
 
@@ -141,48 +141,48 @@ Feature: spec-controller balance runs standalone
     was read back. The re-rendered headline and the exit agree exactly as a live run's do.
 
     @unit @e2e @SCN-CLI-069
-    Scenario Outline: a re-render of a saved <verdict> reconciliation exits <code>, and its verdict headline names <code>
+    Scenario Outline: a re-render of a saved <verdict> reconciliation ends on <code>, and its verdict headline names the exit for <code>
       Given a saved reconciliation of a target that reconciles <verdict>
-      When "spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary
-      Then the re-render exits with status <code>
-      And the re-render's verdict headline names exit <code>
+      When balance is asked to re-render the saved reconciliation
+      Then the re-render ends on <code>
+      And the re-render's verdict headline names the exit for <code>
 
       Examples:
-        | verdict                            | code |
-        | all-balanced                       | 0    |
-        | out-of-balance                     | 1    |
-        | balanced-with-scenario-code-errors | 1    |
-        | unsound                            | 4    |
-        | nothing to reconcile               | 5    |
+        | verdict                            | code                             |
+        | all-balanced                       | the balanced verdict             |
+        | out-of-balance                     | the out-of-balance verdict       |
+        | balanced-with-scenario-code-errors | the scenario-code-errors verdict |
+        | unsound                            | the unsound verdict              |
+        | nothing to reconcile               | the nothing-to-reconcile verdict |
 
     @unit @e2e @SCN-CLI-070
     Scenario Outline: a re-render is strict when the saved run was strict or the re-render is given --strict
       Given a saved reconciliation of a target whose only exception is Pending Items, saved <saved>
-      When "spec-controller balance --render-from-json" is invoked <given> over the saved reconciliation through the CLI binary
-      Then the re-render exits with status <code>
-      And the re-render's verdict headline names exit <code>
+      When balance is asked to re-render the saved reconciliation <given>
+      Then the re-render ends on <code>
+      And the re-render's verdict headline names the exit for <code>
 
       Examples:
-        | saved                          | given         | code |
-        | under --strict                 | with no flags | 3    |
-        | without --strict               | with --strict | 3    |
-        | without --strict               | with no flags | 0    |
-        | before strictness was recorded | with no flags | 0    |
+        | saved                          | given                   | code                 |
+        | under the strict option        | with no options         | the pending verdict  |
+        | without the strict option      | under the strict option | the pending verdict  |
+        | without the strict option      | with no options         | the balanced verdict |
+        | before strictness was recorded | with no options         | the balanced verdict |
 
     @unit @e2e @SCN-CLI-071
     Scenario Outline: under --exit-zero a re-render moves 1 and 3 to 0 and never 4 or 5, printing the same report
       Given a saved reconciliation of a target that reconciles <verdict>
-      When "spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary, once without --exit-zero and once with it
-      Then without --exit-zero the re-render exits with status <code>
-      And with --exit-zero the re-render exits with status <zeroed>
-      And the two re-renders print the same report, byte for byte
+      When balance is asked to re-render the saved reconciliation, once without the report-only option and once under it
+      Then without the report-only option the re-render ends on <code>
+      And under the report-only option the re-render ends on <zeroed>
+      And the two re-renders report the same, byte for byte
 
       Examples:
-        | verdict                           | code | zeroed |
-        | out-of-balance                    | 1    | 0      |
-        | only-Pending-Items under --strict | 3    | 0      |
-        | unsound                           | 4    | 4      |
-        | nothing to reconcile              | 5    | 5      |
+        | verdict                                    | code                             | zeroed                           |
+        | out-of-balance                             | the out-of-balance verdict       | success                          |
+        | only-Pending-Items under the strict option | the pending verdict              | success                          |
+        | unsound                                    | the unsound verdict              | the unsound verdict              |
+        | nothing to reconcile                       | the nothing-to-reconcile verdict | the nothing-to-reconcile verdict |
 
   Rule: a re-render reads its saved report and refuses every flag it would otherwise drop
 
@@ -195,22 +195,22 @@ Feature: spec-controller balance runs standalone
     @unit @e2e @SCN-CLI-072
     Scenario Outline: a <flag> given beside --render-from-json exits 2 naming the flag, and nothing is rendered
       Given a saved reconciliation of a target that reconciles out-of-balance
-      When "spec-controller balance --render-from-json" is invoked with <flag> <value> over the saved reconciliation through the CLI binary
-      Then the re-render exits with status 2
-      And stderr names the flag <flag>
+      When balance is asked to re-render the saved reconciliation with the <flag> given <value>
+      Then the re-render is refused as a usage error
+      And the refusal names the <flag>
       And nothing is re-rendered
 
       Examples:
-        | flag           | value         |
-        | --features     | /nonexistent  |
-        | --vitest       | /nonexistent  |
-        | --cucumber     | /nonexistent  |
-        | --ci           | /nonexistent  |
-        | --package-json | /nonexistent  |
-        | --ci-steps     | /nonexistent  |
-        | --target       | elsewhere     |
-        | --source-sha   | 0000000       |
-        | --format       | json:out.json |
+        | flag                   | value                     |
+        | feature corpus option  | /nonexistent              |
+        | Vitest report option   | /nonexistent              |
+        | Cucumber report option | /nonexistent              |
+        | CI workflows option    | /nonexistent              |
+        | manifest option        | /nonexistent              |
+        | CI step record option  | /nonexistent              |
+        | target-name option     | elsewhere                 |
+        | source-commit option   | 0000000                   |
+        | format option          | the json report in a file |
 
   Rule: an input the tool cannot read is a usage error, never a verdict
 
@@ -243,18 +243,18 @@ Feature: spec-controller balance runs standalone
 
     @unit @e2e @SCN-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
-      Given a target, and --vitest pointing at a report that exists but is not valid JSON
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 2
-      And stderr names the unparseable report and the parse failure
+      Given a target, and the Vitest report option pointing at a report that exists but is not valid JSON
+      When balance is asked to reconcile that target
+      Then the run is refused as a usage error
+      And the refusal names the unparseable report and the parse failure
       And nothing is reconciled
 
     @unit @e2e @SCN-CLI-015
     Scenario Outline: a --render-from-json report the tool cannot read exits 2, naming the file
-      Given --render-from-json pointing at a saved report that is <defect>
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 2
-      And stderr names the unreadable saved report
+      Given the re-render option pointing at a saved report that is <defect>
+      When balance is asked to re-render that saved report
+      Then the run is refused as a usage error
+      And the refusal names the unreadable saved report
       And nothing is rendered
 
       Examples:
@@ -264,10 +264,10 @@ Feature: spec-controller balance runs standalone
 
     @unit @e2e @SCN-CLI-016
     Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
-      Given --features containing a feature file that is <defect>
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 2
-      And stderr names the unparseable feature file and the parse failure
+      Given a feature corpus containing a feature file that is <defect>
+      When balance is asked to reconcile that target
+      Then the run is refused as a usage error
+      And the refusal names the unparseable feature file and the parse failure
       And nothing is reconciled
 
       Examples:
@@ -372,13 +372,13 @@ Feature: spec-controller balance runs standalone
       And the refusal says the tool was not permitted to read it
 
       Examples:
-        | input                            |
-        | a feature file                   |
-        | the feature corpus directory     |
-        | the CI workflow file             |
-        | the CI workflows directory       |
-        | the package.json read by default |
-        | the Vitest report                |
+        | input                        |
+        | a feature file               |
+        | the feature corpus directory |
+        | the CI workflow file         |
+        | the CI workflows directory   |
+        | the manifest read by default |
+        | the Vitest report            |
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
@@ -399,7 +399,7 @@ Feature: spec-controller balance runs standalone
       Given a stored run's target whose <input> is one the tool cannot read in shape
       When a stored balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict
-      And the refused run leaves nothing in the store
+      And the refused run leaves nothing in the run store
 
       Examples:
         | input           |
@@ -422,14 +422,14 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-017 @unit @e2e
     Scenario: a target with no features/ directory is reported on, never crashed over
       Given a target with no Gherkin corpus at all — no features directory on disk
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then it prints the Evidence Reconciliation to stdout
-      And the run ends on an enumerated status rather than a stack trace
+      When balance is asked to reconcile that target
+      Then it reports the Evidence Reconciliation
+      And the run ends on the exit its verdict headline names, rather than on a stack trace
 
     @SCN-CLI-018 @unit @e2e
     Scenario: an absent corpus and a corpus holding no scenario reach the same verdict by the same sentence
       Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario
-      When "spec-controller balance" is invoked over each of those targets through the CLI binary
+      When balance is asked to reconcile each of those targets
       Then every one of them is told the same verdict by the same sentence
       And that sentence names the corpus directory it examined
 
@@ -452,17 +452,17 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-019 @unit @e2e
     Scenario: a run with nothing to reconcile exits 5 and its headline says so, rather than reporting balanced
       Given a target that declared no scenario and produced no evidence
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 5
+      When balance is asked to reconcile that target
+      Then the run ends on the nothing-to-reconcile verdict
       And the verdict headline says the run had nothing to reconcile, never that it balanced
 
     @SCN-CLI-020 @unit @e2e
     Scenario: a corpus-less run carrying uncited credits is an ordinary out-of-balance report at exit 1
       Given a target with no Gherkin corpus whose unit evidence cites no scenario
-      When "spec-controller balance" is invoked over that target through the CLI binary
+      When balance is asked to reconcile that target
       Then the uncited credits are posted to the suspense reconciliation
-      And the verdict headline reads OUT-OF-BALANCE and names exit 1
-      And the command exits with status 1
+      And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
+      And the run ends on the out-of-balance verdict
       And the run is never read as one with nothing to reconcile
 
   Rule: --exit-zero moves the verdict codes to 0 and never the couldn't-run codes
@@ -476,31 +476,31 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-021 @unit @e2e
     Scenario Outline: under --exit-zero a <verdict> run prints the same report byte for byte and exits 0
       Given a target that reconciles <verdict>
-      When "spec-controller balance" is invoked <flags> over that target through the CLI binary, once without --exit-zero and once with it
-      Then without --exit-zero the command exits with status <code>
-      And with --exit-zero the command exits with status 0
-      And the two runs print the same Evidence Reconciliation to stdout, byte for byte but for the run timestamp each stamps for itself
+      When balance is asked to reconcile that target <flags>, once without the report-only option and once under it
+      Then without the report-only option the run ends on <code>
+      And under the report-only option the run ends on success
+      And the two runs report the same Evidence Reconciliation, byte for byte but for the run timestamp each stamps for itself
 
       Examples:
-        | verdict                            | flags         | code |
-        | all-balanced                       | with no flags | 0    |
-        | out-of-balance                     | with no flags | 1    |
-        | only-Pending-Items                 | with --strict | 3    |
-        | balanced-with-scenario-code-errors | with no flags | 1    |
+        | verdict                            | flags                   | code                             |
+        | all-balanced                       | with no options         | the balanced verdict             |
+        | out-of-balance                     | with no options         | the out-of-balance verdict       |
+        | only-Pending-Items                 | under the strict option | the pending verdict              |
+        | balanced-with-scenario-code-errors | with no options         | the scenario-code-errors verdict |
 
     @SCN-CLI-022 @unit @e2e
-    Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still exits <code>
+    Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still ends on <code>
       Given <target>
-      When "spec-controller balance" is invoked with --exit-zero over that target through the CLI binary
-      Then the command exits with status <code>
+      When balance is asked to reconcile that target under the report-only option
+      Then the run ends on <code>
       And <evidence>
 
       Examples:
-        | state                | target                                                         | code | evidence                                                                           |
-        | usage                | a target, and --vitest pointing at a path that does not exist  | 2    | stderr names --vitest and the missing path                                         |
-        | unsound              | a target whose vitest report carries a collection-failed suite | 4    | it prints the Evidence Reconciliation to stdout                                    |
-        | nothing to reconcile | a target that declared no scenario and produced no evidence    | 5    | the verdict headline says the run had nothing to reconcile, never that it balanced |
-        | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code | 4 | the report still lists the scenario code error                             |
+        | state                | target                                                                        | code                             | evidence                                                                           |
+        | usage                | a target, and the Vitest report option pointing at a path that does not exist | a usage error                    | the rejection names the Vitest report option and the missing path                  |
+        | unsound              | a target whose vitest report carries a collection-failed suite                | the unsound verdict              | it reports the Evidence Reconciliation                                             |
+        | nothing to reconcile | a target that declared no scenario and produced no evidence                   | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
+        | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code   | the unsound verdict              | the report still lists the scenario code error                                     |
 
   Rule: a corpus-shape fault never pre-empts the report
 
@@ -512,8 +512,8 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-055 @unit @e2e
     Scenario: An out-of-balance account and a scenario code error in one run exit 1, both reported
       Given a target whose corpus misfiles a scenario code and whose ledger has an account out of balance
-      When "spec-controller balance" is invoked over that target through the CLI binary
-      Then the command exits with status 1
+      When balance is asked to reconcile that target
+      Then the run ends on the out-of-balance verdict
       And the report lists the scenario code error
       And the report carries the out-of-balance account
       And the verdict headline names both the scenario code error and the accounts out of balance
@@ -529,11 +529,11 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-056 @unit @e2e
     Scenario Outline: an unknown command is a usage fault — <request>
-      Given the spec-controller top-level binary
+      Given the spec-controller host
       When it is asked for <request>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And it names the command it does not know
-      And it prints nothing a pipeline could read as a report
+      And it produces nothing a pipeline could read as a report
 
       Examples:
         | request                                    |
@@ -543,9 +543,9 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-057 @unit @e2e
     Scenario: --exit-zero after an unknown command never moves its usage status
-      Given the spec-controller top-level binary
-      When it is asked for a name that is no command, with --exit-zero after the command
-      Then it answers that the invocation was wrong, with the usage status
+      Given the spec-controller host
+      When it is asked for a name that is no command, with the report-only option after the command
+      Then the invocation is refused as a usage error
 
   Rule: a flag that takes a value, given none, is a usage fault, refused before anything runs
 
@@ -565,29 +565,29 @@ Feature: spec-controller balance runs standalone
       And the refusal names <flag> as a flag missing its value
 
       Examples:
-        | flag               | shape                                                 |
-        | --format           | at the end of the arguments                           |
-        | --format           | followed by --exit-zero                               |
-        | --target           | followed by --exit-zero                               |
-        | --vitest           | at the end, with a file named true in the working dir |
-        | --render-from-json | at the end of the arguments                           |
-        | --features         | with an empty value                                   |
+        | flag                      | shape                                                       |
+        | the format option         | at the end of the arguments                                 |
+        | the format option         | followed by the report-only option                          |
+        | the target-name option    | followed by the report-only option                          |
+        | the Vitest report option  | at the end, with a file named true in the working directory |
+        | the re-render option      | at the end of the arguments                                 |
+        | the feature corpus option | with an empty value                                         |
 
     @SCN-CLI-059 @unit @e2e
     Scenario Outline: the host refuses <modifier> given no value as a usage fault, and stores nothing — <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When a stored balance run is asked for with <modifier> given no value, <shape>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And the refusal names <modifier> as a flag missing its value
-      And nothing is written to the store root or the working directory
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | modifier | shape                         |
-        | --store  | alone                         |
-        | --store  | followed by --run-id          |
-        | --run-id | at the end, after --store     |
-        | --run-id | with an empty value           |
-        | --store  | with an empty value           |
+        | modifier              | shape                                |
+        | the store modifier    | alone                                |
+        | the store modifier    | followed by the run-name modifier    |
+        | the run-name modifier | at the end, after the store modifier |
+        | the run-name modifier | with an empty value                  |
+        | the store modifier    | with an empty value                  |
 
   Rule: a flag goes on its own side of the command, and one on the wrong side is refused as out of place
 
@@ -599,27 +599,27 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-060 @unit @e2e
     Scenario Outline: a flag given before the command is refused as a flag out of place, never as an unknown command — <flag>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When a stored run is asked for with <flag>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And the refusal names the flag as given before the command, never as an unknown command
-      And nothing is written to the store root or the working directory
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | flag                                  |
-        | --exit-zero, before balance           |
-        | --format md, before balance           |
-        | --bogus, before balance               |
-        | --exit-zero, before no known command  |
+        | flag                                            |
+        | the report-only option, before balance          |
+        | the format option given md, before balance      |
+        | an unknown flag, before balance                 |
+        | the report-only option, before no known command |
 
     @SCN-CLI-061 @unit @e2e
     Scenario: a host modifier given after the command is refused as out of place, naming where it goes, with no pin advice
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with the store modifier given after the command
       Then balance refuses the run as a usage fault, with nothing reconciled
       And the refusal names the store modifier as one that goes before the command
       And the refusal advises no pin
-      And nothing is written to the store root or the working directory
+      And nothing is written to the run store or the working directory
 
   Rule: every argument is read as what it is, or refused as a usage fault before anything runs
 
@@ -637,163 +637,163 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-062 @unit @e2e
     Scenario Outline: balance refuses a value given to a flag that takes none, naming both — <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with <flag> given the value <value>, <shape>
       Then balance refuses the run as a usage fault, with nothing reconciled
       And the refusal names <flag> as a flag that takes no value, and <value> as the value it was given
-      And the store root holds no record of a run
+      And the run store holds no record of a run
 
       Examples:
-        | flag        | value | shape                                     |
-        | --strict    | foo   | after the target's flags                  |
-        | --exit-zero | foo   | after the target's flags                  |
-        | --strict    | foo   | after the target's flags, in a stored run |
+        | flag                   | value | shape                                     |
+        | the strict option      | foo   | after the target's flags                  |
+        | the report-only option | foo   | after the target's flags                  |
+        | the strict option      | foo   | after the target's flags, in a stored run |
 
     @SCN-CLI-063 @unit @e2e
     Scenario Outline: balance refuses an argument that is neither a flag nor a flag's value, naming it — <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with an argument that is no flag, <shape>
       Then balance refuses the run as a usage fault, with nothing reconciled
       And the refusal names that argument as one balance does not take
-      And the store root holds no record of a run
+      And the run store holds no record of a run
 
       Examples:
-        | shape                                                          |
-        | the target's features directory alone, with no flag before it |
-        | a stray word after the target's flags, with --exit-zero        |
-        | a single-dash token after the target's flags, with --exit-zero |
-        | the command given twice, in a stored run                       |
+        | shape                                                                      |
+        | the target's features directory alone, with no flag before it              |
+        | a stray word after the target's flags, under the report-only option        |
+        | a single-dash token after the target's flags, under the report-only option |
+        | the command given twice, in a stored run                                   |
 
     @SCN-CLI-064 @unit @e2e
     Scenario Outline: a flag that does not repeat, given twice, is refused naming the flag, never read as its last value — <flag> <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When a run is asked for with <flag> given twice, <shape>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And nothing is reconciled
       And the refusal names <flag> as given more than once
-      And the store root holds no record of a run
+      And the run store holds no record of a run
 
       Examples:
-        | flag       | shape                                                               |
-        | --features | at a path that does not exist, then at the target, with --exit-zero |
-        | --target   | as two different names                                              |
-        | --strict   | with no value either time                                           |
-        | --target   | as two different names, in a stored run                             |
-        | --store    | before the command, the second time at the store root               |
-        | --run-id   | before the command, as two ids, in a stored run                     |
+        | flag                      | shape                                                                           |
+        | the feature corpus option | at a path that does not exist, then at the target, under the report-only option |
+        | the target-name option    | as two different names                                                          |
+        | the strict option         | with no value either time                                                       |
+        | the target-name option    | as two different names, in a stored run                                         |
+        | the store modifier        | before the command, the second time at the run store                            |
+        | the run-name modifier     | before the command, as two ids, in a stored run                                 |
 
     @SCN-CLI-065 @unit @e2e
     Scenario Outline: a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice — <written> <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When a run is asked for with <written>, <shape>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And nothing is reconciled
       And the refusal names <written> as a form that is not read, and <spelling> as the spelling that is
       And the refusal advises no pin, and calls the flag neither unknown nor out of place
-      And the store root holds no record of a run
+      And the run store holds no record of a run
 
       Examples:
-        | written        | spelling         | shape                                      |
-        | --format=json  | --format json    | after the target's flags                   |
-        | --format=json  | --format json    | after the target's flags, with --exit-zero |
-        | --features=    | --features <dir> | after the target's flags                   |
-        | --store=<root> | --store <root>   | before the command                         |
-        | --store=<root> | --store <root>   | after the command                          |
-        | --format=json  | --format json    | after the target's flags, in a stored run  |
+        | written                                                        | spelling                                                   | shape                                                  |
+        | the format option and json joined by an equals sign            | the format option and json as two arguments                | after the target's flags                               |
+        | the format option and json joined by an equals sign            | the format option and json as two arguments                | after the target's flags, under the report-only option |
+        | the feature corpus option and nothing joined by an equals sign | the feature corpus option and a directory as two arguments | after the target's flags                               |
+        | the store modifier and the run store joined by an equals sign  | the store modifier and the run store as two arguments      | before the command                                     |
+        | the store modifier and the run store joined by an equals sign  | the store modifier and the run store as two arguments      | after the command                                      |
+        | the format option and json joined by an equals sign            | the format option and json as two arguments                | after the target's flags, in a stored run              |
 
     @SCN-CLI-066 @unit @e2e
     Scenario Outline: the host refuses a modifier that took the command as its value, naming both, and stores nothing — <modifier> <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When a stored run is asked for, with the command given as the value of <modifier>, <shape>
-      Then it answers that the invocation was wrong, with the usage status
+      Then the invocation is refused as a usage error
       And the refusal names <modifier> as having taken the command as its value
-      And nothing is written to the store root or the working directory
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | modifier | shape                                           |
-        | --store  | with the target's flags after it                |
-        | --store  | with nothing after it                           |
-        | --run-id | after --store, with the target's flags after it |
+        | modifier              | shape                                                      |
+        | the store modifier    | with the target's flags after it                           |
+        | the store modifier    | with nothing after it                                      |
+        | the run-name modifier | after the store modifier, with the target's flags after it |
 
     @SCN-CLI-067 @unit @e2e
     Scenario Outline: the host refuses a modifier with no command after it, naming it, and stores nothing — <modifiers> <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
-      When the host modifiers <modifiers> are given with no command after them, <shape>
-      Then it answers that the invocation was wrong, with the usage status
-      And it prints nothing a pipeline could read as a report
+      Given a target that reconciles out-of-balance, and an empty run store
+      When the host is asked for nothing but <modifiers>, <shape>
+      Then the invocation is refused as a usage error
+      And it produces nothing a pipeline could read as a report
       And the refusal names every modifier given, and says no command followed them
-      And nothing is written to the store root or the working directory
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | modifiers         | shape                             |
-        | --store           | at a store root that is not there |
-        | --store           | at the empty store root           |
-        | --run-id          | alone                             |
-        | --store, --run-id | in that order                     |
-        | --run-id, --store | in that order                     |
+        | modifiers                                    | shape                            |
+        | the store modifier                           | at a run store that is not there |
+        | the store modifier                           | at the empty run store           |
+        | the run-name modifier                        | alone                            |
+        | the store modifier and the run-name modifier | in that order                    |
+        | the run-name modifier and the store modifier | in that order                    |
 
     @SCN-CLI-068 @unit @e2e
     Scenario Outline: help after a modifier, or nothing given at all, still answers the top-level help — <request>
-      Given a target that reconciles out-of-balance, and an empty store root
-      When the top-level binary is asked for <request>
-      Then it answers with the same top-level help as a bare invocation, and the success status
-      And nothing is written to the store root or the working directory
+      Given a target that reconciles out-of-balance, and an empty run store
+      When spec-controller is asked for <request>
+      Then it answers with the same top-level help as a bare invocation, and succeeds
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | request                                             |
-        | --help after --store                                |
-        | help after --store                                  |
-        | -h after --store                                    |
-        | --help after --run-id                               |
-        | --help after --store and --run-id                   |
-        | nothing at all                                      |
-        | --help after --store, given a command as its value  |
-        | -h after --store, given a command as its value      |
-        | --help after --run-id, given a command as its value |
-        | -h after --run-id, given a command as its value     |
+        | request                                                                          |
+        | help by its long name after the store modifier                                   |
+        | the help command after the store modifier                                        |
+        | help by its short name after the store modifier                                  |
+        | help by its long name after the run-name modifier                                |
+        | help by its long name after the store modifier and the run-name modifier         |
+        | nothing at all                                                                   |
+        | help by its long name after the store modifier, given a command as its value     |
+        | help by its short name after the store modifier, given a command as its value    |
+        | help by its long name after the run-name modifier, given a command as its value  |
+        | help by its short name after the run-name modifier, given a command as its value |
 
     @SCN-CLI-073 @unit @e2e
     Scenario Outline: a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing — <request>
-      Given a target that reconciles out-of-balance, and an empty store root
+      Given a target that reconciles out-of-balance, and an empty run store
       When the host is given <request>
-      Then it answers with the same top-level help as a bare invocation, and the success status
-      And nothing is written to the store root or the working directory
+      Then it answers with the same top-level help as a bare invocation, and succeeds
+      And nothing is written to the run store or the working directory
 
       Examples:
-        | request                                                               |
-        | --help after a flag out of place                                      |
-        | --help after a flag out of place, before a command                    |
-        | --help after a modifier that took the command, and the target's flags |
-        | -h between a modifier that took the command and the target's flags   |
-        | --help after a modifier that took the command, and another modifier  |
-        | --help where a modifier's value goes                                  |
-        | --help after a modifier given twice                                   |
-        | --help after a modifier written --flag=value                          |
-        | -h as a modifier's value, before a command                            |
+        | request                                                                                |
+        | help by its long name after a flag out of place                                        |
+        | help by its long name after a flag out of place, before a command                      |
+        | help by its long name after a modifier that took the command, and the target's flags   |
+        | help by its short name between a modifier that took the command and the target's flags |
+        | help by its long name after a modifier that took the command, and another modifier     |
+        | help by its long name where a modifier's value goes                                    |
+        | help by its long name after a modifier given twice                                     |
+        | help by its long name after a modifier joined to its value by an equals sign           |
+        | help by its short name as a modifier's value, before a command                         |
 
     @SCN-CLI-083 @unit @e2e
     Scenario Outline: the host refuses --run-id given without --store as a usage fault, naming it, and nothing runs or is written — <shape>
-      Given a target that reconciles out-of-balance, and an empty store root
-      When a run is named with --run-id and given no store, <shape>
-      Then it answers that the invocation was wrong, with the usage status
-      And it prints nothing a pipeline could read as a report
-      And the refusal names --run-id as naming a run that is not kept
-      And nothing is written to the store root or the working directory
+      Given a target that reconciles out-of-balance, and an empty run store
+      When a run is named with the run-name modifier and given no store modifier, <shape>
+      Then the invocation is refused as a usage error
+      And it produces nothing a pipeline could read as a report
+      And the refusal names the run-name modifier as naming a run that is not kept
+      And nothing is written to the run store or the working directory
 
       Examples:
         | shape                                                      |
         | before a live balance run                                  |
-        | before a live balance run, with --exit-zero                |
-        | before a live balance run, with --strict                   |
+        | before a live balance run, under the report-only option    |
+        | before a live balance run, under the strict option         |
         | before a live balance run that writes its report to a file |
         | before a balance re-render of a saved report               |
 
     @SCN-CLI-084 @unit @e2e
     Scenario Outline: a request for balance's help after --run-id with no --store answers balance's help as it does alone, and writes nothing — <request>
-      Given a target that reconciles out-of-balance, and an empty store root
-      When balance's help is asked for <request>, after --run-id with no store
-      Then it answers with balance's help, exactly as it does with nothing before it, and the success status
-      And nothing is written to the store root or the working directory
+      Given a target that reconciles out-of-balance, and an empty run store
+      When balance's help is asked for <request>, after the run-name modifier with no store modifier
+      Then it answers with balance's help, exactly as it does with nothing before it, and succeeds
+      And nothing is written to the run store or the working directory
 
       Examples:
         | request           |
@@ -827,10 +827,10 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-009 @unit @e2e
     Scenario: an unregistered flag to balance is a usage error
-      Given the spec-controller balance command
-      When "spec-controller balance --bogus" is run through the CLI binary
-      Then it exits with status 2 naming the unrecognised flag --bogus on stderr
-      And nothing is reconciled to stdout
+      Given a flag balance has never registered
+      When balance is asked to run with that unregistered flag
+      Then the run is refused as a usage error, naming the unrecognised flag
+      And nothing is reconciled
       And the refusal names the version that refused it and the bump that cures a pinned skew
 
   Rule: a flag balance has retired is refused as retired, naming what replaced it — never as skew a pin can cure
@@ -847,7 +847,7 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-023 @unit @e2e
     Scenario: a retired flag to balance is refused as retired, naming its replacement and no pin that restores it
-      Given a flag the balance command has retired
+      Given a flag balance has retired
       When balance is asked to run with that flag
       Then balance refuses the run as a usage fault and reconciles nothing
       And the refusal names the flag as retired, with the version that retired it

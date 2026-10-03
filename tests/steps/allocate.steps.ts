@@ -286,7 +286,7 @@ When("the author asks allocate for its help {}", function (request: string) {
   answer = allocate(repository, args);
 });
 
-Then("it answers with allocate's help, naming the feature part it takes and --new, and gives no code", function () {
+Then("it answers with allocate's help, naming the feature part it takes and the new-part option, and gives no code", function () {
   assert.equal(answer.status, 0, `expected success, got ${answer.status}\n${answer.stderr}`);
   assert.match(answer.stdout, /^spec-controller allocate — /);
   assert.match(answer.stdout, /<FFF>/);
@@ -296,10 +296,20 @@ Then("it answers with allocate's help, naming the feature part it takes and --ne
 
 let storeRoot = "";
 
+const MODIFIER_FLAG: Record<string, string> = { "the store modifier": "--store", "the run-name modifier": "--run-id" };
+
+function modifierFlags(modifiers: string): string[] {
+  return modifiers.split(" and ").map((modifier) => {
+    const flag = MODIFIER_FLAG[modifier];
+    assert.ok(flag !== undefined, `no flag for: ${modifier}`);
+    return flag;
+  });
+}
+
 function modifierArgs(modifiers: string): string[] {
   storeRoot = join(mkdtempSync(join(tmpdir(), "allocate-store-")), "store");
   const values: Record<string, string> = { "--store": storeRoot, "--run-id": "r1" };
-  return modifiers.split(" and ").flatMap((modifier) => [modifier, values[modifier] ?? ""]);
+  return modifierFlags(modifiers).flatMap((modifier) => [modifier, values[modifier] ?? ""]);
 }
 
 When("the author asks for the next code for {word} with {} before the command", function (part: string, modifiers: string) {
@@ -314,10 +324,10 @@ When("the author asks for the next code for {word} with {} before the command", 
 Then("it is refused as a usage error naming {}, and no code is given", function (modifiers: string) {
   assert.equal(answer.status, 2, `expected the usage status, got ${answer.status}\n${answer.stderr}`);
   assert.equal(answer.stdout, "");
-  for (const modifier of modifiers.split(" and ")) assert.ok(answer.stderr.includes(modifier), answer.stderr);
+  for (const modifier of modifierFlags(modifiers)) assert.ok(answer.stderr.includes(modifier), answer.stderr);
 });
 
-Then("nothing is stored, in the store root or the repository", function () {
+Then("nothing is stored, in the run store or the repository", function () {
   assert.equal(existsSync(storeRoot), false, `the store root was made: ${storeRoot}`);
   assert.equal(git(repository, ["status", "--porcelain"]).trim(), "");
 });

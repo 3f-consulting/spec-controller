@@ -50,7 +50,7 @@ After(function () {
   scratch = undefined;
 });
 
-Given(/^a store root holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
+Given(/^a run store holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-run-"));
   storeRoot = join(scratch, "store");
   if (earlier !== "nothing yet") {
@@ -78,7 +78,7 @@ Then("the stored run announces no run directory", function () {
   assert.ok(!run.stdout.includes(storeRoot), `a run directory was announced:\n${run.stdout}`);
 });
 
-Then("the refused run added, changed or removed no file under the store root", function () {
+Then("the refused run added, changed or removed no file under the run store", function () {
   assert.deepEqual(filesUnder(storeRoot), filesBefore);
 });
 
@@ -86,25 +86,25 @@ const HELP_NAME: Readonly<Record<string, string>> = { long: "--help", short: "-h
 
 let rootBefore: { exists: boolean; isFile: boolean; bytes: string | undefined };
 
-Given(/^a store root that is (not yet made|a regular file)$/, function (root: string) {
+Given(/^a run store that is (not yet made|a regular file)$/, function (root: string) {
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-help-"));
   storeRoot = join(scratch, "store");
   if (root === "a regular file") writeFileSync(storeRoot, "not a directory\n");
   rootBefore = snapshotRoot();
 });
 
-When(/^the operator asks for balance's help by its (long|short) name under that store root$/, function (name: string) {
+When(/^the operator asks for balance's help by its (long|short) name under that run store$/, function (name: string) {
   run = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", HELP_NAME[name] ?? name]);
 });
 
-Then("the help is answered, as it is with no store root", function () {
+Then("the help is answered, as it is with no run store", function () {
   const bare = specController(["balance", "--help"]);
   assert.equal(run.status, 0, `expected the help's status; got ${run.status}\n${run.stderr}`);
   assert.equal(run.stderr, "", `the help wrote to stderr:\n${run.stderr}`);
   assert.equal(run.stdout, bare.stdout, "the stored help differs from the help with no store root");
 });
 
-Then("the store root is as it was before the run", function () {
+Then("the run store is as it was before the run", function () {
   assert.deepEqual(snapshotRoot(), rootBefore);
 });
 
@@ -132,7 +132,7 @@ Given(/^a saved reconciliation that is (of an out-of-balance run|at a path that 
   assert.equal(live.status, 1, `expected the saved run out of balance; got ${live.status}\n${live.stderr}`);
 });
 
-When(/^the operator asks for it to be re-rendered under a store root (.+)$/, function (beside: string) {
+When(/^the operator asks for it to be re-rendered under a run store (.+)$/, function (beside: string) {
   const flags = BESIDE[beside];
   assert.ok(flags !== undefined, `no flags for "${beside}"`);
   invocation = ["--store", storeRoot, "--run-id", RUN_ID, "balance", "--render-from-json", savedReport, ...flags];
@@ -150,10 +150,10 @@ Then("the refusal names no flag the operator did not give", function () {
   assert.deepEqual(notGiven, [], `the refusal names flags the operator did not give:\n${run.stderr}`);
 });
 
-Then("the stored re-render prints no report", function () {
+Then("the stored re-render produces no report", function () {
   assert.equal(run.stdout, "", `a report reached stdout:\n${run.stdout.slice(0, 400)}`);
 });
 
-Then("no store root is made", function () {
+Then("no run store is made", function () {
   assert.ok(!existsSync(storeRoot), `the store root was made: ${storeRoot}`);
 });

@@ -5,6 +5,7 @@ import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirS
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { STORED_RUN_FILE_INTENT, storedRunFile } from "./support/storedRunFile.js";
 
 const USAGE = 2;
 const TARGET_NAME = "reads-its-own";
@@ -72,8 +73,11 @@ function targetArgs(overrides: Readonly<Record<string, string>>): string[] {
 }
 
 Given(
-  /^a balanced target whose (cucumber report|unit test report|workflow file) is the (spec-reconciliation\.json|spec-reconciliation\.md|run\.yaml) a stored run of it would write, over (nothing yet|an earlier kept run under the same run-id)$/,
-  function (input: string, file: string, earlier: string) {
+  new RegExp(
+    `^a balanced target whose (cucumber report|unit test report|workflow file) sits where a stored run of it would write (${STORED_RUN_FILE_INTENT}), over (nothing yet|an earlier kept run under the same run-id)$`,
+  ),
+  function (input: string, intent: string, earlier: string) {
+    const file = storedRunFile(intent);
     scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-input-"));
     target = join(scratch, "target");
     mkdirSync(join(target, "features"), { recursive: true });

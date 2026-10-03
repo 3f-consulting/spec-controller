@@ -4,7 +4,9 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { optionFlag } from "./support/balanceOption.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { exitOn, RUN_OUTCOME } from "./support/runExit.js";
 
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "all-balanced": { fixture: "balanced", flags: [] },
@@ -12,7 +14,7 @@ const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "balanced-with-scenario-code-errors": { fixture: "scenario-code-error", flags: [] },
   unsound: { fixture: "broken", flags: [] },
   "nothing to reconcile": { fixture: "nothing-to-reconcile", flags: [] },
-  "only-Pending-Items under --strict": { fixture: "pending-only", flags: ["--strict"] },
+  "only-Pending-Items under the strict option": { fixture: "pending-only", flags: ["--strict"] },
 };
 
 let scratch: string | undefined;
@@ -66,41 +68,47 @@ function withoutStrictRecord(path: string): string {
 }
 
 Given(
-  /^a saved reconciliation of a target whose only exception is Pending Items, saved (under --strict|without --strict|before strictness was recorded)$/,
+  /^a saved reconciliation of a target whose only exception is Pending Items, saved (under the strict option|without the strict option|before strictness was recorded)$/,
   function (saved: string) {
-    const strict = saved === "under --strict" ? ["--strict"] : [];
+    const strict = saved === "under the strict option" ? ["--strict"] : [];
     const path = saveLiveRun("pending-only", strict);
     savedReport = saved === "before strictness was recorded" ? withoutStrictRecord(path) : path;
   },
 );
 
 When(
-  /^"spec-controller balance --render-from-json" is invoked (with no flags|with --strict) over the saved reconciliation through the CLI binary$/,
+  /^balance is asked to re-render the saved reconciliation (with no options|under the strict option)$/,
   function (given: string) {
-    const flags = given === "with --strict" ? ["--strict"] : [];
+    const flags = given === "under the strict option" ? ["--strict"] : [];
     reRendered = spawnController(["--render-from-json", savedReport, ...flags], process.cwd());
   },
 );
 
 When(
-  '"spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary',
+  "balance is asked to re-render the saved reconciliation",
   function () {
     reRendered = spawnController(["--render-from-json", savedReport], process.cwd());
   },
 );
 
-Then("the re-render exits with status {int}", function (code: number) {
+Then(new RegExp(`^the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  const code = exitOn(outcome);
   assert.equal(reRendered.status, code, `expected the re-render to exit ${code}; got ${reRendered.status}:\n${reRendered.stderr}`);
 });
 
-Then("the re-render's verdict headline names exit {int}", function (code: number) {
-  assert.equal(headlineExit(reRendered.stdout), code);
+Then("the re-render is refused as a usage error", function () {
+  const code = exitOn("a usage error");
+  assert.equal(reRendered.status, code, `expected the re-render to exit ${code}; got ${reRendered.status}:\n${reRendered.stderr}`);
+});
+
+Then(new RegExp(`^the re-render's verdict headline names the exit for (${RUN_OUTCOME})$`), function (outcome: string) {
+  assert.equal(headlineExit(reRendered.stdout), exitOn(outcome));
 });
 
 let exitZeroPair: { without: SpawnSyncReturns<string>; with: SpawnSyncReturns<string> } | undefined;
 
 When(
-  '"spec-controller balance --render-from-json" is invoked over the saved reconciliation through the CLI binary, once without --exit-zero and once with it',
+  "balance is asked to re-render the saved reconciliation, once without the report-only option and once under it",
   function () {
     exitZeroPair = {
       without: spawnController(["--render-from-json", savedReport], process.cwd()),
@@ -109,30 +117,37 @@ When(
   },
 );
 
-Then("without --exit-zero the re-render exits with status {int}", function (code: number) {
-  assert.equal(exitZeroPair?.without.status, code, `without --exit-zero:\n${exitZeroPair?.without.stderr}`);
+Then(new RegExp(`^without the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  assert.equal(exitZeroPair?.without.status, exitOn(outcome), `without --exit-zero:\n${exitZeroPair?.without.stderr}`);
 });
 
-Then("with --exit-zero the re-render exits with status {int}", function (code: number) {
-  assert.equal(exitZeroPair?.with.status, code, `with --exit-zero:\n${exitZeroPair?.with.stderr}`);
+Then(new RegExp(`^under the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  assert.equal(exitZeroPair?.with.status, exitOn(outcome), `with --exit-zero:\n${exitZeroPair?.with.stderr}`);
 });
 
-Then("the two re-renders print the same report, byte for byte", function () {
+Then("the two re-renders report the same, byte for byte", function () {
   assert.ok(exitZeroPair && exitZeroPair.without.stdout.includes("### Run verdict"), "the re-render printed no report");
   assert.equal(exitZeroPair.with.stdout, exitZeroPair.without.stdout);
 });
 
 let refusalCwd = "";
 
+const OPTION_VALUE: Record<string, string> = {
+  "the json report in a file": "json:out.json",
+};
+
 When(
-  /^"spec-controller balance --render-from-json" is invoked with (--[a-z-]+) (\S+) over the saved reconciliation through the CLI binary$/,
-  function (flag: string, value: string) {
+  /^balance is asked to re-render the saved reconciliation with the (.+ option) given (.+)$/,
+  function (option: string, given: string) {
+    const flag = optionFlag(option);
+    const value = OPTION_VALUE[given] ?? given;
     refusalCwd = mkdtempSync(join(scratch ?? tmpdir(), "cwd-"));
     reRendered = spawnController(["--render-from-json", savedReport, flag, value], refusalCwd);
   },
 );
 
-Then("stderr names the flag {word}", function (flag: string) {
+Then(/^the refusal names the (.+ option)$/, function (option: string) {
+  const flag = optionFlag(option);
   assert.ok(reRendered.stderr.includes(flag), `expected stderr to name ${flag}; got:\n${reRendered.stderr}`);
 });
 

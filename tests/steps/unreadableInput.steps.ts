@@ -153,7 +153,7 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     chmodSync(join(dir, "workflows"), 0o000);
     return [["--features", "features", "--ci", "workflows"], "workflows", "--ci"];
   },
-  "the package.json read by default": (dir) => {
+  "the manifest read by default": (dir) => {
     writeFileSync(join(dir, "package.json"), "{}");
     chmodSync(join(dir, "package.json"), 0o000);
     return [["--features", "features"], "package.json", "package.json read by default"];
@@ -230,7 +230,7 @@ function filesUnder(dir: string): string[] {
     .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1));
 }
 
-Then("the refused run leaves nothing in the store", function () {
+Then("the refused run leaves nothing in the run store", function () {
   assert.deepEqual(filesUnder(store), [], "a refused run must store nothing: no run.yaml and no report");
 });
 

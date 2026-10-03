@@ -41,7 +41,7 @@ Given(
   }
 );
 
-When("the reconciliation is run over each and persisted to spec-reconciliation.json", function () {
+When("the reconciliation is run over each and saved in JSON", function () {
   const repoRoot = process.cwd();
   rmd009Parsed = rmd009Reports.map((vitest, i) => {
     const out = join(rmd009Dir, `run-${i}.json`);

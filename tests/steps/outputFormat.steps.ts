@@ -25,7 +25,7 @@ let fmt006Result: SpawnSyncReturns<string>;
 let fmt007Cwd: string;
 let fmt007Result: SpawnSyncReturns<string>;
 
-When("the operator asks the built CLI for the markdown report in a file", function () {
+When("the operator asks for the markdown report in a file", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt003FilePath = join(corpusCwd, "spec-reconciliation.md");
@@ -44,7 +44,7 @@ When("the operator asks the built CLI for the markdown report in a file", functi
   );
 });
 
-Then("the markdown report is in that file, and the run prints nothing", function () {
+Then("the markdown report is in that file, and nothing else is reported", function () {
   assert.equal(fmt003Run.error, undefined, `the CLI subprocess failed to spawn: ${fmt003Run.error?.message}`);
   assert.equal(
     fmt003Run.status,
@@ -70,7 +70,7 @@ Given("a target corpus to reconcile", function () {
   );
 });
 
-When("the CLI is run with --format md and --format json", function () {
+When("the operator asks for the markdown report and the json report, neither given a file of its own", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt005Result = spawnSync(
@@ -89,7 +89,7 @@ When("the CLI is run with --format md and --format json", function () {
   );
 });
 
-Then("the CLI exits non-zero", function () {
+Then("the run is rejected", function () {
   assert.equal(
     fmt005Result.error,
     undefined,
@@ -103,7 +103,7 @@ Then("the CLI exits non-zero", function () {
   );
 });
 
-Then("stderr hints to give one of the outputs a :<path>", function () {
+Then("the rejection hints to give one of the outputs a path of its own", function () {
   const stderr = fmt005Result.stderr ?? "";
   assert.match(
     stderr,
@@ -121,7 +121,7 @@ After({ tags: "@SCN-FMT-005" }, function () {
   if (corpusCwd && existsSync(corpusCwd)) rmSync(corpusCwd, { recursive: true, force: true });
 });
 
-Given("a target corpus to reconcile with a legacy --json destination", function () {
+Given("a target corpus to reconcile with a destination for the legacy json option", function () {
   fmt006Cwd = mkdtempSync(join(tmpdir(), "spec-controller-fmt006-"));
   fmt006JsonPath = join(fmt006Cwd, "out.json");
   assert.ok(
@@ -130,7 +130,7 @@ Given("a target corpus to reconcile with a legacy --json destination", function 
   );
 });
 
-When("the CLI is run with the removed --json flag", function () {
+When("the operator asks for the json report through the removed legacy json option", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt006Result = spawnSync(
@@ -148,7 +148,7 @@ When("the CLI is run with the removed --json flag", function () {
   );
 });
 
-Then("the CLI exits non-zero and does not create the --json file", function () {
+Then("the run is rejected and does not create that destination", function () {
   assert.equal(
     fmt006Result.error,
     undefined,
@@ -166,7 +166,7 @@ Then("the CLI exits non-zero and does not create the --json file", function () {
   );
 });
 
-Then("stderr hints to use --format json:<path>", function () {
+Then("the rejection hints to use the format option to write the json report to a file", function () {
   const stderr = fmt006Result.stderr ?? "";
   assert.match(
     stderr,
@@ -179,7 +179,7 @@ After({ tags: "@SCN-FMT-006" }, function () {
   if (fmt006Cwd && existsSync(fmt006Cwd)) rmSync(fmt006Cwd, { recursive: true, force: true });
 });
 
-Given("a target corpus to reconcile with an unsupported --format", function () {
+Given("a target corpus to reconcile with an unsupported report format", function () {
   fmt007Cwd = mkdtempSync(join(tmpdir(), "spec-controller-fmt007-"));
   assert.ok(
     existsSync(join(process.cwd(), FIXTURE.features)),
@@ -187,7 +187,7 @@ Given("a target corpus to reconcile with an unsupported --format", function () {
   );
 });
 
-When("the CLI is run with --format xml", function () {
+When("the operator asks for the xml report", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt007Result = spawnSync(
@@ -205,7 +205,7 @@ When("the CLI is run with --format xml", function () {
   );
 });
 
-Then("the CLI exits non-zero rejecting the unknown format", function () {
+Then("the run is rejected for the unknown format", function () {
   assert.equal(
     fmt007Result.error,
     undefined,
@@ -219,7 +219,7 @@ Then("the CLI exits non-zero rejecting the unknown format", function () {
   );
 });
 
-Then("stderr lists the supported formats md and json", function () {
+Then("the rejection lists the supported formats md and json", function () {
   const stderr = fmt007Result.stderr ?? "";
   assert.match(
     stderr,

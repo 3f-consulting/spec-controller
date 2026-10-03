@@ -146,7 +146,7 @@ Feature: Allocate the next scenario code for a feature part
     Scenario Outline: allocate --help answers first, listing <FFF> and --new, and exits 0 whatever else is given — <request>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks allocate for its help <request>
-      Then it answers with allocate's help, naming the feature part it takes and --new, and gives no code
+      Then it answers with allocate's help, naming the feature part it takes and the new-part option, and gives no code
 
       Examples:
         | request                               |
@@ -161,35 +161,35 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks for the next code for ONE with <modifiers> before the command
       Then it is refused as a usage error naming <modifiers>, and no code is given
-      And nothing is stored, in the store root or the repository
+      And nothing is stored, in the run store or the repository
 
       Examples:
-        | modifiers           |
-        | --store             |
-        | --run-id            |
-        | --store and --run-id |
+        | modifiers                                    |
+        | the store modifier                           |
+        | the run-name modifier                        |
+        | the store modifier and the run-name modifier |
 
     @SCN-ALC-016 @unit @e2e
     Scenario Outline: a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing — <modifiers> <request>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author gives <modifiers> before allocate and asks it for its help <request>
       Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code
-      And nothing is stored, in the store root or the repository
+      And nothing is stored, in the run store or the repository
 
       Examples:
-        | modifiers            | request                                                     |
-        | --store              | alone                                                       |
-        | --store              | by its short name, alone                                    |
-        | --store              | after a part                                                |
-        | --store              | by its short name, beside a flag the command does not take |
-        | --run-id             | alone                                                       |
-        | --run-id             | by its short name, alone                                    |
-        | --run-id             | after a part                                                |
-        | --run-id             | by its short name, beside a flag the command does not take |
-        | --store and --run-id | alone                                                       |
-        | --store and --run-id | by its short name, alone                                    |
-        | --store and --run-id | after a part                                                |
-        | --store and --run-id | by its short name, beside a flag the command does not take |
+        | modifiers                                    | request                                                    |
+        | the store modifier                           | alone                                                      |
+        | the store modifier                           | by its short name, alone                                   |
+        | the store modifier                           | after a part                                               |
+        | the store modifier                           | by its short name, beside a flag the command does not take |
+        | the run-name modifier                        | alone                                                      |
+        | the run-name modifier                        | by its short name, alone                                   |
+        | the run-name modifier                        | after a part                                               |
+        | the run-name modifier                        | by its short name, beside a flag the command does not take |
+        | the store modifier and the run-name modifier | alone                                                      |
+        | the store modifier and the run-name modifier | by its short name, alone                                   |
+        | the store modifier and the run-name modifier | after a part                                               |
+        | the store modifier and the run-name modifier | by its short name, beside a flag the command does not take |
 
   Rule: a file allocate cannot read is a usage error, never a crash and never an answer without it
 

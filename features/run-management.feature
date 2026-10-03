@@ -65,12 +65,12 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-004
     Scenario: `spec-controller --store <root> balance` writes a stored run the operator can reach
-      Given a reconcilable target and a store root outside the repo
-      When the operator runs balance under a store directive through the CLI binary
-      Then the store command exits with status 1
-      And a run directory named for the target and run-id exists under the store root
-      And that run directory holds spec-reconciliation.md, spec-reconciliation.json, and run.yaml
-      And its run.yaml parses with mode balance, the target, and the run-id
+      Given a reconcilable target and a run store outside the repo
+      When the operator runs balance under the store modifier and the run-name modifier
+      Then the stored run ends on the out-of-balance verdict
+      And a run directory named for the target and run-id exists under the run store
+      And that run directory holds the saved reconciliation, in markdown and in JSON, and the run manifest
+      And the run manifest reads mode balance, the target, and the run-id
 
   Rule: a store location that cannot be written is refused, never a crash
 
@@ -83,8 +83,8 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-008
     Scenario Outline: a --store root that cannot be created is refused naming the location and why, with no stack trace and no run directory printed
-      Given an out-of-balance target and a store root that is <location>
-      When the operator stores a run of it under that root
+      Given an out-of-balance target and a run store that is <location>
+      When the operator stores a run of it under that run store
       Then the run is refused as a usage error, never reported as a verdict
       And the refusal names the run directory and says <reason>
       And the refusal carries no stack trace
@@ -100,20 +100,20 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-009
     Scenario Outline: a stored run that cannot write a report or its run.yaml into its run directory is refused naming the file and why, with no stack trace and no run directory printed
-      Given an out-of-balance target and a store root whose run directory already holds <obstacle>
-      When the operator stores a run of it under that root
+      Given an out-of-balance target and a run store whose run directory already holds <obstacle>
+      When the operator stores a run of it under that run store
       Then the run is refused as a usage error, never reported as a verdict
-      And the refusal names the run directory's <file> and says <reason>
+      And the refusal names <file> in the run directory and says <reason>
       And the refusal carries no stack trace
       And no run directory is announced
 
       Examples:
-        | obstacle                                   | file                     | reason                         |
-        | nothing it may write into                  | spec-reconciliation.md   | permission was denied          |
-        | a directory named spec-reconciliation.md   | spec-reconciliation.md   | the destination is a directory |
-        | a directory named spec-reconciliation.json | spec-reconciliation.json | the destination is a directory |
-        | a directory named run.yaml                 | run.yaml                 | the destination is a directory |
-        | a run.yaml it may not write                | run.yaml                 | permission was denied          |
+        | obstacle                                                      | file                                  | reason                         |
+        | nothing it may write into                                     | the saved reconciliation, in markdown | permission was denied          |
+        | a directory where the saved reconciliation, in markdown, goes | the saved reconciliation, in markdown | the destination is a directory |
+        | a directory where the saved reconciliation, in JSON, goes     | the saved reconciliation, in JSON     | the destination is a directory |
+        | a directory where the run manifest goes                       | the run manifest                      | the destination is a directory |
+        | a run manifest it may not write                               | the run manifest                      | permission was denied          |
 
   Rule: a --format output never shares a file the stored run writes
 
@@ -125,23 +125,23 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-010
     Scenario Outline: a stored run given a --format naming its own report or run.yaml is refused naming the file, prints no run directory, and an earlier run under the same run id keeps its files
-      Given an out-of-balance target and a store root holding <earlier>
-      When the operator stores a run of it and also asks for the <format> report at the run directory's <file>
+      Given an out-of-balance target and a run store holding <earlier>
+      When the operator stores a run of it and also asks for the <format> report at <file> in the run directory
       Then the run is refused as a usage error, never reported as a verdict
-      And the refusal names the run directory's <file>
+      And the refusal names <file> in the run directory
       And the refusal carries no stack trace
       And no run directory is announced
-      And no file under the store root was added, changed or removed
+      And no file under the run store was added, changed or removed
 
       Examples:
-        | earlier                                   | format   | file                     |
-        | nothing yet                               | json     | spec-reconciliation.md   |
-        | nothing yet                               | markdown | spec-reconciliation.json |
-        | nothing yet                               | markdown | spec-reconciliation.md   |
-        | nothing yet                               | markdown | run.yaml                 |
-        | an earlier kept run under the same run-id | json     | spec-reconciliation.md   |
-        | an earlier kept run under the same run-id | markdown | spec-reconciliation.json |
-        | an earlier kept run under the same run-id | markdown | run.yaml                 |
+        | earlier                                   | format   | file                                  |
+        | nothing yet                               | json     | the saved reconciliation, in markdown |
+        | nothing yet                               | markdown | the saved reconciliation, in JSON     |
+        | nothing yet                               | markdown | the saved reconciliation, in markdown |
+        | nothing yet                               | markdown | the run manifest                      |
+        | an earlier kept run under the same run-id | json     | the saved reconciliation, in markdown |
+        | an earlier kept run under the same run-id | markdown | the saved reconciliation, in JSON     |
+        | an earlier kept run under the same run-id | markdown | the run manifest                      |
 
   Rule: a stored run's run.yaml records only a run that wrote its report
 
@@ -154,11 +154,11 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-005
     Scenario Outline: a stored run refused for an unknown flag leaves no run.yaml and prints no run directory, and an earlier run under the same run-id keeps its record
-      Given a store root holding <earlier>
+      Given a run store holding <earlier>
       When the operator stores a balance run under that run-id with a flag balance does not accept
       Then the stored run is refused as a usage error, never reported as a verdict
       And the stored run announces no run directory
-      And the refused run added, changed or removed no file under the store root
+      And the refused run added, changed or removed no file under the run store
 
       Examples:
         | earlier                                   |
@@ -167,10 +167,10 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-006
     Scenario Outline: a stored balance --help answers the help before the store is touched, even under a store root that cannot be written
-      Given a store root that is <root>
-      When the operator asks for balance's help by its <name> name under that store root
-      Then the help is answered, as it is with no store root
-      And the store root is as it was before the run
+      Given a run store that is <root>
+      When the operator asks for balance's help by its <name> name under that run store
+      Then the help is answered, as it is with no run store
+      And the run store is as it was before the run
 
       Examples:
         | name  | root           |
@@ -182,11 +182,11 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     @unit @e2e @SCN-RMG-007
     Scenario Outline: a stored --render-from-json re-render is refused naming --store, never a flag the operator did not give, and nothing is stored
       Given a saved reconciliation that is <saved>
-      When the operator asks for it to be re-rendered under a store root <beside>
+      When the operator asks for it to be re-rendered under a run store <beside>
       Then the re-render is refused as a usage error, naming the store as what it cannot take
       And the refusal names no flag the operator did not give
-      And the stored re-render prints no report
-      And no store root is made
+      And the stored re-render produces no report
+      And no run store is made
 
       Examples:
         | saved                     | beside                        |
@@ -205,7 +205,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
     @unit @e2e @SCN-RMG-011
     Scenario Outline: a stored run whose report or run.yaml would land on one of its inputs is refused naming the file, prints no run directory, and every input is left as it was
-      Given a balanced target whose <input> is the <file> a stored run of it would write, over <earlier>
+      Given a balanced target whose <input> sits where a stored run of it would write <file>, over <earlier>
       When the operator stores a run of it reading that input
       Then the stored run is refused as a usage error, naming that file
       And its refusal is a single line with no stack trace
@@ -213,8 +213,8 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
       And every file of the target and its store is left exactly as it was
 
       Examples:
-        | input                | file                     | earlier                                   |
-        | cucumber report      | spec-reconciliation.json | nothing yet                               |
-        | unit test report     | spec-reconciliation.md   | nothing yet                               |
-        | workflow file        | run.yaml                 | nothing yet                               |
-        | workflow file        | run.yaml                 | an earlier kept run under the same run-id |
+        | input            | file                                  | earlier                                   |
+        | cucumber report  | the saved reconciliation, in JSON     | nothing yet                               |
+        | unit test report | the saved reconciliation, in markdown | nothing yet                               |
+        | workflow file    | the run manifest                      | nothing yet                               |
+        | workflow file    | the run manifest                      | an earlier kept run under the same run-id |

@@ -32,8 +32,8 @@ Feature: Emit each output format to stdout or a caller-given path
     @unit @integration @SCN-FMT-003
     Scenario: --format md:<path> writes the markdown report to a file instead of stdout
       Given a target corpus to reconcile
-      When the operator asks the built CLI for the markdown report in a file
-      Then the markdown report is in that file, and the run prints nothing
+      When the operator asks for the markdown report in a file
+      Then the markdown report is in that file, and nothing else is reported
 
     @unit @e2e @SCN-FMT-012
     Scenario: a --format path that is a symlink to a file not yet created is written through the link
@@ -64,18 +64,18 @@ Feature: Emit each output format to stdout or a caller-given path
     @unit @integration @SCN-FMT-005
     Scenario: two outputs both routed to stdout are rejected with a hint
       Given a target corpus to reconcile
-      When the CLI is run with --format md and --format json
-      Then the CLI exits non-zero
-      And stderr hints to give one of the outputs a :<path>
+      When the operator asks for the markdown report and the json report, neither given a file of its own
+      Then the run is rejected
+      And the rejection hints to give one of the outputs a path of its own
 
     @unit @e2e @SCN-FMT-011
     Scenario Outline: a --format path naming stdout counts as routed to stdout, so beside another stdout output it is refused and no report is printed
-      Given an out-of-balance target whose standard output is <connected to>
+      Given an out-of-balance target whose default report destination is <connected to>
       When the operator asks for the markdown report at <first> and the json report at <second>
       Then the run is refused as a usage error, never reported as a verdict
-      And the refusal says more than one output routes to standard output
+      And the refusal says more than one output goes to the same place
       And the refusal carries no stack trace
-      And no report reaches standard output
+      And nothing reaches the default report destination
 
       Examples:
         | connected to | first               | second                      |
@@ -93,10 +93,10 @@ Feature: Emit each output format to stdout or a caller-given path
 
     @unit @integration @SCN-FMT-006
     Scenario: the legacy --json flag is rejected with a hint to use --format json:<path>
-      Given a target corpus to reconcile with a legacy --json destination
-      When the CLI is run with the removed --json flag
-      Then the CLI exits non-zero and does not create the --json file
-      And stderr hints to use --format json:<path>
+      Given a target corpus to reconcile with a destination for the legacy json option
+      When the operator asks for the json report through the removed legacy json option
+      Then the run is rejected and does not create that destination
+      And the rejection hints to use the format option to write the json report to a file
 
   Rule: an unknown format is rejected
 
@@ -107,10 +107,10 @@ Feature: Emit each output format to stdout or a caller-given path
 
     @unit @integration @SCN-FMT-007
     Scenario: --format xml (an unsupported format) is rejected with a hint listing md and json
-      Given a target corpus to reconcile with an unsupported --format
-      When the CLI is run with --format xml
-      Then the CLI exits non-zero rejecting the unknown format
-      And stderr lists the supported formats md and json
+      Given a target corpus to reconcile with an unsupported report format
+      When the operator asks for the xml report
+      Then the run is rejected for the unknown format
+      And the rejection lists the supported formats md and json
 
   Rule: a file destination that cannot be written is refused before anything is emitted, never a crash
 
@@ -129,7 +129,7 @@ Feature: Emit each output format to stdout or a caller-given path
       Then the run is refused as a usage error, never reported as a verdict
       And the refusal names the destination and says <reason>
       And the refusal carries no stack trace
-      And no report is printed
+      And no report is produced
 
       Examples:
         | location                                     | format   | reason                         |
@@ -146,7 +146,7 @@ Feature: Emit each output format to stdout or a caller-given path
       And a markdown report destination that is <markdown>
       When the operator asks for both reports, the <first> one named first
       Then the run is refused as a usage error, never reported as a verdict
-      And no report is printed
+      And no report is produced
       And the markdown report destination is left exactly as it was
 
       Examples:
@@ -179,22 +179,22 @@ Feature: Emit each output format to stdout or a caller-given path
       Then the run is refused as a usage error, never reported as a verdict
       And the refusal names both outputs that share the file
       And the refusal carries no stack trace
-      And no report is printed
+      And no report is produced
       And every destination is left exactly as it was
 
       Examples:
-        | state                     | alias                                     | first    | second   |
-        | does not exist            | the same path                             | markdown | markdown |
-        | does not exist            | the same path                             | markdown | json     |
-        | does not exist            | the same path                             | json     | markdown |
-        | holds an earlier run      | the same path                             | markdown | json     |
-        | does not exist            | the path spelled from the current folder  | markdown | json     |
-        | does not exist            | its absolute path                         | markdown | json     |
-        | does not exist            | a path through a sibling folder and back  | markdown | json     |
-        | holds an earlier run      | a symbolic link to it                     | markdown | json     |
-        | holds an earlier run      | a path through a link to its folder       | markdown | json     |
-        | holds an earlier run      | a hard link to it                         | markdown | json     |
-        | holds an earlier run      | where standard output is redirected       | markdown | json     |
+        | state                | alias                                              | first    | second   |
+        | does not exist       | the same path                                      | markdown | markdown |
+        | does not exist       | the same path                                      | markdown | json     |
+        | does not exist       | the same path                                      | json     | markdown |
+        | holds an earlier run | the same path                                      | markdown | json     |
+        | does not exist       | the path spelled from the current folder           | markdown | json     |
+        | does not exist       | its absolute path                                  | markdown | json     |
+        | does not exist       | a path through a sibling folder and back           | markdown | json     |
+        | holds an earlier run | a symbolic link to it                              | markdown | json     |
+        | holds an earlier run | a path through a link to its folder                | markdown | json     |
+        | holds an earlier run | a hard link to it                                  | markdown | json     |
+        | holds an earlier run | where the default report destination is redirected | markdown | json     |
 
   Rule: no output lands on a file the run reads, however it is named, and a run that asks for it is refused before anything is written
 
@@ -215,32 +215,32 @@ Feature: Emit each output format to stdout or a caller-given path
       When the operator <runs> it and asks for the <format> report at that path, and a second report at a file of its own
       Then the run is refused as a usage error, not a verdict, naming the report and the input it would overwrite
       And the refusal is a single line with no stack trace
-      And nothing is printed
+      And nothing is reported
       And every file of the target is left exactly as it was
 
       Examples:
-        | verdict        | input                                                       | alias                                    | runs            | format   |
-        | balanced       | the unit test report                                        | its own path                             | runs            | json     |
-        | balanced       | the cucumber report                                         | its own path                             | runs            | markdown |
-        | balanced       | the record of the CI steps                                  | its own path                             | runs            | json     |
-        | balanced       | the manifest it was pointed at                              | its own path                             | runs            | json     |
-        | balanced       | the manifest it reads by default                            | its own path                             | runs            | json     |
-        | balanced       | a feature file of the corpus it was pointed at              | its own path                             | runs            | markdown |
-        | balanced       | a feature file of the corpus it reads by default            | its own path                             | runs            | json     |
-        | balanced       | the workflow file it was pointed at                         | its own path                             | runs            | json     |
-        | balanced       | a .yml workflow of the folder it was pointed at             | its own path                             | runs            | json     |
-        | balanced       | a .yaml workflow of the folder it was pointed at            | its own path                             | runs            | json     |
-        | balanced       | a workflow of the folder it reads by default                | its own path                             | runs            | json     |
-        | out-of-balance | the unit test report                                        | its own path                             | runs            | json     |
-        | balanced       | the unit test report                                        | the path spelled from the current folder | runs            | json     |
-        | balanced       | the unit test report                                        | its absolute path                        | runs            | json     |
-        | balanced       | the unit test report                                        | a path through a sibling folder and back | runs            | json     |
-        | balanced       | the unit test report                                        | a symbolic link to it                    | runs            | json     |
-        | balanced       | the unit test report                                        | a hard link to it                        | runs            | json     |
-        | balanced       | a workflow of the folder it reads by default                | a path through a link to its folder      | runs            | json     |
-        | balanced       | the unit test report, named through a symbolic link         | its own path                             | runs            | json     |
-        | balanced       | a feature file of the corpus, named through a linked folder | its own path                             | runs            | json     |
-        | balanced       | the unit test report                                        | where standard output is appended        | runs            | markdown |
-        | out-of-balance | the workflow file it was pointed at                         | where standard output is appended        | runs            | markdown |
-        | balanced       | the unit test report                                        | its own path                             | stores a run of | json     |
-        | balanced       | the manifest it reads by default                            | its own path                             | stores a run of | markdown |
+        | verdict        | input                                                       | alias                                            | runs            | format   |
+        | balanced       | the unit test report                                        | its own path                                     | runs            | json     |
+        | balanced       | the cucumber report                                         | its own path                                     | runs            | markdown |
+        | balanced       | the record of the CI steps                                  | its own path                                     | runs            | json     |
+        | balanced       | the manifest it was pointed at                              | its own path                                     | runs            | json     |
+        | balanced       | the manifest it reads by default                            | its own path                                     | runs            | json     |
+        | balanced       | a feature file of the corpus it was pointed at              | its own path                                     | runs            | markdown |
+        | balanced       | a feature file of the corpus it reads by default            | its own path                                     | runs            | json     |
+        | balanced       | the workflow file it was pointed at                         | its own path                                     | runs            | json     |
+        | balanced       | a .yml workflow of the folder it was pointed at             | its own path                                     | runs            | json     |
+        | balanced       | a .yaml workflow of the folder it was pointed at            | its own path                                     | runs            | json     |
+        | balanced       | a workflow of the folder it reads by default                | its own path                                     | runs            | json     |
+        | out-of-balance | the unit test report                                        | its own path                                     | runs            | json     |
+        | balanced       | the unit test report                                        | the path spelled from the current folder         | runs            | json     |
+        | balanced       | the unit test report                                        | its absolute path                                | runs            | json     |
+        | balanced       | the unit test report                                        | a path through a sibling folder and back         | runs            | json     |
+        | balanced       | the unit test report                                        | a symbolic link to it                            | runs            | json     |
+        | balanced       | the unit test report                                        | a hard link to it                                | runs            | json     |
+        | balanced       | a workflow of the folder it reads by default                | a path through a link to its folder              | runs            | json     |
+        | balanced       | the unit test report, named through a symbolic link         | its own path                                     | runs            | json     |
+        | balanced       | a feature file of the corpus, named through a linked folder | its own path                                     | runs            | json     |
+        | balanced       | the unit test report                                        | where the default report destination is appended | runs            | markdown |
+        | out-of-balance | the workflow file it was pointed at                         | where the default report destination is appended | runs            | markdown |
+        | balanced       | the unit test report                                        | its own path                                     | stores a run of | json     |
+        | balanced       | the manifest it reads by default                            | its own path                                     | stores a run of | markdown |

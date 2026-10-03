@@ -4,7 +4,9 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { optionFlag } from "./support/balanceOption.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { exitNamedBy, exitOn, RUN_OUTCOME } from "./support/runExit.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -62,7 +64,8 @@ Given("a target with scenarios and a Vitest report of what ran", function () {
   invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
 });
 
-Given("a target, and {word} pointing at a path that does not exist", function (flag: string) {
+Given("a target, and the {} pointing at a path that does not exist", function (option: string) {
+  const flag = optionFlag(option);
   const root = process.cwd();
   missingPath = `tests/fixtures/does-not-exist/${flag.replace(/^--/, "")}.missing`;
   assert.ok(!existsSync(join(root, missingPath)), `fixture invariant: ${missingPath} must not exist`);
@@ -74,16 +77,15 @@ Given("a target, and {word} pointing at a path that does not exist", function (f
   invocationArgs = Object.entries(args).flatMap(([k, v]) => [k, v]);
 });
 
-When("{string} is invoked over that target through the CLI binary", function (command: string) {
-  assert.equal(command, "spec-controller balance");
+When("balance is asked to reconcile that target", function () {
   cliResult = spawnBalance(invocationArgs);
 });
 
-Then("the command exits zero", function () {
-  assert.equal(cliResult.status, 0, `expected exit 0; got ${cliResult.status}\n${cliResult.stderr}`);
+When("balance is asked to re-render that saved report", function () {
+  cliResult = spawnBalance(invocationArgs);
 });
 
-Then("it prints the Evidence Reconciliation to stdout", function () {
+Then("it reports the Evidence Reconciliation", function () {
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
 });
 
@@ -91,11 +93,12 @@ Then("the reconciliation reports the target's scenarios", function () {
   assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
 });
 
-Then("the command exits non-zero", function () {
+Then("the run is rejected for the missing path", function () {
   assert.notEqual(cliResult.status, 0, `expected a non-zero exit; got ${cliResult.status}\n${cliResult.stdout}`);
 });
 
-Then("stderr names {word} and the missing path", function (flag: string) {
+Then("the rejection names the {} and the missing path", function (option: string) {
+  const flag = optionFlag(option);
   assert.ok(
     cliResult.stderr.includes(flag),
     `expected stderr to name the flag ${flag}; got:\n${cliResult.stderr}`,
@@ -117,8 +120,7 @@ Given("a target with scenarios and a Vitest report", function () {
   invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
 });
 
-When("{string} is invoked with no --cucumber flag through the CLI binary", function (command: string) {
-  assert.equal(command, "spec-controller balance");
+When("balance is asked to reconcile that target without the Cucumber report option", function () {
   assert.ok(!invocationArgs.includes("--cucumber"), "fixture invariant: --cucumber must be omitted");
   cliResult = spawnBalance(invocationArgs);
 });
@@ -187,13 +189,9 @@ Then("the reconciliation reports a Pending Item", function () {
   assert.match(cliResult.stdout, /Pending Item/);
 });
 
-When(
-  "{string} is invoked with --strict over that target through the CLI binary",
-  function (command: string) {
-    assert.equal(command, "spec-controller balance");
-    cliResult = spawnBalance([...invocationArgs, "--strict"]);
-  },
-);
+When("balance is asked to reconcile that target under the strict option", function () {
+  cliResult = spawnBalance([...invocationArgs, "--strict"]);
+});
 
 let topLevelArgs: string[] = [];
 let controllerResult: SpawnSyncReturns<string>;
@@ -209,7 +207,7 @@ function spawnController(args: string[]): SpawnSyncReturns<string> {
   return result;
 }
 
-Given("the spec-controller top-level binary", function () {
+Given("the spec-controller host", function () {
   topLevelArgs = ["--help"];
 });
 
@@ -217,7 +215,7 @@ const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string
   "a typo of a command": { argv: ["blance"], command: "blance", stored: false },
   "a name that is no command": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: false },
   "a name that is no command, as a stored run": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: true },
-  "a name that is no command, with --exit-zero after the command": {
+  "a name that is no command, with the report-only option after the command": {
     argv: ["nosuchcommand", "--exit-zero"],
     command: "nosuchcommand",
     stored: false,
@@ -241,7 +239,7 @@ When("it is asked for {}", function (request: string) {
   }
 });
 
-Then("it answers that the invocation was wrong, with the usage status", function () {
+Then("the invocation is refused as a usage error", function () {
   assert.equal(
     controllerResult.status,
     2,
@@ -256,20 +254,27 @@ Then("it names the command it does not know", function () {
   );
 });
 
-Then("it prints nothing a pipeline could read as a report", function () {
+Then("it produces nothing a pipeline could read as a report", function () {
   assert.equal(controllerResult.stdout, "", `expected nothing on stdout; got:\n${controllerResult.stdout}`);
 });
 
-Given("the spec-controller balance command", function () {
+Given("a flag balance has never registered", function () {
   invocationArgs = ["--bogus"];
 });
 
-When("{string} is run through the CLI binary", function (command: string) {
-  assert.equal(command, "spec-controller balance --bogus");
+When("balance is asked to run with that unregistered flag", function () {
   cliResult = spawnBalance(invocationArgs);
 });
 
-Then("it exits with status 2 naming the unrecognised flag --bogus on stderr", function () {
+Then("the run is refused as a usage error", function () {
+  assert.equal(
+    cliResult.status,
+    exitOn("a usage error"),
+    `expected exit 2; got ${cliResult.status}\nstdout:\n${cliResult.stdout}\nstderr:\n${cliResult.stderr}`,
+  );
+});
+
+Then("the run is refused as a usage error, naming the unrecognised flag", function () {
   assert.equal(
     cliResult.status,
     2,
@@ -279,10 +284,6 @@ Then("it exits with status 2 naming the unrecognised flag --bogus on stderr", fu
     cliResult.stderr.includes("--bogus"),
     `expected stderr to name the unknown flag --bogus; got:\n${cliResult.stderr}`,
   );
-});
-
-Then("nothing is reconciled to stdout", function () {
-  assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
 });
 
 Then(
@@ -313,7 +314,7 @@ Then(
 
 let retiredFlagResult: SpawnSyncReturns<string>;
 
-Given("a flag the balance command has retired", function () {
+Given("a flag balance has retired", function () {
   invocationArgs = ["--measurements", "x.json"];
 });
 
@@ -387,13 +388,14 @@ Then("the trial-balance table counts {int} out-of-balance Scenario Reconciliatio
   );
 });
 
-Then("the verdict headline reads {word} and names exit {int}", function (word: string, exit: number) {
+Then("the verdict headline reads {word} and names the exit it ends with", function (word: string) {
+  const exit = exitNamedBy(word);
   const headline = verdictHeadline(cliResult.stdout);
   assert.equal(headline.word, word, `expected the headline to read ${word}; got ${headline.word}`);
   assert.equal(headline.exit, exit, `expected the headline to name exit ${exit}; got exit ${headline.exit}`);
 });
 
-Then("the tally, the verdict headline and the process exit code agree", function () {
+Then("the tally, the verdict headline and the run's exit agree", function () {
   const tally = tallyOutOfBalance(cliResult.stdout);
   const headline = verdictHeadline(cliResult.stdout);
   const exitCode = cliResult.status;
@@ -415,7 +417,8 @@ Then("the tally, the verdict headline and the process exit code agree", function
   );
 });
 
-Then("the command exits with status {int}", function (code: number) {
+Then(new RegExp(`^the run ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  const code = exitOn(outcome);
   assert.equal(
     cliResult.status,
     code,
@@ -426,7 +429,7 @@ Then("the command exits with status {int}", function (code: number) {
 let unparseablePath = "";
 
 Given(
-  "a target, and --vitest pointing at a report that exists but is not valid JSON",
+  "a target, and the Vitest report option pointing at a report that exists but is not valid JSON",
   function () {
     const root = process.cwd();
     unparseablePath = join(tmpdir(), `scn-cli-014-${process.pid}.json`);
@@ -445,7 +448,7 @@ Given(
 let unparseableFeature = "";
 
 Given(
-  "--features containing a feature file that is a corrupt tag line",
+  "a feature corpus containing a feature file that is a corrupt tag line",
   function () {
     writeCorruptFeature(
       "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
@@ -455,7 +458,7 @@ Given(
 );
 
 Given(
-  "--features containing a feature file that is a corrupt scenario keyword",
+  "a feature corpus containing a feature file that is a corrupt scenario keyword",
   function () {
     writeCorruptFeature(
       "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
@@ -465,7 +468,7 @@ Given(
 );
 
 Given(
-  "--features containing a feature file that is wholly unparseable",
+  "a feature corpus containing a feature file that is wholly unparseable",
   function () {
     writeCorruptFeature("not gherkin at all {{{\n");
   },
@@ -505,7 +508,7 @@ function writeCorruptFeature(featureSource: string): void {
   ];
 }
 
-Then("stderr names the unparseable feature file and the parse failure", function () {
+Then("the refusal names the unparseable feature file and the parse failure", function () {
   assert.ok(
     cliResult.stderr.includes(unparseableFeature),
     `expected stderr to NAME the unparseable feature file ${unparseableFeature}; got:\n${cliResult.stderr}`,
@@ -524,7 +527,7 @@ Then("stderr names the unparseable feature file and the parse failure", function
 let unreadableSavedReport = "";
 
 Given(
-  "--render-from-json pointing at a saved report that is {word}",
+  "the re-render option pointing at a saved report that is {word}",
   function (defect: string) {
     if (defect === "missing") {
       unreadableSavedReport = join(tmpdir(), `scn-cli-015-missing-${process.pid}.json`);
@@ -541,7 +544,7 @@ Given(
   },
 );
 
-Then("stderr names the unreadable saved report", function () {
+Then("the refusal names the unreadable saved report", function () {
   assert.ok(
     cliResult.stderr.includes(unreadableSavedReport),
     `expected stderr to NAME the unreadable saved report ${unreadableSavedReport}; got:\n${cliResult.stderr}`,
@@ -557,7 +560,7 @@ Then("nothing is rendered", function () {
   assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
 });
 
-Then("stderr names the unparseable report and the parse failure", function () {
+Then("the refusal names the unparseable report and the parse failure", function () {
   assert.ok(
     cliResult.stderr.includes(unparseablePath),
     `expected stderr to NAME the unparseable report ${unparseablePath}; got:\n${cliResult.stderr}`,
@@ -629,7 +632,7 @@ Given("a target with no Gherkin corpus at all — no features directory on disk"
   invocationCwd = dir;
 });
 
-Then("the run ends on an enumerated status rather than a stack trace", function () {
+Then("the run ends on the exit its verdict headline names, rather than on a stack trace", function () {
   assert.doesNotMatch(
     cliResult.stderr,
     /^\s+at .+:\d+:\d+\)?$/m,
@@ -747,7 +750,7 @@ Given(
 );
 
 When(
-  '"spec-controller balance" is invoked over each of those targets through the CLI binary',
+  "balance is asked to reconcile each of those targets",
   function () {
     noCorpusRuns = noCorpusTargets.map(({ shape, root }) => {
       invocationCwd = root;
@@ -787,14 +790,13 @@ Given("a target that reconciles only-Pending-Items", function () {
 });
 
 const EXIT_ZERO_FLAGS: Record<string, string[]> = {
-  "no flags": [],
-  "--strict": ["--strict"],
+  "with no options": [],
+  "under the strict option": ["--strict"],
 };
 
 When(
-  "{string} is invoked with {} over that target through the CLI binary, once without --exit-zero and once with it",
-  function (command: string, flags: string) {
-    assert.equal(command, "spec-controller balance");
+  "balance is asked to reconcile that target {}, once without the report-only option and once under it",
+  function (flags: string) {
     const extra = EXIT_ZERO_FLAGS[flags];
     assert.ok(extra !== undefined, `unrecognised <flags> cell: ${flags}`);
     const without = spawnBalance([...invocationArgs, ...extra]);
@@ -816,12 +818,12 @@ function statusOf(run: SpawnSyncReturns<string>, label: string, code: number): v
   );
 }
 
-Then("without --exit-zero the command exits with status {int}", function (code: number) {
-  statusOf(exitZeroRuns().without, "the run without --exit-zero", code);
+Then(new RegExp(`^without the report-only option the run ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  statusOf(exitZeroRuns().without, "the run without --exit-zero", exitOn(outcome));
 });
 
-Then("with --exit-zero the command exits with status {int}", function (code: number) {
-  statusOf(exitZeroRuns().with, "the run with --exit-zero", code);
+Then(new RegExp(`^under the report-only option the run ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+  statusOf(exitZeroRuns().with, "the run with --exit-zero", exitOn(outcome));
 });
 
 const RUN_TIMESTAMP_LINE = /^- Run timestamp \(UTC\): .+$/m;
@@ -832,7 +834,7 @@ function maskRunTimestamp(stdout: string, label: string): string {
 }
 
 Then(
-  "the two runs print the same Evidence Reconciliation to stdout, byte for byte but for the run timestamp each stamps for itself",
+  "the two runs report the same Evidence Reconciliation, byte for byte but for the run timestamp each stamps for itself",
   function () {
     const { without, with: withFlag } = exitZeroRuns();
     assert.match(without.stdout, /^# Evidence Reconciliation/m);
@@ -844,13 +846,9 @@ Then(
   },
 );
 
-When(
-  "{string} is invoked with --exit-zero over that target through the CLI binary",
-  function (command: string) {
-    assert.equal(command, "spec-controller balance");
-    cliResult = spawnBalance([...invocationArgs, "--exit-zero"]);
-  },
-);
+When("balance is asked to reconcile that target under the report-only option", function () {
+  cliResult = spawnBalance([...invocationArgs, "--exit-zero"]);
+});
 
 const CODE_ERROR_OUT_OF_BALANCE = "tests/fixtures/code-error-out-of-balance";
 
@@ -931,15 +929,16 @@ function standBesideAFileNamedTrue(args: readonly string[]): string[] {
 
 const MISSING_VALUE_SHAPES: Record<string, (args: string[], flag: string) => string[]> = {
   "at the end of the arguments": (args, flag) => [...args, flag],
-  "followed by --exit-zero": (args, flag) => [...args, flag, "--exit-zero"],
+  "followed by the report-only option": (args, flag) => [...args, flag, "--exit-zero"],
   "with an empty value": (args, flag) => [...args, flag, ""],
-  "at the end, with a file named true in the working dir": (args, flag) => [
+  "at the end, with a file named true in the working directory": (args, flag) => [
     ...standBesideAFileNamedTrue(args),
     flag,
   ],
 };
 
-When("balance is asked to run with {word} given no value, {}", function (flag: string, shape: string) {
+When(/^balance is asked to run with (.+) given no value, (.+)$/, function (option: string, shape: string) {
+  const flag = optionFlag(option);
   const shapeOf = MISSING_VALUE_SHAPES[shape];
   assert.ok(shapeOf !== undefined, `no missing-value shape named "${shape}"`);
   const args = shapeOf(withoutFlag(invocationArgs, flag), flag);
@@ -956,7 +955,8 @@ Then("balance refuses the run as a usage fault, with nothing reconciled", functi
   assert.equal(cliResult.stdout, "", `expected nothing on stdout; got:\n${cliResult.stdout}`);
 });
 
-Then("the refusal names {word} as a flag missing its value", function (flag: string) {
+Then(/^the refusal names (.+) as a flag missing its value$/, function (option: string) {
+  const flag = optionFlag(option);
   const { stderr } = cliResult;
   assert.ok(
     stderr.split("\n").some((line) => line.includes(flag) && /value/i.test(line)),
@@ -973,7 +973,7 @@ Then("the refusal names {word} as a flag missing its value", function (flag: str
 let storedRunDir = "";
 let storedRunRoot = "";
 
-Given("a target that reconciles out-of-balance, and an empty store root", function () {
+Given("a target that reconciles out-of-balance, and an empty run store", function () {
   storedRunDir = mkdtempSync(join(tmpdir(), "scn-cli-059-"));
   storedRunRoot = join(storedRunDir, "store");
   mkdirSync(storedRunRoot);
@@ -988,14 +988,14 @@ Given("a target that reconciles out-of-balance, and an empty store root", functi
 });
 
 const MISSING_MODIFIER_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
-  "--store alone": () => ["--store"],
-  "--store followed by --run-id": (_store, target) => ["--store", "--run-id", "r1", "balance", ...target],
-  "--run-id at the end, after --store": (store) => ["--store", store, "--run-id"],
-  "--run-id with an empty value": (store, target) => ["--store", store, "--run-id", "", "balance", ...target],
-  "--store with an empty value": (_store, target) => ["--store", "", "balance", ...target],
+  "the store modifier alone": () => ["--store"],
+  "the store modifier followed by the run-name modifier": (_store, target) => ["--store", "--run-id", "r1", "balance", ...target],
+  "the run-name modifier at the end, after the store modifier": (store) => ["--store", store, "--run-id"],
+  "the run-name modifier with an empty value": (store, target) => ["--store", store, "--run-id", "", "balance", ...target],
+  "the store modifier with an empty value": (_store, target) => ["--store", "", "balance", ...target],
 };
 
-When("a stored balance run is asked for with {word} given no value, {}", function (modifier: string, shape: string) {
+When(/^a stored balance run is asked for with (.+) given no value, (.+)$/, function (modifier: string, shape: string) {
   const argvOf = MISSING_MODIFIER_VALUE[`${modifier} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
@@ -1007,7 +1007,7 @@ When("a stored balance run is asked for with {word} given no value, {}", functio
   cliResult = result;
 });
 
-Then("nothing is written to the store root or the working directory", function () {
+Then("nothing is written to the run store or the working directory", function () {
   try {
     assert.deepEqual(readdirSync(storedRunRoot), [], "expected the store root to stay empty");
     assert.deepEqual(readdirSync(storedRunDir), ["store"], "expected nothing beside the store root");
@@ -1017,10 +1017,10 @@ Then("nothing is written to the store root or the working directory", function (
 });
 
 const FLAG_BEFORE_COMMAND: Record<string, { before: string[]; command: string }> = {
-  "--exit-zero, before balance": { before: ["--exit-zero"], command: "balance" },
-  "--format md, before balance": { before: ["--format", "md"], command: "balance" },
-  "--bogus, before balance": { before: ["--bogus"], command: "balance" },
-  "--exit-zero, before no known command": { before: ["--exit-zero"], command: "nosuchcommand" },
+  "the report-only option, before balance": { before: ["--exit-zero"], command: "balance" },
+  "the format option given md, before balance": { before: ["--format", "md"], command: "balance" },
+  "an unknown flag, before balance": { before: ["--bogus"], command: "balance" },
+  "the report-only option, before no known command": { before: ["--exit-zero"], command: "nosuchcommand" },
 };
 let flagOutOfPlace = "";
 
@@ -1069,11 +1069,11 @@ const NOT_A_FLAG: Record<string, (store: string, target: string[]) => { argv: st
     const dir = target[target.indexOf("--features") + 1] ?? "";
     return { argv: ["balance", dir], token: dir };
   },
-  "a stray word after the target's flags, with --exit-zero": (_store, target) => ({
+  "a stray word after the target's flags, under the report-only option": (_store, target) => ({
     argv: ["balance", ...target, "extra", "--exit-zero"],
     token: "extra",
   }),
-  "a single-dash token after the target's flags, with --exit-zero": (_store, target) => ({
+  "a single-dash token after the target's flags, under the report-only option": (_store, target) => ({
     argv: ["balance", ...target, "-x", "--exit-zero"],
     token: "-x",
   }),
@@ -1104,7 +1104,7 @@ Then("the refusal names that argument as one balance does not take", function ()
   assert.doesNotMatch(stderr, /\bpin\b|unknown/i, `stderr names another fault:\n${stderr}`);
 });
 
-Then("the store root holds no record of a run", function () {
+Then("the run store holds no record of a run", function () {
   try {
     const manifests = readdirSync(storedRunRoot, { recursive: true }).filter((entry) =>
       String(entry).endsWith("run.yaml"),
@@ -1128,7 +1128,8 @@ const VALUE_TO_A_FLAG_THAT_TAKES_NONE: Record<string, (store: string, target: st
   ],
 };
 
-When("balance is asked to run with {word} given the value {word}, {}", function (flag: string, value: string, shape: string) {
+When(/^balance is asked to run with (.+) given the value (\S+), (.+)$/, function (option: string, value: string, shape: string) {
+  const flag = optionFlag(option);
   const argvOf = VALUE_TO_A_FLAG_THAT_TAKES_NONE[shape];
   assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
   const argv = argvOf(storedRunRoot, invocationArgs, [flag, value]);
@@ -1139,8 +1140,9 @@ When("balance is asked to run with {word} given the value {word}, {}", function 
 });
 
 Then(
-  "the refusal names {word} as a flag that takes no value, and {word} as the value it was given",
-  function (flag: string, value: string) {
+  /^the refusal names (.+) as a flag that takes no value, and (\S+) as the value it was given$/,
+  function (option: string, value: string) {
+    const flag = optionFlag(option);
     const { stderr } = cliResult;
     assert.ok(
       stderr.split("\n").some((line) => line.includes(flag) && line.includes(value) && /takes no value/i.test(line)),
@@ -1150,7 +1152,7 @@ Then(
 );
 
 const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]> = {
-  "--features at a path that does not exist, then at the target, with --exit-zero": (_store, target) => [
+  "the feature corpus option at a path that does not exist, then at the target, under the report-only option": (_store, target) => [
     "balance",
     ...withoutFlag(target, "--features"),
     "--features",
@@ -1159,9 +1161,9 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
     target[target.indexOf("--features") + 1] ?? "",
     "--exit-zero",
   ],
-  "--target as two different names": (_store, target) => ["balance", ...target, "--target", "a", "--target", "b"],
-  "--strict with no value either time": (_store, target) => ["balance", ...target, "--strict", "--strict"],
-  "--target as two different names, in a stored run": (store, target) => [
+  "the target-name option as two different names": (_store, target) => ["balance", ...target, "--target", "a", "--target", "b"],
+  "the strict option with no value either time": (_store, target) => ["balance", ...target, "--strict", "--strict"],
+  "the target-name option as two different names, in a stored run": (store, target) => [
     "--store",
     store,
     "--run-id",
@@ -1173,7 +1175,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
     "--target",
     "b",
   ],
-  "--store before the command, the second time at the store root": (store, target) => [
+  "the store modifier before the command, the second time at the run store": (store, target) => [
     "--store",
     join(tmpdir(), "scn-cli-064-other-store"),
     "--store",
@@ -1181,7 +1183,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
     "balance",
     ...target,
   ],
-  "--run-id before the command, as two ids, in a stored run": (store, target) => [
+  "the run-name modifier before the command, as two ids, in a stored run": (store, target) => [
     "--store",
     store,
     "--run-id",
@@ -1193,9 +1195,9 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
   ],
 };
 
-When("a run is asked for with {word} given twice, {}", function (flag: string, shape: string) {
-  const argvOf = GIVEN_TWICE[`${flag} ${shape}`];
-  assert.ok(argvOf !== undefined, `no row for ${flag} ${shape}`);
+When(/^a run is asked for with (.+?) given twice, (.+)$/, function (option: string, shape: string) {
+  const argvOf = GIVEN_TWICE[`${option} ${shape}`];
+  assert.ok(argvOf !== undefined, `no row for ${option} ${shape}`);
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
     cwd: storedRunDir,
     encoding: "utf8",
@@ -1205,7 +1207,8 @@ When("a run is asked for with {word} given twice, {}", function (flag: string, s
   cliResult = result;
 });
 
-Then("the refusal names {word} as given more than once", function (flag: string) {
+Then(/^the refusal names (.+) as given more than once$/, function (option: string) {
+  const flag = optionFlag(option);
   const { stderr } = cliResult;
   assert.ok(
     stderr.split("\n").some((line) => line.includes(flag) && /more than once/i.test(line)),
@@ -1215,7 +1218,7 @@ Then("the refusal names {word} as given more than once", function (flag: string)
 
 const EQUALS_FORM: Record<string, (store: string, target: string[], written: string) => string[]> = {
   "after the target's flags": (_store, target, written) => ["balance", ...target, written],
-  "after the target's flags, with --exit-zero": (_store, target, written) => ["balance", ...target, written, "--exit-zero"],
+  "after the target's flags, under the report-only option": (_store, target, written) => ["balance", ...target, written, "--exit-zero"],
   "before the command": (_store, target, written) => [written, "balance", ...target],
   "after the command": (_store, target, written) => ["balance", ...target, written],
   "after the target's flags, in a stored run": (store, target, written) => [
@@ -1229,11 +1232,30 @@ const EQUALS_FORM: Record<string, (store: string, target: string[], written: str
   ],
 };
 
+const WRITTEN_FORM: Record<string, string> = {
+  "the format option and json joined by an equals sign": "--format=json",
+  "the feature corpus option and nothing joined by an equals sign": "--features=",
+  "the store modifier and the run store joined by an equals sign": "--store=<root>",
+};
+
+const SPELLING_READ: Record<string, string> = {
+  "the format option and json as two arguments": "--format json",
+  "the feature corpus option and a directory as two arguments": "--features <dir>",
+  "the store modifier and the run store as two arguments": "--store <root>",
+};
+
+function argumentsFor(table: Record<string, string>, intent: string): string {
+  const literal = table[intent];
+  assert.ok(literal !== undefined, `no arguments are named "${intent}"`);
+  return literal;
+}
+
 function withStoreRoot(cell: string): string {
   return cell.replace("<root>", storedRunRoot);
 }
 
-When("a run is asked for with {word}, {}", function (written: string, shape: string) {
+When(/^a run is asked for with (.+? joined by an equals sign), (.+)$/, function (intent: string, shape: string) {
+  const written = argumentsFor(WRITTEN_FORM, intent);
   const argvOf = EQUALS_FORM[shape];
   assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
   const argv = argvOf(storedRunRoot, invocationArgs, withStoreRoot(written));
@@ -1243,7 +1265,9 @@ When("a run is asked for with {word}, {}", function (written: string, shape: str
   cliResult = result;
 });
 
-Then("the refusal names {word} as a form that is not read, and {} as the spelling that is", function (written: string, spelling: string) {
+Then(/^the refusal names (.+? joined by an equals sign) as a form that is not read, and (.+) as the spelling that is$/, function (writtenIntent: string, spellingIntent: string) {
+  const written = argumentsFor(WRITTEN_FORM, writtenIntent);
+  const spelling = argumentsFor(SPELLING_READ, spellingIntent);
   const { stderr } = cliResult;
   const given = withStoreRoot(written);
   assert.ok(
@@ -1258,9 +1282,9 @@ Then("the refusal advises no pin, and calls the flag neither unknown nor out of 
 });
 
 const COMMAND_AS_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
-  "--store with the target's flags after it": (_store, target) => ["--store", "balance", ...target],
-  "--store with nothing after it": () => ["--store", "balance"],
-  "--run-id after --store, with the target's flags after it": (store, target) => [
+  "the store modifier with the target's flags after it": (_store, target) => ["--store", "balance", ...target],
+  "the store modifier with nothing after it": () => ["--store", "balance"],
+  "the run-name modifier after the store modifier, with the target's flags after it": (store, target) => [
     "--store",
     store,
     "--run-id",
@@ -1269,7 +1293,7 @@ const COMMAND_AS_VALUE: Record<string, (store: string, target: string[]) => stri
   ],
 };
 
-When("a stored run is asked for, with the command given as the value of {word}, {}", function (modifier: string, shape: string) {
+When(/^a stored run is asked for, with the command given as the value of (.+? modifier), (.+)$/, function (modifier: string, shape: string) {
   const argvOf = COMMAND_AS_VALUE[`${modifier} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot, invocationArgs)], {
@@ -1281,7 +1305,8 @@ When("a stored run is asked for, with the command given as the value of {word}, 
   cliResult = result;
 });
 
-Then("the refusal names {word} as having taken the command as its value", function (modifier: string) {
+Then(/^the refusal names (.+) as having taken the command as its value$/, function (intent: string) {
+  const modifier = optionFlag(intent);
   const { stderr } = cliResult;
   assert.ok(
     stderr.split("\n").some((line) => line.includes(modifier) && line.includes("balance") && /as its value/i.test(line)),
@@ -1291,18 +1316,18 @@ Then("the refusal names {word} as having taken the command as its value", functi
 });
 
 const MODIFIERS_WITH_NO_COMMAND: Record<string, (store: string) => string[]> = {
-  "--store at a store root that is not there": (store) => ["--store", join(store, "absent")],
-  "--store at the empty store root": (store) => ["--store", store],
-  "--run-id alone": () => ["--run-id", "r1"],
-  "--store, --run-id in that order": (store) => ["--store", store, "--run-id", "r1"],
-  "--run-id, --store in that order": (store) => ["--run-id", "r1", "--store", store],
+  "the store modifier at a run store that is not there": (store) => ["--store", join(store, "absent")],
+  "the store modifier at the empty run store": (store) => ["--store", store],
+  "the run-name modifier alone": () => ["--run-id", "r1"],
+  "the store modifier and the run-name modifier in that order": (store) => ["--store", store, "--run-id", "r1"],
+  "the run-name modifier and the store modifier in that order": (store) => ["--run-id", "r1", "--store", store],
 };
 let modifiersGiven: string[] = [];
 
-When("the host modifiers {} are given with no command after them, {}", function (modifiers: string, shape: string) {
+When(/^the host is asked for nothing but (.+?), (.+)$/, function (modifiers: string, shape: string) {
   const argvOf = MODIFIERS_WITH_NO_COMMAND[`${modifiers} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifiers} ${shape}`);
-  modifiersGiven = modifiers.split(", ");
+  modifiersGiven = modifiers.split(" and ").map(optionFlag);
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(storedRunRoot)], {
     cwd: storedRunDir,
     encoding: "utf8",
@@ -1322,16 +1347,16 @@ Then("the refusal names every modifier given, and says no command followed them"
 });
 
 const HELP_REQUESTS: Record<string, (store: string) => string[]> = {
-  "--help after --store": (store) => ["--store", store, "--help"],
-  "help after --store": (store) => ["--store", store, "help"],
-  "-h after --store": (store) => ["--store", store, "-h"],
-  "--help after --run-id": () => ["--run-id", "r1", "--help"],
-  "--help after --store and --run-id": (store) => ["--store", store, "--run-id", "r1", "--help"],
+  "help by its long name after the store modifier": (store) => ["--store", store, "--help"],
+  "the help command after the store modifier": (store) => ["--store", store, "help"],
+  "help by its short name after the store modifier": (store) => ["--store", store, "-h"],
+  "help by its long name after the run-name modifier": () => ["--run-id", "r1", "--help"],
+  "help by its long name after the store modifier and the run-name modifier": (store) => ["--store", store, "--run-id", "r1", "--help"],
   "nothing at all": () => [],
-  "--help after --store, given a command as its value": () => ["--store", "balance", "--help"],
-  "-h after --store, given a command as its value": () => ["--store", "balance", "-h"],
-  "--help after --run-id, given a command as its value": () => ["--run-id", "balance", "--help"],
-  "-h after --run-id, given a command as its value": () => ["--run-id", "balance", "-h"],
+  "help by its long name after the store modifier, given a command as its value": () => ["--store", "balance", "--help"],
+  "help by its short name after the store modifier, given a command as its value": () => ["--store", "balance", "-h"],
+  "help by its long name after the run-name modifier, given a command as its value": () => ["--run-id", "balance", "--help"],
+  "help by its short name after the run-name modifier, given a command as its value": () => ["--run-id", "balance", "-h"],
 };
 
 function spawnBesideStore(argv: string[]): SpawnSyncReturns<string> {
@@ -1340,38 +1365,38 @@ function spawnBesideStore(argv: string[]): SpawnSyncReturns<string> {
   return result;
 }
 
-When("the top-level binary is asked for {}", function (request: string) {
+When("spec-controller is asked for {}", function (request: string) {
   const argvOf = HELP_REQUESTS[request];
   assert.ok(argvOf !== undefined, `no request row named "${request}"`);
   controllerResult = spawnBesideStore(argvOf(storedRunRoot));
 });
 
 const HELP_AT_HOST_SCOPE: Record<string, (store: string, target: string[]) => string[]> = {
-  "--help after a flag out of place": (store) => ["--store", store, "--exit-zero", "--help"],
-  "--help after a flag out of place, before a command": () => ["--exit-zero", "balance", "--help"],
-  "--help after a modifier that took the command, and the target's flags": (_store, target) => [
+  "help by its long name after a flag out of place": (store) => ["--store", store, "--exit-zero", "--help"],
+  "help by its long name after a flag out of place, before a command": () => ["--exit-zero", "balance", "--help"],
+  "help by its long name after a modifier that took the command, and the target's flags": (_store, target) => [
     "--store",
     "balance",
     ...target,
     "--help",
   ],
-  "-h between a modifier that took the command and the target's flags": (_store, target) => [
+  "help by its short name between a modifier that took the command and the target's flags": (_store, target) => [
     "--store",
     "balance",
     "-h",
     ...target,
   ],
-  "--help after a modifier that took the command, and another modifier": () => [
+  "help by its long name after a modifier that took the command, and another modifier": () => [
     "--store",
     "balance",
     "--run-id",
     "r1",
     "--help",
   ],
-  "--help where a modifier's value goes": () => ["--store", "--help"],
-  "--help after a modifier given twice": (store) => ["--store", store, "--store", store, "--help"],
-  "--help after a modifier written --flag=value": (store) => [`--store=${store}`, "--help"],
-  "-h as a modifier's value, before a command": (_store, target) => ["--run-id", "-h", "balance", ...target],
+  "help by its long name where a modifier's value goes": () => ["--store", "--help"],
+  "help by its long name after a modifier given twice": (store) => ["--store", store, "--store", store, "--help"],
+  "help by its long name after a modifier joined to its value by an equals sign": (store) => [`--store=${store}`, "--help"],
+  "help by its short name as a modifier's value, before a command": (_store, target) => ["--run-id", "-h", "balance", ...target],
 };
 
 When("the host is given {}", function (request: string) {
@@ -1380,7 +1405,7 @@ When("the host is given {}", function (request: string) {
   controllerResult = spawnBesideStore(argvOf(storedRunRoot, invocationArgs));
 });
 
-Then("it answers with the same top-level help as a bare invocation, and the success status", function () {
+Then("it answers with the same top-level help as a bare invocation, and succeeds", function () {
   const bare = spawnBesideStore([]);
   const help = spawnBesideStore(["--help"]);
   assert.equal(controllerResult.status, 0, `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`);
@@ -1393,8 +1418,8 @@ Then("it answers with the same top-level help as a bare invocation, and the succ
 
 const RUN_ID_WITHOUT_STORE: Record<string, (target: string[]) => string[]> = {
   "before a live balance run": (target) => ["--run-id", "r1", "balance", ...target],
-  "before a live balance run, with --exit-zero": (target) => ["--run-id", "r1", "balance", ...target, "--exit-zero"],
-  "before a live balance run, with --strict": (target) => ["--run-id", "r1", "balance", ...target, "--strict"],
+  "before a live balance run, under the report-only option": (target) => ["--run-id", "r1", "balance", ...target, "--exit-zero"],
+  "before a live balance run, under the strict option": (target) => ["--run-id", "r1", "balance", ...target, "--strict"],
   "before a live balance run that writes its report to a file": (target) => [
     "--run-id",
     "r1",
@@ -1425,7 +1450,7 @@ function savedReportOf(target: string[]): string {
   return saved;
 }
 
-When("a run is named with --run-id and given no store, {}", function (shape: string) {
+When("a run is named with the run-name modifier and given no store modifier, {}", function (shape: string) {
   const argvOf = RUN_ID_WITHOUT_STORE[shape];
   assert.ok(argvOf !== undefined, `no row for ${shape}`);
   try {
@@ -1438,7 +1463,7 @@ When("a run is named with --run-id and given no store, {}", function (shape: str
   }
 });
 
-Then("the refusal names --run-id as naming a run that is not kept", function () {
+Then("the refusal names the run-name modifier as naming a run that is not kept", function () {
   const { stderr } = cliResult;
   assert.ok(
     stderr.split("\n").some((line) => line.includes("--run-id") && /no run is kept|keeps no run|not stored/i.test(line)),
@@ -1458,14 +1483,14 @@ const BALANCE_HELP_NAME: Record<string, string> = {
 };
 let balanceHelpAlone: SpawnSyncReturns<string>;
 
-When("balance's help is asked for {}, after --run-id with no store", function (request: string) {
+When("balance's help is asked for {}, after the run-name modifier with no store modifier", function (request: string) {
   const help = BALANCE_HELP_NAME[request];
   assert.ok(help !== undefined, `no request row named "${request}"`);
   balanceHelpAlone = spawnBesideStore(["balance", help]);
   controllerResult = spawnBesideStore(["--run-id", "r1", "balance", help]);
 });
 
-Then("it answers with balance's help, exactly as it does with nothing before it, and the success status", function () {
+Then("it answers with balance's help, exactly as it does with nothing before it, and succeeds", function () {
   assert.equal(balanceHelpAlone.status, 0, `balance's help alone did not answer\n${balanceHelpAlone.stderr}`);
   assert.match(balanceHelpAlone.stdout, /--render-from-json/, "expected balance's help to list its own flags");
   assert.equal(controllerResult.status, 0, `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`);

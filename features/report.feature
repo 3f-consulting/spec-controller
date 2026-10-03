@@ -335,9 +335,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-016
     Scenario: a cross-repo reconcile run from a foreign cwd yields zero absolute paths on both surfaces
-      Given a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo
-      When the real CLI reconciles it from a foreign cwd and persists the markdown and JSON reports
-      Then the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root
+      Given a target repo outside the run's working directory whose Vitest and Cucumber reports carry absolute test-file locators under that repo
+      When balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON
+      Then the saved reconciliation, in both markdown and JSON, carries none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root
 
   Rule: the report's evidence-observation views level a runtime observation by the cited scenario's tag
 

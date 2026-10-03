@@ -66,7 +66,7 @@ const INPUT: Readonly<Record<string, InputRow>> = {
   },
 };
 
-const APPENDED_STDOUT = "where standard output is appended";
+const APPENDED_STDOUT = "where the default report destination is appended";
 
 const ALIAS: Readonly<Record<string, (file: string, target: string) => string>> = {
   "its own path": (file) => file,
@@ -213,7 +213,7 @@ Then("the refusal is a single line with no stack trace", function () {
   assert.doesNotMatch(run.stderr, /^\s+at /m, "the refusal carries a stack trace");
 });
 
-Then("nothing is printed", function () {
+Then("nothing is reported", function () {
   assert.equal(run.stdout, "", `something was printed:\n${run.stdout.slice(0, 400)}`);
 });
 

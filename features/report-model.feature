@@ -136,8 +136,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code
       Given a reconciliation over a target corpus whose feature files carry their feature codes
       When the coded-corpus reconciliation run persists its machine artefacts
-      Then the persisted spec-reconciliation.json carries the feature titles keyed by feature code
-      And the persisted spec-reconciliation.md names each out-of-balance feature in full, sourced from the model
+      Then the saved reconciliation, in JSON, carries the feature titles keyed by feature code
+      And the saved reconciliation, in markdown, names each out-of-balance feature in full, sourced from the model
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
 
@@ -156,11 +156,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @integration @SCN-RMD-007
     Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
-      Given a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render
-      When the markdown is regenerated from the saved spec-reconciliation.json alone
+      Given a reconciliation run saved in JSON alongside its direct markdown render
+      When the markdown is regenerated from the saved reconciliation's JSON alone
       Then the regenerated markdown equals the directly rendered markdown
       And the regenerated markdown names the coded out-of-balance feature in full
-      And the regeneration exits the code the saved run exited
+      And the regeneration ends with the same exit as the run that saved it
 
   Rule: each evidence sub-row is keyed by one flat quality-check coordinate
 
@@ -195,7 +195,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @integration @SCN-RMD-009
     Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location
       Given a runner report citing one scenario from two test files, and the same report with its files listed the other way round
-      When the reconciliation is run over each and persisted to spec-reconciliation.json
+      When the reconciliation is run over each and saved in JSON
       Then the two reports are identical apart from their run provenance
       And the scenario's row reads its evidence in quality-check order, then by location
       And its unit reconciliation names the same test file in both
