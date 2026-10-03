@@ -548,6 +548,222 @@ green only if every scope's job is green, so adding a scope changes nothing on t
 **The plant.** Point one matrix entry's globs at a weaker directory, dispatch the workflow, and only
 that job reds while the others stay green. Restore it before merge.
 
+### Complexity and function length
+
+**What it runs.** The CI step *Complexity — eslint's cognitive-complexity and max-lines-per-function*
+runs `if: always()` under `shell: bash`, in two lines:
+- `pnpm exec eslint` reads the whole population and reports. Both rules are at `warn`, so this line
+  reds only on an error, and the one error the config raises is an unused disable directive
+  (`reportUnusedDisableDirectives: "error"`).
+- The gate line:
+  `git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r pnpm exec eslint --max-warnings 0 --no-warn-ignored`.
+
+**Configuration.**
+- `eslint.config.js` holds `sonarjs/cognitive-complexity` and `max-lines-per-function` at `warn`.
+  Their ceilings are canon's, set as two named constants. The length count skips blank and comment
+  lines.
+- A `*.test.ts` file takes the same complexity ceiling, with function length off.
+- The population is `MEASURED_GLOBS`: `packages/*/src/**/*.ts` and `tests/steps/**/*.ts`. `dist`,
+  `.stryker-tmp` and `node_modules` are ignored.
+
+**The changed set.**
+- It is every file the branch touches against its merge base with `origin/main`, deleted files left
+  out. The checkout sets `fetch-depth: 0` so the merge base resolves.
+- A touched file is linted whole, so a standing warning anywhere in it reds the step.
+- `--no-warn-ignored` lets a touched file outside the population pass.
+- `shell: bash` brings `pipefail`, so a failing `git diff` reds the step. `xargs -r` makes an empty
+  set, such as a push to `main`, run nothing and pass.
+
+**Limits.** Untracked files are outside the set, so locally a new file is gated once it is staged. On
+a push to `main` only the report line checks anything.
+
+**The plant.** An over-ceiling function in a touched population file reds the gate line. A dead
+`eslint-disable` reds the report line. An unresolvable merge base reds the gate line. Restore each
+before merge.
+
+### CRAP
+
+**What it runs.** The CI step *CRAP — complex code must be tested* runs under `shell: bash` unless
+the run is cancelled or the Test step was skipped. The tool is `@barney-media/crap-typescript`,
+pinned exactly, reading coverage from `@vitest/coverage-v8`.
+- **Coverage** comes from the Test step, which passes `--coverage.enabled`. `vitest.config.ts` keeps
+  coverage off by default, with `provider: "v8"`, `include: ["packages/*/src/**"]`,
+  `reporter: ["json"]` and `reportOnFailure: true`, so a local `pnpm test` and Stryker's runner take
+  none.
+- **The report line**, `crap-typescript --format text --threshold <t> packages || [ $? -eq 2 ]`,
+  scores every function on every run. It tolerates exit 2, a function over the threshold, and reds
+  on any other failure.
+- **The gate line** feeds the Complexity gate's changed set, narrowed by the pathspec
+  `-- 'packages/*/src/*'`, through `xargs -0 -r` to the tool at the same threshold.
+
+**The threshold.** `<t>` in `ci.yml` is the largest double below canon's ceiling. The tool reds only
+strictly above its threshold, so that value makes a function scoring exactly the ceiling red.
+
+**The score.** Complexity is ESLint-classic cyclomatic complexity. Coverage per function is the lower
+of statement and branch coverage, which the tool fixes and nothing configures.
+
+**The changed set.** It is the Complexity gate's git line, with the pathspec's trailing `/*` needed
+because a bare `packages/*/src` matches no file. The tool's own `--changed` is not used: it reads
+the working tree, so on CI's clean checkout it analyses nothing.
+
+**Limits.**
+- Coverage is the Vitest unit suite's alone, so code that only Cucumber's spawned CLI runs reads as
+  uncovered.
+- A function whose coverage the tool cannot attribute scores N/A and never reds.
+
+**The plant.** The smallest untested function that reaches canon's ceiling, placed in a touched source
+file, reds the step.
+
+### Comments
+
+Canon: `technical-design/code-comments.md` → *The gates*. Four CI steps run `if: always()` over the
+whole tree on every run.
+
+**Comment share.**
+- The step *Comment share* runs under `shell: bash`, using the devDependency `cloc`, pinned exactly.
+  Check what the pin ships with `cloc --version`, never from the package version.
+- Its command is
+  `cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --skip-uniqueness --strip-str-comments --by-file --csv --quiet`.
+- One `awk` line names each file whose comment lines exceed canon's share of its comment plus code
+  lines, then exits non-zero. A file exactly at the share passes.
+- Limits: a `/*` … `*/` pair across backtick template literals reads as comment, a shebang counts as
+  code, and cloc does not count `.gitignore`.
+
+**The three Vale gates.**
+- The steps check for a ticket ID, a scenario code, and narrated history in a comment, description
+  or document.
+- Each runs `errata-ai/vale-action`, pinned by SHA, with the Vale `version:` pinned,
+  `filter_mode: nofilter`, `fail_on_error: true` and `reporter: github-annotations`.
+- A negated glob keeps untracked output (`node_modules`, `dist`, `.stryker-tmp`, `coverage`,
+  `reports`, `build`) out. Each step selects one rule with a `filter:` on the rule's name.
+- The rules are existence rules at level `error`, in `.vale/styles/Identifiers/` and
+  `.vale/styles/History/`. Read the files for the patterns and the phrase list.
+- `.vale.ini` sets `MinAlertLevel = error`, `IgnoredScopes = tt` and `SkippedScopes = script, style`,
+  so Markdown fenced blocks are read. Inline code is read too: measured, a ticket ID in backticks
+  reds.
+- It lints Markdown, TypeScript and JavaScript, YAML through a `Comments` view, and `.feature`
+  through a `Gherkin` view that keeps description and `#` lines only.
+- An empty `BasedOnStyles` exempts `tests/fixtures/**`, `pnpm-lock.yaml`, changelogs, decision logs
+  and `work-item/**`.
+
+**Limits.** A `#` line inside a YAML `run: |` scalar is not read, and nor are Feature, Rule or
+Scenario titles. `.gitignore`, `.vale.ini` and `LICENSE` are outside the gates, and `.cjs` is
+unmeasured. The one safe scenario-code placeholder is `SCN-<FFF>-<NNN>`.
+
+**The plant.** For the share gate, a file over the share is named and reds. A file exactly at it, and
+a heavily commented file under `tests/fixtures`, stay unnamed. For the Vale gates, a trailing
+comment planted in a code file reds each rule, and a string on the same line does not. A plant that
+needs a scenario code uses the feature part `XMPL`, never one the corpus uses.
+
+### Evidence layers cross a seam
+
+**What it runs.** The CI step *Evidence layers cross a seam* runs `pnpm lint:seam` with
+`if: always()`. The script is
+`eslint --config eslint.boundaries.js --rule 'no-restricted-syntax: off' tests/steps`.
+
+**Configuration.** The last block of `eslint.boundaries.js` covers
+`tests/steps/**/*.{ts,mts,cts,js,mjs,cjs}` with `no-restricted-imports` at `error`. It uses two
+`regex` patterns: `^(\.\.?/)+packages(/|$)` and `^@3f-consulting/spec-controller-core(/|$)`. The
+rule reads `import`, `import type` and `export … from` declarations.
+
+**One violation, one red step.** The Import boundaries step's script runs the same config with
+`no-restricted-imports` off, and `lint:seam` runs it with `no-restricted-syntax` off.
+
+**The seam a step uses.** Steps spawn the built CLI at `packages/spec-controller/dist/cli.js`, through
+a `--import` loader hook (`tests/steps/support/coreFromDist.*.js`) that resolves the core package's
+name to its `dist`. The hook names the package in strings, never in an import declaration, so the
+rule does not read it.
+
+**Limits.** A dynamic `import()` is outside what the rule sees.
+
+**The plant.** One step file imports the product four ways: a relative path into a package's source,
+`import type` by the core package's name, the `/internal` subpath, and `export … from` by a relative
+path. It also imports `node:path` as a control. `lint:seam` reds once per product import and never on
+`node:path`, while Import boundaries stays green.
+
+### A scenario Cucumber does not run has no steps
+
+**What it runs.** The CI step *No step on a scenario Cucumber does not run* runs `if: always()` under
+`shell: bash`:
+`pnpm exec cucumber-js --profile outside --dry-run --format message | jq -rn '…' | awk '{ print } END { exit NR > 0 }'`.
+The `jq` program collects every `testCase.pickleId`. It then prints each `pickle` whose id is among
+them and whose `steps` are not empty.
+
+**Configuration.** `cucumber.js` states the filter once, as `const tags`. Paths, `require` and
+`requireModule` sit in a `common` object. The default export spreads `common` with `tags` and
+`parallel: 2`. The named profile `outside` spreads `common` with `tags: not (<tags>)`. A named
+profile replaces the default profile and does not load it, which is why `outside` carries `common`
+itself.
+
+**The population.** It is every scenario the default filter does not select. The message stream emits
+a `pickle` for every scenario whatever the filter, and only the join to `testCase` gives the
+selected set.
+
+**Who decides.** A dry run exits 0 even on an undefined step, so `awk` sets the exit. Because the step
+pipes the runner's output onward, `balance` reads it as a check, never as the Cucumber runner.
+
+**Limits.** A `Background` gives its steps to every scenario in its file, so a `Background` in a file
+holding a stepless scenario reds the gate. A stepless scenario's title is unchecked prose.
+
+**The plant.** One `Given` added under a `@unit`-only scenario reds the step, which names the scenario
+and its step count. The Cucumber step stays green.
+
+### Every step definition is one Cucumber runs
+
+**What it runs.** The CI step *No unused step definition* runs `if: always()` under `shell: bash`:
+`pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[] | select((.matches | length) == 0) | …' | awk '{ print } END { exit NR > 0 }'`.
+It prints each offender's `uri:line` and pattern.
+
+**The population.** It is every definition the default profile loads. With no `--profile`, the
+default tag filter applies, and `usage-json` counts only the steps of scenarios it selects. So a
+definition matched only by steps outside the filter counts as unused.
+
+**Who decides.** Cucumber exits 0 on an unused definition, so `awk` sets the exit.
+
+**Limits.** It reads step definitions only. Support code under `tests/steps/support` that no
+definition calls is outside it.
+
+**The plant.** Append `Given("a step no scenario Cucumber runs uses", () => undefined)` to a step
+file. The step reds and prints that definition, and every other check stays green.
+
+### How a step states its rule
+
+Canon: `delivery-approach.md` → *Declarative scenarios — assert the rule, not the interface*.
+
+**The convention.** A Given, When or Then line states the rule by intent. No exit code, `--flag`,
+stdout, stderr, file name or JSON shape appears in a prose line, and the step definition holds the
+mechanic. A business parameter, such as a format name, is the rule's own data and stays in prose.
+Rule and Scenario titles are outside the convention as the tree holds it.
+
+**Intent tables hold the interface contract.**
+- `tests/steps/support/runExit.ts`: `OUTCOME_EXIT` maps each outcome phrase (*the balanced verdict*,
+  *a usage error*, *the unsound verdict* and others) to an exit code, and `HEADLINE_EXIT` does the
+  same for each headline word. `RUN_OUTCOME` joins the phrases into an alternation, which definitions
+  interpolate into their patterns. `exitOn` and `exitNamedBy` fail on a phrase the table does not
+  name.
+- `tests/steps/support/balanceOption.ts`: `OPTION_FLAG` maps each option name (*strict option*,
+  *report-only option*, *store modifier* and others) to its flag. `optionFlag` drops a leading `the `
+  and fails on a name the table does not hold.
+- So a feature says *Then the run ends on the balanced verdict*. A change to an exit code or a flag
+  touches one table entry and no `.feature` line. Distinct failure modes take distinct phrases, even
+  where two map to one code.
+
+**How a rewording is checked.** A rewording is a green-to-green refactor:
+- a dry run shows no undefined step;
+- *Every step definition is one Cucumber runs* stays green;
+- Cucumber's scenario and status multiset is unchanged;
+- `balance`'s report is byte-identical apart from its provenance.
+
+The plant: put one definition's pattern back to the old text. The dry run shows the step undefined,
+and the unused-definition gate names the definition.
+
+**Limits.** No CI step reads Given/When/Then prose for interface words. A pattern holds each line to
+a definition, and nothing holds the line's altitude. This audit grep returns nothing on the tree:
+
+```sh
+git grep -cE '^[[:space:]]+(Given|When|Then|And|But) .*(stdout|stderr|exits? [0-9]|exit code|exit status|package\.json|--[a-z]|success status|store root|\.json)' -- features
+```
+
 ---
 
 ## Converting an existing check — the checklist
