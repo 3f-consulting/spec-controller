@@ -553,6 +553,11 @@ on `workflow_dispatch`, never per push. The shared `stryker.config.js` holds the
 - One catalogue cannot serve both packages. Core may not import the app, and the app reaches core
   only through its published entry, which carries no app prose.
 - Each catalogue file is excluded from its scope's `mutate` by name.
+- Only message prose leaves the mutated surface this way. Other data, including a report's layout
+  (separators, table rules, cell glyphs, section order), stays in code, and tests assert the rendered
+  output to kill its mutants. Data that is not prose leaves only if it meets all four of the
+  catalogue's guards: keyed by a type, completeness typed, a no-empty guard, and no logic. Another
+  test covering it is not a reason to exclude it.
 - One test reads every catalogue in the tree and fails on an empty entry, and one scenario states
   that rule. Test files sit outside both import rules, so one file can read both packages.
 - A test that kills a mutant no other test kills is never a deletion candidate, whatever else
