@@ -3,7 +3,8 @@ import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ScnSighting } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
-import { readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { firstLine, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
 export type HistoryBoundary = { kind: "complete" } | { kind: "not-a-repository" } | { kind: "shallow"; before: string };
 
@@ -13,15 +14,11 @@ const COMMIT_MARKER = "\u0001";
 
 export function readHistory(cwd: string, part: string): ScnSighting[] {
   proveRefsReadable(cwd);
-  const result = spawnSync(
-    "git",
-    ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `SCN-${part}-`],
-    { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES },
-  );
-  if (result.error !== undefined) refuse("the repository's history", cwd, result.error);
+  const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `SCN-${part}-`];
+  const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
+  if (result.error !== undefined) refuse(AppMessage.History, cwd, result.error);
   if (result.status !== 0) {
-    const said = result.stderr.split("\n")[0] ?? "";
-    throw new UnreadableInput("the repository's history", cwd, `git log exited ${result.status}: ${said}`);
+    throw new UnreadableInput(AppMessage.History, cwd, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
   }
   return diffLineSightings(result.stdout);
 }
@@ -32,12 +29,12 @@ function gitAnswer(cwd: string, args: readonly string[]): string | null {
 }
 
 export function repositoryTop(cwd: string): string | null {
-  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
+  const args = ["rev-parse", "--show-toplevel"];
+  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (result.status === 0) return result.stdout.trim();
   const gitEntry = result.error === undefined ? gitEntryAtOrAbove(cwd) : null;
   if (gitEntry === null) return null;
-  const said = result.stderr.split("\n")[0] ?? "";
-  throw new UnreadableInput("the repository", gitEntry, `git rev-parse exited ${result.status}: ${said}`);
+  throw new UnreadableInput(AppMessage.Repository, gitEntry, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
 }
 
 function gitEntryAtOrAbove(dir: string): string | null {
@@ -60,7 +57,7 @@ export function historyBoundaryOf(cwd: string): HistoryBoundary {
 
 function shallowBoundaryOf(cwd: string): HistoryBoundary {
   const shallowPath = shallowRecordPath(cwd);
-  const record = readOrRefuse("the repository's history", shallowPath, () => readFileSync(shallowPath, "utf8"));
+  const record = readOrRefuse(AppMessage.History, shallowPath, () => readFileSync(shallowPath, "utf8"));
   const edge = record.split("\n")[0] ?? "";
   return { kind: "shallow", before: gitAnswer(cwd, ["rev-parse", "--short", edge]) ?? edge };
 }
@@ -113,11 +110,11 @@ function pathOf(header: string): string {
 }
 
 function readHunkHeader(line: string, at: PatchPosition): void {
-  const match = /^@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line);
+  const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line);
   at.oldLine = Number(match?.[1] ?? 0);
   at.newLine = Number(match?.[2] ?? 0);
 }
 
 function sightingAt(text: string, path: string, line: number, commit: string | undefined): ScnSighting {
-  return commit === undefined ? { text, path, line } : { text, path, line, commit };
+  return { text, path, line, commit };
 }

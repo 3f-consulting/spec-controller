@@ -1,5 +1,5 @@
-import { afterEach, describe, it, expect } from "vitest";
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, afterEach, describe, it, expect } from "vitest";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { walkTree } from "./readTree.js";
@@ -15,6 +15,10 @@ afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
 function thrownBy(read: () => unknown): unknown {
   try {
     read();
@@ -24,8 +28,11 @@ function thrownBy(read: () => unknown): unknown {
   throw new Error("expected the read to be refused, and it read");
 }
 
+const made: string[] = [];
+
 function tree(): string {
   const root = mkdtempSync(join(tmpdir(), "allocate-walk-"));
+  made.push(root);
   mkdirSync(join(root, "docs"));
   writeFileSync(join(root, "docs", "notes.md"), "Cites SCN-ONE-004.\n");
   return root;

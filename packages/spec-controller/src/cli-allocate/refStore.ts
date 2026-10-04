@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { AppMessage } from "../messages.js";
 import { readOrRefuse } from "./unreadable.js";
 
 const REF_STORES = ["refs", "packed-refs", "reftable"] as const;
@@ -21,12 +22,12 @@ function gitDirsOf(cwd: string): string[] {
 }
 
 function readEveryEntry(path: string): void {
-  const kind = readOrRefuse("the repository's history", path, () => lstatSync(path, { throwIfNoEntry: false }));
+  const kind = readOrRefuse(AppMessage.History, path, () => lstatSync(path, { throwIfNoEntry: false }));
   if (kind === undefined) return;
   if (kind.isDirectory()) {
-    const names = readOrRefuse("the repository's history", path, () => readdirSync(path));
+    const names = readOrRefuse(AppMessage.History, path, () => readdirSync(path));
     for (const name of names) readEveryEntry(join(path, name));
   } else if (kind.isFile()) {
-    readOrRefuse("the repository's history", path, () => readFileSync(path));
+    readOrRefuse(AppMessage.History, path, () => readFileSync(path));
   }
 }

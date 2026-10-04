@@ -1,0 +1,162 @@
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { runAllocate } from "./cli.js";
+
+function git(cwd: string, args: readonly string[]): string {
+  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+  });
+  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+  return result.stdout;
+}
+
+function writeInto(root: string, path: string, content: string): void {
+  mkdirSync(dirname(join(root, path)), { recursive: true });
+  writeFileSync(join(root, path), content);
+}
+
+function commitAll(repo: string, message: string): void {
+  git(repo, ["add", "-A"]);
+  git(repo, ["commit", "-q", "-m", message]);
+}
+
+const made: string[] = [];
+
+function freshDirectory(prefix: string): string {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
+  made.push(dir);
+  return dir;
+}
+
+function headedOneCarrying003(): string {
+  const repo = freshDirectory("allocate-not-the-kind-");
+  git(repo, ["init", "-q", "-b", "main"]);
+  writeInto(repo, "features/one.feature", "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n");
+  commitAll(repo, "the corpus");
+  return repo;
+}
+
+interface WrongKind {
+  path: string;
+  kind: string;
+  make: (at: string) => void;
+  subject: string;
+  reason: RegExp;
+}
+
+const WRONG_KINDS: readonly WrongKind[] = [
+  {
+    path: "features",
+    kind: "a regular file",
+    make: (at) => {
+      rmSync(at, { recursive: true, force: true });
+      writeFileSync(at, "not a directory\n");
+    },
+    subject: "the feature corpus",
+    reason: /^ENOTDIR: /,
+  },
+  {
+    path: "features/two.feature",
+    kind: "a directory",
+    make: (at) => mkdirSync(at),
+    subject: "a feature file",
+    reason: /^EISDIR: /,
+  },
+  {
+    path: "features/two.feature",
+    kind: "a link to a file that is not there",
+    make: (at) => symlinkSync(join(dirname(at), "nowhere.feature"), at),
+    subject: "a feature file",
+    reason: /^ENOENT: /,
+  },
+];
+
+interface Answered {
+  stdout: string;
+  stderr: string;
+  exitCode: typeof process.exitCode;
+  thrown: unknown;
+}
+
+function allocateWith(cwd: () => string, argv: string[]): Answered {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  vi.spyOn(process, "cwd").mockImplementation(cwd);
+  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
+    stdout.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    stderr.push(String(chunk));
+    return true;
+  });
+  let thrown: unknown;
+  try {
+    runAllocate(argv);
+  } catch (err) {
+    thrown = err;
+  }
+  const exitCode = process.exitCode;
+  vi.restoreAllMocks();
+  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode, thrown };
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  process.exitCode = undefined;
+});
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
+  it.each(WRONG_KINDS)("refuses ONE at the usage status, naming $path, where it is $kind", ({ path, make, subject, reason }) => {
+    const repo = headedOneCarrying003();
+    make(join(repo, path));
+
+    const answered = allocateWith(() => repo, ["ONE"]);
+
+    expect(answered.thrown).toBeUndefined();
+    expect(answered.stdout).toBe("");
+    expect(answered.exitCode).toBe(2);
+    const opening = `spec-controller allocate: usage error — ${subject} could not be read: ${join(repo, path)} (`;
+    expect(answered.stderr.startsWith(opening)).toBe(true);
+    expect(answered.stderr.endsWith(")\n")).toBe(true);
+    expect(answered.stderr.split("\n")).toHaveLength(2);
+    expect(answered.stderr.slice(opening.length, -2)).toMatch(reason);
+  });
+
+  it("neither refuses nor reads through a tracked link, though what it links to carries a higher code", () => {
+    const repo = headedOneCarrying003();
+    const elsewhere = freshDirectory("allocate-link-target-");
+    writeFileSync(join(elsewhere, "notes.md"), "SCN-ONE-009 lives here\n");
+    mkdirSync(join(repo, "docs"));
+    symlinkSync(join(elsewhere, "notes.md"), join(repo, "docs/notes.md"));
+    commitAll(repo, "a link out of the tree");
+
+    const answered = allocateWith(() => repo, ["ONE"]);
+
+    expect(answered.thrown).toBeUndefined();
+    expect(answered.exitCode).toBeUndefined();
+    expect(answered.stdout).toBe("SCN-ONE-004\n");
+  });
+
+  it("refuses nothing, and gives no code, when what fails is not a path it reads", () => {
+    const fault = new Error("not a fault reading any path");
+
+    const answered = allocateWith(() => {
+      throw fault;
+    }, ["ONE"]);
+
+    expect(answered.thrown).toBe(fault);
+    expect(answered.stdout).toBe("");
+    expect(answered.stderr).toBe("");
+    expect(answered.exitCode).toBeUndefined();
+  });
+});

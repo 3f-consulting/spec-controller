@@ -226,7 +226,7 @@ Feature: Allocate the next scenario code for a feature part
         | copy without git | docs                 |
         | copy without git | working directory    |
 
-    @SCN-ALC-019 @e2e
+    @SCN-ALC-019 @unit @e2e
     Scenario: asked from a working directory that no longer exists, allocate is refused as a usage error
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks for the next code for ONE from a working directory that has since been removed

@@ -16,8 +16,16 @@ function git(repo: string, args: readonly string[]): string {
   return result.stdout;
 }
 
+const temporaryDirectories: string[] = [];
+
+function temporaryDirectory(prefix: string): string {
+  const directory = mkdtempSync(join(tmpdir(), prefix));
+  temporaryDirectories.push(directory);
+  return directory;
+}
+
 function newRepository(): string {
-  const repo = mkdtempSync(join(tmpdir(), "allocate-"));
+  const repo = temporaryDirectory("allocate-");
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
@@ -148,7 +156,7 @@ Given(
 Given(
   "the author's copy of it is a copy without git, whose packages and hidden directories mention {word}",
   function (code: string) {
-    copy = mkdtempSync(join(tmpdir(), "allocate-copy-"));
+    copy = temporaryDirectory("allocate-copy-");
     cpSync(repository, copy, { recursive: true, filter: (source) => basename(source) !== ".git" });
     writeInto(copy, "node_modules/some-package/README.md", `Cites ${code}.\n`);
     writeInto(copy, ".hidden/notes.md", `Cites ${code}.\n`);
@@ -158,7 +166,7 @@ Given(
 );
 
 Given("the author's copy of it is a clone one commit deep", function () {
-  copy = join(mkdtempSync(join(tmpdir(), "allocate-clone-")), "clone");
+  copy = join(temporaryDirectory("allocate-clone-"), "clone");
   git(repository, ["clone", "-q", "--depth", "1", `file://${repository}`, copy]);
   assert.equal(git(copy, ["rev-parse", "--is-shallow-repository"]).trim(), "true");
   assert.equal(git(copy, ["rev-list", "--count", "HEAD"]).trim(), "1");
@@ -307,7 +315,7 @@ function modifierFlags(modifiers: string): string[] {
 }
 
 function modifierArgs(modifiers: string): string[] {
-  storeRoot = join(mkdtempSync(join(tmpdir(), "allocate-store-")), "store");
+  storeRoot = join(temporaryDirectory("allocate-store-"), "store");
   const values: Record<string, string> = { "--store": storeRoot, "--run-id": "r1" };
   return modifierFlags(modifiers).flatMap((modifier) => [modifier, values[modifier] ?? ""]);
 }
@@ -409,10 +417,11 @@ function withhold(path: string, mode: number): void {
 
 After(function () {
   while (permissionsTaken.length > 0) permissionsTaken.pop()?.();
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
 
 function copyWithoutGit(): string {
-  const copy = mkdtempSync(join(tmpdir(), "allocate-plain-"));
+  const copy = temporaryDirectory("allocate-plain-");
   writeInto(copy, "features/one.feature", featureFile("ONE", ["SCN-ONE-003"]));
   writeInto(copy, "docs/notes.md", "Cites SCN-ONE-004.\n");
   const probe = spawnSync("git", ["rev-parse", "--git-dir"], { cwd: copy, encoding: "utf8" });
@@ -528,7 +537,7 @@ Given("its branch refs are not permitted to be read", function () {
 });
 
 Given("it is cloned one commit deep, and the clone's shallow record is not permitted to be read", function () {
-  const clone = join(mkdtempSync(join(tmpdir(), "allocate-clone-")), "clone");
+  const clone = join(temporaryDirectory("allocate-clone-"), "clone");
   git(repository, ["clone", "-q", "--depth", "1", `file://${repository}`, clone]);
   assert.equal(git(clone, ["rev-parse", "--is-shallow-repository"]).trim(), "true");
   repository = clone;

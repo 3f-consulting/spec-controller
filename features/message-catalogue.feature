@@ -17,20 +17,30 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   and should pin. The sixteen mutants do not become killed; they cease to exist, and the ones
   that replace them are the ternaries deciding `Exists` against `None`, now asserted as fields.
 
+  ONE CATALOGUE PER PACKAGE, AND THE RULE HOLDS FOR EVERY ONE. The domain's faults are not the only
+  prose in this tree: every human-facing message is reached by a code, through a catalogue held as
+  data and excluded by name from the mutate glob of the scope that contains it. There is one
+  catalogue per package, because the import rules let core import nothing of the app and let the
+  app reach core only through its published entry point, so no single catalogue can serve both. Core's lives in `domain`, keyed by the fault
+  codes, and `render` and `parse` extend it rather than starting their own. The app's lives in
+  `packages/spec-controller/src/messages.ts`, keyed by an app-wide code, and every app scope
+  extends it. Whichever catalogue a code belongs to, the same rule holds: every code has an entry,
+  nothing else does, and no entry renders blank.
+
   THE EXCLUSION IS THE PART THAT COULD BE A HOLE. "Do not mutate this file" is one edit away from
   "do not mutate this directory", and nothing would go red. What closes half of it is not a promise
-  but the compiler: the catalogue is a mapped type over the fault codes, so a code cannot exist
-  without a message and a template cannot reach for a parameter its fault does not carry, the way
+  but the compiler: each catalogue is a mapped type over its codes, so a code cannot exist
+  without a message and a template cannot reach for a parameter its code does not carry, the way
   `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss. The exclusion ITSELF is held by
   review alone, and that is said here rather than left to be found. No check reads the Stryker
   config back: its subject would be this repository's own Stryker configuration, which a reader
   who copies this corpus does not have. A widened exclusion reds nothing — what it still
-  cannot do is make the catalogue lie. An accepted residual, not an oversight, and the same trade
+  cannot do is make a catalogue lie. An accepted residual, not an oversight, and the same trade
   `stryker.config.js` already carries in writing for the lost kill its own threshold cannot see.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
   mutate is a folder outside the domain — and the boundary gate's domain-imports-only-domain rule says
-  a domain module imports only the domain layer. So the catalogue stays INSIDE
+  a domain module imports only the domain layer. So core's catalogue stays INSIDE
   the domain and leaves the mutated surface by CONFIG, which is the axis the problem is actually
   on: the mutate glob is a statement about what mutation testing can usefully ask, not about what
   the domain may depend on. Purity and mutability are two different questions and are answered in
@@ -46,7 +56,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
     @unit @SCN-MSG-001
     Scenario: a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what was required
 
-  Rule: every fault code has a message that names its fault
+  Rule: every code in a message catalogue has a message that names what it stands for
 
     @unit @SCN-MSG-002
-    Scenario: the catalogue is total over the fault codes with no empty entry
+    Scenario: every message catalogue is total over its codes, with no empty entry

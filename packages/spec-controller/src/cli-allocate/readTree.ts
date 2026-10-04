@@ -2,7 +2,8 @@ import { spawnSync } from "node:child_process";
 import { accessSync, constants, lstatSync, readdirSync, readFileSync, type Dirent } from "node:fs";
 import { join, relative, sep } from "node:path";
 import type { ScnSighting } from "@3f-consulting/spec-controller-core";
-import { readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { firstLine, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
@@ -12,17 +13,16 @@ export function readTree(top: string, part: string): ScnSighting[] {
   const listed = gitListing(top, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]);
   const ignored = gitListing(top, ["ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]);
   proveListable(top, "", new Set(ignored.filter(isDirectoryEntry).map((entry) => entry.slice(0, -1))));
-  return listed.filter((entry) => !isDirectoryEntry(entry)).flatMap((path) => sightingsInListed(top, path, `SCN-${part}-`));
+  return listed.flatMap((path) => sightingsInListed(top, path, `SCN-${part}-`));
 }
 
 function gitListing(top: string, args: readonly string[]): string[] {
   const result = spawnSync("git", args, { cwd: top, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
-  if (result.error !== undefined) refuse("the tree", top, result.error);
+  if (result.error !== undefined) refuse(AppMessage.Tree, top, result.error);
   if (result.status !== 0) {
-    const said = result.stderr.split("\n")[0] ?? "";
-    throw new UnreadableInput("the tree", top, `git ls-files exited ${result.status}: ${said}`);
+    throw new UnreadableInput(AppMessage.Tree, top, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
   }
-  return result.stdout.split("\0").filter((entry) => entry !== "");
+  return result.stdout.split("\0");
 }
 
 function isDirectoryEntry(entry: string): boolean {
@@ -30,8 +30,8 @@ function isDirectoryEntry(entry: string): boolean {
 }
 
 function proveListable(top: string, dir: string, ignored: ReadonlySet<string>): void {
-  const path = dir === "" ? top : join(top, dir);
-  const entries = readOrRefuse("a directory in the tree", path, () => listedAndEntered(path));
+  const path = join(top, dir);
+  const entries = readOrRefuse(AppMessage.TreeDirectory, path, () => listedAndEntered(path));
   if (dir !== "" && entries.some((entry) => entry.name === ".git")) return;
   for (const entry of entries) {
     const child = dir === "" ? entry.name : `${dir}/${entry.name}`;
@@ -46,9 +46,9 @@ function listedAndEntered(path: string): Dirent[] {
 
 function sightingsInListed(top: string, path: string, needle: string): ScnSighting[] {
   const file = join(top, path);
-  const kind = readOrRefuse("a file in the tree", file, () => lstatSync(file, { throwIfNoEntry: false }));
+  const kind = readOrRefuse(AppMessage.TreeFile, file, () => lstatSync(file, { throwIfNoEntry: false }));
   if (kind === undefined || !kind.isFile()) return [];
-  return linesCarrying(path, readOrRefuse("a file in the tree", file, () => readFileSync(file)), needle);
+  return linesCarrying(path, readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file)), needle);
 }
 
 function linesCarrying(path: string, content: Buffer, needle: string): ScnSighting[] {
@@ -65,13 +65,13 @@ export function isWalkedDirectory(name: string): boolean {
 
 export function walkTree(root: string, part: string): ScnSighting[] {
   return filesUnder(root).flatMap((file) => {
-    const content = readOrRefuse("a file in the tree", file, () => readFileSync(file));
+    const content = readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file));
     return linesCarrying(relative(root, file).split(sep).join("/"), content, `SCN-${part}-`);
   });
 }
 
 function filesUnder(dir: string): string[] {
-  const entries = readOrRefuse("a directory in the tree", dir, () => readdirSync(dir, { withFileTypes: true }));
+  const entries = readOrRefuse(AppMessage.TreeDirectory, dir, () => readdirSync(dir, { withFileTypes: true }));
   return entries.flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return isWalkedDirectory(entry.name) ? filesUnder(path) : [];

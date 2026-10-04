@@ -1,6 +1,6 @@
-import { afterEach, beforeAll, describe, it, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
@@ -28,8 +28,16 @@ function git(repo: string, args: readonly string[]): void {
   if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
 }
 
+const made: string[] = [];
+
+function freshDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  made.push(dir);
+  return dir;
+}
+
 function templateRepository(): string {
-  const repo = mkdtempSync(join(tmpdir(), "allocate-tree-"));
+  const repo = freshDirectory("allocate-tree-");
   git(repo, ["init", "-q", "-b", "main"]);
   mkdirSync(join(repo, "docs"));
   writeFileSync(join(repo, "docs", "notes.md"), "Cites SCN-ONE-003.\n");
@@ -47,7 +55,7 @@ beforeAll(() => {
 });
 
 function repositoryWithDraft(): string {
-  const repo = mkdtempSync(join(tmpdir(), "allocate-tree-"));
+  const repo = freshDirectory("allocate-tree-");
   cpSync(template, repo, { recursive: true });
   return repo;
 }
@@ -61,6 +69,10 @@ function withhold(path: string, mode: number): void {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
+});
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 function thrownBy(read: () => unknown): unknown {

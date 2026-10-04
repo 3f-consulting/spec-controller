@@ -1,6 +1,6 @@
-import { afterEach, beforeAll, describe, it, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
@@ -98,8 +98,16 @@ function git(repo: string, args: readonly string[]): void {
   if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
 }
 
+const made: string[] = [];
+
+function freshDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  made.push(dir);
+  return dir;
+}
+
 function templateRepository(): string {
-  const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+  const repo = freshDirectory("allocate-history-");
   git(repo, ["init", "-q", "-b", "main"]);
   writeFileSync(join(repo, "one.md"), "SCN-ONE-001\nSCN-ONE-005\n");
   git(repo, ["add", "-A"]);
@@ -116,7 +124,7 @@ beforeAll(() => {
 });
 
 function repositoryWithHistory(): string {
-  const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+  const repo = freshDirectory("allocate-history-");
   cpSync(template, repo, { recursive: true });
   return repo;
 }
@@ -131,6 +139,10 @@ function withhold(path: string, mode: number): void {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
+});
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 function thrownBy(read: () => unknown): unknown {
@@ -174,7 +186,7 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
   });
 
   it("refuses a repository whose .git names a directory that is not there", () => {
-    const repo = mkdtempSync(join(tmpdir(), "allocate-history-"));
+    const repo = freshDirectory("allocate-history-");
     writeFileSync(join(repo, ".git"), `gitdir: ${join(repo, "nowhere")}\n`);
     expect(thrownBy(() => repositoryTop(repo))).toMatchObject({ name: "UnreadableInput", subject: "the repository", path: join(repo, ".git") });
   });
@@ -187,7 +199,7 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
   });
 
   it("still reads a directory with no .git at or above it as no repository", () => {
-    expect(repositoryTop(mkdtempSync(join(tmpdir(), "allocate-plain-")))).toBeNull();
+    expect(repositoryTop(freshDirectory("allocate-plain-"))).toBeNull();
   });
 
   it("still reads a repository with no git to ask as no repository", () => {

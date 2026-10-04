@@ -4,6 +4,7 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readHeaderCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
+import { AppMessage } from "../messages.js";
 import { readOrRefuse, refusalLine, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
@@ -40,7 +41,7 @@ function refuseUsage(line: string): void {
 }
 
 function answerRequest({ part, isNew }: AllocateRequest): void {
-  const cwd = readOrRefuse("the working directory", "", () => process.cwd());
+  const cwd = readOrRefuse(AppMessage.WorkingDirectory, "", () => process.cwd());
   const top = repositoryTop(cwd);
   const headerCodes = readHeaderCodes(join(top ?? cwd, "features"));
   const answer = nextScnCode({ part, headerCodes, isNew }, sightingsFrom(cwd, part, top));

@@ -60,6 +60,9 @@ scored on its own:
           - scope: core-assemble
             mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts"
             timeout: 8
+          - scope: spec-controller-cli-allocate
+            mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts"
+            timeout: 15
 ```
 
 ```yaml
