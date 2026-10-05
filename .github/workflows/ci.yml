@@ -36,7 +36,9 @@ jobs:
         run: corepack enable
 
       - name: Resolve the evidence root
-        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
+        run: |
+          echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,12 +48,28 @@ jobs:
 
       - name: Test
         id: SCN-FIT-012
+        env:
+          TMPDIR: ${{ runner.temp }}/suite-tmp/vitest
+          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
         run: timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled
 
       - name: Cucumber
         id: SCN-FIT-013
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        env:
+          TMPDIR: ${{ runner.temp }}/suite-tmp/cucumber
+          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
+          TSX_DISABLE_CACHE: "1"
         run: timeout 150 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
+
+      - name: No test leaves an entry in its temporary directory
+        id: SCN-FIT-031
+        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/suite-tmp"
+          left="$(find . -mindepth 2 -maxdepth 2 | sed -E 's|^\./||; s/-?[0-9A-Za-z]{6}$//' | sort | uniq -c)"
+          [ -z "$left" ] || { printf 'left behind, by suite and prefix:\n%s\n' "$left"; exit 1; }
 
       - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
         id: SCN-FIT-001

@@ -129,3 +129,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-030
     Scenario: no Given, When or Then line in the corpus names an output channel, an exit code, a flag, a file name or the binary
+
+  Rule: a test run leaves the machine it ran on as it found it
+
+    @fitness @SCN-FIT-031
+    Scenario: neither suite leaves an entry in the temporary directory it ran in

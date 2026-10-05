@@ -809,6 +809,40 @@ rows are not read either. One table in `output-format.feature` keeps the paths i
 (`/dev/stdout`, standard output) as its own data, and a cell that reaches a step line is held by
 review alone. A pattern holds each line to a definition, and this gate holds its altitude.
 
+### A test leaves nothing in its temporary directory
+
+Canon: the cleanup rule. A test removes what it creates with `fs.rmSync`, and restores any mode it
+stripped with `fs.chmodSync` first, in the same hook.
+
+**Where the suites run.** *Test* and *Cucumber* each run with `TMPDIR` set to a directory of their
+own, `$RUNNER_TEMP/suite-tmp/vitest` and `$RUNNER_TEMP/suite-tmp/cucumber`, created empty by
+*Resolve the evidence root*. Their commands are unchanged, so their run-time gates time the same
+commands as before.
+
+**The two cache settings, and why each is there.** Without them the toolchain, not a test, writes to
+`TMPDIR`, and the rule could not stay "nothing left".
+- `NODE_COMPILE_CACHE`, on both suites, points Node's compile cache at
+  `$RUNNER_TEMP/node-compile-cache`. Vitest turns that cache on, and by default it lives in
+  `TMPDIR`. The setting moves it.
+- `TSX_DISABLE_CACHE: "1"`, on *Cucumber* only, turns tsx's cache off. tsx keeps its cache in
+  `TMPDIR` and reads no setting that moves it. A fresh runner never gets a warm hit, so turning it
+  off costs nothing in CI; local runs keep it.
+- Neither is a named exclusion. An exemption by name would also pass a test that leaks under that
+  name.
+
+**The check.** The step *No test leaves an entry in its temporary directory* runs after *Cucumber*,
+under the same condition, so it is skipped when *Test* was skipped and never passes over a directory
+no suite wrote to. It lists every entry in each suite's directory, counted by suite and by prefix
+with `mkdtemp`'s six-character suffix stripped, and fails if there is any.
+
+The plant: remove one step file's `rmSync`. The check reds and names the suite and the prefix, for
+example `5 cucumber/scn-grammar` when scnGrammar's steps keep their five directories.
+
+**Limits.** A cancelled run skips the check. A suite killed by its own `timeout` is still checked,
+so what its unrun teardown would have removed is reported beside the timeout's red. The check reads
+only the two suite directories, so a test that writes somewhere other than `os.tmpdir()` is not
+seen.
+
 ### Self-reconciliation
 
 Canon: `fitness-functions.md` → *Self-reconciliation — the capstone*, and `ci-and-release.md` → *The
