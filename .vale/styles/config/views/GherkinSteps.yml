@@ -1,0 +1,17 @@
+engine: textfsm
+template: |
+  Value List Step (\S.*)
+
+  Start
+    ^\s*""" -> QuotedDocString
+    ^\s*``` -> FencedDocString
+    ^\s*(?:Given|When|Then|And|But|\*)\s+${Step}
+
+  QuotedDocString
+    ^\s*""" -> Start
+
+  FencedDocString
+    ^\s*``` -> Start
+scopes:
+  - name: step
+    expr: Step

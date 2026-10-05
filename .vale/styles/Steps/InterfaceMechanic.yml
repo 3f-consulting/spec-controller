@@ -1,0 +1,20 @@
+extends: existence
+message: "'%s' names the interface a step is observed through; state the rule, and leave the mechanic to the step definition."
+level: error
+nonword: true
+ignorecase: true
+tokens:
+  - \bstd(?:out|err)\b
+  - \bstandard (?:output|error)\b
+  - \bexits (?:with status|non-zero)\b
+  - \bexits? [0-9]+\b
+  - \bexit (?:code|status)\b
+  - \bsuccess status\b
+  - (?<![\w-])--[a-z][a-z0-9-]*
+  - \w[\w.-]*\.json\b
+  - \brun\.yaml\b
+  - \bstore root\b
+  - \b(?:CLI|top-level) binary\b
+  - \b(?:the|real) CLI\b
+  - \bcwd\b
+  - \bbalance command\b

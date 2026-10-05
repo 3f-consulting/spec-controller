@@ -124,3 +124,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-029
     Scenario: every step definition matches a step in a scenario Cucumber runs
+
+  Rule: a Given, When or Then states the rule it checks, never the interface it is observed through
+
+    @fitness @SCN-FIT-030
+    Scenario: no Given, When or Then line in the corpus names an output channel, an exit code, a flag, a file name or the binary

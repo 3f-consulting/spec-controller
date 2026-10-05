@@ -788,12 +788,26 @@ Rule and Scenario titles are outside the convention as the tree holds it.
 The plant: put one definition's pattern back to the old text. The dry run shows the step undefined,
 and the unused-definition gate names the definition.
 
-**Limits.** No CI step reads Given/When/Then prose for interface words. A pattern holds each line to
-a definition, and nothing holds the line's altitude. This audit grep returns nothing on the tree:
+**The gate.** The step *No Given, When or Then names an interface mechanic* reds when a step line in
+`features/` names one. It runs the pinned `vale-action` with `config: .vale/steps.ini`, a config of
+its own, so the comment gates and `.vale.ini` are untouched.
+- The view `GherkinSteps` reads the text after `Given`, `When`, `Then`, `And`, `But` or `*`, and
+  nothing else. It skips docstrings, under `"""` or three backticks, because they hold fixture
+  text.
+- The rule `Steps.InterfaceMechanic` is an existence rule, case-insensitive. Its tokens are output
+  channels (`stdout`, `stderr`, standard output or error); exit codes (`exit 1`, `exits 2`, exit
+  code or status, success status, exits non-zero); a `--flag`; a `.json` file name or `run.yaml`;
+  the store root; and the binary (CLI binary, top-level binary, the CLI, `cwd`, the balance
+  command).
+- The rule's own data stays legal: format names as words (`json`, `md`, `xml`), a target's workflow
+  names (`ci.yml`, `nightly.yml`) and the verdict words.
 
-```sh
-git grep -cE '^[[:space:]]+(Given|When|Then|And|But) .*(stdout|stderr|exits? [0-9]|exit code|exit status|package\.json|--[a-z]|success status|store root|\.json)' -- features
-```
+The plant: add the line `And the run exits 1` to a scenario. The step reds and names the line.
+
+**Limits.** Feature, Rule and Scenario titles are not read; some still name the interface. Examples
+rows are not read either. One table in `output-format.feature` keeps the paths it tests
+(`/dev/stdout`, standard output) as its own data, and a cell that reaches a step line is held by
+review alone. A pattern holds each line to a definition, and this gate holds its altitude.
 
 ### Self-reconciliation
 
