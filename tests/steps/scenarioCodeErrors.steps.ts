@@ -1,6 +1,6 @@
-import { Before, Given, When, Then } from "@cucumber/cucumber";
+import { After, Before, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
@@ -29,10 +29,21 @@ const SCN_ID = /SCN-[A-Z0-9]{2,5}-\d+/g;
 let files: Record<string, string> = {};
 let uncited = new Set<string>();
 let run: CodeRun;
+const temporaryDirectories: string[] = [];
 
 Before(function () {
   uncited = new Set();
 });
+
+After(function () {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+});
+
+function temporaryDirectory(prefix: string): string {
+  const directory = mkdtempSync(join(tmpdir(), prefix));
+  temporaryDirectories.push(directory);
+  return directory;
+}
 
 function featureFile(code: string | null, ids: readonly string[]): string {
   const header = code === null ? "" : `@${code}\n`;
@@ -46,7 +57,7 @@ function citedIds(): string[] {
 }
 
 function balance(): CodeRun {
-  const dir = mkdtempSync(join(tmpdir(), "scn-code-errors-"));
+  const dir = temporaryDirectory("scn-code-errors-");
   mkdirSync(join(dir, "features"));
   for (const [name, source] of Object.entries(files)) writeFileSync(join(dir, "features", name), source);
   writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");

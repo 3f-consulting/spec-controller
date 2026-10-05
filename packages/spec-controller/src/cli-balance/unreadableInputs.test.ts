@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, describe, expect, it } from "vitest";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkInputsParse } from "./cli.js";
@@ -104,8 +104,25 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
   });
 });
 
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) {
+    for (const entry of ["features", "workflows"]) {
+      const path = join(dir, entry);
+      if (existsSync(path)) chmodSync(path, 0o755);
+    }
+    for (const entry of [join("features", "a.feature"), join("workflows", "ci.yml")]) {
+      const path = join(dir, entry);
+      if (existsSync(path)) chmodSync(path, 0o644);
+    }
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 function targetOnDisk(): { features: string; ci: string } {
   const dir = mkdtempSync(join(tmpdir(), "input-paths-"));
+  made.push(dir);
   const features = join(dir, "features");
   const ci = join(dir, "workflows");
   mkdirSync(features);

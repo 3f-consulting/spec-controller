@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, describe, it, expect, vi } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -12,6 +12,12 @@ import {
 } from "./cli.js";
 import { cliRegistry } from "../cli-registry.js";
 import { checkUnknownFlags } from "../cli-args.js";
+
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -428,6 +434,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
 describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
   function duplicateTarget(): string {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
+    made.push(dir);
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "dup.feature"),

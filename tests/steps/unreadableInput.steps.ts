@@ -1,7 +1,7 @@
 import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
@@ -17,9 +17,11 @@ interface Target {
 
 let target: Target;
 let result: SpawnSyncReturns<string>;
+const temporaryDirectories: string[] = [];
 
 function targetDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "unreadable-input-"));
+  temporaryDirectories.push(dir);
   mkdirSync(join(dir, "features"));
   writeFileSync(join(dir, "features", "target.feature"), FEATURE);
   return dir;
@@ -268,13 +270,16 @@ Then("the refusal says the tool was not permitted to read it", function () {
   assert.match(result.stderr, /EACCES|EPERM/, `expected the operating system's reason; got:\n${result.stderr}`);
 });
 
-After({ tags: "@SCN-CLI-082" }, function () {
-  for (const entry of ["features", "workflows"]) {
-    const path = join(target.dir, entry);
-    if (existsSync(path)) chmodSync(path, 0o755);
-  }
-  for (const entry of [join("features", "target.feature"), "ci.yml", "package.json", "vitest.json"]) {
-    const path = join(target.dir, entry);
-    if (existsSync(path)) chmodSync(path, 0o644);
+After(function () {
+  for (const directory of temporaryDirectories.splice(0)) {
+    for (const entry of ["features", "workflows"]) {
+      const path = join(directory, entry);
+      if (existsSync(path)) chmodSync(path, 0o755);
+    }
+    for (const entry of [join("features", "target.feature"), "ci.yml", "package.json", "vitest.json"]) {
+      const path = join(directory, entry);
+      if (existsSync(path)) chmodSync(path, 0o644);
+    }
+    rmSync(directory, { recursive: true, force: true });
   }
 });

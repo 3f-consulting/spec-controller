@@ -1,15 +1,21 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 let corpusDir: string | undefined;
+const temporaryDirectories: string[] = [];
+
+After(function () {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+});
 
 function writeCorpus(files: Record<string, string>): string {
   const dir = mkdtempSync(join(tmpdir(), "scn-stg-"));
+  temporaryDirectories.push(dir);
   mkdirSync(join(dir, "features"));
   for (const [name, source] of Object.entries(files)) writeFileSync(join(dir, "features", name), source);
   writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");

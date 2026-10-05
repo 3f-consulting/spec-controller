@@ -1,4 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -43,6 +43,12 @@ let invocationArgs: string[] = [];
 let missingPath = "";
 let invocationCwd: string | undefined;
 let cliResult: SpawnSyncReturns<string>;
+
+const temporaryPaths: string[] = [];
+
+After(function () {
+  for (const path of temporaryPaths.splice(0)) rmSync(path, { recursive: true, force: true });
+});
 
 function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
@@ -433,6 +439,7 @@ Given(
   function () {
     const root = process.cwd();
     unparseablePath = join(tmpdir(), `scn-cli-014-${process.pid}.json`);
+    temporaryPaths.push(unparseablePath);
     writeFileSync(unparseablePath, "not valid json at all {{{");
 
     assert.ok(existsSync(unparseablePath), "the fixture report must EXIST — this is not the missing-path case");
@@ -476,6 +483,7 @@ Given(
 
 function writeCorruptFeature(featureSource: string): void {
   const dir = mkdtempSync(join(tmpdir(), `scn-cli-016-${process.pid}-`));
+  temporaryPaths.push(dir);
   mkdirSync(join(dir, "features"), { recursive: true });
   unparseableFeature = join(dir, "features", "target.feature");
   writeFileSync(unparseableFeature, featureSource);
@@ -537,6 +545,7 @@ Given(
       );
     } else {
       unreadableSavedReport = join(tmpdir(), `scn-cli-015-bad-${process.pid}.json`);
+      temporaryPaths.push(unreadableSavedReport);
       writeFileSync(unreadableSavedReport, "not a saved report at all {{{");
       assert.ok(existsSync(unreadableSavedReport), "the unparseable fixture must EXIST");
     }
@@ -620,6 +629,7 @@ const ENUMERATED_STATUSES = [0, 1, 2, 3, 4, 5];
 
 Given("a target with no Gherkin corpus at all — no features directory on disk", function () {
   const dir = mkdtempSync(join(tmpdir(), `scn-cli-017-${process.pid}-`));
+  temporaryPaths.push(dir);
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "new-client-target", private: true, scripts: { test: "vitest run" } }),
@@ -720,6 +730,7 @@ Given(
   "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario",
   function () {
     const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
+    temporaryPaths.push(root);
     const manifest = JSON.stringify({ name: "new-client-target", private: true, scripts: {} });
     const shapes: { shape: string; build: (dir: string) => void }[] = [
       { shape: "no corpus directory", build: () => {} },

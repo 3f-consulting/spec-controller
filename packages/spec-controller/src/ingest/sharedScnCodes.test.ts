@@ -1,11 +1,23 @@
-import { describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, describe, it, expect } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readEvidenceObligations } from "./ingestQualityChecks.js";
 
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  made.push(dir);
+  return dir;
+}
+
 function corpus(files: Record<string, string>): string {
-  const dir = join(mkdtempSync(join(tmpdir(), "scn-stg-017-")), "features");
+  const dir = join(temporaryDirectory("scn-stg-017-"), "features");
   mkdirSync(dir);
   for (const [name, source] of Object.entries(files)) writeFileSync(join(dir, name), source);
   return dir;

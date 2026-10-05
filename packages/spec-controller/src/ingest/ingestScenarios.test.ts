@@ -1,10 +1,22 @@
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, it, expect } from "vitest";
+import { afterAll, describe, it, expect } from "vitest";
 
 import { parseErrorsIn } from "./gherkinValidation.js";
 import { discoverFeatures } from "./ingestScenarios.js";
+
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+function temporaryDirectory(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  made.push(dir);
+  return dir;
+}
 
 const WELL_FORMED = `@AAA
 Feature: alpha
@@ -36,7 +48,7 @@ function corpusWithTwoUnreadableFiles(): {
   firstBad: string;
   secondBad: string;
 } {
-  const dir = join(mkdtempSync(join(tmpdir(), `scn-gpg-001-${process.pid}-`)), "features");
+  const dir = join(temporaryDirectory(`scn-gpg-001-${process.pid}-`), "features");
   mkdirSync(dir, { recursive: true });
 
   const good = join(dir, "a-alpha.feature");
@@ -107,7 +119,7 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
   });
 
   it("returns the corpus as before when every file parses", () => {
-    const dir = join(mkdtempSync(join(tmpdir(), `scn-gpg-001-ok-${process.pid}-`)), "features");
+    const dir = join(temporaryDirectory(`scn-gpg-001-ok-${process.pid}-`), "features");
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "a-alpha.feature"), WELL_FORMED);
 
@@ -120,7 +132,7 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
 
 describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
   function absentDir(): string {
-    const dir = join(mkdtempSync(join(tmpdir(), `scn-cli-017-${process.pid}-`)), "features");
+    const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
     expect(existsSync(dir)).toBe(false);
     return dir;
   }
@@ -148,7 +160,7 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
   });
 
   it("rethrows what is NOT an absence — a `features` path that is a FILE is a different fault", () => {
-    const notADirectory = join(mkdtempSync(join(tmpdir(), `scn-cli-017-file-${process.pid}-`)), "features");
+    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
     const { thrown } = discover(notADirectory);

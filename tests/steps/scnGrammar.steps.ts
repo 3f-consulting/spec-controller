@@ -1,6 +1,6 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
@@ -23,6 +23,11 @@ interface GrammarRun {
 
 let target: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
 let grammarRun: GrammarRun;
+const temporaryDirectories: string[] = [];
+
+After(function () {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+});
 
 function scenarioFile(scnId: string): string {
   const code = scnId.split("-")[1]!;
@@ -32,6 +37,7 @@ function scenarioFile(scnId: string): string {
 
 function balanceGrammarTarget(): GrammarRun {
   const dir = mkdtempSync(join(tmpdir(), "scn-grammar-"));
+  temporaryDirectories.push(dir);
   mkdirSync(join(dir, "features"));
   for (const [name, source] of Object.entries(target.features)) writeFileSync(join(dir, "features", name), source);
   writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");

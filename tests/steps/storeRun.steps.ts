@@ -1,7 +1,7 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parse } from "yaml";
@@ -17,12 +17,18 @@ const RUN_ID = "r1";
 let storeRoot: string;
 let storeResult: SpawnSyncReturns<string>;
 let runDir: string;
+const temporaryDirectories: string[] = [];
+
+After(function () {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+});
 
 Given("a reconcilable target and a run store outside the repo", function () {
   const root = process.cwd();
   assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
   assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
   storeRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmg004-"));
+  temporaryDirectories.push(storeRoot);
 });
 
 When("the operator runs balance under the store modifier and the run-name modifier", function () {

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, describe, it, expect } from "vitest";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,8 +10,15 @@ import {
   runReconcile,
 } from "./ingestQualityChecks.js";
 
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
 function absentCorpus(): { features: string; packageJson: string; ci: string } {
   const root = mkdtempSync(join(tmpdir(), `scn-cli-017-absent-${process.pid}-`));
+  made.push(root);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
@@ -21,6 +28,7 @@ function absentCorpus(): { features: string; packageJson: string; ci: string } {
 
 function unreadableCorpus(): { features: string; packageJson: string; file: string } {
   const root = mkdtempSync(join(tmpdir(), `scn-cli-017-unreadable-${process.pid}-`));
+  made.push(root);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");

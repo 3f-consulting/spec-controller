@@ -1,10 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { afterAll, describe, it, expect } from "vitest";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 
 import { runReconcile } from "./ingestQualityChecks.js";
+
+const made: string[] = [];
+
+afterAll(() => {
+  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
 
 const CORPUS_DIR = "features";
 
@@ -33,6 +39,7 @@ const CORPUS_DECLARING_NOTHING: Shape = {
 
 function targetFor({ build }: Shape): string {
   const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
+  made.push(root);
   writeFileSync(
     join(root, "package.json"),
     JSON.stringify({ name: "new-client-target", scripts: {} })
