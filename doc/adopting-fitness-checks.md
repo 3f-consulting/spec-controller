@@ -795,6 +795,37 @@ a definition, and nothing holds the line's altitude. This audit grep returns not
 git grep -cE '^[[:space:]]+(Given|When|Then|And|But) .*(stdout|stderr|exits? [0-9]|exit code|exit status|package\.json|--[a-z]|success status|store root|\.json)' -- features
 ```
 
+### Self-reconciliation
+
+Canon: `fitness-functions.md` → *Self-reconciliation — the capstone*, and `ci-and-release.md` → *The
+shape to copy*.
+
+**What it runs.** The last step of `ci.yml`, *Self-reconciliation balance*, runs `balance` over
+`features`, the run's `vitest.json` and `cucumber.json`, the step record, `ci.yml` and
+`package.json`. Its exit sets the job's result: a balanced ledger passes, an out-of-balance one
+reds at exit 1, and an input it could not read reds at exit 2.
+
+**It runs on every run.** The step carries `if: always()`, like the gates above it, so a red run
+still reconciles. That run is the one where the ledger matters most, because it names the
+obligations that have no evidence.
+- When an earlier gate reds but both suites finished, both reports are whole. The step reconciles
+  and the ledger names what is out of balance: a failing assertion shows its scenario as
+  *Evidence Observation is failing*.
+- When a suite is killed before it writes its report, the report is absent (Vitest) or empty
+  (Cucumber). A failed install or build leaves both absent. The step then refuses at exit 2, naming
+  the input it could not read.
+- `--vitest` and `--cucumber` are always passed. Passing them only when their files exist would
+  reconcile a crashed suite as if it had no evidence at all, which is 254 of 276 rows out of balance
+  when measured, with the crash visible only as *Not supplied* in the provenance. `--ci-steps` is
+  passed only when its file exists, and in CI it always does: the dump step that writes it is
+  itself `if: always()`.
+- No report is ever written in place of a missing one.
+
+**The plant.** A failing unit assertion: *Test* reds, and *Self-reconciliation balance* runs and
+prints the ledger with that scenario out of balance. The same assertion without the `if:` leaves the
+step `skipped`. *Test*'s `timeout` lowered to 1 second: the step runs and refuses at exit 2, naming
+`--vitest`.
+
 ---
 
 ## Converting an existing check — the checklist

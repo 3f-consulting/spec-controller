@@ -186,4 +186,5 @@ jobs:
             "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
 
       - name: Self-reconciliation balance
+        if: always()
         run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
