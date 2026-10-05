@@ -809,6 +809,42 @@ rows are not read either. One table in `output-format.feature` keeps the paths i
 (`/dev/stdout`, standard output) as its own data, and a cell that reaches a step line is held by
 review alone. A pattern holds each line to a definition, and this gate holds its altitude.
 
+### Duplication
+
+Canon: `fitness-functions.md` → *The suite — the mandatory gates*, the Duplication row, and *The
+gate holds the changed set, and nothing keeps a list*.
+
+**What it runs.** The step *Duplication — no clone touches a changed production file* runs
+`if: always()` under `shell: bash`. It runs `jscpd`, pinned exactly in the root `package.json`, a
+native binary that npm installs per platform. The flags carry the configuration, each with its
+reason in a YAML comment beside the step, because jscpd's config file accepts neither comments nor
+unknown keys.
+- The population is production code: `packages/core/src` and `packages/spec-controller/src`,
+  `--format typescript`, with `**/*.test.ts` and `**/fixtures/**` ignored.
+- A clone is jscpd's own default, stated in full: `--min-tokens 50 --min-lines 5`. That is the
+  tool's definition, not a number fitted to this code. There is no community standard; SonarQube
+  defaults to 100 tokens across 10 lines.
+- `--absolute` names each file by its full path, so the report can be matched against the changed
+  set.
+
+**Two commands, one report and one gate.** The first reports every production clone and exits 0.
+The second takes the complexity gate's changed-set line, `git diff -z --name-only --diff-filter=d
+"$(git merge-base origin/main HEAD)"`, and one `jq` filter over jscpd's JSON report. It prints each
+clone with a fragment in a changed file, and fails if there is one. The changed set needs no
+pathspec: jscpd's paths and ignores already hold the population, so a changed test can never appear
+in a clone.
+
+**Why not jscpd's own baseline.** jscpd 5 can compare against a ref with `--baseline-from-ref` and
+fail only on new clones. Canon's gate is clean as you code: an old clone in a file the change
+touches reds too, so it is tidied when its file is next edited. The baseline mode would pass it.
+
+**The plants.** A file that copies another production file reds the step and names both. A
+whitespace-only change to a file that already holds a clone reds it too, naming the old clone.
+
+**Limits.** A clone below 50 tokens or 5 lines is not one. A clone with no fragment in the changed
+set is reported and does not fail, so existing duplication waits until its file is next touched.
+Test code is outside the population.
+
 ### A test leaves nothing in its temporary directory
 
 Canon: the cleanup rule. A test removes what it creates with `fs.rmSync`, and restores any mode it

@@ -87,6 +87,18 @@ jobs:
           pnpm exec crap-typescript --format text --threshold 29.999999999999996 packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r pnpm exec crap-typescript --format text --threshold 29.999999999999996
 
+      - name: Duplication — no clone touches a changed production file
+        id: SCN-FIT-032
+        if: always()
+        shell: bash
+        # jscpd, pinned in package.json, over production code: both packages' src, TypeScript, with tests and fixtures ignored.
+        # --min-tokens 50 --min-lines 5 is jscpd's own default definition of a clone, stated in full so a copier inherits it.
+        # --absolute names each file by its full path, so the report can be matched against the changed set.
+        # The first command reports every production clone and exits 0; the second reds on a clone with a fragment in a changed file.
+        run: |
+          pnpm exec jscpd --format typescript --ignore "**/*.test.ts,**/fixtures/**" --min-tokens 50 --min-lines 5 --absolute --reporters console,json --output "$RUNNER_TEMP/jscpd" packages/core/src packages/spec-controller/src
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --arg root "$PWD/" --slurpfile report "$RUNNER_TEMP/jscpd/jscpd-report.json" '. as $changed | $report[0].duplicates[] | select([.firstFile.name, .secondFile.name] | map(ltrimstr($root)) | any(IN($changed[]))) | "\(.firstFile.name | ltrimstr($root)):\(.firstFile.start)-\(.firstFile.end) = \(.secondFile.name | ltrimstr($root)):\(.secondFile.start)-\(.secondFile.end)"' | awk '{ print } END { exit NR > 0 }'
+
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()

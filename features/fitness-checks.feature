@@ -134,3 +134,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-031
     Scenario: neither suite leaves an entry in the temporary directory it ran in
+
+  Rule: production logic is written once
+
+    @fitness @SCN-FIT-032
+    Scenario: no clone in production code touches a file the change touches
