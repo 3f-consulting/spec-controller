@@ -218,7 +218,7 @@ that passes.
 
 **Dependabot checks once a day, every day, weekends included, so no human act is needed in the
 pin loop (operator, 2026-09-19).** The schedule is `interval: cron` with
-`cronjob: "0 22 * * *"`, which is 22:00 UTC on all seven days. `daily`, which this replaced, runs
+`cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven days. `daily`, which this replaced, runs
 Monday to Friday only, so a release published on a Saturday waited for Monday or for a person. Once a
 day is as often as GitHub allows: its config check rejects any `cronjob` that fires more often than
 every 24 hours. A pin therefore lags a publish by up to 24 hours. The operator accepted that, because
@@ -240,6 +240,17 @@ reds with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`, naming both entries; with bo
 with `spec-controller` alone it reds naming core. The exemption names packages, not versions, so
 unlike a version pin it needs no pruning; every other dependency stays
 under the policy in full.
+
+**The workflows' actions move by a second entry, monthly, and a person merges them.** Every action
+in `.github/workflows/` is pinned by SHA with its version in a trailing comment
+(`@<sha> # vX.Y.Z`); actionlint alone runs as a Docker image pinned by tag. A `github-actions`
+entry in `.github/dependabot.yml` moves those pins: once a month, every action bump in one grouped
+PR, and a release only after a 7-day cooldown. Dependabot moves the SHA and rewrites the version
+comment with it. `dependabot-auto-merge.yml` refuses that PR, because it changes workflow files and
+not exactly `package.json` and `pnpm-lock.yaml`, so auto-merge is never armed and a person merges it
+once `ci` is green. A green `ci` proves the bump in `ci.yml`
+alone. Before merging a bump that touches `mutation.yml`, dispatch `mutation.yml` on the PR's
+branch. A bump in `release.yml` is first exercised by the next package release, so read that run.
 
 **When the model moves and the pinned reader cannot read the tree**, the cure is the expand
 merge in *A model change the pinned reader cannot read* below. The pin is never moved by hand to

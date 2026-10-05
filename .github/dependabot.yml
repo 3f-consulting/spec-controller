@@ -13,3 +13,13 @@ updates:
     cooldown:
       exclude:
         - spec-controller
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 7
