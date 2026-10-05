@@ -3,6 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "doc/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
   pull_request:
 
 permissions:
@@ -131,7 +136,7 @@ jobs:
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
         run: |
-          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > 0.15 { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > 0.15 { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
       - name: No ticket ID in a comment, description or document
         id: SCN-FIT-024

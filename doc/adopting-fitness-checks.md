@@ -641,11 +641,20 @@ file, reds the step.
 Canon: `technical-design/code-comments.md` → *The gates*. Four CI steps run `if: always()` over the
 whole tree on every run.
 
+**When it runs.** CI runs on every pull request, and on every push to `main` except one that changes
+only `doc/**`, `README.md`, `CONTRIBUTING.md` or `LICENSE` (`paths-ignore` on the `push` trigger).
+Of the four, only the three Vale gates read Markdown, so a doc-only push to `main` is checked only
+by whoever runs Vale locally before pushing. The next run on any branch reads the whole tree, and
+reds there on anything that push let through. `packages/*/README.md` is not in the set: it ships
+in the packed tarball, and a change to it triggers a release.
+
 **Comment share.**
 - The step *Comment share* runs under `shell: bash`, using the devDependency `cloc`, pinned exactly.
   Check what the pin ships with `cloc --version`, never from the package version.
 - Its command is
-  `cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --skip-uniqueness --strip-str-comments --by-file --csv --quiet`.
+  `cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet`.
+- It measures code and configuration, never prose: `--exclude-lang=Markdown` keeps every `.md`
+  out, and the Vale gates hold documents.
 - One `awk` line names each file whose comment lines exceed canon's share of its comment plus code
   lines, then exits non-zero. A file exactly at the share passes.
 - Limits: a `/*` … `*/` pair across backtick template literals reads as comment, a shebang counts as

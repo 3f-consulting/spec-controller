@@ -19,9 +19,14 @@ earn their place once there is a second reviewer.
 
 ## The CI gate
 
-CI (`.github/workflows/ci.yml`) runs on every push to `main` and every PR, on
-ubuntu with a frozen lockfile. It is the single source of truth for "green" — a
-local pass on one machine is not evidence the gate holds in CI.
+CI (`.github/workflows/ci.yml`) runs on every PR, and on every push to `main` except one that
+changes only documentation: `doc/**`, `README.md`, `CONTRIBUTING.md` or `LICENSE`. It runs on
+ubuntu with a frozen lockfile. It is the single source of truth for "green" — a local pass on one
+machine is not evidence the gate holds in CI.
+
+A doc-only push to `main` therefore meets none of CI's gates, including the three Vale gates that
+read Markdown. Run Vale locally before that push. The next CI run on any branch reads the whole
+tree, so anything a doc-only push lets through reds the next PR.
 
 **CI is the gate, and it is the only green.** No single local command reproduces it, and
 deliberately so: this repository once *derived* a local ladder from `ci.yml` so that a
