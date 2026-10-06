@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
@@ -43,6 +43,69 @@ describe("[SCN-RPT-026] resolveToolIdentity: the tool's own checkout, and a non-
     } finally {
       rmSync(bareDir, { recursive: true, force: true });
     }
+  });
+
+  it("takes the version from the nearest package.json above the tool's directory when no path is given", () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-walk-")));
+    try {
+      writeFileSync(join(root, "package.json"), JSON.stringify({ name: "spec-controller", version: "4.5.6-above" }));
+      const toolDir = join(root, "dist", "run-management");
+      mkdirSync(toolDir, { recursive: true });
+
+      const identity = resolveToolIdentity({ toolDir });
+
+      expect(identity.toolSha).toBeNull();
+      expect(identity.toolVersion).toBe("4.5.6-above");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ["blank", { name: "spec-controller", version: "" }],
+    ["a number", { name: "spec-controller", version: 7 }],
+    ["absent", { name: "spec-controller" }],
+  ])("resolves the version to \"unknown\" when the package.json version is %s", (_, pkg) => {
+    const toolDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-badver-")));
+    try {
+      writeFileSync(join(toolDir, "package.json"), JSON.stringify(pkg));
+
+      const identity = resolveToolIdentity({ toolDir });
+
+      expect(identity.toolSha).toBeNull();
+      expect(identity.toolVersion).toBe("unknown");
+    } finally {
+      rmSync(toolDir, { recursive: true, force: true });
+    }
+  });
+
+  it("resolves the version to \"unknown\" when no package.json exists anywhere up to the filesystem root", () => {
+    const toolDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-rootward-")));
+    try {
+      for (let dir = toolDir; ; dir = dirname(dir)) {
+        expect(existsSync(join(dir, "package.json")), `fixture needs no package.json at ${dir}`).toBe(false);
+        if (dirname(dir) === dir) break;
+      }
+
+      const identity = resolveToolIdentity({ toolDir });
+
+      expect(identity.toolSha).toBeNull();
+      expect(identity.toolVersion).toBe("unknown");
+    } finally {
+      rmSync(toolDir, { recursive: true, force: true });
+    }
+  });
+
+  it("resolves a blank toolDir from the module's own location: this checkout's HEAD and its package's version", () => {
+    const realHead = execFileSync("git", ["-C", process.cwd(), "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    const ownPackage = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
+      version: string;
+    };
+
+    const identity = resolveToolIdentity({ toolDir: "  " });
+
+    expect(identity.toolSha).toBe(realHead);
+    expect(identity.toolVersion).toBe(ownPackage.version);
   });
 });
 
@@ -101,6 +164,64 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
 });
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
+  function targetRepo(): { repo: string; head: string; cleanup: () => void } {
+    const repo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-")));
+    const git = (...args: string[]): string =>
+      execFileSync(
+        "git",
+        ["-C", repo, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+      ).trim();
+    git("init", "-q");
+    git("commit", "--allow-empty", "-q", "-m", "the target's own commit");
+    return { repo, head: git("rev-parse", "HEAD"), cleanup: () => rmSync(repo, { recursive: true, force: true }) };
+  }
+
+  it("resolves a git target with no override to that target's own HEAD", () => {
+    const { repo, head, cleanup } = targetRepo();
+    try {
+      expect(head).toMatch(/^[0-9a-f]{40}$/);
+      expect(resolveSourceSha({ targetDir: repo })).toBe(head);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("trims whitespace from an explicit override", () => {
+    const { repo, cleanup } = targetRepo();
+    try {
+      const sha = "905a987c0ffeeba110000000000000000deadbeef";
+      expect(resolveSourceSha({ sourceSha: `  ${sha}\n`, targetDir: repo })).toBe(sha);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("treats a blank override as no override and reads the target's HEAD", () => {
+    const { repo, head, cleanup } = targetRepo();
+    try {
+      expect(resolveSourceSha({ sourceSha: "   ", targetDir: repo })).toBe(head);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it.each([
+    ["blank", { targetDir: "  " }],
+    ["absent", {}],
+  ])("reads the working directory's HEAD when the target directory is %s", (_, opts) => {
+    const { repo, head, cleanup } = targetRepo();
+    const realHead = execFileSync("git", ["-C", process.cwd(), "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(repo);
+    try {
+      expect(head).not.toBe(realHead);
+      expect(resolveSourceSha(opts)).toBe(head);
+    } finally {
+      cwd.mockRestore();
+      cleanup();
+    }
+  });
+
   it("returns an explicit source SHA verbatim, overriding the git HEAD of a real git target", () => {
     const gitTargetDir = process.cwd();
     const headOfTarget = execFileSync("git", ["-C", gitTargetDir, "rev-parse", "HEAD"], {
@@ -151,5 +272,16 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
 
   it("falls back to process.cwd() for a self-reconcile with no --features", () => {
     expect(resolveTargetRoot({})).toBe(process.cwd());
+  });
+
+  it("resolves a blank --features to the working directory, not a root derived from the blank path", () => {
+    const workDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-blank-")));
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(workDir);
+    try {
+      expect(resolveTargetRoot({ features: "   " })).toBe(workDir);
+    } finally {
+      cwd.mockRestore();
+      rmSync(workDir, { recursive: true, force: true });
+    }
   });
 });

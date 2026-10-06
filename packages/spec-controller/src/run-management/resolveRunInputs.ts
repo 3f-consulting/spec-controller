@@ -7,19 +7,10 @@ export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string 
   if (opts.sourceSha !== undefined && opts.sourceSha.trim() !== "") {
     return opts.sourceSha.trim();
   }
-  try {
-    const dir = opts.targetDir !== undefined && opts.targetDir.trim() !== ""
-      ? opts.targetDir
-      : process.cwd();
-    const out = execFileSync("git", ["-C", dir, "rev-parse", "HEAD"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    });
-    const sha = out.trim();
-    return sha === "" ? null : sha;
-  } catch {
-    return null;
-  }
+  const dir = opts.targetDir !== undefined && opts.targetDir.trim() !== ""
+    ? opts.targetDir
+    : undefined;
+  return readGit(dir, ["rev-parse", "HEAD"]);
 }
 
 export interface ToolIdentity {
@@ -39,16 +30,7 @@ export function resolveToolIdentity(opts: { toolDir?: string; packageJsonPath?: 
 
 function resolveToolSha(toolDir: string): string | null {
   if (toolDir.split(sep).includes("node_modules")) return null;
-  try {
-    const out = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    });
-    const sha = out.trim();
-    return sha === "" ? null : sha;
-  } catch {
-    return null;
-  }
+  return readGit(toolDir, ["rev-parse", "HEAD"]);
 }
 
 function resolveToolVersion(packageJsonPath: string | null): string {
@@ -81,14 +63,19 @@ export function resolveTargetRoot(opts: { features?: string }): string {
     return process.cwd();
   }
   const targetDir = dirname(opts.features);
+  return readGit(targetDir, ["rev-parse", "--show-toplevel"]) ?? targetDir;
+}
+
+// An undefined dir means the working directory. It is read inside the try because
+// process.cwd() throws once that directory is removed, which must read as no output.
+function readGit(dir: string | undefined, args: readonly string[]): string | null {
   try {
-    const out = execFileSync("git", ["-C", targetDir, "rev-parse", "--show-toplevel"], {
+    const out = execFileSync("git", ["-C", dir ?? process.cwd(), ...args], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    const root = out.trim();
-    return root === "" ? targetDir : root;
+    return out.trim() || null;
   } catch {
-    return targetDir;
+    return null;
   }
 }

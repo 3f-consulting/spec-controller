@@ -1,13 +1,17 @@
 import { describe, it, expect } from "vitest";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
+  executeKeptRun,
   planKeptRun,
   planRunManifest,
   serialiseRunManifest,
   resolveRunId,
   RECONCILIATION_DOCUMENT,
   RECONCILIATION_JSON,
+  RUN_MANIFEST,
   type RunManifestInput,
 } from "./keptRun.js";
 
@@ -96,6 +100,36 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
       document: "spec-reconciliation.md",
       reconciliation: "spec-reconciliation.json",
     });
+  });
+
+  it("writes the stored run's own run.yaml with that run's id, target and metadata", () => {
+    const scratch = mkdtempSync(join(tmpdir(), "spec-controller-run-manifest-"));
+    try {
+      const storeRoot = join(scratch, "store");
+      const { runId, target, ...meta } = input;
+
+      executeKeptRun({ storeRoot, target, runId }, meta, () => true);
+
+      const written = parse(readFileSync(join(storeRoot, target, runId, RUN_MANIFEST), "utf8")) as Record<string, unknown>;
+      expect(written).toEqual({
+        schema_version: 2,
+        run_id: input.runId,
+        target: input.target,
+        source_sha: input.sourceSha,
+        tool_sha: input.toolSha,
+        tool_version: input.toolVersion,
+        mode: input.mode,
+        date: input.date,
+        purpose: [],
+        links: [],
+        artefacts: {
+          document: "spec-reconciliation.md",
+          reconciliation: "spec-reconciliation.json",
+        },
+      });
+    } finally {
+      rmSync(scratch, { recursive: true, force: true });
+    }
   });
 });
 

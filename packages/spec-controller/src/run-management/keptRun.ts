@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify } from "yaml";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { firstSharingFile, inputAt, refuse, writeOrRefuse, type ReadInput } from "../outputLocation.js";
 
 export const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
@@ -8,9 +9,9 @@ export const RECONCILIATION_JSON = "spec-reconciliation.json";
 
 export const RUN_MANIFEST = "run.yaml";
 
-export const RUN_MANIFEST_SCHEMA_VERSION = 2;
+const RUN_MANIFEST_SCHEMA_VERSION = 2;
 
-export type RunMode = "balance" | "analyse" | "migrate";
+type RunMode = "balance" | "analyse" | "migrate";
 
 export interface RunManifestMeta {
   readonly sourceSha: string;
@@ -80,7 +81,7 @@ export function resolveRunId(options: ResolveRunIdOptions): string {
 }
 
 function formatRunTimestamp(instant: Date): string {
-  return instant.toISOString().replace(/\.\d+Z$/, "Z").replace(/:/g, "-");
+  return instant.toISOString().replace(/\.\d+Z/, "Z").replace(/:/g, "-");
 }
 
 export function planRunManifest(input: RunManifestInput): RunManifest {
@@ -112,27 +113,21 @@ export function executeKeptRun(
   route: RouteOutputs
 ): KeptRunPlan | undefined {
   const plan = planKeptRun(spec);
-  writeOrRefuse("The stored run's directory could not be created", plan.runDir, () =>
+  writeOrRefuse(APP_MESSAGES[AppMessage.StoredRunDirectoryNotCreated](), plan.runDir, () =>
     mkdirSync(plan.runDir, { recursive: true }),
   );
   const manifestPath = join(plan.runDir, RUN_MANIFEST);
   const sharesManifest = firstSharingFile(manifestPath, spec.formatPaths ?? []);
   if (sharesManifest !== undefined) {
-    refuse(
-      `A --format output names ${sharesManifest}, which is this stored run's own ${manifestPath}. ` +
-        `Give the report a path outside ${plan.runDir}.`,
-    );
+    refuse(APP_MESSAGES[AppMessage.FormatNamesStoredRunManifest](sharesManifest, manifestPath, plan.runDir));
   }
   const readManifest = inputAt(manifestPath, spec.inputs ?? []);
   if (readManifest !== undefined) {
-    refuse(
-      `A file this stored run reads is its own ${manifestPath}: ${readManifest.path} is ${readManifest.subject}. ` +
-        `Give the store a root outside the files the run reads.`,
-    );
+    refuse(APP_MESSAGES[AppMessage.StoredRunReadsItsManifest](manifestPath, readManifest.path, readManifest.subject));
   }
   if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`])) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
-  writeOrRefuse("The stored run's run.yaml could not be written", manifestPath, () =>
+  writeOrRefuse(APP_MESSAGES[AppMessage.StoredRunManifestNotWritten](), manifestPath, () =>
     writeFileSync(manifestPath, serialiseRunManifest(manifest)),
   );
   return plan;

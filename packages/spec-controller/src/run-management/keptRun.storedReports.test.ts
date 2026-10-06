@@ -1,0 +1,60 @@
+import { describe, expect, it, vi } from "vitest";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
+import { runBalance } from "../cli-balance/cli.js";
+import { wrapCommandArgv } from "../host.js";
+
+const TARGET = "target";
+const RUN_ID = "r1";
+
+const meta: RunManifestMeta = {
+  sourceSha: "unknown",
+  toolSha: "unknown",
+  toolVersion: "0.0.0",
+  mode: "balance",
+  date: "2026-09-27T00:00:00.000Z",
+};
+
+const BALANCE_ARGS = [
+  "--features", "tests/fixtures/balanced/features",
+  "--vitest", "tests/fixtures/balanced/vitest.json",
+];
+
+function routeThroughBalance(formatSpecs: readonly string[]): boolean {
+  const savedExitCode = process.exitCode;
+  const out = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  const err = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    return runBalance(wrapCommandArgv(BALANCE_ARGS, [...formatSpecs]));
+  } finally {
+    out.mockRestore();
+    err.mockRestore();
+    process.exitCode = savedExitCode;
+  }
+}
+
+describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
+  it("writes the markdown and JSON reports into the run directory it hands back", () => {
+    const scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-reports-"));
+    try {
+      const storeRoot = join(scratch, "store");
+      const runDir = join(storeRoot, TARGET, RUN_ID);
+
+      const plan = executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, routeThroughBalance);
+
+      expect(plan).toEqual({
+        runDir,
+        documentPath: join(runDir, "spec-reconciliation.md"),
+        reconciliationJsonPath: join(runDir, "spec-reconciliation.json"),
+      });
+      expect(readdirSync(runDir).sort()).toEqual([RUN_MANIFEST, "spec-reconciliation.json", "spec-reconciliation.md"]);
+      expect(readFileSync(join(runDir, "spec-reconciliation.md"), "utf8")).toMatch(/^# Evidence Reconciliation\n/);
+      const json = JSON.parse(readFileSync(join(runDir, "spec-reconciliation.json"), "utf8")) as Record<string, unknown>;
+      expect(json).toHaveProperty("runProvenance");
+    } finally {
+      rmSync(scratch, { recursive: true, force: true });
+    }
+  });
+});

@@ -17,19 +17,22 @@ jobs:
         include:
           - scope: core-domain
             mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/messages.ts"
-            timeout: 52
+            timeout: 60
           - scope: core-provenance
             mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts"
-            timeout: 5
+            timeout: 8
           - scope: core-assemble
             mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts"
-            timeout: 16
+            timeout: 17
           - scope: spec-controller-cli-allocate
             mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts"
             timeout: 15
           - scope: core-render
             mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts"
-            timeout: 51
+            timeout: 60
+          - scope: spec-controller-run-management
+            mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts"
+            timeout: 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
