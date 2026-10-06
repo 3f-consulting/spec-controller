@@ -709,7 +709,23 @@ a `--import` loader hook (`tests/steps/support/coreFromDist.*.js`) that resolves
 name to its `dist`. The hook names the package in strings, never in an import declaration, so the
 rule does not read it.
 
-**Limits.** A dynamic `import()` is outside what the rule sees.
+**Limits.** A dynamic `import()` is outside what the rule sees. The rule holds that a step crosses a
+seam. It cannot hold that the layer adds evidence: a step that spawns the CLI and asserts only what
+a unit test already asserts passes it.
+
+**When a layer goes, and when it stays.** No gate decides this, so the tree decides it by reading
+each Then against the unit tests that cite the same scenario. A scenario starts at the lowest layer
+that can observe it, and a Cucumber layer stays only for a claim no unit test makes:
+- Every claim a Then makes is also asserted by a citing unit test: the Cucumber layer goes.
+- A claim only a seam can see, such as the process's exit code: the layer stays, cut down to that
+  claim.
+- An in-process claim no unit test makes yet, such as a report re-rendered from its saved JSON or a
+  row equal to the same row from a run without the fault: the assertion moves into a citing unit
+  test first, then the layer goes.
+- Compare claim by claim, never verdict by verdict. A unit test that only checks a row's verdict does
+  not cover a Then comparing the whole row.
+- A step calling the functions the unit test calls, in the same process, is a copy, and the rule
+  above already refuses it.
 
 **The plant.** One step file imports the product four ways: a relative path into a package's source,
 `import type` by the core package's name, the `/internal` subpath, and `export … from` by a relative
