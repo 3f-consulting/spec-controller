@@ -106,9 +106,9 @@ The sweep runs one job per gated scope, each held to that 95 on its own; the dom
 12-16 minutes on CI and the provenance job about 2, so it runs nightly (`.github/workflows/mutation.yml`).
 **The window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h** for a nightly. A lapsed,
 crashed or below-bar sweep fails the step, and on an ordinary push that reds the job before the
-self-reconciliation runs, so the lapse shows as a red job rather than a `failing` line. The recipe,
-and what reading a verdict instead of a number gives up, is
-[`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
+self-reconciliation runs, so the lapse shows as a red job rather than a `failing` line. The recipe is
+`.github/workflows/mutation.yml` and the push step in `.github/workflows/ci.yml` that reads its
+newest run.
 
 To see the score on your machine, run the sweep:
 

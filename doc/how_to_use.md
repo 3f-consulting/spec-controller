@@ -8,13 +8,13 @@ This document is for anyone running `spec-controller balance` against a project 
 
 **Not a task tracker. Not a documentation spec. Automated tests — unit, integration, e2e, performance — and fitness checks in CI.**
 
-Feature files are not a precondition. You need none to start: a project that has none, or has some that are not tagged to spec-controller's model, is a `new-client`, and `balance` already reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds; they are not what you need first. The states are set out in [`adopting-quality-checks.md`](./adopting-quality-checks.md).
+Feature files are not a precondition. You need none to start: a project that has none, or has some that are not tagged to spec-controller's model, is a `new-client`, and `balance` already reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds; they are not what you need first.
 
 **Your tracker keeps the work.** A ticket is a change; a scenario is behaviour the system has now. The two meet only where one piece of work creates, reads, updates or deletes one scenario.
 
 **Test validity is assumed.** spec-controller reconciles a result to the test that claimed it. Whether that test reflects the behaviour the business wants is yours to ensure, as it is under CI, TDD and BDD; the tool does not try to establish that a test is a good test.
 
-**A title can drift from its check, and that gap is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario carries no Given/When/Then, so no unexecuted step reads as a test; its title is still prose that nothing reads against the check that answers it, and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the title says.** See [*What this leaves open*](./adopting-quality-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found).
+**A title can drift from its check, and that gap is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario carries no Given/When/Then, so no unexecuted step reads as a test; its title is still prose that nothing reads against the check that answers it, and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the title says.**
 
 ---
 
@@ -95,8 +95,7 @@ second artefact — there is no manifest list:
 **That is the whole declaration.** **One `@fitness` scenario is one check**, identified by its
 `@SCN` and described by its title: nothing else says what the check is about. **Nothing names a
 bar** either — the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by
-one push step that reads the newest nightly sweep's verdict:
-[`scheduled-checks.md`](./scheduled-checks.md). The check's credit is its step's `outcome`: the
+one push step that reads the newest nightly sweep's verdict (*Wiring into CI*, below). The check's credit is its step's `outcome`: the
 tool's exit code on its own CI step is the verdict, whatever the tool measures.
 
 **Neither artefact is derived from the other, and that is deliberate** — it is what lets the two
@@ -115,8 +114,7 @@ nothing said about what it once did. The two artefacts above are the whole of wh
 `--ci-steps` is what points `balance` at it. That is wiring rather than declaration, so it is under
 *Wiring into CI* below, with the `if: always()` rule that goes with it.
 
-**The three adoption states — what you author at each, and what the report says back — are in
-[`adopting-quality-checks.md`](./adopting-quality-checks.md).** This page is the flags and the CLI.
+This page is the flags and the CLI.
 
 ### A converted check is still a command you can run
 
@@ -126,9 +124,6 @@ repository's own pipeline are a command you can paste into a terminal — `pnpm 
 rest read a number an earlier step, or a scheduled sweep, already left behind. What the scenario and
 the `id:` add is that the run becomes **observable**: the ledger can say the check ran, and against
 what.
-
-The worked before/after, the migration checklist, and the traps:
-[`adopting-quality-checks.md`](./adopting-quality-checks.md).
 
 ### Naming your runners, and the one limit that remains
 
@@ -408,7 +403,7 @@ The point of `spec-controller` is continuous reconciliation, so `balance` belong
 
 **The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one `failing` and N `broken` — a worse account from a correct mechanism. **The dump must be `toJSON(steps)`**: it is the only place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives `continue-on-error` where `conclusion` does not.
 
-**A check that runs on a schedule is still one step here.** A nightly mutation sweep, say: the push step reads the newest scheduled run's conclusion with stock `gh` and carries the scenario's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run. The recipe is [`scheduled-checks.md`](./scheduled-checks.md).
+**A check that runs on a schedule is still one step here.** A nightly mutation sweep, say: the push step reads the newest scheduled run's conclusion with stock `gh` and carries the scenario's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run.
 
 Then reconcile, once, over the reports and the record:
 
@@ -425,7 +420,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`adopting-quality-checks.md`](./adopting-quality-checks.md).
+Drop `--ci-steps` if you have converted nothing.
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 

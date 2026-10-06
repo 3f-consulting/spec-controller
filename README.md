@@ -18,7 +18,7 @@ That is not a bug in the AI. It optimises for the observable objective — *"tes
 
 `spec-controller` puts the constraint *outside* the loop. A scenario tagged `@unit` names an **evidence obligation**: a unit test must exist and pass. Delete it and the reconciliation goes out of balance — *required: unit; observed: none* — and CI rejects the change. The AI cannot edit its way out of *that*, because the obligation lives in the scenario's tags and is checked by machinery the generation loop doesn't control.
 
-**And here is where that stops, said plainly rather than left to be found.** The constraint holds for behaviour a scenario names. Code that arrives with *no* scenario raises no obligation, so nothing goes out of balance and the reconciliation is green — correctly, because there is no claim to check it against. Deleting a test is what an agent does when it is cornered; writing new code is what it does all day, and this closes the first direction, not the second. And a balanced scenario means its evidence exists and holds, not that the evidence tests what the scenario says: where the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — the scenario carries no Given/When/Then, and nothing reds if its title drifts from the check (the gap stated in [`doc/adopting-quality-checks.md`](doc/adopting-quality-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found)). Whether a test is a good test is assumed, and is yours. That narrowness is what makes the rest of the claim worth anything: what `spec-controller` guarantees, it guarantees mechanically, and it says where the guarantee stops.
+**And here is where that stops, said plainly rather than left to be found.** The constraint holds for behaviour a scenario names. Code that arrives with *no* scenario raises no obligation, so nothing goes out of balance and the reconciliation is green — correctly, because there is no claim to check it against. Deleting a test is what an agent does when it is cornered; writing new code is what it does all day, and this closes the first direction, not the second. And a balanced scenario means its evidence exists and holds, not that the evidence tests what the scenario says: where the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — the scenario carries no Given/When/Then, and nothing reds if its title drifts from the check. Whether a test is a good test is assumed, and is yours. That narrowness is what makes the rest of the claim worth anything: what `spec-controller` guarantees, it guarantees mechanically, and it says where the guarantee stops.
 
 That is the difference from spec-driven development. A spec is a *moment* of discipline that expires the instant code evolves past it — and the spec is itself AI-touched, subject to the same failure mode it is meant to defend against. Reconciliation is a *continuous* discipline that holds at every CI run.
 
@@ -61,7 +61,7 @@ A fitness check is a whole-system property — complexity, mutation score, type 
         run: eslint
 ```
 
-You write nothing of ours. There is no manifest list of fitness checks, and nothing carries a bar: the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
+You write nothing of ours. There is no manifest list of fitness checks, and nothing carries a bar: the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/how_to_use.md`](./doc/how_to_use.md) → *Wiring into CI*.
 
 **One `@fitness` scenario is one check.** The tag says *how the claim is proved*; the scenario's **title** says what the check is about, and its `@SCN` is its identity — so several checks are several scenarios, and nothing classifies them further: no word, no roster, no roll-up. A `package.json` of yours that still carries the retired `specController.fitnessChecks` key reconciles to the same ledger and the same exit code as the same tree without it; the report names the key under `## Configuration not read`, in the words it uses for any key the `specController` block does not read, and says nothing of what it once did.
 
@@ -91,8 +91,6 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a fitne
 **Nothing moves out of your pipeline.** Your steps keep their names, their order, their matrix, their caching, and their language — the citation is an attribute, and it works over `ruff` as well as over `eslint`.
 
 `spec-controller` reconciles those obligations against the evidence that actually ran, and catches the **watermelon**: a check that is green but enforces nothing.
-
-Converting checks you already have — with a worked before/after, and the traps: [`doc/adopting-quality-checks.md`](./doc/adopting-quality-checks.md).
 
 ## How this relates to coverage and mutation testing
 
@@ -133,7 +131,7 @@ On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` writes the reconciliation 
 
 Full flags, examples, and CI wiring: [`doc/how_to_use.md`](./doc/how_to_use.md).
 
-Running a check on a schedule and gating every push on its result — a nightly mutation sweep, a long soak — see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
+Running a check on a schedule and gating every push on its result, such as a nightly mutation sweep: see [`doc/how_to_use.md`](./doc/how_to_use.md) → *Wiring into CI*.
 
 Before you wire this into a repository you intend to keep: this package is at a `0.x` version, which under semantic versioning promises nothing — [`doc/compatibility.md`](./doc/compatibility.md) says so plainly, and says what changes at `1.0`. Pin an exact version.
 

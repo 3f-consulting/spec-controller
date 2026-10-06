@@ -360,7 +360,7 @@ don't*, first bullet; `the maintainers' private notes` → *Nothing publishes ex
    accept a release hours old.
 3. **Migrate.** With the new reader pinned, the tree drops the old shape.
 4. **Contract.** The reader stops accepting the old shape **only once no adopter still writes it**,
-   and `doc/adopting-quality-checks.md` says so in the same merge.
+   and `doc/how_to_use.md` says so in the same merge.
 
 **Step 4 is a deliberate step, never a consequence of step 3.** The reader dropping a shape is what
 breaks an adopter's next pin bump, and an adopter is not this repository: they move on their own
