@@ -1149,7 +1149,9 @@ checked claim by claim*. How spec-controller applied them:
   each claim its Then makes would fail, and watch whether any unit test reds. Reading assertion
   text called 38 of spec-controller's scenarios covered, and planting found claims no unit test held
   in three of the first seven. A claim no unit test holds gets one assertion in that scenario's own
-  unit test, planted the same way, before the layer goes.
+  unit test, planted the same way, before the layer goes. Where no citing test can reach the code
+  (in a monorepo, the citers may sit in a package that cannot import it), add one new test citing
+  the scenario to a test file that already imports that code.
 
 ### Finding the rest: six smells in the unit and scenario estate
 
