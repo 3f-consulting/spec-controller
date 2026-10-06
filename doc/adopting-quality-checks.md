@@ -721,19 +721,8 @@ rule does not read it.
 seam. It cannot hold that the layer adds evidence: a step that spawns the CLI and asserts only what
 a unit test already asserts passes it.
 
-**When a layer goes, and when it stays.** No gate decides this, so the tree decides it by reading
-each Then against the unit tests that cite the same scenario. A scenario starts at the lowest layer
-that can observe it, and a Cucumber layer stays only for a claim no unit test makes:
-- Every claim a Then makes is also asserted by a citing unit test: the Cucumber layer goes.
-- A claim only a seam can see, such as the process's exit code: the layer stays, cut down to that
-  claim.
-- An in-process claim no unit test makes yet, such as a report re-rendered from its saved JSON or a
-  row equal to the same row from a run without the fault: the assertion moves into a citing unit
-  test first, then the layer goes.
-- Compare claim by claim, never verdict by verdict. A unit test that only checks a row's verdict does
-  not cover a Then comparing the whole row.
-- A step calling the functions the unit test calls, in the same process, is a copy, and the rule
-  above already refuses it.
+**When a layer goes, and when it stays** is under *What you will inherit, and how to remove it* →
+*Evidence layers no test needs*.
 
 **The plant.** One step file imports the product four ways: a relative path into a package's source,
 `import type` by the core package's name, the `/internal` subpath, and `export … from` by a relative
@@ -1063,3 +1052,153 @@ step `skipped`. *Test*'s `timeout` lowered to 1 second: the step runs and refuse
 7. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
    Break one step's `id:` so its credit cites nothing, confirm the comparison reds, and
    restore. A comparison whose teeth are unproven is a diff that is not looking.
+
+---
+
+## What you will inherit, and how to remove it
+
+*A team adopting these checks starts from an estate that grew without them. spec-controller did
+too. Three problems are near-certain: fitness checks that check little, tests whose subject is the
+test tooling, and evidence layers no test needs. This part names each problem, how to find it, and
+how to remove it. Then it covers the order to do it in and how to keep the delete safe.*
+
+**The property you are working towards:** every test in the estate carries evidence no other test
+does. A problem below is a reason to suspect a test fails that property. Finding the problem
+deletes nothing. What counts as dead wood in each population is a decision you make, one population
+at a time, before you delete.
+
+### The order: strengthen, then reduce, then measure, then gate
+
+1. **Bring mutation to its bar first.** Every source scope reaches its bar (spec-controller holds
+   95) before any unit test is deleted. A weak scope has tests that, once strengthened, would kill
+   mutants. Trim first and you delete them. Once every scope is gated, a deletion that lowers a
+   score reds the nightly run, so the mutation gate decides what a trim may take.
+2. **Remove named problems, never a number.** Each deletion belongs to a named population with a
+   stated reason. Deleting to reach a ratio turns the measurement into a target.
+3. **Measure, then declare.** Only after the problems are gone, measure test code against
+   production code and declare your `testRatioCeiling` with your reasoning beside it. The gate
+   holds the ceiling you declare, never the figure you measured. A figure pinned at measurement
+   sits inside run-to-run noise, and a legitimately test-heavy change would red it.
+4. **Then gate,** so nothing grows back: the seam lint, the stepless-scenario check, the unused step
+   definition check and the ratio gate, each under *How spec-controller runs each gate*.
+
+### Fitness checks that check little
+
+**What you will find:**
+- **Check code of your own** — a script that reads the tree and decides a verdict. It is debt, not
+  design. Each one is a candidate to convert to a configured third-party tool: ESLint, a Gherkin or
+  prose linter, `jscpd`, `knip`, `publint`, `attw`, `actionlint`, `zizmor`, `cloc`. A file that
+  stays argues why in its own header. There is no register of exceptions.
+- **A roster of checks** — a list, written by hand, of what checks exist. The `.feature` corpus is
+  the registry: one `@fitness` scenario is one check, and the CI step whose `id:` is its `@SCN`
+  runs it. A second list drifts from the first.
+- **Glue presented as a check** — moving a number between two CI runs, re-shaping a report,
+  re-counting what a tool already counts. Moving a measurement is `actions/upload-artifact`, `gh run
+  download` and one subtraction, not a tool of your own.
+- **A watermelon** — a check green outside and red inside: `continue-on-error` on its step, or a
+  check that runs over a fixture rather than the real source. It reports success whatever happens.
+- **A check guarding a check** — a test proving a third-party tool works, or a drift guard over a
+  generated list. A real finding on the real tree, or the tool's own exit code, is the evidence.
+- **Steps on a scenario nothing runs** — Given/When/Then on a `@fitness` or `@unit`-only
+  scenario, with step definitions Cucumber never executes. They read as a test and prove nothing.
+
+**How to remove them.** Convert each check to its configured tool in one change: the scenario stays
+and becomes stepless, and the CI step carries its `@SCN` as its `id:`. Prove the converted check
+with a plant: break the property, watch the step red, restore it, and record the red run in the
+commit. Delete the old code and anything that existed only to run it. A conversion that leaves the
+old script running beside the new step has not converted.
+
+### Tests on tests
+
+**What you will find:** a scenario whose subject is your own test tooling, rather than the product:
+that the harness loads its fixtures, that a helper parses a report, that a guard over the corpus
+fires. A test whose subject is test code is not a further layer of evidence about the product. It
+has a different subject, so it adds nothing to any product behaviour, and the same author keeps
+both books.
+
+**How to remove them.** Delete the scenario. Do not move it somewhere else. First check whether it
+is the only evidence of something the product ships. If it is, move that claim to a product
+scenario, then delete. The apparatus around it goes with it. Moving it keeps the cost and hides it.
+
+### Evidence layers no test needs
+
+**What you will find:**
+- **In-process second layers.** An `@integration` or `@e2e` step that imports the product's own
+  modules and calls what the unit test calls. It is a copy, not a layer. The seam lint (*Evidence
+  layers cross a seam*, above) finds every one.
+- **Seam layers that assert what a unit test already asserts.** The step crosses a real seam, then
+  checks only what a citing unit test checks.
+- **Steps on scenarios Cucumber does not select,** and step definitions no scenario uses (*A
+  scenario Cucumber does not run has no steps*; *Every step definition is one Cucumber runs*).
+
+**How to remove them: when a layer goes, and when it stays.** No gate decides this, so read each
+Then against the unit tests that cite the same scenario. A scenario starts at the lowest layer that
+can observe it, and a Cucumber layer stays only for a claim no unit test makes.
+- Every claim a Then makes is also asserted by a citing unit test: the Cucumber layer goes, and the
+  scenario keeps its `@unit` floor.
+- A claim only a seam can see, such as the process's exit code: the layer stays, cut down to that
+  claim.
+- An in-process claim no unit test makes yet, such as a report re-rendered from its saved JSON, or a
+  row equal to the same row from a run without the fault: the assertion moves into a citing unit
+  test first, then the layer goes.
+- Compare claim by claim, never verdict by verdict. A unit test that checks only a row's verdict
+  does not cover a Then comparing the whole row. This is the miss to expect.
+- A step calling the functions the unit test calls, in the same process, is a copy, and the seam
+  lint already refuses it.
+
+### Finding the rest: six smells in the unit and scenario estate
+
+Each smell is a population you derive mechanically, not one you estimate. Derive them all at one
+named commit, with nothing changed in the tree, from three inputs: Vitest's JSON report with test
+locations, Cucumber's dry-run message stream, and a Stryker run over every production file with
+`coverageAnalysis: "perTest"` and `disableBail: true`. Count every line with `cloc`.
+
+1. **Redundant mutation kills.** A unit test whose every kill a kept test also makes. Build the kept
+   set as a cover: seed it with each `@unit` scenario's only citer, add the test with the most kills
+   not yet covered until every kill is covered, and keep one test covering each timeout. Everything
+   outside the set is the population. A scenario's last citer never counts.
+2. **Over-citation.** A test citing a scenario where another citer makes every kill and every
+   assertion it makes. A count of citers is not the smell: five citers with five distinct claims
+   are a well-evidenced scenario.
+3. **Concentration.** A test file whose size is not its evidence: it serves more than one feature,
+   or more of its lines are set-up than tests. Size alone is not the smell.
+4. **Seam layers whose content the unit tests see.** The section above, applied to every scenario
+   whose Then reads a file the run wrote. Read each one. A string match against the unit tests'
+   source misses claims made on structured data.
+5. **Missed Outlines and missed `it.each`.** Scenarios, or `it` blocks, that differ only in their
+   literals. Collapse them into one table: the evidence stays and the repetition goes.
+6. **Tests that assert nothing a mutant could break.** A test that covers mutants and kills none,
+   or makes no assertion, or runs no production code. A matcher such as `toBeDefined` makes a test
+   a candidate, never a member by that alone, because a value's presence can be the whole claim.
+
+**Two limits of the mutation input, to state with every kill-based verdict.** In a monorepo, a
+package imported by name can resolve to its unmutated source inside Stryker's sandbox, so its kills
+are invisible until the test runner aliases the name to the source (*Mutation*, above). A test whose
+title is built from production data changes its title under a mutant, so some of its kills are filed
+under another name. A verdict either limit weakens is unmeasured, not a measurement.
+
+**Re-derive after anything that changes kills.** Smells 1, 2 and 6 read the mutation input, so
+each strengthened scope invalidates them.
+
+### Executing a big delete safely
+
+- **Re-measure every premise when the work starts.** A count written when the work was planned
+  describes the tree on that day. Count again at the commit you start from, and record the commit.
+- **Capture the baseline before the first edit.** Capture `balance`'s report, Cucumber's results and
+  Vitest's results at the starting commit, into files named for this run. Afterwards, compare
+  against that capture, never against a re-derivation.
+- **Declare the ledger change before you make it,** for example "Cucumber test cases 381 → 333,
+  integration observations 61 → 13, unit tests +3", and then show the run that produced it. A
+  deletion that removes fewer rows than declared has removed the wrong thing or nothing.
+- **`balance`'s report is the arbiter.** For a pure removal of steps or layers, the report is
+  byte-identical before and after, apart from provenance and the rows the declaration names.
+- **Prove each comparison with a plant.** An identical report is also what a change that did
+  nothing produces. Break one thing the change touches, watch the comparison red, then restore it.
+- **One change per scenario.** Each scenario that loses a layer is its own change, with its own
+  before and after. Try the approach on one scenario first, and check it moved exactly one row.
+- **Delete what the deletion orphans.** A step definition only the removed layer used, a helper only
+  those steps called, a fixture only that helper read. The unused step definition check and `knip`
+  find what is left behind.
+- **Never lower a bar to land a delete.** If a deletion drops a mutation score, the deletion was
+  wrong or a test elsewhere is weak. Kill the survivor through the code's real consumer, or keep
+  the test.
