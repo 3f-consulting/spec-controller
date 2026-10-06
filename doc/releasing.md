@@ -114,8 +114,10 @@ appears; it will start appearing by itself when the repository flips, with no ed
 
 **`oidc()` never throws.** Every failure inside it — the permission missing, the exchange refused,
 connection fields that do not match the run — logs at `verbose` and returns, and the publish then
-falls back to the `.npmrc` `actions/setup-node` wrote. That file holds the placeholder
-`XXXXX-XXXXX-XXXXX-XXXXX`, so what you see is:
+falls back to the `.npmrc` `actions/setup-node` wrote. That file's token is
+`${NODE_AUTH_TOKEN}`, and since setup-node v7 nothing sets that variable, so npm sends the
+unexpanded text `${NODE_AUTH_TOKEN}` as the token. It is no more a token than v6's placeholder
+`XXXXX-XXXXX-XXXXX-XXXXX` was, so what you see is:
 
 ```
 npm error code E401
