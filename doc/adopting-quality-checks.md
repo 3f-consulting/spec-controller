@@ -1145,6 +1145,11 @@ checked claim by claim*. How spec-controller applied them:
 - **Compare claim by claim, never verdict by verdict.** A unit test that checked only a row's
   verdict was counted as covering a Then that compared the whole row. The layer went, and the
   claim was left untested until a unit assertion replaced it. This is the miss to expect.
+- **Settle each verdict by planting, never by reading.** Before a layer goes, break the product so
+  each claim its Then makes would fail, and watch whether any unit test reds. Reading assertion
+  text called 38 of spec-controller's scenarios covered, and planting found claims no unit test held
+  in three of the first seven. A claim no unit test holds gets one assertion in that scenario's own
+  unit test, planted the same way, before the layer goes.
 
 ### Finding the rest: six smells in the unit and scenario estate
 
