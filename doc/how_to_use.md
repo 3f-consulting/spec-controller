@@ -8,13 +8,13 @@ This document is for anyone running `spec-controller balance` against a project 
 
 **Not a task tracker. Not a documentation spec. Automated tests — unit, integration, e2e, performance — and fitness checks in CI.**
 
-Feature files are not a precondition. You need none to start: a project that has none, or has some that are not tagged to spec-controller's model, is a `new-client`, and `balance` already reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds; they are not what you need first. The states are set out in [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+Feature files are not a precondition. You need none to start: a project that has none, or has some that are not tagged to spec-controller's model, is a `new-client`, and `balance` already reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds; they are not what you need first. The states are set out in [`adopting-quality-checks.md`](./adopting-quality-checks.md).
 
 **Your tracker keeps the work.** A ticket is a change; a scenario is behaviour the system has now. The two meet only where one piece of work creates, reads, updates or deletes one scenario.
 
 **Test validity is assumed.** spec-controller reconciles a result to the test that claimed it. Whether that test reflects the behaviour the business wants is yours to ensure, as it is under CI, TDD and BDD; the tool does not try to establish that a test is a good test.
 
-**A title can drift from its check, and that gap is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario carries no Given/When/Then, so no unexecuted step reads as a test; its title is still prose that nothing reads against the check that answers it, and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the title says.** See [*What this leaves open*](./adopting-fitness-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found).
+**A title can drift from its check, and that gap is stated rather than solved.** Wherever the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — a scenario carries no Given/When/Then, so no unexecuted step reads as a test; its title is still prose that nothing reads against the check that answers it, and the two can drift without anything going red. The ledger proves a scenario is linked to evidence and that the evidence passed. **It does not prove the evidence tests what the title says.** See [*What this leaves open*](./adopting-quality-checks.md#what-this-leaves-open-stated-rather-than-left-to-be-found).
 
 ---
 
@@ -116,7 +116,7 @@ nothing said about what it once did. The two artefacts above are the whole of wh
 *Wiring into CI* below, with the `if: always()` rule that goes with it.
 
 **The three adoption states — what you author at each, and what the report says back — are in
-[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).** This page is the flags and the CLI.
+[`adopting-quality-checks.md`](./adopting-quality-checks.md).** This page is the flags and the CLI.
 
 ### A converted check is still a command you can run
 
@@ -128,7 +128,7 @@ the `id:` add is that the run becomes **observable**: the ledger can say the che
 what.
 
 The worked before/after, the migration checklist, and the traps:
-[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+[`adopting-quality-checks.md`](./adopting-quality-checks.md).
 
 ### Naming your runners, and the one limit that remains
 
@@ -425,7 +425,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`adopting-quality-checks.md`](./adopting-quality-checks.md).
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 

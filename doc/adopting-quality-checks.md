@@ -1,4 +1,12 @@
-# Adopting fitness checks — what one is, and how you declare it
+# Adopting quality checks — the model, the gates, and what you inherit
+
+*spec-controller reconciles five kinds of quality check: `@unit`, `@integration`, `@e2e`,
+`@performance` and `@fitness`. This page is how spec-controller's own tree runs them, written for a
+team to copy. It has three parts:*
+- *the fitness-check model, which is where most of what you author lives;*
+- *the gates every check runs under, and how spec-controller runs each one;*
+- *what you will inherit when you adopt (bad fitness checks, tests on tests, layers no test needs)
+  and how to remove it.*
 
 *A fitness check is a whole-system property your codebase must hold, and **one `@fitness` scenario
 is one check**: its title says what the check is about, and its `@SCN` is its identity. **What you

@@ -12,7 +12,7 @@ exact version and read the changelog before you move.
 `deferralTags` — and the `--ci-steps` record. [`how_to_use.md`](./how_to_use.md) says what each key
 does. There is one way to declare a fitness check, and it is two artefacts: a `@fitness` scenario,
 and its `@SCN` as the `id:` of the CI step that runs the check. See
-[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+[`adopting-quality-checks.md`](./adopting-quality-checks.md).
 
 **A key this reader has no reading for is passed over — it is not read, and it is named as a key
 the block does not read, in the same words whichever key it is.** `specController.checkRegistry`, `specController.staticChecks`, a `fitnessChecks` row's
@@ -37,7 +37,7 @@ step is observed, and the declared behavioural runners are the only steps it nam
 
 - [`how_to_use.md`](./how_to_use.md) — the flags, the manifest keys, the report,
   and the `balance` exit codes.
-- [`adopting-fitness-checks.md`](./adopting-fitness-checks.md) — the
+- [`adopting-quality-checks.md`](./adopting-quality-checks.md) — the
   fitness axis and what a consumer authors.
 - The [README](../README.md) — the exit-code taxonomy and the shortest path in.
 
