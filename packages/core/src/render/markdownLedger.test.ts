@@ -7,6 +7,7 @@ import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
@@ -109,6 +110,100 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| Scenario | Verdict | Reconciling items |");
     expect(md).not.toContain("| Scenario | Fitness |");
     expect(md).not.toContain("| Cell | Meaning |");
+  });
+
+  const headerOf = (...evidence: string[]): string =>
+    `| ${[
+      CORE_MESSAGES[CoreMessage.ScenarioColumn],
+      ...evidence,
+      CORE_MESSAGES[CoreMessage.VerdictColumn],
+      CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
+    ].join(" | ")} |`;
+
+  const ledgerTable = (md: string): string[] => {
+    const lines = md.split("\n");
+    const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading]);
+    expect(section).toBeGreaterThanOrEqual(0);
+    const start = lines.findIndex(
+      (l, i) => i > section && l.startsWith(`| ${CORE_MESSAGES[CoreMessage.ScenarioColumn]} |`)
+    );
+    expect(start).toBeGreaterThan(section);
+    const end = lines.indexOf("", start);
+    return lines.slice(start, end);
+  };
+
+  const cellsOf = (row: string, count: number): string[] =>
+    row.slice(2, -2).split(" | ").slice(0, count);
+
+  it("adds a column for a runtime tier the corpus names but no run observed, lettered E for e2e and P for performance", () => {
+    const named = reconcile(
+      [
+        { scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "e2e" }] },
+        { scnId: "SCN-P", evidenceObligations: [{ qualityCheck: "performance" }] },
+      ],
+      [{ qualityCheck: "unit", scnId: "SCN-U", status: "passed" }]
+    );
+    const table = ledgerTable(renderMarkdown(__er(named, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Unit", "E2e", "Performance"));
+    expect(table[1]).toBe("| --- | --- | --- | --- | --- | --- |");
+    expect(table.slice(2).map((row) => cellsOf(row, 4))).toEqual([
+      ["SCN-U", "U/1", "", ""],
+      ["SCN-E", "", "E/-", ""],
+      ["SCN-P", "", "", "P/-"],
+    ]);
+  });
+
+  it("adds a column for a tier observed on a shared-code row, whose reconciliations name only its declared tiers", () => {
+    const shared = reconcile(
+      [
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-D", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
+      ]
+    );
+    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Unit", "Integration"));
+    expect(table[1]).toBe("| --- | --- | --- | --- | --- |");
+    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "U/1", "-/1"]]);
+  });
+
+  it("takes no column from a phantom row's credits, and fills the phantom row's evidence cells with —", () => {
+    const phantom = reconcile(
+      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-U", status: "passed" },
+        { qualityCheck: "e2e", scnId: "SCN-GHOST", status: "passed" },
+      ]
+    );
+    expect(phantom.scenarioReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
+      ["SCN-U", "scenario"],
+      ["SCN-GHOST", "phantom-scenario"],
+    ]);
+    const table = ledgerTable(renderMarkdown(__er(phantom, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Unit"));
+    expect(table[1]).toBe("| --- | --- | --- | --- |");
+    expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
+      ["SCN-U", "U/1"],
+      ["SCN-GHOST", "—"],
+    ]);
+  });
+
+  it("renders no evidence column at all, for any tier the corpus names, when no observations are threaded", () => {
+    const named = reconcile(
+      [
+        { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "e2e" }, { qualityCheck: "fitness" }] },
+        { scnId: "SCN-P", evidenceObligations: [{ qualityCheck: "performance" }] },
+      ],
+      []
+    );
+    const table = ledgerTable(renderMarkdown(__er(named), ctx));
+    expect(table[0]).toBe(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
+    expect(table[1]).toBe("| --- | --- | --- |");
+    expect(table.slice(2).map((row) => row.slice(2, -2).split(" | ")[0])).toEqual(["SCN-E", "SCN-P"]);
   });
 });
 

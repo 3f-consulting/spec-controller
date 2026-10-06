@@ -6,7 +6,7 @@ export default {
   mutate: [
     "packages/core/src/domain/**/*.ts",
     "!packages/core/src/domain/**/*.test.ts",
-    "!packages/core/src/domain/qualityCheckFaultMessages.ts",
+    "!packages/core/src/domain/messages.ts",
   ],
   reporters: ["progress", "clear-text", "html", "json"],
   htmlReporter: { fileName: "reports/mutation/index.html" },

@@ -1,18 +1,19 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
-  reconciles: "this step runs the reconciliation this report is",
-  records: "this step writes the step record the reconciliation reads",
+  reconciles: CORE_MESSAGES[CoreMessage.ReconcilerReconciles],
+  records: CORE_MESSAGES[CoreMessage.ReconcilerRecords],
 };
 
 export const reconcilerSection = (report: RenderInput): string[] => {
   const steps = report.summary.reconcilerSteps ?? [];
   if (steps.length === 0) return [];
   return [
-    "### The reconciler",
+    CORE_MESSAGES[CoreMessage.ReconcilerHeading],
     "",
-    ...steps.map(({ step, role }) => `- ${step} — the reconciler: ${WHAT_IT_IS[role]}.`),
+    ...steps.map(({ step, role }) => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](step, WHAT_IT_IS[role])}`),
     "",
   ];
 };

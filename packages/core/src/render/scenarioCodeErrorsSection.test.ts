@@ -1,8 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown, renderReportFromJson } from "./markdown.js";
+import { renderJson } from "./json.js";
+import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import { duplicateFeatureCodes, foreignScenarioCodes } from "../parse/scenarioCodeErrors.js";
+import type { CorpusFile } from "../parse/scenarioCodeErrors.js";
 import type { RunContext } from "../provenance/provenance.js";
 
 const ctx: RunContext = {
@@ -69,31 +74,90 @@ function countBefore(statement: string, noun: string): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
+const HEADING = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
+
+function codedFeature(code: string): string {
+  return `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a thing\n`;
+}
+
+function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconciliation {
+  const plainSlugs = Array.from({ length: plain }, (_, i) => `plain${i + 1}`);
+  return evidenceReconciliationFromSources({
+    featureSources: [...codes.map(codedFeature), ...plainSlugs.map((slug) => `Feature: ${slug}\n`)],
+    featureFiles: [
+      ...codes.map((code) => ({ slug: code.toLowerCase(), featureCode: code })),
+      ...plainSlugs.map((slug) => ({ slug, featureCode: null })),
+    ],
+    untaggedScenarios: [],
+    packageJson: {},
+    ciSources: [],
+    runtimeObservations: codes.map((code) => ({ qualityCheck: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
+    deferralTags: [],
+  });
+}
+
+function cleanSectionOf(md: string): string[] {
+  const lines = md.split("\n");
+  const start = lines.indexOf(HEADING);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
+  return lines.slice(start, next === -1 ? lines.length : next);
+}
+
 describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own count of feature files and of feature codes", () => {
-  const populations = [
-    { featureFiles: 3, featureCodes: 2 },
-    { featureFiles: 1, featureCodes: 0 },
-    { featureFiles: 2, featureCodes: 1 },
-    { featureFiles: 2, featureCodes: 2 },
+  const F = CORE_MESSAGES[CoreMessage.FeatureFileNoun];
+  const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
+  const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver];
+  const ownCode = CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode];
+  const othersUncoded = CORE_MESSAGES[CoreMessage.CleanOthersUncoded];
+  const noCoded = CORE_MESSAGES[CoreMessage.CleanNoCodedScenario];
+
+  const cases = [
+    { codes: ["ONE"], plain: 0, statement: ownCode(over(`1 ${F}`, `1 ${C}`)) },
+    { codes: ["ONE", "TWO"], plain: 0, statement: ownCode(over(`2 ${F}s`, `2 ${C}s`)) },
+    {
+      codes: ["ONE", "TWO"],
+      plain: 1,
+      statement: othersUncoded(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+    },
+    {
+      codes: ["ONE", "TWO"],
+      plain: 2,
+      statement: othersUncoded(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
+    },
+    {
+      codes: ["ONE"],
+      plain: 1,
+      statement: othersUncoded(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+    },
+    { codes: [], plain: 1, statement: noCoded(over(`1 ${F}`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ItPronoun]) },
+    { codes: [], plain: 2, statement: noCoded(over(`2 ${F}s`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ThemPronoun]) },
   ];
 
-  for (const population of populations) {
-    it(`states the codes clean over ${population.featureFiles} files carrying ${population.featureCodes} codes`, () => {
-      const md = renderMarkdown({ ...balancedWith([]), scenarioCodePopulation: population }, ctx);
-      const statement = statementOf(md);
-      expect(statement).toMatch(/\bclean\b/);
-      expect(countBefore(statement, "feature file")).toBe(population.featureFiles);
-      expect(countBefore(statement, "feature code")).toBe(population.featureCodes);
-      expect(md).toContain(DUPLICATE_LINE);
-      expect(md).toContain("**BALANCED**");
+  for (const { codes, plain, statement } of cases) {
+    const files = codes.length + plain;
+    it(`states the codes clean over ${files} files carrying ${codes.length} codes, counted from the corpus`, () => {
+      const judged = judgedCorpus(codes, plain);
+      expect(judged.scenarioCodeErrors).toEqual([]);
+      expect(judged.scenarioCodePopulation).toEqual({ featureFiles: files, featureCodes: codes.length });
+      const md = renderMarkdown(judged, ctx);
+      expect(cleanSectionOf(md)).toEqual([HEADING, "", statement, "", DUPLICATE_LINE, ""]);
+      expect(md).not.toContain("**SCENARIO CODE ERRORS**");
     });
   }
 
-  it("states no counts for a report saved before the population was recorded", () => {
-    const statement = statementOf(renderMarkdown(balancedWith([]), ctx));
-    expect(statement).toMatch(/\bclean\b/);
-    expect(countBefore(statement, "feature file")).toBeUndefined();
-    expect(countBefore(statement, "feature code")).toBeUndefined();
+  it("states the codes clean with no count when re-rendering a report saved before the population was recorded", () => {
+    const { scenarioCodePopulation: _counted, ...saved } = JSON.parse(renderJson(judgedCorpus(["ONE", "TWO"], 1), ctx));
+    expect(saved).toHaveProperty("scenarioCodeErrors", []);
+    const md = renderReportFromJson(JSON.stringify(saved));
+    expect(cleanSectionOf(md)).toEqual([
+      HEADING,
+      "",
+      CORE_MESSAGES[CoreMessage.ScenarioCodesClean],
+      "",
+      DUPLICATE_LINE,
+      "",
+    ]);
   });
 
   it("says where a duplicate is reported beside the errors too", () => {
@@ -107,8 +171,33 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
 });
 
 describe("[SCN-STG-023] a corpus with no feature file is never stated clean", () => {
+  const empty = judgedCorpus([], 0);
+  const noFileSection = [
+    HEADING,
+    "",
+    CORE_MESSAGES[CoreMessage.NoFeatureFileJudged],
+    "",
+    DUPLICATE_LINE,
+    "",
+  ];
+
+  it("judges a corpus of no feature file as no file and no code, with no scenario code error", () => {
+    expect(empty.scenarioCodeErrors).toEqual([]);
+    expect(empty.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
+  });
+
+  it("says no feature file was judged, in place of any clean statement", () => {
+    const section = cleanSectionOf(renderMarkdown(empty, ctx));
+    expect(section).toEqual(noFileSection);
+    expect(section).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodesClean]);
+  });
+
+  it("says the same when the saved report is re-rendered", () => {
+    expect(cleanSectionOf(renderReportFromJson(renderJson(empty, ctx)))).toEqual(noFileSection);
+  });
+
   it("says no feature file was judged, stating no code clean and no count", () => {
-    const md = renderMarkdown({ ...balancedWith([]), scenarioCodePopulation: { featureFiles: 0, featureCodes: 0 } }, ctx);
+    const md = renderMarkdown(empty, ctx);
     const statement = statementOf(md);
     expect(statement).not.toMatch(/\bclean\b/);
     expect(countBefore(statement, "feature file")).toBeUndefined();
@@ -143,5 +232,105 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
   it("lists the error and still carries the out-of-balance account", () => {
     expect(md).toContain(`- \`foreign-scn-code\` — ${FOREIGN.message}`);
     expect(md).toMatch(/\| SCN-ONE-002 \|[^\n]*out-of-balance/);
+  });
+});
+
+describe("[SCN-STG-011] the scenario code errors section counts the errors the corpus holds and lists each by its kind", () => {
+  function featureFile(slug: string, featureCode: string, scnIds: readonly string[]): CorpusFile {
+    const scenarios = scnIds.map((id) => `  @unit @${id}\n  Scenario: ${id.toLowerCase()}\n    Given a thing\n`);
+    return { slug, featureCode, source: `@${featureCode}\nFeature: ${slug}\n\n${scenarios.join("\n")}` };
+  }
+
+  function reconciled(files: readonly CorpusFile[]): EvidenceReconciliation {
+    return evidenceReconciliationFromSources({
+      featureSources: files.map((file) => file.source),
+      featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
+      untaggedScenarios: [],
+      packageJson: {},
+      ciSources: [],
+      runtimeObservations: [],
+      deferralTags: [],
+    });
+  }
+
+  function errorLine(error: ScenarioCodeError): string {
+    return `- \`${error.kind}\` — ${error.message}`;
+  }
+
+  const framing = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming];
+
+  describe("a file headed @TWO holding a scenario coded @SCN-ONE-002, beside a file headed @ONE", () => {
+    const files = [featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])];
+    const parsed = foreignScenarioCodes(files);
+    const md = renderMarkdown(reconciled(files), ctx);
+
+    it("is judged one foreign-scn-code and nothing else", () => {
+      expect(parsed.map((error) => error.kind)).toEqual(["foreign-scn-code"]);
+      expect(duplicateFeatureCodes(files)).toEqual([]);
+      expect(reconciled(files).scenarioCodeErrors).toEqual(parsed);
+    });
+
+    it("counts one error in the singular, then lists it on one line by its kind and its parse message", () => {
+      expect(cleanSectionOf(md)).toEqual([
+        HEADING,
+        "",
+        framing(CORE_MESSAGES[CoreMessage.OneScenarioCodeError]),
+        "",
+        errorLine(parsed[0]!),
+        "",
+        DUPLICATE_LINE,
+        "",
+      ]);
+      expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toEqual([errorLine(parsed[0]!)]);
+    });
+
+    it("lists the same section when the saved report is re-rendered", () => {
+      expect(cleanSectionOf(renderReportFromJson(renderJson(reconciled(files), ctx)))).toEqual(cleanSectionOf(md));
+    });
+  });
+
+  describe("a second file also headed @ONE, so the corpus holds a duplicate feature code and a foreign scenario code", () => {
+    const files = [
+      featureFile("one", "ONE", ["SCN-ONE-001"]),
+      featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"]),
+      featureFile("uno", "ONE", ["SCN-ONE-003"]),
+    ];
+    const parsed = [...duplicateFeatureCodes(files), ...foreignScenarioCodes(files)];
+    const md = renderMarkdown(reconciled(files), ctx);
+
+    it("is judged one duplicate-feature-code and one foreign-scn-code", () => {
+      expect(parsed.map((error) => error.kind)).toEqual(["duplicate-feature-code", "foreign-scn-code"]);
+      expect(reconciled(files).scenarioCodeErrors).toEqual(parsed);
+    });
+
+    it("counts the errors in the plural with their number, then lists each on its own line in the order judged", () => {
+      expect(cleanSectionOf(md)).toEqual([
+        HEADING,
+        "",
+        framing(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorCount](2)),
+        "",
+        errorLine(parsed[0]!),
+        errorLine(parsed[1]!),
+        "",
+        DUPLICATE_LINE,
+        "",
+      ]);
+    });
+  });
+
+  it("renders no section for a report whose corpus headers were never read, so its codes were never judged", () => {
+    const { source } = featureFile("two", "TWO", ["SCN-ONE-002"]);
+    const unjudged = evidenceReconciliationFromSources({
+      featureSources: [source],
+      untaggedScenarios: [],
+      packageJson: {},
+      ciSources: [],
+      runtimeObservations: [],
+      deferralTags: [],
+    });
+    expect(unjudged.scenarioCodeErrors).toBeUndefined();
+    const md = renderMarkdown(unjudged, ctx);
+    expect(md).not.toContain(HEADING);
+    expect(renderReportFromJson(renderJson(unjudged, ctx))).not.toContain(HEADING);
   });
 });

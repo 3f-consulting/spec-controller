@@ -6,6 +6,7 @@ import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
@@ -131,6 +132,47 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
+
+  const ledgerHeading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+
+  function byFeatureLines(lines: string[]): string[] {
+    const start = lines.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const end = lines.indexOf(ledgerHeading);
+    expect(end).toBeGreaterThan(start);
+    return lines.slice(start, end);
+  }
+
+  it("renders heading, blank, total line, blank, header, separator, one row per out-of-balance feature carrying its ids, then one blank", () => {
+    const featureNames = new Map([["LDG", "ledger"]]);
+    const lines = renderMarkdown(__er(spanning), ctx, undefined, featureNames).split("\n");
+
+    expect(byFeatureLines(lines)).toEqual([
+      CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
+      "",
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`,
+      "",
+      CORE_MESSAGES[CoreMessage.ByFeatureTableHeader],
+      "| --- | --- | --- |",
+      "| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |",
+      "| LNT | 1 | SCN-LNT-002 |",
+      "",
+    ]);
+  });
+
+  it("emits no line at all when no scenario is out of balance, so the ledger heading follows the previous section's closing blank", () => {
+    const allBalanced: Ledger = reconcile(
+      [{ scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+    );
+    const lines = renderMarkdown(__er(allBalanced), ctx).split("\n");
+    const ledgerAt = lines.indexOf(ledgerHeading);
+
+    expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    expect(ledgerAt).toBeGreaterThan(1);
+    expect(lines[ledgerAt - 1]).toBe("");
+    expect(lines[ledgerAt - 2]).not.toBe("");
+  });
 });
 
 describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
@@ -170,6 +212,20 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
         "out of balance, not grouped by feature (no feature file names them)."
     );
     expect(section).not.toContain("| Feature | Count |");
+  });
+
+  it("renders only the heading and the total line, with no table and no stray line, when the ungrouped rows are the only ones out of balance", () => {
+    const section = byFeature(reconcile([proven], [provenCredit, strandedCredit, uncitedCredit]));
+    const ungrouped = [
+      CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1),
+      CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](1),
+    ].join(CORE_MESSAGES[CoreMessage.AndJoiner]);
+    expect(section.split("\n")).toEqual([
+      CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
+      "",
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](ungrouped)}.`,
+      "",
+    ]);
   });
 
   it("adds no tail when every out-of-balance row is a scenario row", () => {
@@ -248,6 +304,26 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
     expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
+
+  it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
+    const lines = renderMarkdown(__er(simple), ctx).split("\n");
+    const heading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+    const section = lines.slice(lines.indexOf(heading));
+    const header = `| ${[
+      CORE_MESSAGES[CoreMessage.ScenarioColumn],
+      CORE_MESSAGES[CoreMessage.VerdictColumn],
+      CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
+    ].join(" | ")} |`;
+    expect(section.slice(0, 6)).toEqual([
+      heading,
+      "",
+      `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](1, 1, 0)}`,
+      "",
+      header,
+      "| --- | --- | --- |",
+    ]);
+    expect(section.slice(6)).toEqual([expect.stringMatching(/^\| SCN-A \| .+ \|$/), ""]);
+  });
 });
 
 describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
@@ -308,6 +384,42 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     );
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static 🍉");
+  });
+
+  it("ends the report with the scenario reconciliations: heading, blank, tally, blank, table, then one closing blank", () => {
+    const observed: Ledger = reconcile(
+      [
+        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [{ qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+    );
+    const lines = renderMarkdown(__er(observed, true), ctx).split("\n");
+    const heading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+    const start = lines.indexOf(heading);
+    expect(start).toBeGreaterThan(0);
+    expect(lines.filter((line) => line.startsWith("## ")).at(-1)).toBe(heading);
+
+    const header = `| ${[
+      CORE_MESSAGES[CoreMessage.ScenarioColumn],
+      "Unit",
+      CORE_MESSAGES[CoreMessage.VerdictColumn],
+      CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
+    ].join(" | ")} |`;
+    const section = lines.slice(start);
+    expect(section.slice(0, 6)).toEqual([
+      heading,
+      "",
+      `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](2, 1, 1)}`,
+      "",
+      header,
+      "| --- | --- | --- | --- |",
+    ]);
+    expect(section.slice(6, 8)).toEqual([
+      expect.stringMatching(/^\| SCN-LDG-001 \| .+ \|$/),
+      expect.stringMatching(/^\| SCN-LDG-002 \| .+ \|$/),
+    ]);
+    expect(section.slice(8)).toEqual([""]);
   });
 });
 

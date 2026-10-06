@@ -1,6 +1,7 @@
 import { featureCodeOf } from "../domain/featureCode.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { parseTaggedScenarios } from "./scenarios.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface CorpusFile {
   slug: string;
@@ -15,11 +16,7 @@ export function duplicateFeatureCodes(features: readonly CorpusFile[]): Scenario
     faults.push({
       kind: "duplicate-feature-code",
       files,
-      message:
-        `the feature code @${code} is carried by ${files.length} feature ` +
-        `files — ${files.join(", ")}. A feature code names exactly one feature file: a ` +
-        `reconciliation's by-feature cut groups on it, so two files sharing a code report as one ` +
-        `row and attribute one file's scenarios to the other. Give one of them a code of its own.`,
+      message: CORE_MESSAGES[CoreMessage.DuplicateFeatureCode](code, files.length, files.join(", ")),
     });
   }
   return faults;
@@ -35,27 +32,21 @@ function headerFilesByCode(features: readonly CorpusFile[]): Map<string, string[
 }
 
 function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: string, named: string, carriers: readonly string[]): string {
-  const opening =
-    `${file.slug}.feature carries the feature code @${file.featureCode}, but holds the scenario ` +
-    `@${scnId}, whose feature part names ${named}. A reconciliation's by-feature cut groups on the id, so `;
-  const recode = `Re-code the scenario for @${file.featureCode}`;
+  const fileName = `${file.slug}.feature`;
   if (carriers.length === 1) {
-    return (
-      `${opening}it counts this scenario under ${carriers[0]}'s row, not ${file.slug}.feature's. ` +
-      `${recode}, or move it to ${carriers[0]}.`
-    );
+    return CORE_MESSAGES[CoreMessage.ForeignScnCodeOneCarrier](fileName, file.featureCode, scnId, named, carriers[0]!);
   }
   if (carriers.length > 1) {
-    return (
-      `${opening}it counts this scenario under the one row for ${named}, which ${carriers.length} feature ` +
-      `files carry — ${carriers.join(", ")} — so that row cannot say which of them it belongs to. ` +
-      `${recode}, or move it once a single file carries ${named}.`
+    return CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers](
+      fileName,
+      file.featureCode,
+      scnId,
+      named,
+      carriers.length,
+      carriers.join(", ")
     );
   }
-  return (
-    `${opening}it opens a row for ${named}, which no feature file carries as its header code, so ` +
-    `that row stands for no file. ${recode}.`
-  );
+  return CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier](fileName, file.featureCode, scnId, named);
 }
 
 export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
@@ -86,10 +77,7 @@ export function uncodedFeatureFiles(features: readonly CorpusFile[]): ScenarioCo
     .map((file) => ({
       kind: "no-feature-code" as const,
       files: [`${file.slug}.feature`],
-      message:
-        `${file.slug}.feature carries no feature code, but its scenarios carry @SCN codes. A feature ` +
-        `file is the class its scenarios' codes are filed under: give it a header code of its own, ` +
-        `and code its scenarios for it.`,
+      message: CORE_MESSAGES[CoreMessage.NoFeatureCode](`${file.slug}.feature`),
     }));
 }
 

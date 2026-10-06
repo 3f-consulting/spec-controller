@@ -1,12 +1,13 @@
 import type { RenderInput } from "../assemble/renderInput.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const discoveryScopeSection = (report: RenderInput): string[] => {
   const scope = report.summary.discoveryScope ?? [];
   if (scope.length === 0) return [];
   return [
-    "### Discovery scope",
+    CORE_MESSAGES[CoreMessage.DiscoveryScopeHeading],
     "",
-    "| Workflow | Job | Steps read | Candidates |",
+    CORE_MESSAGES[CoreMessage.DiscoveryScopeTableHeader],
     "| --- | --- | --- | --- |",
     ...scope.map(
       ({ source, job, steps, candidates }) =>

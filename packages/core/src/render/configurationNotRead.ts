@@ -1,22 +1,20 @@
 import type { RenderInput } from "../assemble/renderInput.js";
-
-const INTRO =
-  "The target's package.json holds configuration this run could not use. Each entry below was read as absent, and every account in this report is the one the target gives without it.";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const configurationNotReadSection = (report: RenderInput): string[] => {
   const wrongKinds = report.summary.wrongKindConfiguration ?? [];
   const unknownKeys = report.summary.unknownConfigurationKeys ?? [];
   if (wrongKinds.length === 0 && unknownKeys.length === 0) return [];
   return [
-    "## Configuration not read",
+    CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],
     "",
-    INTRO,
+    CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
     "",
     ...wrongKinds.map(
-      ({ entry, is, reads }) => `- \`${entry}\` is ${is} where ${reads} is read, so this run read it as absent.`
+      ({ entry, is, reads }) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationWrongKind](`\`${entry}\``, is, reads)}`
     ),
     ...unknownKeys.map(
-      (key) => `- \`specController.${key}\` is not a key the specController block reads, so this run read nothing from it.`
+      (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`
     ),
     "",
   ];

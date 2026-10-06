@@ -3,7 +3,9 @@ import { renderMarkdown } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { evidenceObligations } from "../census/evidenceObligations.js";
+import { evidenceObligations, sharedScnCodesOf } from "../census/evidenceObligations.js";
+import { countScnOccurrences, parseScenarios, parseUntaggedScenarios } from "../parse/scenarios.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
@@ -40,6 +42,65 @@ const census: EvidenceObligations = {
   ],
 };
 
+const alpha = `Feature: alpha
+
+  @unit @SCN-TRI-001
+  Scenario: the first carrier of the three-way code
+    Given a fixture
+
+  @unit @SCN-DUO-001
+  Scenario: the first carrier of the two-way code
+    Given a fixture
+
+  @unit @SCN-OWN-001
+  Scenario: a scenario of its own
+    Given a fixture
+`;
+
+const beta = `Feature: beta
+
+  @unit @SCN-TRI-001
+  Scenario: the second carrier of the three-way code
+    Given a fixture
+
+  @unit @SCN-DUO-001
+  Scenario: the second carrier of the two-way code
+    Given a fixture
+
+  @unit @SCN-TRI-001
+  Scenario: the third carrier of the three-way code
+    Given a fixture
+`;
+
+const solo = `Feature: solo
+
+  @unit @SCN-SOL-001
+  Scenario: one code, one scenario
+    Given a fixture
+
+  @unit @SCN-SOL-002
+  Scenario: another code, another scenario
+    Given a fixture
+`;
+
+function censusBlock(corpus: readonly { feature: string; source: string }[]): string[] {
+  const untagged = corpus.flatMap(({ feature, source }) =>
+    parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
+  );
+  const raw = corpus.reduce((n, { source }) => n + countScnOccurrences(source), 0);
+  const scenarios = corpus.flatMap(({ source }) => parseScenarios(source));
+  const md = renderMarkdown(
+    er(reconcile(scenarios, [])),
+    ctx,
+    evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus))
+  );
+  const lines = md.split("\n");
+  const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);
+  expect(start).toBeGreaterThan(0);
+  const block = lines.slice(start);
+  return block.slice(0, block.indexOf(""));
+}
+
 describe("[SCN-STG-017] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
   it("states that the corpus holds three scenarios in two accounts", () => {
     const md = renderMarkdown(er(ledger), ctx, census);
@@ -72,5 +133,25 @@ describe("[SCN-STG-017] the report states scenarios against accounts, and names 
     const row = renderMarkdown(er(bare), ctx).split("\n").find((line) => line.startsWith("| SCN-ONE-001 "));
     expect(row).toContain("⧉ Evidence Obligation's @SCN code is carried by another Scenario");
     expect(row).not.toContain("undefined");
+  });
+
+  it("counts every scenario against its accounts and names each shared code's carriers, a code to a line, in code order", () => {
+    expect(
+      censusBlock([
+        { feature: "alpha.feature", source: alpha },
+        { feature: "beta.feature", source: beta },
+      ])
+    ).toEqual([
+      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
+      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 3, 2)}`,
+      "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
+      "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
+    ]);
+  });
+
+  it("renders no shared-code line when every code in the corpus is carried by one scenario", () => {
+    expect(censusBlock([{ feature: "solo.feature", source: solo }])).toEqual([
+      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
+    ]);
   });
 });

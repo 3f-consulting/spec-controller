@@ -16,8 +16,8 @@ jobs:
       matrix:
         include:
           - scope: core-domain
-            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/qualityCheckFaultMessages.ts"
-            timeout: 35
+            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/messages.ts"
+            timeout: 52
           - scope: core-provenance
             mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts"
             timeout: 5
@@ -27,6 +27,9 @@ jobs:
           - scope: spec-controller-cli-allocate
             mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts"
             timeout: 15
+          - scope: core-render
+            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts"
+            timeout: 51
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

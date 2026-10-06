@@ -1,0 +1,83 @@
+import { describe, it, expect } from "vitest";
+import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { RunContext } from "../provenance/provenance.js";
+import { renderMarkdown } from "./markdown.js";
+
+const ci = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+      - name: Lint
+        run: pnpm lint
+`;
+
+const feature = `Feature: fixture
+
+  @unit @SCN-FIX-001
+  Scenario: a fixture behaviour
+    Given a fixture
+`;
+
+const ctx: RunContext = {
+  target: "fixture",
+  inputs: { features: "features" },
+  runStart: new Date("2026-10-04T12:00:00.000Z"),
+  sourceSha: null,
+  toolSha: null,
+  toolVersion: "0.0.0",
+};
+
+const tiers = ["unit", "integration", "e2e", "performance"];
+
+function reportLines(runners: Record<string, string | null>): string[] {
+  const reconciliation = evidenceReconciliationFromSources({
+    featureSources: [feature],
+    untaggedScenarios: [],
+    packageJson: {
+      scripts: { test: "vitest run", lint: "eslint ." },
+      specController: {
+        runners,
+        notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
+      },
+    },
+    ciSources: [ci],
+    ciSourceNames: ["ci.yml"],
+    runtimeObservations: [],
+    deferralTags: [],
+  });
+  return renderMarkdown(reconciliation, ctx).split("\n");
+}
+
+const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
+
+function section(lines: readonly string[]): string[] {
+  const start = lines.indexOf(heading);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
+  return lines.slice(start, next === -1 ? lines.length : next);
+}
+
+const notATier = (key: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`;
+
+describe("[SCN-USG-019] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
+  it("renders the section for a key outside the four tiers alone, naming that key and no tier", () => {
+    const lines = section(
+      reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" })
+    );
+    const account = lines.filter((line) => line.startsWith("- "));
+
+    expect(account).toStrictEqual([notATier("lint")]);
+    for (const tier of tiers) {
+      expect(account.some((line) => line.includes(tier))).toBe(false);
+    }
+    expect(lines.some((line) => line.startsWith("| "))).toBe(false);
+    expect(lines).toStrictEqual([heading, "", notATier("lint"), ""]);
+  });
+});

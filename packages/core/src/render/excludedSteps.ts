@@ -1,16 +1,15 @@
 import type { RenderInput } from "../assemble/renderInput.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const excludedStepsSection = (report: RenderInput): string[] => {
   const excluded = report.summary.excludedSteps ?? [];
   const unmatched = report.summary.unmatchedNotChecks ?? [];
   if (excluded.length === 0 && unmatched.length === 0) return [];
   return [
-    "### Excluded steps",
+    CORE_MESSAGES[CoreMessage.ExcludedStepsHeading],
     "",
-    ...excluded.map((entry) => `- ${entry} — excluded: the target names this step a non-check.`),
-    ...unmatched.map(
-      (entry) => `- ${entry} — matches no step: the entry names nothing this run read.`
-    ),
+    ...excluded.map((entry) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](entry)}`),
+    ...unmatched.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](entry)}`),
     "",
   ];
 };

@@ -1,5 +1,6 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const runnerTierAccount = (
   runnerTiers: Readonly<Record<string, string | null>> | undefined
@@ -8,15 +9,13 @@ const runnerTierAccount = (
     ? []
     : RUNTIME_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) =>
         Object.hasOwn(runnerTiers, tier)
-          ? `- ${tier} — no runner: the target names none.`
-          : `- ${tier} — unnamed: the target has not said.`
+          ? `- ${CORE_MESSAGES[CoreMessage.RunnerTierNamesNone](tier)}`
+          : `- ${CORE_MESSAGES[CoreMessage.RunnerTierUnnamed](tier)}`
       );
 
 const unrecognisedKeyAccount = (keys: readonly string[] | undefined): string[] =>
   (keys ?? []).map(
-    (key) =>
-      `- ${key} — not a tier: the runner block is keyed by the four canon tiers, and this key excludes nothing.`
-  );
+(key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`);
 
 export const behaviouralRunnersSection = (report: RenderInput): string[] => {
   const runners = report.summary.behaviouralRunners ?? [];
@@ -26,11 +25,11 @@ export const behaviouralRunnersSection = (report: RenderInput): string[] => {
   ];
   if (runners.length === 0 && account.length === 0) return [];
   return [
-    "### Behavioural runners",
+    CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading],
     "",
     ...(runners.length > 0
       ? [
-          "| Tier | Runner | Recognised at |",
+          CORE_MESSAGES[CoreMessage.BehaviouralRunnersTableHeader],
           "| --- | --- | --- |",
           ...runners.map(({ tier, runner, step }) => `| ${tier} | ${runner} | ${step} |`),
           "",

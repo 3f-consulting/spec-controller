@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 
 import { QualityCheckFaultCode, type QualityCheckFault } from "../../core/src/domain/qualityCheckFault.js";
-import { QUALITY_CHECK_FAULT_MESSAGES } from "../../core/src/domain/qualityCheckFaultMessages.js";
+import {
+  CORE_MESSAGES,
+  CoreMessage,
+  QUALITY_CHECK_FAULT_MESSAGES,
+  type CoreMessages,
+} from "../../core/src/domain/messages.js";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, Unreadable, type AppMessages } from "./messages.js";
 
 function codesOf(codes: object): number[] {
@@ -37,6 +42,67 @@ function renderedFault(fault: QualityCheckFault): string {
   return (QUALITY_CHECK_FAULT_MESSAGES[fault.code] as (f: QualityCheckFault) => string)(fault);
 }
 
+type CoreTemplate = {
+  [C in CoreMessage]: CoreMessages[C] extends string ? never : C;
+}[CoreMessage];
+
+const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessages[C]> } = {
+  [CoreMessage.ProvenanceTargetRepo]: ["/repo"],
+  [CoreMessage.ProvenanceNotSupplied]: ["--results"],
+  [CoreMessage.ProvenanceRunTimestamp]: ["2026-10-04T00:00:00Z"],
+  [CoreMessage.ProvenanceSourceSha]: ["abc1234"],
+  [CoreMessage.ProvenanceToolSha]: ["def5678"],
+  [CoreMessage.ProvenanceToolVersion]: ["1.0.0"],
+  [CoreMessage.ConfigurationWrongKind]: ["specController.runners", "a string", "an object"],
+  [CoreMessage.ConfigurationUnknownKey]: ["specController.extra"],
+  [CoreMessage.ProofsNeverRan]: [2],
+  [CoreMessage.RunUnsound]: ["2 proofs never ran."],
+  [CoreMessage.BrokenEvidenceWhatBroke]: ["features/a.feature:3"],
+  [CoreMessage.ScenarioCodeErrorCount]: [2],
+  [CoreMessage.ScenarioCodeErrorsFraming]: ["2 scenario code errors"],
+  [CoreMessage.ScenarioCodesCleanOver]: ["2 feature files", "2 feature codes"],
+  [CoreMessage.CleanNoCodedScenario]: ["over 1 feature file", "it"],
+  [CoreMessage.CleanEachFileOwnCode]: ["over 2 feature files"],
+  [CoreMessage.CleanOthersUncoded]: ["over 3 feature files", 1, "holds"],
+  [CoreMessage.DuplicateFeatureCode]: ["ABC", 2, "a.feature, b.feature"],
+  [CoreMessage.ForeignScnCodeOneCarrier]: ["a.feature", "ABC", "SCN-DEF-001", "DEF", "d.feature"],
+  [CoreMessage.ForeignScnCodeManyCarriers]: ["a.feature", "ABC", "SCN-DEF-001", "DEF", 2, "d.feature, e.feature"],
+  [CoreMessage.ForeignScnCodeNoCarrier]: ["a.feature", "ABC", "SCN-DEF-001", "DEF"],
+  [CoreMessage.NoFeatureCode]: ["a.feature"],
+  [CoreMessage.VerdictExit]: [1],
+  [CoreMessage.ScenarioCodeErrorsGloss]: [""],
+  [CoreMessage.NothingToReconcileGloss]: ["features"],
+  [CoreMessage.PendingTally]: [1],
+  [CoreMessage.TestVolumeSum]: [3, 1, 1, 1],
+  [CoreMessage.StaticChecksCounts]: [2, 1],
+  [CoreMessage.RunnerTierNamesNone]: ["e2e"],
+  [CoreMessage.RunnerTierUnnamed]: ["performance"],
+  [CoreMessage.RunnerKeyNotATier]: ["smoke"],
+  [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
+  [CoreMessage.StepExcluded]: ["ci.yml / build / lint"],
+  [CoreMessage.NotChecksEntryMatchesNoStep]: ["ci.yml / build / gone"],
+  [CoreMessage.StepsNotAccountedFor]: [5, 4],
+  [CoreMessage.FitnessSatisfiedOf]: [1, 2],
+  [CoreMessage.ScenarioRowsOutOfBalance]: [1, 3],
+  [CoreMessage.NotGroupedByFeature]: ["1 phantom-scenario row(s)"],
+  [CoreMessage.PhantomScenarioRows]: [1],
+  [CoreMessage.SuspenseScenarioRows]: [1],
+  [CoreMessage.UncodedScenarios]: [1],
+  [CoreMessage.ScenarioReconciliationTally]: [3, 2, 1],
+  [CoreMessage.PhantomScenarioTally]: [1],
+  [CoreMessage.SuspenseScenarioTally]: [1],
+  [CoreMessage.ExcludedScnOccurrences]: [1],
+  [CoreMessage.UntaggedScenarios]: [1],
+  [CoreMessage.SharedScnCodes]: [4, 3, 1],
+  [CoreMessage.PendingItemFor]: ["unit"],
+};
+
+function renderedCore(code: CoreMessage): string {
+  const entry = CORE_MESSAGES[code];
+  if (typeof entry === "string") return entry;
+  return (entry as (...params: unknown[]) => string)(...SAMPLE_CORE_PARAMS[code as CoreTemplate]);
+}
+
 const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]> } = {
   [AppMessage.History]: [],
   [AppMessage.Repository]: [],
@@ -70,6 +136,14 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
       expect(message).toContain(fault.required);
       expect(message).toContain(fault.actual);
     }
+  });
+
+  it("holds core's report catalogue to every core message code and nothing else, with no entry rendering blank", () => {
+    const codes = codesOf(CoreMessage);
+    expect(codes.length).toBeGreaterThan(0);
+    expect(keysOf(CORE_MESSAGES)).toEqual(codes);
+
+    for (const code of codes as CoreMessage[]) expect(renderedCore(code).trim()).not.toBe("");
   });
 
   it("holds the app's catalogue to every app message code and nothing else, with no entry rendering blank", () => {

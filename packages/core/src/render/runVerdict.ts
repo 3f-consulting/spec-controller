@@ -4,6 +4,7 @@ import type { ProvenanceObject } from "../provenance/provenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const DEFAULT_CORPUS_DIR = "features";
 
@@ -14,55 +15,43 @@ function corpusExamined(provenance: ProvenanceObject): string {
 }
 
 function scenarioCodeErrorsVerdict(reconciliation: Ledger): Verdict {
-  const alsoOutOfBalance = isBalanced(reconciliation)
-    ? ""
-    : " The accounts do not agree either: at least one Scenario Reconciliation carries a reconciling item.";
+  const alsoOutOfBalance = isBalanced(reconciliation) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
   return {
-    headline: "**SCENARIO CODE ERRORS**",
-    exit: "exit 1",
-    gloss:
-      "the corpus files a scenario code under the wrong feature, so the by-feature grouping " +
-      `cannot be trusted. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+    headline: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline],
+    exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
+    gloss: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](alsoOutOfBalance),
   };
 }
 
 const OUT_OF_BALANCE: Verdict = {
-  headline: "**OUT-OF-BALANCE**",
-  exit: "exit 1",
-  gloss: "the accounts do not agree. At least one Scenario Reconciliation carries a reconciling item. This run FAILED.",
+  headline: CORE_MESSAGES[CoreMessage.OutOfBalanceHeadline],
+  exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
+  gloss: CORE_MESSAGES[CoreMessage.OutOfBalanceGloss],
 };
 
 const UNSOUND: Verdict = {
-  headline: "**UNSOUND**",
-  exit: "exit 4",
-  gloss:
-    "the evidence could not be TRUSTED to reconcile. A proof never ran, so the behaviour " +
-    "it proves was never exercised. Read the run-integrity stamp above before any count " +
-    "below it.",
+  headline: CORE_MESSAGES[CoreMessage.UnsoundHeadline],
+  exit: CORE_MESSAGES[CoreMessage.VerdictExit](4),
+  gloss: CORE_MESSAGES[CoreMessage.UnsoundGloss],
 };
 
 const PENDING: Verdict = {
-  headline: "**PENDING**",
-  exit: "exit 3",
-  gloss:
-    "every Scenario Reconciliation balances, but Pending Items are outstanding and this run " +
-    "treats a deferral as a failure (`--strict`). This run FAILED.",
+  headline: CORE_MESSAGES[CoreMessage.PendingHeadline],
+  exit: CORE_MESSAGES[CoreMessage.VerdictExit](3),
+  gloss: CORE_MESSAGES[CoreMessage.PendingGloss],
 };
 
 const BALANCED: Verdict = {
-  headline: "**BALANCED**",
-  exit: "exit 0",
-  gloss: "every Scenario Reconciliation balances: scenario, phantom and suspense alike.",
+  headline: CORE_MESSAGES[CoreMessage.BalancedHeadline],
+  exit: CORE_MESSAGES[CoreMessage.VerdictExit](0),
+  gloss: CORE_MESSAGES[CoreMessage.BalancedGloss],
 };
 
 function nothingToReconcile(corpusDir: string): Verdict {
   return {
-    headline: "**NOTHING TO RECONCILE**",
-    exit: "exit 5",
-    gloss:
-      "there were no accounts to agree. The ledger carries no Scenario Reconciliation at " +
-      `all, so this run has NO BASIS FOR A VERDICT — nothing was declared in \`${corpusDir}\` ` +
-      "and nothing was produced. Not balanced: a run that examined nothing must not certify.",
+    headline: CORE_MESSAGES[CoreMessage.NothingToReconcileHeadline],
+    exit: CORE_MESSAGES[CoreMessage.VerdictExit](5),
+    gloss: CORE_MESSAGES[CoreMessage.NothingToReconcileGloss](corpusDir),
   };
 }
 
@@ -90,13 +79,10 @@ export const runVerdictSection = (report: RenderInput): string[] => {
     strict: report.runProvenance.strict === true,
   });
   const verdict = verdictFor(code, reconciliation, corpusExamined(report.runProvenance), codeErrors);
-  const lines = ["### Run verdict", "", `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`];
+  const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`];
   if (code === 0 && hasPendingItems(reconciliation)) {
     lines.push("");
-    lines.push(
-      "⏳ Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
-        "A run that treats a deferral as a failure gives exit 3 under `--strict`."
-    );
+    lines.push(CORE_MESSAGES[CoreMessage.PendingItemsOutstanding]);
   }
   lines.push("");
   return lines;

@@ -1,5 +1,6 @@
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import type { RenderInput } from "../assemble/renderInput.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const testVolumeSection = (report: RenderInput): string[] => {
   const volume = report.summary.testVolume;
@@ -7,11 +8,11 @@ export const testVolumeSection = (report: RenderInput): string[] => {
   if (!volume || !raw) return [];
   const total = volume.totalEvidenceObservations;
   const lines = [
-    "### Test volume",
+    CORE_MESSAGES[CoreMessage.TestVolumeHeading],
     "",
-    `${total} evidence observations = ${volume.onScenario} on scenarios + ${volume.onPhantomScenario} on phantom scenarios + ${volume.onSuspenseScenario} on the suspense scenario.`,
+    CORE_MESSAGES[CoreMessage.TestVolumeSum](total, volume.onScenario, volume.onPhantomScenario, volume.onSuspenseScenario),
     "",
-    "| Quality-check | Evidence observations |",
+    CORE_MESSAGES[CoreMessage.TestVolumeTableHeader],
     "| --- | --- |",
   ];
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {

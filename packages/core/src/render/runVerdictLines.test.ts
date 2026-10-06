@@ -1,0 +1,147 @@
+import { describe, it, expect } from "vitest";
+import { renderMarkdown } from "./markdown.js";
+import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
+import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
+import type { RunContext } from "../provenance/provenance.js";
+
+const ctx: RunContext = {
+  target: "run-verdict-target",
+  inputs: { features: "specs/features" },
+  runStart: new Date("2026-10-05T09:00:00.000Z"),
+  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+  toolVersion: "0.1.0",
+};
+
+const strictCtx: RunContext = { ...ctx, strict: true };
+
+const HEADING = CORE_MESSAGES[CoreMessage.RunVerdictHeading];
+const NEXT_HEADING = CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading];
+
+function verdictSectionOf(md: string): string[] {
+  const lines = md.split("\n");
+  const start = lines.indexOf(HEADING);
+  const end = lines.indexOf(NEXT_HEADING);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  return lines.slice(start, end);
+}
+
+function verdictLine(headline: CoreMessage, gloss: string, exitCode: number): string {
+  return `${CORE_MESSAGES[headline] as string} — ${gloss} (${CORE_MESSAGES[CoreMessage.VerdictExit](exitCode)})`;
+}
+
+const evidenceReconciliation = (ledger: Ledger): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, false, false),
+  ledger,
+});
+
+const scenario: Scenario = { scnId: "SCN-VRD-001", evidenceObligations: [{ qualityCheck: "unit" }] };
+const pendingScenario: Scenario = {
+  scnId: "SCN-VRD-001",
+  evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+};
+const passed: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-VRD-001", status: "passed" };
+const unattributed: EvidenceObservation = { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" };
+
+const BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, CORE_MESSAGES[CoreMessage.BalancedGloss], 0);
+const OUT_OF_BALANCE_LINE = verdictLine(CoreMessage.OutOfBalanceHeadline, CORE_MESSAGES[CoreMessage.OutOfBalanceGloss], 1);
+
+describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
+  it("a balanced ledger: the heading, a blank line, the verdict naming exit 0, and one blank line", () => {
+    const md = renderMarkdown(evidenceReconciliation(reconcile([scenario], [passed])), ctx);
+    expect(verdictSectionOf(md)).toEqual([HEADING, "", BALANCED_LINE, ""]);
+  });
+
+  it("a balanced ledger with Pending Items: the verdict still names exit 0, then a blank line and the outstanding note, then one blank line", () => {
+    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), ctx);
+    expect(verdictSectionOf(md)).toEqual([
+      HEADING,
+      "",
+      BALANCED_LINE,
+      "",
+      CORE_MESSAGES[CoreMessage.PendingItemsOutstanding],
+      "",
+    ]);
+  });
+
+  it("the same Pending Items under --strict: the verdict names exit 3 and carries no outstanding note", () => {
+    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), strictCtx);
+    expect(verdictSectionOf(md)).toEqual([
+      HEADING,
+      "",
+      verdictLine(CoreMessage.PendingHeadline, CORE_MESSAGES[CoreMessage.PendingGloss], 3),
+      "",
+    ]);
+  });
+
+  it("an out-of-balance ledger that also carries Pending Items: the verdict names exit 1 and carries no outstanding note", () => {
+    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed, unattributed])), ctx);
+    expect(verdictSectionOf(md)).toEqual([HEADING, "", OUT_OF_BALANCE_LINE, ""]);
+  });
+
+  it("an empty corpus: the verdict names exit 5 and the corpus directory the run examined", () => {
+    const md = renderMarkdown(evidenceReconciliation(reconcile([], [])), ctx);
+    expect(verdictSectionOf(md)).toEqual([
+      HEADING,
+      "",
+      verdictLine(
+        CoreMessage.NothingToReconcileHeadline,
+        CORE_MESSAGES[CoreMessage.NothingToReconcileGloss]("specs/features"),
+        5
+      ),
+      "",
+    ]);
+  });
+
+  describe("a corpus whose file headed @TWO holds a scenario coded @SCN-ONE-002", () => {
+    const sources = [
+      "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n    Given a thing\n",
+      "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: two\n    Given a thing\n",
+    ];
+    const reconciled = (runtimeObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
+      evidenceReconciliationFromSources({
+        featureSources: sources,
+        featureFiles: [
+          { slug: "one", featureCode: "ONE" },
+          { slug: "two", featureCode: "TWO" },
+        ],
+        untaggedScenarios: [],
+        packageJson: {},
+        ciSources: [],
+        runtimeObservations,
+        deferralTags: [],
+      });
+    const bothPassed: EvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" },
+      { qualityCheck: "unit", scnId: "SCN-ONE-002", status: "passed" },
+    ];
+
+    it("with every account balanced: the scenario-code-error verdict names exit 1 and adds nothing about the accounts", () => {
+      const md = renderMarkdown(reconciled(bothPassed), ctx);
+      expect(verdictSectionOf(md)).toEqual([
+        HEADING,
+        "",
+        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](""), 1),
+        "",
+      ]);
+    });
+
+    it("with an account out of balance as well: the same verdict, naming exit 1, adds that the accounts do not agree", () => {
+      const md = renderMarkdown(reconciled(bothPassed.slice(0, 1)), ctx);
+      expect(verdictSectionOf(md)).toEqual([
+        HEADING,
+        "",
+        verdictLine(
+          CoreMessage.ScenarioCodeErrorsHeadline,
+          CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](CORE_MESSAGES[CoreMessage.AlsoOutOfBalance]),
+          1
+        ),
+        "",
+      ]);
+    });
+  });
+});

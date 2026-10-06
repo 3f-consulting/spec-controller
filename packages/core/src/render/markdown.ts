@@ -26,6 +26,7 @@ import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
@@ -84,25 +85,23 @@ function cellSafe(text: string): string {
 }
 
 function renderPendingItem(item: PendingItem): string {
-  return item.qualityCheck === undefined ? "⏳ pending" : `⏳ pending: ${item.qualityCheck}`;
+  return item.qualityCheck === undefined
+    ? CORE_MESSAGES[CoreMessage.PendingItem]
+    : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheck);
 }
 
 function renderRowExceptions(s: ScenarioReconciliation): string {
   const reconciling = s.reconcilingItems.map(renderItem).join("; ");
-  const pending = (s.pendingItems ?? []).map(renderPendingItem).join("; ");
+  const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
   return groups.length === 0 ? "—" : groups.join("; ");
-}
-
-function renderScenario(s: ScenarioReconciliation): string {
-  return `| ${s.scnId} | ${VERDICT_GLYPH[s.verdict]} ${s.verdict} | ${renderRowExceptions(s)} |`;
 }
 
 type SectionEmitter = (report: RenderInput) => string[];
 
 export type FeatureNames = ReadonlyMap<string, string>;
 
-const titleSection: SectionEmitter = () => ["# Evidence Reconciliation", ""];
+const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
 const runIntegritySection: SectionEmitter = (report) => {
   if (!hasBrokenEvidence({ scenarioReconciliations: report.ledger.scenarioReconciliations })) return [];
@@ -112,28 +111,35 @@ const runIntegritySection: SectionEmitter = (report) => {
   const count = brokenItems.length;
   const proofs =
     count === 1
-      ? "1 proof never ran, so the behaviour it proves was never exercised."
-      : `${count} proofs never ran, so the behaviours they prove were never exercised.`;
+      ? CORE_MESSAGES[CoreMessage.OneProofNeverRan]
+      : CORE_MESSAGES[CoreMessage.ProofsNeverRan](count);
   const lines = [
-    "## Run integrity: unsound",
+    CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
     "",
-    `⚠ **This run is unsound.** ${proofs} A \`missing\` outcome ` +
-      "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
-      `"write the test", because the test may already be there. Fix the harness and regenerate.`,
+    CORE_MESSAGES[CoreMessage.RunUnsound](proofs),
     "",
   ];
   for (const item of brokenItems) {
-    lines.push(`- \`${item.locator ?? "(evidence not named by the runner)"}\` — what broke:`);
+    const locator = item.locator ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
     lines.push("");
     lines.push("```text");
-    lines.push(...(item.message ?? "(no message reported by the runner)").split("\n"));
+    lines.push(...(item.message ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]).split("\n"));
     lines.push("```");
     lines.push("");
   }
   return lines;
 };
 
-const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
+const summaryViewsSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.SummaryViewsHeading], ""];
+
+const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
+  CORE_MESSAGES[CoreMessage.SubjectColumn],
+  CORE_MESSAGES[CoreMessage.TotalColumn],
+  CORE_MESSAGES[CoreMessage.BalancedColumn],
+  CORE_MESSAGES[CoreMessage.OutOfBalanceColumn],
+  CORE_MESSAGES[CoreMessage.DetailColumn],
+];
 
 const evidenceReconciliationSection: SectionEmitter = (report) => {
   const scenarioReconciliations = report.summary.scenarioReconciliations;
@@ -145,19 +151,19 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     .map(({ subject, count }) => `${count} ${subject}`)
     .join(" + ");
   const lines = [
-    "### Evidence reconciliation",
+    CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
     "",
-    row(["Subject", "Total", "Balanced", "Out-of-balance", "Detail"]),
+    row(EVIDENCE_RECONCILIATION_COLUMNS),
     row(["---", "---", "---", "---", "---"]),
     row([
-      "Scenario Reconciliation",
+      CORE_MESSAGES[CoreMessage.ScenarioReconciliationSubject],
       String(scenarioReconciliations.total),
       String(scenarioReconciliations.balanced),
       String(scenarioReconciliations.outOfBalance),
       "",
     ]),
     row([
-      "Evidence obligation",
+      CORE_MESSAGES[CoreMessage.EvidenceObligationSubject],
       String(totalEvidenceObligations),
       String(evidenceObligations.byOutcome.satisfied),
       String(evidenceObligationsOutOfBalance),
@@ -175,7 +181,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
 
 function pendingTally(pending: number): string[] {
   return pending > 0
-    ? ["", `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`]
+    ? ["", CORE_MESSAGES[CoreMessage.PendingTally](pending)]
     : [];
 }
 
@@ -189,11 +195,11 @@ const fitnessSection: SectionEmitter = (report) => {
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.fitness;
   return [
-    "### Fitness evidence obligations",
+    CORE_MESSAGES[CoreMessage.FitnessHeading],
     "",
-    `${satisfied} of ${total} fitness evidence obligations reconcile satisfied.`,
+    CORE_MESSAGES[CoreMessage.FitnessSatisfiedOf](satisfied, total),
     "",
-    "| Scenario | Outcome |",
+    CORE_MESSAGES[CoreMessage.FitnessTableHeader],
     "| --- | --- |",
     ...rows,
     "",
@@ -213,11 +219,11 @@ const byFeatureSection: SectionEmitter = (report) => {
   const outOfBalance = scenarios.filter(
     (s) => s.verdict === "out-of-balance"
   ).length;
-  const head = `${outOfBalance} of ${scenarios.length} scenario rows out of balance`;
+  const head = CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](outOfBalance, scenarios.length);
   return [
-    "### Out-of-balance by feature",
+    CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
     "",
-    `${head}${groups.size > 0 ? ", grouped by feature" : ""}${ungroupedTail(ungrouped)}.`,
+    `${head}${groups.size > 0 ? CORE_MESSAGES[CoreMessage.GroupedByFeature] : ""}${ungroupedTail(ungrouped)}.`,
     "",
     ...byFeatureTableLines(groups, report.metadata?.featureNames),
   ];
@@ -259,7 +265,7 @@ function byFeatureTableLines(
   featureNames: Readonly<Record<string, string>> | undefined,
 ): string[] {
   if (groups.size === 0) return [];
-  const lines = ["| Feature | Count | Out-of-balance `@SCN` ids |", "| --- | --- | --- |"];
+  const lines = [CORE_MESSAGES[CoreMessage.ByFeatureTableHeader], "| --- | --- | --- |"];
   for (const [key, group] of groups) {
     const slug = featureNames?.[key];
     const label = slug ? `${slug} (${key})` : key;
@@ -272,20 +278,20 @@ function byFeatureTableLines(
 function idsCell(group: FeatureGroup): string {
   const ids = group.ids.join(", ");
   if (group.uncoded === 0) return ids;
-  const uncoded = `${group.uncoded} with no \`@SCN\` code`;
-  return ids === "" ? uncoded : `${ids} and ${uncoded}`;
+  const uncoded = CORE_MESSAGES[CoreMessage.UncodedScenarios](group.uncoded);
+  return ids === "" ? uncoded : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${uncoded}`;
 }
 
 function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
   return [
-    ...(totals.phantom > 0 ? [`${totals.phantom} phantom-scenario row(s)`] : []),
-    ...(totals.suspense > 0 ? [`${totals.suspense} suspense-scenario row(s)`] : []),
+    ...(totals.phantom > 0 ? [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](totals.phantom)] : []),
+    ...(totals.suspense > 0 ? [CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](totals.suspense)] : []),
   ];
 }
 
 function ungroupedTail(ungrouped: readonly string[]): string {
   return ungrouped.length > 0
-    ? `; ${ungrouped.join(" and ")} out of balance, not grouped by feature (no feature file names them)`
+    ? `; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](ungrouped.join(CORE_MESSAGES[CoreMessage.AndJoiner]))}`
     : "";
 }
 
@@ -298,7 +304,7 @@ const ledgerSection: SectionEmitter = (report) => {
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
   const withObservations = report.summary.testVolume !== undefined;
   return [
-    "## Scenario Reconciliations",
+    CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.scenarioReconciliations),
     ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
@@ -310,30 +316,25 @@ const ledgerSection: SectionEmitter = (report) => {
 
 function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
   const lines = [
-    `- ${totals.total} Scenario Reconciliation(s): ${totals.balanced} balanced, ` +
-      `${totals.outOfBalance} out-of-balance.`,
+    `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](totals.total, totals.balanced, totals.outOfBalance)}`,
   ];
   if (totals.phantom > 0) {
-    lines.push(
-      `- ${totals.phantom} phantom-scenario(s): cited by an evidence observation, named by no feature.`
-    );
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomScenarioTally](totals.phantom)}`);
   }
   if (totals.suspense > 0) {
-    lines.push(
-      `- ${totals.suspense} suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".`
-    );
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.SuspenseScenarioTally](totals.suspense)}`);
   }
   return lines;
 }
 
 function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, accounts: number): string[] {
-  const lines = [`- ${census.excludedOccurrences} @SCN ids seen in non-tag context, excluded`];
+  const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](census.excludedOccurrences)}`];
   const untagged = census.untaggedScenarios;
   if (untagged.length > 0) {
     const sorted = [...untagged].sort(
       (a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario)
     );
-    lines.push(`- ${untagged.length} scenario(s) carry no @SCN tag:`);
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged.length)}`);
     for (const { feature, scenario } of sorted) {
       lines.push(`  - ${feature} : ${scenario}`);
     }
@@ -346,7 +347,7 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
   if (shared.length === 0) return [];
   const scenarios = accounts + shared.reduce((extra, code) => extra + code.scenarios.length - 1, 0);
   return [
-    `- The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${shared.length} @SCN code(s) carried by more than one scenario:`,
+    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenarios, accounts, shared.length)}`,
     ...shared.map(
       (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
     ),
@@ -358,18 +359,11 @@ function ledgerTableLines(
   withObservations: boolean
 ): string[] {
   const columns = withObservations ? evidenceColumns(scenarios) : [];
-  if (!(withObservations && columns.length > 0)) {
-    return [
-      "| Scenario | Verdict | Reconciling items |",
-      "| --- | --- | --- |",
-      ...scenarios.map(renderScenario),
-    ];
-  }
   const headers = [
-    "Scenario",
+    CORE_MESSAGES[CoreMessage.ScenarioColumn],
     ...columns.map(columnHeader),
-    "Verdict",
-    "Reconciling items",
+    CORE_MESSAGES[CoreMessage.VerdictColumn],
+    CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
   ];
   const lines = [`| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`];
   for (const s of scenarios) {

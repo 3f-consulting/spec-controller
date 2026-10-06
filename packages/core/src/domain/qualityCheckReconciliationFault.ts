@@ -1,5 +1,5 @@
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
-import { QUALITY_CHECK_FAULT_MESSAGES } from "./qualityCheckFaultMessages.js";
+import { QUALITY_CHECK_FAULT_MESSAGES } from "./messages.js";
 
 export class QualityCheckReconciliationFault extends Error {
   constructor(readonly fault: QualityCheckFault) {
