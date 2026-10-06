@@ -505,6 +505,10 @@ on `workflow_dispatch`, never per push. The shared `stryker.config.js` holds the
 - Each job uploads its report as an artifact named after its scope.
 - A scope's timeout is about twice its measured duration on the CI runner, never above 60 minutes.
   Measure it on CI. A local run at a different concurrency does not predict it.
+- A change that adds work to a scope's job re-measures that job on CI and resets its timeout in the
+  same change. Added work means a new matrix entry running beside it, tests that newly reach its
+  scope, or a heavier step. A job that slows with no single change adding work is caught by its own
+  timeout, and that red is the signal. No check compares a job's duration with its timeout.
 
 **A scope joins green or not at all.**
 - A scope is added by one `include` entry in the change that brings it to the bar, never before.
