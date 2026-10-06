@@ -139,3 +139,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-032
     Scenario: no clone in production code touches a file the change touches
+
+  Rule: nothing ships that nothing uses
+
+    @fitness @SCN-FIT-033
+    Scenario: no file the change touches carries an unused file, export or dependency

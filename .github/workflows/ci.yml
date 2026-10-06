@@ -99,6 +99,18 @@ jobs:
           pnpm exec jscpd --format typescript --ignore "**/*.test.ts,**/fixtures/**" --min-tokens 50 --min-lines 5 --absolute --reporters console,json --output "$RUNNER_TEMP/jscpd" packages/core/src packages/spec-controller/src
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --arg root "$PWD/" --slurpfile report "$RUNNER_TEMP/jscpd/jscpd-report.json" '. as $changed | $report[0].duplicates[] | select([.firstFile.name, .secondFile.name] | map(ltrimstr($root)) | any(IN($changed[]))) | "\(.firstFile.name | ltrimstr($root)):\(.firstFile.start)-\(.firstFile.end) = \(.secondFile.name | ltrimstr($root)):\(.secondFile.start)-\(.secondFile.end)"' | awk '{ print } END { exit NR > 0 }'
 
+      - name: Unused code — no changed file carries an unused file, export or dependency
+        id: SCN-FIT-033
+        if: always()
+        shell: bash
+        # knip, pinned in package.json and configured in knip.jsonc, where each setting carries its reason.
+        # Default mode: an export a test imports is used. Exported types count as exports.
+        # The first command reports every finding and exits 0; the second reds on a finding in a file the change touches.
+        run: |
+          pnpm exec knip --include files,exports,types,dependencies --no-exit-code
+          pnpm exec knip --include files,exports,types,dependencies --reporter json --no-exit-code > "$RUNNER_TEMP/knip.json"
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --slurpfile report "$RUNNER_TEMP/knip.json" '. as $changed | $report[0].issues[] | select(.file as $f | $changed | index($f)) | . as $i | ([(if (.files | length) > 0 then "unused file" else empty end)] + [.exports[]?, .types[]?, .dependencies[]?, .devDependencies[]?, .optionalPeerDependencies[]? | .name]) | map("\($i.file): \(.)")[]' | awk '{ print } END { exit NR > 0 }'
+
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()

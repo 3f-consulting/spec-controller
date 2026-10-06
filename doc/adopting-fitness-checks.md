@@ -845,6 +845,40 @@ whitespace-only change to a file that already holds a clone reds it too, naming 
 set is reported and does not fail, so existing duplication waits until its file is next touched.
 Test code is outside the population.
 
+### Unused code
+
+Canon: `fitness-functions.md` → *The suite — the mandatory gates*, the Unused code row, and *The
+gate holds the changed set, and nothing keeps a list*.
+
+**What it runs.** The step *Unused code — no changed file carries an unused file, export or
+dependency* runs `if: always()` under `shell: bash`. It runs `knip`, pinned exactly in the root
+`package.json`, configured in `knip.jsonc`, where each setting carries its reason as a comment.
+- Default mode: knip reads the test files as entry points, so an export a test imports counts as
+  used. Production mode, where tests are not consumers, would make the gate a lever on how the unit
+  tests are written.
+- `--include files,exports,types,dependencies` keeps the four kinds canon names: an unused file, an
+  unused export, an unused exported type (a type is an export), and an unused dependency of any
+  workspace. Unlisted binaries and unresolved imports are other faults, not unused code.
+- `ignore: ["tests/**"]` keeps findings in the Cucumber step files and their support out of the
+  report, because canon's row covers what ships. knip still reads their imports, so what they use
+  stays used.
+- `ignoreDependencies: ["tsx"]`: Cucumber loads it through the `requireModule` string in
+  `cucumber.js`, which knip's Cucumber plugin does not read.
+
+**One report and one gate.** The first command prints every finding and exits 0. The second writes
+knip's JSON report. The complexity gate's changed-set line and one `jq` filter keep the findings in
+files the change touches, print each as `<file>: <name>`, and fail if there is one. knip's paths are
+repository-relative, like `git diff`'s.
+
+**A manifest is a file too.** A change to `package.json` brings that manifest's unused dependencies
+into the changed set. So a dependency bump, the Dependabot pin's included, reds if the manifest
+carries one, and the manifest has to stay clean.
+
+**The plant.** An unused export added to a production file reds the step and names it.
+
+**Limits.** An unused finding in a file the change does not touch is reported and does not fail.
+Test code's own unused exports are not reported.
+
 ### A test leaves nothing in its temporary directory
 
 Canon: the cleanup rule. A test removes what it creates with `fs.rmSync`, and restores any mode it
