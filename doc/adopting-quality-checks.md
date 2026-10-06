@@ -1138,8 +1138,11 @@ only for a claim a lower one cannot see, and drop a layer that adds no claim, ch
 claim. The conditions are canon: `principles.md` → `layered-evidence`, and
 `claude/skills/drive-scenario.md` → *Dropping a layer is the expected move when it adds no claim —
 checked claim by claim*. How spec-controller applied them:
-- A claim only a seam can see, such as the process's exit code, kept its layer, cut down to that
-  claim.
+- A seam is held by the corpus, not by one scenario. A scenario asserting that a scenario code
+  error exits 1 was first kept as "the one end-to-end check" of that exit. Planting showed two unit
+  tests already held the claim, and other scenarios that spawn the CLI and expect exit 1 already
+  held the seam, so its layer went too. Before keeping a layer for a seam, break the seam's wiring
+  and see whether another scenario reds. A layer stays only for a seam claim nothing else holds.
 - An in-process claim no unit test made, such as a report re-rendered from its saved JSON, moved
   into a citing unit test before the layer went.
 - **Compare claim by claim, never verdict by verdict.** A unit test that checked only a row's
