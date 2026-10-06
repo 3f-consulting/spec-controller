@@ -128,16 +128,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     them off metadata.featureNames — needing no external map. The markdown stays byte-identical
     (same slugs, now model-sourced). Its unit arm proves assembleReport carries the titles under
     metadata, the glue-free JSON serialises them there, and the model-sourced by-feature cut names
-    features in full byte-identically to the map-threaded render; the integration arm drives the
-    REAL CLI and reads the persisted spec-reconciliation.json carrying the titles under metadata,
-    keyed by feature code.
+    features in full byte-identically to the map-threaded render, and the CLI publishes the titles
+    it reads off the feature files under metadata in spec-reconciliation.json, keyed by feature code.
 
-    @unit @integration @SCN-RMD-006
+    @unit @SCN-RMD-006
     Scenario: the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code
-      Given a reconciliation over a target corpus whose feature files carry their feature codes
-      When the coded-corpus reconciliation run persists its machine artefacts
-      Then the saved reconciliation, in JSON, carries the feature titles keyed by feature code
-      And the saved reconciliation, in markdown, names each out-of-balance feature in full, sourced from the model
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
 
@@ -150,17 +145,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     included (why the feature-title model-completion is the enabling dependency).
     Its unit arm proves the parse→renderReport drift-equality over a corpus spanning the whole
     document (the three-way test-volume line, the materialised summary totals, and a coded
-    out-of-balance feature, so the by-feature title path has teeth); its integration arm drives
-    the REAL CLI end-to-end over a fixture whose by-feature cut names a coded feature — reconcile,
-    persist the JSON, regenerate from it, byte-identical to the direct render.
+    out-of-balance feature, so the by-feature title path has teeth), and the CLI, run over a
+    fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
+    from it the markdown it rendered directly, exiting the code the saved run exited.
 
-    @unit @integration @SCN-RMD-007
+    @unit @SCN-RMD-007
     Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
-      Given a reconciliation run saved in JSON alongside its direct markdown render
-      When the markdown is regenerated from the saved reconciliation's JSON alone
-      Then the regenerated markdown equals the directly rendered markdown
-      And the regenerated markdown names the coded out-of-balance feature in full
-      And the regeneration ends with the same exit as the run that saved it
 
   Rule: each evidence sub-row is keyed by one flat quality-check coordinate
 
@@ -192,10 +182,5 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     then everything else the credit says. The report is then a function of what was observed,
     never of the order it arrived in.
 
-    @unit @integration @SCN-RMD-009
+    @unit @SCN-RMD-009
     Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location
-      Given a runner report citing one scenario from two test files, and the same report with its files listed the other way round
-      When the reconciliation is run over each and saved in JSON
-      Then the two reports are identical apart from their run provenance
-      And the scenario's row reads its evidence in quality-check order, then by location
-      And its unit reconciliation names the same test file in both

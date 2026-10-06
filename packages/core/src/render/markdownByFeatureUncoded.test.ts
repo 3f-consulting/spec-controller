@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown, renderReportFromJson } from "./markdown.js";
+import { renderJson } from "./json.js";
 import { reconcile, summaryOf, type EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { evidenceObligations, type UntaggedScenario } from "../census/evidenceObligations.js";
 import type { Ledger } from "../model.js";
@@ -62,6 +63,14 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
       ["refund.feature", "1", "1 with no `@SCN` code"],
     ]);
   });
+
+  it("groups them the same when the report is rendered again from its saved reconciliation", () => {
+    const { reconciliation, census } = uncodedCorpus(checkout);
+    const md = renderMarkdown(reconciliation, ctx, census);
+    const again = renderReportFromJson(renderJson(reconciliation, ctx, census));
+    expect(byFeatureRows(again)).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
+    expect(again).toEqual(md);
+  });
 });
 
 describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row", () => {
@@ -86,6 +95,24 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
     );
     const md = renderMarkdown(reconciliationOf(ledger), ctx, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
     expect(byFeatureRows(md)).toEqual([["sample (UNT)", "3", "SCN-UNT-001 and 2 with no `@SCN` code"]]);
+  });
+
+  it("counts them on that feature's row the same when the report is rendered again from its saved reconciliation", () => {
+    const untagged = [
+      { feature: "one.feature", scenario: "an uncoded scenario" },
+      { feature: "one.feature", scenario: "an over-long code" },
+    ];
+    const ledger = reconcile(
+      [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [],
+      untagged.map((u) => `${u.feature} : ${u.scenario}`),
+    );
+    const census = evidenceObligations(1, 1, untagged);
+    const names = new Map([["ONE", "one"]]);
+    const md = renderMarkdown(reconciliationOf(ledger), ctx, census, names);
+    const again = renderReportFromJson(renderJson(reconciliationOf(ledger), ctx, census, names));
+    expect(byFeatureRows(again)).toEqual([["one (ONE)", "3", "SCN-ONE-001 and 2 with no `@SCN` code"]]);
+    expect(again).toEqual(md);
   });
 
   it("still names a headerless file beside a headed one", () => {

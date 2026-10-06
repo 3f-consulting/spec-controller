@@ -432,14 +432,14 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
 });
 
 describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
-  function duplicateTarget(): string {
+  function duplicateTarget(withDuplicate = true): string {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
     made.push(dir);
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "dup.feature"),
       "@DUP\nFeature: dup\n\n  @unit @SCN-DUP-001\n  Scenario: first\n    Given a thing\n\n" +
-        "  @unit @SCN-DUP-001\n  Scenario: second\n    Given a thing\n\n" +
+        (withDuplicate ? "  @unit @SCN-DUP-001\n  Scenario: second\n    Given a thing\n\n" : "") +
         "  @unit @SCN-DUP-002\n  Scenario: its own\n    Given a thing\n"
     );
     writeFileSync(
@@ -459,6 +459,21 @@ describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the repor
     writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");
     writeFileSync(join(dir, "package.json"), "{}\n");
     return dir;
+  }
+
+  function ownRowOf(dir: string): unknown {
+    const out: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    try {
+      runBalance(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
+    } finally {
+      outSpy.mockRestore();
+    }
+    const rows = JSON.parse(out.join("")).ledger.scenarioReconciliations as { scnId: string }[];
+    return rows.find((r) => r.scnId === "SCN-DUP-002");
   }
 
   it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", () => {
@@ -489,10 +504,309 @@ describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the repor
       expect(rows.find((r) => r.scnId === "SCN-DUP-002")?.verdict).toBe("balanced");
       expect(process.exitCode).toBe(1);
       expect(err.join("")).not.toMatch(/names the same @SCN on more than one scenario/);
+      expect(ownRowOf(dir)).toEqual(ownRowOf(duplicateTarget(false)));
     } finally {
       outSpy.mockRestore();
       errSpy.mockRestore();
       process.exitCode = savedExitCode;
     }
+  });
+});
+
+describe("[SCN-STG-028] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
+  it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", () => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-stg-028-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(
+      join(dir, "features", "own.feature"),
+      "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own scenario\n" +
+        "    Given the prose mentions @SCN-A-001 and @SCN-AB-001\n" +
+        "    # and a comment mentions @SCN-FIVEC-001 and @SCN-SIXCHR-001\n    And a thing\n"
+    );
+    const out: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    const savedExitCode = process.exitCode;
+    try {
+      runBalance(["--features", join(dir, "features"), "--format", "json"]);
+    } finally {
+      outSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+    const report = JSON.parse(out.join(""));
+    expect(report.evidenceObligations.excludedOccurrences).toBe(2);
+    expect(report.scenarioCodeErrors ?? []).toEqual([]);
+  });
+});
+
+describe("[SCN-LDG-037] a passing and a failing test in one file citing the same scenario read failing, whichever order the two credits arrive in", () => {
+  const passed = { fullName: "[SCN-ONE-001] the test that passed", status: "passed" };
+  const failed = { fullName: "[SCN-ONE-001] the test that failed", status: "failed" };
+
+  it.each([
+    ["passed first", [passed, failed]],
+    ["failed first", [failed, passed]],
+  ])("the JSON report's unit reconciliation reads failing and carries the failed test's credit, with the row out of balance and exit 1, %s", (_order, assertionResults) => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-ldg-037-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n");
+    writeFileSync(join(dir, "vitest.json"), JSON.stringify({ testResults: [{ name: "m.test.ts", assertionResults }] }));
+    const savedExitCode = process.exitCode;
+    process.exitCode = 0;
+    const out: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    try {
+      runBalance(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
+      const row = JSON.parse(out.join("")).ledger.scenarioReconciliations.find(
+        (r: { scnId: string }) => r.scnId === "SCN-ONE-001"
+      );
+      const unit = row.qualityCheckReconciliations.find((q: { qualityCheck: string }) => q.qualityCheck === "unit");
+      expect([unit.outcome, unit.evidenceObservation?.locator, unit.evidenceObservation?.status, row.verdict, process.exitCode]).toEqual([
+        "failing",
+        "m.test.ts",
+        "failed",
+        "out-of-balance",
+        1,
+      ]);
+    } finally {
+      outSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
+});
+
+describe("[SCN-RMD-006] the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code", () => {
+  it("names each coded feature file by its slug under metadata, omits the feature file with no code, and keeps no top-level featureNames", () => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-rmd-006-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(
+      join(dir, "features", "config-vocabulary-lint.feature"),
+      "@CVL\nFeature: config vocabulary lint\n\n  @unit @SCN-CVL-001\n  Scenario: coded\n"
+    );
+    writeFileSync(join(dir, "features", "uncoded.feature"), "Feature: an uncoded feature\n\n  @unit @SCN-XYZ-001\n  Scenario: uncoded\n");
+    const savedExitCode = process.exitCode;
+    const out: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    try {
+      runBalance(["--features", join(dir, "features"), "--format", "json"]);
+      const report = JSON.parse(out.join(""));
+      expect([report.metadata?.featureNames, "featureNames" in report]).toEqual([{ CVL: "config-vocabulary-lint" }, false]);
+    } finally {
+      outSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
+});
+
+describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
+  function byFeatureRows(md: string): string[][] {
+    const section = md.slice(md.indexOf("### Out-of-balance by feature"));
+    const end = section.indexOf("\n#", 1);
+    return (end > 0 ? section.slice(0, end) : section)
+      .split("\n")
+      .filter((line) => line.startsWith("| ") && !line.startsWith("| Feature ") && !line.startsWith("| ---"))
+      .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()));
+  }
+
+  function stdoutOf(argv: string[]): string {
+    const out: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      out.push(String(c));
+      return true;
+    });
+    const savedExitCode = process.exitCode;
+    try {
+      runBalance(argv);
+    } finally {
+      outSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+    return out.join("");
+  }
+
+  it("writes one row named by the file read off the feature files, and renders it again the same from the saved JSON", () => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-031-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(
+      join(dir, "features", "checkout.feature"),
+      "Feature: checkout\n\n  Scenario: pay by card\n    Given a basket\n\n" +
+        "  Scenario: pay by voucher\n    Given a basket\n\n  Scenario: pay on account\n    Given a basket\n"
+    );
+    const saved = join(dir, "report.json");
+    const written = stdoutOf(["--features", join(dir, "features"), "--format", "md", "--format", `json:${saved}`]);
+    expect(byFeatureRows(written)).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
+    expect(stdoutOf(["--render-from-json", saved])).toEqual(written);
+  });
+});
+
+const block = { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Checkout"], deferralTags: ["deferred"] };
+
+function targetOf(specController: unknown): string {
+  const dir = mkdtempSync(join(tmpdir(), "scn-usg-config-"));
+  made.push(dir);
+  mkdirSync(join(dir, "features"));
+  writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
+  writeFileSync(
+    join(dir, "vitest.json"),
+    JSON.stringify({ testResults: [{ name: "own.test.ts", assertionResults: [{ fullName: "[SCN-OWN-001] own", status: "passed" }] }] })
+  );
+  writeFileSync(
+    join(dir, "ci.yml"),
+    "jobs:\n  ci:\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Unit tests\n        run: pnpm test\n"
+  );
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController }));
+  return dir;
+}
+
+function inputsOf(dir: string): string[] {
+  return [
+    "--features", join(dir, "features"),
+    "--vitest", join(dir, "vitest.json"),
+    "--ci", join(dir, "ci.yml"),
+    "--package-json", join(dir, "package.json"),
+  ];
+}
+
+function captured(argv: string[]): { report: string; stderr: string; exitCode: unknown } {
+  const out: string[] = [];
+  const err: string[] = [];
+  const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
+    out.push(String(c));
+    return true;
+  });
+  const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
+    err.push(String(c));
+    return true;
+  });
+  const savedExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    runBalance(argv);
+    return { report: out.join(""), stderr: err.join(""), exitCode: process.exitCode };
+  } finally {
+    outSpy.mockRestore();
+    errSpy.mockRestore();
+    process.exitCode = savedExitCode;
+  }
+}
+
+function balanceOf(specController: unknown): { report: string; stderr: string; exitCode: unknown } {
+  return captured([...inputsOf(targetOf(specController)), "--format", "md"]);
+}
+
+describe("[SCN-USG-025] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
+  const examples: ReadonlyArray<readonly [string, unknown, unknown]> = [
+    ["specController", "x", undefined],
+    ["specController.runners", { ...block, runners: ["vitest"] }, { ...block, runners: undefined }],
+    ["specController.runners.unit", { ...block, runners: { unit: 5 } }, { ...block, runners: {} }],
+    ["specController.notChecks", { ...block, notChecks: "ci.yml:ci:Checkout" }, { ...block, notChecks: undefined }],
+    ["specController.notChecks[1]", { ...block, notChecks: ["ci.yml:ci:Checkout", { a: 1 }] }, block],
+    ["specController.deferralTags", { ...block, deferralTags: { a: 1 } }, { ...block, deferralTags: undefined }],
+    ["specController.deferralTags[0]", { ...block, deferralTags: [null] }, { ...block, deferralTags: [] }],
+  ];
+
+  it.each(examples)("reconciles a target holding %s, writing nothing to stderr and exiting as the target without it does", (entry, written, without) => {
+    const run = balanceOf(written);
+    expect(run.report).toContain(`- \`${entry}\` is `);
+    expect(run.stderr).toBe("");
+    expect(run.exitCode).toBe(balanceOf(without).exitCode);
+  });
+});
+
+describe("[SCN-USG-026] a specController block whose every entry is a kind its reader takes names nothing as the wrong kind", () => {
+  it.each([
+    ["a null runner", { ...block, runners: { unit: "vitest", e2e: null } }],
+    ["an empty notChecks", { ...block, notChecks: [] }],
+    ["an empty deferralTags", { ...block, deferralTags: [] }],
+    ["a runners key that is not a tier, given a number", { ...block, runners: { unit: "vitest", lint: 5 } }],
+  ])("reconciles a target holding %s, naming no entry it could not use and writing nothing to stderr", (_, specController) => {
+    const run = balanceOf(specController);
+    expect(run.report).toContain("## Run provenance");
+    expect(run.report).not.toContain("## Configuration not read");
+    expect(run.stderr).toBe("");
+  });
+});
+
+describe("[SCN-USG-027] a saved run re-rendered names the same specController entries its live report named", () => {
+  it("re-renders a saved run of a target holding a wrong kind and an unread key, naming both as the live report did and writing nothing to stderr", () => {
+    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ scn: "SCN-OWN-001" }] });
+    const saved = join(dir, "saved.json");
+    const live = captured([...inputsOf(dir), "--format", "md", "--format", `json:${saved}`]);
+    const again = captured(["--render-from-json", saved]);
+    const named = (report: string): string[] => report.split("\n").filter((line) => line.startsWith("- `specController."));
+    expect(named(live.report)).toHaveLength(2);
+    expect(named(again.report)).toEqual(named(live.report));
+    expect(again.stderr).toBe("");
+  });
+});
+
+describe("[SCN-USG-028] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
+  const SECTION = "## Configuration not read";
+  const withoutSection = (report: string): string => {
+    const lines = report.split("\n");
+    const start = lines.indexOf(SECTION);
+    const end = start === -1 ? -1 : lines.findIndex((line, i) => i > start && line.startsWith("## "));
+    return (start === -1 ? lines : [...lines.slice(0, start), ...lines.slice(end)])
+      .filter((line) => !line.startsWith("- Run timestamp"))
+      .join("\n");
+  };
+
+  it.each(["notCheck", "fitnessChecks", "zzz"])("reconciles a target also holding %s as the target without it, naming the key in the one sentence every unread key gets", (key) => {
+    const dir = targetOf(block);
+    const without = captured([...inputsOf(dir), "--format", "md"]);
+    writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController: { ...block, [key]: ["x"] } }));
+    const run = captured([...inputsOf(dir), "--format", "md"]);
+    expect(run.report.split("\n").filter((line) => line.startsWith("- `specController."))).toEqual([
+      `- \`specController.${key}\` is not a key the specController block reads, so this run read nothing from it.`,
+    ]);
+    expect(run.stderr).toBe("");
+    expect(run.exitCode).toBe(without.exitCode);
+    expect(withoutSection(run.report)).toBe(withoutSection(without.report));
+  });
+});
+
+describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
+  it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-usg-017-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
+    writeFileSync(
+      join(dir, "ci.yml"),
+      "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Unit tests\n        run: pnpm test\n"
+    );
+    writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController: {} }));
+    const err: string[] = [];
+    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((): boolean => true);
+    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
+      err.push(String(c));
+      return true;
+    });
+    const savedExitCode = process.exitCode;
+    try {
+      runBalance([
+        "--features", join(dir, "features"),
+        "--ci", join(dir, "ci.yml"),
+        "--package-json", join(dir, "package.json"),
+        "--format", "md",
+      ]);
+    } finally {
+      outSpy.mockRestore();
+      errSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+    expect(err.join("")).toBe("");
   });
 });

@@ -73,6 +73,7 @@ describe("[SCN-USG-011] a step running `pnpm test` is the unit runner when the m
   it("tables the unit tier, vitest and the step that runs it, under the heading, header and separator", () => {
     const lines = section(reportLines(allNamed));
 
+    expect(lines[0]).toBe("### Behavioural runners");
     expect(lines.slice(0, 4)).toStrictEqual([heading, "", tableHeader, separator]);
     const rows = lines.slice(4).filter((line) => line.startsWith("| "));
     expect(rows).toHaveLength(1);

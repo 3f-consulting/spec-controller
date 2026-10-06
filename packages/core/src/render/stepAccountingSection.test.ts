@@ -124,6 +124,16 @@ describe("[SCN-USG-018] candidates, runners, the reconciler and the excluded sum
     expect(lines[5]).toBe("");
     expect(lines[6]).toBe(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
     expect(lines[7]).toBe("");
+    expect(lines).toStrictEqual([
+      "### Step accounting",
+      "",
+      "| Steps read | Candidates | Runners | Reconciler | Excluded | Accounted for |",
+      "| --- | --- | --- | --- | --- | --- |",
+      "| 10 | 4 | 1 | 2 | 3 | 10 |",
+      "",
+      "- every step this run read is accounted for.",
+      "",
+    ]);
   });
 
   it("renders no section, and nothing in its place, where the run read no CI configuration", () => {

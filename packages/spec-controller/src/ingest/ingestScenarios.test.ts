@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterAll, describe, it, expect } from "vitest";
 
 import { parseErrorsIn } from "./gherkinValidation.js";
-import { discoverFeatures } from "./ingestScenarios.js";
+import { discoverFeatures, extractFeatureCode } from "./ingestScenarios.js";
 
 const made: string[] = [];
 
@@ -127,6 +127,13 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
 
     expect(discovered.map((f) => f.slug)).toEqual(["a-alpha"]);
     expect(discovered[0]!.featureCode).toBe("AAA");
+  });
+});
+
+describe("[SCN-STG-024] a feature file headed by a code of two or five characters carries that code", () => {
+  it("reads the two- and five-character header codes, and not the one- or six-character ones", () => {
+    const headed = (code: string) => `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a step\n`;
+    expect(["A", "AB", "FIVEC", "SIXCHR"].map((code) => extractFeatureCode(headed(code)))).toEqual([null, "AB", "FIVEC", null]);
   });
 });
 

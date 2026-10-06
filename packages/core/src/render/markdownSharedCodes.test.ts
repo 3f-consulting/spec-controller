@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown, renderReportFromJson } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -120,6 +120,18 @@ describe("[SCN-STG-017] the report states scenarios against accounts, and names 
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
     expect(clean.evidenceObligations).not.toHaveProperty("sharedScnCodes");
     expect(renderMarkdown(er(ledger), ctx, evidenceObligations(3, 3))).not.toContain("The corpus holds");
+  });
+
+  it("re-renders the same statement and the same sharers from the report saved as JSON", () => {
+    const direct = renderMarkdown(er(ledger), ctx, census);
+    const rerendered = renderReportFromJson(renderJson(er(ledger), ctx, census));
+    const statementAndSharers = (md: string): string[] =>
+      md.split("\n").filter((line) => line.startsWith("- The corpus holds") || line.startsWith("  - SCN-ONE-001:"));
+    expect(statementAndSharers(direct)).toEqual([
+      "- The corpus holds 3 scenarios in 2 accounts — 1 @SCN code(s) carried by more than one scenario:",
+      "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
+    ]);
+    expect(statementAndSharers(rerendered)).toEqual(statementAndSharers(direct));
   });
 
   it("renders an account whose sharers name no quality check by its outcome alone, never an undefined subject", () => {

@@ -85,6 +85,7 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
     expect(lines.filter((line) => line.startsWith("- "))).toHaveLength(2);
     expect(lines[2]).toContain(dump);
     expect(lines[3]).toContain(balance);
+    expect(reportLines(ci)).not.toContain(CORE_MESSAGES[CoreMessage.ExcludedStepsHeading]);
   });
 
   it("follows the list with exactly one blank line before the next section", () => {

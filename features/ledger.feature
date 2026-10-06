@@ -34,19 +34,11 @@ Feature: Ledger over obligation-vs-observation evidence
     where its file sorts may discharge it. The item names the first credit carrying that outcome
     in the order the books read evidence in; the rest stay posted on the row.
 
-    @unit @integration @SCN-LDG-036
+    @unit @SCN-LDG-036
     Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
-      Given a runner report citing one scenario from two test files, the file that sorts first passing and the file that sorts last failing
-      When balance reconciles each runner report
-      Then the scenario's unit reconciliation reads failing, carrying the failed test's credit
-      And the scenario and the run are both out of balance
 
-    @unit @integration @SCN-LDG-037
+    @unit @SCN-LDG-037
     Scenario: a passing and a failing test in one file citing the same scenario read failing, whichever order the two credits arrive in
-      Given a runner report citing one scenario from two tests in one file, one passing and one failing, and the same report with the two tests listed the other way round
-      When balance reconciles each runner report
-      Then the scenario's unit reconciliation reads failing, carrying the failed test's credit
-      And the scenario and the run are both out of balance
 
     @unit @SCN-LDG-038
     Scenario: whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it

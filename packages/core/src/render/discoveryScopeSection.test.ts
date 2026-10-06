@@ -98,6 +98,11 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
     expect(scope).toHaveLength(3);
     const lines = rendered(reconciliation);
     expect(lines).toHaveLength(8);
+    expect(lines.slice(0, 3)).toStrictEqual([
+      "### Discovery scope",
+      "",
+      "| Workflow | Job | Steps read | Candidates |",
+    ]);
     expect(lines[0]).toBe(heading);
     expect(lines[1]).toBe("");
     expect(lines[2]).toBe(tableHeader);

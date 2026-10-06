@@ -90,6 +90,11 @@ describe("[SCN-USG-016] a null runner reports the tier as having none, and an ab
     expect(lines.slice(0, 2)).toStrictEqual([heading, ""]);
     expect(lines.some((line) => line.startsWith("| "))).toBe(false);
     expect(accountLines(lines)).toStrictEqual([unnamed("integration"), unnamed("e2e"), namesNone("performance")]);
+    expect(accountLines(lines)).toStrictEqual([
+      "- integration — unnamed: the target has not said.",
+      "- e2e — unnamed: the target has not said.",
+      "- performance — no runner: the target names none.",
+    ]);
   });
 
   it("renders no section, and nothing in its place, for a target naming all four tiers when no runner is recognised", () => {

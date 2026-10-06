@@ -80,4 +80,20 @@ describe("[SCN-USG-019] a runners key that is not one of the four tiers is repor
     expect(lines.some((line) => line.startsWith("| "))).toBe(false);
     expect(lines).toStrictEqual([heading, "", notATier("lint"), ""]);
   });
+
+  it("names the key after the tiers the target has not said, beneath the tier it recognises", () => {
+    expect(section(reportLines({ unit: "vitest", lint: "eslint" }))).toStrictEqual([
+      "### Behavioural runners",
+      "",
+      "| Tier | Runner | Recognised at |",
+      "| --- | --- | --- |",
+      "| unit | vitest | Unit tests |",
+      "",
+      "- integration — unnamed: the target has not said.",
+      "- e2e — unnamed: the target has not said.",
+      "- performance — unnamed: the target has not said.",
+      "- lint — not a tier: the runner block is keyed by the four canon tiers, and this key excludes nothing.",
+      "",
+    ]);
+  });
 });

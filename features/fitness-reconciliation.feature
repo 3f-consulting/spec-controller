@@ -191,7 +191,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
 
-    ONE @fitness SCENARIO IS ONE CHECK (canon fitness-evidence.md, "The tag is the quality
+    ONE @fitness SCENARIO IS ONE CHECK (canon quality-checks.md, "The tag is the quality
     check; nothing else declares it"). Its quality check is fitness, exactly as unit is for a @unit
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
@@ -236,7 +236,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       check, a scenario no entry named raised NOTHING and the report said so in a census line,
       beside a degenerate both-missing row; an entry with no scenario raised a debit. One side of
       the same disagreement on the books and the other in prose. Canon requires both to be rows
-      (fitness-functions.md, "Every obligation and every observation is a reconciliation row, for
+      (quality-checks.md, "Every obligation and every observation is a reconciliation row, for
       every quality check").
 
       AND THE CENSUS LINE GOES WITH IT. A missing obligation says WHO on the row itself, under the

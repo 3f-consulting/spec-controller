@@ -75,6 +75,8 @@ describe("[SCN-STG-022] a scenario whose feature part no file's header carries o
       file("two", "TWO", ["SCN-TWO-001", "SCN-THR-002"]),
     ]);
     expect(foreign).toMatchObject({ namedFeatureCode: "THR", namedFeatureFiles: [] });
+    expect(foreign.message).toContain("SCN-THR-002");
+    expect(foreign.message).toContain("@TWO");
     expect(foreign.message).not.toMatch(/@THR\b/);
     expect(namedFiles).toEqual(["two.feature"]);
   });
@@ -99,6 +101,7 @@ describe("[SCN-STG-010] two feature files carrying one header code are listed as
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ kind: "duplicate-feature-code", files: ["one.feature", "one-b.feature"] });
     expect(errors[0]!.message).toContain("@ONE");
+    expect(errors[0]!.message).toContain("one.feature, one-b.feature");
   });
 
   it("lists nothing once one of them carries a code of its own", () => {

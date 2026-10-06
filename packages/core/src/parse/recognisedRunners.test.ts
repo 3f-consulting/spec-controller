@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recognisedRunners } from "./runningStaticChecks.js";
+import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveRunners } from "./targetManifest.js";
 
 describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
@@ -170,13 +170,13 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
       "      - name: Rule check",
       '        run: pnpm lint:rules --outputFile.json="$EVIDENCE_DIR/vitest.json"',
     ].join("\n");
-    expect(
-      recognisedRunners(
-        [both],
-        { scripts: { test: "vitest run", "lint:rules": "eslint . --format json" } },
-        unit
-      )
-    ).toEqual([{ tier: "unit", runner: "vitest", step: "Unit tests" }]);
+    const manifest = { scripts: { test: "vitest run", "lint:rules": "eslint . --format json" } };
+    expect(recognisedRunners([both], manifest, unit)).toEqual([
+      { tier: "unit", runner: "vitest", step: "Unit tests" },
+    ]);
+    expect(runningStaticChecks([both], manifest, unit).map((check) => check.staticCheck)).toEqual([
+      "lint:rules",
+    ]);
   });
 });
 
@@ -196,13 +196,11 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
   const asTheRunner = [{ tier: "integration", runner: "cucumber-js", step: "Gate" }];
 
   it("leaves a check piping the runner's output into another command a candidate", () => {
-    expect(
-      recognisedRunners(
-        [stepRunning("pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'")],
-        noScripts,
-        integration
-      )
-    ).toEqual([]);
+    const piped = [stepRunning("pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'")];
+    expect(recognisedRunners(piped, noScripts, integration)).toEqual([]);
+    expect(runningStaticChecks(piped, noScripts, integration).map((check) => check.staticCheck)).toEqual([
+      "Gate",
+    ]);
   });
 
   it("leaves a check piping the runner's output and its errors into another command a candidate", () => {

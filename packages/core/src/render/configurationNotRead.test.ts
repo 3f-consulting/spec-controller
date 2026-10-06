@@ -52,6 +52,7 @@ describe("[SCN-USG-025] the report names a specController entry of a kind its re
     ]);
     expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("## Configuration not read"));
     expect(md.indexOf("## Configuration not read")).toBeLessThan(md.indexOf("## Summary views"));
+    expect(md.replace(section(md).join("\n") + "\n", "")).toBe(render({}));
   });
 
   it("renders nothing when every entry was read", () => {
@@ -82,8 +83,10 @@ describe("[SCN-USG-028] the report names a key the specController block does not
     expect(template("zzz")).toHaveLength(1);
   });
 
-  it("renders the section for unread keys alone", () => {
-    expect(section(render({ unknownConfigurationKeys: ["notCheck"] }))[0]).toBe("## Configuration not read");
+  it("renders the section for unread keys alone, and the rest of the report as without them", () => {
+    const md = render({ unknownConfigurationKeys: ["notCheck"] });
+    expect(section(md)[0]).toBe("## Configuration not read");
+    expect(md.replace(section(md).join("\n") + "\n", "")).toBe(render({}));
   });
 });
 

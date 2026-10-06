@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "domain-purity": "echo domain-purity-check"
-  },
-  "specController": {}
-}

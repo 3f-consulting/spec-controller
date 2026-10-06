@@ -87,3 +87,37 @@ describe("[SCN-CLI-018] absent, empty and scenario-less corpora are one answer, 
     expect(absent()).toContain(CORPUS_DIR);
   });
 });
+
+describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped", () => {
+  it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
+    const root = targetFor(EMPTY_CORPUS);
+    const balance = runReconcile({
+      features: join(root, CORPUS_DIR),
+      packageJson: join(root, "package.json"),
+      ci: root,
+    });
+
+    expect(balance.scenarioCodeErrors).toEqual([]);
+    expect(balance.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
+  });
+});
+
+describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
+  it("posts lint:foo and lint:bar alone as fitness checks when the manifest names the runners test and cucumber run", () => {
+    const balance = runReconcile({
+      features: "tests/fixtures/usg/features",
+      ci: "tests/fixtures/usg/ci.yml",
+      packageJson: "tests/fixtures/usg/package.json",
+    });
+
+    const postings = balance.ledger.scenarioReconciliations.flatMap((row) =>
+      row.evidenceObservations
+        .filter((o) => o.qualityCheck === "fitness")
+        .map((o) => [row.kind, o.staticCheck])
+    );
+    expect(postings).toEqual([
+      ["scenario", "lint:foo"],
+      ["suspense-scenario", "lint:bar"],
+    ]);
+  });
+});

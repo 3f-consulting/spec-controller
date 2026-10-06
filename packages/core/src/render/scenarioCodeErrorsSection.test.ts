@@ -143,6 +143,7 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
       const md = renderMarkdown(judged, ctx);
       expect(cleanSectionOf(md)).toEqual([HEADING, "", statement, "", DUPLICATE_LINE, ""]);
       expect(md).not.toContain("**SCENARIO CODE ERRORS**");
+      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx)))).toEqual(cleanSectionOf(md));
     });
   }
 

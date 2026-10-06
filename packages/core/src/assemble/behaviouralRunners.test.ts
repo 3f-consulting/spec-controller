@@ -14,6 +14,7 @@ jobs:
         run: pnpm test
       - name: Lint
         run: pnpm lint
+      - uses: github/codeql-action/analyze@v3
 `;
 
 const feature = `Feature: fixture
@@ -42,8 +43,19 @@ function reconcile(runners?: Record<string, string | null>): EvidenceReconciliat
 }
 
 describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
-  it("carries no runner account for a target whose configuration names no runners", () => {
-    const { summary } = reconcile();
+  it("posts every step of the pipeline to the suspense row, each counted run and uncited, and carries no runner account", () => {
+    const { summary, ledger } = reconcile();
+    const suspense = ledger.scenarioReconciliations
+      .filter((row) => row.kind === "suspense-scenario")
+      .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]));
+    expect(suspense).toStrictEqual([
+      ["Checkout", "cites-no-scenario"],
+      ["Install", "cites-no-scenario"],
+      ["github/codeql-action/analyze@v3", "cites-no-scenario"],
+      ["lint", "cites-no-scenario"],
+      ["test", "cites-no-scenario"],
+    ]);
+    expect(summary.staticChecks).toStrictEqual({ runningStaticCheckCount: 5, uncitedStaticCheckCount: 5 });
     expect(summary).not.toHaveProperty("behaviouralRunners");
     expect(summary).not.toHaveProperty("runnerTiers");
     expect(summary).not.toHaveProperty("unrecognisedRunnerKeys");

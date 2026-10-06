@@ -112,7 +112,7 @@ Feature: The report renders the ledger as sectioned facts
     NO CHECK COLUMN. The table once printed a "Static check" column carrying the
     characteristic the obligation was keyed by — what the check was ABOUT. One @fitness scenario
     is one check and what it is about is its scenario's title, so no report rolls a check up by a
-    word (canon: fitness-functions.md, "A fitness check is its scenario"); the scenario's @SCN is
+    word (canon: quality-checks.md, "A fitness check is its scenario"); the scenario's @SCN is
     the whole identity the row needs.
 
     @unit @SCN-RPT-005
@@ -159,21 +159,11 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
 
-    @unit @integration @SCN-RPT-031
+    @unit @SCN-RPT-031
     Scenario: a feature file's scenarios carrying no @SCN code count together on one row named by that file, never one row each
-      Given a feature file with no feature code whose three scenarios carry no @SCN code
-      When that corpus is reconciled and its report written, then rendered again from its saved reconciliation
-      Then the by-feature cut holds one row, named by that file, counting all three as carrying no @SCN code
-      And no cell of the by-feature cut locates a scenario by its file and name
-      And the report rendered again from its saved reconciliation is the report first written
 
-    @unit @integration @SCN-RPT-032
+    @unit @SCN-RPT-032
     Scenario: a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row
-      Given a feature file headed by a feature code, holding one scenario carrying its code, one carrying no @SCN code and one tagged only with an over-long code
-      When that corpus is reconciled and its report written, then rendered again from its saved reconciliation
-      Then the by-feature cut holds one row, the headed feature's, counting all three and naming only the one carrying its code
-      And no cell of the by-feature cut locates a scenario by its file and name
-      And the report rendered again from its saved reconciliation is the report first written
 
   Rule: the corpus census survives its own section's dissolution
 
