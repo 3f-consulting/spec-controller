@@ -1131,9 +1131,11 @@ scenario, then delete. The apparatus around it goes with it. Moving it keeps the
 - **Steps on scenarios Cucumber does not select,** and step definitions no scenario uses (*A
   scenario Cucumber does not run has no steps*; *Every step definition is one Cucumber runs*).
 
-**How to remove them: when a layer goes, and when it stays.** Evidence starts at `@unit`, and a
-layer is added only for a claim a lower one cannot see. A layer that adds no claim is dropped,
-checked claim by claim. The conditions are canon: `principles.md` → `layered-evidence`, and
+**How to remove them: when a layer goes, and when it stays.** Look at `@unit` first: a unit
+test where one is useful, never for its own sake. Where none is, because the behaviour is the
+wiring, the file system or the process, start at the lowest layer that can see it. Add a layer
+only for a claim a lower one cannot see, and drop a layer that adds no claim, checked claim by
+claim. The conditions are canon: `principles.md` → `layered-evidence`, and
 `claude/skills/drive-scenario.md` → *Dropping a layer is the expected move when it adds no claim —
 checked claim by claim*. How spec-controller applied them:
 - A claim only a seam can see, such as the process's exit code, kept its layer, cut down to that
