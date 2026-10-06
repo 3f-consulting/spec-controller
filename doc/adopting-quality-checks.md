@@ -1131,20 +1131,18 @@ scenario, then delete. The apparatus around it goes with it. Moving it keeps the
 - **Steps on scenarios Cucumber does not select,** and step definitions no scenario uses (*A
   scenario Cucumber does not run has no steps*; *Every step definition is one Cucumber runs*).
 
-**How to remove them: when a layer goes, and when it stays.** No gate decides this, so read each
-Then against the unit tests that cite the same scenario. A scenario starts at the lowest layer that
-can observe it, and a Cucumber layer stays only for a claim no unit test makes.
-- Every claim a Then makes is also asserted by a citing unit test: the Cucumber layer goes, and the
-  scenario keeps its `@unit` floor.
-- A claim only a seam can see, such as the process's exit code: the layer stays, cut down to that
+**How to remove them: when a layer goes, and when it stays.** Evidence starts at `@unit`, and a
+layer is added only for a claim a lower one cannot see. A layer that adds no claim is dropped,
+checked claim by claim. The conditions are canon: `principles.md` → `layered-evidence`, and
+`claude/skills/drive-scenario.md` → *Dropping a layer is the expected move when it adds no claim —
+checked claim by claim*. How spec-controller applied them:
+- A claim only a seam can see, such as the process's exit code, kept its layer, cut down to that
   claim.
-- An in-process claim no unit test makes yet, such as a report re-rendered from its saved JSON, or a
-  row equal to the same row from a run without the fault: the assertion moves into a citing unit
-  test first, then the layer goes.
-- Compare claim by claim, never verdict by verdict. A unit test that checks only a row's verdict
-  does not cover a Then comparing the whole row. This is the miss to expect.
-- A step calling the functions the unit test calls, in the same process, is a copy, and the seam
-  lint already refuses it.
+- An in-process claim no unit test made, such as a report re-rendered from its saved JSON, moved
+  into a citing unit test before the layer went.
+- **Compare claim by claim, never verdict by verdict.** A unit test that checked only a row's
+  verdict was counted as covering a Then that compared the whole row. The layer went, and the
+  claim was left untested until a unit assertion replaced it. This is the miss to expect.
 
 ### Finding the rest: six smells in the unit and scenario estate
 
