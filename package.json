@@ -31,7 +31,8 @@
       "ci.yml:ci:Enable corepack",
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
-      "ci.yml:ci:Build"
+      "ci.yml:ci:Build",
+      "ci.yml:ci:Hand the built packages to the release"
     ]
   },
   "devDependencies": {
