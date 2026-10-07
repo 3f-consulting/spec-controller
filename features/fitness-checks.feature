@@ -135,6 +135,20 @@ Feature: The fitness checks this repository declares, one scenario per check
     @fitness @SCN-FIT-031
     Scenario: neither suite leaves an entry in the temporary directory it ran in
 
+  Rule: a scenario's red is proven by a run of that scenario's own tests alone
+
+    @fitness @SCN-FIT-034
+    Scenario: a red proof of a unit scenario runs exactly the tests whose titles carry its code
+
+    @fitness @SCN-FIT-035
+    Scenario: a red proof of an integration or e2e scenario runs exactly that scenario
+
+    @fitness @SCN-FIT-036
+    Scenario: a red proof that selects no test fails, saying no test was selected
+
+    @fitness @SCN-FIT-037
+    Scenario: a red proof in which no selected test reported a result fails as not a red
+
   Rule: production logic is written once
 
     @fitness @SCN-FIT-032

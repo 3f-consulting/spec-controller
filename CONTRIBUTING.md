@@ -56,6 +56,16 @@ pnpm cucumber
 worth fixing before you push; a green across all of it says nothing about the gates it leaves
 out. The pull request's CI run is the verdict, and the only one.
 
+**A scenario's red is proven by running only that scenario's tests, with `red-proof.yml`.**
+Push the commit that adds the failing test, then dispatch the workflow on your branch:
+`gh workflow run red-proof.yml --ref <branch> -f scenario=<code> -f layer=<unit|integration|e2e>`.
+It builds as CI does and runs the layer's own CI command filtered to that one code: the bracketed
+code in Vitest titles, or the code's tag in Cucumber. A red is exit 1 with
+`red: N of M selected failed`. Exit 3, `no test selected`, and exit 4, `not a red`, are refusals,
+never reds. Then read the failing test's message, because a failure that is not the test's own
+assertion is not a red either. The green commit still waits on the pull request's full CI run,
+whose self-reconciliation shows that the real Test or Cucumber step ran the scenario's test.
+
 **The self-reconciliation reads what the two suites emitted.** It is
 `pnpm spec-controller balance` — the product's own binary, run over this tree with this tree's
 scan surfaces. A `--vitest` or `--cucumber` path it is handed and cannot find is a

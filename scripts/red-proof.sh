@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: red-proof.sh <unit | integration | e2e> <scenario code, such as SCN-ABC-001>" >&2
+  echo "       red-proof.sh judge <unit | integration | e2e> <the run's JSON report>" >&2
+  exit 2
+}
+
+valid_layer() {
+  case $1 in unit | integration | e2e) ;; *) usage ;; esac
+}
+
+# A test reported a result when it passed or failed. One that was skipped, or never collected, did not, so a run in which none did is not a red, whatever its exit.
+# A report that cannot be read is a run that ended before writing one.
+judge() {
+  local layer=$1 report=$2 reported failed red
+  if [ "$layer" = unit ]; then
+    reported=$(jq '[.testResults[].assertionResults[] | select(.status == "passed" or .status == "failed")] | length' "$report" 2> /dev/null) || reported=0
+    failed=$(jq '[.testResults[].assertionResults[] | select(.status == "failed")] | length' "$report" 2> /dev/null) || failed=0
+    red=$(jq '.success | not' "$report" 2> /dev/null) || red=true
+  else
+    reported=$(jq '[.[].elements[] | select(any(.steps[] | select(.hidden != true); .result.status == "passed" or .result.status == "failed"))] | length' "$report" 2> /dev/null) || reported=0
+    failed=$(jq '[.[].elements[] | select(any(.steps[]; .result.status != "passed"))] | length' "$report" 2> /dev/null) || failed=0
+    if [ "$failed" -gt 0 ]; then red=true; else red=false; fi
+  fi
+  [ "$reported" -gt 0 ] || { echo "not a red: no selected test reported a result" >&2; return 4; }
+  if [ "$red" = true ]; then
+    echo "red: $failed of $reported selected failed"
+    return 1
+  fi
+  echo "green: $reported selected passed"
+}
+
+if [ "${1:-}" = judge ]; then
+  [ "$#" -eq 3 ] || usage
+  valid_layer "$2"
+  verdict=0
+  judge "$2" "$3" || verdict=$?
+  exit "$verdict"
+fi
+
+[ "$#" -eq 2 ] || usage
+layer=$1
+code=$2
+valid_layer "$layer"
+[[ $code =~ ^SCN-[A-Z]{2,5}-[0-9]{3}$ ]] || usage
+
+refuse_empty() {
+  [ "$1" -gt 0 ] || { echo "no test selected: $code at $layer" >&2; exit 3; }
+}
+
+out=${RED_PROOF_DIR:-$(mktemp -d)}
+mkdir -p "$out"
+
+prove_unit() {
+  local filter="\\[$code\\]" files=() file
+  while IFS= read -r file; do
+    files+=("$file")
+  done < <(git grep -l -F "[$code]" -- ':(glob)packages/*/src/**/*.test.ts' || true)
+  refuse_empty "${#files[@]}"
+
+  status=0
+  timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$out/vitest.json" --coverage.enabled --coverage.reportsDirectory="$out/coverage" -t "$filter" ${files[@]+"${files[@]}"} || status=$?
+  report=$out/vitest.json
+}
+
+# Both layers run through Cucumber's one ci.yml step, under the default profile, so the profile's tag filter is ANDed with the code's.
+prove_cucumber() {
+  pnpm exec cucumber-js --dry-run --tags "@$code" --format json:"$out/selection.json" > /dev/null
+  selected=$(jq '[.[].elements[]] | length' "$out/selection.json")
+  refuse_empty "$selected"
+
+  status=0
+  TSX_DISABLE_CACHE=1 timeout 150 pnpm cucumber --format json:"$out/cucumber.json" --tags "@$code" || status=$?
+  report=$out/cucumber.json
+}
+
+if [ "$layer" = unit ]; then prove_unit; else prove_cucumber; fi
+
+verdict=0
+said=$(judge "$layer" "$report") || verdict=$?
+if [ "$verdict" -eq 0 ] && [ "$status" -ne 0 ]; then
+  echo "red: the run exited $status with no selected test failing"
+  exit "$status"
+fi
+[ -z "$said" ] || echo "$said"
+exit "$verdict"
