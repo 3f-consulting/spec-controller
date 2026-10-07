@@ -112,9 +112,17 @@ bar. `ci.yml`'s `Mutation score` step carries its `@SCN` as its `id:` and asks s
 newest `mutation.yml` run on `main`, created inside the last 26 hours, concluded `success`. The bar
 is the 95 `stryker.config.js` states as `thresholds.break`, and it is written nowhere else.
 
-The sweep runs one job per gated scope, each held to that 95 on its own; the domain core's job costs
-12-16 minutes on CI and the provenance job about 2, so it runs nightly (`.github/workflows/mutation.yml`).
-**The window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h** for a nightly. A lapsed,
+The sweep runs one job per gated scope, each held to that 95 over the whole scope
+(`.github/workflows/mutation.yml`). Monday to Saturday it runs incrementally: each scope restores
+its last results from the Actions cache, re-tests only the mutants whose code or killing tests
+changed, and reuses the rest. That costs about a minute a job, so about 7 runner-minutes on a quiet
+night. On Sunday, and on a dispatch with `force`, it re-tests every mutant: about 123 runner-minutes
+across the seven scopes, the domain core and the renderer about 40 each. A change to
+`stryker.config.js`, `vitest.config.ts` or the workflow misses the cache, so the next night runs in
+full as well; a dependency change does not, and Sunday's full sweep catches anything it moves. A
+month costs about 700 runner-minutes, plus a full night for each such change. Either way the sweep
+runs once a night, so
+**the window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h**. A lapsed,
 crashed or below-bar sweep fails the step, and on an ordinary push that reds the job before the
 self-reconciliation runs, so the lapse shows as a red job rather than a `failing` line. The recipe is
 `.github/workflows/mutation.yml` and the push step in `.github/workflows/ci.yml` that reads its

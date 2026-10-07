@@ -2,13 +2,19 @@ name: Mutation
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: "17 3 * * 1-6"
+    - cron: "17 3 * * 0"
   workflow_dispatch:
     inputs:
       scope:
         description: "Run only this matrix scope (empty runs every scope); refused on main"
         required: false
         default: ""
+      force:
+        description: "Re-test every mutant, reusing no earlier result"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   mutation:
@@ -42,7 +48,9 @@ jobs:
             mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/messages.ts"
             timeout: 36
     env:
-      SELECTED: ${{ inputs.scope == '' || matrix.scope == inputs.scope }}
+      SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
+      FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}
+      INCREMENTAL_FILE: reports/stryker-incremental-${{ matrix.scope }}.json
     steps:
       - name: Refuse a scoped run on main
         if: inputs.scope != '' && github.ref == 'refs/heads/main'
@@ -68,11 +76,33 @@ jobs:
         if: env.SELECTED == 'true'
         run: pnpm install --frozen-lockfile
 
+      # The key carries the configuration a mutant's result depends on that Stryker's
+      # incremental diff cannot see, so a change to it starts a full run. Dependency
+      # changes are left to Sunday's forced sweep: the lockfile changes almost daily.
+      - name: Restore incremental results
+        if: env.SELECTED == 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.INCREMENTAL_FILE }}
+          key: stryker-incremental-${{ matrix.scope }}-${{ hashFiles('stryker.config.js', 'vitest.config.ts', '.github/workflows/mutation.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            stryker-incremental-${{ matrix.scope }}-${{ hashFiles('stryker.config.js', 'vitest.config.ts', '.github/workflows/mutation.yml') }}-
+
       - name: Mutation test ${{ matrix.scope }}
         if: env.SELECTED == 'true'
-        run: pnpm mutation --mutate "$MUTATE"
+        run: |
+          args=(--mutate "$MUTATE" --incremental --incrementalFile "$INCREMENTAL_FILE")
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          pnpm mutation "${args[@]}"
         env:
           MUTATE: ${{ matrix.mutate }}
+
+      - name: Save incremental results
+        if: always() && env.SELECTED == 'true' && hashFiles(env.INCREMENTAL_FILE) != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.INCREMENTAL_FILE }}
+          key: stryker-incremental-${{ matrix.scope }}-${{ hashFiles('stryker.config.js', 'vitest.config.ts', '.github/workflows/mutation.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload mutation report
         if: always() && env.SELECTED == 'true'
