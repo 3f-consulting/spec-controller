@@ -230,7 +230,10 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   it.each([
     [[], "the top level is a list, not an object"],
     ["x", "the top level is a string, not an object"],
+    [{ ...SAVED, runProvenance: undefined }, "runProvenance is missing"],
+    [{ ...SAVED, summary: undefined }, "summary is missing"],
     [{ ...SAVED, ledger: undefined }, "ledger is missing"],
+    [{ ...SAVED, ledger: {} }, "ledger.scenarioReconciliations is missing"],
     [{ ...SAVED, ledger: "x" }, "ledger is a string, not an object"],
     [{ ...SAVED, ledger: { scenarioReconciliations: {} } }, "ledger.scenarioReconciliations is an object, not a list"],
     [{ ...SAVED, runProvenance: null }, "runProvenance is null, not an object"],

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterAll, describe, it, expect } from "vitest";
 
 import { parseErrorsIn } from "./gherkinValidation.js";
+import { featureCorpusParseErrors } from "./ingestQualityChecks.js";
 import { discoverFeatures, extractFeatureCode } from "./ingestScenarios.js";
 
 const made: string[] = [];
@@ -118,15 +119,18 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
     expect(JSON.stringify(returned ?? null)).not.toContain(good);
   });
 
-  it("returns the corpus as before when every file parses", () => {
+  it("returns the corpus as before when every file parses, only its .feature files, in name order", () => {
     const dir = join(temporaryDirectory(`scn-gpg-001-ok-${process.pid}-`), "features");
     mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "c-gamma.feature"), WELL_FORMED.replace("@AAA", "@CCC"));
+    writeFileSync(join(dir, "b-beta.feature"), WELL_FORMED.replace("@AAA", "@BBB"));
     writeFileSync(join(dir, "a-alpha.feature"), WELL_FORMED);
+    writeFileSync(join(dir, "README.md"), "These notes are not Gherkin.\n");
 
     const discovered = discoverFeatures(dir);
 
-    expect(discovered.map((f) => f.slug)).toEqual(["a-alpha"]);
-    expect(discovered[0]!.featureCode).toBe("AAA");
+    expect(discovered.map((f) => f.slug)).toEqual(["a-alpha", "b-beta", "c-gamma"]);
+    expect(discovered.map((f) => f.featureCode)).toEqual(["AAA", "BBB", "CCC"]);
   });
 });
 
@@ -173,6 +177,23 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
     const { thrown } = discover(notADirectory);
 
     expect((thrown as Error).name).not.toBe("MissingFeatureCorpusError");
+    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
+  });
+
+  it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {
+    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
+    writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
+
+    let returned: unknown;
+    let thrown: unknown;
+    try {
+      returned = featureCorpusParseErrors(notADirectory);
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(returned).toBeUndefined();
+    expect(thrown).not.toBeInstanceOf(TypeError);
     expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
   });
 });

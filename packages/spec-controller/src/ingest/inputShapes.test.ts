@@ -33,6 +33,12 @@ describe("[SCN-CLI-076] a Vitest report is read only in the shape the Vitest JSO
     for (const [path, report] of reports) expect([path, shapeFaultIn(report, VITEST_REPORT)]).toEqual([path, null]);
   });
 
+  it("names a fault in a test file past the first, when the files before it are well-formed", () => {
+    const report = JSON.parse(readFileSync(join(FIXTURES, "every-outcome-corpus", "vitest.json"), "utf8"));
+    report.testResults[1].status = 7;
+    expect(shapeFaultIn(report, VITEST_REPORT)).toBe("testResults[1].status is a number, not a string");
+  });
+
   it("never looks at a field the reader does not read", () => {
     const report = { testResults: [{ name: "a.test.ts", duration: "x", assertionResults: [{ title: "t", location: 7 }] }] };
     expect(shapeFaultIn(report, VITEST_REPORT)).toBeNull();
@@ -61,6 +67,12 @@ describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber
     for (const [path, report] of reports) expect([path, shapeFaultIn(report, CUCUMBER_REPORT)]).toEqual([path, null]);
   });
 
+  it("names a step whose result's status is not a string, in a report otherwise in the formatter's shape", () => {
+    const report = JSON.parse(readFileSync(join(FIXTURES, "every-outcome-corpus", "cucumber.json"), "utf8"));
+    report[0].elements[0].steps[0].result.status = 7;
+    expect(shapeFaultIn(report, CUCUMBER_REPORT)).toBe("[0].elements[0].steps[0].result.status is a number, not a string");
+  });
+
   it("never looks at a field the reader does not read", () => {
     const report = [{ uri: "a.feature", elements: [{ steps: [{ hidden: "x", result: { status: "passed", duration: "x" } }] }] }];
     expect(shapeFaultIn(report, CUCUMBER_REPORT)).toBeNull();
@@ -80,6 +92,16 @@ describe("[SCN-CLI-078] a CI step record is read only as a record of step outcom
 
   it("never checks a step the reader never credits: one not keyed by a scenario code", () => {
     expect(shapeFaultIn({ "dump-the-step-record": "x", "SCN-A-001": null, lint: 7 }, CI_STEP_RECORD)).toBeNull();
+  });
+
+  it.each(["xSCN-AAA-001", "SCN-AAA-001x"])("never checks a step keyed %s, which only contains a scenario code", (key) => {
+    expect(shapeFaultIn({ [key]: { outcome: 7 } }, CI_STEP_RECORD)).toBeNull();
+  });
+
+  it("names a fault in a step past the first, when the steps before it are well-formed", () => {
+    const record = JSON.parse(readFileSync(join(FIXTURES, "scn-lnt-026", "ci-steps.json"), "utf8"));
+    record["SCN-CVT-002"].outcome = 7;
+    expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("SCN-CVT-002.outcome is a number, not a string");
   });
 
   it("reads every CI step record the fixture tree holds", () => {

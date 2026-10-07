@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
+import { runReconcile } from "../ingest/ingestQualityChecks.js";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
@@ -282,6 +283,57 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
     } finally {
       cwd.mockRestore();
       rmSync(workDir, { recursive: true, force: true });
+    }
+  });
+
+  it("reconciles a Vitest report's test files relative to the target's repository, not the working directory", () => {
+    const target = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-reconcile-")));
+    const foreign = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-foreign-")));
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(foreign);
+    try {
+      execFileSync("git", ["-C", target, "init", "-q"], { stdio: "ignore" });
+      writeFileSync(join(target, "package.json"), JSON.stringify({ name: "cross-repo-target", scripts: {} }));
+      mkdirSync(join(target, "features"));
+      writeFileSync(
+        join(target, "features", "widget.feature"),
+        "@WGT\nFeature: widget\n\n  @unit @SCN-WGT-001\n  Scenario: the widget is proven\n"
+      );
+      writeFileSync(
+        join(target, "vitest.json"),
+        JSON.stringify({
+          testResults: [
+            {
+              name: join(target, "src", "widget.test.ts"),
+              status: "passed",
+              assertionResults: [
+                {
+                  ancestorTitles: ["[SCN-WGT-001] the widget is proven"],
+                  fullName: "[SCN-WGT-001] the widget is proven works",
+                  status: "passed",
+                  title: "works",
+                },
+              ],
+            },
+          ],
+        })
+      );
+
+      const balance = runReconcile({
+        features: join(target, "features"),
+        packageJson: join(target, "package.json"),
+        ci: target,
+        vitest: join(target, "vitest.json"),
+      });
+      const scenario = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-WGT-001");
+
+      expect(scenario?.evidenceObservations).toEqual([
+        { qualityCheck: "unit", scnId: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts" },
+      ]);
+      expect(JSON.stringify(balance)).not.toContain(target);
+    } finally {
+      cwd.mockRestore();
+      rmSync(target, { recursive: true, force: true });
+      rmSync(foreign, { recursive: true, force: true });
     }
   });
 });

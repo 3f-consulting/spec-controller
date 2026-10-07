@@ -1,6 +1,8 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator } from "@cucumber/messages";
 
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+
 export interface GherkinParseError {
   file: string;
   message: string;
@@ -24,7 +26,7 @@ export class UnreadableFeatureCorpusError extends Error {
   constructor(errors: readonly GherkinParseError[]) {
     super(
       [
-        "The feature corpus contains a file that could not be parsed as Gherkin:",
+        APP_MESSAGES[AppMessage.FeatureCorpusUnparseable](),
         ...errors.map(({ file, message }) => `${file}\n${message}`),
       ].join("\n")
     );
@@ -37,7 +39,7 @@ export class MissingFeatureCorpusError extends Error {
   readonly directory: string;
 
   constructor(directory: string) {
-    super(`The feature corpus directory does not exist: ${directory}`);
+    super(APP_MESSAGES[AppMessage.FeatureCorpusDirectoryMissing](directory));
     this.name = "MissingFeatureCorpusError";
     this.directory = directory;
   }

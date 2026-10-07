@@ -31,7 +31,6 @@ import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controlle
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
-  Scenario,
   RuntimeQualityCheck,
   EvidenceObservation,
   EvidenceReconciliation,
@@ -61,22 +60,11 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
 }
 function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
   try {
-    return featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
+    return discoverFeatures(featuresDir);
   } catch (err) {
     if (err instanceof MissingFeatureCorpusError) return [];
     throw err;
   }
-}
-
-function featureSources(featuresDir: string | undefined): string[] {
-  return balanceCorpus(featuresDir).map((f) => readFileSync(f.path, "utf8"));
-}
-
-function scenariosFromFeatures(
-  featuresDir: string | undefined,
-  deferralTags: readonly string[] = DEFAULT_DEFERRAL_TAGS
-): Scenario[] {
-  return featureSources(featuresDir).flatMap((source) => parseScenarios(source, deferralTags));
 }
 
 function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
@@ -134,7 +122,7 @@ export function ciReadFault(ciPath: string | undefined): InputReadFault | null {
 
 function readCiSource(source: string): void {
   try {
-    readFileSync(source, "utf8");
+    readFileSync(source);
   } catch (err) {
     const errno = err as NodeJS.ErrnoException;
     errno.path ??= source;

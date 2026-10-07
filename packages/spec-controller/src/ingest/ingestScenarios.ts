@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 import {
   MissingFeatureCorpusError,
@@ -19,14 +19,7 @@ export interface DiscoveredFeature {
 export function extractFeatureCode(source: string): string | null {
   const lines = source.split(/\r?\n/);
   const featureLine = lines.findIndex((line) => line.trim().startsWith("Feature:"));
-  if (featureLine < 0) return null;
-  return headerTagsAbove(lines, featureLine).find(isHeaderCode) ?? null;
-}
-
-const NON_CODE_TAGS = ["unit", "integration", "e2e", "performance", "smoke"];
-
-function isHeaderCode(bare: string): boolean {
-  return !bare.startsWith("SCN-") && !NON_CODE_TAGS.includes(bare) && CODE_PATTERN.test(bare);
+  return headerTagsAbove(lines, featureLine).find((bare) => CODE_PATTERN.test(bare)) ?? null;
 }
 
 function headerTagsAbove(lines: readonly string[], featureLine: number): string[] {
@@ -76,7 +69,7 @@ export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature
   if (parseErrors.length > 0) throw new UnreadableFeatureCorpusError(parseErrors);
 
   return files.map(({ name, path, source }) => ({
-    slug: name.replace(/\.feature$/, ""),
+    slug: basename(name, ".feature"),
     path,
     featureCode: extractFeatureCode(source),
   }));

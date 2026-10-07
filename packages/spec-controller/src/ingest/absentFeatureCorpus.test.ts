@@ -68,6 +68,16 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
 
     expect(balance.ledger.scenarioReconciliations).toEqual([]);
   });
+
+  it("reconciles a bare target that has no package.json either", () => {
+    const { features, ci } = absentCorpus();
+    const packageJson = join(ci, "absent-package.json");
+    expect(existsSync(packageJson)).toBe(false);
+
+    const balance = runReconcile({ features, packageJson, ci });
+
+    expect(balance.ledger.scenarioReconciliations).toEqual([]);
+  });
 });
 
 describe("[SCN-STG-022] a feature part no file's header carries has no file behind its by-feature row", () => {

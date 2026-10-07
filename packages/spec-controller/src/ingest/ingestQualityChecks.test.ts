@@ -79,4 +79,87 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with n
       ]);
     }
   );
+
+  it.each(["wip", "ignore", "skip", "todo", "pending"])(
+    "@%s defers its scenario to a Pending Item when Cucumber reports it pending, while its twin is credited from the same report",
+    (tag) => {
+      const root = cucumberReportingTarget(tag);
+      const balance = runReconcile({
+        features: join(root, "features"),
+        packageJson: join(root, "package.json"),
+        ci: root,
+        cucumber: join(root, "cucumber.json"),
+      });
+      const scenario = (scnId: string) => balance.ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
+
+      expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+      expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);
+      expect(scenario("SCN-DFR-001")?.evidenceObservations).toEqual([]);
+      expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
+      expect(scenario("SCN-DFR-002")?.reconcilingItems).toEqual([]);
+      expect(scenario("SCN-DFR-002")?.qualityCheckReconciliations).toEqual([
+        {
+          qualityCheck: "integration",
+          outcome: "satisfied",
+          evidenceObligation: { qualityCheck: "integration" },
+          evidenceObservation: {
+            qualityCheck: "integration",
+            scnId: "SCN-DFR-002",
+            status: "passed",
+            locator: "features/deferral.feature",
+          },
+        },
+      ]);
+    }
+  );
 });
+
+function cucumberReportingTarget(tag: string): string {
+  const root = mkdtempSync(join(tmpdir(), `scn-pnd-019-${process.pid}-`));
+  made.push(root);
+  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
+  mkdirSync(join(root, "features"));
+  writeFileSync(
+    join(root, "features", "deferral.feature"),
+    "@DFR\nFeature: deferral\n\n" +
+      `  @${tag} @integration @SCN-DFR-001\n  Scenario: the deferred scenario\n    Given a thing\n\n` +
+      "  @integration @SCN-DFR-002\n  Scenario: its untagged twin\n    Given a thing\n"
+  );
+  const step = (line: number, status: string) => ({
+    arguments: [],
+    keyword: "Given ",
+    line,
+    name: "a thing",
+    match: { location: "tests/steps/deferral.steps.ts:3" },
+    result: status === "pending" ? { status, duration: 0 } : { status, duration: 1_200_000 },
+  });
+  const scenarioOf = (id: string, name: string, line: number, tags: string[], status: string) => ({
+    description: "",
+    id: `deferral;${id}`,
+    keyword: "Scenario",
+    line,
+    name,
+    steps: [step(line + 1, status)],
+    tags: [{ name: "@DFR", line: 1 }, ...tags.map((t) => ({ name: t, line: line - 1 }))],
+    type: "scenario",
+  });
+  writeFileSync(
+    join(root, "cucumber.json"),
+    JSON.stringify([
+      {
+        description: "",
+        elements: [
+          scenarioOf("the-deferred-scenario", "the deferred scenario", 5, [`@${tag}`, "@integration", "@SCN-DFR-001"], "pending"),
+          scenarioOf("its-untagged-twin", "its untagged twin", 9, ["@integration", "@SCN-DFR-002"], "passed"),
+        ],
+        id: "deferral",
+        line: 2,
+        keyword: "Feature",
+        name: "deferral",
+        tags: [{ name: "@DFR", line: 1 }],
+        uri: "features/deferral.feature",
+      },
+    ])
+  );
+  return root;
+}
