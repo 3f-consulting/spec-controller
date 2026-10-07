@@ -320,13 +320,10 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     deeper chain is a shape no pipeline in the portfolio has, and an unbounded walk over a
     manifest the consumer wrote is an input this tool does not control.
 
-    NO VERDICT MOVED WHEN THIS LANDED, and that was deliberate: a runner sat outside the static
-    axis because the prefix rule never reached it, so what this scenario bought at the time was the
-    READER — a step recognised as a runner leaves it NAMED rather than silent, the first half of
-    the no-fifth-outcome rule the inversion needed before it could land. SINCE THE INVERSION THIS
-    RECOGNITION IS ALSO THE VERDICT: the prefix rule is gone, so what keeps a runner
-    step off the static axis is this rule and nothing else. Both readings go through one
-    comparison, so the report and the books cannot disagree about which step ran a runner.
+    THIS RECOGNITION IS BOTH THE READER AND THE VERDICT. A step recognised as a runner is NAMED
+    on the report rather than left silent, and what keeps a runner step off the static axis is
+    this rule and nothing else. Both readings go through one comparison, so the report and the
+    books cannot disagree about which step ran a runner.
 
     @unit @SCN-USG-011
     Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest

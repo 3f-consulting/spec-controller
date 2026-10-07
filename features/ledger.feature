@@ -84,9 +84,7 @@ Feature: Ledger over obligation-vs-observation evidence
     real account). ALL uncited credits aggregate into ONE suspense-scenario Scenario
     Reconciliation, sentinel id "(no scenario)", each Quality Check Reconciliation carrying
     the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
-    verdict always out of balance. The suspense-evidence-observation and
-    uncited-static-check detail lists dissolve into this row (no double-report; the
-    counts survive in the summary balance-check identities).
+    verdict always out of balance. Every uncited credit is listed on this row.
 
     @unit @SCN-LDG-007
     Scenario: a credit citing no scenario is reported as a suspense-scenario reconciliation, out of balance
@@ -101,7 +99,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of runtime observations never silently counts a
-    stray credit at a never-raised quality-check as reconciliation-matched-attributed — no-evidence-obligation
+    stray credit at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
     appears in summary.byOutcome, while the Test-volume attributed (credits citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 

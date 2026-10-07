@@ -1,0 +1,25 @@
+engine: textfsm
+template: |
+  Value List Title (\S.*)
+  Value List Description (\S.*)
+  Value List Comment (.*)
+
+  Start
+    ^\s*#\s?${Comment}
+    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios):\s*${Title} -> Description
+    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios): -> Description
+
+  Description
+    ^\s*#\s?${Comment}
+    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios):\s*${Title} -> Description
+    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios): -> Description
+    ^\s*(?:@|\||Given |When |Then |And |But |\* ) -> Start
+    ^\s*$$
+    ^\s*${Description}
+scopes:
+  - name: title
+    expr: Title
+  - name: description
+    expr: Description
+  - name: comment
+    expr: Comment

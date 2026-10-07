@@ -406,7 +406,8 @@ Feature: The report renders the ledger as sectioned facts
     Outcome union so a new outcome cannot ship without its canon gloss — replacing the scattered
     gloss-text landmarks that drifted from canon and each other. (The run-integrity stamp and verdict
     line are governed by the manifesto's Unsound entry and stay reader-agnostic — RPT-021 / RPT-022 —
-    not this Rule's concern. RPT-020 owns render-single-sourcing; this owns value-equals-canon.)
+    not this Rule's concern. RPT-020 holds that the markdown renders this text in place of the
+    handle; this Rule holds that the text is canon's.)
 
     @unit @SCN-RPT-025
     Scenario Outline: the <handle> outcome glosses as the manifesto's canon text
@@ -563,7 +564,7 @@ Feature: The report renders the ledger as sectioned facts
     run there, the rendered line read back.
 
     @unit @SCN-RPT-026
-    Scenario: resolveToolIdentity reads the tool's own repo HEAD, and falls back to a null SHA with the version still present when the tool is not a git checkout
+    Scenario: the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version
 
     @unit @integration @SCN-RPT-029
     Scenario: a spec-controller resolved out of node_modules reports no tool SHA though the tree it sits in is a git repository, while one running from a checkout of itself still reports that checkout's HEAD

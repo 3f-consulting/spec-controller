@@ -47,8 +47,8 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   the domain may depend on. Purity and mutability are two different questions and are answered in
   two different files.
 
-  THE TWO CARVE-OUTS SURVIVE. A runner's own words are passed through verbatim, never rewritten
-  into a catalogue entry (name-the-fault-never-the-cure), and a message with parameters keeps its
+  TWO THINGS STAY OUT OF THE CATALOGUE. A runner's own words are passed through verbatim, never
+  rewritten into a catalogue entry, and a message with parameters keeps its
   parameter logic in code where mutation still reaches it. The catalogue holds the sentence; it
   never holds the reasoning that fills the blanks.
 

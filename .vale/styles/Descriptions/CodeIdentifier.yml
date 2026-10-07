@@ -16,6 +16,7 @@ exceptions:
   - onPhantomScenario
   - onScenario
   - onSuspenseScenario
+  - outOfBalance
   - qualityCheck
   - qualityCheckReconciliations
   - rawByRuntimeQualityCheck
@@ -35,6 +36,8 @@ exceptions:
   - specController
   - notChecks
   - checkRegistry
+  # The published API's type, which a package consumer reads off the v1 barrel.
+  - QualityCheckReconciliation
   # Names that belong to others: a company, its product, a JavaScript built-in, a TypeScript option.
   - GitHub
   - CodeQL

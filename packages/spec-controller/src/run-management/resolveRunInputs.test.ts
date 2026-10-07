@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
-describe("[SCN-RPT-026] resolveToolIdentity: the tool's own checkout, and a non-git install resolves the SHA to null", () => {
+describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
     const toolDir = process.cwd();
     const realHead = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
