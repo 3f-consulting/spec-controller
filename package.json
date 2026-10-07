@@ -26,8 +26,8 @@
       "integration": "cucumber-js"
     },
     "notChecks": [
-      "ci.yml:ci:actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-      "ci.yml:ci:actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "ci.yml:ci:Check out the repository",
+      "ci.yml:ci:Set up Node",
       "ci.yml:ci:Enable corepack",
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
