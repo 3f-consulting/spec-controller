@@ -61,21 +61,18 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   without redding anything. A number in this prose is a second reading of something nothing keeps
   it in step with, so none is written.
 
-  The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
-  in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
-  over a fixture target and asserts the rendered report surface.
+  Unit tests hold the reading, the counting and the render section in isolation. The scenarios
+  here that keep a Cucumber layer also drive the real file reads (ci.yml + package.json +
+  features) over a fixture target and assert the rendered report surface.
 
   Rule: a CI check no fitness scenario cites is reported as an uncited static check
 
-    WHAT MAKES A CHECK UNCITED HAS MOVED; WHERE IT LANDS HAS NOT. Under name-match a check was
-    cited by a scenario spelling its runnable handle in an @lint= tag, so this axis's whole
-    detection was a lookup miss against that one spelling — and a check whose technique had no
-    way to spell itself that way was uncited by construction. Under the one posting rule the
-    CREDIT cites: a run resolves to an @SCN through the target's registry and then through its
-    corpus, and a check is uncited when that seam reaches no scenario at all. The reader-visible
-    landing is unchanged — cites-no-scenario on the suspense row, surfaced under
-    "### Static checks" — because what this axis has always reported is a check nobody has
-    taken responsibility for, and only the test of responsibility has changed.
+    A CHECK IS UNCITED WHEN ITS STEP NAMES NO SCENARIO. A check's CI step cites the scenario it
+    answers by carrying that scenario's @SCN as its `id:`, and the credit carries the citation
+    from there; a step that carries none reaches no scenario at all, and its check is uncited.
+    The reader-visible landing is cites-no-scenario on the suspense row, surfaced under
+    "### Static checks", because what this axis reports is a check nobody has taken
+    responsibility for.
 
     THE CREDIT IS NEVER DROPPED, which is the clause worth saying out loud on the credit side.
     Every Evidence Observation posts somewhere, so a check the seam cannot place is not quietly
@@ -83,14 +80,12 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     run reds. The failure this forecloses is the comfortable one — a check nobody owns becoming a
     check nobody can see, with a balanced report to say so.
 
-    THE TWO WAYS THE SEAM REACHES NOTHING ARE ONE FACT HERE. A handle nothing registers, and a
-    registered check no stepless fitness scenario carries, are different faults with different
-    cures — register the handle, or write the check's fitness scenario — but at this seam they
-    are the same non-answer, and the suspense row is where an uncited check is separated from a
-    miscited one rather than guessed at from a lookup miss. The target below holds
-    the SECOND, because it is the one only the new rule can produce: both its checks are
-    registered, so the only difference between the cited one and the uncited one is whether a
-    stepless fitness scenario carries the tag.
+    UNCITED IS NOT MISCITED. A step that carries no `id:` cited nothing and lands on the suspense
+    row; a step whose `id:` names a code no scenario carries looked and missed, and posts to a
+    phantom row under that code. The cures differ — give the step its scenario's code, or fix the
+    code it gives — so the two are told apart by where the credit lands, never guessed at. This
+    Rule is the first: its tests' target runs two checks, and the only difference between the
+    cited one and the uncited one is whether the step carries a scenario's code.
 
     @unit @SCN-USG-001
     Scenario: a CI check no fitness scenario cites is reported as an uncited static check
@@ -99,17 +94,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     THE POSITIVE TWIN, AND WHY THE PAIR IS NOT ONE SCENARIO SAID TWICE. The rule above is
     satisfied on its own by a reader that places NOTHING and calls every running check uncited;
-    this one is its control. Over the SAME target, the check a scenario does carry has to reach
-    that scenario's row and fold into the running volume rather than the uncited count. Between
-    the two targets exactly one fact differs — which of the two registered handles a stepless
-    fitness scenario carries — so nothing but the citation can move either verdict.
+    this one is its control. Over the SAME target, the check whose step carries a scenario's code
+    has to reach that scenario's row and fold into the running volume rather than the uncited
+    count. Between its two checks exactly one fact differs — whether the step carries a code —
+    so nothing but the citation can move either verdict.
 
-    ATTRIBUTED NOW MEANS POSTED, NOT MATCHED. Under name-match a credit found its row by spelling
-    the scenario's runnable handle back at it, and being attributed was a lookup hit on one
-    string. Under the one posting rule the run resolves lint:foo through the target's registry to
-    the bare check foo, and through its corpus to the scenario carrying that tag; the row it lands
-    on is that scenario's and the check it lands under is foo — the BARE tag, not the handle that ran.
-    Those two spellings never match, so the retired rule cannot post this row at all.
+    ATTRIBUTED MEANS POSTED. lint:foo's step carries the stepless fitness scenario's code as its
+    `id:`, so the run's credit cites that scenario and lands on its row. Nothing matches the
+    handle that ran back to a tag, and nothing resolves the citation through a second artefact.
 
     WHICH IS WHY THE ASSERTION READS THE ATTRIBUTED ROW, not merely the absence of an uncited one.
     Absence is the weaker claim and several wrong readers produce it: one that posts the credit to
@@ -173,13 +165,10 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     being useless; only a sibling target whose identically-unprefixed check IS attributed tells the
     two apart.
 
-    REGISTERED, AND STILL UNCITED — the shape that separates discovery from citation, unchanged by
-    the switch. This target's registry maps domain-purity to the bare check domain-purity, so the
-    seam CAN reach a tag for the handle; what nothing in its corpus does is carry that tag. Leaving
-    the handle out of the registry would report the same uncited check for a second reason — a
-    handle nothing registers reaches nothing either — and the target would then go on passing under
-    a reader that took every registered handle for an attributed one. One fact holds this verdict,
-    and it is the fact the cited twin flips.
+    DISCOVERED, AND STILL UNCITED — the shape that separates discovery from citation. The check is
+    found because nothing takes it out, and it is uncited because its step carries no `id:`, so
+    its run reaches no scenario. One fact holds this verdict, and it is the fact the cited twin
+    flips: the same check, with its step carrying a scenario's code.
 
     THE LANDING IS READ ON THE ROW, not anywhere in the report. Posting to suspense is a claim
     about WHERE the credit went, and a whole-report search cannot tell the suspense row from any
@@ -203,28 +192,23 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     reconciler's word for a cited-but-unenforced check is watermelon, and a check running
     in nightly.yml earns it today for no reason but where it was written down.
 
-    WHAT MAKES THE CHECK CITED HAS MOVED; WHICH WORKFLOWS ARE READ HAS NOT. Under name-match
-    this target's scenario earned its verdict by spelling the runnable handle back at the
-    tool in a tag, so satisfied was a lookup hit on the one string lint:nightly. Under the
-    one posting rule the run resolves lint:nightly through the target's registry to the bare
-    check nightly, and through its corpus to the stepless fitness scenario carrying that tag:
-    the row it lands on is that scenario's and the check it lands under is nightly — the BARE
-    tag, not the handle that ran. Those two spellings never meet, so the retired rule cannot
-    settle this obligation at all.
+    WHAT MAKES THE CHECK CITED IS ITS STEP; WHICH WORKFLOWS ARE READ IS THIS RULE. lint:nightly's
+    step in nightly.yml carries the stepless fitness scenario's code as its `id:`, so its run
+    cites that scenario and lands on its row. The citation is settled where the step is; this
+    Rule is about whether the step is read at all.
 
     THE SATISFIED ROW IS WHAT THE ASSERTION READS, and the absent watermelon is its second
     half rather than the whole of it. Absence is the weaker claim and several wrong readers
     produce it: one that never resolves the citation leaves the obligation unsettled and
     raises no watermelon either, and one that resolves it to a scenario the corpus never
     wrote banks the credit on a phantom row and raises none either. Naming the row the credit
-    lands on, under the bare tag it lands under, is what tells those apart from the verdict
-    this scenario is about.
+    lands on is what tells those apart from the verdict this scenario is about.
 
-    TWO FACTS HOLD THIS VERDICT, AND THE SIBLING WORKFLOW IS ONLY ONE OF THEM. The handle has
-    to be registered and its bare tag carried for the seam to reach a scenario at all, and the
-    check has to be invoked in a workflow the reader actually opens for a run to exist against
-    the obligation. Reading ci.yml alone leaves both citation facts untouched and takes the run
-    away, and the target is then scored a watermelon — a real, running gate called fabricated.
+    TWO FACTS HOLD THIS VERDICT, AND THE SIBLING WORKFLOW IS ONLY ONE OF THEM. The step has to
+    carry the scenario's code for the run to reach a scenario at all, and the check has to be
+    invoked in a workflow the reader actually opens for a run to exist against the obligation.
+    Reading ci.yml alone leaves the citation untouched and takes the run away, and the target is
+    then scored a watermelon — a real, running gate called fabricated.
     That is the fault this Rule refuses, and it is untouched by what cited now means.
 
     THE OTHER DIRECTION IS THE OMISSION, AND ITS COST IS QUIETER. A check nothing cites is
@@ -238,17 +222,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE TWIN ABOVE CANNOT SEE THIS, WHICH IS WHY THE PAIR IS TWO SCENARIOS. A reader that
     opens every workflow and attributes every check it finds settles the cited obligation and
     greens the satisfied row, and it reports nothing uncited here because it reports nothing
-    uncited anywhere. The two arms fail apart: narrowing the workflow walk reds both, but
-    dropping an unplaceable credit reds only this one, and taking every registered handle for
-    an attributed one reds only this one too.
+    uncited anywhere. The two scenarios fail apart: narrowing the workflow walk reds both, but
+    dropping an unplaceable credit reds only this one, and taking every check for an attributed
+    one reds only this one too.
 
-    REGISTERED, AND STILL UNCITED, on the terms this feature file's other uncited arms hold.
-    The target below maps lint:sweep to the bare check sweep in its own registry, so the seam
-    CAN resolve a tag for the handle; what nothing in its corpus does is carry that tag. Leave
-    the handle out of the registry and the same uncited check is reported for a second reason —
-    a handle nothing registers reaches nothing either — and the target goes on passing under a
-    reader that never asked whether anything CARRIED the check. One fact holds this verdict,
-    and it is the fact the cited twin flips.
+    DISCOVERED, AND STILL UNCITED, on the terms this feature file's other uncited scenarios hold.
+    lint:sweep's step carries no `id:`, so its run reaches no scenario. One fact holds this
+    verdict, and it is the fact the cited twin flips: the same check, with its step carrying a
+    scenario's code.
 
     The plural stops at SOURCES. ciRunCommands takes strings of CI config so a second
     ecosystem can supply its own; the walk from a directory to those strings is the
@@ -275,27 +256,11 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Every other scenario here asserts what IS found, so a change making an explicit
     input sweep its parent directory too would leave all of them green while silently
     widening a caller's deliberate scope — the direction that produces a surprise red on
-    a client's tree. This is the arm that reds instead.
+    a client's tree. This is the scenario that reds instead.
 
-    THERE ARE NOW TWO WAYS TO WIDEN IT, AND ONLY ONE OF THEM IS A DIRECTORY WALK. Under
-    the one posting rule a handle also reaches this axis from the TARGET'S MANIFEST: its
-    registry maps a runnable handle to a bare check tag, and a handle whose tag some
-    stepless fitness scenario carries is asked about whether or not the file the caller
-    named invokes it. That door never reads CI at all, so a reader that took a registry
-    entry for an observation would put back exactly the check the narrowing excluded —
-    and would do it from an input with nothing to say about which file was named.
-
-    THE MANIFEST IS NOT THE SOURCE HERE EITHER: a script CI does not run is not a gate, and
-    would red every repository for owning a helper it never runs. The registry is a second
-    manifest input and takes the same terms — it can change how a run is READ, never produce
-    one.
-
-    WHICH IS WHY THIS TARGET'S REGISTRY ENTRY IS LOAD-BEARING FOR THIS ARM, and not only
-    for the sibling it shares the fixture with. The target maps lint:sweep to the bare
-    check sweep, so the manifest door stands open over the very handle the narrowing
-    excludes; measured by plant, opening that door reds this scenario exactly as sweeping
-    the parent directory does. Read the entry as inert and remove it, and the arm goes on
-    passing while guarding one door of two.
+    THE MANIFEST IS NOT A SOURCE OF RUNS. A script CI does not run is not a gate, and counting it
+    would red every repository for owning a helper it never runs, so a run is observed only from
+    the CI files read. Naming one of them is therefore the whole of the narrowing.
 
     @integration @SCN-USG-008
     Scenario: an explicitly supplied CI file narrows observation to that file alone
@@ -307,31 +272,24 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     THE CONTROL THAT MAKES THE RULE ABOVE MEAN SOMETHING. The rule above is satisfied on its own by
     a reader that places nothing and calls every script it finds uncited; this is what stops that.
-    Both targets run the same domain-purity script, a name matching no convention of ours, and
-    both registries map it to the same bare check domain-purity — so the ONE fact left between
-    them is whether a stepless fitness scenario carries that tag, and that fact alone moves the
-    verdict off the suspense row and onto a scenario's.
+    Both targets run the same domain-purity script, a name matching no convention of ours, so the
+    ONE fact left between them is whether the step cites a scenario, and that fact alone moves
+    the verdict off the suspense row and onto a scenario's.
 
     WHICH IS WHY THE NAME CANNOT BE WHAT DECIDES, and the pair is what proves it rather than
-    asserts it. The two targets run the same script under the same registry entry, so any reader
-    answering from the handle's spelling answers the same way for both — and the two verdicts
-    differ. Whatever places this credit on the fixture's scenario is reading the corpus, which is the one
-    posting rule; the retired rule read a name, and a name is the thing these two targets share.
+    asserts it. The two targets run the same script, so any reader answering from the handle's
+    spelling answers the same way for both — and the two verdicts differ. Whatever places this
+    credit on the scenario is reading the citation; a name is the thing these two targets share.
 
     THE ASSERTION READS THE ATTRIBUTED ROW, not the absence of an uncited one — the reading
     already given to its own cited twin. Absence is the weaker claim and several
     wrong readers produce it: one that drops the credit on the floor reports no uncited check
     either, and so does one that posts it to a scenario the corpus never wrote.
 
-    THE PAIR IS NOT SYMMETRIC. The
-    asymmetry was stated as a narrowing of the observed prefixes — cut them to lint: and the twin
-    reds while this arm stays green — and there is no prefix set to narrow. The
-    asymmetry survives, because it was never about the prefixes: the twin reaches this axis
-    through DISCOVERY, which now reads every step of the pipeline that is not a runner the
-    manifest names, the reconciler, or a step the consumer named a non-check. This target reaches
-    it through the other door — a handle whose bare check some scenario carries is answered by the
-    obligation-side observer, whatever discovery did — and is then filtered out of the
-    running-check stream so that one run is not observed twice.
+    BOTH REACH THIS AXIS THROUGH DISCOVERY, which reads every step of the pipeline that is not a
+    runner the manifest names, the reconciler, or a step the consumer named a non-check. What
+    parts them is the step's citation alone: the cited one's credit carries its scenario's code,
+    and the uncited one's carries none.
 
     SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned:
     name this target's own step a non-check and the twin's verdict is what goes, while
@@ -394,8 +352,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     argument all carry the runner's name without being it.
 
     THE PLANT IS RECORDED, NOT ASSUMED. Swapping the token comparison for a substring one reds
-    this scenario and the unit arms beside it; the swap was made, its red was read, and it was
-    reverted. A guard whose teeth were reasoned about rather than watched is not a guard.
+    this scenario's unit tests; the swap was made, its red was read, and it was reverted. A guard
+    whose teeth were reasoned about rather than watched is not a guard.
 
     THE CHECK STEP HERE IS AN ORDINARY ONE, deliberately. The reconciler's own step is excluded
     too, but BY CONSTRUCTION and not by this rule — sharing one fixture would leave
@@ -422,9 +380,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     misreading lands on the side a consumer can see: a step reported as a check is one line of
     notChecks, and a check reported as the runner is a gate deleted from the report.
 
-    THE SUITE STEP IN THIS TARGET IS THE CONTROL. A reader that recognised no runner at all would
-    put the check on the books too; the suite step still named the runner is what shows the rule
-    discriminates rather than going blind.
+    A READER BLIND TO RUNNERS WOULD PASS HERE TOO, and is caught beside it. One that recognised no
+    runner at all would put the check on the books as well; the scenario that recognises the unit
+    runner from a `pnpm test` step is what shows the reading discriminates rather than going blind.
 
     @unit @SCN-USG-029
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner
@@ -492,7 +450,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     takes about data that came from outside.
 
     THE KEY EXCLUDES NOTHING, WHICH IS THE HALF THAT NEEDS A CHECK BESIDE IT. An absence proves
-    little on its own: a reader recognising nothing anywhere satisfies it. So the target below
+    little on its own: a reader recognising nothing anywhere satisfies it. So its tests' target
     runs a real check whose script the bogus key names, and that check has to reach the books as
     an uncited static check — the presence that makes the absence mean something.
 
@@ -599,7 +557,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     notChecks entries produces exactly this report — no balance row, no dump row — over exactly
     this pipeline. The two answers part company at the consumer who never wrote the entries, and
     under the configured one their very first run reports their own reconciler as an uncited
-    fitness check on their books. So the target below carries no such list at all, and the report
+    fitness check on their books. So its tests' target carries no such list at all, and the report
     it produces must name nothing as excluded: an exclusion section appearing here would say the
     consumer's own configuration did the work, and there is no configuration to do it.
 

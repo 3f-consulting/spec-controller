@@ -98,11 +98,10 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     THE CREDIT SIDE OF THE ONE POSTING RULE, and the first place the citation seam is
     consumed. Name-match worked because the DEBIT cited: a scenario named a runnable script
     and the run was matched back to it by name, so nothing ever had to know which scenario a
-    check belonged to. Citation-routing inverts that. The run now arrives carrying an @SCN —
-    resolved script handle to bare check tag through the registry, then bare check tag to the
-    fitness scenario carrying it through the corpus — and the ordinary citation route does the
-    rest. There is no static-axis posting rule left to be special: the same route that lands a
-    unit test's credit on its scenario lands a fitness check's.
+    check belonged to. Citation-routing inverts that. The run now arrives carrying an @SCN — its
+    CI step's `id:` — and the ordinary citation route does the rest. There is no static-axis
+    posting rule left to be special: the same route that lands a unit test's credit on its
+    scenario lands a fitness check's.
 
     EXACTLY ONE ROW IS THE WHOLE POINT. Under name-match one run posted to EVERY row naming
     it, which is how a whole-system property came to be smeared across behavioural
@@ -157,7 +156,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
     THE TWO DESTINATIONS ARE DIFFERENT FACTS, and telling them apart is the whole value of the rule.
     A credit citing NOTHING never looked, and lands in suspense — the tool's own uncited-check
-    axis, whose remedy is to register the check and write its fitness scenario. A credit
+    axis, whose remedy is to give the check's step its scenario's code and write that scenario. A credit
     citing an @SCN the corpus does not carry LOOKED AND MISSED, so it mints the row it named and
     lands there; its remedy is to fix the citation. Folding either into the other sends a reader to
     the wrong cure.
@@ -311,7 +310,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     DISCRIMINATES IS THE CONSUMER'S OWN LIST, and nothing else does: the tool held a
     check heuristic — the scripts a manifest carried under a guard prefix or named as static checks
     — and retired it, because the set of names a check might be given belongs to the consumer and
-    guessing at it is what made a pipeline named some other way invisible. So the target below says
+    guessing at it is what made a pipeline named some other way invisible. So its tests' target says
     which of its steps are not checks, in one line each, and those steps are ACCOUNTED as excluded
     rather than reported nowhere. Off the books, and not silent — the difference is the whole of
     what the inversion bought.
@@ -457,8 +456,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The step's `id:` IS
       the code of the row that step answers, read off what was observed. No check registry is
-      consulted and no corpus lookup stands behind it: the two hops a DISCOVERED check needs are
-      the two this route does not have.
+      consulted and no corpus lookup stands behind it.
 
       AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED RATHER THAN INFERRED. On the discovered
       route the check EXISTS because a manifest holds a script by that name, and it ran over the real
