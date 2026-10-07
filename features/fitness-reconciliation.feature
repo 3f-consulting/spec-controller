@@ -392,12 +392,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     @unit @SCN-LNT-032
     Scenario: a check whose step or whose job carries continue-on-error reconciles as the watermelon, beside a sibling check whose red is the job's verdict
 
-      THE ENGINE COMPUTED THIS FACT AND THREW IT AWAY, which is why the claim is held here rather
-      than left to the walk that produces it. `abortsJob` has been read off both carriers correctly,
-      and every consumer it ever reached was under `tests/` — this repository's own
-      ladder, which never ships. So the guard that looked like the defence protected us and no
-      consumer at all, while the published reader certified as satisfied precisely what this
-      product itself calls the watermelon: green on the surface, red within.
+      THE CLAIM IS HELD HERE, NOT LEFT TO THE WALK THAT PRODUCES IT. Whether a check's red ends
+      the job is read off both carriers, the step and the job, and a guard that only this
+      repository's own tests consult protects no consumer. The published reader must not
+      certify as satisfied what this product itself calls the watermelon: green on
+      the surface, red within.
 
       THE WORD WAS ALREADY ALLOCATED AND THE RECONCILER WAS ALREADY WAITING FOR IT. `watermelon` is
       defined as a check that exists but is not wired into CI over the real source, and a severed

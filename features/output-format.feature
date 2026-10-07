@@ -8,15 +8,15 @@ Feature: Emit each output format to stdout or a caller-given path
   to future formats (html, sarif); applies across all modes (balance / analyse / migrate).
 
   Dispatch splits by layer (the three-layer architecture): the renderers stay pure
-  (model → string); planOutput is a PURE parse+validate of the --format grammar
-  (→ an OutputPlan or a typed error); a thin writer performs the only IO (stdout / file);
+  (model → string); planning the output is a PURE parse+validate of the --format grammar
+  (→ an output plan or a typed error); a thin writer performs the only IO (stdout / file);
   the CLI is the thin edge. Each @integration arm asserts the REAL IO effect (stdout
-  bytes / file contents / exit + stderr hint), never a re-run of the planOutput @unit.
+  bytes / file contents / exit + stderr hint), never a re-run of the output plan's @unit.
 
   Rule: markdown emits to stdout by default
 
     No --format flag — and an explicit "--format md" — emits the markdown report to
-    stdout, the default human output. Establishes planOutput and the writer.
+    stdout, the default human output. It rests on the output plan and the writer.
 
     @unit @SCN-FMT-001
     Scenario: with no --format flag the markdown report is written to stdout

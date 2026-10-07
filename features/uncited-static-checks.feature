@@ -2,20 +2,17 @@
 Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   The static-check axis's UNCITED detection — the mirror of the
-  runtime axis's cites-no-scenario evidence observations. The axis was once obligation→observation
-  only, reading each check an obligation NAMED, and was structurally blind to the reverse: a check
-  that runs in CI which nothing cites — an unposted credit. That obligation-side reader is deleted,
-  so the running-check observer below is now the whole of the axis's input.
+  runtime axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
+  cites is an unposted credit, and the axis sees it because its whole input is the running-check
+  observer below, not the checks an obligation names.
 
-  The running-check observer emits every running CI check (the lint:* scripts a CI run: step
-  invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
-  complete static stream: a check a fitness scenario cites posts to that scenario's row; one no
-  fitness scenario cites — the citation seam reaches no @SCN for it — cites no scenario, so
-  reconcile folds it to the suspense row (an UNCITED static-check). The report's static census is a pure counter
-  over the stream (countStaticEvidenceObservationKinds → StaticEvidenceObservationKindCounts
-  { runningStaticCheckCount, uncitedStaticCheckCount }; the named count is implicit, running −
-  uncited, and the completeness invariant is asserted inside the counter), the static-axis
-  mirror of RuntimeEvidenceObservationKindCounts. The report surfaces the counts under
+  The running-check observer emits every check a CI step runs into the reconcile stream, so the
+  ONE reconcile engine sees the complete static stream: a check a fitness scenario cites posts to
+  that scenario's row; one no fitness scenario cites — the citation seam reaches no @SCN for it —
+  cites no scenario, so reconcile folds it to the suspense row (an UNCITED static-check). The
+  report's static census is a pure count over the stream, runningStaticCheckCount and
+  uncitedStaticCheckCount; the cited count is implicit, running − uncited. It is the static-axis
+  mirror of the runtime count under Test volume. The report surfaces the counts under
   "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows.
 
   WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION. Membership is a PROPERTY of the check — does it analyse source without executing it
@@ -231,10 +228,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     verdict, and it is the fact the cited twin flips: the same check, with its step carrying a
     scenario's code.
 
-    The plural stops at SOURCES. ciRunCommands takes strings of CI config so a second
-    ecosystem can supply its own; the walk from a directory to those strings is the
-    ingest edge's, which already knows where GitHub keeps workflows and after this knows
-    exactly the same amount.
+    The plural stops at SOURCES. The reader of CI commands takes strings of CI config so a
+    second ecosystem can supply its own; the walk from a directory to those strings is the
+    ingest edge's, which knows where GitHub keeps workflows and nothing more.
 
     @unit @integration @SCN-USG-006
     Scenario: a cited fitness check enforced from a sibling workflow is satisfied, with no watermelon raised against it

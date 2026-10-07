@@ -2,7 +2,8 @@
 Feature: Human-facing message prose lives off the mutated surface, keyed by a code
 
   THE MUTANT NOBODY CAN KILL. Stryker mutates every string literal in the domain, so the two
-  invariant messages `makeQualityCheckReconciliation` throws carry sixteen mutants between them —
+  invariant messages a Quality Check Reconciliation throws, when a side is present that its
+  outcome forbids or absent that its outcome needs, carry sixteen mutants between them —
   the template chunks emptied, the `"Exists"` / `"None"` words emptied, and the ternaries that pick
   between them flipped. Every one survives, and the test that would kill them is a test asserting
   wording. That test must not be written: prose is the one thing in this tree allowed to be
@@ -22,8 +23,8 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   data and excluded by name from the mutate glob of the scope that contains it. There is one
   catalogue per package, because the import rules let core import nothing of the app and let the
   app reach core only through its published entry point, so no single catalogue can serve both. Core's lives in `domain`, keyed by the fault
-  codes, and `render` and `parse` extend it rather than starting their own. The app's lives in
-  `packages/spec-controller/src/messages.ts`, keyed by an app-wide code, and every app scope
+  codes, and `render` and `parse` extend it rather than starting their own. The app's lives in the
+  app package's own messages module, keyed by an app-wide code, and every app scope
   extends it. Whichever catalogue a code belongs to, the same rule holds: every code has an entry,
   nothing else does, and no entry renders blank.
 
@@ -36,7 +37,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   config back: its subject would be this repository's own Stryker configuration, which a reader
   who copies this corpus does not have. A widened exclusion reds nothing — what it still
   cannot do is make a catalogue lie. An accepted residual, not an oversight, and the same trade
-  `stryker.config.js` already carries in writing for the lost kill its own threshold cannot see.
+  the Stryker configuration already carries in writing for the lost kill its own threshold cannot see.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
   mutate is a folder outside the domain — and the boundary gate's domain-imports-only-domain rule says

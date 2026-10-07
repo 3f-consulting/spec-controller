@@ -2,11 +2,11 @@
 Feature: A pending evidence obligation raises a Pending Item
 
   A `<quality-check>pending` tag (evidence-manifesto §11B) raises an evidence
-  obligation that is owed but deliberately deferred to a later slice. This slice is
-  the PARSE only: it recognises the tag and derives a pending obligation. What a
-  pending obligation *does* on the ledger — the one-sided Pending Item — is slice 2.
+  obligation that is owed but deliberately deferred to a later slice. The parse
+  recognises the tag and derives a pending obligation; on the ledger, a pending
+  obligation raises the one-sided Pending Item the Rules below hold.
 
-  Seam: parse/scenarios.ts derives EvidenceObligation[] from a scenario's tags. A
+  Seam: parsing a scenario derives its Evidence Obligations from its tags. A
   `<qc>pending` tag over a RECOGNISED quality-check derives `{ qualityCheck: <qc>, pending: true }`
   — the obligation gains a `pending?: boolean` flag (absent = a normal obligation).
   `@fitnesspending` derives `{ qualityCheck: "fitness", pending: true }` with NO check payload

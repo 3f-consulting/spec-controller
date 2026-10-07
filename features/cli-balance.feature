@@ -76,7 +76,7 @@ Feature: spec-controller balance runs standalone
     You cannot trust a reconciliation whose evidence never materialised, so unsound
     DOMINATES. Exit 4 (taxonomy: 0 balanced / 1 out-of-balance / 2 usage / 3 pending-
     under-strict / 4 unsound) even though a broken run is ALSO out-of-balance — the broken
-    item sits on the suspense row, so `isBalanced` is already false. Exit 1 says "the
+    item sits on the suspense row, so the balance verdict is already false. Exit 1 says "the
     ledger disagrees"; exit 4 says "the ledger could not be trusted to disagree". The
     pre-emption is load-bearing, not cosmetic: unless broken evidence is checked BEFORE
     the balance verdict, exit 4 is unreachable and the collection failure stays masked as
@@ -115,12 +115,11 @@ Feature: spec-controller balance runs standalone
 
   Rule: the printed verdict agrees with the process exit code
 
-    The bug was THREE VIEWS OF ONE RUN DISAGREEING: the scenario tally said 0 out-of-balance
-    (a pass), the obligation tally said 17, and the process exited 1. Each was internally
-    consistent; nothing pinned them TOGETHER, so they drifted and a failing run read as
-    clean for as long as anyone cared to look.
+    THREE VIEWS OF ONE RUN CAN DISAGREE: a scenario tally saying 0 out-of-balance (a pass),
+    an obligation tally saying 17, and a process exiting 1. Each is internally consistent;
+    unless something pins them TOGETHER, they drift and a failing run reads as clean.
 
-    Once the tally counts every Scenario Reconciliation, the tally, `isBalanced` and the
+    The tally counts every Scenario Reconciliation, so the tally, the balance verdict and the
     exit code are three statements of one fact. Pin that they agree — so no future change
     can move one without moving the others.
 
@@ -435,9 +434,9 @@ Feature: spec-controller balance runs standalone
 
   Rule: a run with nothing to reconcile has no verdict to give, and says so
 
-    `isBalanced` is `.every()` over the rows and so is VACUOUSLY TRUE on an empty ledger: a
-    target that declared nothing and produced nothing was told "BALANCED … (exit 0)" — a green
-    over silence, from the tool whose whole claim is that silence is not the same as nothing
+    The balance verdict holds when every row balances, and so is VACUOUSLY TRUE on an empty
+    ledger: a target that declared nothing and produced nothing would be told "BALANCED … (exit 0)"
+    — a green over silence, from the tool whose whole claim is that silence is not the same as nothing
     wrong. Nothing-to-reconcile is its OWN enumerated state — not balanced (no accounts to
     agree), not out-of-balance (nothing disagrees), not a usage fault (the invocation was valid
     and the target supported), not unsound (no proof failed; none was owed). Exit 5 (taxonomy:

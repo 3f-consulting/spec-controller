@@ -1,0 +1,42 @@
+extends: existence
+message: "'%s' names the code; say what it does in the reader's words."
+level: error
+tokens:
+  - '[a-z]+[A-Z][A-Za-z0-9]*'
+  - '[A-Z][a-z0-9]+[A-Z][A-Za-z0-9]*'
+  - '[\w./-]*\w\.(?:ts|tsx|mjs|cjs|js)'
+exceptions:
+  # The keys of the published report, which a reader of spec-reconciliation.json reads.
+  - byOutcome
+  - evidenceObligations
+  - evidenceObservations
+  - excludedOccurrences
+  - featureNames
+  - missingByQualityCheck
+  - onPhantomScenario
+  - onScenario
+  - onSuspenseScenario
+  - qualityCheck
+  - qualityCheckReconciliations
+  - rawByRuntimeQualityCheck
+  - reconcilingItems
+  - runningStaticCheckCount
+  - runProvenance
+  - scenarioCodeErrors
+  - scenarioCodePopulation
+  - scenarioReconciliations
+  - scnId
+  - sourceSha
+  - staticChecks
+  - testVolume
+  - uncitedStaticCheckCount
+  - untaggedScenarios
+  # The keys an adopter writes in package.json; checkRegistry is the retired one the report names as not read.
+  - specController
+  - notChecks
+  - checkRegistry
+  # Names that belong to others: a company, its product, a JavaScript built-in, a TypeScript option.
+  - GitHub
+  - CodeQL
+  - SyntaxError
+  - noEmit

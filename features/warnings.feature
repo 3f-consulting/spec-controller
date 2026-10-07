@@ -8,11 +8,9 @@ Feature: A scenario raising no evidence obligations is both-missing
   `both-missing` (label: "Evidence Obligation and Evidence Observation are both missing —
   the Scenario is untagged and uncited"), verdict `out-of-balance`.
 
-  This SUPERSEDES the earlier zero-evidence warning: the separate
-  authoring-quality axis is retired. The `warnings` section, the `warnings` JSON key, and
-  the `ScenarioWarning` type dissolve entirely — the zero-evidence scenario's home is now
-  a both-missing out-of-balance row in the ledger, reached via its reconciling item, NOT a
-  warning excluded from the tally. The verdict stays two-valued (a both-missing scenario is
+  The report has no separate warnings section and no warnings key: a scenario with no
+  evidence is a both-missing out-of-balance row in the ledger, reached via its reconciling
+  item, NOT a warning excluded from the tally. The verdict stays two-valued (a both-missing scenario is
   out-of-balance via its reconciling item, never a third verdict).
 
   Rule: a scenario raising no evidence obligations is a both-missing out-of-balance row

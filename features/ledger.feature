@@ -100,7 +100,7 @@ Feature: Ledger over obligation-vs-observation evidence
     it applies whether or not the scenario carries other evidence obligations). It becomes a credit-side
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
-    countRuntimeEvidenceObservationKinds never silently counts a
+    the count of runtime observations never silently counts a
     stray credit at a never-raised quality-check as reconciliation-matched-attributed — no-evidence-obligation
     appears in summary.byOutcome, while the Test-volume attributed (credits citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
@@ -121,8 +121,8 @@ Feature: Ledger over obligation-vs-observation evidence
     Evidence Observation are both missing — the Scenario is untagged and uncited"), verdict out of balance. Detection keys
     on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
     === 0 map: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation (LDG-010),
-    not both-missing. This retires the earlier zero-evidence warning — the warnings section,
-    JSON key, and ScenarioWarning type dissolve; the scenario's new home is this row.
+    not both-missing. The report has no warnings section: this row is where such a scenario
+    is reported.
 
     @unit @SCN-LDG-009
     Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance

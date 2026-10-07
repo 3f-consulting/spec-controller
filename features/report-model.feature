@@ -3,7 +3,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   The reconciliation is ONE whole-document report model — the ordered sections of the
   document as data — and the machine file is that model serialised glue-free:
-  render/json.ts is JSON.stringify(assembleRenderInput(...)), with no per-key hand-assembly.
+  the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
   Its top-level keys, in document order, are runProvenance, summary and ledger, then
   scenarioCodeErrors, scenarioCodePopulation, evidenceObligations and metadata. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
@@ -13,8 +13,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the reconciliation publishes as one glue-free whole-document report model
 
-    The foundation. One report model, built by assembleRenderInput from the reconciliation and
-    the run context, is serialised glue-free as spec-reconciliation.json. The report opens with
+    The foundation. One report model, assembled from the reconciliation and the facts of the
+    run, is serialised glue-free as spec-reconciliation.json. The report opens with
     runProvenance (the run facts), then the materialised summary (the totals the markdown's
     trial-balance table shows), then the ledger, then the remaining sections. There is no
     `warnings` key: a zero-evidence scenario is a both-missing row on the ledger. Its unit tests
@@ -36,7 +36,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: the ledger is the detail beside the summary's totals
 
     The document IS the Evidence Reconciliation, so a root
-    key named `evidenceReconciliation` is the layer naming itself inside itself — and the grid
+    key named for the Evidence Reconciliation would be the layer naming itself inside itself — and the grid
     it names is, by canon, the LEDGER. Root then reads as chain step 6 literally: "The summary
     has the totals and the ledger the detail."
 
@@ -52,7 +52,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the runtime evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
-    The runtime evidence-observation counting is a FOLD the Ledger owns (runtimeObservationTally).
+    The runtime evidence-observation counting is a FOLD the Ledger owns.
     The raw per-quality-check totals are materialised on summary.rawByRuntimeQualityCheck, and
     the persisted JSON carries NO separate evidence-observations section: every credit is
     already posted on the ledger, a phantom credit on its phantom-scenario row and an uncited one
@@ -89,12 +89,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
     The static-check census carries runningStaticCheckCount and uncitedStaticCheckCount; the
-    cited count is implicit, running − uncited, and the completeness invariant is asserted inside
-    the counter rather than on the surface. The fitness tally is the fitness-only evidence
+    cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
     obligation cut (satisfied of total), under summary.fitness: the outcome breakdown under
     summary.evidenceObligations is kind-agnostic and cannot give the fitness-only total, so it is
-    materialised explicitly. Its unit tests hold summaryOf and the assembled summary in
-    isolation.
+    materialised explicitly. Its unit tests hold the summary's folds and the assembled summary
+    in isolation.
 
     @unit @SCN-RMD-005
     Scenario: the summary materialises the test-volume, static-check, and fitness totals with the test-volume balance identity and the static-check shape holding on the persisted file
@@ -104,11 +103,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The by-feature cut names each feature in full ("slug (FFF)") from the feature titles carried
     on the report model. They sit under a small top-level `metadata` object
     (report.metadata.featureNames) — presentation *metadata* (names), kept apart from the
-    reconciliation records (summary and ledger). assembleRenderInput takes the code→slug source
+    reconciliation records (summary and ledger). The assembly takes the code→slug source
     and stores it under metadata.featureNames as a plain object, only when it is non-empty, and
     metadata is the LAST document key. The published JSON carries the titles there, which is what
-    lets it round-trip, and renderReport reads them off metadata.featureNames with no external
-    map. Its unit tests hold that the assembly carries the titles under metadata, that the
+    lets it round-trip, and the markdown renderer reads them off metadata.featureNames with no
+    external map. Its unit tests hold that the assembly carries the titles under metadata, that the
     glue-free JSON serialises them there, and that the model-sourced by-feature cut names features
     in full; and the CLI publishes the titles it reads off the feature files under metadata in
     spec-reconciliation.json, keyed by feature code.
@@ -120,12 +119,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The load-bearing proof that the JSON IS the model. A seam reads a saved
     spec-reconciliation.json, parses it back into the report model, and renders the human markdown
-    through renderReport — no RunContext, no live inputs, the JSON alone: the exported
-    renderReportFromJson(json), and the CLI's "--render-from-json <path>" mode, which reads the
+    through the markdown renderer — no run context, no live inputs, the JSON alone: the package's
+    exported render-from-JSON function, and the CLI's "--render-from-json <path>" mode, which reads the
     file, prints the regenerated markdown to stdout, and exits before any reconcile, on the code
     the saved verdict names. Drift-equality is the acceptance: the markdown regenerated from the
     saved JSON EQUALS the markdown rendered directly from the same run, the by-feature titles
-    included. Its unit tests hold the parse→renderReport drift-equality over a corpus spanning
+    included. Its unit tests hold the parse→render drift-equality over a corpus spanning
     the whole document (the three-way test-volume line, the materialised summary totals, and a coded
     out-of-balance feature, so the by-feature title path has teeth), and the CLI, run over a
     fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
