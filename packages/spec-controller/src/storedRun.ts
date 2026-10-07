@@ -1,6 +1,7 @@
 import { asksForHelp } from "./cli-args.js";
 import { cliRegistry, type CommandSpec } from "./cli-registry.js";
 import type { HostInvocation } from "./host.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export function dispatchesUnstored(inv: HostInvocation): boolean {
   return inv.store === undefined || asksForHelp(inv.commandArgs);
@@ -12,9 +13,8 @@ export function storedReRenderRefusal(inv: HostInvocation): string | undefined {
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
   return (
-    `spec-controller: usage error — 'balance --render-from-json' re-renders a saved report to stdout and keeps no run, ` +
-    `and was given ${given.join(", ")}: a re-render is not stored.\n` +
-    `Run 'spec-controller balance --render-from-json <path>' without ${given.length === 1 ? "it" : "them"}.`
+    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ReRenderNotStored](given.join(", "))}\n` +
+    APP_MESSAGES[given.length === 1 ? AppMessage.ReRenderWithoutIt : AppMessage.ReRenderWithoutThem]()
   );
 }
 
@@ -26,8 +26,7 @@ export function unstoredRunIdRefusal(
   const entry = commands.find((command) => command.name === inv.command);
   if (entry === undefined || entry.acceptsHostModifiers === false) return undefined;
   return (
-    `spec-controller: usage error — --run-id names a stored run, and was given '${inv.runId}' with no --store, ` +
-    `so no run is kept under it.\n` +
-    `To keep the run under that name, give --store <root> as well; otherwise run '${entry.name}' without --run-id.`
+    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.RunIdWithoutStore](inv.runId)}\n` +
+    APP_MESSAGES[AppMessage.KeepRunUnderName](entry.name)
   );
 }

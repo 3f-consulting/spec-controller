@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { namesStdout } from "./outputLocation.js";
@@ -7,7 +7,7 @@ import { namesStdout } from "./outputLocation.js";
 let scratch: string;
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-names-stdout-"));
+  scratch = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-names-stdout-")));
 });
 
 afterEach(() => {
@@ -19,6 +19,31 @@ describe("[SCN-FMT-011] a path names standard output when it spells file descrip
     expect(namesStdout("/dev/stdout")).toBe(true);
     expect(namesStdout("/dev/fd/1")).toBe(true);
     expect(namesStdout("/dev/../dev/stdout")).toBe(true);
+    expect(namesStdout("//dev//stdout")).toBe(true);
+    expect(namesStdout("/dev//fd///1")).toBe(true);
+  });
+
+  it("answers yes for file descriptor 1 spelled through this process's own entry in /proc", () => {
+    expect(namesStdout("/proc/self/fd/1")).toBe(true);
+    expect(namesStdout("/proc/thread-self/fd/1")).toBe(true);
+    expect(namesStdout(`/proc/${process.pid}/fd/1`)).toBe(true);
+  });
+
+  it("follows a chain of up to forty links to any spelling of file descriptor 1, and stops at a chain one link longer", () => {
+    const chainTo = (target: string, name: string, links: number): string => {
+      for (let i = links; i >= 1; i--) {
+        const link = join(scratch, `${name}-${i}`);
+        symlinkSync(target, link);
+        target = link;
+      }
+      return target;
+    };
+    const spellings = ["/dev/stdout", "/dev/fd/1", "/proc/self/fd/1", "/proc/thread-self/fd/1", `/proc/${process.pid}/fd/1`];
+
+    spellings.forEach((spelling, n) => {
+      expect(namesStdout(chainTo(spelling, `forty-${n}`, 40)), spelling).toBe(true);
+    });
+    expect(namesStdout(chainTo("/dev/stdout", "forty-one", 41))).toBe(false);
   });
 
   it("answers yes for a link to /dev/stdout, and a link to that link", () => {

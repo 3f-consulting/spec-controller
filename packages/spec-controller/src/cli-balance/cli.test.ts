@@ -10,8 +10,10 @@ import {
   runBalance,
   sourceTarget,
 } from "./cli.js";
-import { cliRegistry } from "../cli-registry.js";
-import { checkUnknownFlags } from "../cli-args.js";
+import { cliRegistry, type CliRegistry, type FlagSpec } from "../cli-registry.js";
+import { checkUnknownFlags, parseArgs } from "../cli-args.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -334,6 +336,86 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     expect(refusal).not.toBeNull();
     expect(refusal).toContain(REFUSING_TOOL_VERSION);
     expect(refusal).toMatch(/bump the pin/i);
+  });
+
+  const balance = cliRegistry.commands.find((command) => command.name === "balance");
+  const namesOf = (flag: FlagSpec): string[] => [flag.name, ...(flag.aliases ?? [])];
+  const givenOnce = (flag: FlagSpec, name: string): string[] => {
+    const read = `--${name.replace(/^-+/, "")}`;
+    return flag.arg === undefined ? [read] : [read, "x"];
+  };
+  const refusalOf = (argv: string[], registry: CliRegistry): string | null =>
+    checkUnknownFlags(parseArgs(argv), registry, "balance", REFUSING_TOOL_VERSION);
+
+  it("reads balance --features dir --strict as the value flag's value and the switch's true, and no key for a lone -", () => {
+    expect(parseArgs(["--features", "dir", "--strict"])).toEqual({ features: "dir", strict: "true" });
+    expect(parseArgs(["-", "--strict"])).toEqual({ strict: "true" });
+  });
+
+  it("accepts every flag and alias balance registers, each given once as the registry spells it", () => {
+    const names = (balance?.flags ?? [])
+      .flatMap((flag) => namesOf(flag).map((name) => ({ flag, name })))
+      .filter(({ name }) => name.startsWith("--"));
+    for (const { flag, name } of names) {
+      expect(refusalOf(givenOnce(flag, name), cliRegistry), name).toBeNull();
+    }
+  });
+
+  it("accepts a flag the registry writes with one dash and an alias it writes with two, the same way", () => {
+    const later: FlagSpec = { name: "-later", aliases: ["--l"], arg: "<x>", description: "added later" };
+    const grown: CliRegistry = {
+      ...cliRegistry,
+      commands: cliRegistry.commands.map((command) =>
+        command.name === "balance" ? { ...command, flags: [...command.flags, later] } : command,
+      ),
+    };
+    for (const name of namesOf(later)) expect(refusalOf(givenOnce(later, name), grown), name).toBeNull();
+    expect(refusalOf(["--nosuch"], grown)).toContain("--nosuch");
+  });
+
+  function runRefused(argv: string[]): { stdout: string; stderr: string; exitCode: typeof process.exitCode } {
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const out = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+    const err = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
+      stderr.push(String(chunk));
+      return true;
+    });
+    try {
+      runBalance(argv);
+      return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
+    } finally {
+      out.mockRestore();
+      err.mockRestore();
+      process.exitCode = undefined;
+    }
+  }
+
+  it("refuses each host modifier given after balance as a modifier out of place, not as unregistered, reconciling nothing", () => {
+    for (const modifier of cliRegistry.global) {
+      expect(runRefused(["--features", "dir", modifier.name, "x"]), modifier.name).toEqual({
+        stdout: "",
+        stderr:
+          `${APP_MESSAGES[AppMessage.MisplacedModifier](modifier.name, "balance")}\n` +
+          `${APP_MESSAGES[AppMessage.SeeModifiers]()}\n`,
+        exitCode: 2,
+      });
+    }
+  });
+
+  it("refuses --nosuch as unregistered at balance's scope, naming the version that refused, reconciling nothing", () => {
+    const scope = "spec-controller balance";
+    expect(runRefused(["--nosuch"])).toEqual({
+      stdout: "",
+      stderr:
+        `${APP_MESSAGES[AppMessage.UnknownFlag]("--nosuch", scope, resolveToolIdentity().toolVersion, "balance")}\n` +
+        `${APP_MESSAGES[AppMessage.PinDrifted]("balance", "--nosuch")}\n` +
+        `${APP_MESSAGES[AppMessage.OtherwiseSeeFlags](scope)}\n`,
+      exitCode: 2,
+    });
   });
 });
 

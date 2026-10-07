@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import { allocateCommand, renderCommandHelp } from "../cli-registry.js";
 import { runAllocate } from "./cli.js";
 
 function git(repo: string, args: readonly string[]): string {
@@ -74,7 +74,7 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new, 
   it.each(Object.keys(HELP_REQUEST))("answers with allocate's help and gives no code, asked %s", (request) => {
     const answered = allocateIn(headedOneCarryingThree(), HELP_REQUEST[request] as string[]);
 
-    expect(answered.stdout).toBe(renderCommandHelp(cliRegistry, "allocate") + "\n");
+    expect(answered.stdout).toBe(renderCommandHelp(allocateCommand) + "\n");
     expect(answered.stdout).toContain("<FFF>");
     expect(answered.stdout).toContain("--new");
     expect(answered.stdout).not.toMatch(/^SCN-/m);

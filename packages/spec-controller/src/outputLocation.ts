@@ -3,7 +3,7 @@ import { dirname, resolve, sep } from "node:path";
 
 const USAGE_EXIT_CODE = 2;
 
-export class UsageRefusal extends Error {
+class UsageRefusal extends Error {
   override readonly name = "UsageRefusal";
   readonly exitCode = USAGE_EXIT_CODE;
 }
@@ -78,8 +78,9 @@ function identityOrNone(path: string, created: string[]): RegularFileIdentity | 
     if (probed.created !== undefined) created.push(probed.created);
     return probed.identity;
   } catch {
-    return undefined;
+    // A path that cannot be opened for writing shares no file with the one being checked.
   }
+  return undefined;
 }
 
 function sameIdentity(a: RegularFileIdentity | undefined, b: RegularFileIdentity): boolean {
@@ -90,8 +91,9 @@ export function regularFileIdentity(path: string): RegularFileIdentity | undefin
   try {
     return regularIdentity(statSync(path, { bigint: true }));
   } catch {
-    return undefined;
+    // A path that cannot be stat'd is no file, so it is no input's file either.
   }
+  return undefined;
 }
 
 export function inputAt(path: string, inputs: readonly ReadInput[]): ReadInput | undefined {
@@ -104,8 +106,9 @@ export function stdoutIdentity(): RegularFileIdentity | undefined {
   try {
     return regularIdentity(fstatSync(1, { bigint: true }));
   } catch {
-    return undefined;
+    // A closed stdout has no file for a destination to share.
   }
+  return undefined;
 }
 
 function identityOf(fd: number): RegularFileIdentity | undefined {
@@ -147,6 +150,7 @@ function linkTarget(path: string): string | undefined {
   try {
     return lstatSync(path).isSymbolicLink() ? readlinkSync(path) : undefined;
   } catch {
-    return undefined;
+    // A prefix that cannot be read is followed no further: the path names stdout only as spelled.
   }
+  return undefined;
 }

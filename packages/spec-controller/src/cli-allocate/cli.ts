@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { nextScnCode, type ScnSighting } from "@3f-consulting/spec-controller-core";
-import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import { allocateCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readHeaderCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
@@ -12,7 +12,7 @@ import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRef
 
 export function runAllocate(argv: string[]): void {
   if (asksForHelp(argv)) {
-    process.stdout.write(renderCommandHelp(cliRegistry, "allocate") + "\n");
+    process.stdout.write(renderCommandHelp(allocateCommand) + "\n");
     return;
   }
   answerOrRefuse(readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion));

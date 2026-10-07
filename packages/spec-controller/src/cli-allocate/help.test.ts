@@ -1,8 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import {
+  allocateCommand,
+  balanceCommand,
+  cliRegistry,
+  renderCommandHelp,
+  type CliRegistry,
+  type CommandSpec,
+  type PositionalSpec,
+} from "../cli-registry.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
-  const help = renderCommandHelp(cliRegistry, "allocate");
+  const help = renderCommandHelp(allocateCommand);
 
   it("shows how the command is called, with its feature part", () => {
     expect(help).toMatch(/^Usage: spec-controller allocate <FFF> \[options\]$/m);
@@ -15,5 +24,60 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new",
   it("lists --new and --help among its options", () => {
     expect(help).toMatch(/^ {2}--new\s+Start a part/m);
     expect(help).toMatch(/^ {2}--help, -h\s+Show this help and exit\.$/m);
+  });
+
+  const allocatePositionals: readonly PositionalSpec[] =
+    cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
+
+  function withAllocatePositional(positional: PositionalSpec): CliRegistry {
+    return {
+      ...cliRegistry,
+      commands: cliRegistry.commands.map((command) =>
+        command.name === "allocate" ? { ...command, positionals: [...(command.positionals ?? []), positional] } : command,
+      ),
+    };
+  }
+
+  function argumentsBlockOf(registry: CliRegistry, positionals: readonly PositionalSpec[]): string[] {
+    const lines = renderCommandHelp(registry.commands.find((c) => c.name === "allocate") as CommandSpec).split("\n");
+    expect(lines[0]).toBe(`spec-controller allocate — ${APP_MESSAGES[AppMessage.AllocateSummary]()}`);
+    expect(lines.slice(1, 5)).toEqual([
+      "",
+      `${APP_MESSAGES[AppMessage.HelpUsage]()} spec-controller allocate ${positionals.map((p) => p.name).join(" ")} [options]`,
+      "",
+      APP_MESSAGES[AppMessage.HelpArguments](),
+    ]);
+    const rows = lines.slice(5, 5 + positionals.length);
+    expect(lines[5 + positionals.length]).toBe("");
+    expect(lines[6 + positionals.length]).toBe(APP_MESSAGES[AppMessage.HelpOptions]());
+    return rows;
+  }
+
+  function expectAlignedRows(rows: readonly string[], positionals: readonly PositionalSpec[]): void {
+    const descriptionAt = 2 + Math.max(...positionals.map((p) => p.name.length)) + 2;
+    expect(rows).toHaveLength(positionals.length);
+    rows.forEach((row, i) => {
+      const positional = positionals[i] as PositionalSpec;
+      expect(row.slice(0, descriptionAt)).toBe(`  ${positional.name}`.padEnd(descriptionAt));
+      expect(row.slice(descriptionAt)).toBe(positional.description);
+    });
+  }
+
+  it("opens with its title, a blank line, the usage line naming its part, a blank line, the arguments heading and the part's row, before its options", () => {
+    expect(allocatePositionals.map((p) => p.name)).toEqual(["<FFF>"]);
+    expectAlignedRows(argumentsBlockOf(cliRegistry, allocatePositionals), allocatePositionals);
+  });
+
+  it("names every part a registry gives it in the usage line, space-separated, and aligns each description at the longest part's width", () => {
+    const longer: PositionalSpec = { name: "<LONGER-PART>", description: "A part registered later." };
+    const positionals = [...allocatePositionals, longer];
+    expectAlignedRows(argumentsBlockOf(withAllocatePositional(longer), positionals), positionals);
+  });
+
+  it("gives balance, which takes no part, no usage line and no arguments block", () => {
+    const lines = renderCommandHelp(balanceCommand).split("\n");
+    expect(lines.slice(1, 3)).toEqual(["", APP_MESSAGES[AppMessage.HelpOptions]()]);
+    expect(lines).not.toContain(APP_MESSAGES[AppMessage.HelpArguments]());
+    expect(lines.some((line) => line.startsWith(APP_MESSAGES[AppMessage.HelpUsage]()))).toBe(false);
   });
 });

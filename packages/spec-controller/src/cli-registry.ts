@@ -1,4 +1,5 @@
 import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export interface FlagSpec {
   name: string;
@@ -23,7 +24,7 @@ export interface CommandSpec {
   retiredFlags?: RetiredFlagSpec[];
 }
 
-export interface RetiredFlagSpec {
+interface RetiredFlagSpec {
   name: string;
   retiredIn: string;
   replacement: string;
@@ -38,87 +39,82 @@ const balanceFlags: FlagSpec[] = [
   {
     name: "--features",
     arg: "<dir>",
-    description:
-      "Directory of Gherkin .feature files — the scenarios, and the `@`-tags naming what each must prove (@unit, @integration, @fitness, …).",
+    description: APP_MESSAGES[AppMessage.FeaturesFlag](),
   },
   {
     name: "--vitest",
     arg: "<report.json>",
-    description: "A Vitest JSON report — runtime test evidence.",
+    description: APP_MESSAGES[AppMessage.VitestFlag](),
   },
   {
     name: "--cucumber",
     arg: "<report.json>",
-    description: "A Cucumber JSON report — runtime test evidence.",
+    description: APP_MESSAGES[AppMessage.CucumberFlag](),
   },
   {
     name: "--ci",
     arg: "<ci.yml>",
-    description:
-      "Your CI workflows — a file, or a directory of them (default .github/workflows). Where a static check you have not converted is found running over the real source, and where a check step's `id:` supplies the @SCN its result cites.",
+    description: APP_MESSAGES[AppMessage.CiFlag](),
   },
   {
     name: "--package-json",
     arg: "<path>",
-    description:
-      "The target's package.json — its `scripts`, and its specController.runners, specController.notChecks and specController.deferralTags. A fitness check is declared by its @fitness scenario and the CI step whose id: is that scenario's @SCN; no manifest key names one.",
+    description: APP_MESSAGES[AppMessage.PackageJsonFlag](),
   },
   {
     name: "--ci-steps",
     arg: "<record.json>",
-    description:
-      "The CI run's own record of what each of its steps did — your pipeline's `toJSON(steps)` dump, evidence for the converted fitness checks. Omit it if you have converted none.",
+    description: APP_MESSAGES[AppMessage.CiStepsFlag](),
   },
   {
     name: "--target",
     arg: "<name>",
-    description: "A name recorded verbatim in the report's provenance (which project this run reconciled).",
+    description: APP_MESSAGES[AppMessage.TargetFlag](),
   },
   {
     name: "--source-sha",
     arg: "<sha>",
-    description: "Override the git commit SHA recorded in provenance (defaults to the resolved HEAD).",
+    description: APP_MESSAGES[AppMessage.SourceShaFlag](),
   },
   {
     name: "--format",
     arg: "<fmt>[:<path>]",
     repeatable: true,
-    description: "Where to send output (md or json, optionally :<path> to write to a file). Repeatable.",
+    description: APP_MESSAGES[AppMessage.FormatFlag](),
   },
   {
     name: "--render-from-json",
     arg: "<path>",
-    description: "Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs.",
+    description: APP_MESSAGES[AppMessage.RenderFromJsonFlag](),
   },
   {
     name: "--strict",
-    description: "Fail the run (exit 3) when it carries Pending Items — the opt-in that escalates otherwise-run-neutral deferred obligations.",
+    description: APP_MESSAGES[AppMessage.StrictFlag](),
   },
   {
     name: "--exit-zero",
-    description: "Print the same report but exit 0 on an out-of-balance or scenario-code-error (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
+    description: APP_MESSAGES[AppMessage.ExitZeroFlag](),
   },
   {
     name: "--help",
     aliases: ["-h"],
-    description: "Show this help and exit.",
+    description: APP_MESSAGES[AppMessage.HelpFlag](),
   },
 ];
 
 const balanceConfigHelp: string[] = [
-  "Configuration (in the target repo's package.json):",
-  "  specController.deferralTags: string[]",
-  "      Extra recognised deferral tags. A scenario carrying one defers every obligation it",
-  "      names to a Pending Item, extending (never replacing) the built-in set.",
-  `      Built-in deferral tags: ${DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ")}`,
+  APP_MESSAGES[AppMessage.ConfigurationHeading](),
+  `  ${APP_MESSAGES[AppMessage.DeferralTagsKey]()}`,
+  `      ${APP_MESSAGES[AppMessage.DeferralTagsExtend]()}`,
+  `      ${APP_MESSAGES[AppMessage.DeferralTagsNeverReplace]()}`,
+  `      ${APP_MESSAGES[AppMessage.BuiltInDeferralTags](DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "))}`,
 ];
 
 const balanceRetiredFlags: RetiredFlagSpec[] = [
   {
     name: "--measurements",
     retiredIn: "0.1.0-alpha.5",
-    replacement:
-      "A fitness check is credited by the outcome of its own CI step: put the check's @SCN on that step's `id:` and hand balance the run's step record with --ci-steps.",
+    replacement: APP_MESSAGES[AppMessage.MeasurementsReplacement](),
   },
 ];
 
@@ -126,46 +122,42 @@ const globalFlags: FlagSpec[] = [
   {
     name: "--store",
     arg: "<root>",
-    description:
-      "Store the run: write <root>/<target>/<run-id>/ with the reconciliation outputs + a run.yaml manifest. Required to store; there is no default (a default would write inside the repo).",
+    description: APP_MESSAGES[AppMessage.StoreModifier](),
   },
   {
     name: "--run-id",
     arg: "<id>",
-    description:
-      "Name the stored run (default: an ISO-8601 UTC timestamp). Read only with --store: given without it, the run is refused, since no run would be kept under the name.",
+    description: APP_MESSAGES[AppMessage.RunIdModifier](),
   },
 ];
 
+export const balanceCommand: CommandSpec = {
+  name: "balance",
+  summary: APP_MESSAGES[AppMessage.BalanceSummary](),
+  flags: balanceFlags,
+  configHelp: balanceConfigHelp,
+  retiredFlags: balanceRetiredFlags,
+};
+
+export const allocateCommand: CommandSpec = {
+  name: "allocate",
+  summary: APP_MESSAGES[AppMessage.AllocateSummary](),
+  acceptsHostModifiers: false,
+  positionals: [
+    { name: "<FFF>", description: APP_MESSAGES[AppMessage.FeaturePartArgument]() },
+  ],
+  flags: [
+    {
+      name: "--new",
+      description: APP_MESSAGES[AppMessage.NewFlag](),
+    },
+    { name: "--help", aliases: ["-h"], description: APP_MESSAGES[AppMessage.HelpFlag]() },
+  ],
+};
+
 export const cliRegistry: CliRegistry = {
   global: globalFlags,
-  commands: [
-    {
-      name: "balance",
-      summary:
-        "Reconcile Gherkin scenarios against test/CI evidence and emit the Evidence Reconciliation (Markdown to stdout by default).",
-      flags: balanceFlags,
-      configHelp: balanceConfigHelp,
-      retiredFlags: balanceRetiredFlags,
-    },
-    {
-      name: "allocate",
-      summary:
-        "Print the next @SCN code for a feature part: one past the highest the repository has ever carried, the code alone on stdout.",
-      acceptsHostModifiers: false,
-      positionals: [
-        { name: "<FFF>", description: "The feature part: a feature file's header code, two to five of A-Z and 0-9." },
-      ],
-      flags: [
-        {
-          name: "--new",
-          description:
-            "Start a part no feature file's header carries yet: its first code, or one past any number the repository already carries for it.",
-        },
-        { name: "--help", aliases: ["-h"], description: "Show this help and exit." },
-      ],
-    },
-  ],
+  commands: [balanceCommand, allocateCommand],
 };
 
 function flagLabel(flag: FlagSpec): string {
@@ -173,20 +165,19 @@ function flagLabel(flag: FlagSpec): string {
   return flag.arg !== undefined ? `${names} ${flag.arg}` : names;
 }
 
-export function renderCommandHelp(registry: CliRegistry, command: string): string {
-  const entry = registry.commands.find((c) => c.name === command);
-  const flags = entry?.flags ?? [];
+export function renderCommandHelp(command: CommandSpec): string {
+  const flags = command.flags;
   const gutter = 2;
   const labelWidth = Math.max(0, ...flags.map((f) => flagLabel(f).length));
   const lines = flags.map(
     (flag) => `  ${flagLabel(flag).padEnd(labelWidth + gutter)}${flag.description}`,
   );
-  const configHelp = entry?.configHelp ?? [];
+  const configHelp = command.configHelp ?? [];
   return [
-    `spec-controller ${command} — ${entry?.summary ?? ""}`,
-    ...positionalHelp(command, entry?.positionals ?? []),
+    `spec-controller ${command.name} — ${command.summary}`,
+    ...positionalHelp(command.name, command.positionals ?? []),
     "",
-    "Options:",
+    APP_MESSAGES[AppMessage.HelpOptions](),
     ...lines,
     ...(configHelp.length > 0 ? ["", ...configHelp] : []),
   ].join("\n");
@@ -197,9 +188,9 @@ function positionalHelp(command: string, positionals: readonly PositionalSpec[])
   const width = Math.max(...positionals.map((positional) => positional.name.length));
   return [
     "",
-    `Usage: spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
+    `${APP_MESSAGES[AppMessage.HelpUsage]()} spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
     "",
-    "Arguments:",
+    APP_MESSAGES[AppMessage.HelpArguments](),
     ...positionals.map((positional) => `  ${positional.name.padEnd(width + 2)}${positional.description}`),
   ];
 }
@@ -217,17 +208,17 @@ export function renderTopLevelHelp(registry: CliRegistry): string {
   );
   const modifierUsage = registry.global.map((flag) => `[${flagLabel(flag)}]`).join(" ");
   return [
-    "spec-controller — reconcile scenarios against observed evidence",
+    APP_MESSAGES[AppMessage.HelpTitle](),
     "",
-    "Usage:",
+    APP_MESSAGES[AppMessage.HelpUsage](),
     `  spec-controller ${modifierUsage} <command> [command-args]`,
     "",
-    "Commands:",
+    APP_MESSAGES[AppMessage.HelpCommands](),
     ...commandLines,
     "",
-    "Host modifiers (before the command):",
+    APP_MESSAGES[AppMessage.HelpHostModifiers](),
     ...modifierLines,
     "",
-    "Full flags, examples, and CI wiring: doc/how_to_use.md.",
+    APP_MESSAGES[AppMessage.HelpPointer](),
   ].join("\n");
 }

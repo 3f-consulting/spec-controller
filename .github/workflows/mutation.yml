@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "Run only this matrix scope (empty runs every scope); refused on main"
+        required: false
+        default: ""
 
 jobs:
   mutation:
@@ -33,28 +38,44 @@ jobs:
           - scope: spec-controller-run-management
             mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts"
             timeout: 6
+          - scope: spec-controller-shell
+            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/messages.ts"
+            timeout: 36
+    env:
+      SELECTED: ${{ inputs.scope == '' || matrix.scope == inputs.scope }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Refuse a scoped run on main
+        if: inputs.scope != '' && github.ref == 'refs/heads/main'
+        run: |
+          echo "A scoped dispatch would stand as main's newest mutation run while sweeping one scope; dispatch without a scope on main."
+          exit 1
+
+      - if: env.SELECTED == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - if: env.SELECTED == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
 
       - name: Enable corepack
+        if: env.SELECTED == 'true'
         run: corepack enable
 
       - name: Install dependencies
+        if: env.SELECTED == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Mutation test ${{ matrix.scope }}
+        if: env.SELECTED == 'true'
         run: pnpm mutation --mutate "$MUTATE"
         env:
           MUTATE: ${{ matrix.mutate }}
 
       - name: Upload mutation report
-        if: always()
+        if: always() && env.SELECTED == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mutation-report-${{ matrix.scope }}

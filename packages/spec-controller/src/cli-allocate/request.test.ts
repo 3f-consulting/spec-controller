@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry } from "../cli-registry.js";
+import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cli-registry.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { readRequest } from "./request.js";
 
-function usageErrorOf(argv: readonly string[]): string {
-  const read = readRequest(argv, cliRegistry, "0.0.0-test");
+function usageErrorOf(argv: readonly string[], registry: CliRegistry = cliRegistry): string {
+  const read = readRequest(argv, registry, "0.0.0-test");
   if (!("usageError" in read)) throw new Error(`read as a request for ${read.part}`);
   return read.usageError;
 }
@@ -21,6 +22,40 @@ describe("[SCN-ALC-012] a request not in canon's form is refused as a usage erro
     expect(error).toMatch(/^spec-controller allocate: usage error — /);
     expect(error).toMatch(why);
     expect(error).not.toMatch(/unknown part/);
+  });
+
+  const ALLOCATE_SCOPE = "spec-controller allocate";
+  const allocatePositionals: readonly PositionalSpec[] =
+    cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
+
+  function extraArgument(token: string, takes: string): string {
+    return (
+      `spec-controller allocate: usage error — ${APP_MESSAGES[AppMessage.ExtraArgument](token, ALLOCATE_SCOPE, takes)}\n` +
+      APP_MESSAGES[AppMessage.SeeArguments](ALLOCATE_SCOPE)
+    );
+  }
+
+  function withAllocatePositional(positional: PositionalSpec): CliRegistry {
+    return {
+      ...cliRegistry,
+      commands: cliRegistry.commands.map((command) =>
+        command.name === "allocate" ? { ...command, positionals: [...(command.positionals ?? []), positional] } : command,
+      ),
+    };
+  }
+
+  it("refuses a second part by naming it and the part allocate takes, as the registry names it", () => {
+    expect(allocatePositionals.map((positional) => positional.name)).toEqual(["<FFF>"]);
+    expect(usageErrorOf(["ONE", "TWO"])).toBe(extraArgument("TWO", "<FFF>"));
+  });
+
+  it("lists every part allocate takes, in order and space-separated, once it takes more than one", () => {
+    const grown = withAllocatePositional({ name: "<NNN>", description: "added later" });
+    expect(usageErrorOf(["ONE", "007", "EXTRA"], grown)).toBe(extraArgument("EXTRA", "<FFF> <NNN>"));
+  });
+
+  it("reads ABC, one part in canon's form, with no refusal", () => {
+    expect(readRequest(["ABC"], cliRegistry, "0.0.0-test")).toEqual({ part: "ABC", isNew: false });
   });
 
   it("reads a part in canon's form, of two to five characters", () => {

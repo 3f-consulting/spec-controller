@@ -1,4 +1,5 @@
 import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cli-registry.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export function asksForHelp(argv: readonly string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
@@ -22,17 +23,23 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
   return args;
 }
 
-export function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, FlagSpec> {
-  const valueFlags = new Map<string, FlagSpec>();
+export type ValueFlagSpec = FlagSpec & { arg: string };
+
+function takesValue(flag: FlagSpec): flag is ValueFlagSpec {
+  return flag.arg !== undefined;
+}
+
+export function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, ValueFlagSpec> {
+  const valueFlags = new Map<string, ValueFlagSpec>();
   for (const flag of flags) {
-    if (flag.arg === undefined) continue;
+    if (!takesValue(flag)) continue;
     for (const name of [flag.name, ...(flag.aliases ?? [])]) valueFlags.set(name, flag);
   }
   return valueFlags;
 }
 
-export function isMissingValue(next: string | undefined): boolean {
-  return next === undefined || next === "" || next.startsWith("--");
+export function givenValue(next: string | undefined): string | undefined {
+  return next === undefined || next === "" || next.startsWith("--") ? undefined : next;
 }
 
 export function checkMissingValues(
@@ -40,21 +47,20 @@ export function checkMissingValues(
   registry: CliRegistry,
   command: string,
 ): string | null {
-  const entry = registry.commands.find((c) => c.name === command);
-  const valueFlags = valueFlagsOf(entry?.flags ?? []);
-  for (let i = 0; i < argv.length; i++) {
-    const flag = valueFlags.get(argv[i] ?? "");
-    if (flag !== undefined && isMissingValue(argv[i + 1])) {
-      return missingValueRefusal(argv[i] ?? flag.name, flag, `spec-controller ${command}`);
+  const valueFlags = valueFlagsOf(commandEntry(registry, command).flags);
+  for (const [i, token] of argv.entries()) {
+    const flag = valueFlags.get(token);
+    if (flag !== undefined && givenValue(argv[i + 1]) === undefined) {
+      return missingValueRefusal(token, flag, `spec-controller ${command}`);
     }
   }
   return null;
 }
 
-export function missingValueRefusal(given: string, flag: FlagSpec, scope: string): string {
+export function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string): string {
   return (
-    `The ${given} flag of '${scope}' needs a value — ${given} ${flag.arg ?? ""} — and was given none.\n` +
-    `Run '${scope} --help' to see the flags this version accepts and the values they take.`
+    `${APP_MESSAGES[AppMessage.MissingValue](given, scope, flag.arg)}\n` +
+    APP_MESSAGES[AppMessage.SeeFlagsAndValues](scope)
   );
 }
 
@@ -79,7 +85,17 @@ interface Walk {
 }
 
 function positionalsOf(registry: CliRegistry, command: string): readonly PositionalSpec[] {
-  return registry.commands.find((c) => c.name === command)?.positionals ?? [];
+  return commandEntry(registry, command).positionals ?? [];
+}
+
+type CommandEntry = Pick<CommandSpec, "flags" | "positionals" | "retiredFlags">;
+
+function commandEntry(registry: CliRegistry, command: string): CommandEntry {
+  return registry.commands.find((c) => c.name === command) ?? { flags: [] };
+}
+
+function bareName(name: string): string {
+  return name.replace(/^-+/, "");
 }
 
 export function positionalArguments(argv: readonly string[], registry: CliRegistry, command: string): string[] {
@@ -119,15 +135,12 @@ function registeredFlagRefusal(
 }
 
 export function givenTwiceRefusal(given: string, scope: string): string {
-  return (
-    `The ${given} flag of '${scope}' was given more than once, and is read once: give it once.\n` +
-    `Run '${scope} --help' to see the flags this version accepts.`
-  );
+  return `${APP_MESSAGES[AppMessage.GivenTwice](given, scope)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
 }
 
 function flagScopeOf(registry: CliRegistry, command: string): Map<string, FlagSpec> {
   const scope = new Map<string, FlagSpec>();
-  for (const flag of registry.commands.find((c) => c.name === command)?.flags ?? []) {
+  for (const flag of commandEntry(registry, command).flags) {
     for (const name of [flag.name, ...(flag.aliases ?? [])]) scope.set(name, flag);
   }
   return scope;
@@ -148,10 +161,7 @@ export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, Flag
   const flag = flags.get(name);
   const spelling =
     flag !== undefined && flag.arg === undefined ? name : `${name} ${value === "" ? (flag?.arg ?? "<value>") : value}`;
-  return (
-    `The ${token} form is not read by '${scope}': a flag and its value are two arguments, as in '${spelling}'.\n` +
-    `Run '${scope} --help' to see the flags this version accepts.`
-  );
+  return `${APP_MESSAGES[AppMessage.EqualsForm](token, scope, spelling)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
 }
 
 function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined): number {
@@ -160,9 +170,10 @@ function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined):
 }
 
 function takesNoValueRefusal(flag: string, value: string, command: string): string {
+  const scope = `spec-controller ${command}`;
   return (
-    `The ${flag} flag of 'spec-controller ${command}' takes no value, and was given one: '${value}'.\n` +
-    `Run 'spec-controller ${command} --help' to see the flags this version accepts and the values they take.`
+    `${APP_MESSAGES[AppMessage.TakesNoValue](flag, scope, value)}\n` +
+    APP_MESSAGES[AppMessage.SeeFlagsAndValues](scope)
   );
 }
 
@@ -176,18 +187,13 @@ function positionalRead(token: string, walk: Walk, command: string): string | nu
 
 function extraPositionalRefusal(token: string, walk: Walk, command: string): string {
   const takes = walk.positionals.map((positional) => positional.name).join(" ");
-  return (
-    `The argument '${token}' is more than 'spec-controller ${command}' takes: it takes ${takes} once, and its flags.\n` +
-    `Run 'spec-controller ${command} --help' to see what this version accepts.`
-  );
+  const scope = `spec-controller ${command}`;
+  return `${APP_MESSAGES[AppMessage.ExtraArgument](token, scope, takes)}\n${APP_MESSAGES[AppMessage.SeeArguments](scope)}`;
 }
 
 function notAFlagRefusal(token: string, command: string): string {
-  return (
-    `The argument '${token}' is not a flag, nor the value of the flag before it: ` +
-    `'spec-controller ${command}' takes only flags and their values.\n` +
-    `Run 'spec-controller ${command} --help' to see the flags this version accepts.`
-  );
+  const scope = `spec-controller ${command}`;
+  return `${APP_MESSAGES[AppMessage.NotAFlag](token, scope)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
 }
 
 export function checkMisplacedHostModifiers(
@@ -195,14 +201,10 @@ export function checkMisplacedHostModifiers(
   registry: CliRegistry,
   command: string,
 ): string | null {
-  const modifiers = new Set(registry.global.map((flag) => flag.name.replace(/^-+/, "")));
+  const modifiers = new Set(registry.global.map((flag) => bareName(flag.name)));
   const key = Object.keys(args).find((k) => modifiers.has(k));
   if (key === undefined) return null;
-  return (
-    `The --${key} flag is a host modifier: it goes before the command, as in ` +
-    `'spec-controller --${key} <value> ${command} …', never after it.\n` +
-    `Run 'spec-controller --help' to see the host modifiers this version accepts.`
-  );
+  return `${APP_MESSAGES[AppMessage.MisplacedModifier](`--${key}`, command)}\n${APP_MESSAGES[AppMessage.SeeModifiers]()}`;
 }
 
 export function checkUnknownFlags(
@@ -211,40 +213,41 @@ export function checkUnknownFlags(
   command: string,
   toolVersion: string,
 ): string | null {
-  const entry = registry.commands.find((c) => c.name === command);
+  const entry = commandEntry(registry, command);
   const accepted = new Set<string>();
-  for (const flag of entry?.flags ?? []) {
-    accepted.add(flag.name.replace(/^-+/, ""));
-    for (const alias of flag.aliases ?? []) accepted.add(alias.replace(/^-+/, ""));
+  for (const flag of entry.flags) {
+    accepted.add(bareName(flag.name));
+    for (const alias of flag.aliases ?? []) accepted.add(bareName(alias));
   }
   for (const key of Object.keys(args)) {
     if (!accepted.has(key)) {
-      return (
-        retiredFlagRefusal(entry, key, command, toolVersion) ??
-        `Unknown flag --${key} for 'spec-controller ${command}' — this is spec-controller ` +
-        `${toolVersion}, and that flag is not in its ${command} scope.\n` +
-        `If this version is pinned, the pin and the tree it is reading have drifted apart: ` +
-        `bump the pin to a version whose '${command}' accepts --${key}.\n` +
-        `Otherwise run 'spec-controller ${command} --help' to see the flags this version accepts.`
-      );
+      return retiredFlagRefusal(entry, key, command, toolVersion) ?? unknownFlagRefusal(`--${key}`, command, toolVersion);
     }
   }
   return null;
 }
 
+function unknownFlagRefusal(flag: string, command: string, toolVersion: string): string {
+  const scope = `spec-controller ${command}`;
+  return (
+    `${APP_MESSAGES[AppMessage.UnknownFlag](flag, scope, toolVersion, command)}\n` +
+    `${APP_MESSAGES[AppMessage.PinDrifted](command, flag)}\n` +
+    APP_MESSAGES[AppMessage.OtherwiseSeeFlags](scope)
+  );
+}
+
 function retiredFlagRefusal(
-  entry: CommandSpec | undefined,
+  entry: CommandEntry,
   key: string,
   command: string,
   toolVersion: string,
 ): string | undefined {
-  const retired = entry?.retiredFlags?.find((flag) => flag.name.replace(/^-+/, "") === key);
+  const retired = entry.retiredFlags?.find((flag) => bareName(flag.name) === key);
   if (retired === undefined) return undefined;
+  const scope = `spec-controller ${command}`;
   return (
-    `Retired flag ${retired.name} for 'spec-controller ${command}' — retired in spec-controller ` +
-    `${retired.retiredIn}, and no later version accepts it (this is spec-controller ${toolVersion}).\n` +
-    `Do not pin an earlier version to get it back: that restores the route it was retired with. ` +
-    `${retired.replacement}\n` +
-    `Run 'spec-controller ${command} --help' to see the flags this version accepts.`
+    `${APP_MESSAGES[AppMessage.RetiredFlag](retired.name, scope, retired.retiredIn, toolVersion)}\n` +
+    `${APP_MESSAGES[AppMessage.DoNotPinRetired]()} ${retired.replacement}\n` +
+    APP_MESSAGES[AppMessage.SeeFlags](scope)
   );
 }

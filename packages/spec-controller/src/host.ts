@@ -2,12 +2,14 @@ import {
   asksForHelp,
   equalsFormRefusal,
   givenTwiceRefusal,
+  givenValue,
   isEqualsForm,
-  isMissingValue,
   missingValueRefusal,
   valueFlagsOf,
+  type ValueFlagSpec,
 } from "./cli-args.js";
 import { cliRegistry, type CommandSpec, type FlagSpec } from "./cli-registry.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export interface HostInvocation {
   store?: string;
@@ -48,10 +50,9 @@ function readHostTokens(
       if (refusal !== undefined) return { commandArgs: [], refusal };
       break;
     }
-    const value = argv[i + 1];
-    const refusal = modifierRefusal(token, modifier, argv.slice(i + 1, i + 3), { values, commands });
-    if (refusal !== undefined) return { commandArgs: [], refusal };
-    values.set(modifier.name, value ?? "");
+    const read = readModifier(token, modifier, argv.slice(i + 1, i + 3), { values, commands });
+    if ("refusal" in read) return { commandArgs: [], refusal: read.refusal };
+    values.set(modifier.name, read.value);
     i++;
   }
   if (i === argv.length && values.size > 0) return { commandArgs: [], refusal: noCommandRefusal([...values.keys()]) };
@@ -68,33 +69,35 @@ interface HostRead {
   commands: readonly string[];
 }
 
-function modifierRefusal(
+type ModifierRead = { value: string } | { refusal: string };
+
+function readModifier(
   token: string,
-  modifier: FlagSpec,
-  [value, after]: readonly string[],
+  modifier: ValueFlagSpec,
+  [next, after]: readonly string[],
   read: HostRead,
-): string | undefined {
-  if (read.values.has(modifier.name)) return givenTwiceRefusal(token, "spec-controller");
-  if (isMissingValue(value)) return missingValueRefusal(token, modifier, "spec-controller");
-  if (read.commands.includes(value ?? "") && (after === undefined || after.startsWith("-"))) {
-    return commandAsValueRefusal(token, modifier, value ?? "");
+): ModifierRead {
+  if (read.values.has(modifier.name)) return { refusal: givenTwiceRefusal(token, "spec-controller") };
+  const value = givenValue(next);
+  if (value === undefined) return { refusal: missingValueRefusal(token, modifier, "spec-controller") };
+  if (read.commands.includes(value) && (after === undefined || after.startsWith("-"))) {
+    return { refusal: commandAsValueRefusal(token, modifier, value) };
   }
-  return undefined;
+  return { value };
 }
 
 function noCommandRefusal(given: readonly string[]): string {
   return (
-    `No command followed the host modifiers given (${given.join(", ")}), so nothing ran: ` +
-    `a host modifier needs a command after it, or --help.\n` +
-    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
+    `${APP_MESSAGES[AppMessage.NoCommandAfterModifiers](given.join(", "))}\n` +
+    APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()
   );
 }
 
-function commandAsValueRefusal(token: string, modifier: FlagSpec, command: string): string {
+function commandAsValueRefusal(token: string, modifier: ValueFlagSpec, command: string): string {
   return (
-    `The ${token} host modifier took '${command}', a command, as its value, and left no command to run.\n` +
-    `Give ${token} its own value, as in 'spec-controller ${token} ${modifier.arg ?? ""} ${command} …'. ` +
-    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
+    `${APP_MESSAGES[AppMessage.ModifierTookCommand](token, command)}\n` +
+    `${APP_MESSAGES[AppMessage.GiveModifierItsOwnValue](token, modifier.arg, command)} ` +
+    APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()
   );
 }
 
@@ -116,12 +119,7 @@ function isFlagOutOfPlace(token: string): boolean {
 
 function flagBeforeCommandRefusal(flag: string, globalFlags: readonly FlagSpec[]): string {
   const modifiers = globalFlags.map((modifier) => modifier.name).join(", ");
-  return (
-    `The ${flag} flag was given before the command. Before the command, spec-controller takes ` +
-    `only its host modifiers (${modifiers}); a command's own flags go after it, as in ` +
-    `'spec-controller <command> ${flag}'.\n` +
-    `Run 'spec-controller --help' to see the commands and host modifiers this version accepts.`
-  );
+  return `${APP_MESSAGES[AppMessage.FlagBeforeCommand](flag, modifiers)}\n${APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()}`;
 }
 
 export function wrapCommandArgv(commandArgs: readonly string[], formatSpecs: readonly string[]): string[] {
@@ -147,7 +145,7 @@ export interface UnknownCommandAnswer {
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {
     exitCode: 2,
-    stderr: `spec-controller: unknown command "${command}".\n\n${help}\n`,
+    stderr: `spec-controller: ${APP_MESSAGES[AppMessage.UnknownCommand](command)}\n\n${help}\n`,
   };
 }
 
@@ -160,9 +158,8 @@ export function modifiersNotTakenRefusal(
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
   return (
-    `spec-controller: usage error — '${entry.name}' takes no host modifier, and was given ${given.join(", ")}: ` +
-    `it answers a query and keeps no run.\n` +
-    `Run 'spec-controller ${entry.name} …' without them.`
+    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ModifiersNotTaken](entry.name, given.join(", "))}\n` +
+    APP_MESSAGES[AppMessage.RunWithoutModifiers](entry.name)
   );
 }
 

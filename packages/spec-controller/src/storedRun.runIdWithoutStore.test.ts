@@ -30,4 +30,8 @@ describe("[SCN-CLI-083] the host refuses --run-id given without --store as a usa
     expect(unstoredRunIdRefusal(parseHostInvocation(["--store", "/s", "--run-id", "r1", ...LIVE]))).toBeUndefined();
     expect(unstoredRunIdRefusal(parseHostInvocation(LIVE))).toBeUndefined();
   });
+
+  it("leaves --run-id before a command that takes no host modifier to that command's own refusal", () => {
+    expect(unstoredRunIdRefusal(parseHostInvocation(["--run-id", "r1", "allocate", "CLI"]))).toBeUndefined();
+  });
 });

@@ -24,7 +24,7 @@ import {
   verdictCode,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import { balanceCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import {
   asksForHelp,
   parseArgs,
@@ -144,7 +144,7 @@ export function runBalance(argv: string[]): boolean {
 
 function balance(argv: string[]): boolean {
   if (asksForHelp(argv)) {
-    process.stdout.write(renderCommandHelp(cliRegistry, "balance") + "\n");
+    process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
     return false;
   }
 

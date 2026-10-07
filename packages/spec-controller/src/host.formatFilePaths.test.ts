@@ -12,4 +12,9 @@ describe("[SCN-RMG-010] the host collects the file paths its command's --format 
     expect(formatFilePaths(["--features", "f"])).toEqual([]);
     expect(formatFilePaths(["--format"])).toEqual([]);
   });
+
+  it("reads a lone --format's path, and leaves another flag's value to that flag, even one shaped like a format", () => {
+    expect(formatFilePaths(["--format", "md:x"])).toEqual(["x"]);
+    expect(formatFilePaths(["--target", "md:t", "--format", "json:y"])).toEqual(["y"]);
+  });
 });
