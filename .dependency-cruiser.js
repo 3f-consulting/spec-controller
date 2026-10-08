@@ -65,7 +65,7 @@ export default {
   options: {
     doNotFollow: { path: "node_modules" },
 
-    exclude: { path: "(^|/)dist/" },
+    exclude: { path: "^packages/[^/]+/dist/" },
 
     tsConfig: { fileName: "tsconfig.json" },
     tsPreCompilationDeps: true,
