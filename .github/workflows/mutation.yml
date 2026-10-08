@@ -53,6 +53,9 @@ jobs:
           - scope: spec-controller-cli-balance
             mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts"
             timeout: 21
+          - scope: core-census
+            mutate: "packages/core/src/census/**/*.ts,!packages/core/src/census/**/*.test.ts"
+            timeout: 3
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}

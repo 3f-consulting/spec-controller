@@ -29,7 +29,7 @@ export function evidenceObligations(
     scenarioCount,
     excludedOccurrences: raw - scenarioCount,
     untaggedScenarios,
-    ...(sharedScnCodes.length > 0 ? { sharedScnCodes } : {}),
+    sharedScnCodes,
   };
 }
 
