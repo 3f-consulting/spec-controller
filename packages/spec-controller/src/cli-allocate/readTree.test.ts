@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
-import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
+import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.testkit.js";
+import { thrownBy } from "./answered.testkit.js";
 
 describe("[SCN-ALC-004] with no history to read, a code is still offered and the boundary is stated", () => {
   it.each([
@@ -17,23 +17,6 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
     expect(isWalkedDirectory("node_modules")).toBe(false);
   });
 });
-
-function git(repo: string, args: readonly string[]): void {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-}
-
-const made: string[] = [];
-
-function freshDirectory(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
-}
 
 function templateRepository(): string {
   const repo = freshDirectory("allocate-tree-");
@@ -59,13 +42,6 @@ function repositoryWithDraft(): string {
   return repo;
 }
 
-const taken: Array<() => void> = [];
-
-function withhold(path: string, mode: number): void {
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, 0o755));
-}
-
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
@@ -73,15 +49,6 @@ afterEach(() => {
 afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
-
-function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
-}
 
 describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
   it.each([

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
+import { rowsOf } from "./checkStep.testkit.js";
 
 const manifest = {
   scripts: {
@@ -50,15 +51,6 @@ function reconcileUnannotated(): EvidenceReconciliation {
     runtimeObservations: [],
     deferralTags: [],
   });
-}
-
-function rowsOf(reconciliation: EvidenceReconciliation) {
-  return reconciliation.ledger.scenarioReconciliations.map((row) => [
-    row.scnId,
-    row.kind,
-    row.verdict,
-    row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
-  ]);
 }
 
 describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it runs, citing nothing", () => {

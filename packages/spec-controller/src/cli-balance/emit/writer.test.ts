@@ -6,17 +6,7 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
-
-function usageStatusOf(run: () => unknown): number | undefined {
-  try {
-    run();
-    return undefined;
-  } catch (err) {
-    const code = (err as { exitCode?: unknown }).exitCode;
-    if (typeof code !== "number") throw err;
-    return code;
-  }
-}
+import { usageStatusOf } from "../../usageStatus.testkit.js";
 
 const ctx: RunContext = {
   target: "unwritable",

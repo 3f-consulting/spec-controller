@@ -68,34 +68,6 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
   });
 });
 
-describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pending Items does not fail", () => {
-  it("is balanced over a WHOLE run whose only exceptions are Pending Items — one-sided, run-neutral", () => {
-    const scenarios: Scenario[] = [
-      { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
-      { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
-      {
-        scnId: "SCN-PDR-003",
-        evidenceObligations: [
-          { qualityCheck: "unit" },
-          { qualityCheck: "integration", pending: true },
-        ],
-      },
-    ];
-    const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-PDR-003", status: "passed" },
-    ];
-    const balance = reconcile(scenarios, evidenceObservations);
-
-    const pendingCount = balance.scenarioReconciliations.flatMap((s) => s.pendingItems ?? []).length;
-    expect(pendingCount).toBe(3);
-    expect(
-      balance.scenarioReconciliations.every((s) => s.reconcilingItems.length === 0)
-    ).toBe(true);
-
-    expect(isBalanced(balance)).toBe(true);
-  });
-});
-
 describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () => {
   it("hasPendingItems is true when any row carries a Pending Item (real reconcile output)", () => {
     const balance = reconcile(
@@ -147,67 +119,6 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
     expect(isBalanced(balance)).toBe(true);
     expect(hasPendingItems(balance)).toBe(false);
     expect(verdictCode({ ledger: balance, strict: true })).toBe(0);
-  });
-});
-
-describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
-  const brokenObservation: EvidenceObservation = {
-    qualityCheck: "unit",
-    scnId: null,
-    status: "failed",
-    broken: true,
-    locator: "packages/core/src/collection-failed.test.ts",
-    message: "Error: Cannot find package '@cucumber/tag-expressions'",
-  };
-
-  it("is true when the run carries a broken reconciling item (real reconcile output)", () => {
-    const balance = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [brokenObservation],
-    );
-    expect(hasBrokenEvidence(balance)).toBe(true);
-  });
-
-  it("is false when no row carries a broken item, even though the run is out-of-balance (real reconcile output)", () => {
-    const balance = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [],
-    );
-    expect(isBalanced(balance)).toBe(false);
-    expect(hasBrokenEvidence(balance)).toBe(false);
-  });
-
-  it("is false for a balanced run (real reconcile output)", () => {
-    const balance = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [{ qualityCheck: "unit", scnId: "SCN-HNS-018", status: "passed" }],
-    );
-    expect(hasBrokenEvidence(balance)).toBe(false);
-  });
-
-  it("the three whole-run predicates are INDEPENDENT: pending-without-broken is sound; broken-without-pending is unsound", () => {
-    const pendingOnly = reconcile(
-      [{ scnId: "SCN-HNS-019", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
-      [],
-    );
-    expect(hasPendingItems(pendingOnly)).toBe(true);
-    expect(hasBrokenEvidence(pendingOnly)).toBe(false);
-
-    const brokenOnly = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [brokenObservation],
-    );
-    expect(hasBrokenEvidence(brokenOnly)).toBe(true);
-    expect(hasPendingItems(brokenOnly)).toBe(false);
-    expect(isBalanced(brokenOnly)).toBe(false);
-  });
-
-  it("soundness is DERIVED, never stored: the reconciliation carries no soundness field", () => {
-    const balance = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [brokenObservation],
-    );
-    expect(Object.keys(balance)).toEqual(["scenarioReconciliations"]);
   });
 });
 

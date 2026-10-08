@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { renderJson } from "../render/json.js";
 import type { EvidenceObligations, SharedScnCode } from "../census/evidenceObligations.js";
-import type { RunContext } from "../provenance/provenance.js";
+import { fixtureCtx as ctx } from "./runContext.testkit.js";
 
 const one = `Feature: one
 
@@ -21,13 +21,6 @@ const two = `Feature: two
   Scenario: the scenario in two
     Given a fixture
 `;
-
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-03T00:00:00.000Z"),
-  sourceSha: null,
-};
 
 const shared: SharedScnCode[] = [
   {

@@ -3,8 +3,9 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { RunContext } from "../provenance/provenance.js";
 import { renderMarkdown } from "./markdown.js";
+import { sectionCtxNextDay as ctx } from "./runContext.testkit.js";
+import { sectionUnder } from "./renderedSection.testkit.js";
 
 const corpus = `@CVT
 Feature: fixture fitness corpus
@@ -36,15 +37,6 @@ jobs:
         run: pnpm lint:bar
 `;
 
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-05T12:00:00.000Z"),
-  sourceSha: null,
-  toolSha: null,
-  toolVersion: "0.0.0",
-};
-
 function reconcile(barCitation: string): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     featureSources: [corpus],
@@ -60,12 +52,7 @@ function reconcile(barCitation: string): EvidenceReconciliation {
 const heading = CORE_MESSAGES[CoreMessage.StaticChecksHeading];
 const counts = CORE_MESSAGES[CoreMessage.StaticChecksCounts];
 
-function section(lines: readonly string[]): string[] {
-  const start = lines.indexOf(heading);
-  expect(start).toBeGreaterThanOrEqual(0);
-  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  return lines.slice(start, next === -1 ? lines.length : next);
-}
+const section = sectionUnder(heading);
 
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");

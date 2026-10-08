@@ -1,38 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { RunContext } from "../provenance/provenance.js";
 import { renderMarkdown } from "./markdown.js";
-
-const ci = `name: fixture CI
-jobs:
-  quality:
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Unit tests
-        run: pnpm test
-      - name: Lint
-        run: pnpm lint
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-04T12:00:00.000Z"),
-  sourceSha: null,
-  toolSha: null,
-  toolVersion: "0.0.0",
-};
+import { sectionCtx as ctx } from "./runContext.testkit.js";
+import { sectionUnder } from "./renderedSection.testkit.js";
+import { unitTestsAndLintCi as ci, feature } from "../evidenceReconciliation.testkit.js";
 
 const tiers = ["unit", "integration", "e2e", "performance"];
 
@@ -57,12 +29,7 @@ function reportLines(runners: Record<string, string | null>): string[] {
 
 const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
 
-function section(lines: readonly string[]): string[] {
-  const start = lines.indexOf(heading);
-  expect(start).toBeGreaterThanOrEqual(0);
-  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  return lines.slice(start, next === -1 ? lines.length : next);
-}
+const section = sectionUnder(heading);
 
 const notATier = (key: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`;
 

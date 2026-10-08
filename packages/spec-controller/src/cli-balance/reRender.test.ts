@@ -1,44 +1,15 @@
-import { describe, it, expect, vi, afterAll } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { cliRegistry } from "../cli-registry.js";
-
-function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
-  vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(new Date("2026-09-27T12:00:00.000Z"));
-  try {
-    const { stdout, exitCode } = runBalanceCaptured(argv);
-    return { stdout, exitCode };
-  } finally {
-    vi.useRealTimers();
-  }
-}
+import { headlineExit } from "./balanceRun.testkit.js";
+import { liveSaver, runPinned } from "./savedRun.testkit.js";
 
 const scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
-
-function saveLive(name: string, argv: readonly string[]): { json: string; md: string; exitCode: number } {
-  const json = join(scratch, `${name}.json`);
-  const md = join(scratch, `${name}.md`);
-  const live = runPinned([...argv, "--format", `md:${md}`, "--format", `json:${json}`]);
-  return { json, md, exitCode: live.exitCode };
-}
-
-describe("[SCN-RMD-007] the markdown regenerates from a saved report byte-identical to the direct render, and exits the code its saved verdict names", () => {
-  it("regenerates the out-of-balance roundtrip report and exits the 1 the live run exited", () => {
-    const saved = saveLive("roundtrip", [
-      "--features", "tests/fixtures/roundtrip/features",
-      "--vitest", "tests/fixtures/roundtrip/vitest.json",
-    ]);
-    expect(saved.exitCode).toBe(1);
-
-    const regenerated = runPinned(["--render-from-json", saved.json]);
-    expect(regenerated.stdout).toBe(readFileSync(saved.md, "utf8"));
-    expect(regenerated.exitCode).toBe(saved.exitCode);
-  });
-});
+const saveLive = liveSaver(scratch);
 
 function fixtureArgv(fixture: string): string[] {
   const dir = `tests/fixtures/${fixture}`;
@@ -47,13 +18,6 @@ function fixtureArgv(fixture: string): string[] {
     if (existsSync(`${dir}/${file}`)) argv.push(flag, `${dir}/${file}`);
   }
   return argv;
-}
-
-function headlineExit(stdout: string): number | undefined {
-  const after = stdout.split("### Run verdict")[1] ?? "";
-  const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
-  const match = /\(exit (\d)\)$/.exec(line);
-  return match ? Number(match[1]) : undefined;
 }
 
 describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its verdict names, and its headline names the same code", () => {

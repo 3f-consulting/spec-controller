@@ -11,13 +11,7 @@ import type {
   Ledger,
   ScenarioReconciliation,
 } from "../model.js";
-import { summaryOf } from "./evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "./evidenceReconciliation.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one account, never to none", () => {
   const namedScenarios: Scenario[] = [

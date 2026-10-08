@@ -3,15 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readHeaderCodes } from "./readParts.js";
-
-function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
-}
+import { thrownBy } from "./answered.testkit.js";
 
 const made: string[] = [];
 

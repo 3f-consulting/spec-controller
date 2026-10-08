@@ -1,35 +1,17 @@
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, isAbsolute, join } from "node:path";
-import { runAllocate } from "./cli.js";
+import { isAbsolute, join } from "node:path";
+import { git, writeInto, scenarioBlock } from "./repository.testkit.js";
+import { allocateIn } from "./answered.testkit.js";
 
 const created: string[] = [];
-
-function git(cwd: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
 
 function freshDirectory(prefix: string): string {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   created.push(dir);
   return dir;
-}
-
-function writeInto(root: string, path: string, content: string): void {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
-}
-
-function scenarioBlock(code: string, n: number): string {
-  return `  @${code} @unit\n  Scenario: scenario ${n}\n    Given a step\n`;
 }
 
 function corpusCarrying(code: string): string {
@@ -57,30 +39,6 @@ function linkedWorktreeOfShallowClone(): string {
   const worktree = join(home, "worktree");
   git(clone, ["worktree", "add", "-q", worktree]);
   return worktree;
-}
-
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
-
-function allocateIn(cwd: string, argv: string[]): Answered {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockReturnValue(cwd);
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  runAllocate(argv);
-  const exitCode = process.exitCode;
-  vi.restoreAllMocks();
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode };
 }
 
 afterEach(() => {

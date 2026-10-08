@@ -3,17 +3,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, wr
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
-
-function usageStatusOf(run: () => unknown): number | undefined {
-  try {
-    run();
-    return undefined;
-  } catch (err) {
-    const code = (err as { exitCode?: unknown }).exitCode;
-    if (typeof code !== "number") throw err;
-    return code;
-  }
-}
+import { usageStatusOf } from "../usageStatus.testkit.js";
 
 const TARGET = "unwritable";
 const RUN_ID = "r1";

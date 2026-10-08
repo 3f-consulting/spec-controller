@@ -1,18 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { main } from "../main.js";
-
-function git(repo: string, args: readonly string[]): void {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-}
+import { runGit as git } from "./repository.testkit.js";
 
 function repositoryHeaded(part: string, code: string): string {
   const repo = realpathSync(mkdtempSync(join(tmpdir(), "main-allocate-")));

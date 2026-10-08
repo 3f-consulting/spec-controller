@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
-import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpSync, mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
+import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.testkit.js";
+import { thrownBy } from "./answered.testkit.js";
 
 const LOG_WITH_MESSAGE = [
   "commit 0123456789abcdef0123456789abcdef01234567",
@@ -96,23 +96,6 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen — a remov
   });
 });
 
-function git(repo: string, args: readonly string[]): void {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-}
-
-const made: string[] = [];
-
-function freshDirectory(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
-}
-
 function templateRepository(): string {
   const repo = freshDirectory("allocate-history-");
   git(repo, ["init", "-q", "-b", "main"]);
@@ -136,14 +119,6 @@ function repositoryWithHistory(): string {
   return repo;
 }
 
-const taken: Array<() => void> = [];
-
-function withhold(path: string, mode: number): void {
-  const before = statSync(path).mode & 0o7777;
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, before));
-}
-
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
@@ -151,15 +126,6 @@ afterEach(() => {
 afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
-
-function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
-}
 
 describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
   it("refuses history whose loose objects it may not read", () => {

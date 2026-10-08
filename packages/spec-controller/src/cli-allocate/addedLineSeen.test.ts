@@ -1,19 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { runAllocate } from "./cli.js";
-
-function git(cwd: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
+import { join } from "node:path";
+import { git, writeInto, commitAllReturningHash as commitAll, lines } from "./repository.testkit.js";
+import { allocateInGuarded as allocateIn } from "./answered.testkit.js";
 
 const repositories: string[] = [];
 
@@ -22,21 +12,6 @@ function newRepository(): string {
   repositories.push(repo);
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
-}
-
-function writeInto(root: string, path: string, content: string): void {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
-}
-
-function commitAll(repo: string, message: string): string {
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", message]);
-  return git(repo, ["log", "-1", "--format=%h"]).trim();
-}
-
-function lines(...texts: string[]): string {
-  return texts.map((text) => `${text}\n`).join("");
 }
 
 // Ten lines, so a line appended after them starts the patch's new side at a two-digit line.
@@ -60,32 +35,6 @@ function commitOnUnmergedBranch(repo: string, path: string, branchContent: strin
   const commit = commitAll(repo, "an unmerged scenario");
   git(repo, ["switch", "-q", "main"]);
   return commit;
-}
-
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
-
-function allocateIn(cwd: string, argv: string[]): Answered {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockReturnValue(cwd);
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  try {
-    runAllocate(argv);
-  } finally {
-    vi.restoreAllMocks();
-  }
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
 }
 
 afterEach(() => {

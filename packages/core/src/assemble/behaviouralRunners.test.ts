@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
-import type { EvidenceReconciliation } from "./renderInput.js";
+import { runnersReconciler } from "./runnerTiers.testkit.js";
+import { feature } from "../evidenceReconciliation.testkit.js";
 
 const ci = `name: fixture CI
 jobs:
@@ -17,30 +17,9 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 `;
 
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
 const scripts = { test: "vitest run", lint: "eslint ." };
 
-function reconcile(runners?: Record<string, string | null>): EvidenceReconciliation {
-  const specController = runners === undefined ? {} : { runners };
-  const packageJson = { scripts, specController } as Parameters<
-    typeof evidenceReconciliationFromSources
-  >[0]["packageJson"];
-  return evidenceReconciliationFromSources({
-    featureSources: [feature],
-    untaggedScenarios: [],
-    packageJson,
-    ciSources: [ci],
-    ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
-    deferralTags: [],
-  });
-}
+const reconcile = runnersReconciler(feature, ci, scripts);
 
 describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
   it("posts every step of the pipeline to the suspense row, each counted run and uncited, and carries no runner account", () => {

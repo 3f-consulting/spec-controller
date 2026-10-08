@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
-import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
-import type { EvidenceReconciliation } from "./renderInput.js";
+import { checkStepReconciler } from "./checkStep.testkit.js";
 
 const corpus = `@CVT
 Feature: a converted target's fitness corpus
@@ -55,18 +54,7 @@ const record: CiStepRecord = {
   "dump-the-step-record": { outcome: "success", conclusion: "success" },
 };
 
-function reconcile(): EvidenceReconciliation {
-  return evidenceReconciliationFromSources({
-    featureSources: [corpus],
-    untaggedScenarios: [],
-    packageJson: manifest,
-    ciSources: [ci],
-    ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
-    deferralTags: [],
-    ciStepRecord: record,
-  });
-}
+const reconcile = checkStepReconciler(corpus, manifest, ci, record);
 
 describe("[SCN-LNT-021] a static check's step the run's record says succeeded credits its own row", () => {
   it("credits each row by the step citing its OWN @SCN, and both balance", () => {

@@ -6,31 +6,11 @@ import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
-
-const reportLedger: Ledger = reconcile(
-  [
-    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-  ],
-  [{ qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" }],
-);
-
-const ctx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: { features: "../an-adopters-repository/features" },
-  runStart: new Date("2026-07-02T08:17:53.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-};
+import { reportCtx as ctx } from "./runContext.testkit.js";
+import { reportLedger } from "./renderInput.testkit.js";
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,

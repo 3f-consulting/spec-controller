@@ -1,32 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { runAllocate } from "./cli.js";
-
-function git(cwd: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
-
-function writeInto(root: string, path: string, content: string): void {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
-}
-
-const made: string[] = [];
-
-function freshDirectory(prefix: string): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-  made.push(dir);
-  return dir;
-}
+import { mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { git, writeInto, made, freshDirectory, taken, withhold } from "./repository.testkit.js";
+import { allocateFrom, expectAnsweredWith } from "./answered.testkit.js";
+import type { Answered } from "./answered.testkit.js";
 
 const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
 
@@ -47,40 +24,6 @@ function copyWithoutGit(): string {
   return copy;
 }
 
-const taken: Array<() => void> = [];
-
-function withhold(path: string, mode: number): void {
-  const before = statSync(path).mode & 0o7777;
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, before));
-}
-
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
-
-function allocateFrom(cwd: string): Answered {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockReturnValue(cwd);
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  try {
-    runAllocate(["ONE"]);
-  } finally {
-    vi.restoreAllMocks();
-  }
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
-}
-
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
   while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
@@ -96,12 +39,6 @@ function expectRefusedNaming(answered: Answered, subject: string, path: string):
   expect(answered.stderr.endsWith(")\n")).toBe(true);
   expect(answered.stderr.split("\n")).toHaveLength(2);
   expect(answered.stderr.slice(opening.length, -2)).toMatch(/^(EACCES|EPERM): /);
-}
-
-function expectAnsweredWith(answered: Answered, code: string): void {
-  expect(answered.exitCode).toBeUndefined();
-  expect(answered.stderr).not.toContain("usage error");
-  expect(answered.stdout).toBe(`${code}\n`);
 }
 
 interface Withheld {

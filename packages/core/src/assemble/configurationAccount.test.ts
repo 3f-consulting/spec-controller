@@ -1,35 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-
-const ci = `name: fixture CI
-jobs:
-  quality:
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Unit tests
-        run: pnpm test
-      - name: Types
-        run: pnpm typecheck
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
+import { block } from "./configurationBlock.testkit.js";
+import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.testkit.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
-
-const block = {
-  runners: { unit: "vitest", performance: null },
-  notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
-  deferralTags: ["deferred"],
-};
 
 function reconcile(specController: unknown): EvidenceReconciliation {
   const packageJson = (specController === undefined ? { scripts } : { scripts, specController }) as Parameters<

@@ -1,19 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { runAllocate } from "./cli.js";
-
-function git(cwd: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
+import { git, taken, withhold } from "./repository.testkit.js";
+import { allocateFrom, expectAnsweredWith } from "./answered.testkit.js";
+import type { Answered } from "./answered.testkit.js";
 
 function writeInto(root: string, path: string, content: string | Buffer): void {
   mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -34,40 +25,6 @@ function repository(): string {
   return repo;
 }
 
-const taken: Array<() => void> = [];
-
-function withhold(path: string, mode: number): void {
-  const before = statSync(path).mode & 0o7777;
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, before));
-}
-
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
-
-function allocateFrom(cwd: string): Answered {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockReturnValue(cwd);
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  try {
-    runAllocate(["ONE"]);
-  } finally {
-    vi.restoreAllMocks();
-  }
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
-}
-
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
   while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
@@ -83,12 +40,6 @@ function refusalReason(answered: Answered, subject: string, path: string): strin
   expect(answered.stderr.endsWith(")\n")).toBe(true);
   expect(answered.stderr.split("\n")).toHaveLength(2);
   return answered.stderr.slice(opening.length, -2);
-}
-
-function expectAnsweredWith(answered: Answered, code: string): void {
-  expect(answered.exitCode).toBeUndefined();
-  expect(answered.stderr).not.toContain("usage error");
-  expect(answered.stdout).toBe(`${code}\n`);
 }
 
 const CARRIERS = {

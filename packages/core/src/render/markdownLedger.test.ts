@@ -3,28 +3,10 @@ import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
-
-const ctx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: {
-    features: "../an-adopters-repository/features",
-    vitest: "../an-adopters-repository/vitest-report.json",
-  },
-  runStart: new Date("2026-06-27T08:17:53.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
-  toolVersion: "0.1.0",
-};
+import { adopterReportCtx as ctx } from "./runContext.testkit.js";
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
   const scenarios: Scenario[] = [
@@ -247,40 +229,6 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the na
     const md = renderMarkdown(__er(balanced), ctx);
     expect(md).not.toContain("carry no @SCN tag");
     expect(md).not.toContain("## Warnings");
-  });
-});
-
-describe("[SCN-USG-001] the markdown report renders the Static checks section", () => {
-  const emptyBalance: Ledger = reconcile([], []);
-
-  const twoRunningOneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "fitness" }] }],
-    [
-      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-    ]
-  );
-  const oneRunningNoneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "fitness" }] }],
-    [{ qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true }]
-  );
-
-  it("renders '### Static checks' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
-    const md = renderMarkdown(__er(twoRunningOneUncited, false, true), ctx);
-    expect(md).toContain("### Static checks");
-    expect(md).toContain("2 static check(s) run, 1 uncited static check(s).");
-    expect(md).not.toContain("- lint:bar");
-  });
-
-  it("shows the counts line but omits the list when every running guard is named", () => {
-    const md = renderMarkdown(__er(oneRunningNoneUncited, false, true), ctx);
-    expect(md).toContain("1 static check(s) run, 0 uncited static check(s).");
-    expect(md).not.toContain("- lint:foo");
-  });
-
-  it("omits the Static checks section when the static-check axis is not in play (back-compat)", () => {
-    const md = renderMarkdown(__er(emptyBalance), ctx);
-    expect(md).not.toContain("### Static checks");
   });
 });
 

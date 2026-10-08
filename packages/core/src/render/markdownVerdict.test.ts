@@ -3,15 +3,9 @@ import { renderMarkdown } from "./markdown.js";
 import type { Ledger, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
+import { adopterReportCtx as ctx } from "./runContext.testkit.js";
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 function qcr(
   fields: Parameters<typeof makeQualityCheckReconciliation>[0],
@@ -27,18 +21,6 @@ function qcr(
       : {}),
   });
 }
-
-const ctx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: {
-    features: "../an-adopters-repository/features",
-    vitest: "../an-adopters-repository/vitest-report.json",
-  },
-  runStart: new Date("2026-06-27T08:17:53.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
-  toolVersion: "0.1.0",
-};
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
   const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";

@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { temporaryDirectoryIn } from "./corpusFixtures.testkit.js";
 import { readEvidenceObligations } from "./ingestQualityChecks.js";
 
 const made: string[] = [];
@@ -10,11 +10,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-function temporaryDirectory(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
-}
+const temporaryDirectory = temporaryDirectoryIn(made);
 
 function corpus(files: Record<string, string>): string {
   const dir = join(temporaryDirectory("scn-stg-017-"), "features");

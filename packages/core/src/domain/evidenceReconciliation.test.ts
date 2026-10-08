@@ -3,7 +3,6 @@ import { reconcile } from "./evidenceReconciliation.js";
 import type {
   Scenario,
   EvidenceObservation,
-  ScenarioReconciliation,
 } from "../model.js";
 
 describe("[SCN-LDG-001] a scenario whose required evidence exists and passes is reported as balanced", () => {
@@ -304,40 +303,5 @@ describe("[SCN-LDG-009] a scenario with zero rows on both sides is reported as b
     expect(row?.verdict).toBe("out-of-balance");
     expect(row?.reconcilingItems).toEqual([{ qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } }]);
     expect(row?.reconcilingItems.some((r) => r.outcome === "both-missing")).toBe(false);
-  });
-});
-
-describe("[SCN-WRN-001] a scenario naming no evidence obligations is reported as a both-missing reconciliation", () => {
-  it("reconciles the zero-evidenceObligation scenario as a both-missing out-of-balance ROW, NOT a warning excluded from the balance", () => {
-    const scenarios: Scenario[] = [{ scnId: "SCN-WRN-001", evidenceObligations: [] }];
-    const evidenceObservations: EvidenceObservation[] = [];
-
-    const balance = reconcile(scenarios, evidenceObservations);
-
-    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-001");
-    expect(row?.kind).toBe("scenario");
-    expect(row?.verdict).toBe("out-of-balance");
-    expect(row?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
-  });
-
-  it("keeps a scenario that DOES name an evidenceObligation on the verdict axis, alongside a both-missing scenario (the WITH-evidenceObligations path is untouched)", () => {
-    const scenarios: Scenario[] = [
-      { scnId: "SCN-WRN-001", evidenceObligations: [] },
-      { scnId: "SCN-WRN-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ];
-    const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-WRN-002", status: "passed" },
-    ];
-
-    const balance = reconcile(scenarios, evidenceObservations);
-
-    const bothMissing = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-001");
-    expect(bothMissing?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
-    const verdictScenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-002");
-    expect(verdictScenario?.verdict).toBe("balanced");
-    expect(balance.scenarioReconciliations.map((s) => s.scnId)).toEqual([
-      "SCN-WRN-001",
-      "SCN-WRN-002",
-    ]);
   });
 });

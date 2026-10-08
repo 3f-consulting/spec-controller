@@ -1,16 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { headlineExit } from "./balanceRun.testkit.js";
 
 function runInProcess(argv: readonly string[]): { stdout: string; exitCode: number } {
   const { stdout, exitCode } = runBalanceCaptured(argv);
   return { stdout, exitCode };
-}
-
-function headlineExit(stdout: string): number | undefined {
-  const after = stdout.split("### Run verdict")[1] ?? "";
-  const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
-  const match = /\(exit (\d)\)$/.exec(line);
-  return match ? Number(match[1]) : undefined;
 }
 
 const PENDING_ONLY = [

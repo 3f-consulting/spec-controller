@@ -4,31 +4,13 @@ import type { Ledger } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
-import type { RunContext } from "../provenance/provenance.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
+import { adopterReportCtx as ctx } from "./runContext.testkit.js";
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 const balance: Ledger = reconcile(
   [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
   [{ qualityCheck: "unit", scnId: "SCN-RPT-001", status: "passed" }],
 );
-
-const ctx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: {
-    features: "../an-adopters-repository/features",
-    vitest: "../an-adopters-repository/vitest-report.json",
-  },
-  runStart: new Date("2026-06-27T08:17:53.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
-  toolVersion: "0.1.0",
-};
 
 describe("[SCN-RPT-001] the markdown report opens with a Run provenance header", () => {
   it("renders all four provenance facts: target repo, inputs used, UTC timestamp, source SHA", () => {

@@ -2,59 +2,10 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { RunContext } from "../provenance/provenance.js";
 import { renderMarkdown } from "./markdown.js";
-
-const ci = `name: fixture CI
-jobs:
-  quality:
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Unit tests
-        run: pnpm test
-`;
-
-const nightly = `name: fixture nightly
-jobs:
-  sweep:
-    steps:
-      - name: Circular check
-        run: pnpm lint:circular
-      - name: Depth check
-        run: pnpm lint:depth
-  audit:
-    steps:
-      - name: Audit
-        run: pnpm audit --audit-level=high
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
-const packageJson = {
-  scripts: {
-    test: "vitest run",
-    "lint:circular": "madge --circular",
-    "lint:depth": "depcruise src",
-  },
-  specController: { runners: { unit: "vitest" } },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
-
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-04T12:00:00.000Z"),
-  sourceSha: null,
-  toolSha: null,
-  toolVersion: "0.0.0",
-};
+import { sectionCtx as ctx } from "./runContext.testkit.js";
+import { sectionUnder, cells } from "./renderedSection.testkit.js";
+import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
 
 function reconcile(
   ciSources: readonly string[],
@@ -74,18 +25,7 @@ function reconcile(
 const heading = CORE_MESSAGES[CoreMessage.DiscoveryScopeHeading];
 const tableHeader = CORE_MESSAGES[CoreMessage.DiscoveryScopeTableHeader];
 
-function section(lines: readonly string[]): string[] {
-  const start = lines.indexOf(heading);
-  expect(start).toBeGreaterThanOrEqual(0);
-  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  return lines.slice(start, next === -1 ? lines.length : next);
-}
-
-const cells = (row: string): string[] =>
-  row
-    .split("|")
-    .slice(1, -1)
-    .map((cell) => cell.trim());
+const section = sectionUnder(heading);
 
 function rendered(reconciliation: EvidenceReconciliation): string[] {
   return section(renderMarkdown(reconciliation, ctx).split("\n"));

@@ -8,16 +8,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
 import { duplicateFeatureCodes, foreignScenarioCodes } from "../parse/scenarioCodeErrors.js";
 import type { CorpusFile } from "../parse/scenarioCodeErrors.js";
-import type { RunContext } from "../provenance/provenance.js";
-
-const ctx: RunContext = {
-  target: "scenario-code-errors-target",
-  inputs: { features: "features" },
-  runStart: new Date("2026-09-24T09:00:00.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
-  toolVersion: "0.1.0",
-};
+import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.testkit.js";
 
 function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(
@@ -35,12 +26,6 @@ function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): Evidenc
   );
   return { ...reconciliation, scenarioCodeErrors };
 }
-
-const FOREIGN: ScenarioCodeError = {
-  kind: "foreign-scn-code",
-  files: ["two.feature"],
-  message: "two.feature carries the feature code @TWO, but holds the scenario @SCN-ONE-002, whose feature part names ONE.",
-};
 
 describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
   const md = renderMarkdown(balancedWith([FOREIGN]), ctx);
@@ -205,34 +190,6 @@ describe("[SCN-STG-023] a corpus with no feature file is never stated clean", ()
     expect(countBefore(statement, "feature code")).toBeUndefined();
     expect(statement).toMatch(/\bno feature file\b/i);
     expect(md).toContain(DUPLICATE_LINE);
-  });
-});
-
-describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in one run: exit 1, both reported", () => {
-  const outOfBalance: EvidenceReconciliation = {
-    ...evidenceReconciliationOf(
-      [
-        { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-      ],
-      [{ qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" }],
-      [],
-      true,
-      false
-    ),
-    scenarioCodeErrors: [FOREIGN],
-  };
-  const md = renderMarkdown(outOfBalance, ctx);
-  const headline = md.split("\n").find((line) => line.startsWith("**SCENARIO CODE ERRORS**")) ?? "";
-
-  it("heads the verdict with the scenario code error, and names the accounts out of balance too", () => {
-    expect(headline).toMatch(/accounts do not agree/);
-    expect(headline).toMatch(/\(exit 1\)$/);
-  });
-
-  it("lists the error and still carries the out-of-balance account", () => {
-    expect(md).toContain(`- \`foreign-scn-code\` — ${FOREIGN.message}`);
-    expect(md).toMatch(/\| SCN-ONE-002 \|[^\n]*out-of-balance/);
   });
 });
 

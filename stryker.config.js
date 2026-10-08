@@ -6,6 +6,7 @@ export default {
   mutate: [
     "packages/core/src/domain/**/*.ts",
     "!packages/core/src/domain/**/*.test.ts",
+    "!packages/core/src/domain/**/*.testkit.ts",
     "!packages/core/src/domain/messages.ts",
   ],
   reporters: ["progress", "clear-text", "html", "json"],

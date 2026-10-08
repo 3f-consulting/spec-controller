@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
+import { rowsOf } from "./checkStep.testkit.js";
 
 const annotatedCorpus = `@CVT
 Feature: an annotated target's fitness corpus
@@ -48,15 +49,6 @@ function reconcileAnnotated(): EvidenceReconciliation {
     runtimeObservations: [],
     deferralTags: [],
   });
-}
-
-function rowsOf(reconciliation: EvidenceReconciliation) {
-  return reconciliation.ledger.scenarioReconciliations.map((row) => [
-    row.scnId,
-    row.kind,
-    row.verdict,
-    row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
-  ]);
 }
 
 describe("[SCN-LNT-031] a check step stating its row's code supplies that row's citation", () => {

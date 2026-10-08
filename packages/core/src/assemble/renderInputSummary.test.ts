@@ -5,30 +5,10 @@ import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-
-const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
-  ledger,
-});
-
-const reportLedger: Ledger = reconcile(
-  [
-    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-  ],
-  [{ qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" }],
-);
-
-const ctx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: { features: "../an-adopters-repository/features" },
-  runStart: new Date("2026-07-02T08:17:53.000Z"),
-  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
-};
+import { reportCtx as ctx } from "./runContext.testkit.js";
+import { reportLedger } from "./renderInput.testkit.js";
+import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
   const rmd005Scenarios: Scenario[] = [
@@ -239,100 +219,5 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
     ]);
-  });
-});
-
-describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
-  const noEvidenceObligationBalance: Ledger = reconcile(
-    [{ scnId: "SCN-LDG-008", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [
-      { qualityCheck: "unit", scnId: "SCN-LDG-008", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/no-evidence-obligation.test.ts" },
-    ],
-  );
-
-  it("carries no-evidence-obligation as its OWN entry in summary.byOutcome", () => {
-    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
-    expect(report.summary.evidenceObligations.byOutcome["no-evidence-obligation"]).toBe(1);
-  });
-
-  it("keeps Test-volume onScenario INCLUDING no-evidence-obligation (cites a scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.no-evidence-obligation", () => {
-    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
-    expect(report.summary.testVolume!.onScenario).toBe(2);
-    const noEvidenceObligation = report.summary.evidenceObligations.byOutcome["no-evidence-obligation"];
-    const matched = report.summary.testVolume!.onScenario - noEvidenceObligation;
-    expect(matched).toBe(1);
-    const row = noEvidenceObligationBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
-    const unitEvidenceObligationCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
-    expect(unitEvidenceObligationCredits).toBe(matched);
-    expect(report.summary.testVolume!.onScenario - matched).toBe(noEvidenceObligation);
-  });
-
-  it("keeps the Test-volume identity 3-termed (no-evidence-obligation is a SUBSET of onScenario, not a 4th term)", () => {
-    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
-    const tv = report.summary.testVolume!;
-    expect(tv.totalEvidenceObservations).toBe(
-      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario
-    );
-  });
-});
-
-describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate from the verdict counts", () => {
-  const pendingBalance: Ledger = reconcile(
-    [
-      {
-        scnId: "SCN-PDX-001",
-        evidenceObligations: [
-          { qualityCheck: "unit", pending: true },
-          { qualityCheck: "integration", pending: true },
-        ],
-      },
-      {
-        scnId: "SCN-PDX-002",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-      },
-      { scnId: "SCN-PDX-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ],
-    [{ qualityCheck: "unit", scnId: "SCN-PDX-003", status: "passed" }],
-  );
-
-  it("materialises summary.pending counting Pending Items across the rows", () => {
-    const report = assembleRenderInput(__er(pendingBalance), ctx);
-    expect(report.summary.pending).toBe(3);
-  });
-
-  it("counts Pending ITEMS, not scenarios carrying them (one row alone carries two)", () => {
-    const report = assembleRenderInput(__er(pendingBalance), ctx);
-    const scenariosCarryingPending = pendingBalance.scenarioReconciliations.filter(
-      (s) => (s.pendingItems ?? []).length > 0
-    ).length;
-    expect(scenariosCarryingPending).toBe(2);
-    expect(report.summary.pending).not.toBe(scenariosCarryingPending);
-  });
-
-  it("keeps the tally SEPARATE from the scenario balanced / out-of-balance counts", () => {
-    const report = assembleRenderInput(__er(pendingBalance), ctx);
-    expect(report.summary.scenarioReconciliations).toEqual({ total: 3, balanced: 2, outOfBalance: 1, phantom: 0, suspense: 0 });
-    expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.balanced);
-    expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.outOfBalance);
-  });
-
-  it("NEVER folds a Pending Item into the evidence-obligation counts (never an out-of-balance outcome, at any count)", () => {
-    const report = assembleRenderInput(__er(pendingBalance), ctx);
-    expect(report.summary.evidenceObligations.total).toBe(2);
-    expect(report.summary.evidenceObligations.outOfBalance).toBe(1);
-    expect(report.summary.evidenceObligations.byOutcome.satisfied).toBe(1);
-    expect(report.summary.evidenceObligations.byOutcome.missing).toBe(1);
-    expect(report.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
-  });
-
-  it("is always present — a pure balance derive reading 0 when no scenario names a pending obligation", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx);
-    expect(report.summary.pending).toBe(0);
-  });
-
-  it("carries the tally through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));
-    expect(parsed.summary.pending).toBe(3);
   });
 });

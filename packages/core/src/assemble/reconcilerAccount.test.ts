@@ -1,39 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-
-const ci = `name: fixture CI
-jobs:
-  ci:
-    steps:
-      - name: Dump this run's step record
-        env:
-          STEPS_JSON: \${{ toJSON(steps) }}
-        run: printf '%s' "$STEPS_JSON" > ci-steps.json
-      - name: Self-reconciliation balance
-        run: pnpm exec spec-controller balance --features features --ci .github/workflows
-      - name: Sweep check
-        run: pnpm lint:sweep
-`;
-
-const ciWithoutReconciler = `name: fixture CI
-jobs:
-  ci:
-    steps:
-      - name: Sweep check
-        run: pnpm lint:sweep
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
-const packageJson = {
-  scripts: { "lint:sweep": "madge --circular" },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
 
 function reconcile(
   ciSources: readonly string[],

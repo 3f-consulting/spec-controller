@@ -1,15 +1,10 @@
 import { afterAll, afterEach, describe, it, expect } from "vitest";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { walkTree } from "./readTree.js";
-
-const taken: Array<() => void> = [];
-
-function withhold(path: string, mode: number): void {
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, 0o755));
-}
+import { taken, withholdDirectory as withhold } from "./repository.testkit.js";
+import { thrownBy } from "./answered.testkit.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
@@ -18,15 +13,6 @@ afterEach(() => {
 afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
-
-function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
-}
 
 const made: string[] = [];
 

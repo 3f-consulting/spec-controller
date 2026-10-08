@@ -56,7 +56,7 @@ export default [
     rules: thresholdRules(PRODUCTION_THRESHOLD),
   },
   {
-    files: ["**/*.test.ts"],
+    files: ["**/*.test.ts", "**/*.testkit.ts"],
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(TEST_THRESHOLD),
   },

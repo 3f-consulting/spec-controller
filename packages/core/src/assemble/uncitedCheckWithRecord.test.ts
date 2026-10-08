@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
+import { rowsOf } from "./checkStep.testkit.js";
 
 const corpus = `@FIT
 Feature: a target's fitness corpus
@@ -49,15 +50,6 @@ function reconcileWithRecord(): EvidenceReconciliation {
     deferralTags: [],
     ciStepRecord: { "SCN-AAA-001": { outcome: "success", conclusion: "success" } },
   });
-}
-
-function rowsOf(reconciliation: EvidenceReconciliation) {
-  return reconciliation.ledger.scenarioReconciliations.map((row) => [
-    row.scnId,
-    row.kind,
-    row.verdict,
-    row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
-  ]);
 }
 
 describe("[SCN-LNT-029] a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report", () => {

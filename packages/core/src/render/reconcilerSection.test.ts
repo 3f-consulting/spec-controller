@@ -1,50 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { RunContext } from "../provenance/provenance.js";
 import { renderMarkdown } from "./markdown.js";
-
-const ci = `name: fixture CI
-jobs:
-  ci:
-    steps:
-      - name: Dump this run's step record
-        env:
-          STEPS_JSON: \${{ toJSON(steps) }}
-        run: printf '%s' "$STEPS_JSON" > ci-steps.json
-      - name: Self-reconciliation balance
-        run: pnpm exec spec-controller balance --features features --ci .github/workflows
-      - name: Sweep check
-        run: pnpm lint:sweep
-`;
-
-const ciWithoutReconciler = `name: fixture CI
-jobs:
-  ci:
-    steps:
-      - name: Sweep check
-        run: pnpm lint:sweep
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
-const packageJson = {
-  scripts: { "lint:sweep": "madge --circular" },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
-
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-04T12:00:00.000Z"),
-  sourceSha: null,
-  toolSha: null,
-  toolVersion: "0.0.0",
-};
+import { sectionCtx as ctx } from "./runContext.testkit.js";
+import { sectionUnder } from "./renderedSection.testkit.js";
+import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
 
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({
@@ -66,12 +26,7 @@ const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
 const stepLine = (step: string, whatItIs: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](step, whatItIs)}`;
 
-function section(lines: readonly string[]): string[] {
-  const start = lines.indexOf(heading);
-  expect(start).toBeGreaterThanOrEqual(0);
-  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  return lines.slice(start, next === -1 ? lines.length : next);
-}
+const section = sectionUnder(heading);
 
 describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("names each reconciler step on its own list line, with what that step does, under a heading and a blank line", () => {

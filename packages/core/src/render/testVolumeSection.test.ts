@@ -4,8 +4,9 @@ import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { EvidenceObservation } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
 import { renderMarkdown } from "./markdown.js";
+import { sectionCtxNextDay as ctx } from "./runContext.testkit.js";
+import { sectionUnder } from "./renderedSection.testkit.js";
 
 const corpus = `@VOL
 Feature: fixture volume corpus
@@ -25,15 +26,6 @@ const observations: EvidenceObservation[] = [
   { qualityCheck: "e2e", scnId: null, status: "failed" },
 ];
 
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-05T12:00:00.000Z"),
-  sourceSha: null,
-  toolSha: null,
-  toolVersion: "0.0.0",
-};
-
 const reconcile = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({
     featureSources: [corpus],
@@ -48,12 +40,7 @@ const heading = CORE_MESSAGES[CoreMessage.TestVolumeHeading];
 const sum = CORE_MESSAGES[CoreMessage.TestVolumeSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.TestVolumeTableHeader];
 
-function section(lines: readonly string[]): string[] {
-  const start = lines.indexOf(heading);
-  expect(start).toBeGreaterThanOrEqual(0);
-  const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  return lines.slice(start, next === -1 ? lines.length : next);
-}
+const section = sectionUnder(heading);
 
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");

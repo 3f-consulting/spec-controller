@@ -2,19 +2,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
+import { executeKeptRun, RUN_MANIFEST } from "./keptRun.js";
+import { meta } from "./runManifestMeta.testkit.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const TARGET = "target";
 const RUN_ID = "r1";
-
-const meta: RunManifestMeta = {
-  sourceSha: "unknown",
-  toolSha: "unknown",
-  toolVersion: "0.0.0",
-  mode: "balance",
-  date: "2026-09-27T00:00:00.000Z",
-};
 
 let scratch: string;
 

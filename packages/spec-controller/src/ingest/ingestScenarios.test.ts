@@ -1,11 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, it, expect } from "vitest";
 
+import { discover, temporaryDirectoryIn } from "./corpusFixtures.testkit.js";
 import { parseErrorsIn } from "./gherkinValidation.js";
-import { featureCorpusParseErrors } from "./ingestQualityChecks.js";
-import { discoverFeatures, extractFeatureCode } from "./ingestScenarios.js";
+import { discoverFeatures } from "./ingestScenarios.js";
 
 const made: string[] = [];
 
@@ -13,11 +12,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-function temporaryDirectory(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
-}
+const temporaryDirectory = temporaryDirectoryIn(made);
 
 const WELL_FORMED = `@AAA
 Feature: alpha
@@ -60,17 +55,6 @@ function corpusWithTwoUnreadableFiles(): {
   writeFileSync(secondBad, CORRUPT_SCENARIO_KEYWORD);
 
   return { dir, good, firstBad, secondBad };
-}
-
-function discover(dir: string): { returned: unknown; thrown: unknown } {
-  let returned: unknown;
-  let thrown: unknown;
-  try {
-    returned = discoverFeatures(dir);
-  } catch (err) {
-    thrown = err;
-  }
-  return { returned, thrown };
 }
 
 describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the parser rejects", () => {
@@ -131,69 +115,5 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
 
     expect(discovered.map((f) => f.slug)).toEqual(["a-alpha", "b-beta", "c-gamma"]);
     expect(discovered.map((f) => f.featureCode)).toEqual(["AAA", "BBB", "CCC"]);
-  });
-});
-
-describe("[SCN-STG-024] a feature file headed by a code of two or five characters carries that code", () => {
-  it("reads the two- and five-character header codes, and not the one- or six-character ones", () => {
-    const headed = (code: string) => `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a step\n`;
-    expect(["A", "AB", "FIVEC", "SIXCHR"].map((code) => extractFeatureCode(headed(code)))).toEqual([null, "AB", "FIVEC", null]);
-  });
-});
-
-describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
-  function absentDir(): string {
-    const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
-    expect(existsSync(dir)).toBe(false);
-    return dir;
-  }
-
-  it("refuses with the corpus's own error rather than letting readdirSync's ENOENT escape", () => {
-    const { thrown } = discover(absentDir());
-
-    expect((thrown as Error | undefined)?.name).toBe("MissingFeatureCorpusError");
-    expect((thrown as { code?: string } | undefined)?.code).toBeUndefined();
-  });
-
-  it("names the directory it looked in, so the report can say what it examined", () => {
-    const dir = absentDir();
-
-    const { thrown } = discover(dir);
-
-    expect((thrown as { directory?: string }).directory).toBe(dir);
-    expect((thrown as Error).message).toContain(dir);
-  });
-
-  it("hands back nothing — an absent corpus is not an empty one at this reader", () => {
-    const { returned } = discover(absentDir());
-
-    expect(returned).toBeUndefined();
-  });
-
-  it("rethrows what is NOT an absence — a `features` path that is a FILE is a different fault", () => {
-    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
-    writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
-
-    const { thrown } = discover(notADirectory);
-
-    expect((thrown as Error).name).not.toBe("MissingFeatureCorpusError");
-    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
-  });
-
-  it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {
-    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
-    writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
-
-    let returned: unknown;
-    let thrown: unknown;
-    try {
-      returned = featureCorpusParseErrors(notADirectory);
-    } catch (err) {
-      thrown = err;
-    }
-
-    expect(returned).toBeUndefined();
-    expect(thrown).not.toBeInstanceOf(TypeError);
-    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
   });
 });

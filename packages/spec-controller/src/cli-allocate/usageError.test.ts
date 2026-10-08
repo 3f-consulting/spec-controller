@@ -1,20 +1,10 @@
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { runAllocate } from "./cli.js";
-
-function git(repo: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
+import { gitInRepository as git } from "./repository.testkit.js";
+import { allocateIn } from "./answered.testkit.js";
 
 const made: string[] = [];
 
@@ -27,30 +17,6 @@ function headedOneCarryingThree(): string {
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "the corpus"]);
   return repo;
-}
-
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
-
-function allocateIn(cwd: string, argv: string[]): Answered {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockReturnValue(cwd);
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  runAllocate(argv);
-  const exitCode = process.exitCode;
-  vi.restoreAllMocks();
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode };
 }
 
 afterEach(() => {

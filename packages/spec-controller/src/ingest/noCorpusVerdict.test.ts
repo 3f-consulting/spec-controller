@@ -1,9 +1,9 @@
 import { afterAll, describe, it, expect } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 
+import { CORPUS_DIR, EMPTY_CORPUS, targetMaker, type Shape } from "./corpusFixtures.testkit.js";
 import { runReconcile } from "./ingestQualityChecks.js";
 
 const made: string[] = [];
@@ -12,19 +12,9 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const CORPUS_DIR = "features";
-
-interface Shape {
-  shape: string;
-  build: (root: string) => void;
-}
+const targetFor = targetMaker(made);
 
 const NO_CORPUS_DIRECTORY: Shape = { shape: "no corpus directory", build: () => {} };
-
-const EMPTY_CORPUS: Shape = {
-  shape: "an empty corpus",
-  build: (root) => mkdirSync(join(root, CORPUS_DIR)),
-};
 
 const CORPUS_DECLARING_NOTHING: Shape = {
   shape: "a corpus declaring no scenario",
@@ -36,17 +26,6 @@ const CORPUS_DECLARING_NOTHING: Shape = {
     );
   },
 };
-
-function targetFor({ build }: Shape): string {
-  const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
-  made.push(root);
-  writeFileSync(
-    join(root, "package.json"),
-    JSON.stringify({ name: "new-client-target", scripts: {} })
-  );
-  build(root);
-  return root;
-}
 
 function verdictFor(target: Shape): string {
   const root = targetFor(target);
@@ -85,39 +64,5 @@ describe("[SCN-CLI-018] absent, empty and scenario-less corpora are one answer, 
 
   it("names the corpus directory it examined", () => {
     expect(absent()).toContain(CORPUS_DIR);
-  });
-});
-
-describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped", () => {
-  it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
-    const root = targetFor(EMPTY_CORPUS);
-    const balance = runReconcile({
-      features: join(root, CORPUS_DIR),
-      packageJson: join(root, "package.json"),
-      ci: root,
-    });
-
-    expect(balance.scenarioCodeErrors).toEqual([]);
-    expect(balance.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
-  });
-});
-
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
-  it("posts lint:foo and lint:bar alone as fitness checks when the manifest names the runners test and cucumber run", () => {
-    const balance = runReconcile({
-      features: "tests/fixtures/usg/features",
-      ci: "tests/fixtures/usg/ci.yml",
-      packageJson: "tests/fixtures/usg/package.json",
-    });
-
-    const postings = balance.ledger.scenarioReconciliations.flatMap((row) =>
-      row.evidenceObservations
-        .filter((o) => o.qualityCheck === "fitness")
-        .map((o) => [row.kind, o.staticCheck])
-    );
-    expect(postings).toEqual([
-      ["scenario", "lint:foo"],
-      ["suspense-scenario", "lint:bar"],
-    ]);
   });
 });

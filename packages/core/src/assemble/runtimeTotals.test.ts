@@ -3,7 +3,7 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import { type EvidenceReconciliation } from "./renderInput.js";
 import { renderJson } from "../render/json.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
-import type { RunContext } from "../provenance/provenance.js";
+import { fixtureCtx as ctx } from "./runContext.testkit.js";
 
 const feature = `Feature: alpha
 
@@ -25,13 +25,6 @@ const vitestResult: VitestJsonReport = {
       ],
     },
   ],
-};
-
-const ctx: RunContext = {
-  target: "fixture",
-  inputs: { features: "features" },
-  runStart: new Date("2026-10-03T00:00:00.000Z"),
-  sourceSha: null,
 };
 
 function assembled(): EvidenceReconciliation {

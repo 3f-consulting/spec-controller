@@ -1,48 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-
-const ci = `name: fixture CI
-jobs:
-  quality:
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Unit tests
-        run: pnpm test
-`;
-
-const nightly = `name: fixture nightly
-jobs:
-  sweep:
-    steps:
-      - name: Circular check
-        run: pnpm lint:circular
-      - name: Depth check
-        run: pnpm lint:depth
-  audit:
-    steps:
-      - name: Audit
-        run: pnpm audit --audit-level=high
-`;
-
-const feature = `Feature: fixture
-
-  @unit @SCN-FIX-001
-  Scenario: a fixture behaviour
-    Given a fixture
-`;
-
-const packageJson = {
-  scripts: {
-    test: "vitest run",
-    "lint:circular": "madge --circular",
-    "lint:depth": "depcruise src",
-  },
-  specController: { runners: { unit: "vitest" } },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
 
 function reconcile(
   ciSources: readonly string[],

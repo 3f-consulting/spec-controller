@@ -4,6 +4,7 @@ import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readTree } from "./readTree.js";
+import { thrownBy } from "./answered.testkit.js";
 
 function git(cwd: string, args: readonly string[]): void {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
@@ -29,15 +30,6 @@ function repositoryWithACode(): string {
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "one"]);
   return repo;
-}
-
-function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
 }
 
 afterEach(() => {
