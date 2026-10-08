@@ -90,22 +90,15 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
     expect(run.stderr).toContain(missing);
   });
 
-  it("unsound: a collection-failed suite still exits 4", () => {
+  it.each([
+    ["unsound: a collection-failed suite still exits 4", "tests/fixtures/broken"],
+    ["unsound beside a misfiled code: unsound pre-empts the scenario code error, and still exits 4", "tests/fixtures/unsound-code-error"],
+  ] as const)("%s", (_title, fixture) => {
     const run = runWithExitZero([
-      "--features", "tests/fixtures/broken/features",
-      "--vitest", "tests/fixtures/broken/vitest.json",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
-    ]);
-    expect(run.exitCode).toBe(4);
-  });
-
-  it("unsound beside a misfiled code: unsound pre-empts the scenario code error, and still exits 4", () => {
-    const run = runWithExitZero([
-      "--features", "tests/fixtures/unsound-code-error/features",
-      "--vitest", "tests/fixtures/unsound-code-error/vitest.json",
-      "--package-json", "tests/fixtures/unsound-code-error/package.json",
-      "--ci", "tests/fixtures/unsound-code-error",
+      "--features", `${fixture}/features`,
+      "--vitest", `${fixture}/vitest.json`,
+      "--package-json", `${fixture}/package.json`,
+      "--ci", fixture,
     ]);
     expect(run.exitCode).toBe(4);
   });

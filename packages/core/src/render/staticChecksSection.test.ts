@@ -71,22 +71,16 @@ const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");
 
 describe("[SCN-USG-001] a CI check no fitness scenario cites is reported as an uncited static check", () => {
-  it("renders the section as heading, blank, the counts line with the one uncited check, then one blank", () => {
-    const reconciliation = reconcile("");
+  it.each([
+    ["renders the section as heading, blank, the counts line with the one uncited check, then one blank", "", 1],
+    ["still renders the section, counting no uncited check, when every check is cited", "\n        id: SCN-CVT-002", 0],
+  ])("%s", (_title, citation, uncited) => {
+    const reconciliation = reconcile(citation);
     expect(reconciliation.summary.staticChecks).toStrictEqual({
       runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 1,
+      uncitedStaticCheckCount: uncited,
     });
-    expect(section(linesOf(reconciliation))).toStrictEqual([heading, "", counts(2, 1), ""]);
-  });
-
-  it("still renders the section, counting no uncited check, when every check is cited", () => {
-    const reconciliation = reconcile("\n        id: SCN-CVT-002");
-    expect(reconciliation.summary.staticChecks).toStrictEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 0,
-    });
-    expect(section(linesOf(reconciliation))).toStrictEqual([heading, "", counts(2, 0), ""]);
+    expect(section(linesOf(reconciliation))).toStrictEqual([heading, "", counts(2, uncited), ""]);
   });
 
   it("renders no section, and nothing in its place, for a report that carries no static-check axis", () => {

@@ -62,16 +62,23 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     "+  Scenario: scenario 1",
   ].join("\n");
 
-  it("places a removed line at its old line, in the commit that removed it", () => {
-    expect(diffLineSightings(log)[0]).toEqual({ text: "-  @SCN-ONE-005 @unit", path: "features/one.feature", line: 8, commit: "abc1234" });
+  it.each([
+    [
+      "places a removed line at its old line, in the commit that removed it",
+      0,
+      { text: "-  @SCN-ONE-005 @unit", path: "features/one.feature", line: 8, commit: "abc1234" },
+    ],
+    [
+      "places an added line at its new line, in the commit that added it",
+      2,
+      { text: "+  @SCN-ONE-001 @unit", path: "features/one.feature", line: 4, commit: "def5678" },
+    ],
+  ] as const)("%s", (_title, index, sighting) => {
+    expect(diffLineSightings(log)[index]).toEqual(sighting);
   });
 
   it("counts on within a hunk", () => {
     expect(diffLineSightings(log)[1]).toMatchObject({ line: 9, commit: "abc1234" });
-  });
-
-  it("places an added line at its new line, in the commit that added it", () => {
-    expect(diffLineSightings(log)[2]).toEqual({ text: "+  @SCN-ONE-001 @unit", path: "features/one.feature", line: 4, commit: "def5678" });
   });
 });
 

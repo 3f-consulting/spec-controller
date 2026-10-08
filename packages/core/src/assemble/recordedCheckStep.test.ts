@@ -30,16 +30,13 @@ const reconcileWith = (ciStepRecord?: Record<string, { outcome?: string }>) =>
   }).ledger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001");
 
 describe("[SCN-LNT-020] a cited step the run's own record never recorded leaves its scenario missing", () => {
-  it("reads missing where the record happened and carried no step for it", () => {
-    const row = reconcileWith({ "SCN-ZZZ-999": { outcome: "success" } });
-    expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual(["missing"]);
-    expect(row?.verdict).toBe("out-of-balance");
-  });
-
-  it("reads satisfied where the record carried its step and says it succeeded", () => {
-    const row = reconcileWith({ "SCN-AAA-001": { outcome: "success" } });
-    expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual(["satisfied"]);
-    expect(row?.verdict).toBe("balanced");
+  it.each([
+    ["reads missing where the record happened and carried no step for it", "SCN-ZZZ-999", "missing", "out-of-balance"],
+    ["reads satisfied where the record carried its step and says it succeeded", "SCN-AAA-001", "satisfied", "balanced"],
+  ])("%s", (_title, recordedStep, outcome, verdict) => {
+    const row = reconcileWith({ [recordedStep]: { outcome: "success" } });
+    expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual([outcome]);
+    expect(row?.verdict).toBe(verdict);
   });
 
   it("is credited from the workflow file alone where no record was handed over at all", () => {

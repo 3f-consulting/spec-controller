@@ -21,17 +21,13 @@ describe("[SCN-FMT-001] planOutput plans markdown to stdout by default", () => {
 });
 
 describe("[SCN-FMT-002] planOutput plans json to a caller-given file", () => {
-  it("plans exactly one json→file output for a json:<path> spec", () => {
-    const plan = planOf(planOutput(["json:reports/spec-reconciliation.json"], () => false));
+  it.each([
+    ["plans exactly one json→file output for a json:<path> spec", "json:reports/spec-reconciliation.json", "reports/spec-reconciliation.json"],
+    ["takes the path as everything after the FIRST colon (a later colon stays in the path)", "json:/tmp/out:v2.json", "/tmp/out:v2.json"],
+  ] as const)("%s", (_title, spec, path) => {
+    const plan = planOf(planOutput([spec], () => false));
     expect(plan.outputs).toEqual([
-      { fmt: "json", dest: { kind: "file", path: "reports/spec-reconciliation.json" } },
-    ]);
-  });
-
-  it("takes the path as everything after the FIRST colon (a later colon stays in the path)", () => {
-    const plan = planOf(planOutput(["json:/tmp/out:v2.json"], () => false));
-    expect(plan.outputs).toEqual([
-      { fmt: "json", dest: { kind: "file", path: "/tmp/out:v2.json" } },
+      { fmt: "json", dest: { kind: "file", path } },
     ]);
   });
 });

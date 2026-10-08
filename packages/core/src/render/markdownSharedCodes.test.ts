@@ -102,16 +102,18 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
 }
 
 describe("[SCN-STG-017] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
-  it("states that the corpus holds three scenarios in two accounts", () => {
+  it.each([
+    [
+      "states that the corpus holds three scenarios in two accounts",
+      "- The corpus holds 3 scenarios in 2 accounts — 1 @SCN code(s) carried by more than one scenario:",
+    ],
+    [
+      "names the shared code with the file and the name of each scenario carrying it",
+      "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
+    ],
+  ])("%s", (_title, line) => {
     const md = renderMarkdown(er(ledger), ctx, census);
-    expect(md).toContain(
-      "- The corpus holds 3 scenarios in 2 accounts — 1 @SCN code(s) carried by more than one scenario:"
-    );
-  });
-
-  it("names the shared code with the file and the name of each scenario carrying it", () => {
-    const md = renderMarkdown(er(ledger), ctx, census);
-    expect(md).toContain("  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two");
+    expect(md).toContain(line);
   });
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {

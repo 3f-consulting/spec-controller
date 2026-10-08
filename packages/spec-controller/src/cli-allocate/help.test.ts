@@ -13,12 +13,11 @@ import { APP_MESSAGES, AppMessage } from "../messages.js";
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
   const help = renderCommandHelp(allocateCommand);
 
-  it("shows how the command is called, with its feature part", () => {
-    expect(help).toMatch(/^Usage: spec-controller allocate <FFF> \[options\]$/m);
-  });
-
-  it("names the feature part it takes, and what it is", () => {
-    expect(help).toMatch(/^ {2}<FFF>\s+The feature part: a feature file's header code/m);
+  it.each([
+    ["shows how the command is called, with its feature part", /^Usage: spec-controller allocate <FFF> \[options\]$/m],
+    ["names the feature part it takes, and what it is", /^ {2}<FFF>\s+The feature part: a feature file's header code/m],
+  ] as const)("%s", (_title, line) => {
+    expect(help).toMatch(line);
   });
 
   it("lists --new and --help among its options", () => {

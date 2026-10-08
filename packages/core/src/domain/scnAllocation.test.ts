@@ -14,8 +14,11 @@ function seen(text: string, path = "features/one.feature", line = 1): ScnSightin
 describe("[SCN-ALC-008] the code is printed alone, zero-padded to three digits", () => {
   const request = { part: "ONE", headerCodes: ["ONE"] };
 
-  it("offers one past the highest, padded to three digits", () => {
-    expect(next(request, [seen("    @SCN-ONE-7 @unit")]).code).toBe("SCN-ONE-008");
+  it.each([
+    ["offers one past the highest, padded to three digits", "    @SCN-ONE-7 @unit", "SCN-ONE-008"],
+    ["reads every code on a line", "[SCN-ONE-004] and [SCN-ONE-006] and SCN-ONE-005", "SCN-ONE-007"],
+  ])("%s", (_title, text, code) => {
+    expect(next(request, [seen(text)]).code).toBe(code);
   });
 
   it("reads the number, never the text, so 012 and 12 are one number", () => {
@@ -30,23 +33,16 @@ describe("[SCN-ALC-008] the code is printed alone, zero-padded to three digits",
   it("offers the first code when the part carries none", () => {
     expect(next(request, []).code).toBe("SCN-ONE-001");
   });
-
-  it("reads every code on a line", () => {
-    expect(next(request, [seen("[SCN-ONE-004] and [SCN-ONE-006] and SCN-ONE-005")]).code).toBe(
-      "SCN-ONE-007",
-    );
-  });
 });
 
 describe("[SCN-ALC-009] a part whose highest code is 999 is offered 1000", () => {
   const request = { part: "ONE", headerCodes: ["ONE"] };
 
-  it("grows past three digits rather than wrapping or refusing", () => {
-    expect(next(request, [seen("@SCN-ONE-999")]).code).toBe("SCN-ONE-1000");
-  });
-
-  it("keeps growing at every width", () => {
-    expect(next(request, [seen("@SCN-ONE-9999")]).code).toBe("SCN-ONE-10000");
+  it.each([
+    ["grows past three digits rather than wrapping or refusing", "@SCN-ONE-999", "SCN-ONE-1000"],
+    ["keeps growing at every width", "@SCN-ONE-9999", "SCN-ONE-10000"],
+  ])("%s", (_title, text, code) => {
+    expect(next(request, [seen(text)]).code).toBe(code);
   });
 });
 

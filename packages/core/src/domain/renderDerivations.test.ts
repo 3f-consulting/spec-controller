@@ -46,16 +46,12 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   );
   const kindOf = (k: string) => mixed.scenarioReconciliations.find((r) => r.kind === k)!;
 
-  it("is true for a real scenario row", () => {
-    expect(isScenario(kindOf("scenario"))).toBe(true);
-  });
-
-  it("is FALSE for a phantom row — a cited-but-phantom id is not a scenario", () => {
-    expect(isScenario(kindOf("phantom-scenario"))).toBe(false);
-  });
-
-  it("is FALSE for the suspense row — the bucket for uncited credits is not a scenario", () => {
-    expect(isScenario(kindOf("suspense-scenario"))).toBe(false);
+  it.each([
+    ["is true for a real scenario row", "scenario", true],
+    ["is FALSE for a phantom row — a cited-but-phantom id is not a scenario", "phantom-scenario", false],
+    ["is FALSE for the suspense row — the bucket for uncited credits is not a scenario", "suspense-scenario", false],
+  ] as const)("%s", (_title, kind, expected) => {
+    expect(isScenario(kindOf(kind))).toBe(expected);
   });
 
   it("spans all three row kinds in this fixture", () => {

@@ -29,10 +29,13 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
-  it("posts a matched credit to the account it cites", () => {
-    const credit: EvidenceObservation = { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" };
+  it.each([
+    ["posts a matched credit to the account it cites", "SCN-AAA-001"],
+    ["posts a credit citing an unknown @SCN to that phantom account", "SCN-ZZZ-999"],
+  ] as const)("%s", (_title, scnId) => {
+    const credit: EvidenceObservation = { scnId, qualityCheck: "unit", status: "passed" };
     const ledger = reconcile(namedScenarios, [credit]);
-    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
+    expect(accountFor(ledger, scnId)?.evidenceObservations).toEqual([credit]);
   });
 
   it("posts a no-evidence-obligation credit to the real account it cites, not to suspense", () => {
@@ -46,12 +49,6 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     const credit: EvidenceObservation = { scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed" };
     const account = accountFor(reconcile(namedScenarios, [credit]), "SCN-AAA-003");
     expect(account?.evidenceObservations).toEqual([credit]);
-  });
-
-  it("posts a credit citing an unknown @SCN to that phantom account", () => {
-    const credit: EvidenceObservation = { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed" };
-    const ledger = reconcile(namedScenarios, [credit]);
-    expect(accountFor(ledger, "SCN-ZZZ-999")?.evidenceObservations).toEqual([credit]);
   });
 
   it("posts an uncited credit to suspense", () => {

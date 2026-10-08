@@ -184,25 +184,22 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a file that failed to collect with no error names the locator alone", () => {
-      const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "src/silent.test.ts", status: "failed" }] },
-        "unit"
-      );
+    it.each([
+      [
+        "a file that failed to collect with no error names the locator alone",
+        { name: "src/silent.test.ts", status: "failed" },
+        "src/silent.test.ts",
+      ],
+      [
+        "a file that failed to collect with an empty error names the locator alone, with no joiner",
+        { name: "src/empty.test.ts", status: "failed", message: "" },
+        "src/empty.test.ts",
+      ],
+    ])("%s", (_title, testResult, locator) => {
+      const observations = parseVitestEvidenceObservations({ testResults: [testResult] }, "unit");
       expect(brokenRow(observations)).toEqual({
         verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "unit", "src/silent.test.ts"),
-      });
-    });
-
-    it("a file that failed to collect with an empty error names the locator alone, with no joiner", () => {
-      const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "src/empty.test.ts", status: "failed", message: "" }] },
-        "unit"
-      );
-      expect(brokenRow(observations)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "unit", "src/empty.test.ts"),
+        items: item("broken", "💥", "unit", locator),
       });
     });
 

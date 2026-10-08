@@ -83,14 +83,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-E | F/- |  |  |");
   });
 
-  it("[SCN-RPT-018] renders both cells for a scenario naming two runtime tiers — neither collapses to ∅", () => {
+  it.each([
+    ["[SCN-RPT-018] renders both cells for a scenario naming two runtime tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
+    ["renders -/N for a credit at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
+  ])("%s", (_title, row) => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| SCN-G |  | U/1 | I/1 |");
-  });
-
-  it("renders -/N for a credit at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| SCN-F |  | -/1 |  |");
+    expect(md).toContain(row);
   });
 
   it("counts a watermelon guard as PRESENT on the fitness cell's right side, like a satisfied one", () => {

@@ -65,10 +65,6 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
     expect(checkArgvShape(["--features", "dir", "--vitest", "r.json"], cliRegistry, "balance")).toBeNull();
   });
 
-  it("accepts a value that is a command's name, --target balance", () => {
-    expect(checkArgvShape(["--target", "balance"], cliRegistry, "balance")).toBeNull();
-  });
-
   it("refuses the stray word after a value flag given by its alias, and not the alias's value", () => {
     const grown = withBalanceFlag({ name: "--later", aliases: ["-l"], arg: "<x>", description: "added later" });
     expect(checkArgvShape(["-l", "v", "stray"], grown, "balance")).toBe(notAFlag("stray"));
@@ -83,8 +79,11 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
     expect(positionalArguments(wellFormed, cliRegistry, "balance")).toEqual([]);
   });
 
-  it("leaves an unregistered flag and the word after it to @SCN-CLI-009", () => {
-    expect(checkArgvShape(["--bogus", "value"], cliRegistry, "balance")).toBeNull();
+  it.each([
+    ["accepts a value that is a command's name, --target balance", ["--target", "balance"]],
+    ["leaves an unregistered flag and the word after it to @SCN-CLI-009", ["--bogus", "value"]],
+  ] as const)("%s", (_title, argv) => {
+    expect(checkArgvShape(argv, cliRegistry, "balance")).toBeNull();
   });
 
   it("reads the value of a value flag registered later, with no new code", () => {
@@ -191,33 +190,19 @@ describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form a
     });
   }
 
-  it("refuses --features=dir, giving the value flag and its value as '--features dir'", () => {
-    expect(checkArgvShape(["--features=dir"], cliRegistry, "balance")).toBe(equalsForm("--features=dir", "--features dir"));
+  it.each([
+    ["refuses --features=dir, giving the value flag and its value as '--features dir'", "--features=dir", "--features dir"],
+    ["gives the registry's value placeholder for a form written with no value", "--features=", "--features <dir>"],
+    ["refuses the form of a flag the scope does not have, before the unknown-flag check can advise a pin", "--store=/s", "--store /s"],
+  ] as const)("%s", (_title, written, spelling) => {
+    expect(checkArgvShape([written], cliRegistry, "balance")).toBe(equalsForm(written, spelling));
   });
 
-  it("refuses --strict=true, giving the switch alone as '--strict'", () => {
-    expect(checkArgvShape(["--features", "f", "--strict=true"], cliRegistry, "balance")).toBe(
-      equalsForm("--strict=true", "--strict"),
-    );
-  });
-
-  it("gives the registry's value placeholder for a form written with no value", () => {
-    expect(checkArgvShape(["--features="], cliRegistry, "balance")).toBe(equalsForm("--features=", "--features <dir>"));
-  });
-
-  it("refuses --unknown=x, a flag no scope registers, giving '--unknown x'", () => {
-    expect(checkArgvShape(["--features", "f", "--unknown=x"], cliRegistry, "balance")).toBe(
-      equalsForm("--unknown=x", "--unknown x"),
-    );
-  });
-
-  it("gives a generic value placeholder for an unregistered flag written with no value", () => {
-    expect(checkArgvShape(["--features", "f", "--unknown="], cliRegistry, "balance")).toBe(
-      equalsForm("--unknown=", "--unknown <value>"),
-    );
-  });
-
-  it("refuses the form of a flag the scope does not have, before the unknown-flag check can advise a pin", () => {
-    expect(checkArgvShape(["--store=/s"], cliRegistry, "balance")).toBe(equalsForm("--store=/s", "--store /s"));
+  it.each([
+    ["refuses --strict=true, giving the switch alone as '--strict'", "--strict=true", "--strict"],
+    ["refuses --unknown=x, a flag no scope registers, giving '--unknown x'", "--unknown=x", "--unknown x"],
+    ["gives a generic value placeholder for an unregistered flag written with no value", "--unknown=", "--unknown <value>"],
+  ] as const)("%s", (_title, written, spelling) => {
+    expect(checkArgvShape(["--features", "f", written], cliRegistry, "balance")).toBe(equalsForm(written, spelling));
   });
 });

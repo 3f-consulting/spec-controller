@@ -23,14 +23,12 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
     expect(obj.inputs.vitest).toBe("out/vitest.json");
   });
 
-  it("leaves a non-absolute input path unchanged", () => {
-    const obj = provenanceObject(mk({ features: "features" }, "/repo"));
-    expect(obj.inputs.features).toBe("features");
-  });
-
-  it("leaves an absolute path NOT under the run root verbatim (never a ../ leak)", () => {
-    const obj = provenanceObject(mk({ features: "/elsewhere/features" }, "/repo"));
-    expect(obj.inputs.features).toBe("/elsewhere/features");
+  it.each([
+    ["leaves a non-absolute input path unchanged", "features"],
+    ["leaves an absolute path NOT under the run root verbatim (never a ../ leak)", "/elsewhere/features"],
+  ])("%s", (_title, features) => {
+    const obj = provenanceObject(mk({ features }, "/repo"));
+    expect(obj.inputs.features).toBe(features);
   });
 
   it("records inputs verbatim when no run root is given (the opt-in default — existing fixtures unchanged)", () => {

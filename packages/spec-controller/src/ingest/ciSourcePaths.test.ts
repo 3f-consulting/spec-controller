@@ -11,19 +11,23 @@ function readerOf(dirs: Record<string, string[]>, files: readonly string[]): CiP
 }
 
 describe("[SCN-USG-006] a CI input names either one workflow file or a directory of them", () => {
-  it("resolves a directory to every workflow file in it, so a check in any of them is observed", () => {
-    const reader = readerOf({ ".github/workflows": ["nightly.yml", "ci.yml"] }, []);
+  it.each<[string, Record<string, string[]>, string, string[]]>([
+    [
+      "resolves a directory to every workflow file in it, so a check in any of them is observed",
+      { ".github/workflows": ["nightly.yml", "ci.yml"] },
+      ".github/workflows",
+      [".github/workflows/ci.yml", ".github/workflows/nightly.yml"],
+    ],
+    [
+      "keeps both YAML spellings, because a target picks one and the tool does not get to mind",
+      { "wf": ["a.yaml", "b.yml"] },
+      "wf",
+      ["wf/a.yaml", "wf/b.yml"],
+    ],
+  ])("%s", (_title, dirs, input, expected) => {
+    const reader = readerOf(dirs, []);
 
-    expect(ciSourcePathsOf(".github/workflows", reader)).toEqual([
-      ".github/workflows/ci.yml",
-      ".github/workflows/nightly.yml",
-    ]);
-  });
-
-  it("keeps both YAML spellings, because a target picks one and the tool does not get to mind", () => {
-    const reader = readerOf({ "wf": ["a.yaml", "b.yml"] }, []);
-
-    expect(ciSourcePathsOf("wf", reader)).toEqual(["wf/a.yaml", "wf/b.yml"]);
+    expect(ciSourcePathsOf(input, reader)).toEqual(expected);
   });
 
   it("ignores a non-workflow file sitting in the directory rather than trying to parse it", () => {

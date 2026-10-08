@@ -6,16 +6,15 @@ import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
 
 describe("[SCN-ALC-004] with no history to read, a code is still offered and the boundary is stated", () => {
-  it("walks the corpus's own directories", () => {
-    expect(["features", "src", "doc"].map(isWalkedDirectory)).toEqual([true, true, true]);
+  it.each([
+    ["walks the corpus's own directories", ["features", "src", "doc"], [true, true, true]],
+    ["never walks a hidden directory", [".git", ".hidden", ".cache"], [false, false, false]],
+  ] as const)("%s", (_title, names, walked) => {
+    expect(names.map(isWalkedDirectory)).toEqual(walked);
   });
 
   it("never walks a package store, whose packages carry their own codes", () => {
     expect(isWalkedDirectory("node_modules")).toBe(false);
-  });
-
-  it("never walks a hidden directory", () => {
-    expect([".git", ".hidden", ".cache"].map(isWalkedDirectory)).toEqual([false, false, false]);
   });
 });
 
@@ -85,28 +84,22 @@ function thrownBy(read: () => unknown): unknown {
 }
 
 describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
-  it("refuses an untracked file it may not read, naming it", () => {
+  it.each([
+    ["refuses an untracked file it may not read, naming it", ["drafts", "new.md"]],
+    ["refuses a tracked file it may not read, naming it", ["docs", "notes.md"]],
+  ] as const)("%s", (_title, file) => {
     const repo = repositoryWithDraft();
-    withhold(join(repo, "drafts", "new.md"), 0o000);
-    expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, "drafts", "new.md") });
+    withhold(join(repo, ...file), 0o000);
+    expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, ...file) });
   });
 
-  it("refuses a directory it may not list, naming it", () => {
+  it.each([
+    ["refuses a directory it may not list, naming it", 0o000],
+    ["refuses a directory it may list but not enter, naming it", 0o600],
+  ] as const)("%s", (_title, mode) => {
     const repo = repositoryWithDraft();
-    withhold(join(repo, "drafts"), 0o000);
+    withhold(join(repo, "drafts"), mode);
     expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, "drafts") });
-  });
-
-  it("refuses a directory it may list but not enter, naming it", () => {
-    const repo = repositoryWithDraft();
-    withhold(join(repo, "drafts"), 0o600);
-    expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, "drafts") });
-  });
-
-  it("refuses a tracked file it may not read, naming it", () => {
-    const repo = repositoryWithDraft();
-    withhold(join(repo, "docs", "notes.md"), 0o000);
-    expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, "docs", "notes.md") });
   });
 
   it("reads tracked and untracked files alike when it may read them all", () => {

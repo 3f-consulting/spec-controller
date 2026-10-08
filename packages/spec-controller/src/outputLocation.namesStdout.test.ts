@@ -23,12 +23,6 @@ describe("[SCN-FMT-011] a path names standard output when it spells file descrip
     expect(namesStdout("/dev//fd///1")).toBe(true);
   });
 
-  it("answers yes for file descriptor 1 spelled through this process's own entry in /proc", () => {
-    expect(namesStdout("/proc/self/fd/1")).toBe(true);
-    expect(namesStdout("/proc/thread-self/fd/1")).toBe(true);
-    expect(namesStdout(`/proc/${process.pid}/fd/1`)).toBe(true);
-  });
-
   it("follows a chain of up to forty links to any spelling of file descriptor 1, and stops at a chain one link longer", () => {
     const chainTo = (target: string, name: string, links: number): string => {
       for (let i = links; i >= 1; i--) {
@@ -54,10 +48,19 @@ describe("[SCN-FMT-011] a path names standard output when it spells file descrip
     expect(namesStdout(join(scratch, "out-again"))).toBe(true);
   });
 
-  it("answers no for standard error, the null device and file descriptor 2", () => {
-    expect(namesStdout("/dev/stderr")).toBe(false);
-    expect(namesStdout("/dev/null")).toBe(false);
-    expect(namesStdout("/dev/fd/2")).toBe(false);
+  it.each([
+    [
+      "answers yes for file descriptor 1 spelled through this process's own entry in /proc",
+      "/proc/self/fd/1",
+      "/proc/thread-self/fd/1",
+      `/proc/${process.pid}/fd/1`,
+      true,
+    ],
+    ["answers no for standard error, the null device and file descriptor 2", "/dev/stderr", "/dev/null", "/dev/fd/2", false],
+  ] as const)("%s", (_title, first, second, third, answer) => {
+    expect(namesStdout(first)).toBe(answer);
+    expect(namesStdout(second)).toBe(answer);
+    expect(namesStdout(third)).toBe(answer);
   });
 
   it("answers no for a regular file, a path under a folder that does not exist, and a link that goes in a circle", () => {
