@@ -2,28 +2,17 @@ import { describe, it, expect, vi, afterAll } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runBalance } from "./cli.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { cliRegistry } from "../cli-registry.js";
 
 function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
-  const savedExitCode = process.exitCode;
-  process.exitCode = 0;
-  const chunks: string[] = [];
-  const writeSpy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array): boolean => {
-    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-    return true;
-  });
-  const errSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-27T12:00:00.000Z"));
   try {
-    runBalance([...argv]);
-    return { stdout: chunks.join(""), exitCode: Number(process.exitCode ?? 0) };
+    const { stdout, exitCode } = runBalanceCaptured(argv);
+    return { stdout, exitCode };
   } finally {
     vi.useRealTimers();
-    errSpy.mockRestore();
-    writeSpy.mockRestore();
-    process.exitCode = savedExitCode;
   }
 }
 
@@ -139,21 +128,8 @@ describe("[SCN-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and nev
 
 describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-render does not read exits 2 naming the flag, and nothing is rendered", () => {
   function runRefusable(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const out: string[] = [];
-    const err: string[] = [];
-    const text = (chunk: string | Uint8Array): string => (typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => out.push(text(chunk)) > 0);
-    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => err.push(text(chunk)) > 0);
-    try {
-      runBalance([...argv]);
-      return { exitCode: Number(process.exitCode ?? 0), stdout: out.join(""), stderr: err.join("") };
-    } finally {
-      errSpy.mockRestore();
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { exitCode, stdout, stderr } = runBalanceCaptured(argv);
+    return { exitCode, stdout, stderr };
   }
 
   const READ_BY_A_RE_RENDER = new Set(["--render-from-json", "--strict", "--exit-zero", "--help"]);

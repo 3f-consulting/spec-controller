@@ -6,14 +6,13 @@ import { inputOverwriteRefusal, sharedFileRefusal, type FileIdentity, type Ident
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
+import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
+import { APP_MESSAGES, AppMessage } from "../../messages.js";
 
 export interface OutputPayloads {
   readonly balance: EvidenceReconciliation;
   readonly ctx: RunContext;
   readonly evidenceObligations?: EvidenceObligations;
-  readonly withRuntimeObservations?: boolean;
-  readonly withStaticChecks?: boolean;
   readonly featureNames?: FeatureNames;
 }
 
@@ -26,8 +25,8 @@ function render(fmt: OutputFormat, p: OutputPayloads): string {
 export function writeOutputs(
   plan: OutputPlan,
   payloads: OutputPayloads,
-  stdoutFile: () => FileIdentity | undefined = stdoutIdentity,
-  inputs: readonly IdentifiedInput[] = [],
+  stdoutFile: () => FileIdentity | undefined,
+  inputs: readonly IdentifiedInput[],
 ): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
   const refusal = vetDestinations(plan.outputs, stdoutFile, inputs);
@@ -67,7 +66,7 @@ function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefi
 }
 
 function refusalSubject(output: PlannedOutput): string {
-  return `The ${output.fmt} report could not be written`;
+  return APP_MESSAGES[AppMessage.ReportNotWritten](output.fmt);
 }
 
 function emit(output: PlannedOutput, text: string): void {
@@ -76,5 +75,5 @@ function emit(output: PlannedOutput, text: string): void {
     process.stdout.write(text);
     return;
   }
-  writeOrRefuse(refusalSubject(output), dest.path, () => writeFileSync(dest.path, text, "utf8"));
+  writeOrRefuse(refusalSubject(output), dest.path, () => writeFileSync(dest.path, text));
 }

@@ -1,5 +1,5 @@
 import { afterAll, describe, it, expect, vi } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -15,6 +15,7 @@ import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { readFeatureNames } from "../ingest/ingestQualityChecks.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const made: string[] = [];
 
@@ -22,7 +23,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
+describe("[SCN-FMT-006] balance rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
     const error = checkLegacyJson({ json: "out.json" });
     expect(error).not.toBeNull();
@@ -33,6 +34,24 @@ describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a m
   it("returns null when --json is absent, so the CLI proceeds", () => {
     expect(checkLegacyJson({})).toBeNull();
     expect(checkLegacyJson({ format: "json:out.json" })).toBeNull();
+  });
+
+  it("runBalance refuses --json at exit 2 with the hint alone, writing nothing and creating no file, over a target that would otherwise reconcile", () => {
+    const dir = mkdtempSync(join(tmpdir(), "legacy-json-"));
+    made.push(dir);
+    const destination = join(dir, "out.json");
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/balanced/features",
+      "--vitest", "tests/fixtures/balanced/vitest.json",
+      "--package-json", "tests/fixtures/balanced/package.json",
+      "--ci", "tests/fixtures/balanced",
+      "--json", destination,
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(APP_MESSAGES[AppMessage.LegacyJsonRemoved]() + "\n");
+    expect(stdout).toBe("");
+    expect(existsSync(destination)).toBe(false);
   });
 });
 
@@ -49,6 +68,42 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
   it("does NOT guess the target from --features (no basename resolution; the degenerate '.' is impossible)", () => {
     expect(sourceTarget({ features: "../an-adopters-repository/features" })).toBe("unknown-target");
     expect(sourceTarget({ features: "features" })).toBe("unknown-target");
+  });
+});
+
+describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
+  it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and credits the Cucumber report's scenario at integration", () => {
+    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-002-unit-"));
+    made.push(dir);
+    cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });
+    cpSync("tests/fixtures/evidence-observation/cucumber.json", join(dir, "cucumber.json"));
+    cpSync("tests/fixtures/rpt-streams/ci-steps.json", join(dir, "ci-steps.json"));
+    mkdirSync(join(dir, "workflows"));
+    writeFileSync(join(dir, "workflows", "ci.yml"), "jobs: {}\n");
+    const reportPath = join(dir, "spec-reconciliation.json");
+    const savedExitCode = process.exitCode;
+    try {
+      runBalance([
+        "--features", join(dir, "features"),
+        "--ci", join(dir, "workflows"),
+        "--cucumber", join(dir, "cucumber.json"),
+        "--ci-steps", join(dir, "ci-steps.json"),
+        "--format", `json:${reportPath}`,
+      ]);
+    } finally {
+      process.exitCode = savedExitCode;
+    }
+
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    const integrationRow = report.ledger.scenarioReconciliations.find(
+      (row: { scnId: string }) => row.scnId === "SCN-TGT-002",
+    );
+    expect({ inputs: report.runProvenance.inputs, observations: integrationRow?.evidenceObservations }).toEqual({
+      inputs: { features: "features", cucumber: "cucumber.json", ci: "workflows", ciSteps: "ci-steps.json" },
+      observations: [
+        { qualityCheck: "integration", scnId: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
+      ],
+    });
   });
 });
 
@@ -93,6 +148,27 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
 
 describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
   const jsonFlags = ["vitest", "cucumber", "package-json"] as const;
+
+  it("runBalance refuses a --vitest report that exists but is not JSON at exit 2, with the parse refusal alone naming it and the parser's own reason, reconciling nothing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vitest-unparseable-"));
+    made.push(dir);
+    const path = join(dir, "vitest.json");
+    const text = "not valid json at all {{{";
+    writeFileSync(path, text);
+    let reason = "";
+    try {
+      JSON.parse(text);
+    } catch (err) {
+      reason = (err as Error).message;
+    }
+    expect(reason).not.toBe("");
+
+    expect(captured(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[AppMessage.FlaggedReport]("--vitest"), path, reason) + "\n",
+      exitCode: 2,
+    });
+  });
 
   it.each(jsonFlags)(
     "returns a typed error naming --%s, the path and the parse failure when the report is not valid JSON",
@@ -143,7 +219,54 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
   });
 });
 
-describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cannot read", () => {
+describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", () => {
+  function failureOf(act: () => unknown): string {
+    try {
+      act();
+    } catch (err) {
+      return (err as Error).message;
+    }
+    throw new Error("expected the act to fail");
+  }
+
+  function refusalFor(path: string, reason: string): string {
+    return (
+      APP_MESSAGES[AppMessage.CouldNotBeReadAt](
+        APP_MESSAGES[AppMessage.FlaggedSavedReport]("--render-from-json"),
+        path,
+        reason,
+      ) + "\n"
+    );
+  }
+
+  it("runBalance refuses a MISSING saved report at exit 2, naming it and the file system's reason, rendering nothing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "render-missing-"));
+    made.push(dir);
+    const missing = join(dir, "does-not-exist.json");
+    const reason = failureOf(() => readFileSync(missing, "utf8"));
+
+    expect(captured(["--render-from-json", missing])).toEqual({
+      report: "",
+      stderr: refusalFor(missing, reason),
+      exitCode: 2,
+    });
+  });
+
+  it("runBalance refuses an UNPARSEABLE saved report at exit 2, naming it and the parser's reason, rendering nothing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "render-unparseable-"));
+    made.push(dir);
+    const path = join(dir, "spec-reconciliation.json");
+    const text = "not a saved report at all {{{";
+    writeFileSync(path, text);
+    const reason = failureOf(() => JSON.parse(text));
+
+    expect(captured(["--render-from-json", path])).toEqual({
+      report: "",
+      stderr: refusalFor(path, reason),
+      exitCode: 2,
+    });
+  });
+
   it("returns a typed error naming the path when the saved report is MISSING", () => {
     const missing = "saved/does-not-exist.json";
     const read = (): string => {
@@ -188,126 +311,67 @@ describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cann
 
 describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
   it("emits the whole Evidence Reconciliation to stdout AND sets process.exitCode = 1, returning normally", () => {
-    const savedExitCode = process.exitCode;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([
-        "--features",
-        "tests/fixtures/evidence-observation/features",
-        "--vitest",
-        "tests/fixtures/evidence-observation/vitest.json",
-      ]);
+    const { stdout: emitted, exitCode } = runBalanceCaptured([
+      "--features",
+      "tests/fixtures/evidence-observation/features",
+      "--vitest",
+      "tests/fixtures/evidence-observation/vitest.json",
+    ]);
 
-      const emitted = chunks.join("");
-      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
-      expect(emitted).toMatch(/out-of-balance/);
-      expect(process.exitCode).toBe(1);
-    } finally {
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+    expect(emitted).toMatch(/out-of-balance/);
+    expect(exitCode).toBe(1);
   });
 });
 
 describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
   it("emits the report in full AND sets process.exitCode = 4 — not the 1 the same run's out-of-balance verdict would otherwise give", () => {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([
-        "--features",
-        "tests/fixtures/broken/features",
-        "--vitest",
-        "tests/fixtures/broken/vitest.json",
-        "--package-json",
-        "tests/fixtures/broken/package.json",
-      ]);
+    const { stdout: emitted, exitCode } = runBalanceCaptured([
+      "--features",
+      "tests/fixtures/broken/features",
+      "--vitest",
+      "tests/fixtures/broken/vitest.json",
+      "--package-json",
+      "tests/fixtures/broken/package.json",
+    ]);
 
-      const emitted = chunks.join("");
-      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
-      expect(emitted).toMatch(/out-of-balance/);
-      expect(process.exitCode).toBe(4);
-    } finally {
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+    expect(emitted).toMatch(/out-of-balance/);
+    expect(exitCode).toBe(4);
   });
 });
 
 describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, PRE-EMPTING the vacuously-balanced verdict", () => {
   it("emits the report in full AND sets process.exitCode = 5 — not the 0 the same run's vacuously-true balance verdict would otherwise give", () => {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([
-        "--features",
-        "tests/fixtures/nothing-to-reconcile/features",
-        "--package-json",
-        "tests/fixtures/nothing-to-reconcile/package.json",
-        "--ci",
-        "tests/fixtures/nothing-to-reconcile",
-      ]);
+    const { stdout: emitted, exitCode } = runBalanceCaptured([
+      "--features",
+      "tests/fixtures/nothing-to-reconcile/features",
+      "--package-json",
+      "tests/fixtures/nothing-to-reconcile/package.json",
+      "--ci",
+      "tests/fixtures/nothing-to-reconcile",
+    ]);
 
-      const emitted = chunks.join("");
-      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
-      expect(emitted).toMatch(/^\| Scenario Reconciliation \| 0 \| 0 \| 0 \|/m);
-      expect(process.exitCode).toBe(5);
-    } finally {
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+    expect(emitted).toMatch(/^\| Scenario Reconciliation \| 0 \| 0 \| 0 \|/m);
+    expect(exitCode).toBe(5);
   });
 });
 
 describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
   it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([
-        "--features",
-        "tests/fixtures/pending-only/features",
-        "--package-json",
-        "tests/fixtures/pending-only/package.json",
-        "--ci",
-        "tests/fixtures/pending-only",
-      ]);
+    const { stdout: emitted, exitCode } = runBalanceCaptured([
+      "--features",
+      "tests/fixtures/pending-only/features",
+      "--package-json",
+      "tests/fixtures/pending-only/package.json",
+      "--ci",
+      "tests/fixtures/pending-only",
+    ]);
 
-      const emitted = chunks.join("");
-      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
-      expect(emitted).toMatch(/Pending Item/);
-      expect(process.exitCode).toBe(0);
-    } finally {
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+    expect(emitted).toMatch(/Pending Item/);
+    expect(exitCode).toBe(0);
   });
 });
 
@@ -374,25 +438,9 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     expect(refusalOf(["--nosuch"], grown)).toContain("--nosuch");
   });
 
-  function runRefused(argv: string[]): { stdout: string; stderr: string; exitCode: typeof process.exitCode } {
-    const stdout: string[] = [];
-    const stderr: string[] = [];
-    const out = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-      stdout.push(String(chunk));
-      return true;
-    });
-    const err = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-      stderr.push(String(chunk));
-      return true;
-    });
-    try {
-      runBalance(argv);
-      return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
-    } finally {
-      out.mockRestore();
-      err.mockRestore();
-      process.exitCode = undefined;
-    }
+  function runRefused(argv: string[]): { stdout: string; stderr: string; exitCode: number } {
+    const { stdout, stderr, exitCode } = runBalanceCaptured(argv);
+    return { stdout, stderr, exitCode };
   }
 
   it("refuses each host modifier given after balance as a modifier out of place, not as unregistered, reconciling nothing", () => {
@@ -470,32 +518,17 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
   ] as const;
 
   function threeViewsOf(argv: readonly string[]): { outOfBalance: number; word: string; headlineExit: number; exitCode: number } {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([...argv]);
-      const emitted = chunks.join("");
-      const tally = emitted.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
-      expect(tally, `expected a Scenario Reconciliation tally row; got:\n${emitted}`).not.toBeNull();
-      const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
-      expect(headline, `expected a run-verdict headline; got:\n${emitted}`).not.toBeNull();
-      return {
-        outOfBalance: Number(tally?.[3]),
-        word: String(headline?.[1]),
-        headlineExit: Number(headline?.[2]),
-        exitCode: Number(process.exitCode ?? 0),
-      };
-    } finally {
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { stdout: emitted, exitCode } = runBalanceCaptured(argv);
+    const tally = emitted.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
+    expect(tally, `expected a Scenario Reconciliation tally row; got:\n${emitted}`).not.toBeNull();
+    const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
+    expect(headline, `expected a run-verdict headline; got:\n${emitted}`).not.toBeNull();
+    return {
+      outOfBalance: Number(tally?.[3]),
+      word: String(headline?.[1]),
+      headlineExit: Number(headline?.[2]),
+      exitCode,
+    };
   }
 
   for (const run of RUNS) {
@@ -545,54 +578,27 @@ describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the repor
   }
 
   function ownRowOf(dir: string): unknown {
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    try {
-      runBalance(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
-    } finally {
-      outSpy.mockRestore();
-    }
-    const rows = JSON.parse(out.join("")).ledger.scenarioReconciliations as { scnId: string }[];
+    const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
+    const rows = JSON.parse(stdout).ledger.scenarioReconciliations as { scnId: string }[];
     return rows.find((r) => r.scnId === "SCN-DUP-002");
   }
 
   it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", () => {
     const dir = duplicateTarget();
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const out: string[] = [];
-    const err: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      err.push(String(c));
-      return true;
-    });
-    try {
-      runBalance([
-        "--features", join(dir, "features"),
-        "--vitest", join(dir, "vitest.json"),
-        "--ci", join(dir, "ci.yml"),
-        "--package-json", join(dir, "package.json"),
-        "--format", "json",
-      ]);
-      const report = JSON.parse(out.join(""));
-      const rows = report.ledger.scenarioReconciliations as { scnId: string; verdict: string }[];
-      expect(rows.filter((r) => r.scnId === "SCN-DUP-001")).toHaveLength(1);
-      expect(rows.find((r) => r.scnId === "SCN-DUP-002")?.verdict).toBe("balanced");
-      expect(process.exitCode).toBe(1);
-      expect(err.join("")).not.toMatch(/names the same @SCN on more than one scenario/);
-      expect(ownRowOf(dir)).toEqual(ownRowOf(duplicateTarget(false)));
-    } finally {
-      outSpy.mockRestore();
-      errSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", join(dir, "features"),
+      "--vitest", join(dir, "vitest.json"),
+      "--ci", join(dir, "ci.yml"),
+      "--package-json", join(dir, "package.json"),
+      "--format", "json",
+    ]);
+    const report = JSON.parse(stdout);
+    const rows = report.ledger.scenarioReconciliations as { scnId: string; verdict: string }[];
+    expect(rows.filter((r) => r.scnId === "SCN-DUP-001")).toHaveLength(1);
+    expect(rows.find((r) => r.scnId === "SCN-DUP-002")?.verdict).toBe("balanced");
+    expect(exitCode).toBe(1);
+    expect(stderr).not.toMatch(/names the same @SCN on more than one scenario/);
+    expect(ownRowOf(dir)).toEqual(ownRowOf(duplicateTarget(false)));
   });
 });
 
@@ -607,19 +613,8 @@ describe("[SCN-STG-028] a prose mention of a feature part outside two to five ch
         "    Given the prose mentions @SCN-A-001 and @SCN-AB-001\n" +
         "    # and a comment mentions @SCN-FIVEC-001 and @SCN-SIXCHR-001\n    And a thing\n"
     );
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    const savedExitCode = process.exitCode;
-    try {
-      runBalance(["--features", join(dir, "features"), "--format", "json"]);
-    } finally {
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
-    const report = JSON.parse(out.join(""));
+    const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
+    const report = JSON.parse(stdout);
     expect(report.evidenceObligations.excludedOccurrences).toBe(2);
     expect(report.scenarioCodeErrors ?? []).toEqual([]);
   });
@@ -638,30 +633,18 @@ describe("[SCN-LDG-037] a passing and a failing test in one file citing the same
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n");
     writeFileSync(join(dir, "vitest.json"), JSON.stringify({ testResults: [{ name: "m.test.ts", assertionResults }] }));
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    try {
-      runBalance(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
-      const row = JSON.parse(out.join("")).ledger.scenarioReconciliations.find(
-        (r: { scnId: string }) => r.scnId === "SCN-ONE-001"
-      );
-      const unit = row.qualityCheckReconciliations.find((q: { qualityCheck: string }) => q.qualityCheck === "unit");
-      expect([unit.outcome, unit.evidenceObservation?.locator, unit.evidenceObservation?.status, row.verdict, process.exitCode]).toEqual([
-        "failing",
-        "m.test.ts",
-        "failed",
-        "out-of-balance",
-        1,
-      ]);
-    } finally {
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { stdout, exitCode } = runBalanceCaptured(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
+    const row = JSON.parse(stdout).ledger.scenarioReconciliations.find(
+      (r: { scnId: string }) => r.scnId === "SCN-ONE-001"
+    );
+    const unit = row.qualityCheckReconciliations.find((q: { qualityCheck: string }) => q.qualityCheck === "unit");
+    expect([unit.outcome, unit.evidenceObservation?.locator, unit.evidenceObservation?.status, row.verdict, exitCode]).toEqual([
+      "failing",
+      "m.test.ts",
+      "failed",
+      "out-of-balance",
+      1,
+    ]);
   });
 });
 
@@ -675,20 +658,9 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
       "@CVL\nFeature: config vocabulary lint\n\n  @unit @SCN-CVL-001\n  Scenario: coded\n"
     );
     writeFileSync(join(dir, "features", "uncoded.feature"), "Feature: an uncoded feature\n\n  @unit @SCN-XYZ-001\n  Scenario: uncoded\n");
-    const savedExitCode = process.exitCode;
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    try {
-      runBalance(["--features", join(dir, "features"), "--format", "json"]);
-      const report = JSON.parse(out.join(""));
-      expect([report.metadata?.featureNames, "featureNames" in report]).toEqual([{ CVL: "config-vocabulary-lint" }, false]);
-    } finally {
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
+    const report = JSON.parse(stdout);
+    expect([report.metadata?.featureNames, "featureNames" in report]).toEqual([{ CVL: "config-vocabulary-lint" }, false]);
   });
 
   it("keys each feature title by the header code however the header's tags are laid out, and takes no code from a comment", () => {
@@ -707,24 +679,13 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
     for (const [slug, header] of Object.entries(headers)) {
       writeFileSync(join(features, `${slug}.feature`), `${header}\n  @unit\n  Scenario: one\n`);
     }
-    const savedExitCode = process.exitCode;
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
+    const { stdout } = runBalanceCaptured(["--features", features, "--format", "json"]);
+    expect(JSON.parse(stdout).metadata?.featureNames).toEqual({
+      IND: "indented-feature",
+      BLK: "blank-before-feature",
+      TWO: "two-tag-lines",
+      ITG: "indented-tags",
     });
-    try {
-      runBalance(["--features", features, "--format", "json"]);
-      expect(JSON.parse(out.join("")).metadata?.featureNames).toEqual({
-        IND: "indented-feature",
-        BLK: "blank-before-feature",
-        TWO: "two-tag-lines",
-        ITG: "indented-tags",
-      });
-    } finally {
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
   });
 
   it("reads the feature titles from the working directory's features/ when no directory is given", () => {
@@ -752,19 +713,7 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
   }
 
   function stdoutOf(argv: string[]): string {
-    const out: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      out.push(String(c));
-      return true;
-    });
-    const savedExitCode = process.exitCode;
-    try {
-      runBalance(argv);
-    } finally {
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
-    return out.join("");
+    return runBalanceCaptured(argv).stdout;
   }
 
   it("writes one row named by the file read off the feature files, and renders it again the same from the saved JSON", () => {
@@ -812,26 +761,8 @@ function inputsOf(dir: string): string[] {
 }
 
 function captured(argv: string[]): { report: string; stderr: string; exitCode: unknown } {
-  const out: string[] = [];
-  const err: string[] = [];
-  const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((c: string | Uint8Array): boolean => {
-    out.push(String(c));
-    return true;
-  });
-  const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
-    err.push(String(c));
-    return true;
-  });
-  const savedExitCode = process.exitCode;
-  process.exitCode = undefined;
-  try {
-    runBalance(argv);
-    return { report: out.join(""), stderr: err.join(""), exitCode: process.exitCode };
-  } finally {
-    outSpy.mockRestore();
-    errSpy.mockRestore();
-    process.exitCode = savedExitCode;
-  }
+  const { stdout, stderr, exitCode } = runBalanceCaptured(argv);
+  return { report: stdout, stderr, exitCode };
 }
 
 function balanceOf(specController: unknown): { report: string; stderr: string; exitCode: unknown } {
@@ -920,25 +851,12 @@ describe("[SCN-USG-017] a target with no runners block reports every step of its
       "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Unit tests\n        run: pnpm test\n"
     );
     writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController: {} }));
-    const err: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation((): boolean => true);
-    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation((c: string | Uint8Array): boolean => {
-      err.push(String(c));
-      return true;
-    });
-    const savedExitCode = process.exitCode;
-    try {
-      runBalance([
-        "--features", join(dir, "features"),
-        "--ci", join(dir, "ci.yml"),
-        "--package-json", join(dir, "package.json"),
-        "--format", "md",
-      ]);
-    } finally {
-      outSpy.mockRestore();
-      errSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
-    expect(err.join("")).toBe("");
+    const { stderr } = runBalanceCaptured([
+      "--features", join(dir, "features"),
+      "--ci", join(dir, "ci.yml"),
+      "--package-json", join(dir, "package.json"),
+      "--format", "md",
+    ]);
+    expect(stderr).toBe("");
   });
 });

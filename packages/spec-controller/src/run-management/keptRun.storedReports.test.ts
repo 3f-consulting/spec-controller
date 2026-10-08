@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
-import { runBalance } from "../cli-balance/cli.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { wrapCommandArgv } from "../host.js";
 
 const TARGET = "target";
@@ -23,16 +23,7 @@ const BALANCE_ARGS = [
 ];
 
 function routeThroughBalance(formatSpecs: readonly string[]): boolean {
-  const savedExitCode = process.exitCode;
-  const out = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-  const err = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  try {
-    return runBalance(wrapCommandArgv(BALANCE_ARGS, [...formatSpecs]));
-  } finally {
-    out.mockRestore();
-    err.mockRestore();
-    process.exitCode = savedExitCode;
-  }
+  return runBalanceCaptured(wrapCommandArgv(BALANCE_ARGS, [...formatSpecs])).wrote;
 }
 
 describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {

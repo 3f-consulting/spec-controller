@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
+import { stdoutIdentity as processStdout } from "../../outputLocation.js";
 
 function usageStatusOf(run: () => unknown): number | undefined {
   try {
@@ -91,7 +92,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     it(`refuses ${shape}, naming it and ${reason}, on one line with no stack trace`, () => {
       const path = arrange(scratch);
 
-      expect(usageStatusOf(() => writeOutputs(toFile(path), payloads))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(toFile(path), payloads, processStdout, []))).toBe(2);
       const refusal = stderr.join("");
       expect(refusal).toContain(path);
       expect(refusal).toContain(reason);
@@ -104,7 +105,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     const path = join(scratch, "a-directory");
     mkdirSync(path);
 
-    expect(usageStatusOf(() => writeOutputs(toFile(path, "md"), payloads))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(toFile(path, "md"), payloads, processStdout, []))).toBe(2);
     expect(stderr.join("")).toContain("EISDIR");
   });
 
@@ -112,7 +113,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     const path = join(scratch, "earlier.json");
     writeFileSync(path, "earlier\n");
 
-    expect(usageStatusOf(() => writeOutputs(toFile(path), payloads))).toBeUndefined();
+    expect(usageStatusOf(() => writeOutputs(toFile(path), payloads, processStdout, []))).toBeUndefined();
     expect(stderr).toEqual([]);
   });
 });
@@ -133,7 +134,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
     chmodSync(path, 0o222);
 
     try {
-      expect(usageStatusOf(() => writeOutputs(toFile(path), payloads))).toBeUndefined();
+      expect(usageStatusOf(() => writeOutputs(toFile(path), payloads, processStdout, []))).toBeUndefined();
     } finally {
       chmodSync(path, 0o644);
     }
@@ -143,7 +144,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
   for (const jsonFirst of [false, true]) {
     const order = jsonFirst ? "named after" : "named before";
     it(`prints nothing to stdout when the markdown report is ${order} the unwritable json one`, () => {
-      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "stdout" } }, jsonFirst), payloads))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "stdout" } }, jsonFirst), payloads, processStdout, []))).toBe(2);
 
       expect(process.stdout.write).not.toHaveBeenCalled();
     });
@@ -151,7 +152,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
     it(`creates no markdown file when it is ${order} the unwritable json one`, () => {
       const path = join(scratch, "report.md");
 
-      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path } }, jsonFirst), payloads))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path } }, jsonFirst), payloads, processStdout, []))).toBe(2);
 
       expect(existsSync(path)).toBe(false);
     });
@@ -160,9 +161,20 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
       const path = join(scratch, "report.md");
       writeFileSync(path, "an earlier run's report\n");
 
-      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path } }, jsonFirst), payloads))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path } }, jsonFirst), payloads, processStdout, []))).toBe(2);
 
       expect(readFileSync(path, "utf8")).toBe("an earlier run's report\n");
+    });
+
+    it(`refuses naming the json report and its path, and creates no file, when the markdown report is ${order} it`, () => {
+      const markdown = join(scratch, "report.md");
+      const json = join(scratch, "regular", "report.json");
+
+      expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path: markdown } }, jsonFirst), payloads, processStdout, []))).toBe(2);
+
+      expect(stderr.join("")).toBe(`The json report could not be written: ${json} (ENOTDIR: not a directory, open '${json}')\n`);
+      expect(process.stdout.write).not.toHaveBeenCalled();
+      expect(readdirSync(scratch)).toEqual(["regular"]);
     });
   }
 });
@@ -172,7 +184,7 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
   const EARLIER = "an earlier run's report\n";
 
   function refused(plan: OutputPlan, stdoutIdentity?: () => { dev: bigint; ino: bigint } | undefined): string {
-    expect(usageStatusOf(() => writeOutputs(plan, payloads, stdoutIdentity))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(plan, payloads, stdoutIdentity ?? processStdout, []))).toBe(2);
     expect(process.stdout.write).not.toHaveBeenCalled();
     const refusal = stderr.join("");
     expect(refusal.trimEnd().split("\n")).toHaveLength(1);
@@ -251,7 +263,7 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
     const lower = join(scratch, "y.md");
     const upper = join(scratch, "Y.MD");
 
-    expect(usageStatusOf(() => writeOutputs({ outputs: [file("md", lower), file("json", upper)] }, payloads))).toBeUndefined();
+    expect(usageStatusOf(() => writeOutputs({ outputs: [file("md", lower), file("json", upper)] }, payloads, processStdout, []))).toBeUndefined();
     expect(readFileSync(lower, "utf8")).toMatch(/^# /);
     expect(readFileSync(upper, "utf8")).toMatch(/^\{/);
   });
@@ -260,7 +272,7 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
     const md = join(scratch, "y.md");
     const json = join(scratch, "z.json");
 
-    expect(usageStatusOf(() => writeOutputs({ outputs: [file("md", md), file("json", json)] }, payloads))).toBeUndefined();
+    expect(usageStatusOf(() => writeOutputs({ outputs: [file("md", md), file("json", json)] }, payloads, processStdout, []))).toBeUndefined();
     expect(readFileSync(md, "utf8")).toMatch(/^# /);
     expect(readFileSync(json, "utf8")).toMatch(/^\{/);
   });
@@ -272,7 +284,7 @@ describe("[SCN-FMT-012] a destination that is a link to a file not yet created i
     const link = join(scratch, "link.json");
     symlinkSync(target, link);
 
-    expect(usageStatusOf(() => writeOutputs({ outputs: [{ fmt: "json", dest: { kind: "file", path: link } }] }, payloads))).toBeUndefined();
+    expect(usageStatusOf(() => writeOutputs({ outputs: [{ fmt: "json", dest: { kind: "file", path: link } }] }, payloads, processStdout, []))).toBeUndefined();
     expect(stderr).toEqual([]);
     expect(readFileSync(target, "utf8")).toMatch(/^\{/);
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
@@ -295,6 +307,8 @@ describe("[SCN-FMT-012] a destination that is a link to a file not yet created i
             ],
           },
           payloads,
+          processStdout,
+          [],
         ),
       ),
     ).toBe(2);

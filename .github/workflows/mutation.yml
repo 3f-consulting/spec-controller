@@ -50,6 +50,9 @@ jobs:
           - scope: spec-controller-ingest
             mutate: "packages/spec-controller/src/ingest/**/*.ts,!packages/spec-controller/src/ingest/**/*.test.ts"
             timeout: 19
+          - scope: spec-controller-cli-balance
+            mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts"
+            timeout: 21
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}

@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
-import { runBalance } from "../cli-balance/cli.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const TARGET = "target";
 const RUN_ID = "r1";
@@ -73,18 +73,8 @@ describe("[SCN-RMG-005] executeKeptRun stamps run.yaml only when the command wro
 
 describe("[SCN-RMG-005] runBalance answers whether it wrote the report its --format specs name", () => {
   function answer(argv: readonly string[]): { wrote: unknown; exitCode: number } {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const out = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-    const err = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-    try {
-      const wrote: unknown = runBalance([...argv]);
-      return { wrote, exitCode: Number(process.exitCode ?? 0) };
-    } finally {
-      out.mockRestore();
-      err.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+    const { wrote, exitCode } = runBalanceCaptured(argv);
+    return { wrote, exitCode };
   }
 
   it("answers false for a flag balance does not accept, and leaves the usage status", () => {

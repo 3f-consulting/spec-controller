@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { inputsReadBy, type InputReader } from "./inputsRead.js";
 
 const reader: InputReader = {
@@ -43,5 +48,70 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
 
     expect(pointedAway.map((i) => i.path)).not.toContain("package.json");
     expect(absent.map((i) => i.path)).not.toContain("package.json");
+  });
+});
+
+describe("[SCN-FMT-013] balance refuses a --format naming one of the feature files it reads, and writes one naming a file it does not read", () => {
+  const made: string[] = [];
+  afterAll(() => {
+    for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function target(): { features: string; ci: string } {
+    const dir = mkdtempSync(join(tmpdir(), "fmt-013-unit-"));
+    made.push(dir);
+    const features = join(dir, "features");
+    mkdirSync(features);
+    writeFileSync(join(features, "a.feature"), "Feature: a\n");
+    writeFileSync(join(features, "b.feature"), "Feature: b\n");
+    writeFileSync(join(features, "notes.txt"), "not a feature\n");
+    const ci = join(dir, "ci.yml");
+    writeFileSync(ci, "jobs: {}\n");
+    return { features, ci };
+  }
+
+  function contentsOf(dir: string): Record<string, string> {
+    return Object.fromEntries(readdirSync(dir).map((name) => [name, readFileSync(join(dir, name), "utf8")]));
+  }
+
+  function captured(argv: string[]): { stdout: string; stderr: string; exitCode: unknown } {
+    const { stdout, stderr, exitCode } = runBalanceCaptured(argv);
+    return { stdout, stderr, exitCode };
+  }
+
+  it("refuses a markdown report on a feature file of the --features corpus at exit 2, naming the output and that file, and leaves every file as it was", () => {
+    const { features, ci } = target();
+    const before = contentsOf(features);
+    const output = join(features, "b.feature");
+
+    expect(captured(["--features", features, "--ci", ci, "--format", `md:${output}`])).toEqual({
+      stdout: "",
+      stderr: APP_MESSAGES[AppMessage.OutputOverwritesInput](`md:${output}`, "a feature file of the --features corpus", output) + "\n",
+      exitCode: 2,
+    });
+    expect(contentsOf(features)).toEqual(before);
+  });
+
+  it("writes a markdown report on a file of the corpus folder that is not a feature file, since the run does not read it", () => {
+    const { features, ci } = target();
+    const output = join(features, "notes.txt");
+
+    const run = captured(["--features", features, "--ci", ci, "--format", `md:${output}`]);
+
+    expect(run.stderr).toBe("");
+    expect(run.stdout).toBe("");
+    expect(readFileSync(output, "utf8")).not.toBe("not a feature\n");
+    expect(readFileSync(output, "utf8")).toContain("# ");
+    expect(readFileSync(join(features, "a.feature"), "utf8")).toBe("Feature: a\n");
+  });
+
+  it("writes a report to a new file while one of the inputs it reads is no regular file, alongside inputs that are", () => {
+    const { features } = target();
+    const output = join(features, "..", "report.md");
+
+    const run = captured(["--features", features, "--ci", "/dev/null", "--format", `md:${output}`]);
+
+    expect(run.stderr).toBe("");
+    expect(readFileSync(output, "utf8")).toContain("# ");
   });
 });

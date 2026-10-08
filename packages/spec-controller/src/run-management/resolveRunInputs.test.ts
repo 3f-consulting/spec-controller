@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/ingestQualityChecks.js";
+import { runBalance } from "../cli-balance/cli.js";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
@@ -165,7 +166,7 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
 });
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
-  function targetRepo(): { repo: string; head: string; cleanup: () => void } {
+  function targetRepo(message = "the target's own commit"): { repo: string; head: string; cleanup: () => void } {
     const repo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-")));
     const git = (...args: string[]): string =>
       execFileSync(
@@ -174,7 +175,7 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
         { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
       ).trim();
     git("init", "-q");
-    git("commit", "--allow-empty", "-q", "-m", "the target's own commit");
+    git("commit", "--allow-empty", "-q", "-m", message);
     return { repo, head: git("rev-parse", "HEAD"), cleanup: () => rmSync(repo, { recursive: true, force: true }) };
   }
 
@@ -241,6 +242,90 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
     } finally {
       rmSync(nonGitDir, { recursive: true, force: true });
     }
+  });
+
+  describe("runBalance's written JSON provenance", () => {
+    const fixtureVitest = resolve("tests/fixtures/balanced/vitest.json");
+    const fixturePackageJson = resolve("tests/fixtures/balanced/package.json");
+    const fixtureFeatures = resolve("tests/fixtures/balanced/features");
+
+    function plainDir(): { dir: string; cleanup: () => void } {
+      const dir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-plain-")));
+      return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+    }
+
+    function writtenSourceSha(target: string, cwd: string, extra: string[]): unknown {
+      mkdirSync(join(target, "workflows"), { recursive: true });
+      writeFileSync(join(target, "workflows", "ci.yml"), "jobs: {}\n");
+      const reportPath = join(target, "spec-reconciliation.json");
+      const savedExitCode = process.exitCode;
+      const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(cwd);
+      try {
+        runBalance([
+          ...extra,
+          "--vitest", fixtureVitest,
+          "--package-json", fixturePackageJson,
+          "--ci", join(target, "workflows"),
+          "--format", `json:${reportPath}`,
+        ]);
+      } finally {
+        cwdSpy.mockRestore();
+        process.exitCode = savedExitCode;
+      }
+      return JSON.parse(readFileSync(reportPath, "utf8")).runProvenance.sourceSha;
+    }
+
+    function withFeatures(target: string): string[] {
+      cpSync(fixtureFeatures, join(target, "features"), { recursive: true });
+      return ["--features", join(target, "features")];
+    }
+
+    it("records the --features target's own commit, not the working directory's", () => {
+      const target = targetRepo();
+      const cwd = targetRepo("the working directory's commit");
+      try {
+        expect(target.head).not.toBe(cwd.head);
+        expect(writtenSourceSha(target.repo, cwd.repo, withFeatures(target.repo))).toBe(target.head);
+      } finally {
+        cwd.cleanup();
+        target.cleanup();
+      }
+    });
+
+    it("records an explicit --source-sha over the target's own commit", () => {
+      const target = targetRepo();
+      const cwd = targetRepo("the working directory's commit");
+      try {
+        expect(
+          writtenSourceSha(target.repo, cwd.repo, [...withFeatures(target.repo), "--source-sha", "abc123"]),
+        ).toBe("abc123");
+      } finally {
+        cwd.cleanup();
+        target.cleanup();
+      }
+    });
+
+    it("records unknown for a --features target that is not a repository, given no override", () => {
+      const target = plainDir();
+      const cwd = targetRepo("the working directory's commit");
+      try {
+        expect(writtenSourceSha(target.dir, cwd.repo, withFeatures(target.dir))).toBeNull();
+      } finally {
+        cwd.cleanup();
+        target.cleanup();
+      }
+    });
+
+    it("records the working directory's commit when no --features is given", () => {
+      const target = plainDir();
+      const cwd = targetRepo("the working directory's commit");
+      try {
+        expect(writtenSourceSha(target.dir, cwd.repo, [])).toBe(cwd.head);
+      } finally {
+        cwd.cleanup();
+        target.cleanup();
+      }
+    });
   });
 });
 
@@ -332,6 +417,54 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       expect(JSON.stringify(balance)).not.toContain(target);
     } finally {
       cwd.mockRestore();
+      rmSync(target, { recursive: true, force: true });
+      rmSync(foreign, { recursive: true, force: true });
+    }
+  });
+
+  it("runBalance names a cross-repo run's inputs relative to the target's repository on both surfaces, never by the target's absolute path", () => {
+    const target = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-")));
+    const foreign = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-foreign-")));
+    const fixture = resolve("tests/fixtures/balanced");
+    const savedExitCode = process.exitCode;
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(foreign);
+    try {
+      execFileSync("git", ["-C", target, "init", "-q"], { stdio: "ignore" });
+      cpSync(join(fixture, "features"), join(target, "features"), { recursive: true });
+      cpSync(join(fixture, "vitest.json"), join(target, "vitest.json"));
+      cpSync(join(fixture, "package.json"), join(target, "package.json"));
+      mkdirSync(join(target, "workflows"));
+      writeFileSync(join(target, "workflows", "ci.yml"), "jobs: {}\n");
+      const reports = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-out-")));
+      try {
+        const jsonPath = join(reports, "spec-reconciliation.json");
+        const mdPath = join(reports, "spec-reconciliation.md");
+
+        runBalance([
+          "--features", join(target, "features"),
+          "--vitest", join(target, "vitest.json"),
+          "--package-json", join(target, "package.json"),
+          "--ci", join(target, "workflows"),
+          "--format", `json:${jsonPath}`,
+          "--format", `md:${mdPath}`,
+        ]);
+
+        const json = readFileSync(jsonPath, "utf8");
+        const md = readFileSync(mdPath, "utf8");
+        expect(JSON.parse(json).runProvenance.inputs).toEqual({
+          features: "features",
+          vitest: "vitest.json",
+          packageJson: "package.json",
+          ci: "workflows",
+        });
+        expect(json).not.toContain(target);
+        expect(md).not.toContain(target);
+      } finally {
+        rmSync(reports, { recursive: true, force: true });
+      }
+    } finally {
+      cwd.mockRestore();
+      process.exitCode = savedExitCode;
       rmSync(target, { recursive: true, force: true });
       rmSync(foreign, { recursive: true, force: true });
     }

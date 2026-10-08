@@ -14,6 +14,7 @@ import {
   type Shape,
 } from "../ingest/inputShapes.js";
 import { reRender, type ReRendered } from "./reRender.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 export interface JsonInput {
   readonly subject: string;
@@ -23,30 +24,46 @@ export interface JsonInput {
 }
 
 interface ReadShape {
-  readonly noun: string;
+  readonly subject: (flag: string) => string;
   readonly writer: string;
   readonly shape: Shape;
 }
 
 const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
-  vitest: { noun: "report", writer: "the Vitest JSON reporter writes", shape: VITEST_REPORT },
-  cucumber: { noun: "report", writer: "the Cucumber JSON formatter writes", shape: CUCUMBER_REPORT },
-  "ci-steps": { noun: "record", writer: "of a CI run's record of its steps", shape: CI_STEP_RECORD },
-  "package-json": { noun: "manifest", writer: "of a package.json manifest", shape: PACKAGE_MANIFEST },
+  vitest: {
+    subject: APP_MESSAGES[AppMessage.FlaggedReport],
+    writer: APP_MESSAGES[AppMessage.VitestReportShape](),
+    shape: VITEST_REPORT,
+  },
+  cucumber: {
+    subject: APP_MESSAGES[AppMessage.FlaggedReport],
+    writer: APP_MESSAGES[AppMessage.CucumberReportShape](),
+    shape: CUCUMBER_REPORT,
+  },
+  "ci-steps": {
+    subject: APP_MESSAGES[AppMessage.FlaggedRecord],
+    writer: APP_MESSAGES[AppMessage.CiStepRecordShape](),
+    shape: CI_STEP_RECORD,
+  },
+  "package-json": {
+    subject: APP_MESSAGES[AppMessage.FlaggedManifest],
+    writer: APP_MESSAGES[AppMessage.PackageManifestShape](),
+    shape: PACKAGE_MANIFEST,
+  },
 };
 
 export function jsonInputsOf(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
   const given = Object.entries(READ_SHAPES).flatMap(([flag, read]) => {
     const path = args[flag];
     if (path === undefined) return [];
-    return [{ subject: `The --${flag} ${read.noun}`, path, shape: read.shape, writer: read.writer }];
+    return [{ subject: read.subject(`--${flag}`), path, shape: read.shape, writer: read.writer }];
   });
   if (args["package-json"] !== undefined || !exists(DEFAULT_PACKAGE_JSON)) return given;
   const { shape, writer } = READ_SHAPES["package-json"]!;
-  return [...given, { subject: "The package.json read by default", path: DEFAULT_PACKAGE_JSON, shape, writer }];
+  return [...given, { subject: APP_MESSAGES[AppMessage.DefaultPackageJson](), path: DEFAULT_PACKAGE_JSON, shape, writer }];
 }
 
-function reasonOf(err: unknown): string {
+export function reasonOf(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
@@ -55,17 +72,17 @@ function jsonInputFault(input: JsonInput, read: (path: string) => string): strin
   try {
     text = read(input.path);
   } catch (err) {
-    return `${input.subject} could not be read: ${input.path} (${reasonOf(err)})`;
+    return APP_MESSAGES[AppMessage.CouldNotBeReadAt](input.subject, input.path, reasonOf(err));
   }
   let document: unknown;
   try {
     document = JSON.parse(text);
   } catch (err) {
-    return `${input.subject} is not valid JSON: ${input.path} (${reasonOf(err)})`;
+    return APP_MESSAGES[AppMessage.NotValidJson](input.subject, input.path, reasonOf(err));
   }
   const fault = shapeFaultIn(document, input.shape);
   if (fault === null) return null;
-  return `${input.subject} is not in the shape ${input.writer}: ${input.path} (${fault})`;
+  return APP_MESSAGES[AppMessage.NotInShape](input.subject, input.writer, input.path, fault);
 }
 
 export function checkInputShapes(inputs: readonly JsonInput[], read: (path: string) => string): string | null {
@@ -77,29 +94,43 @@ export function checkInputShapes(inputs: readonly JsonInput[], read: (path: stri
 }
 
 function pathRefusal(subject: string, fault: InputReadFault): string {
-  return `${subject} could not be read: ${fault.path} (${fault.reason})`;
+  return APP_MESSAGES[AppMessage.CouldNotBeReadAt](subject, fault.path, fault.reason);
 }
 
 export function checkInputPaths(args: Record<string, string>): string | null {
   const corpus = corpusReadFault(args["features"]);
   if (corpus !== null) {
-    return pathRefusal(args["features"] === undefined ? "The feature corpus read by default" : "The --features corpus", corpus);
+    return pathRefusal(
+      args["features"] === undefined
+        ? APP_MESSAGES[AppMessage.DefaultFeatureCorpus]()
+        : APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"),
+      corpus,
+    );
   }
   const ci = ciReadFault(args["ci"]);
-  if (ci !== null) return pathRefusal(args["ci"] === undefined ? "The CI workflows read by default" : "The --ci workflows", ci);
+  if (ci !== null) {
+    return pathRefusal(
+      args["ci"] === undefined ? APP_MESSAGES[AppMessage.DefaultCiWorkflows]() : APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"),
+      ci,
+    );
+  }
   return null;
 }
 
 export function checkSavedReconciliation(path: string, savedJson: string): string | null {
   const fault = shapeFaultIn(JSON.parse(savedJson), SAVED_RECONCILIATION);
   if (fault === null) return null;
-  return `The --render-from-json file is not a saved reconciliation: ${path} (${fault})`;
+  return APP_MESSAGES[AppMessage.NotASavedReconciliation](APP_MESSAGES[AppMessage.FlaggedFile]("--render-from-json"), path, fault);
 }
 
 export function reRenderOrRefusal(path: string, savedJson: string, strict: boolean): ReRendered | string {
   try {
     return reRender(savedJson, strict);
   } catch (err) {
-    return `The --render-from-json file could not be rendered as a saved reconciliation: ${path} (${reasonOf(err)})`;
+    return APP_MESSAGES[AppMessage.NotRenderableAsSaved](
+      APP_MESSAGES[AppMessage.FlaggedFile]("--render-from-json"),
+      path,
+      reasonOf(err),
+    );
   }
 }

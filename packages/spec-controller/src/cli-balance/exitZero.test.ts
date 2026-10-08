@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { runBalance } from "./cli.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
   const EXAMPLES = [
@@ -45,26 +46,13 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
   ] as const;
 
   function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const chunks: string[] = [];
-    const writeSpy = vi
-      .spyOn(process.stdout, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    const errSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-09-18T12:00:00.000Z"));
     try {
-      runBalance([...argv]);
-      return { stdout: chunks.join(""), exitCode: Number(process.exitCode ?? 0) };
+      const { stdout, exitCode } = runBalanceCaptured(argv);
+      return { stdout, exitCode };
     } finally {
       vi.useRealTimers();
-      errSpy.mockRestore();
-      writeSpy.mockRestore();
-      process.exitCode = savedExitCode;
     }
   }
 
@@ -82,34 +70,22 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
 });
 
 describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict", () => {
-  function runWithExitZero(argv: readonly string[]): { exitCode: number; stderr: string } {
-    const savedExitCode = process.exitCode;
-    process.exitCode = 0;
-    const errChunks: string[] = [];
-    const outSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-    const errSpy = vi
-      .spyOn(process.stderr, "write")
-      .mockImplementation((chunk: string | Uint8Array): boolean => {
-        errChunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-        return true;
-      });
-    try {
-      runBalance([...argv, "--exit-zero"]);
-      return { exitCode: Number(process.exitCode ?? 0), stderr: errChunks.join("") };
-    } finally {
-      errSpy.mockRestore();
-      outSpy.mockRestore();
-      process.exitCode = savedExitCode;
-    }
+  function runWithExitZero(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
+    const { exitCode, stdout, stderr } = runBalanceCaptured([...argv, "--exit-zero"]);
+    return { exitCode, stdout, stderr };
   }
 
-  it("usage: a supplied --vitest path that does not exist still exits 2, naming the flag and the path", () => {
+  it("usage: a supplied --vitest path that does not exist still exits 2, refusing with the missing-input error alone, naming the flag and the path, and reporting nothing", () => {
     const missing = "tests/fixtures/does-not-exist/vitest.missing";
     const run = runWithExitZero([
       "--features", "tests/fixtures/evidence-observation/features",
       "--vitest", missing,
     ]);
-    expect(run.exitCode).toBe(2);
+    expect(run).toEqual({
+      exitCode: 2,
+      stdout: "",
+      stderr: APP_MESSAGES[AppMessage.InputPathMissing]("--vitest", missing) + "\n",
+    });
     expect(run.stderr).toContain("--vitest");
     expect(run.stderr).toContain(missing);
   });

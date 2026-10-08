@@ -1,23 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import { runBalance } from "./cli.js";
+import { describe, it, expect } from "vitest";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 function runInProcess(argv: readonly string[]): { stdout: string; exitCode: number } {
-  const savedExitCode = process.exitCode;
-  process.exitCode = 0;
-  const chunks: string[] = [];
-  const writeSpy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array): boolean => {
-    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-    return true;
-  });
-  const errSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  try {
-    runBalance([...argv]);
-    return { stdout: chunks.join(""), exitCode: Number(process.exitCode ?? 0) };
-  } finally {
-    errSpy.mockRestore();
-    writeSpy.mockRestore();
-    process.exitCode = savedExitCode;
-  }
+  const { stdout, exitCode } = runBalanceCaptured(argv);
+  return { stdout, exitCode };
 }
 
 function headlineExit(stdout: string): number | undefined {

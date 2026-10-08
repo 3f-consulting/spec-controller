@@ -1,5 +1,6 @@
 import { renderReport, verdictCode } from "@3f-consulting/spec-controller-core";
 import type { RenderInput, VerdictCode } from "@3f-consulting/spec-controller-core";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 export interface ReRendered {
   readonly markdown: string;
@@ -22,8 +23,5 @@ export function checkReRenderFlags(args: Record<string, string>): string | null 
   if (args["render-from-json"] === undefined) return null;
   const ignored = Object.keys(args).find((key) => !READ_BY_A_RE_RENDER.has(key));
   if (ignored === undefined) return null;
-  return (
-    `--render-from-json re-renders a saved report and reads only --strict and --exit-zero beside it; ` +
-    `--${ignored} would be ignored. Remove it, or run balance without --render-from-json.`
-  );
+  return APP_MESSAGES[AppMessage.ReRenderReadsOnly](`--${ignored}`);
 }

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkMissingValues } from "./cli-args.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { runBalanceCaptured } from "../test-support/runBalance.js";
 
 const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
 const valueFlags = balanceFlags.filter((flag) => flag.arg !== undefined);
@@ -44,6 +45,21 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
       expect(checkMissingValues([flag.name, "some-value"], cliRegistry, "balance")).toBeNull();
     });
   }
+
+  it("runBalance refuses --vitest at the end over an out-of-balance target at exit 2, naming it and its value alone, before it reconciles", () => {
+    const vitest = valueFlags.find((flag) => flag.name === "--vitest");
+    expect(vitest).toBeDefined();
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/broken/features",
+      "--package-json", "tests/fixtures/broken/package.json",
+      "--ci", "tests/fixtures/broken",
+      "--vitest",
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(refusalFor("--vitest", vitest as FlagSpec) + "\n");
+    expect(stdout).toBe("");
+  });
 
   it("never asks a flag that takes no value for one", () => {
     for (const flag of booleanFlags) {

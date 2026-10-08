@@ -17,6 +17,7 @@ import {
   checkInputShapes,
   checkSavedReconciliation,
   jsonInputsOf,
+  reasonOf,
   reRenderOrRefusal,
 } from "./unreadableInputs.js";
 import { statusFor } from "./exitStatus.js";
@@ -34,28 +35,20 @@ import {
   checkMisplacedHostModifiers,
 } from "../cli-args.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 function collectFormatSpecs(argv: string[]): string[] {
-  const specs: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--format") {
-      const value = argv[i + 1];
-      if (value !== undefined && !value.startsWith("--")) {
-        specs.push(value);
-        i++;
-      }
-    }
-  }
-  return specs;
+  // checkMissingValues has already refused a --format given no value.
+  return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
+}
+
+function readText(path: string): string {
+  return readFileSync(path, "utf8");
 }
 
 export function checkLegacyJson(args: Record<string, string>): string | null {
   if (args["json"] !== undefined) {
-    return (
-      "The --json <path> flag has been removed. " +
-      "Use --format json:<path> to write the JSON report to a file " +
-      "(e.g. --format json:spec-reconciliation.json)."
-    );
+    return APP_MESSAGES[AppMessage.LegacyJsonRemoved]();
   }
   return null;
 }
@@ -85,7 +78,7 @@ export function checkInputsExist(
   for (const flag of flags) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
-      return `The --${flag} path does not exist: ${path}`;
+      return APP_MESSAGES[AppMessage.InputPathMissing](`--${flag}`, path);
     }
   }
   return null;
@@ -107,19 +100,15 @@ export function checkInputsParse(
     try {
       text = read(path);
     } catch (err) {
-      return `The --${flag} file could not be read: ${path} (${failureOf(err)})`;
+      return APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedFile](`--${flag}`), path, reasonOf(err));
     }
     try {
       JSON.parse(text);
     } catch (err) {
-      return `The --${flag} report is not valid JSON: ${path} (${failureOf(err)})`;
+      return APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[AppMessage.FlaggedReport](`--${flag}`), path, reasonOf(err));
     }
   }
   return null;
-}
-
-function failureOf(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }
 
 export function checkRenderFromJson(
@@ -132,8 +121,11 @@ export function checkRenderFromJson(
   try {
     JSON.parse(read(path));
   } catch (err) {
-    const failure = err instanceof Error ? err.message : String(err);
-    return `The --render-from-json saved report could not be read: ${path} (${failure})`;
+    return APP_MESSAGES[AppMessage.CouldNotBeReadAt](
+      APP_MESSAGES[AppMessage.FlaggedSavedReport]("--render-from-json"),
+      path,
+      reasonOf(err),
+    );
   }
   return null;
 }
@@ -143,11 +135,12 @@ export function runBalance(argv: string[]): boolean {
 }
 
 function balance(argv: string[]): boolean {
-  if (asksForHelp(argv)) {
-    process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
-    return false;
-  }
+  const helped = asksForHelp(argv);
+  if (helped) process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
+  return !helped && reconcile(argv);
+}
 
+function reconcile(argv: string[]): boolean {
   const runStart = new Date();
   const args = parseArgs(argv);
 
@@ -185,33 +178,31 @@ function balance(argv: string[]): boolean {
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames };
+  const payloads = { balance, ctx, evidenceObligations, featureNames };
   writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
 
   const verdict = verdictCode({ ...balance, strict: ctx.strict === true });
   const code = statusFor(verdict, args["exit-zero"] !== undefined);
-  if (code !== 0) process.exitCode = code;
+  process.exitCode = code;
   return true;
 }
 
 function renderSavedReport(args: Record<string, string>): boolean {
   const ignoredFlagError = checkReRenderFlags(args);
   if (ignoredFlagError) refuse(ignoredFlagError);
-  const unreadableSavedReportError = checkRenderFromJson(args, (path) =>
-    readFileSync(path, "utf8"),
-  );
+  const unreadableSavedReportError = checkRenderFromJson(args, readText);
   if (unreadableSavedReportError) refuse(unreadableSavedReportError);
 
   const rehydratePath = args["render-from-json"];
   if (rehydratePath === undefined) return false;
-  const savedJson = readFileSync(rehydratePath, "utf8");
+  const savedJson = readText(rehydratePath);
   const notSavedError = checkSavedReconciliation(rehydratePath, savedJson);
   if (notSavedError) refuse(notSavedError);
   const saved = reRenderOrRefusal(rehydratePath, savedJson, args["strict"] !== undefined);
   if (typeof saved === "string") refuse(saved);
   process.stdout.write(saved.markdown + "\n");
   const code = statusFor(saved.code, args["exit-zero"] !== undefined);
-  if (code !== 0) process.exitCode = code;
+  process.exitCode = code;
   return true;
 }
 
@@ -219,20 +210,22 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) refuse(missingInputError);
 
-  const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
+  const unparseableInputError = checkInputsParse(args, readText);
   if (unparseableInputError) refuse(unparseableInputError);
 
   const unreadablePathError = checkInputPaths(args);
   if (unreadablePathError) refuse(unreadablePathError);
 
-  const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), (path) => readFileSync(path, "utf8"));
+  const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
   if (misshapenInputError) refuse(misshapenInputError);
 
   const featureParseErrors = featureCorpusParseErrors(args["features"]);
   if (featureParseErrors.length > 0) {
     refuse(
       featureParseErrors
-        .map(({ file, message }) => `The --features corpus contains a feature file that could not be parsed: ${file}\n${message}`)
+        .map(({ file, message }) =>
+          APP_MESSAGES[AppMessage.CorpusFileUnparseable](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), file, message),
+        )
         .join("\n"),
     );
   }
@@ -256,7 +249,3 @@ function runContextOf(
     strict: args["strict"] !== undefined,
   };
 }
-
-const invokedDirectly =
-  process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`;
-if (invokedDirectly) runBalance(process.argv.slice(2));

@@ -1,3 +1,5 @@
+import { APP_MESSAGES, AppMessage } from "../../messages.js";
+
 export type OutputFormat = "md" | "json";
 
 const SUPPORTED_FORMATS: readonly OutputFormat[] = ["md", "json"];
@@ -6,7 +8,7 @@ function isSupportedFormat(fmt: string): fmt is OutputFormat {
   return (SUPPORTED_FORMATS as readonly string[]).includes(fmt);
 }
 
-export type OutputDest =
+type OutputDest =
   | { readonly kind: "stdout" }
   | { readonly kind: "file"; readonly path: string };
 
@@ -25,7 +27,7 @@ export type PlanResult =
 
 export function planOutput(
   formatSpecs: readonly string[],
-  namesStdout: (path: string) => boolean = () => false,
+  namesStdout: (path: string) => boolean,
 ): PlanResult {
   const specs = formatSpecs.length === 0 ? ["md"] : formatSpecs;
   const outputs: PlannedOutput[] = specs.map((spec) => {
@@ -41,9 +43,7 @@ export function planOutput(
     const bad = [...new Set(unknown.map((o) => o.fmt))].join(", ");
     return {
       ok: false,
-      error:
-        `Unknown --format ${bad}. Supported formats are ${SUPPORTED_FORMATS.join(", ")} ` +
-        `(e.g. --format md, --format json:report.json).`,
+      error: APP_MESSAGES[AppMessage.UnknownFormat](bad, SUPPORTED_FORMATS.join(", ")),
     };
   }
 
@@ -52,10 +52,7 @@ export function planOutput(
     const fmts = stdoutBound.map((o) => o.fmt).join(", ");
     return {
       ok: false,
-      error:
-        `More than one output routes to stdout (${fmts}); at most one may. ` +
-        `Give one of them a :<path> to write it to a file instead ` +
-        `(e.g. --format json:report.json).`,
+      error: APP_MESSAGES[AppMessage.MoreThanOneToStdout](fmts),
     };
   }
 
@@ -77,10 +74,7 @@ export function sharedFileRefusal(outputs: readonly IdentifiedOutput[]): string 
   for (const [index, first] of onFiles.entries()) {
     const second = onFiles.slice(index + 1).find((o) => sameFile(o.identity, first.identity));
     if (second !== undefined) {
-      return (
-        `Two outputs name the same file: ${asGiven(first.output)} and ${asGiven(second.output)}. ` +
-        `Give each output a file of its own.`
-      );
+      return APP_MESSAGES[AppMessage.OutputsShareFile](asGiven(first.output), asGiven(second.output));
     }
   }
   return undefined;
@@ -97,10 +91,7 @@ export function inputOverwriteRefusal(outputs: readonly IdentifiedOutput[], inpu
     if (identity === undefined) continue;
     const read = inputs.find((input) => input.identity !== undefined && sameFile(input.identity, identity));
     if (read !== undefined) {
-      return (
-        `An output would overwrite a file this run reads: ${asGiven(output)} is ${read.subject}, ${read.path}. ` +
-        `Give the report a file of its own.`
-      );
+      return APP_MESSAGES[AppMessage.OutputOverwritesInput](asGiven(output), read.subject, read.path);
     }
   }
   return undefined;

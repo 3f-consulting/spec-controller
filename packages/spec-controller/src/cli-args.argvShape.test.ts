@@ -3,6 +3,7 @@ import { cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js"
 import { checkArgvShape, positionalArguments } from "./cli-args.js";
 import { formatFilePaths } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { runBalanceCaptured } from "../test-support/runBalance.js";
 
 const balanceFlags: readonly FlagSpec[] = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
 
@@ -39,6 +40,21 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
       expect(checkArgvShape(argv, cliRegistry, "balance")).toBe(notAFlag(token));
     });
   }
+
+  it("runBalance refuses a stray word after the target's flags under --exit-zero at exit 2, naming it alone, before it reconciles", () => {
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/balanced/features",
+      "--vitest", "tests/fixtures/balanced/vitest.json",
+      "--package-json", "tests/fixtures/balanced/package.json",
+      "--ci", "tests/fixtures/balanced",
+      "extra",
+      "--exit-zero",
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(notAFlag("extra") + "\n");
+    expect(stdout).toBe("");
+  });
 
   it("accepts every registered flag given once, each value flag with its value", () => {
     expect(wellFormed.length).toBeGreaterThan(balanceFlags.length);

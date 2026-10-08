@@ -78,6 +78,33 @@ export enum AppMessage {
   AllocateSummary,
   FeaturePartArgument,
   NewFlag,
+  LegacyJsonRemoved,
+  InputPathMissing,
+  FlaggedFile,
+  FlaggedReport,
+  FlaggedRecord,
+  FlaggedManifest,
+  FlaggedSavedReport,
+  FlaggedCorpus,
+  FlaggedWorkflows,
+  DefaultPackageJson,
+  DefaultFeatureCorpus,
+  DefaultCiWorkflows,
+  VitestReportShape,
+  CucumberReportShape,
+  CiStepRecordShape,
+  PackageManifestShape,
+  NotValidJson,
+  NotInShape,
+  NotASavedReconciliation,
+  NotRenderableAsSaved,
+  CorpusFileUnparseable,
+  ReRenderReadsOnly,
+  UnknownFormat,
+  MoreThanOneToStdout,
+  OutputsShareFile,
+  OutputOverwritesInput,
+  ReportNotWritten,
 }
 
 interface AppMessageParams {
@@ -113,6 +140,25 @@ interface AppMessageParams {
   [AppMessage.RunIdWithoutStore]: [runId: string];
   [AppMessage.KeepRunUnderName]: [command: string];
   [AppMessage.BuiltInDeferralTags]: [tags: string];
+  [AppMessage.InputPathMissing]: [flag: string, path: string];
+  [AppMessage.FlaggedFile]: [flag: string];
+  [AppMessage.FlaggedReport]: [flag: string];
+  [AppMessage.FlaggedRecord]: [flag: string];
+  [AppMessage.FlaggedManifest]: [flag: string];
+  [AppMessage.FlaggedSavedReport]: [flag: string];
+  [AppMessage.FlaggedCorpus]: [flag: string];
+  [AppMessage.FlaggedWorkflows]: [flag: string];
+  [AppMessage.NotValidJson]: [subject: string, path: string, reason: string];
+  [AppMessage.NotInShape]: [subject: string, shape: string, path: string, fault: string];
+  [AppMessage.NotASavedReconciliation]: [subject: string, path: string, fault: string];
+  [AppMessage.NotRenderableAsSaved]: [subject: string, path: string, reason: string];
+  [AppMessage.CorpusFileUnparseable]: [corpus: string, file: string, message: string];
+  [AppMessage.ReRenderReadsOnly]: [ignored: string];
+  [AppMessage.UnknownFormat]: [formats: string, supported: string];
+  [AppMessage.MoreThanOneToStdout]: [formats: string];
+  [AppMessage.OutputsShareFile]: [first: string, second: string];
+  [AppMessage.OutputOverwritesInput]: [output: string, subject: string, path: string];
+  [AppMessage.ReportNotWritten]: [format: string];
 }
 
 export type AppMessages = {
@@ -265,6 +311,49 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.NewFlag]: () =>
     "Start a part no feature file's header carries yet: its first code, " +
     "or one past any number the repository already carries for it.",
+  [AppMessage.LegacyJsonRemoved]: () =>
+    "The --json <path> flag has been removed. " +
+    "Use --format json:<path> to write the JSON report to a file " +
+    "(e.g. --format json:spec-reconciliation.json).",
+  [AppMessage.InputPathMissing]: (flag, path) => `The ${flag} path does not exist: ${path}`,
+  [AppMessage.FlaggedFile]: (flag) => `The ${flag} file`,
+  [AppMessage.FlaggedReport]: (flag) => `The ${flag} report`,
+  [AppMessage.FlaggedRecord]: (flag) => `The ${flag} record`,
+  [AppMessage.FlaggedManifest]: (flag) => `The ${flag} manifest`,
+  [AppMessage.FlaggedSavedReport]: (flag) => `The ${flag} saved report`,
+  [AppMessage.FlaggedCorpus]: (flag) => `The ${flag} corpus`,
+  [AppMessage.FlaggedWorkflows]: (flag) => `The ${flag} workflows`,
+  [AppMessage.DefaultPackageJson]: () => "The package.json read by default",
+  [AppMessage.DefaultFeatureCorpus]: () => "The feature corpus read by default",
+  [AppMessage.DefaultCiWorkflows]: () => "The CI workflows read by default",
+  [AppMessage.VitestReportShape]: () => "the Vitest JSON reporter writes",
+  [AppMessage.CucumberReportShape]: () => "the Cucumber JSON formatter writes",
+  [AppMessage.CiStepRecordShape]: () => "of a CI run's record of its steps",
+  [AppMessage.PackageManifestShape]: () => "of a package.json manifest",
+  [AppMessage.NotValidJson]: (subject, path, reason) => `${subject} is not valid JSON: ${path} (${reason})`,
+  [AppMessage.NotInShape]: (subject, shape, path, fault) => `${subject} is not in the shape ${shape}: ${path} (${fault})`,
+  [AppMessage.NotASavedReconciliation]: (subject, path, fault) =>
+    `${subject} is not a saved reconciliation: ${path} (${fault})`,
+  [AppMessage.NotRenderableAsSaved]: (subject, path, reason) =>
+    `${subject} could not be rendered as a saved reconciliation: ${path} (${reason})`,
+  [AppMessage.CorpusFileUnparseable]: (corpus, file, message) =>
+    `${corpus} contains a feature file that could not be parsed: ${file}\n${message}`,
+  [AppMessage.ReRenderReadsOnly]: (ignored) =>
+    `--render-from-json re-renders a saved report and reads only --strict and --exit-zero beside it; ` +
+    `${ignored} would be ignored. Remove it, or run balance without --render-from-json.`,
+  [AppMessage.UnknownFormat]: (formats, supported) =>
+    `Unknown --format ${formats}. Supported formats are ${supported} ` +
+    `(e.g. --format md, --format json:report.json).`,
+  [AppMessage.MoreThanOneToStdout]: (formats) =>
+    `More than one output routes to stdout (${formats}); at most one may. ` +
+    `Give one of them a :<path> to write it to a file instead ` +
+    `(e.g. --format json:report.json).`,
+  [AppMessage.OutputsShareFile]: (first, second) =>
+    `Two outputs name the same file: ${first} and ${second}. Give each output a file of its own.`,
+  [AppMessage.OutputOverwritesInput]: (output, subject, path) =>
+    `An output would overwrite a file this run reads: ${output} is ${subject}, ${path}. ` +
+    `Give the report a file of its own.`,
+  [AppMessage.ReportNotWritten]: (format) => `The ${format} report could not be written`,
 };
 
 export const Unreadable = {

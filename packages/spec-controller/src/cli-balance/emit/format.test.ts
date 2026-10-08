@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { planOutput, type OutputPlan } from "./format.js";
+import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { runBalanceCaptured } from "../../../test-support/runBalance.js";
 
 function planOf(result: ReturnType<typeof planOutput>): OutputPlan {
   if (!result.ok) throw new Error(`expected a plan, got error: ${result.error}`);
@@ -8,26 +10,26 @@ function planOf(result: ReturnType<typeof planOutput>): OutputPlan {
 
 describe("[SCN-FMT-001] planOutput plans markdown to stdout by default", () => {
   it("plans exactly one md→stdout output when no --format flag is given", () => {
-    const plan = planOf(planOutput([]));
+    const plan = planOf(planOutput([], () => false));
     expect(plan.outputs).toEqual([{ fmt: "md", dest: { kind: "stdout" } }]);
   });
 
   it("plans exactly one md→stdout output for an explicit --format md", () => {
-    const plan = planOf(planOutput(["md"]));
+    const plan = planOf(planOutput(["md"], () => false));
     expect(plan.outputs).toEqual([{ fmt: "md", dest: { kind: "stdout" } }]);
   });
 });
 
 describe("[SCN-FMT-002] planOutput plans json to a caller-given file", () => {
   it("plans exactly one json→file output for a json:<path> spec", () => {
-    const plan = planOf(planOutput(["json:reports/spec-reconciliation.json"]));
+    const plan = planOf(planOutput(["json:reports/spec-reconciliation.json"], () => false));
     expect(plan.outputs).toEqual([
       { fmt: "json", dest: { kind: "file", path: "reports/spec-reconciliation.json" } },
     ]);
   });
 
   it("takes the path as everything after the FIRST colon (a later colon stays in the path)", () => {
-    const plan = planOf(planOutput(["json:/tmp/out:v2.json"]));
+    const plan = planOf(planOutput(["json:/tmp/out:v2.json"], () => false));
     expect(plan.outputs).toEqual([
       { fmt: "json", dest: { kind: "file", path: "/tmp/out:v2.json" } },
     ]);
@@ -36,21 +38,21 @@ describe("[SCN-FMT-002] planOutput plans json to a caller-given file", () => {
 
 describe("[SCN-FMT-003] planOutput plans markdown to a caller-given file", () => {
   it("plans exactly one md→file output for a md:<path> spec", () => {
-    const plan = planOf(planOutput(["md:reports/spec-reconciliation.md"]));
+    const plan = planOf(planOutput(["md:reports/spec-reconciliation.md"], () => false));
     expect(plan.outputs).toEqual([
       { fmt: "md", dest: { kind: "file", path: "reports/spec-reconciliation.md" } },
     ]);
   });
 
   it("routes nothing to stdout when the markdown is file-destined", () => {
-    const plan = planOf(planOutput(["md:reports/spec-reconciliation.md"]));
+    const plan = planOf(planOutput(["md:reports/spec-reconciliation.md"], () => false));
     expect(plan.outputs.filter((o) => o.dest.kind === "stdout")).toEqual([]);
   });
 });
 
 describe("[SCN-FMT-004] planOutput routes several specs independently in one plan", () => {
   it("plans md→stdout AND json→file from a `md` + `json:<path>` spec list", () => {
-    const plan = planOf(planOutput(["md", "json:reports/spec-reconciliation.json"]));
+    const plan = planOf(planOutput(["md", "json:reports/spec-reconciliation.json"], () => false));
     expect(plan.outputs).toEqual([
       { fmt: "md", dest: { kind: "stdout" } },
       { fmt: "json", dest: { kind: "file", path: "reports/spec-reconciliation.json" } },
@@ -58,7 +60,7 @@ describe("[SCN-FMT-004] planOutput routes several specs independently in one pla
   });
 
   it("routes EXACTLY ONE output to stdout — the allowed multi-output shape", () => {
-    const plan = planOf(planOutput(["md", "json:reports/spec-reconciliation.json"]));
+    const plan = planOf(planOutput(["md", "json:reports/spec-reconciliation.json"], () => false));
     expect(plan.outputs.filter((o) => o.dest.kind === "stdout")).toEqual([
       { fmt: "md", dest: { kind: "stdout" } },
     ]);
@@ -67,7 +69,7 @@ describe("[SCN-FMT-004] planOutput routes several specs independently in one pla
 
 describe("[SCN-FMT-005] planOutput rejects more than one output routed to stdout", () => {
   it("rejects two DIFFERENT formats both bound for stdout, with a stdout+:<path> hint", () => {
-    const result = planOutput(["md", "json"]);
+    const result = planOutput(["md", "json"], () => false);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable: expected a stdout-collision error");
     expect(result.error).toMatch(/stdout/i);
@@ -75,24 +77,46 @@ describe("[SCN-FMT-005] planOutput rejects more than one output routed to stdout
   });
 
   it("rejects the SAME format twice (md, md) — both stdout — locking the count semantics", () => {
-    const result = planOutput(["md", "md"]);
+    const result = planOutput(["md", "md"], () => false);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable: expected a stdout-collision error");
     expect(result.error).toMatch(/:<path>/);
   });
 
   it("accepts a single stdout-bound output (the allowed shape)", () => {
-    expect(planOutput(["md"]).ok).toBe(true);
+    expect(planOutput(["md"], () => false).ok).toBe(true);
   });
 
   it("accepts one stdout output plus one file output (only the stdout count matters)", () => {
-    expect(planOutput(["md", "json:reports/spec-reconciliation.json"]).ok).toBe(true);
+    expect(planOutput(["md", "json:reports/spec-reconciliation.json"], () => false).ok).toBe(true);
   });
 });
 
-describe("[SCN-FMT-007] planOutput rejects an unknown format with a hint listing md and json", () => {
+describe("[SCN-FMT-007] balance rejects an unknown format with a hint listing md and json", () => {
+  it("runBalance refuses --format xml at exit 2 with the hint alone, writing nothing, over a target that would otherwise reconcile", () => {
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/balanced/features",
+      "--vitest", "tests/fixtures/balanced/vitest.json",
+      "--package-json", "tests/fixtures/balanced/package.json",
+      "--ci", "tests/fixtures/balanced",
+      "--format", "xml",
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(APP_MESSAGES[AppMessage.UnknownFormat]("xml", "md, json") + "\n");
+    expect(stdout).toBe("");
+  });
+
+  it("names each unknown format once, in the order first given, however often and wherever it is routed", () => {
+    const result = planOutput(["xml", "xml:a.out", "yaml"], () => false);
+    expect(result).toEqual({
+      ok: false,
+      error: APP_MESSAGES[AppMessage.UnknownFormat]("xml, yaml", "md, json"),
+    });
+  });
+
   it("rejects an unsupported format (xml) with a hint listing md and json", () => {
-    const result = planOutput(["xml"]);
+    const result = planOutput(["xml"], () => false);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable: expected an unknown-format error");
     expect(result.error).toMatch(/\bmd\b/);
@@ -100,7 +124,7 @@ describe("[SCN-FMT-007] planOutput rejects an unknown format with a hint listing
   });
 
   it("rejects an unknown format among otherwise-valid specs (md:x + nope)", () => {
-    const result = planOutput(["md:x", "nope"]);
+    const result = planOutput(["md:x", "nope"], () => false);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable: expected an unknown-format error");
     expect(result.error).toMatch(/\bmd\b/);
@@ -108,10 +132,10 @@ describe("[SCN-FMT-007] planOutput rejects an unknown format with a hint listing
   });
 
   it("accepts the supported formats — md, json, md:<path>, json:<path> — unchanged", () => {
-    expect(planOutput(["md"]).ok).toBe(true);
-    expect(planOutput(["json"]).ok).toBe(true);
-    expect(planOutput(["md:x"]).ok).toBe(true);
-    expect(planOutput(["json:x"]).ok).toBe(true);
+    expect(planOutput(["md"], () => false).ok).toBe(true);
+    expect(planOutput(["json"], () => false).ok).toBe(true);
+    expect(planOutput(["md:x"], () => false).ok).toBe(true);
+    expect(planOutput(["json:x"], () => false).ok).toBe(true);
   });
 });
 
