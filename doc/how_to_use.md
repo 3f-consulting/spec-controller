@@ -6,7 +6,7 @@ This document is for anyone running `spec-controller balance` against a project 
 
 ## What spec-controller assumes
 
-**Not a task tracker. Not a documentation spec. Automated tests — unit, integration, e2e, performance — and fitness checks in CI.**
+**Not a task tracker. Not a documentation spec. Automated tests — unit, integration, e2e, performance — and fitness functions in CI.**
 
 Feature files are not a precondition. You need none to start: a project that has none, or has some that are not tagged to spec-controller's model, is a `new-client`, and `balance` already reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds; they are not what you need first.
 
@@ -33,7 +33,7 @@ node --version   # must be v22.x or higher
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
-- Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness check (see *Wiring into CI*).
+- Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness function (see *Wiring into CI*).
 - Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are read to check that an UNCONVERTED static check is wired into CI over the real source.
 
 ---
@@ -46,7 +46,7 @@ A scenario's tag line says what it needs proved: `@SCN-<FFF>-<NNN> @unit @e2e` a
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title — the most specific one wins |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
-| `@fitness` | a CI step | the step's `id:` is the code (see *Declaring a fitness check*, below) |
+| `@fitness` | a CI step | the step's `id:` is the code (see *Declaring a fitness function*, below) |
 
 ```ts
 describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
@@ -64,9 +64,9 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
 
 ---
 
-## Declaring a fitness check
+## Declaring a fitness function
 
-A **fitness check** is a whole-system property — complexity, mutation score, type
+A **fitness function** is a whole-system property — complexity, mutation score, type
 soundness, vocabulary, suite run time. **There are two artefacts and no third**, and **neither of
 them is a cucumber step definition**. There is no fitness profile to configure, no manifest list,
 and no step to write.
@@ -130,7 +130,7 @@ what.
 **The zero-annotation state is not Node-shaped.** It does not match `package.json` script names
 against prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script is discovered
 like any other, and **what you name is not a list of check names**: you name the commands that run your behavioural suites — a closed set of four, one per
-tier — and **every other step of the workflows `--ci` names is a candidate fitness check**, whatever
+tier — and **every other step of the workflows `--ci` names is a candidate fitness function**, whatever
 it invokes and whether it is a `run:` step or a `uses:` action.
 
 ```jsonc
@@ -260,8 +260,8 @@ spec-controller balance --features ./features \
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness check is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
-| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness function is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
+| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness functions. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
@@ -388,7 +388,7 @@ Each one misfiles a code without making any posting ambiguous, so every account 
 
 The point of `spec-controller` is continuous reconciliation, so `balance` belongs in CI, after your tests have produced their reports.
 
-**If you have converted any fitness check, each check step carries its `@SCN` as its `id:` and the job ends with one dump step:**
+**If you have converted any fitness function, each check step carries its `@SCN` as its `id:` and the job ends with one dump step:**
 
 ```yaml
 - run: eslint
@@ -504,7 +504,7 @@ packages carry codes of their own.
 
 **A static check shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
-**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
+**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, one buried in a quoted argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`), is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
 
