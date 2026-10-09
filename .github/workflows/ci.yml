@@ -248,6 +248,11 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.mutation.js packages
 
+      - name: No production source file writes message prose outside its package's catalogue
+        id: SCN-FIT-041
+        if: always()
+        run: pnpm exec eslint --config eslint.messages.js packages
+
       - name: Every production source file is in a mutation scope or on the recorded list
         id: SCN-FIT-040
         if: always()

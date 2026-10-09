@@ -7,7 +7,12 @@ import type {
 } from "../model.js";
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../census/evidenceObligations.js";
+import {
+  untaggedScenarioId,
+  type EvidenceObligations,
+  type SharedScnCode,
+  type UntaggedScenario,
+} from "../census/evidenceObligations.js";
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import { isScenario } from "../domain/scenarioReconciliation.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
@@ -242,7 +247,7 @@ function outOfBalanceByFeature(
   featureNames: Readonly<Record<string, string>>,
 ): Map<string, FeatureGroup> {
   const codeOfFile = new Map(Object.entries(featureNames).map(([code, slug]) => [`${slug}.feature`, code]));
-  const featureOf = new Map(untagged.map((u) => [`${u.feature} : ${u.scenario}`, codeOfFile.get(u.feature) ?? u.feature]));
+  const featureOf = new Map(untagged.map((u) => [untaggedScenarioId(u), codeOfFile.get(u.feature) ?? u.feature]));
   const groups = new Map<string, FeatureGroup>();
   for (const s of scenarios) {
     if (s.verdict !== "out-of-balance") continue;

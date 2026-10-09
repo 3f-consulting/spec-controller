@@ -39,6 +39,7 @@ import {
 } from "./scenarioReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
 import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posting.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";
 
@@ -227,7 +228,7 @@ function suspenseScenarioRows(
   if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationStaticChecks.length > 0) {
     const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationStaticChecks);
     rows.push({
-      scnId: "(no scenario)",
+      scnId: CORE_MESSAGES[CoreMessage.SuspenseScenarioId],
       kind: "suspense-scenario",
       verdict: verdictFor(items),
       evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationStaticChecks],

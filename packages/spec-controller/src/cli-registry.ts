@@ -211,7 +211,7 @@ export function renderTopLevelHelp(registry: CliRegistry): string {
     APP_MESSAGES[AppMessage.HelpTitle](),
     "",
     APP_MESSAGES[AppMessage.HelpUsage](),
-    `  spec-controller ${modifierUsage} <command> [command-args]`,
+    `  ${APP_MESSAGES[AppMessage.HelpUsageLine](modifierUsage)}`,
     "",
     APP_MESSAGES[AppMessage.HelpCommands](),
     ...commandLines,

@@ -1,3 +1,5 @@
+import { APP_MESSAGES, AppMessage } from "../messages.js";
+
 export type Shape =
   | "string"
   | "number"
@@ -65,14 +67,14 @@ export const SAVED_RECONCILIATION: Shape = {
 
 function kindOf(value: unknown): string {
   if (value === null) return "null";
-  if (Array.isArray(value)) return "a list";
-  if (typeof value === "object") return "an object";
-  return `a ${typeof value}`;
+  if (Array.isArray(value)) return APP_MESSAGES[AppMessage.ShapeKindList]();
+  if (typeof value === "object") return APP_MESSAGES[AppMessage.ShapeKindObject]();
+  return APP_MESSAGES[AppMessage.ShapeKindOfType](typeof value);
 }
 
 function expectedKindOf(shape: Shape): string {
-  if (typeof shape === "string") return `a ${shape}`;
-  return "list" in shape ? "a list" : "an object";
+  if (typeof shape === "string") return APP_MESSAGES[AppMessage.ShapeKindOfType](shape);
+  return "list" in shape ? APP_MESSAGES[AppMessage.ShapeKindList]() : APP_MESSAGES[AppMessage.ShapeKindObject]();
 }
 
 function pathOf(where: string, key: string): string {
@@ -83,7 +85,8 @@ export function shapeFaultIn(value: unknown, shape: Shape, where = ""): string |
   if (shape === "anything") return null;
   const found = kindOf(value);
   const expected = expectedKindOf(shape);
-  if (found !== expected) return `${where === "" ? "the top level" : where} is ${found}, not ${expected}`;
+  if (found !== expected)
+    return APP_MESSAGES[AppMessage.ShapeWrongKind](where === "" ? APP_MESSAGES[AppMessage.ShapeTopLevel]() : where, found, expected);
   if (typeof shape === "string") return null;
   if ("list" in shape) return listFault(value as readonly unknown[], shape.list, where);
   if ("entries" in shape) return entriesFault(value as Record<string, unknown>, shape, where);
@@ -102,7 +105,7 @@ function fieldsFault(record: Record<string, unknown>, shape: Fields, where: stri
   for (const [key, field] of Object.entries(shape.fields)) {
     const path = pathOf(where, key);
     if (record[key] === undefined) {
-      if (shape.required?.includes(key) === true) return `${path} is missing`;
+      if (shape.required?.includes(key) === true) return APP_MESSAGES[AppMessage.ShapeFieldMissing](path);
       continue;
     }
     const fault = shapeFaultIn(record[key], field, path);

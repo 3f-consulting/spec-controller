@@ -116,6 +116,22 @@ export enum AppMessage {
   UnknownPartRefused,
   NoPartsCarried,
   PartAlreadyHeaded,
+  NoFeaturePartGiven,
+  NotAFeaturePart,
+  DefaultCorpusFeatureFile,
+  FlaggedCorpusFeatureFile,
+  DefaultCiWorkflow,
+  FlaggedCiWorkflow,
+  FlaggedCiFolderWorkflow,
+  FormatOnStandardOutput,
+  ShapeKindList,
+  ShapeKindObject,
+  ShapeKindOfType,
+  ShapeTopLevel,
+  ShapeWrongKind,
+  ShapeFieldMissing,
+  HostUsageError,
+  HelpUsageLine,
 }
 
 interface AppMessageParams {
@@ -178,6 +194,13 @@ interface AppMessageParams {
   [AppMessage.HighestSeenInCommit]: [code: string, path: string, line: number, commit: string];
   [AppMessage.UnknownPartRefused]: [part: string, parts: string];
   [AppMessage.PartAlreadyHeaded]: [part: string];
+  [AppMessage.NotAFeaturePart]: [part: string];
+  [AppMessage.FormatOnStandardOutput]: [fmt: string];
+  [AppMessage.ShapeKindOfType]: [type: string];
+  [AppMessage.ShapeWrongKind]: [where: string, found: string, expected: string];
+  [AppMessage.ShapeFieldMissing]: [path: string];
+  [AppMessage.HostUsageError]: [message: string];
+  [AppMessage.HelpUsageLine]: [modifierUsage: string];
 }
 
 export type AppMessages = {
@@ -386,6 +409,23 @@ export const APP_MESSAGES: AppMessages = {
     `The parts this corpus's feature files carry: ${parts}.`,
   [AppMessage.NoPartsCarried]: () => "none",
   [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
+  [AppMessage.NoFeaturePartGiven]: () =>
+    "no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code.",
+  [AppMessage.NotAFeaturePart]: (part) => `'${part}' is not a feature part in canon's form: two to five characters, each A-Z or 0-9.`,
+  [AppMessage.DefaultCorpusFeatureFile]: () => "a feature file of the corpus read by default",
+  [AppMessage.FlaggedCorpusFeatureFile]: () => "a feature file of the --features corpus",
+  [AppMessage.DefaultCiWorkflow]: () => "a CI workflow read by default",
+  [AppMessage.FlaggedCiWorkflow]: () => "the --ci workflow",
+  [AppMessage.FlaggedCiFolderWorkflow]: () => "a workflow of the --ci folder",
+  [AppMessage.FormatOnStandardOutput]: (fmt) => `${fmt} on standard output`,
+  [AppMessage.ShapeKindList]: () => "a list",
+  [AppMessage.ShapeKindObject]: () => "an object",
+  [AppMessage.ShapeKindOfType]: (type) => `a ${type}`,
+  [AppMessage.ShapeTopLevel]: () => "the top level",
+  [AppMessage.ShapeWrongKind]: (where, found, expected) => `${where} is ${found}, not ${expected}`,
+  [AppMessage.ShapeFieldMissing]: (path) => `${path} is missing`,
+  [AppMessage.HostUsageError]: (message) => `spec-controller: usage error — ${message}`,
+  [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
 };
 
 export const Unreadable = {

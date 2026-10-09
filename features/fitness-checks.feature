@@ -173,3 +173,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-040
     Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates
+
+  Rule: a human-facing message is read from its package's catalogue, never written in production code
+
+    @fitness @SCN-FIT-041
+    Scenario: no production source file in the packages writes human-facing message prose outside its package's catalogue

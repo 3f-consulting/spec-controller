@@ -19,7 +19,7 @@ export { parseScenarios, countScnOccurrences, parseUntaggedScenarios } from "./p
 
 export { evidenceObligations } from "./census/evidenceObligations.js";
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./census/evidenceObligations.js";
-export { sharedScnCodesOf } from "./census/evidenceObligations.js";
+export { sharedScnCodesOf, untaggedScenarioId } from "./census/evidenceObligations.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export { hasScenarioCodeErrors } from "./domain/scenarioCodeError.js";

@@ -13,7 +13,7 @@ export function storedReRenderRefusal(inv: HostInvocation): string | undefined {
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
   return (
-    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ReRenderNotStored](given.join(", "))}\n` +
+    `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ReRenderNotStored](given.join(", ")))}\n` +
     APP_MESSAGES[given.length === 1 ? AppMessage.ReRenderWithoutIt : AppMessage.ReRenderWithoutThem]()
   );
 }
@@ -26,7 +26,7 @@ export function unstoredRunIdRefusal(
   const entry = commands.find((command) => command.name === inv.command);
   if (entry === undefined || entry.acceptsHostModifiers === false) return undefined;
   return (
-    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.RunIdWithoutStore](inv.runId)}\n` +
+    `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.RunIdWithoutStore](inv.runId))}\n` +
     APP_MESSAGES[AppMessage.KeepRunUnderName](entry.name)
   );
 }

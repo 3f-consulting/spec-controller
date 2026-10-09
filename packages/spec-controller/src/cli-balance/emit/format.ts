@@ -102,5 +102,5 @@ function sameFile(a: FileIdentity, b: FileIdentity): boolean {
 }
 
 function asGiven(output: PlannedOutput): string {
-  return output.dest.kind === "stdout" ? `${output.fmt} on standard output` : `${output.fmt}:${output.dest.path}`;
+  return output.dest.kind === "stdout" ? APP_MESSAGES[AppMessage.FormatOnStandardOutput](output.fmt) : `${output.fmt}:${output.dest.path}`;
 }

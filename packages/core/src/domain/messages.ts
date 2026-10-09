@@ -143,6 +143,13 @@ export enum CoreMessage {
   AmbiguousUnnamedStep,
   UnknownFeature,
   UnknownVitestFile,
+  ManifestKindList,
+  ManifestKindObject,
+  ManifestKindString,
+  ManifestKindStringOrNull,
+  ManifestKindOfType,
+  SuspenseScenarioId,
+  UntaggedScenarioId,
 }
 
 interface CoreMessageParams {
@@ -206,17 +213,23 @@ interface CoreMessageParams {
   [CoreMessage.CheckStepSkipped]: [scnId: string];
   [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
   [CoreMessage.AmbiguousNamedStep]: [step: string];
+  [CoreMessage.ManifestKindOfType]: [type: string];
+  [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
 }
 
 export type CoreMessages = {
   readonly [C in CoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
 };
 
+const SUSPENSE_SCENARIO_ID = "(no scenario)";
+
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
 const foreignOpening = (file: string, featureCode: string, scnId: string, named: string): string =>
   `${file} carries the feature code @${featureCode}, but holds the scenario ` +
   `@${scnId}, whose feature part names ${named}. A reconciliation's by-feature cut groups on the id, so `;
+
+const aKind = (type: string): string => `a ${type}`;
 
 const recode = (featureCode: string): string => `Re-code the scenario for @${featureCode}`;
 
@@ -382,7 +395,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PhantomScenarioTally]: (count) =>
     `${count} phantom-scenario(s): cited by an evidence observation, named by no feature.`,
   [CoreMessage.SuspenseScenarioTally]: (count) =>
-    `${count} suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".`,
+    `${count} suspense-scenario(s): credits citing no scenario, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag:`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
@@ -408,4 +421,11 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
   [CoreMessage.UnknownFeature]: "(unknown feature)",
   [CoreMessage.UnknownVitestFile]: "(unknown vitest file)",
+  [CoreMessage.ManifestKindList]: "a list",
+  [CoreMessage.ManifestKindObject]: "an object",
+  [CoreMessage.ManifestKindString]: aKind("string"),
+  [CoreMessage.ManifestKindStringOrNull]: "a string or null",
+  [CoreMessage.ManifestKindOfType]: aKind,
+  [CoreMessage.SuspenseScenarioId]: SUSPENSE_SCENARIO_ID,
+  [CoreMessage.UntaggedScenarioId]: (feature, scenario) => `${feature} : ${scenario}`,
 };

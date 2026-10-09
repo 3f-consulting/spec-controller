@@ -158,7 +158,7 @@ export function modifiersNotTakenRefusal(
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
   return (
-    `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ModifiersNotTaken](entry.name, given.join(", "))}\n` +
+    `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ModifiersNotTaken](entry.name, given.join(", ")))}\n` +
     APP_MESSAGES[AppMessage.RunWithoutModifiers](entry.name)
   );
 }

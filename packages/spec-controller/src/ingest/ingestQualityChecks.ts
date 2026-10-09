@@ -7,6 +7,7 @@ import {
   countScnOccurrences,
   parseUntaggedScenarios,
   sharedScnCodesOf,
+  untaggedScenarioId,
 } from "@3f-consulting/spec-controller-core";
 import {
   MissingFeatureCorpusError,
@@ -70,7 +71,7 @@ function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
 function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
   return balanceCorpus(featuresDir).flatMap((f) =>
     parseUntaggedScenarios(readFileSync(f.path, "utf8")).map(
-      (scenario) => `${f.slug}.feature : ${scenario}`
+      (scenario) => untaggedScenarioId({ feature: `${f.slug}.feature`, scenario })
     )
   );
 }

@@ -1,8 +1,13 @@
 import { parseTaggedScenarios } from "../parse/scenarios.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface UntaggedScenario {
   feature: string;
   scenario: string;
+}
+
+export function untaggedScenarioId({ feature, scenario }: UntaggedScenario): string {
+  return CORE_MESSAGES[CoreMessage.UntaggedScenarioId](feature, scenario);
 }
 
 export interface SharedScnCode {

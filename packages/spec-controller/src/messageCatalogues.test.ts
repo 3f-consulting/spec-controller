@@ -100,6 +100,8 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
   [CoreMessage.CheckStepEnded]: ["SCN-ABC-001", "cancelled"],
   [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
+  [CoreMessage.ManifestKindOfType]: ["number"],
+  [CoreMessage.UntaggedScenarioId]: ["one.feature", "an untagged scenario"],
 };
 
 function renderedCore(code: CoreMessage): string {
@@ -226,6 +228,22 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.UnknownPartRefused]: ["ZZZ", "ONE, TWO"],
   [AppMessage.NoPartsCarried]: [],
   [AppMessage.PartAlreadyHeaded]: ["ONE"],
+  [AppMessage.NoFeaturePartGiven]: [],
+  [AppMessage.NotAFeaturePart]: ["one"],
+  [AppMessage.DefaultCorpusFeatureFile]: [],
+  [AppMessage.FlaggedCorpusFeatureFile]: [],
+  [AppMessage.DefaultCiWorkflow]: [],
+  [AppMessage.FlaggedCiWorkflow]: [],
+  [AppMessage.FlaggedCiFolderWorkflow]: [],
+  [AppMessage.FormatOnStandardOutput]: ["md"],
+  [AppMessage.ShapeKindList]: [],
+  [AppMessage.ShapeKindObject]: [],
+  [AppMessage.ShapeKindOfType]: ["number"],
+  [AppMessage.ShapeTopLevel]: [],
+  [AppMessage.ShapeWrongKind]: ["testResults", "an object", "a list"],
+  [AppMessage.ShapeFieldMissing]: ["ledger.scenarioReconciliations"],
+  [AppMessage.HostUsageError]: ["--store applies to stored runs only"],
+  [AppMessage.HelpUsageLine]: ["[--store <dir>] [--run-id <id>]"],
 };
 
 function renderedApp(code: AppMessage): string {

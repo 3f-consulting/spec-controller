@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH } from "../ingest/ingestQualityChecks.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { regularFileIdentity, type ReadInput } from "../outputLocation.js";
 import type { IdentifiedInput } from "./emit/format.js";
 import { jsonInputsOf } from "./unreadableInputs.js";
@@ -45,7 +46,7 @@ export function identifiedInputs(inputs: readonly ReadInput[]): IdentifiedInput[
 }
 
 function featureInputs(dir: string | undefined, reader: InputReader): ReadInput[] {
-  const subject = dir === undefined ? "a feature file of the corpus read by default" : "a feature file of the --features corpus";
+  const subject = APP_MESSAGES[dir === undefined ? AppMessage.DefaultCorpusFeatureFile : AppMessage.FlaggedCorpusFeatureFile]();
   return reader.featureFiles(dir ?? DEFAULT_FEATURES_DIR).map((path) => ({ subject, path }));
 }
 
@@ -55,8 +56,8 @@ function workflowInputs(ci: string | undefined, reader: InputReader): ReadInput[
 }
 
 function workflowSubject(ci: string | undefined, path: string): string {
-  if (ci === undefined) return "a CI workflow read by default";
-  return path === ci ? "the --ci workflow" : "a workflow of the --ci folder";
+  if (ci === undefined) return APP_MESSAGES[AppMessage.DefaultCiWorkflow]();
+  return APP_MESSAGES[path === ci ? AppMessage.FlaggedCiWorkflow : AppMessage.FlaggedCiFolderWorkflow]();
 }
 
 function lowerFirst(text: string): string {
