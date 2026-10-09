@@ -34,7 +34,7 @@ node --version   # must be v22.x or higher
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
 - Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness function (see *Wiring into CI*).
-- Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are read to check that an UNCONVERTED static check is wired into CI over the real source.
+- Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are read to check that an UNCONVERTED fitness function is wired into CI over the real source.
 
 ---
 
@@ -248,7 +248,7 @@ spec-controller balance --features ./features \
 ### What it does
 
 1. Parses your Gherkin scenarios and their `@`-tags into **evidence obligations** — the debit (what's specified).
-2. Parses the evidence reports you passed — Vitest, Cucumber, and the CI/`package.json` static-check checks — into **evidence observations** — the credit (what actually ran).
+2. Parses the evidence reports you passed — Vitest, Cucumber, and the fitness functions in CI and `package.json` — into **evidence observations** — the credit (what actually ran).
 3. Reconciles evidence obligations against evidence observations, per scenario, quality-check by quality-check.
 4. Assembles the **Evidence Reconciliation** and renders it.
 
@@ -259,7 +259,7 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
+| `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness function is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness functions. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
@@ -366,7 +366,7 @@ The **Evidence Reconciliation** — the whole reconciliation — in two renderin
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 
-The outcome you are watching for is the **watermelon**: a static check that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
+The outcome you are watching for is the **watermelon**: a fitness function that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict, and the report is printed.
 
@@ -502,7 +502,7 @@ packages carry codes of their own.
 
 **No scenarios found / empty report** — check `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.
 
-**A static check shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
+**A fitness function shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
 **My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
