@@ -1,6 +1,7 @@
 import type { RuntimeQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export type CucumberJsonReport = Array<{
   uri?: string;
@@ -16,7 +17,7 @@ export type CucumberJsonReport = Array<{
   }>;
 }>;
 
-export const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
+const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
 
 const TIER_TAG = /^@?(integration|e2e|performance)$/;
 
@@ -37,8 +38,9 @@ function deriveLevels(
 
 function ambiguousMessage(step: { keyword?: string; name?: string }): string {
   const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
-  const named = text.length > 0 ? `The step "${text}"` : "A step";
-  return `${named} is ambiguous — two or more step definitions match it, so the step never ran.`;
+  return text.length > 0
+    ? CORE_MESSAGES[CoreMessage.AmbiguousNamedStep](text)
+    : CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep];
 }
 
 export function parseCucumberEvidenceObservations(

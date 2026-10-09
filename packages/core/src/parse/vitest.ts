@@ -31,7 +31,7 @@ export function parseVitestEvidenceObservations(
         status: "failed",
         locator,
         broken: true,
-        ...(file.message !== undefined ? { message: file.message } : {}),
+        message: file.message,
       });
       continue;
     }

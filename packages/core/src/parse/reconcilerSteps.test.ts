@@ -121,6 +121,14 @@ describe("[SCN-USG-014] reconcilerSteps — what it does not recognise", () => {
     ).toEqual([]);
   });
 
+  it("leaves an action step with no env a candidate", () => {
+    const ci = `jobs:\n  ci:\n    steps:\n      - name: Check out\n        uses: actions/checkout@v4`;
+    expect(recognised(ci)).toEqual([]);
+    expect(reconcilerSteps([ci], NAMES, INVOCATION, {}).isReconciler(stepNamed(ci, "Check out"))).toBe(
+      false
+    );
+  });
+
   it("does not read the expression off the job", () => {
     const ci = `
 jobs:
@@ -156,6 +164,23 @@ describe("[SCN-USG-014] reconcilerSteps — how the step-record expression is re
     expect(dumpWith("${{ toJSON(steps) }}")).toEqual(named);
     expect(dumpWith("${{tojson(steps)}}")).toEqual(named);
     expect(dumpWith("${{ toJSON( steps ) }}")).toEqual(named);
+  });
+
+  it("reads the expression beside env values that are not text", () => {
+    const ci = `
+jobs:
+  ci:
+    steps:
+      - name: Dump
+        env:
+          RETRIES: 3
+          STRICT: true
+          STEPS_JSON: \${{ toJSON(steps) }}
+        run: echo done
+`;
+    const { steps, isReconciler } = reconcilerSteps([ci], NAMES, INVOCATION, {});
+    expect(steps).toEqual([{ step: "ci.yml:ci:Dump", role: "records" }]);
+    expect(isReconciler(stepNamed(ci, "Dump"))).toBe(true);
   });
 
   it("reads a different expression as nothing of ours", () => {

@@ -13,10 +13,7 @@ export function stepExclusions(
   notChecks: readonly string[]
 ): StepExclusions {
   const named = new Set(
-    ciWorkflowSteps(ciSources).flatMap((step) => {
-      const name = qualifiedStepName(step, ciSourceNames);
-      return name === undefined ? [] : [name];
-    })
+    ciWorkflowSteps(ciSources).map((step) => qualifiedStepName(step, ciSourceNames))
   );
   const excluded = notChecks.filter((entry) => named.has(entry));
   return {
@@ -24,7 +21,7 @@ export function stepExclusions(
     unmatchedEntries: notChecks.filter((entry) => !named.has(entry)),
     isExcluded: (step) => {
       const name = qualifiedStepName(step, ciSourceNames);
-      return name !== undefined && excluded.includes(name);
+      return excluded.some((entry) => entry === name);
     },
   };
 }

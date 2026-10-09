@@ -1,8 +1,9 @@
 import { SCN_CODE } from "./scenarios.js";
 import type { EvidenceStatus } from "../domain/journal.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { FitnessEvidenceObservation } from "../model.js";
 
-export interface CiStepRecordEntry {
+interface CiStepRecordEntry {
   readonly outcome?: string;
   readonly conclusion?: string;
 }
@@ -22,13 +23,9 @@ function readingOf(outcome: string | undefined): StepReading {
 }
 
 function checkDidNotRunMessage(scnId: string, outcome: string | undefined): string {
-  if (outcome === undefined) {
-    return `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`;
-  }
-  if (outcome === SKIPPED) {
-    return `${scnId}: the CI run's record says this check's step was skipped — so the check did not run.`;
-  }
-  return `${scnId}: the CI run's record says this check's step ended \`${outcome}\` — so the check did not run.`;
+  if (outcome === undefined) return CORE_MESSAGES[CoreMessage.CheckStepNoOutcome](scnId);
+  if (outcome === SKIPPED) return CORE_MESSAGES[CoreMessage.CheckStepSkipped](scnId);
+  return CORE_MESSAGES[CoreMessage.CheckStepEnded](scnId, outcome);
 }
 
 function namedOf(citedScn: string) {

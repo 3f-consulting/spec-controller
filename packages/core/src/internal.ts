@@ -8,9 +8,6 @@ export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 
 export { isFitnessObservation } from "./domain/journal.js";
 
-export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
-export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
-
 export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.js";
 

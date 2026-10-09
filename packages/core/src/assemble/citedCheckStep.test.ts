@@ -39,12 +39,12 @@ jobs:
         run: pnpm lint:beta
 `;
 
-function reconcileAnnotated(): EvidenceReconciliation {
+function reconcileAnnotated(ciSource = annotatedCi): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     featureSources: [annotatedCorpus],
     untaggedScenarios: [],
     packageJson: manifest,
-    ciSources: [annotatedCi],
+    ciSources: [ciSource],
     ciSourceNames: ["ci.yml"],
     runtimeObservations: [],
     deferralTags: [],
@@ -72,6 +72,30 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
         enforcedOverRealSource: true,
         scnId: "SCN-CVT-001",
       },
+    ]);
+  });
+
+  it("credits the row a padded id: names, as if it were written unpadded", () => {
+    const paddedCi = annotatedCi.replace(
+      "        run: pnpm lint:beta",
+      '        id: " SCN-CVT-002 "\n        run: pnpm lint:beta'
+    );
+    expect(rowsOf(reconcileAnnotated(paddedCi))).toEqual([
+      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "balanced", [[undefined, "satisfied"]]],
+    ]);
+  });
+
+  it("reads a blank id: as no citation, leaving its check in suspense as an unannotated one", () => {
+    const blankCi = annotatedCi.replace(
+      "        run: pnpm lint:beta",
+      '        id: ""\n        run: pnpm lint:beta'
+    );
+    expect(blankCi).toContain('id: ""');
+    expect(rowsOf(reconcileAnnotated(blankCi))).toEqual([
+      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
+      ["(no scenario)", "suspense-scenario", "out-of-balance", [["lint:beta", "cites-no-scenario"]]],
     ]);
   });
 });

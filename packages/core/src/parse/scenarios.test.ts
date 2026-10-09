@@ -95,6 +95,75 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
     ].join("\n");
     expect(parseUntaggedScenarios(allTagged)).toEqual([]);
   });
+
+  it("reads a tag line with more than one space between its tags as tags", () => {
+    const spaced = [
+      "Feature: spaced tags",
+      "  @unit  @SCN-AB-001",
+      "  Scenario: coded on a double-spaced tag line",
+      "    Given a step",
+    ].join("\n");
+    expect(parseUntaggedScenarios(spaced)).toEqual([]);
+  });
+
+  it("lists an untagged scenario under every header keyword, the colon followed by a space or not", () => {
+    const headers = [
+      "Feature: header keywords",
+      "  Scenario Outline: an untagged outline",
+      "    Given <x>",
+      "    Examples:",
+      "      | x |",
+      "      | 1 |",
+      "  Scenario Template: an untagged template",
+      "    Given <y>",
+      "    Examples:",
+      "      | y |",
+      "      | 2 |",
+      "  Example: an untagged example",
+      "    Given a step",
+      "  Scenario:written hard against its colon",
+      "    Given a step",
+    ].join("\n");
+    expect(parseUntaggedScenarios(headers)).toEqual([
+      "an untagged outline",
+      "an untagged template",
+      "an untagged example",
+      "written hard against its colon",
+    ]);
+  });
+
+  it("never reads a header keyword in the middle of a step as a scenario", () => {
+    const midLine = [
+      "Feature: mid-line keyword",
+      "  @unit @SCN-AB-001",
+      "  Scenario: coded",
+      "    Given the Scenario: wording appears mid-line",
+    ].join("\n");
+    expect(parseUntaggedScenarios(midLine)).toEqual([]);
+  });
+
+  it("lists an untagged scenario whose header follows a step citing a code", () => {
+    const cited = [
+      "Feature: a cited code above a header",
+      "  @unit @SCN-AB-001",
+      "  Scenario: coded",
+      "    Given the rule @SCN-AB-001 is cited",
+      "  Scenario: uncoded, straight after the cited step",
+      "    Given a step",
+    ].join("\n");
+    expect(parseUntaggedScenarios(cited)).toEqual(["uncoded, straight after the cited step"]);
+  });
+
+  it("lists the second of two scenarios when only the first carries a code", () => {
+    const pair = [
+      "Feature: a coded scenario then an uncoded one",
+      "  @unit @SCN-AB-001",
+      "  Scenario: coded",
+      "  Scenario: uncoded",
+      "    Given a step",
+    ].join("\n");
+    expect(parseUntaggedScenarios(pair)).toEqual(["uncoded"]);
+  });
 });
 
 describe("[SCN-STG-024] a scenario tagged with a feature part outside two to five characters carries no @SCN code", () => {

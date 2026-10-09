@@ -143,6 +143,40 @@ Feature: alpha
     expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-001", "SCN-AAA-001"]);
   });
 
+  it("passes a Feature's tier through its Background to every scenario, and the Background is no scenario", () => {
+    const source = `@integration
+Feature: alpha
+
+  Background:
+    Given a shared precondition
+
+  @unit @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+
+  @SCN-AAA-002
+  Scenario: alpha also works
+    Given another thing
+`;
+    expect(parseScenarios(source)).toEqual([
+      {
+        scnId: "SCN-AAA-001",
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-AAA-002",
+        evidenceObligations: [{ qualityCheck: "integration" }],
+      },
+    ]);
+  });
+
+  it.each([
+    ["an empty file", ""],
+    ["a file of comments only", "# alpha is not written yet\n\n# nor is beta\n"],
+  ])("holds no scenario in %s, and reads it without throwing", (_label, source) => {
+    expect(parseScenarios(source)).toEqual([]);
+  });
+
   it("THROWS on unparseable source — an empty corpus balances against anything, so it never returns one", () => {
     expect(() => parseScenarios("not gherkin at all {{{")).toThrow(/not valid Gherkin/);
   });

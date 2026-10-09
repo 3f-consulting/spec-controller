@@ -95,6 +95,11 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.UntaggedScenarios]: [1],
   [CoreMessage.SharedScnCodes]: [4, 3, 1],
   [CoreMessage.PendingItemFor]: ["unit"],
+  [CoreMessage.FeatureSourceNotGherkin]: ["(1:1): expected: #EOF, got 'x'"],
+  [CoreMessage.CheckStepNoOutcome]: ["SCN-ABC-001"],
+  [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
+  [CoreMessage.CheckStepEnded]: ["SCN-ABC-001", "cancelled"],
+  [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
 };
 
 function renderedCore(code: CoreMessage): string {

@@ -10,15 +10,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 const CONTINUE_ON_ERROR = "continue-on-error";
 
-export type CiRunStep = { readonly command: string; readonly id?: string } & StepAbortsJob;
-
-type StepAbortsJob =
-  | { readonly abortsJob: true }
-  | {
-      readonly abortsJob: false;
-      readonly continuesOnError: { readonly carriedBy: "step" | "job"; readonly value: string };
-    };
-
 export type CiStepAction =
   | { readonly runs: string }
   | { readonly uses: string };
@@ -29,17 +20,17 @@ export type CiWorkflowStep = {
   readonly identity: string;
   readonly id?: string;
   readonly env: readonly string[];
-} & CiStepAction &
-  StepAbortsJob;
+  readonly abortsJob: boolean;
+} & CiStepAction;
 
 function vouchesForTheStep(value: unknown): boolean {
   return value === undefined || value === false || value === "false";
 }
 
 function envValuesOf(value: unknown): readonly string[] {
-  return isRecord(value)
-    ? Object.values(value).filter((entry): entry is string => typeof entry === "string")
-    : [];
+  return Object.values(isRecord(value) ? value : {}).filter(
+    (entry): entry is string => typeof entry === "string"
+  );
 }
 
 function idOf(value: unknown): string | undefined {
@@ -48,14 +39,8 @@ function idOf(value: unknown): string | undefined {
   return id === "" ? undefined : id;
 }
 
-function abortsJobOf(ownValue: unknown, jobValue: unknown): StepAbortsJob {
-  if (!vouchesForTheStep(ownValue)) {
-    return { abortsJob: false, continuesOnError: { carriedBy: "step", value: String(ownValue) } };
-  }
-  if (!vouchesForTheStep(jobValue)) {
-    return { abortsJob: false, continuesOnError: { carriedBy: "job", value: String(jobValue) } };
-  }
-  return { abortsJob: true };
+function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
+  return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
 }
 
 function actionOf(step: Record<string, unknown>): CiStepAction | undefined {
@@ -82,15 +67,14 @@ function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): CiWorkflo
     if (!isRecord(step)) continue;
     const action = actionOf(step);
     if (action === undefined) continue;
-    const id = idOf(step["id"]);
     read.push({
       sourceIndex,
       jobId,
       identity: identityOf(step["name"], action),
       env: envValuesOf(step["env"]),
-      ...(id !== undefined ? { id } : {}),
+      id: idOf(step["id"]),
       ...action,
-      ...abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
+      abortsJob: abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
     });
   }
   return read;
@@ -101,26 +85,11 @@ function stepsOf(ciSource: string, sourceIndex: number): CiWorkflowStep[] {
   try {
     doc = parse(ciSource);
   } catch {
-    return [];
+    // An unparseable workflow declares no steps, as one with no jobs does.
   }
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
   return Object.entries(jobs).flatMap(([jobId, job]) => stepsOfJob(jobId, job, sourceIndex));
-}
-
-function runStepOf(step: CiWorkflowStep & { readonly runs: string }): CiRunStep {
-  const read = { command: step.runs, ...(step.id !== undefined ? { id: step.id } : {}) };
-  return step.abortsJob
-    ? { ...read, abortsJob: true }
-    : { ...read, abortsJob: false, continuesOnError: step.continuesOnError };
-}
-
-export function ciRunCommands(ciSources: readonly string[]): string[] {
-  return ciRunSteps(ciSources).map((step) => step.command);
-}
-
-export function ciRunSteps(ciSources: readonly string[]): CiRunStep[] {
-  return ciWorkflowSteps(ciSources).flatMap((step) => ("runs" in step ? [runStepOf(step)] : []));
 }
 
 export function ciWorkflowSteps(ciSources: readonly string[]): CiWorkflowStep[] {
@@ -129,8 +98,7 @@ export function ciWorkflowSteps(ciSources: readonly string[]): CiWorkflowStep[] 
 
 function lineInvokesScript(line: string, script: string): boolean {
   const tokens = line.trim().split(/\s+/);
-  for (let i = 0; i < tokens.length; i++) {
-    const tok = tokens[i];
+  for (const [i, tok] of tokens.entries()) {
     if (tok === "pnpm" || tok === "yarn") {
       let j = i + 1;
       if (tokens[j] === "run") j++;

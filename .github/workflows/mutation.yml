@@ -56,6 +56,9 @@ jobs:
           - scope: core-census
             mutate: "packages/core/src/census/**/*.ts,!packages/core/src/census/**/*.test.ts,!packages/core/src/census/**/*.testkit.ts"
             timeout: 3
+          - scope: core-parse
+            mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.testkit.ts"
+            timeout: 53
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}

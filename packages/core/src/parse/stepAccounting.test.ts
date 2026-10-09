@@ -206,6 +206,37 @@ describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exa
     });
   });
 
+  it("reads no step from a list item that neither runs a command nor uses an action", () => {
+    const sources = [
+      [
+        "jobs:",
+        "  sweep:",
+        "    steps:",
+        "      - name: Announce",
+        "      - uses: 3",
+        "      -",
+        "      - name: Depth check",
+        "        run: pnpm lint:depth",
+      ].join("\n"),
+    ];
+    expect(
+      stepAccounting(
+        sources,
+        SCRIPTS,
+        NO_RUNNERS,
+        reconcilerOver(sources, ["nightly.yml"]),
+        notChecksOver(sources, ["nightly.yml"], [])
+      )
+    ).toEqual({
+      stepsRead: 1,
+      candidates: 1,
+      runners: 0,
+      reconciler: 0,
+      excluded: 0,
+      accountedFor: 1,
+    });
+  });
+
   it("accounts for nothing where the run read no CI configuration", () => {
     expect(
       stepAccounting([], SCRIPTS, UNIT_RUNNER, reconcilerOver([], []), notChecksOver([], [], []))

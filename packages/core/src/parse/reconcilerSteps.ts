@@ -11,8 +11,9 @@ export interface ReconcilerSteps {
 const STEP_RECORD_EXPRESSION = "tojson(steps)";
 
 function producesTheStepRecord(step: CiWorkflowStep): boolean {
-  return [...step.env, ...("runs" in step ? [step.runs] : [])].some((written) =>
-    written.replace(/\s+/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION)
+  const written = "runs" in step ? [...step.env, step.runs] : step.env;
+  return written.some((text) =>
+    text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION)
   );
 }
 

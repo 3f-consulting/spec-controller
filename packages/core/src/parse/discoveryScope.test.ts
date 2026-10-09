@@ -59,6 +59,8 @@ const excluding =
   (step: CiWorkflowStep): boolean =>
     identities.includes(step.identity);
 
+const excludingNothing = (): boolean => false;
+
 describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read", () => {
   it("names every workflow and every job, with the steps it read from each", () => {
     expect(
@@ -77,7 +79,7 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
   });
 
   it("counts a `uses:` step among the steps it read, because the walk reads one", () => {
-    const [ci] = discoveryScope([CI_YML], ["ci.yml"], SCRIPTS, NO_RUNNERS);
+    const [ci] = discoveryScope([CI_YML], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing);
     expect(ci).toEqual({ source: "ci.yml", job: "ci", steps: 4, candidates: 4 });
   });
 
@@ -87,8 +89,20 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
     ).toEqual([{ source: "release.yml", job: "publish", steps: 2, candidates: 0 }]);
   });
 
+  it("adds no steps for a job that calls a reusable workflow, or for a job with no body", () => {
+    const withStepless = [
+      CI_YML,
+      "  reuse:",
+      "    uses: ./.github/workflows/x.yml",
+      "  empty:",
+    ].join("\n");
+    expect(discoveryScope([withStepless], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([
+      { source: "ci.yml", job: "ci", steps: 4, candidates: 4 },
+    ]);
+  });
+
   it("reads nothing from a document that parses to no jobs", () => {
-    expect(discoveryScope(["name: CI\non: [push]\n"], ["ci.yml"], SCRIPTS, NO_RUNNERS)).toEqual([]);
+    expect(discoveryScope(["name: CI\non: [push]\n"], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([]);
   });
 });
 
@@ -118,7 +132,7 @@ describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones
 });
 
 describe("[SCN-USG-020] discoveryScope — one settled order", () => {
-  const inOrder = discoveryScope([CI_YML, NIGHTLY_YML], ["ci.yml", "nightly.yml"], SCRIPTS, NO_RUNNERS);
+  const inOrder = discoveryScope([CI_YML, NIGHTLY_YML], ["ci.yml", "nightly.yml"], SCRIPTS, NO_RUNNERS, excludingNothing);
 
   it("sorts the jobs of one workflow, whatever order the workflow writes them in", () => {
     expect(inOrder.map((entry) => `${entry.source}:${entry.job}`)).toEqual([
@@ -130,21 +144,21 @@ describe("[SCN-USG-020] discoveryScope — one settled order", () => {
 
   it("reads the same whichever order the sources were handed over in", () => {
     expect(
-      discoveryScope([NIGHTLY_YML, CI_YML], ["nightly.yml", "ci.yml"], SCRIPTS, NO_RUNNERS)
+      discoveryScope([NIGHTLY_YML, CI_YML], ["nightly.yml", "ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)
     ).toEqual(inOrder);
   });
 });
 
 describe("[SCN-USG-020] discoveryScope — a source with no name", () => {
   it("keeps the job, and names no workflow for it", () => {
-    expect(discoveryScope([CI_YML], [], SCRIPTS, NO_RUNNERS)).toEqual([
+    expect(discoveryScope([CI_YML], [], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([
       { job: "ci", steps: 4, candidates: 4 },
     ]);
   });
 
   it("sorts a nameless source ahead of a named one, so the order is still settled", () => {
     expect(
-      discoveryScope([CI_YML, NIGHTLY_YML], [undefined as unknown as string, "nightly.yml"], SCRIPTS, NO_RUNNERS)
+      discoveryScope([CI_YML, NIGHTLY_YML], [undefined as unknown as string, "nightly.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)
     ).toEqual([
       { job: "ci", steps: 4, candidates: 4 },
       { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },

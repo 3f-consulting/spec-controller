@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 import type { RuntimeEvidenceObservation } from "../model.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
@@ -66,6 +67,54 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
         elements: [
           {
             tags: [{ name: "@integration" }, { name: "@SCN-LDG-012" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-012", status: "passed", locator: "features/integration.feature" },
+    ]);
+  });
+
+  it("reads an @integration scenario failed when one step failed, whatever its other steps did", () => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/integration.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-LDG-012" }],
+            steps: [
+              { keyword: "Given ", name: "a ledger", result: { status: "passed" } },
+              { keyword: "When ", name: "it reconciles", result: { status: "failed" } },
+              { keyword: "Then ", name: "it balances", result: { status: "skipped" } },
+            ],
+          },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-012", status: "failed", locator: "features/integration.feature" },
+    ]);
+  });
+
+  it("credits nothing for an @integration scenario that ran no steps", () => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/integration.feature",
+        elements: [{ tags: [{ name: "@integration" }, { name: "@SCN-LDG-012" }], steps: [] }],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([]);
+  });
+
+  it("credits integration once when the tag is inherited from the feature beside the scenario's own", () => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/integration.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@integration" }, { name: "@SCN-LDG-012" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
@@ -220,6 +269,7 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     expect(observation).toMatchObject({
       qualityCheck: "integration",
       scnId: "SCN-HNS-020",
+      status: "failed",
       locator: "features/ldg019.feature",
       broken: true,
     });
@@ -275,6 +325,21 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
       { qualityCheck: "integration", scnId: "SCN-HNS-023", status: "failed", locator: "features/ldg019.feature" },
     ]);
+  });
+
+  it.each<[string, { keyword?: string; name?: string }, string]>([
+    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
+    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
+    ["as a step, when it has neither keyword nor text", {}, CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
+  ])("names the ambiguous step %s", (_case, step, message) => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/ldg019.feature",
+        elements: [{ tags: [{ name: "@integration" }], steps: [{ ...step, result: { status: "ambiguous" } }] }],
+      },
+    ];
+
+    expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([{ broken: true, message }]);
   });
 
   it("emits the broken observation for an UNCITED ambiguous scenario too — scnId null, still broken", () => {

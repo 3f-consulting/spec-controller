@@ -87,6 +87,48 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
   it("recognises nothing when the manifest names no runners", () => {
     expect(recognisedRunners([aliasCi], { scripts: { test: "vitest run" } }, {})).toEqual([]);
   });
+
+  const unitRunner = [{ tier: "unit", runner: "vitest run", step: "Unit tests" }];
+
+  it("recognises the runner on any line of a multi-line script", () => {
+    expect(
+      recognisedRunners(
+        [aliasCi],
+        { scripts: { test: "pnpm build\nvitest run" } },
+        { unit: "vitest run" }
+      )
+    ).toEqual(unitRunner);
+  });
+
+  it("recognises nothing where the runner's words fall on two lines", () => {
+    expect(
+      recognisedRunners(
+        [aliasCi],
+        { scripts: { test: "pnpm build --filter vitest\nrun" } },
+        { unit: "vitest run" }
+      )
+    ).toEqual([]);
+  });
+
+  it("recognises the runner however widely the script spaces its words", () => {
+    expect(
+      recognisedRunners([aliasCi], { scripts: { test: "vitest  run" } }, { unit: "vitest run" })
+    ).toEqual(unitRunner);
+  });
+
+  it("recognises the runner however the runner value is padded or spaced", () => {
+    expect(
+      recognisedRunners([aliasCi], { scripts: { test: "vitest run" } }, { unit: "  vitest   run " })
+    ).toEqual([{ tier: "unit", runner: "  vitest   run ", step: "Unit tests" }]);
+  });
+
+  it("recognises nothing for a blank runner value, leaving the step a candidate", () => {
+    const manifest = { scripts: { test: "vitest run " } };
+    expect(recognisedRunners([aliasCi], manifest, { unit: " " })).toEqual([]);
+    expect(
+      runningStaticChecks([aliasCi], manifest, { unit: " " }).map((check) => check.staticCheck)
+    ).toContain("test");
+  });
 });
 
 describe("[SCN-USG-011] resolveRunners — the target's specController.runners block", () => {
@@ -238,6 +280,20 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
   it("still recognises the runner in a pipeline's last stage, where nothing reads its output", () => {
     expect(
       recognisedRunners([stepRunning("echo start | cucumber-js")], noScripts, integration)
+    ).toEqual(asTheRunner);
+  });
+
+  it("leaves a check a candidate where every line pipes, the runner's output piped on a later line", () => {
+    const piped = [stepRunning("git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'")];
+    expect(recognisedRunners(piped, noScripts, integration)).toEqual([]);
+    expect(runningStaticChecks(piped, noScripts, integration).map((check) => check.staticCheck)).toEqual([
+      "Gate",
+    ]);
+  });
+
+  it("still recognises the runner in a last stage written hard against the pipe", () => {
+    expect(
+      recognisedRunners([stepRunning("echo start |cucumber-js")], noScripts, integration)
     ).toEqual(asTheRunner);
   });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
 import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 function file(slug: string, code: string | null, ids: readonly string[]): CorpusFile {
   const header = code === null ? "" : `@${code}\n`;
@@ -36,6 +37,16 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
     expect(foreign?.namedFeatureFiles).toEqual(["one.feature", "one-b.feature"]);
     expect(foreign?.message).toContain("one.feature");
     expect(foreign?.message).toContain("one-b.feature");
+    expect(foreign?.message).toBe(
+      CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers](
+        "two.feature",
+        "TWO",
+        "SCN-ONE-002",
+        "ONE",
+        2,
+        "one.feature, one-b.feature"
+      )
+    );
   });
 
   it("lists an out-of-class near-miss the same way (S7b): SCN-ONE-1 parses, so ONE is its class", () => {
@@ -79,6 +90,9 @@ describe("[SCN-STG-022] a scenario whose feature part no file's header carries o
     expect(foreign.message).toContain("@TWO");
     expect(foreign.message).not.toMatch(/@THR\b/);
     expect(namedFiles).toEqual(["two.feature"]);
+    expect(foreign.message).toBe(
+      CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier]("two.feature", "TWO", "SCN-THR-002", "THR")
+    );
   });
 
   it("says the same when the only other file using the code carries no header", () => {
@@ -89,6 +103,9 @@ describe("[SCN-STG-022] a scenario whose feature part no file's header carries o
     expect(foreign.namedFeatureFiles).toEqual([]);
     expect(foreign.message).not.toMatch(/@THR\b/);
     expect(namedFiles).toEqual(["two.feature"]);
+    expect(foreign.message).toBe(
+      CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier]("two.feature", "TWO", "SCN-THR-002", "THR")
+    );
   });
 });
 
@@ -118,6 +135,7 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
       file("unc", null, ["SCN-UNC-001", "SCN-UNC-002"]),
     ]);
     expect(errors).toEqual([expect.objectContaining({ kind: "no-feature-code", files: ["unc.feature"] })]);
+    expect(errors[0]!.message).toBe(CORE_MESSAGES[CoreMessage.NoFeatureCode]("unc.feature"));
   });
 
   it("lists nothing for a file whose header and scenario codes are both too long to be codes, and lists the same file once its scenario's feature part is five characters", () => {

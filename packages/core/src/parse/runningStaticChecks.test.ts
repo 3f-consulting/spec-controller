@@ -44,6 +44,27 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
       { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
+
+  const unscriptedCi = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    '      - run: "\\n  ./scripts/check.sh  \\n  ./scripts/report.sh\\n"',
+    '      - run: "   \\r\\n  ./scripts/audit.sh\\r\\n"',
+  ];
+
+  it("reports an unnamed step that invokes no script by its first non-blank command, trimmed, whatever its line endings", () => {
+    expect(
+      runningStaticChecks([unscriptedCi.join("\n")], usgPkg, SUITE_RUNNERS).map((o) => o.staticCheck)
+    ).toEqual(["./scripts/audit.sh", "./scripts/check.sh"]);
+  });
+
+  it("still reports the checks beside a step whose command is blank", () => {
+    const withBlank = [...unscriptedCi, '      - run: ""'].join("\n");
+    expect(runningStaticChecks([withBlank], usgPkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual(
+      expect.arrayContaining(["./scripts/audit.sh", "./scripts/check.sh"])
+    );
+  });
 });
 
 describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
@@ -137,6 +158,32 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
     ]);
     expect(observed[0]).not.toHaveProperty("scnId");
   });
+
+  const checkPkg: PackageJsonScripts = { scripts: { check: "echo check" } };
+  const reportedAs = (run: string): string[] =>
+    runningStaticChecks(
+      [["jobs:", "  ci:", "    steps:", `      - run: ${JSON.stringify(run)}`].join("\n")],
+      checkPkg,
+      NO_RUNNERS
+    ).map((o) => o.staticCheck);
+
+  it.each([
+    ["pnpm check", "check"],
+    ["pnpm run check", "check"],
+    ["yarn check", "check"],
+    ["npm run check", "check"],
+    ["pnpm  check", "check"],
+    ["echo start\npnpm check", "check"],
+    ["npm check", "npm check"],
+    ["echo check", "echo check"],
+    ["pnpm run", "pnpm run"],
+    ["npm run", "npm run"],
+    ["npm exec check", "npm exec check"],
+    ["bun run check", "bun run check"],
+    ["pnpm\ncheck", "pnpm"],
+  ])("reports a step running %j as %j", (run, expected) => {
+    expect(reportedAs(run)).toEqual([expected]);
+  });
 });
 
 describe("[SCN-USG-007] a static check running in ANY of a target's workflows is observed", () => {
@@ -200,6 +247,24 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
     const named = runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck);
     expect(named).toContain("Dependency review");
     expect(named).not.toContain("actions/dependency-review-action@v4");
+  });
+
+  it("names an action step by the action it uses where its `name:` is blank, and by its trimmed `name:` where padded", () => {
+    const shapes = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - uses: github/codeql-action/analyze@v3",
+      '      - name: "   "',
+      "        uses: actions/dependency-review-action@v4",
+      '      - name: "  Lint  "',
+      "        uses: super-linter/super-linter@v7",
+    ].join("\n");
+    expect(runningStaticChecks([shapes], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual([
+      "actions/dependency-review-action@v4",
+      "github/codeql-action/analyze@v3",
+      "Lint",
+    ]);
   });
 
   it("reads the action step's own `continue-on-error`, rather than vouching for it", () => {

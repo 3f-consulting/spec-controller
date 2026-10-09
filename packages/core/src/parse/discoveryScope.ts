@@ -11,7 +11,7 @@ export function discoveryScope(
   ciSourceNames: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
-  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean = () => false
+  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean
 ): readonly JobDiscoveryScope[] {
   const tallies = new Map<string, Tally>();
   for (const step of ciWorkflowSteps(ciSources)) {

@@ -135,6 +135,12 @@ export enum CoreMessage {
   ReconcilingItemsColumn,
   PendingItem,
   PendingItemFor,
+  FeatureSourceNotGherkin,
+  CheckStepNoOutcome,
+  CheckStepSkipped,
+  CheckStepEnded,
+  AmbiguousNamedStep,
+  AmbiguousUnnamedStep,
 }
 
 interface CoreMessageParams {
@@ -193,6 +199,11 @@ interface CoreMessageParams {
   [CoreMessage.UntaggedScenarios]: [count: number];
   [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
   [CoreMessage.PendingItemFor]: [qualityCheck: string];
+  [CoreMessage.FeatureSourceNotGherkin]: [cause: string];
+  [CoreMessage.CheckStepNoOutcome]: [scnId: string];
+  [CoreMessage.CheckStepSkipped]: [scnId: string];
+  [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
+  [CoreMessage.AmbiguousNamedStep]: [step: string];
 }
 
 export type CoreMessages = {
@@ -380,4 +391,17 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
   [CoreMessage.PendingItem]: "⏳ pending",
   [CoreMessage.PendingItemFor]: (qualityCheck) => `⏳ pending: ${qualityCheck}`,
+  [CoreMessage.FeatureSourceNotGherkin]: (cause) =>
+    `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
+    `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
+    `rather than silently. Cause: ${cause}`,
+  [CoreMessage.CheckStepNoOutcome]: (scnId) =>
+    `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`,
+  [CoreMessage.CheckStepSkipped]: (scnId) =>
+    `${scnId}: the CI run's record says this check's step was skipped — so the check did not run.`,
+  [CoreMessage.CheckStepEnded]: (scnId, outcome) =>
+    `${scnId}: the CI run's record says this check's step ended \`${outcome}\` — so the check did not run.`,
+  [CoreMessage.AmbiguousNamedStep]: (step) =>
+    `The step "${step}" is ambiguous — two or more step definitions match it, so the step never ran.`,
+  [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
 };

@@ -20,6 +20,9 @@ Feature: a converted target's fitness corpus
 
     @fitness @SCN-CVT-004
     Scenario: every documented command is one this repository still ships
+
+    @fitness @SCN-CVT-005
+    Scenario: every public export is imported somewhere in the tree
 `;
 
 const manifest = {
@@ -31,6 +34,7 @@ const manifest = {
       { scn: "SCN-CVT-002", command: "scn-subissues" },
       { scn: "SCN-CVT-003", command: "jscpd" },
       { scn: "SCN-CVT-004", command: "doc-audit" },
+      { scn: "SCN-CVT-005", command: "knip" },
     ],
   },
 };
@@ -57,6 +61,10 @@ jobs:
         id: SCN-CVT-004
         if: always()
         run: doc-audit
+      - name: Unused exports
+        id: SCN-CVT-005
+        if: always()
+        run: knip
       - name: Dump this run's step record
         id: dump-the-step-record
         if: always()
@@ -70,6 +78,7 @@ const record: CiStepRecord = {
   "SCN-CVT-002": { outcome: "failure", conclusion: "failure" },
   "SCN-CVT-003": { outcome: "skipped", conclusion: "skipped" },
   "SCN-CVT-004": { outcome: "neutral", conclusion: "neutral" },
+  "SCN-CVT-005": { conclusion: "success" },
   "dump-the-step-record": { outcome: "success", conclusion: "success" },
 };
 
@@ -93,12 +102,13 @@ function suspenseItemsOf(reconciliation: EvidenceReconciliation): unknown[] {
 }
 
 describe("[SCN-LNT-026] a check step's outcome credits its row only where it says what the check did", () => {
-  it("credits the step that succeeded and the step that failed, and neither of the other two", () => {
+  it("credits the step that succeeded and the step that failed, and none of the other three", () => {
     expect(scenarioRows(reconcile())).toEqual([
       ["SCN-CVT-001", "balanced", [[undefined, "satisfied"]]],
       ["SCN-CVT-002", "out-of-balance", [[undefined, "failing"]]],
       ["SCN-CVT-003", "out-of-balance", [[undefined, "missing"]]],
       ["SCN-CVT-004", "out-of-balance", [[undefined, "missing"]]],
+      ["SCN-CVT-005", "out-of-balance", [[undefined, "missing"]]],
     ]);
   });
 
@@ -131,10 +141,33 @@ describe("[SCN-LNT-026] a check step's outcome credits its row only where it say
         "SCN-CVT-004: the CI run's record says this check's step ended `neutral` — so the check " +
           "did not run.",
       ],
+      [
+        "broken",
+        "SCN-CVT-005: the CI run's record carries no outcome for this check's step — so the check " +
+          "did not run.",
+      ],
     ]);
   });
 
-  it("counts TWO running static checks over a record holding four check steps", () => {
+  it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
+    const suspense = reconcile().ledger.scenarioReconciliations.find(
+      (row) => row.kind === "suspense-scenario"
+    );
+    expect(
+      suspense?.evidenceObservations.map((o) => [
+        o.scnId,
+        "exists" in o ? o.exists : undefined,
+        "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,
+        o.broken,
+      ])
+    ).toEqual([
+      ["SCN-CVT-003", false, false, true],
+      ["SCN-CVT-004", false, false, true],
+      ["SCN-CVT-005", false, false, true],
+    ]);
+  });
+
+  it("counts TWO running static checks over a record holding five check steps", () => {
     expect(reconcile().summary.staticChecks).toEqual({
       runningStaticCheckCount: 2,
       uncitedStaticCheckCount: 0,

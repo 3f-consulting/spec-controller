@@ -3,6 +3,7 @@ import {
   parseScenarios,
   pendingQualityCheck,
 } from "./scenarios.js";
+import { parseCucumberEvidenceObservations } from "./cucumber.js";
 
 const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
@@ -24,7 +25,7 @@ describe("[SCN-PND-001] pendingQualityCheck recognises a <quality-check>pending 
   });
 });
 
-describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios level", () => {
+describe("[SCN-PND-002] the pending suffix is significant — @integrationpending is not read as @integration", () => {
   it("a bare @integration scenario derives a plain integration obligation and no pending one", () => {
     const source = [
       "@integration @SCN-XXX-001",
@@ -51,6 +52,26 @@ describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios 
         (o) => o.qualityCheck === "integration" && o.pending !== true
       )
     ).toBe(false);
+  });
+
+  it("a passing Cucumber scenario tagged @integrationpending is credited at the caller's fallback, never as integration", () => {
+    const observations = parseCucumberEvidenceObservations(
+      [
+        {
+          uri: "features/deferred.feature",
+          elements: [
+            {
+              tags: [{ name: "@integrationpending" }, { name: "@SCN-XXX-002" }],
+              steps: [{ result: { status: "passed" } }],
+            },
+          ],
+        },
+      ],
+      "e2e"
+    );
+    expect(observations).toEqual([
+      { qualityCheck: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+    ]);
   });
 });
 

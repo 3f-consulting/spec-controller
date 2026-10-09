@@ -2,6 +2,7 @@ import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherki
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
@@ -26,7 +27,6 @@ const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
 };
 
 function tagLineTags(line: string): string[] | null {
-  if (!line.startsWith("@")) return null;
   const tokens = line.split(/\s+/);
   if (!tokens.every((t) => t.startsWith("@"))) return null;
   return tokens.map((t) => t.slice(1));
@@ -46,14 +46,14 @@ export function parseUntaggedScenarios(source: string): string[] {
   let blockTags: string[] = [];
   for (const rawLine of source.split(/\r?\n/)) {
     const line = rawLine.trim();
-    const tags = line === "" ? null : tagLineTags(line);
+    const tags = tagLineTags(line);
     if (tags) {
       blockTags.push(...tags);
       continue;
     }
     const header = SCENARIO_HEADER.exec(line);
     if (header && !blockTags.some((t) => SCN_CODE.test(t))) {
-      untagged.push(header[1]!.trim());
+      untagged.push(header[1]!);
     }
     blockTags = [];
   }
@@ -111,21 +111,18 @@ function parseFeatureDocument(source: string): GherkinDocument {
     return parser.parse(source);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
-        `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
-        `rather than silently. Cause: ${message}`
-    );
+    throw new Error(CORE_MESSAGES[CoreMessage.FeatureSourceNotGherkin](message));
   }
 }
 
 export function parseTaggedScenarios(source: string): TaggedScenario[] {
-  const document = parseFeatureDocument(source);
+  const { feature } = parseFeatureDocument(source);
+  if (feature === undefined) return [];
 
   const tagged: TaggedScenario[] = [];
   const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
 
-  const featureTags = bare(document.feature?.tags ?? []);
+  const featureTags = bare(feature.tags);
 
   const collect = (children: readonly FeatureChild[], inherited: string[]): void => {
     for (const child of children) {
@@ -143,7 +140,7 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
     }
   };
 
-  collect((document.feature?.children ?? []) as FeatureChild[], featureTags);
+  collect(feature.children as FeatureChild[], featureTags);
 
   return tagged;
 }
