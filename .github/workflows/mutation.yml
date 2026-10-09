@@ -59,6 +59,9 @@ jobs:
           - scope: core-parse
             mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.testkit.ts"
             timeout: 53
+          - scope: core-lib
+            mutate: "packages/core/src/lib/**/*.ts,!packages/core/src/lib/**/*.test.ts,!packages/core/src/lib/**/*.testkit.ts"
+            timeout: 6
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}

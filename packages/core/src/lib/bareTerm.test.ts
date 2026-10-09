@@ -23,6 +23,14 @@ describe("[SCN-TRM-001] a configured deferral tag names the term the target auth
   it("keeps a doubled sigil exactly as the target spelled it", () => {
     expect(configured("  @@flaky")).toStrictEqual(["@flaky"]);
   });
+
+  it("keeps an @ inside the term exactly as the target spelled it", () => {
+    expect(configured("flaky@ci")).toStrictEqual(["flaky@ci"]);
+  });
+
+  it("bares only the leading sigil of a term with an @ inside it", () => {
+    expect(configured("  @flaky@ci")).toStrictEqual(["flaky@ci"]);
+  });
 });
 
 describe("[SCN-TRM-001] a check step's id: names the scenario the target authored", () => {

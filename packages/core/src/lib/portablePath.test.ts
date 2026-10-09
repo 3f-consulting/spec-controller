@@ -6,6 +6,10 @@ describe("[SCN-RPT-016] relativizeToRoot — portable-path relativization (share
     expect(relativizeToRoot("/repo/src/a.ts", "/repo")).toBe("src/a.ts");
   });
 
+  it("records the run root itself as \".\", never as its absolute path", () => {
+    expect(relativizeToRoot("/repo", "/repo")).toBe(".");
+  });
+
   it("leaves a non-absolute path unchanged (a sentinel / already-relative path)", () => {
     expect(relativizeToRoot("src/a.ts", "/repo")).toBe("src/a.ts");
     expect(relativizeToRoot("(unknown vitest file)", "/repo")).toBe("(unknown vitest file)");

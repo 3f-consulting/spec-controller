@@ -422,7 +422,10 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
     }
   });
 
-  it("runBalance names a cross-repo run's inputs relative to the target's repository on both surfaces, never by the target's absolute path", () => {
+  it.each([
+    ["a directory under it by its relative path", (target: string) => join(target, "workflows"), "workflows"],
+    ["the target root itself as \".\"", (target: string) => target, "."],
+  ])("runBalance names a cross-repo run's inputs relative to the target's repository on both surfaces, never by the target's absolute path — an input naming %s", (_title, ciInput, ciRecorded) => {
     const target = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-")));
     const foreign = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-foreign-")));
     const fixture = resolve("tests/fixtures/balanced");
@@ -444,7 +447,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
           "--features", join(target, "features"),
           "--vitest", join(target, "vitest.json"),
           "--package-json", join(target, "package.json"),
-          "--ci", join(target, "workflows"),
+          "--ci", ciInput(target),
           "--format", `json:${jsonPath}`,
           "--format", `md:${mdPath}`,
         ]);
@@ -455,7 +458,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
           features: "features",
           vitest: "vitest.json",
           packageJson: "package.json",
-          ci: "workflows",
+          ci: ciRecorded,
         });
         expect(json).not.toContain(target);
         expect(md).not.toContain(target);
