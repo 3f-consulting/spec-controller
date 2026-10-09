@@ -50,7 +50,7 @@ export function parseCucumberEvidenceObservations(
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
   for (const feature of report) {
-    const locator = relativizeToRoot(feature.uri ?? feature.name ?? "(unknown feature)", root);
+    const locator = relativizeToRoot(feature.uri ?? feature.name ?? CORE_MESSAGES[CoreMessage.UnknownFeature], root);
     for (const scenario of feature.elements ?? []) {
       results.push(...scenarioObservations(scenario, locator, fallbackQualityCheck));
     }

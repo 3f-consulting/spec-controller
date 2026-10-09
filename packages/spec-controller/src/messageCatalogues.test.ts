@@ -215,6 +215,17 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.OutputsShareFile]: ["md:out.md", "json:out.md"],
   [AppMessage.OutputOverwritesInput]: ["json:vitest.json", "The --vitest report", "vitest.json"],
   [AppMessage.ReportNotWritten]: ["json"],
+  [AppMessage.HistoryBoundary]: ["not a git repository — none read", "a code above SCN-ONE-001"],
+  [AppMessage.ShallowHistoryUnread]: ["abc1234"],
+  [AppMessage.NoRepositoryHistoryRead]: [],
+  [AppMessage.RiskOfPartCode]: ["ONE"],
+  [AppMessage.RiskAboveCode]: ["SCN-ONE-001"],
+  [AppMessage.HighestSeenNone]: [],
+  [AppMessage.HighestSeenInTree]: ["SCN-ONE-005", "features/one.feature", 8],
+  [AppMessage.HighestSeenInCommit]: ["SCN-ONE-005", "features/one.feature", 8, "abc1234"],
+  [AppMessage.UnknownPartRefused]: ["ZZZ", "ONE, TWO"],
+  [AppMessage.NoPartsCarried]: [],
+  [AppMessage.PartAlreadyHeaded]: ["ONE"],
 };
 
 function renderedApp(code: AppMessage): string {

@@ -141,6 +141,8 @@ export enum CoreMessage {
   CheckStepEnded,
   AmbiguousNamedStep,
   AmbiguousUnnamedStep,
+  UnknownFeature,
+  UnknownVitestFile,
 }
 
 interface CoreMessageParams {
@@ -404,4 +406,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.AmbiguousNamedStep]: (step) =>
     `The step "${step}" is ambiguous — two or more step definitions match it, so the step never ran.`,
   [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
+  [CoreMessage.UnknownFeature]: "(unknown feature)",
+  [CoreMessage.UnknownVitestFile]: "(unknown vitest file)",
 };

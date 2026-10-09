@@ -1,6 +1,7 @@
 import type { RuntimeQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { parseScnCitation } from "../lib/scnCitation.js";
+import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface VitestJsonReport {
   testResults?: Array<{
@@ -22,7 +23,7 @@ export function parseVitestEvidenceObservations(
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
   for (const file of report.testResults ?? []) {
-    const locator = relativizeToRoot(file.name ?? "(unknown vitest file)", root);
+    const locator = relativizeToRoot(file.name ?? CORE_MESSAGES[CoreMessage.UnknownVitestFile], root);
     const assertions = file.assertionResults ?? [];
     if (file.status === "failed" && assertions.length === 0) {
       results.push({

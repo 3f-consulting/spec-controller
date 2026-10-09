@@ -105,6 +105,17 @@ export enum AppMessage {
   OutputsShareFile,
   OutputOverwritesInput,
   ReportNotWritten,
+  HistoryBoundary,
+  ShallowHistoryUnread,
+  NoRepositoryHistoryRead,
+  RiskOfPartCode,
+  RiskAboveCode,
+  HighestSeenNone,
+  HighestSeenInTree,
+  HighestSeenInCommit,
+  UnknownPartRefused,
+  NoPartsCarried,
+  PartAlreadyHeaded,
 }
 
 interface AppMessageParams {
@@ -159,6 +170,14 @@ interface AppMessageParams {
   [AppMessage.OutputsShareFile]: [first: string, second: string];
   [AppMessage.OutputOverwritesInput]: [output: string, subject: string, path: string];
   [AppMessage.ReportNotWritten]: [format: string];
+  [AppMessage.HistoryBoundary]: [unread: string, risk: string];
+  [AppMessage.ShallowHistoryUnread]: [before: string];
+  [AppMessage.RiskOfPartCode]: [part: string];
+  [AppMessage.RiskAboveCode]: [code: string];
+  [AppMessage.HighestSeenInTree]: [code: string, path: string, line: number];
+  [AppMessage.HighestSeenInCommit]: [code: string, path: string, line: number, commit: string];
+  [AppMessage.UnknownPartRefused]: [part: string, parts: string];
+  [AppMessage.PartAlreadyHeaded]: [part: string];
 }
 
 export type AppMessages = {
@@ -354,6 +373,19 @@ export const APP_MESSAGES: AppMessages = {
     `An output would overwrite a file this run reads: ${output} is ${subject}, ${path}. ` +
     `Give the report a file of its own.`,
   [AppMessage.ReportNotWritten]: (format) => `The ${format} report could not be written`,
+  [AppMessage.HistoryBoundary]: (unread, risk) => `history: ${unread}; ${risk} may have been used before`,
+  [AppMessage.ShallowHistoryUnread]: (before) => `shallow clone — history before ${before} unread`,
+  [AppMessage.NoRepositoryHistoryRead]: () => "not a git repository — none read",
+  [AppMessage.RiskOfPartCode]: (part) => `a code of ${part}`,
+  [AppMessage.RiskAboveCode]: (code) => `a code above ${code}`,
+  [AppMessage.HighestSeenNone]: () => "highest seen: none",
+  [AppMessage.HighestSeenInTree]: (code, path, line) => `highest seen: ${code}, ${path}:${line}`,
+  [AppMessage.HighestSeenInCommit]: (code, path, line, commit) => `highest seen: ${code}, ${path}:${line} in ${commit}`,
+  [AppMessage.UnknownPartRefused]: (part, parts) =>
+    `spec-controller allocate: unknown part — no feature file's header carries ${part}.\n` +
+    `The parts this corpus's feature files carry: ${parts}.`,
+  [AppMessage.NoPartsCarried]: () => "none",
+  [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
 };
 
 export const Unreadable = {
