@@ -163,3 +163,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-033
     Scenario: no file the change touches carries an unused file, export or dependency
+
+  Rule: a mutant is killed or removed at its source, never hidden from the mutation run
+
+    @fitness @SCN-FIT-039
+    Scenario: no source or test file in the packages carries a comment that disables a mutant

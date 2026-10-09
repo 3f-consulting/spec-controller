@@ -243,6 +243,11 @@ jobs:
         if: always()
         run: pnpm lint:seam
 
+      - name: No comment disables a mutant
+        id: SCN-FIT-039
+        if: always()
+        run: pnpm exec eslint --config eslint.mutation.js packages
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()
