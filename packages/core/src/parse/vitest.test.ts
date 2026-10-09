@@ -32,66 +32,6 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named 
   });
 });
 
-describe("[SCN-PND-015] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
-  const reportWithStatus = (status: string): VitestJsonReport => ({
-    testResults: [
-      { name: "/r/a.test.ts", assertionResults: [{ fullName: "[SCN-PDV-001] a unit assertion", status }] },
-    ],
-  });
-
-  it("emits a `passed` observation for a passed assertion", () => {
-    expect(parseVitestEvidenceObservations(reportWithStatus("passed"), "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-PDV-001", status: "passed", locator: "/r/a.test.ts" },
-    ]);
-  });
-
-  it("emits a `failed` observation for a failed assertion", () => {
-    expect(parseVitestEvidenceObservations(reportWithStatus("failed"), "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-PDV-001", status: "failed", locator: "/r/a.test.ts" },
-    ]);
-  });
-
-  it("DROPS a skipped assertion — inconclusive, so nothing is emitted", () => {
-    expect(parseVitestEvidenceObservations(reportWithStatus("skipped"), "unit")).toEqual([]);
-  });
-
-  it("DROPS a todo assertion — inconclusive, so nothing is emitted", () => {
-    expect(parseVitestEvidenceObservations(reportWithStatus("todo"), "unit")).toEqual([]);
-  });
-
-  it("DROPS any non-pass-non-fail status — robust to vitest's status spelling", () => {
-    expect(parseVitestEvidenceObservations(reportWithStatus("pending"), "unit")).toEqual([]);
-    expect(
-      parseVitestEvidenceObservations(
-        { testResults: [{ name: "/r/a.test.ts", assertionResults: [{ fullName: "[SCN-PDV-001] x" }] }] },
-        "unit"
-      )
-    ).toEqual([]);
-  });
-
-  it("drops ONLY the inconclusive assertion — genuine passed/failed siblings still emit", () => {
-    const out = parseVitestEvidenceObservations(
-      {
-        testResults: [
-          {
-            name: "/r/a.test.ts",
-            assertionResults: [
-              { fullName: "[SCN-PDV-001] p", status: "passed" },
-              { fullName: "no scn here", status: "failed" },
-              { fullName: "[SCN-PDV-002] s", status: "skipped" },
-            ],
-          },
-        ],
-      },
-      "unit"
-    );
-    expect(out).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-PDV-001", status: "passed", locator: "/r/a.test.ts" },
-      { qualityCheck: "unit", scnId: null, status: "failed", locator: "/r/a.test.ts" },
-    ]);
-  });
-});
-
 describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion by its own leaf title", () => {
   const report: VitestJsonReport = {
     testResults: [

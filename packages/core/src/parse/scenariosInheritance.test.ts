@@ -82,8 +82,10 @@ Feature: alpha
     ]);
   });
 
-  it("inherits an @SCN from the Rule — parity with cucumber, which inherits EVERY tag", () => {
-    const source = `@AAA
+  it.each([
+    [
+      "inherits an @SCN from the Rule — parity with cucumber, which inherits EVERY tag",
+      `@AAA
 Feature: alpha
 
   @unit @SCN-AAA-001
@@ -94,38 +96,11 @@ Feature: alpha
 
     Scenario: alpha also works
       Given another thing
-`;
-    const scenarios = parseScenarios(source);
-
-    expect(scenarios).toHaveLength(2);
-    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-001", "SCN-AAA-001"]);
-  });
-
-  it("is BYTE-IDENTICAL on a file that uses no inheritance — the regression bar", () => {
-    const source = `@AAA
-Feature: alpha
-
-  @unit @integration @SCN-AAA-001
-  Scenario: alpha works
-    Given a thing
-
-  @fitness @SCN-AAA-002
-  Scenario: beta stays inside its threshold
-`;
-    expect(parseScenarios(
-      source)).toEqual([
-      {
-        scnId: "SCN-AAA-001",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
-      },
-      {
-        scnId: "SCN-AAA-002",
-        evidenceObligations: [{ qualityCheck: "fitness" }],
-      },
-    ]);
-  });
-  it("makes a duplicate scnId VISIBLE — two scenarios sharing an inherited @SCN are TWO scenarios, never deduped", () => {
-    const source = `@AAA
+`,
+    ],
+    [
+      "makes a duplicate scnId VISIBLE — two scenarios sharing an inherited @SCN are TWO scenarios, never deduped",
+      `@AAA
 Feature: alpha
 
   @unit @SCN-AAA-001
@@ -136,15 +111,33 @@ Feature: alpha
 
     Scenario: alpha also works, and NOTHING proves it
       Given another thing
-`;
+`,
+    ],
+  ] as const)("%s", (_title, source) => {
     const scenarios = parseScenarios(source);
 
     expect(scenarios).toHaveLength(2);
     expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-001", "SCN-AAA-001"]);
   });
 
-  it("passes a Feature's tier through its Background to every scenario, and the Background is no scenario", () => {
-    const source = `@integration
+  it.each([
+    [
+      "is BYTE-IDENTICAL on a file that uses no inheritance — the regression bar",
+      `@AAA
+Feature: alpha
+
+  @unit @integration @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+
+  @fitness @SCN-AAA-002
+  Scenario: beta stays inside its threshold
+`,
+      "fitness",
+    ],
+    [
+      "passes a Feature's tier through its Background to every scenario, and the Background is no scenario",
+      `@integration
 Feature: alpha
 
   Background:
@@ -157,7 +150,10 @@ Feature: alpha
   @SCN-AAA-002
   Scenario: alpha also works
     Given another thing
-`;
+`,
+      "integration",
+    ],
+  ] as const)("%s", (_title, source, qualityCheck) => {
     expect(parseScenarios(source)).toEqual([
       {
         scnId: "SCN-AAA-001",
@@ -165,7 +161,7 @@ Feature: alpha
       },
       {
         scnId: "SCN-AAA-002",
-        evidenceObligations: [{ qualityCheck: "integration" }],
+        evidenceObligations: [{ qualityCheck }],
       },
     ]);
   });

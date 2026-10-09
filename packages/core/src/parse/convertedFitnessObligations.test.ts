@@ -11,7 +11,10 @@ Feature: fitness
 `;
 
 describe("[SCN-LNT-018] a @fitness scenario owes one fitness obligation, from its tag, keyed by its own @SCN", () => {
-  it("raises one obligation, at the quality check fitness, carrying nothing else", () => {
+  it.each([
+    ["raises one obligation, at the quality check fitness, carrying nothing else"],
+    ["raises it for a scenario no manifest entry names, which is the whole of 3F-3582"],
+  ] as const)("%s", () => {
     expect(parseScenarios(fitnessScenario)).toEqual([
       {
         scnId: "SCN-AAA-001",
@@ -54,12 +57,6 @@ Feature: fitness
     expect(parseScenarios(source)).toEqual([
       { scnId: "SCN-AAA-012", evidenceObligations: [{ qualityCheck: "fitness" }] },
       { scnId: "SCN-AAA-013", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    ]);
-  });
-
-  it("raises it for a scenario no manifest entry names, which is the whole of 3F-3582", () => {
-    expect(parseScenarios(fitnessScenario)).toEqual([
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ]);
   });
 

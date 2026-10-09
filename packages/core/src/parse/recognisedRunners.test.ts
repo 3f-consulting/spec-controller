@@ -12,10 +12,13 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
     "        run: pnpm test"
   );
 
-  it("recognises the runner a step reaches through the manifest script it invokes", () => {
+  it.each([
+    ["recognises the runner a step reaches through the manifest script it invokes", "vitest"],
+    ["recognises the runner however the runner value is padded or spaced", "  vitest   run "],
+  ] as const)("%s", (_title, runner) => {
     expect(
-      recognisedRunners([aliasCi], { scripts: { test: "vitest run" } }, { unit: "vitest" })
-    ).toEqual([{ tier: "unit", runner: "vitest", step: "Unit tests" }]);
+      recognisedRunners([aliasCi], { scripts: { test: "vitest run" } }, { unit: runner })
+    ).toEqual([{ tier: "unit", runner, step: "Unit tests" }]);
   });
 
   it("recognises nothing from the workflow alone — the measurement that makes the hop the rule", () => {
@@ -90,11 +93,14 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
 
   const unitRunner = [{ tier: "unit", runner: "vitest run", step: "Unit tests" }];
 
-  it("recognises the runner on any line of a multi-line script", () => {
+  it.each([
+    ["recognises the runner on any line of a multi-line script", "pnpm build\nvitest run"],
+    ["recognises the runner however widely the script spaces its words", "vitest  run"],
+  ] as const)("%s", (_title, test) => {
     expect(
       recognisedRunners(
         [aliasCi],
-        { scripts: { test: "pnpm build\nvitest run" } },
+        { scripts: { test } },
         { unit: "vitest run" }
       )
     ).toEqual(unitRunner);
@@ -108,18 +114,6 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
         { unit: "vitest run" }
       )
     ).toEqual([]);
-  });
-
-  it("recognises the runner however widely the script spaces its words", () => {
-    expect(
-      recognisedRunners([aliasCi], { scripts: { test: "vitest  run" } }, { unit: "vitest run" })
-    ).toEqual(unitRunner);
-  });
-
-  it("recognises the runner however the runner value is padded or spaced", () => {
-    expect(
-      recognisedRunners([aliasCi], { scripts: { test: "vitest run" } }, { unit: "  vitest   run " })
-    ).toEqual([{ tier: "unit", runner: "  vitest   run ", step: "Unit tests" }]);
   });
 
   it("recognises nothing for a blank runner value, leaving the step a candidate", () => {
@@ -162,29 +156,22 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
   const unit = { unit: "vitest" };
   const eslintScripts = { scripts: { "lint:rules": "eslint . --format json" } };
 
-  it("leaves a check writing its report to a file named after the runner a candidate", () => {
+  it.each([
+    [
+      "leaves a check writing its report to a file named after the runner a candidate",
+      "pnpm lint:rules --output-file reports/vitest.json",
+    ],
+    [
+      "leaves a check whose =-joined argument names the runner a candidate",
+      'pnpm lint:rules --outputFile.json="$EVIDENCE_DIR/vitest.json"',
+    ],
+    [
+      "leaves a check whose flag is spelled like the runner a candidate",
+      'pnpm lint:rules --vitest "$EVIDENCE_DIR/vitest.json"',
+    ],
+  ] as const)("%s", (_title, command) => {
     expect(
-      recognisedRunners([checkStep("pnpm lint:rules --output-file reports/vitest.json")], eslintScripts, unit)
-    ).toEqual([]);
-  });
-
-  it("leaves a check whose =-joined argument names the runner a candidate", () => {
-    expect(
-      recognisedRunners(
-        [checkStep('pnpm lint:rules --outputFile.json="$EVIDENCE_DIR/vitest.json"')],
-        eslintScripts,
-        unit
-      )
-    ).toEqual([]);
-  });
-
-  it("leaves a check whose flag is spelled like the runner a candidate", () => {
-    expect(
-      recognisedRunners(
-        [checkStep('pnpm lint:rules --vitest "$EVIDENCE_DIR/vitest.json"')],
-        eslintScripts,
-        unit
-      )
+      recognisedRunners([checkStep(command)], eslintScripts, unit)
     ).toEqual([]);
   });
 
@@ -271,15 +258,16 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
     ).toEqual([]);
   });
 
-  it("still recognises the runner where its failure falls through to another command — the || control", () => {
+  it.each([
+    [
+      "still recognises the runner where its failure falls through to another command — the || control",
+      "cucumber-js || echo the suite failed",
+    ],
+    ["still recognises the runner in a pipeline's last stage, where nothing reads its output", "echo start | cucumber-js"],
+    ["still recognises the runner in a last stage written hard against the pipe", "echo start |cucumber-js"],
+  ] as const)("%s", (_title, line) => {
     expect(
-      recognisedRunners([stepRunning("cucumber-js || echo the suite failed")], noScripts, integration)
-    ).toEqual(asTheRunner);
-  });
-
-  it("still recognises the runner in a pipeline's last stage, where nothing reads its output", () => {
-    expect(
-      recognisedRunners([stepRunning("echo start | cucumber-js")], noScripts, integration)
+      recognisedRunners([stepRunning(line)], noScripts, integration)
     ).toEqual(asTheRunner);
   });
 
@@ -289,12 +277,6 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
     expect(runningStaticChecks(piped, noScripts, integration).map((check) => check.staticCheck)).toEqual([
       "Gate",
     ]);
-  });
-
-  it("still recognises the runner in a last stage written hard against the pipe", () => {
-    expect(
-      recognisedRunners([stepRunning("echo start |cucumber-js")], noScripts, integration)
-    ).toEqual(asTheRunner);
   });
 
   it("still recognises the runner on an unpiped line of a step whose other line pipes", () => {

@@ -8,50 +8,39 @@ describe("[SCN-TRM-001] a configured deferral tag names the term the target auth
   const configured = (tag: string): readonly string[] =>
     resolveDeferralTags({ specController: { deferralTags: [tag] } }, []);
 
-  it("bares a tag padded in front of its sigil", () => {
-    expect(configured("  @flaky")).toStrictEqual(["flaky"]);
-  });
-
-  it("bares a tag spelled with a space between the sigil and the term", () => {
-    expect(configured("@ flaky")).toStrictEqual(["flaky"]);
+  it.each([
+    ["bares a tag padded in front of its sigil", "  @flaky", "flaky"],
+    ["bares a tag spelled with a space between the sigil and the term", "@ flaky", "flaky"],
+    ["keeps a doubled sigil exactly as the target spelled it", "  @@flaky", "@flaky"],
+    ["keeps an @ inside the term exactly as the target spelled it", "flaky@ci", "flaky@ci"],
+    ["bares only the leading sigil of a term with an @ inside it", "  @flaky@ci", "flaky@ci"],
+  ] as const)("%s", (_title, tag, term) => {
+    expect(configured(tag)).toStrictEqual([term]);
   });
 
   it("drops a tag that is nothing but whitespace and a sigil", () => {
     expect(configured("  @  ")).toStrictEqual([]);
   });
-
-  it("keeps a doubled sigil exactly as the target spelled it", () => {
-    expect(configured("  @@flaky")).toStrictEqual(["@flaky"]);
-  });
-
-  it("keeps an @ inside the term exactly as the target spelled it", () => {
-    expect(configured("flaky@ci")).toStrictEqual(["flaky@ci"]);
-  });
-
-  it("bares only the leading sigil of a term with an @ inside it", () => {
-    expect(configured("  @flaky@ci")).toStrictEqual(["flaky@ci"]);
-  });
 });
 
 describe("[SCN-TRM-001] a check step's id: names the scenario the target authored", () => {
-  it("bares a step's id: padded in front of its sigil", () => {
-    expect(citationOfCitedRow("  @SCN-MSD-001")).toStrictEqual({
+  it.each([
+    ["bares a step's id: padded in front of its sigil", "  @SCN-MSD-001"],
+    ["bares a step's id: spelled with a space between the sigil and the term", "@ SCN-MSD-001"],
+  ] as const)("%s", (_title, id) => {
+    expect(citationOfCitedRow(id)).toStrictEqual({
       scnId: "SCN-MSD-001",
     });
   });
 
-  it("bares a step's id: spelled with a space between the sigil and the term", () => {
-    expect(citationOfCitedRow("@ SCN-MSD-001")).toStrictEqual({
-      scnId: "SCN-MSD-001",
-    });
-  });
-
-  it("cites nothing for a step's id: that is nothing but whitespace and a sigil", () => {
-    expect(citationOfCitedRow("  @  ")).toBeNull();
-  });
-
-  it("keeps a doubled sigil exactly as the step's id: spelled it, citing no un-doubled scenario", () => {
-    expect(citationOfCitedRow("  @@SCN-MSD-001")).toBeNull();
+  it.each([
+    ["cites nothing for a step's id: that is nothing but whitespace and a sigil", "  @  "],
+    [
+      "keeps a doubled sigil exactly as the step's id: spelled it, citing no un-doubled scenario",
+      "  @@SCN-MSD-001",
+    ],
+  ] as const)("%s", (_title, id) => {
+    expect(citationOfCitedRow(id)).toBeNull();
   });
 });
 

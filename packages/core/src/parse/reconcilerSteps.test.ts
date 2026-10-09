@@ -94,16 +94,21 @@ describe("[SCN-USG-014] reconcilerSteps — what it does not recognise", () => {
     ...reconcilerSteps([ci], NAMES, INVOCATION, { scripts }).steps,
   ];
 
-  it("leaves a step running this tool's OTHER command a candidate", () => {
-    expect(recognised(`jobs:\n  ci:\n    steps:\n      - run: pnpm spec-controller help`)).toEqual(
-      []
-    );
-  });
-
-  it("leaves a step naming the package rather than running it a candidate", () => {
-    expect(
-      recognised(`jobs:\n  ci:\n    steps:\n      - run: pnpm --filter spec-controller build`)
-    ).toEqual([]);
+  it.each([
+    [
+      "leaves a step running this tool's OTHER command a candidate",
+      `jobs:\n  ci:\n    steps:\n      - run: pnpm spec-controller help`,
+    ],
+    [
+      "leaves a step naming the package rather than running it a candidate",
+      `jobs:\n  ci:\n    steps:\n      - run: pnpm --filter spec-controller build`,
+    ],
+    [
+      "leaves a dump-shaped step carrying no step-record expression a candidate",
+      `jobs:\n  ci:\n    steps:\n      - name: Dump this run's step record\n        run: pnpm lint:dump`,
+    ],
+  ] as const)("%s", (_title, ci) => {
+    expect(recognised(ci)).toEqual([]);
   });
 
   it("leaves a step carrying the words inside another token a candidate", () => {
@@ -111,14 +116,6 @@ describe("[SCN-USG-014] reconcilerSteps — what it does not recognise", () => {
       recognised(`jobs:\n  ci:\n    steps:\n      - run: node scripts/spec-controller-balance.js`)
     ).toEqual([]);
     expect(recognised(`jobs:\n  ci:\n    steps:\n      - run: pnpm lint:balance`)).toEqual([]);
-  });
-
-  it("leaves a dump-shaped step carrying no step-record expression a candidate", () => {
-    expect(
-      recognised(
-        `jobs:\n  ci:\n    steps:\n      - name: Dump this run's step record\n        run: pnpm lint:dump`
-      )
-    ).toEqual([]);
   });
 
   it("leaves an action step with no env a candidate", () => {

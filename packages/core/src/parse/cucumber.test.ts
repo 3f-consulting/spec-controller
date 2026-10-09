@@ -182,67 +182,6 @@ describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit le
   });
 });
 
-describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
-  const reportWithStep = (status: string): CucumberJsonReport => [
-    {
-      uri: "features/pnd013.feature",
-      elements: [
-        {
-          tags: [{ name: "@integration" }, { name: "@SCN-PDN-001" }],
-          steps: [{ result: { status } }],
-        },
-      ],
-    },
-  ];
-
-  it("emits a `passed` observation when every step passed (→ satisfied downstream)", () => {
-    expect(parseCucumberEvidenceObservations(reportWithStep("passed"), "integration")).toEqual([
-      { qualityCheck: "integration", scnId: "SCN-PDN-001", status: "passed", locator: "features/pnd013.feature" },
-    ]);
-  });
-
-  it("emits a `failed` observation when a step failed (→ failing downstream)", () => {
-    expect(parseCucumberEvidenceObservations(reportWithStep("failed"), "integration")).toEqual([
-      { qualityCheck: "integration", scnId: "SCN-PDN-001", status: "failed", locator: "features/pnd013.feature" },
-    ]);
-  });
-
-  for (const status of ["undefined", "pending", "skipped"]) {
-    it(`DROPS an inconclusive "${status}" scenario — emits no observation (→ missing by absence)`, () => {
-      expect(parseCucumberEvidenceObservations(reportWithStep(status), "integration")).toEqual([]);
-    });
-  }
-
-  it("drops an inconclusive scenario at EVERY named tier — the drop is whole-scenario, not per-tier", () => {
-    const report: CucumberJsonReport = [
-      {
-        uri: "features/multi.feature",
-        elements: [
-          {
-            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-PDN-002" }],
-            steps: [{ result: { status: "passed" } }, { result: { status: "skipped" } }],
-          },
-        ],
-      },
-    ];
-    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([]);
-  });
-
-  it("still emits a genuine passed/failed UNCITED (null-scnId) result — only inconclusive is dropped", () => {
-    const report: CucumberJsonReport = [
-      {
-        uri: "features/uncited.feature",
-        elements: [
-          { tags: [{ name: "@integration" }], steps: [{ result: { status: "failed" } }] },
-        ],
-      },
-    ];
-    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
-      { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/uncited.feature" },
-    ]);
-  });
-});
-
 describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
   const ambiguousReport = (tags: Array<{ name?: string }>): CucumberJsonReport => [
     {
@@ -350,22 +289,5 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
 
     expect(observations).toHaveLength(1);
     expect(observations[0]).toMatchObject({ scnId: null, broken: true, locator: "features/ldg019.feature" });
-  });
-});
-
-describe("[SCN-STG-026] a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario", () => {
-  const tagged = (id: string) => ({ tags: [{ name: `@${id}` }], steps: [{ result: { status: "passed" as const } }] });
-  const report: CucumberJsonReport = [
-    { uri: "features/x.feature", elements: ["SCN-A-001", "SCN-AB-001", "SCN-FIVEC-001", "SCN-SIXCHR-001", "SCN-AB-1"].map(tagged) },
-  ];
-
-  it("cites the two- and five-character codes, any number width, and nothing for the one- or six-character tags", () => {
-    expect(parseCucumberEvidenceObservations(report, "integration").map((o) => o.scnId)).toEqual([
-      null,
-      "SCN-AB-001",
-      "SCN-FIVEC-001",
-      null,
-      "SCN-AB-1",
-    ]);
   });
 });

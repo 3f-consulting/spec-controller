@@ -70,14 +70,16 @@ describe("[SCN-USG-015] stepExclusions — the match is exact and fully qualifie
     expect(ciWorkflowSteps([CI_YML]).some((step) => resolved.isExcluded(step))).toBe(false);
   };
 
-  it("matches no step on a bare step name", () => nothingMatches("Rule check"));
-  it("matches no step on a job-and-step form", () => nothingMatches("ci:Rule check"));
-  it("matches no step on a file-and-step form", () => nothingMatches("ci.yml:Rule check"));
-  it("matches no step on a prefix of the qualified name", () => nothingMatches("ci.yml:ci:Rule"));
-  it("matches no step on a trailing wildcard", () => nothingMatches("ci.yml:ci:Rule*"));
-  it("matches no step on a whole-job wildcard", () => nothingMatches("ci.yml:ci:*"));
-  it("matches no step on a different case", () => nothingMatches("ci.yml:ci:rule check"));
-  it("matches no step on surrounding whitespace", () => nothingMatches(" ci.yml:ci:Rule check "));
+  it.each([
+    ["matches no step on a bare step name", "Rule check"],
+    ["matches no step on a job-and-step form", "ci:Rule check"],
+    ["matches no step on a file-and-step form", "ci.yml:Rule check"],
+    ["matches no step on a prefix of the qualified name", "ci.yml:ci:Rule"],
+    ["matches no step on a trailing wildcard", "ci.yml:ci:Rule*"],
+    ["matches no step on a whole-job wildcard", "ci.yml:ci:*"],
+    ["matches no step on a different case", "ci.yml:ci:rule check"],
+    ["matches no step on surrounding whitespace", " ci.yml:ci:Rule check "],
+  ] as const)("%s", (_title, entry) => nothingMatches(entry));
 });
 
 describe("[SCN-USG-015] stepExclusions — two steps of one name in two workflows", () => {

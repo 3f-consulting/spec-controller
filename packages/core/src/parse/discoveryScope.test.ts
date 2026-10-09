@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
 import { runningStaticChecks } from "./runningStaticChecks.js";
 import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import { RELEASE_YML } from "./releaseWorkflow.testkit.js";
 
 const CI_YML = [
   "jobs:",
@@ -28,16 +29,6 @@ const NIGHTLY_YML = [
   "    steps:",
   "      - name: Audit",
   "        run: pnpm audit --audit-level=high",
-].join("\n");
-
-const RELEASE_YML = [
-  "jobs:",
-  "  publish:",
-  "    steps:",
-  "      - name: Build",
-  "        run: pnpm build",
-  "      - name: Publish",
-  "        run: pnpm publish --access public",
 ].join("\n");
 
 const SCRIPTS = {
