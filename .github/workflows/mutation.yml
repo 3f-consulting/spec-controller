@@ -16,6 +16,13 @@ on:
         required: false
         default: false
 
+env:
+  # Production files no scope mutates. These re-export only, so there is no mutant to raise.
+  UNSCOPED: |
+    packages/core/src/index.ts
+    packages/core/src/internal.ts
+    packages/core/src/model.ts
+
 jobs:
   mutation:
     runs-on: ubuntu-latest

@@ -248,6 +248,20 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.mutation.js packages
 
+      - name: Every production source file is in a mutation scope or on the recorded list
+        id: SCN-FIT-040
+        if: always()
+        shell: bash
+        run: |
+          # A scope's own ! lines are not read: an exclude pathspec applies to the whole listing, never to one scope's matches.
+          set -f
+          excludes=()
+          while IFS= read -r p; do
+            if [ -n "$p" ]; then excludes+=(":(exclude,glob)$p"); fi
+          done < <(yq -r '(.jobs.mutation.strategy.matrix.include[].mutate | split(",") | .[] | select(test("^!") | not)), .env.UNSCOPED' .github/workflows/mutation.yml)
+          git ls-files -- ':(glob)packages/*/src/**/*.ts' ':(exclude,glob)packages/**/*.test.ts' ':(exclude,glob)packages/**/*.testkit.ts' "${excludes[@]}" \
+            | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()

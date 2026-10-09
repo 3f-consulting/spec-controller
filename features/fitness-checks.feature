@@ -168,3 +168,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-039
     Scenario: no source or test file in the packages carries a comment that disables a mutant
+
+  Rule: mutation reaches every production source file, or the repository records which it leaves out and why
+
+    @fitness @SCN-FIT-040
+    Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates
