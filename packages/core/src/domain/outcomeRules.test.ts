@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import {
   noEvidenceObligationReconciliationsOf,
@@ -188,12 +188,16 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
 });
 
 describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's items", () => {
-  const broken = credit("unit", "SCN-AAA-001", {
-    broken: true,
-    locator: "tests/broken.test.ts",
-    message: "Failed to collect",
+  let broken: ReturnType<typeof credit>;
+  let uncited: ReturnType<typeof credit>;
+  beforeEach(() => {
+    broken = credit("unit", "SCN-AAA-001", {
+      broken: true,
+      locator: "tests/broken.test.ts",
+      message: "Failed to collect",
+    });
+    uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
   });
-  const uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
   const guard: FitnessEvidenceObservation = {
     qualityCheck: "fitness",
     staticCheck: "lint:nobody-asked",

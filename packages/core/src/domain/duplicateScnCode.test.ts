@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
 import { parseScenarios } from "../parse/scenarios.js";
@@ -9,16 +9,19 @@ function accountsFor(ledger: Ledger, scnId: string): ScenarioReconciliation[] {
 }
 
 describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
-  const ledger = reconcile(
-    [
-      { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      {
-        scnId: "SCN-DUP-001",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-      },
-    ],
-    []
-  );
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile(
+      [
+        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        {
+          scnId: "SCN-DUP-001",
+          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+        },
+      ],
+      []
+    );
+  });
 
   it("holds ONE real account for the code, never one row per scenario", () => {
     const accounts = accountsFor(ledger, "SCN-DUP-001");
@@ -77,7 +80,10 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
 describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
   const one = "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: in one\n    Given a thing\n";
   const two = "@TWO\nFeature: two\n\n  @unit @SCN-ONE-001\n  Scenario: in two\n    Given a thing\n";
-  const ledger = reconcile([...parseScenarios(one), ...parseScenarios(two)], []);
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile([...parseScenarios(one), ...parseScenarios(two)], []);
+  });
 
   it("holds ONE account for the code across the two files", () => {
     expect(accountsFor(ledger, "SCN-ONE-001")).toHaveLength(1);
@@ -92,16 +98,19 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one
 });
 
 describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality checks still never balance", () => {
-  const ledger = reconcile(
-    [
-      { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "integration" }] },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-DIS-001", status: "passed", locator: "dis.test.ts" },
-      { qualityCheck: "integration", scnId: "SCN-DIS-001", status: "passed", locator: "dis.feature" },
-    ]
-  );
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile(
+      [
+        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-DIS-001", status: "passed", locator: "dis.test.ts" },
+        { qualityCheck: "integration", scnId: "SCN-DIS-001", status: "passed", locator: "dis.feature" },
+      ]
+    );
+  });
 
   it("carries the union of the checks the sharers name, each reading duplicate-scn-code", () => {
     const [account] = accountsFor(ledger, "SCN-DIS-001");
@@ -124,13 +133,16 @@ describe("[SCN-STG-016] every credit citing a duplicated code posts to its one a
     { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "failed", locator: "crd-fail.test.ts" },
     { qualityCheck: "e2e", scnId: "SCN-CRD-001", status: "passed", locator: "crd-e2e.spec.ts" },
   ] as const;
-  const ledger = reconcile(
-    [
-      { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ],
-    [...credits]
-  );
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile(
+      [
+        { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [...credits]
+    );
+  });
 
   it("posts each citing credit to the one account exactly once", () => {
     const [account] = accountsFor(ledger, "SCN-CRD-001");

@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
 import { modifiersNotTakenRefusal, parseHostInvocation } from "./host.js";
 import { main } from "./main.js";
@@ -16,6 +16,33 @@ interface Answered {
   expectedStderr: string | undefined;
   workingEntries: string[];
 }
+
+let target: string[];
+let savedDir: string;
+let savedReport: string;
+
+beforeEach(() => {
+  const outOfBalance = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
+  target = [
+    "--features", join(outOfBalance, "features"),
+    "--vitest", join(outOfBalance, "vitest.json"),
+    "--ci", outOfBalance,
+  ];
+  savedDir = mkdtempSync(join(tmpdir(), "main-run-id-without-store-saved-"));
+  savedReport = join(savedDir, "saved.json");
+  const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  try {
+    runBalance([...target, "--format", `json:${savedReport}`]);
+  } finally {
+    quiet.mockRestore();
+    process.exitCode = undefined;
+  }
+  if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
+});
+
+afterEach(() => {
+  rmSync(savedDir, { recursive: true, force: true });
+});
 
 let stdout: string[];
 let stderr: string[];
@@ -63,59 +90,38 @@ function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal:
   }
 }
 
-const OUT_OF_BALANCE = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
-const TARGET = [
-  "--features", join(OUT_OF_BALANCE, "features"),
-  "--vitest", join(OUT_OF_BALANCE, "vitest.json"),
-  "--ci", OUT_OF_BALANCE,
-];
-const balance = (): string[] => ["balance", ...TARGET];
+const balance = (): string[] => ["balance", ...target];
 
-let savedDir: string;
-let savedReport: string;
+const KEEP_UNDER_NAME = (): string => APP_MESSAGES[AppMessage.KeepRunUnderName]("balance");
+const RE_RENDER_WITHOUT_IT = (): string => APP_MESSAGES[AppMessage.ReRenderWithoutIt]();
 
-beforeAll(() => {
-  savedDir = mkdtempSync(join(tmpdir(), "main-run-id-without-store-saved-"));
-  savedReport = join(savedDir, "saved.json");
-  const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-  try {
-    runBalance([...TARGET, "--format", `json:${savedReport}`]);
-  } finally {
-    quiet.mockRestore();
-    process.exitCode = undefined;
-  }
-  if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
-});
+const liveBalance = (): string[] => ["--run-id", "r1", ...balance()];
+const liveBalanceReportOnly = (): string[] => ["--run-id", "r1", ...balance(), "--exit-zero"];
+const liveBalanceStrict = (): string[] => ["--run-id", "r1", ...balance(), "--strict"];
+const liveBalanceToAFile = (cwd: string): string[] => ["--run-id", "r1", ...balance(), "--format", `json:${join(cwd, "report.json")}`];
 
-afterAll(() => {
-  rmSync(savedDir, { recursive: true, force: true });
-});
-
-const KEEP_UNDER_NAME = APP_MESSAGES[AppMessage.KeepRunUnderName]("balance");
-const RE_RENDER_WITHOUT_IT = APP_MESSAGES[AppMessage.ReRenderWithoutIt]();
-
-const SHAPES: { shape: string; argvAt: (cwd: string) => string[]; refusal: Refusal; closing: string }[] = [
+const SHAPES: { shape: string; argvAt: (cwd: string) => string[]; refusal: Refusal; closing: () => string }[] = [
   {
     shape: "before a live balance run",
-    argvAt: () => ["--run-id", "r1", ...balance()],
+    argvAt: liveBalance,
     refusal: refusedAsUnstored,
     closing: KEEP_UNDER_NAME,
   },
   {
     shape: "before a live balance run, under the report-only option",
-    argvAt: () => ["--run-id", "r1", ...balance(), "--exit-zero"],
+    argvAt: liveBalanceReportOnly,
     refusal: refusedAsUnstored,
     closing: KEEP_UNDER_NAME,
   },
   {
     shape: "before a live balance run, under the strict option",
-    argvAt: () => ["--run-id", "r1", ...balance(), "--strict"],
+    argvAt: liveBalanceStrict,
     refusal: refusedAsUnstored,
     closing: KEEP_UNDER_NAME,
   },
   {
     shape: "before a live balance run that writes its report to a file",
-    argvAt: (cwd) => ["--run-id", "r1", ...balance(), "--format", `json:${join(cwd, "report.json")}`],
+    argvAt: liveBalanceToAFile,
     refusal: refusedAsUnstored,
     closing: KEEP_UNDER_NAME,
   },
@@ -137,7 +143,7 @@ describe("[SCN-CLI-083] the host refuses --run-id given without --store as a usa
     });
 
     it("closes the refusal with the way to run it that applies to this shape", () => {
-      expect(inTemporaryWorkingDirectory(argvAt, refusal).stderr.split("\n").slice(-2)).toEqual([closing, ""]);
+      expect(inTemporaryWorkingDirectory(argvAt, refusal).stderr.split("\n").slice(-2)).toEqual([closing(), ""]);
     });
 
     it("exits with the usage status", () => {

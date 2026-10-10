@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { stepAccounting } from "./stepAccounting.js";
 import { reconcilerSteps } from "./reconcilerSteps.js";
 import { stepExclusions } from "./stepExclusions.js";
@@ -6,35 +6,41 @@ import { runningStaticChecks } from "./runningStaticChecks.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import { RELEASE_YML } from "./releaseWorkflow.testkit.js";
 
-const CI_YML = [
-  "jobs:",
-  "  ci:",
-  "    steps:",
-  "      - uses: actions/checkout@v4",
-  "      - name: Install",
-  "        run: pnpm install --frozen-lockfile",
-  "      - name: Unit tests",
-  "        run: pnpm test",
-  "      - name: Sweep check",
-  "        run: pnpm lint:sweep",
-  "      - uses: github/codeql-action/analyze@v3",
-  "      - name: Dump this run's step record",
-  "        env:",
-  "          STEPS_JSON: ${{ toJSON(steps) }}",
-  "        run: pnpm lint:dump",
-  "      - name: Self-reconciliation balance",
-  "        run: pnpm lint:reconcile",
-].join("\n");
+let CI_YML: string;
+beforeEach(() => {
+  CI_YML = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - uses: actions/checkout@v4",
+    "      - name: Install",
+    "        run: pnpm install --frozen-lockfile",
+    "      - name: Unit tests",
+    "        run: pnpm test",
+    "      - name: Sweep check",
+    "        run: pnpm lint:sweep",
+    "      - uses: github/codeql-action/analyze@v3",
+    "      - name: Dump this run's step record",
+    "        env:",
+    "          STEPS_JSON: ${{ toJSON(steps) }}",
+    "        run: pnpm lint:dump",
+    "      - name: Self-reconciliation balance",
+    "        run: pnpm lint:reconcile",
+  ].join("\n");
+});
 
-const NIGHTLY_YML = [
-  "jobs:",
-  "  sweep:",
-  "    steps:",
-  "      - name: Depth check",
-  "        run: pnpm lint:depth",
-  "      - name: Audit",
-  "        run: pnpm audit --audit-level=high",
-].join("\n");
+let NIGHTLY_YML: string;
+beforeEach(() => {
+  NIGHTLY_YML = [
+    "jobs:",
+    "  sweep:",
+    "    steps:",
+    "      - name: Depth check",
+    "        run: pnpm lint:depth",
+    "      - name: Audit",
+    "        run: pnpm audit --audit-level=high",
+  ].join("\n");
+});
 
 const SCRIPTS: PackageJsonScripts = {
   scripts: {

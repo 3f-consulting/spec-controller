@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -8,33 +8,36 @@ import { adopterReportCtx as ctx } from "./runContext.testkit.js";
 import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {
-  const spanning: Ledger = reconcile(
-    [
-      { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-      { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "integration" }] },
-      { scnId: "SCN-LNT-009", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
-      {
-        qualityCheck: "fitness",
-        staticCheck: "lint:guard-lint",
-        scnId: "SCN-LNT-002",
-        exists: true,
-        enforcedOverRealSource: false,
-      },
-      {
-        qualityCheck: "fitness",
-        staticCheck: "lint:guard-lint",
-        scnId: "SCN-LNT-009",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-    ]
-  );
+  let spanning: Ledger;
+  beforeEach(() => {
+    spanning = reconcile(
+      [
+        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
+        { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "integration" }] },
+        { scnId: "SCN-LNT-009", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
+        {
+          qualityCheck: "fitness",
+          staticCheck: "lint:guard-lint",
+          scnId: "SCN-LNT-002",
+          exists: true,
+          enforcedOverRealSource: false,
+        },
+        {
+          qualityCheck: "fitness",
+          staticCheck: "lint:guard-lint",
+          scnId: "SCN-LNT-009",
+          exists: true,
+          enforcedOverRealSource: true,
+        },
+      ]
+    );
+  });
 
   it("renders an '### Out-of-balance by feature' table grouping the out-of-balance scenarios under their feature code", () => {
     const md = renderMarkdown(__er(spanning), ctx);
@@ -218,14 +221,17 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
 });
 
 describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
-  const reconciliationFixture: Ledger = reconcile(
-    [
-      { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "integration" }] },
-      { scnId: "SCN-C", evidenceObligations: [] },
-    ],
-    [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
-  );
+  let reconciliationFixture: Ledger;
+  beforeEach(() => {
+    reconciliationFixture = reconcile(
+      [
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "integration" }] },
+        { scnId: "SCN-C", evidenceObligations: [] },
+      ],
+      [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
+    );
+  });
 
   it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
     const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [] }, ctx);
@@ -259,10 +265,13 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
 });
 
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
-  const simple: Ledger = reconcile(
-    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
-  );
+  let simple: Ledger;
+  beforeEach(() => {
+    simple = reconcile(
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
+    );
+  });
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
@@ -309,17 +318,20 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 });
 
 describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
-  const reformatted: Ledger = reconcile(
-    [
-      { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
-    ]
-  );
+  let reformatted: Ledger;
+  beforeEach(() => {
+    reformatted = reconcile(
+      [
+        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
+        { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
+      ]
+    );
+  });
 
   it("titles the report '# Evidence Reconciliation', not '# Ledger' or '# Spec reconciliation'", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
@@ -419,7 +431,10 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
     { qualityCheck: "integration", scnId: null, status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
-  const balance: Ledger = reconcile(scenarios, observations);
+  let balance: Ledger;
+  beforeEach(() => {
+    balance = reconcile(scenarios, observations);
+  });
 
   it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);

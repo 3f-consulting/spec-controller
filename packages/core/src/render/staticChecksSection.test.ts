@@ -52,7 +52,7 @@ function reconcile(barCitation: string): EvidenceReconciliation {
 const heading = CORE_MESSAGES[CoreMessage.StaticChecksHeading];
 const counts = CORE_MESSAGES[CoreMessage.StaticChecksCounts];
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   countScnOccurrences,
   parseScenarios,
@@ -8,15 +8,18 @@ import {
 const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
-  const source = [
-    "@RPT @SCN-RPT-001",
-    "Scenario: a thing",
-    "  Given the rule @SCN-RPT-001 is referenced again in prose",
-    "  # see also @SCN-LNT-005 in a comment",
-    "",
-    "@unit @SCN-LDG-003",
-    "Scenario: another",
-  ].join("\n");
+  let source: string;
+  beforeEach(() => {
+    source = [
+      "@RPT @SCN-RPT-001",
+      "Scenario: a thing",
+      "  Given the rule @SCN-RPT-001 is referenced again in prose",
+      "  # see also @SCN-LNT-005 in a comment",
+      "",
+      "@unit @SCN-LDG-003",
+      "Scenario: another",
+    ].join("\n");
+  });
 
   it("counts @SCN occurrences across tag lines AND non-tag context (prose, comments)", () => {
     expect(countScnOccurrences(source)).toBe(4);
@@ -34,32 +37,35 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
 });
 
 describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SCN tag", () => {
-  const source = [
-    "@UNT",
-    "Feature: a fixture",
-    "",
-    "  Rule: a mix of tagged and untagged scenarios",
-    "",
-    "    @unit @SCN-UNT-001",
-    "    Scenario: a tagged scenario with an anchor",
-    "      Given a step",
-    "",
-    "    Scenario: an untagged scenario",
-    "      Given a step",
-    "",
-    "    Scenario Outline: an untagged outline",
-    "      Given <x>",
-    "      Examples:",
-    "        | x |",
-    "        | 1 |",
-    "",
-    "    @SCN-UNT-002",
-    "    Scenario Outline: a tagged outline",
-    "      Given <y>",
-    "      Examples:",
-    "        | y |",
-    "        | 2 |",
-  ].join("\n");
+  let source: string;
+  beforeEach(() => {
+    source = [
+      "@UNT",
+      "Feature: a fixture",
+      "",
+      "  Rule: a mix of tagged and untagged scenarios",
+      "",
+      "    @unit @SCN-UNT-001",
+      "    Scenario: a tagged scenario with an anchor",
+      "      Given a step",
+      "",
+      "    Scenario: an untagged scenario",
+      "      Given a step",
+      "",
+      "    Scenario Outline: an untagged outline",
+      "      Given <x>",
+      "      Examples:",
+      "        | x |",
+      "        | 1 |",
+      "",
+      "    @SCN-UNT-002",
+      "    Scenario Outline: a tagged outline",
+      "      Given <y>",
+      "      Examples:",
+      "        | y |",
+      "        | 2 |",
+    ].join("\n");
+  });
 
   it("returns the untagged scenario + outline names, excluding the @SCN-tagged ones", () => {
     expect(parseUntaggedScenarios(asFeature(source))).toEqual([

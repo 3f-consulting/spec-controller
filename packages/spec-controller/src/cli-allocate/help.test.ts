@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import {
   allocateCommand,
   balanceCommand,
@@ -11,7 +11,13 @@ import {
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
-  const help = renderCommandHelp(allocateCommand);
+  let help: string;
+  let allocatePositionals: readonly PositionalSpec[];
+
+  beforeEach(() => {
+    help = renderCommandHelp(allocateCommand);
+    allocatePositionals = cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
+  });
 
   it.each([
     ["shows how the command is called, with its feature part", /^Usage: spec-controller allocate <FFF> \[options\]$/m],
@@ -24,9 +30,6 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new",
     expect(help).toMatch(/^ {2}--new\s+Start a part/m);
     expect(help).toMatch(/^ {2}--help, -h\s+Show this help and exit\.$/m);
   });
-
-  const allocatePositionals: readonly PositionalSpec[] =
-    cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
 
   function withAllocatePositional(positional: PositionalSpec): CliRegistry {
     return {

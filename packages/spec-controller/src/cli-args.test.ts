@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { cliRegistry, type CliRegistry } from "./cli-registry.js";
+import { beforeEach, describe, it, expect } from "vitest";
+import { cliRegistry, type CliRegistry, type CommandSpec } from "./cli-registry.js";
 import { checkUnknownFlags } from "./cli-args.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
@@ -8,7 +8,15 @@ const REFUSING_TOOL_VERSION = "9.9.9-test";
 const MEASUREMENTS_RETIRED_IN = "0.1.0-alpha.5";
 
 describe("[SCN-CLI-023] checkUnknownFlags refuses a flag balance has retired as retired, offering no pin", () => {
-  const refusal = checkUnknownFlags({ measurements: "x.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+  let refusal: ReturnType<typeof checkUnknownFlags>;
+  let balance: CommandSpec | undefined;
+  let retiredFlags: NonNullable<CommandSpec["retiredFlags"]>;
+
+  beforeEach(() => {
+    refusal = checkUnknownFlags({ measurements: "x.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+    balance = cliRegistry.commands.find((command) => command.name === "balance");
+    retiredFlags = balance?.retiredFlags ?? [];
+  });
 
   it("refuses the flag, naming it as retired with the version that retired it", () => {
     expect(refusal).not.toBeNull();
@@ -34,8 +42,6 @@ describe("[SCN-CLI-023] checkUnknownFlags refuses a flag balance has retired as 
   });
 
   const BALANCE_SCOPE = "spec-controller balance";
-  const balance = cliRegistry.commands.find((command) => command.name === "balance");
-  const retiredFlags = balance?.retiredFlags ?? [];
   const retiredRefusal = (flag: { name: string; retiredIn: string; replacement: string }): string =>
     `${APP_MESSAGES[AppMessage.RetiredFlag](flag.name, BALANCE_SCOPE, flag.retiredIn, REFUSING_TOOL_VERSION)}\n` +
     `${APP_MESSAGES[AppMessage.DoNotPinRetired]()} ${flag.replacement}\n` +

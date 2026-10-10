@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { checkStepReconciler, corpus, manifest } from "./checkStep.testkit.js";
@@ -26,7 +26,10 @@ const record: CiStepRecord = {
   "dump-the-step-record": { outcome: "success", conclusion: "success" },
 };
 
-const reconcile = checkStepReconciler(corpus, manifest, ci, record);
+let reconcile: ReturnType<typeof checkStepReconciler>;
+beforeEach(() => {
+  reconcile = checkStepReconciler(corpus, manifest, ci, record);
+});
 
 describe("[SCN-LNT-028] a check step the run's record says failed posts a failing observation", () => {
   it("reds the row it names, carrying what the check found, and leaves the run sound", () => {

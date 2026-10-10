@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { runnersReconciler } from "./runnerTiers.testkit.js";
 import { feature } from "../evidenceReconciliation.testkit.js";
 
@@ -19,7 +19,10 @@ jobs:
 
 const scripts = { test: "vitest run", lint: "eslint ." };
 
-const reconcile = runnersReconciler(feature, ci, scripts);
+let reconcile: ReturnType<typeof runnersReconciler>;
+beforeEach(() => {
+  reconcile = runnersReconciler(feature, ci, scripts);
+});
 
 describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
   it("posts every step of the pipeline to the suspense row, each counted run and uncited, and carries no runner account", () => {

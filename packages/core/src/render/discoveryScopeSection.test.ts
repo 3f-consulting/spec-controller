@@ -25,7 +25,7 @@ function reconcile(
 const heading = CORE_MESSAGES[CoreMessage.DiscoveryScopeHeading];
 const tableHeader = CORE_MESSAGES[CoreMessage.DiscoveryScopeTableHeader];
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 function rendered(reconciliation: EvidenceReconciliation): string[] {
   return section(renderMarkdown(reconciliation, ctx).split("\n"));

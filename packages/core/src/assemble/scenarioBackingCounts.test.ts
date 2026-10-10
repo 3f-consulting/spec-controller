@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
@@ -6,13 +6,16 @@ import { reportCtx as ctx } from "./runContext.testkit.js";
 import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
-  const noEvidenceObligationBalance: Ledger = reconcile(
-    [{ scnId: "SCN-LDG-008", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [
-      { qualityCheck: "unit", scnId: "SCN-LDG-008", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/no-evidence-obligation.test.ts" },
-    ],
-  );
+  let noEvidenceObligationBalance: Ledger;
+  beforeEach(() => {
+    noEvidenceObligationBalance = reconcile(
+      [{ scnId: "SCN-LDG-008", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-LDG-008", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/no-evidence-obligation.test.ts" },
+      ],
+    );
+  });
 
   it("carries no-evidence-obligation as its OWN entry in summary.byOutcome", () => {
     const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);

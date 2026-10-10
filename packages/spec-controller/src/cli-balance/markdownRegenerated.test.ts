@@ -1,12 +1,18 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { liveSaver, runPinned } from "./savedRun.testkit.js";
 
-const scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
-afterAll(() => rmSync(scratch, { recursive: true, force: true }));
-const saveLive = liveSaver(scratch);
+let scratch: string;
+let saveLive: ReturnType<typeof liveSaver>;
+
+beforeEach(() => {
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
+  saveLive = liveSaver(scratch);
+});
+
+afterEach(() => rmSync(scratch, { recursive: true, force: true }));
 
 describe("[SCN-RMD-007] the markdown regenerates from a saved report byte-identical to the direct render, and exits the code its saved verdict names", () => {
   it("regenerates the out-of-balance roundtrip report and exits the 1 the live run exited", () => {

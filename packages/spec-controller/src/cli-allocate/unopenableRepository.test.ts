@@ -47,10 +47,11 @@ function expectRefusedNaming(answered: Answered, gitEntry: string, git: { status
   );
 }
 
-const asRoot = process.getuid?.() === 0;
+const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
-  it.skipIf(asRoot)("refuses ONE when its .git directory is not permitted to be read, naming the .git in git's own words", () => {
+  it("refuses ONE when its .git directory is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();
     const gitEntry = join(repo, ".git");
     withhold(gitEntry, 0o000);
@@ -58,14 +59,16 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
     expectRefusedNaming(allocateFrom(repo), gitEntry, gitsOwnRefusal(repo));
   });
 
-  it.skipIf(asRoot)("refuses ONE when its object store is not permitted to be read, naming the .git in git's own words", () => {
+  it("refuses ONE when its object store is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();
     withhold(join(repo, ".git", "objects"), 0o000);
 
     expectRefusedNaming(allocateFrom(repo), join(repo, ".git"), gitsOwnRefusal(repo));
   });
 
-  it.skipIf(asRoot)("refuses ONE when its HEAD is not permitted to be read, naming the .git in git's own words", () => {
+  it("refuses ONE when its HEAD is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();
     withhold(join(repo, ".git", "HEAD"), 0o000);
 
@@ -81,7 +84,8 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
     expectRefusedNaming(allocateFrom(repo), gitEntry, gitsOwnRefusal(repo));
   });
 
-  it.skipIf(asRoot)("refuses ONE from a directory below the top, naming the .git it found above", () => {
+  it("refuses ONE from a directory below the top, naming the .git it found above", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();
     withhold(join(repo, ".git", "HEAD"), 0o000);
     const below = join(repo, "docs");

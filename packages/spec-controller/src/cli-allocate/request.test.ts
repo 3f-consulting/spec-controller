@@ -25,8 +25,6 @@ describe("[SCN-ALC-012] a request not in canon's form is refused as a usage erro
   });
 
   const ALLOCATE_SCOPE = "spec-controller allocate";
-  const allocatePositionals: readonly PositionalSpec[] =
-    cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
 
   function extraArgument(token: string, takes: string): string {
     return (
@@ -45,6 +43,7 @@ describe("[SCN-ALC-012] a request not in canon's form is refused as a usage erro
   }
 
   it("refuses a second part by naming it and the part allocate takes, as the registry names it", () => {
+    const allocatePositionals: readonly PositionalSpec[] = cliRegistry.commands.find((c) => c.name === "allocate")?.positionals ?? [];
     expect(allocatePositionals.map((positional) => positional.name)).toEqual(["<FFF>"]);
     expect(usageErrorOf(["ONE", "TWO"])).toBe(extraArgument("TWO", "<FFF>"));
   });

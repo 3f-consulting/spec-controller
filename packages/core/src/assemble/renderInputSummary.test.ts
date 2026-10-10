@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
@@ -28,18 +28,21 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
     { qualityCheck: "fitness", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
-  const rmd005Balance: Ledger = reconcile(rmd005Scenarios, rmd005Observations);
-
-  const lintBalance: Ledger = reconcile(
-    [
-      { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "unit" }] },
-      { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    ],
-    [
-      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    ],
-  );
+  let rmd005Balance: Ledger;
+  let lintBalance: Ledger;
+  beforeEach(() => {
+    rmd005Balance = reconcile(rmd005Scenarios, rmd005Observations);
+    lintBalance = reconcile(
+      [
+        { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "unit" }] },
+        { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      ],
+      [
+        { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+      ],
+    );
+  });
 
   it("materialises the test-volume totals (onScenario excludes onPhantomScenario)", () => {
     const report = assembleRenderInput(__er(rmd005Balance, true, false), ctx);
@@ -84,7 +87,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("omits testVolume / staticChecks when their sibling read is not threaded, but always carries the fitness tally", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx);
+    const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
     expect(report.summary).not.toHaveProperty("staticChecks");
     expect(report.summary.fitness).toEqual({ satisfied: 0, total: 0 });
@@ -99,13 +102,16 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
 });
 
 describe("[SCN-RMD-006] the report model carries the feature titles", () => {
-  const codedBalance: Ledger = reconcile(
-    [
-      { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    ],
-    [{ qualityCheck: "fitness", staticCheck: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
-  );
+  let codedBalance: Ledger;
+  beforeEach(() => {
+    codedBalance = reconcile(
+      [
+        { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      ],
+      [{ qualityCheck: "fitness", staticCheck: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
+    );
+  });
   const featureNames = new Map([
     ["LDG", "ledger"],
     ["LNT", "fitness-evidence"],
@@ -163,15 +169,15 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
 });
 
 describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
-  const feature = [
+  const featureLines = [
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
     "    @unit @fitness @SCN-RMD-008",
     "    Scenario: a fixture scenario",
-  ].join("\n");
+  ];
   const report = () =>
-    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(feature), [])), ctx))) as {
+    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [])), ctx))) as {
       ledger: {
         scenarioReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;

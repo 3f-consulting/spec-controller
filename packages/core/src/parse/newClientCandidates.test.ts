@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveRunners } from "./targetManifest.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
@@ -10,21 +10,24 @@ describe("[SCN-USG-017] a target that has named no runners — every step of its
   };
   const pkg: PackageJsonScripts = { scripts: manifest.scripts };
 
-  const ci = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - uses: actions/checkout@v4",
-    "      - uses: actions/setup-node@v4",
-    "      - run: pnpm install --frozen-lockfile",
-    "      - name: Lint",
-    "        run: pnpm lint",
-    "      - name: Typecheck",
-    "        run: pnpm typecheck",
-    "      - name: Unit tests",
-    "        run: pnpm test",
-    "      - uses: github/codeql-action/analyze@v3",
-  ].join("\n");
+  let ci: string;
+  beforeEach(() => {
+    ci = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - uses: actions/checkout@v4",
+      "      - uses: actions/setup-node@v4",
+      "      - run: pnpm install --frozen-lockfile",
+      "      - name: Lint",
+      "        run: pnpm lint",
+      "      - name: Typecheck",
+      "        run: pnpm typecheck",
+      "      - name: Unit tests",
+      "        run: pnpm test",
+      "      - uses: github/codeql-action/analyze@v3",
+    ].join("\n");
+  });
 
   const candidateHandles = (runners: Readonly<Record<string, string | null>>): string[] =>
     runningStaticChecks([ci], pkg, runners).map((observation) => observation.staticCheck);

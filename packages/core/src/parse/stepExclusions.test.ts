@@ -1,28 +1,34 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { stepExclusions } from "./stepExclusions.js";
 import { runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveNotChecks } from "./targetManifest.js";
 
-const CI_YML = [
-  "jobs:",
-  "  ci:",
-  "    steps:",
-  "      - uses: actions/checkout@v4",
-  "      - run: pnpm install --frozen-lockfile",
-  "      - name: Rule check",
-  "        run: pnpm lint:rules",
-  "      - name: Sweep check",
-  "        run: pnpm lint:sweep",
-].join("\n");
+let CI_YML: string;
+beforeEach(() => {
+  CI_YML = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - uses: actions/checkout@v4",
+    "      - run: pnpm install --frozen-lockfile",
+    "      - name: Rule check",
+    "        run: pnpm lint:rules",
+    "      - name: Sweep check",
+    "        run: pnpm lint:sweep",
+  ].join("\n");
+});
 
-const RELEASE_YML = [
-  "jobs:",
-  "  ci:",
-  "    steps:",
-  "      - name: Rule check",
-  "        run: pnpm lint:rules",
-].join("\n");
+let RELEASE_YML: string;
+beforeEach(() => {
+  RELEASE_YML = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - name: Rule check",
+    "        run: pnpm lint:rules",
+  ].join("\n");
+});
 
 const SCRIPTS = {
   scripts: {
@@ -83,7 +89,10 @@ describe("[SCN-USG-015] stepExclusions — the match is exact and fully qualifie
 });
 
 describe("[SCN-USG-015] stepExclusions — two steps of one name in two workflows", () => {
-  const sources = [CI_YML, RELEASE_YML];
+  let sources: string[];
+  beforeEach(() => {
+    sources = [CI_YML, RELEASE_YML];
+  });
   const names = ["ci.yml", "release.yml"];
 
   it("excludes the one the entry's workflow names, and leaves its namesake alone", () => {

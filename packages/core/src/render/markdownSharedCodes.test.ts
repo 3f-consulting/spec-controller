@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown, renderReportFromJson } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
@@ -21,26 +21,30 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-const ledger = reconcile(
-  [
-    { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-OWN-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-  ],
-  []
-);
-const census: EvidenceObligations = {
-  ...evidenceObligations(3, 3),
-  sharedScnCodes: [
-    {
-      scnId: "SCN-ONE-001",
-      scenarios: [
-        { feature: "one.feature", scenario: "the scenario in one" },
-        { feature: "two.feature", scenario: "the scenario in two" },
-      ],
-    },
-  ],
-};
+let ledger: Ledger;
+let census: EvidenceObligations;
+beforeEach(() => {
+  ledger = reconcile(
+    [
+      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-OWN-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ],
+    []
+  );
+  census = {
+    ...evidenceObligations(3, 3),
+    sharedScnCodes: [
+      {
+        scnId: "SCN-ONE-001",
+        scenarios: [
+          { feature: "one.feature", scenario: "the scenario in one" },
+          { feature: "two.feature", scenario: "the scenario in two" },
+        ],
+      },
+    ],
+  };
+});
 
 const alpha = `Feature: alpha
 

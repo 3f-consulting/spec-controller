@@ -58,17 +58,19 @@ function historyRefusalReason(answered: Answered, path: string): string {
 const NOT_PERMITTED = /^(EACCES|EPERM): /;
 const GIT_LOG_FAILED = /^git log exited 128: \S/;
 
-const asRoot = process.getuid?.() === 0;
+const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
-  it.skipIf(asRoot)("refuses ONE when its loose objects are not permitted to be read, in git's own words", () => {
+  it("refuses ONE when its loose objects are not permitted to be read, in git's own words", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
     for (const dir of looseObjectDirectories(repo)) withhold(dir, 0o000);
 
     expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
   });
 
-  it.skipIf(asRoot)("refuses ONE when its objects are packed, and the pack is not permitted to be read, in git's own words", () => {
+  it("refuses ONE when its objects are packed, and the pack is not permitted to be read, in git's own words", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
     git(repo, ["gc", "-q"]);
     const pack = join(repo, ".git", "objects", "pack");
@@ -79,7 +81,8 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
   });
 
-  it.skipIf(asRoot)("refuses ONE when its branch refs are not permitted to be read, naming them", () => {
+  it("refuses ONE when its branch refs are not permitted to be read, naming them", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
     const heads = join(repo, ".git", "refs", "heads");
     withhold(heads, 0o000);
@@ -87,7 +90,8 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     expect(historyRefusalReason(allocateFrom(repo), heads)).toMatch(NOT_PERMITTED);
   });
 
-  it.skipIf(asRoot)("refuses ONE when a branch ref nested below refs/heads is not permitted to be read, naming it", () => {
+  it("refuses ONE when a branch ref nested below refs/heads is not permitted to be read, naming it", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
     git(repo, ["branch", "topic/later"]);
     const ref = join(repo, ".git", "refs", "heads", "topic", "later");
@@ -96,7 +100,8 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     expect(historyRefusalReason(allocateFrom(repo), ref)).toMatch(NOT_PERMITTED);
   });
 
-  it.skipIf(asRoot)("refuses ONE when its packed refs are not permitted to be read, naming them", () => {
+  it("refuses ONE when its packed refs are not permitted to be read, naming them", ({ skip }) => {
+    skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
     git(repo, ["pack-refs", "--all"]);
     const packed = join(repo, ".git", "packed-refs");
@@ -105,7 +110,8 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     expect(historyRefusalReason(allocateFrom(repo), packed)).toMatch(NOT_PERMITTED);
   });
 
-  it.skipIf(asRoot)("refuses ONE when it is cloned one commit deep, and the clone's shallow record is not permitted to be read", () => {
+  it("refuses ONE when it is cloned one commit deep, and the clone's shallow record is not permitted to be read", ({ skip }) => {
+    skip(runsAsRoot());
     const origin = repositoryWithADeletedCode();
     const clone = join(temporaryDirectory(), "clone");
     git(origin, ["clone", "-q", "--depth", "1", `file://${origin}`, clone]);

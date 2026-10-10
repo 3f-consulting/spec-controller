@@ -1,18 +1,24 @@
-import { describe, it, expect } from "vitest";
-import { cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
+import { beforeEach, describe, it, expect } from "vitest";
+import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkMissingValues } from "./cli-args.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { runBalanceCaptured } from "../test-support/runBalance.js";
 
-const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
-const valueFlags = balanceFlags.filter((flag) => flag.arg !== undefined);
-const booleanFlags = balanceFlags.filter((flag) => flag.arg === undefined).map((flag) => flag.name);
+const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
-const MISSING: Record<string, (flag: string) => string[]> = {
-  "at the end": (flag) => ["--features", "f", flag],
-  "followed by a flag": (flag) => [flag, "--exit-zero", "--features", "f"],
-  "with an empty value": (flag) => ["--features", "f", flag, ""],
-};
+let valueFlags: FlagSpec[];
+let booleanFlags: string[];
+
+beforeEach(() => {
+  valueFlags = balanceFlags.filter((flag) => flag.arg !== undefined);
+  booleanFlags = balanceFlags.filter((flag) => flag.arg === undefined).map((flag) => flag.name);
+});
+
+const MISSING: [string, (flag: string) => string[]][] = [
+  ["at the end", (flag) => ["--features", "f", flag]],
+  ["followed by a flag", (flag) => [flag, "--exit-zero", "--features", "f"]],
+  ["with an empty value", (flag) => ["--features", "f", flag, ""]],
+];
 
 const refusalFor = (given: string, flag: FlagSpec): string =>
   `${APP_MESSAGES[AppMessage.MissingValue](given, "spec-controller balance", flag.arg ?? "")}\n` +
@@ -30,9 +36,10 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     expect(valueFlags).toHaveLength(10);
   });
 
-  for (const flag of valueFlags) {
+  for (const flag of balanceFlags) {
+    if (flag.arg === undefined) continue;
     for (const given of [flag.name, ...(flag.aliases ?? [])]) {
-      for (const [shape, argvOf] of Object.entries(MISSING)) {
+      for (const [shape, argvOf] of MISSING) {
         it(`refuses ${given} ${shape}, naming it, its value and balance's scope, and never the word "true"`, () => {
           const refusal = checkMissingValues(argvOf(given), cliRegistry, "balance");
           expect(refusal).toBe(refusalFor(given, flag));

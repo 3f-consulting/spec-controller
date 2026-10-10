@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import {
   allocateCommand,
   balanceCommand,
@@ -13,7 +13,11 @@ import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
-  const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
+  let balanceFlags: FlagSpec[];
+
+  beforeEach(() => {
+    balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
+  });
 
   it("registers the balance command's full flag scope in the registry (the single source)", () => {
     const names = balanceFlags.map((f) => f.name);

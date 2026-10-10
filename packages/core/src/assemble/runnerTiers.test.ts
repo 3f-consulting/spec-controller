@@ -1,10 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { runnersReconciler } from "./runnerTiers.testkit.js";
 import { unitTestsCi as ci, feature } from "../evidenceReconciliation.testkit.js";
 
 const scripts = { test: "vitest run" };
 
-const reconcile = runnersReconciler(feature, ci, scripts);
+let reconcile: ReturnType<typeof runnersReconciler>;
+beforeEach(() => {
+  reconcile = runnersReconciler(feature, ci, scripts);
+});
 
 describe("[SCN-USG-016] a null runner reports the tier as having none, and an absent key reports it as unnamed", () => {
   it("carries the performance tier as having no runner for a target that says it has none", () => {

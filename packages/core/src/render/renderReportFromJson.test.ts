@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderJson } from "./json.js";
 import { renderReportFromJson, renderMarkdown } from "./markdown.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
@@ -19,7 +19,10 @@ const observations: EvidenceObservation[] = [
   { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
-const balance: Ledger = reconcile(scenarios, observations);
+let balance: Ledger;
+beforeEach(() => {
+  balance = reconcile(scenarios, observations);
+});
 
 const ctx: RunContext = {
   target: "roundtrip-fixture",

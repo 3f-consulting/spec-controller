@@ -1,10 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import { cliRegistry, type FlagSpec } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 const modifiers = cliRegistry.global;
-const commands = cliRegistry.commands.map((command) => command.name);
+let commands: string[];
+
+beforeEach(() => {
+  commands = cliRegistry.commands.map((command) => command.name);
+});
 
 const tookCommand = (modifier: FlagSpec, command: string): string =>
   `${APP_MESSAGES[AppMessage.ModifierTookCommand](modifier.name, command)}\n` +
@@ -32,7 +36,7 @@ describe("[SCN-CLI-066] the host refuses a modifier that took the command as its
   });
 
   for (const modifier of modifiers) {
-    for (const command of commands) {
+    for (const { name: command } of cliRegistry.commands) {
       it(`refuses ${modifier.name} ${command} followed by the command's flags, naming both, and takes no command`, () => {
         expect(parseHostInvocation([modifier.name, command, "--features", "f"])).toEqual({
           commandArgs: [],

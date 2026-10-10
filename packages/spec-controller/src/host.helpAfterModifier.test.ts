@@ -1,16 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import { cliRegistry } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
 
-const modifiers = cliRegistry.global.map((flag) => flag.name);
+let modifiers: string[];
 
-const values = ["v", ...cliRegistry.commands.map((command) => command.name)];
+beforeEach(() => {
+  modifiers = cliRegistry.global.map((flag) => flag.name);
+});
 
 const HELP = ["--help", "-h", "help"];
 
 describe("[SCN-CLI-068] help after a modifier, or nothing given at all, still answers the top-level help", () => {
-  for (const modifier of modifiers) {
-    for (const value of values) {
+  for (const { name: modifier } of cliRegistry.global) {
+    for (const { name: value } of [{ name: "v" }, ...cliRegistry.commands]) {
       for (const help of HELP) {
         it(`reads ${help} after ${modifier} ${value} as the command, and refuses nothing`, () => {
           const inv = parseHostInvocation([modifier, value, help]);

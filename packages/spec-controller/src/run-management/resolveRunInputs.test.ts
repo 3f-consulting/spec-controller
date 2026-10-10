@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -245,9 +245,15 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
   });
 
   describe("runBalance's written JSON provenance", () => {
-    const fixtureVitest = resolve("tests/fixtures/balanced/vitest.json");
-    const fixturePackageJson = resolve("tests/fixtures/balanced/package.json");
-    const fixtureFeatures = resolve("tests/fixtures/balanced/features");
+    let fixtureVitest: string;
+    let fixturePackageJson: string;
+    let fixtureFeatures: string;
+
+    beforeEach(() => {
+      fixtureVitest = resolve("tests/fixtures/balanced/vitest.json");
+      fixturePackageJson = resolve("tests/fixtures/balanced/package.json");
+      fixtureFeatures = resolve("tests/fixtures/balanced/features");
+    });
 
     function plainDir(): { dir: string; cleanup: () => void } {
       const dir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-plain-")));

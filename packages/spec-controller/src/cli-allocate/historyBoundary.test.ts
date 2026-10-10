@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
 import { cpSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -34,16 +34,13 @@ function cloneOneCommitDeep(repo: string): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
   let repo = "";
 
-  beforeAll(() => {
+  beforeEach(() => {
     repo = repositoryWhoseHistoryOnceCarried("SCN-ONE-001", "SCN-ONE-005");
   });
 

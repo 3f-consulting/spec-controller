@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
-import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { afterAll, afterEach, describe, it, expect } from "vitest";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
 import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.testkit.js";
@@ -18,7 +18,7 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
   });
 });
 
-function templateRepository(): string {
+function repositoryWithDraft(): string {
   const repo = freshDirectory("allocate-tree-");
   git(repo, ["init", "-q", "-b", "main"]);
   mkdirSync(join(repo, "docs"));
@@ -27,18 +27,6 @@ function templateRepository(): string {
   git(repo, ["commit", "-q", "-m", "notes"]);
   mkdirSync(join(repo, "drafts"));
   writeFileSync(join(repo, "drafts", "new.md"), "Cites SCN-ONE-016.\n");
-  return repo;
-}
-
-let template = "";
-
-beforeAll(() => {
-  template = templateRepository();
-});
-
-function repositoryWithDraft(): string {
-  const repo = freshDirectory("allocate-tree-");
-  cpSync(template, repo, { recursive: true });
   return repo;
 }
 

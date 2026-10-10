@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
@@ -58,23 +58,26 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     return reconcile(scenarios, observations);
   };
 
-  const vitestBroken = balanceWithBroken(
-    qcr({
-      qualityCheck: "unit",
-      outcome: "broken",
-      locator: VITEST_LOCATOR,
-      message: VITEST_MESSAGE,
-    }),
-  );
-
-  const cucumberBroken = balanceWithBroken(
-    qcr({
-      qualityCheck: "integration",
-      outcome: "broken",
-      locator: CUCUMBER_LOCATOR,
-      message: CUCUMBER_MESSAGE,
-    }),
-  );
+  let vitestBroken: Ledger;
+  let cucumberBroken: Ledger;
+  beforeEach(() => {
+    vitestBroken = balanceWithBroken(
+      qcr({
+        qualityCheck: "unit",
+        outcome: "broken",
+        locator: VITEST_LOCATOR,
+        message: VITEST_MESSAGE,
+      }),
+    );
+    cucumberBroken = balanceWithBroken(
+      qcr({
+        qualityCheck: "integration",
+        outcome: "broken",
+        locator: CUCUMBER_LOCATOR,
+        message: CUCUMBER_MESSAGE,
+      }),
+    );
+  });
 
   const integrityOf = (md: string): string => md.slice(md.indexOf("## Run integrity"));
 
@@ -169,37 +172,40 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     status: "passed",
   };
 
-  const balanced: Ledger = reconcile([balancedScenario], [balancedObs]);
-
-  const outOfBalance: Ledger = reconcile(
-    [balancedScenario],
-    [balancedObs, { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" }]
-  );
-
-  const broken: Ledger = reconcile(
-    [balancedScenario],
-    [
-      balancedObs,
-      {
-        qualityCheck: "unit",
-        scnId: null,
-        status: "passed",
-        broken: true,
-        locator: "tests/harness/x.test.ts",
-        message: "Error: boom",
-      },
-    ]
-  );
-
-  const balancedWithPending: Ledger = reconcile(
-    [
-      {
-        scnId: "SCN-VRD-001",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-      },
-    ],
-    [balancedObs]
-  );
+  let balanced: Ledger;
+  let outOfBalance: Ledger;
+  let broken: Ledger;
+  let balancedWithPending: Ledger;
+  beforeEach(() => {
+    balanced = reconcile([balancedScenario], [balancedObs]);
+    outOfBalance = reconcile(
+      [balancedScenario],
+      [balancedObs, { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" }]
+    );
+    broken = reconcile(
+      [balancedScenario],
+      [
+        balancedObs,
+        {
+          qualityCheck: "unit",
+          scnId: null,
+          status: "passed",
+          broken: true,
+          locator: "tests/harness/x.test.ts",
+          message: "Error: boom",
+        },
+      ]
+    );
+    balancedWithPending = reconcile(
+      [
+        {
+          scnId: "SCN-VRD-001",
+          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+        },
+      ],
+      [balancedObs]
+    );
+  });
 
   it("opens the summary with the verdict, before any cut of the reconciliation", () => {
     const opening = summaryOpening(renderMarkdown(__er(balanced), ctx));
@@ -250,14 +256,17 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 });
 
 describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconciliation(s)", never "scenario(s)"', () => {
-  const namedPhantomSuspense: Ledger = reconcile(
-    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [
-      { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
-      { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
-    ],
-  );
+  let namedPhantomSuspense: Ledger;
+  beforeEach(() => {
+    namedPhantomSuspense = reconcile(
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
+        { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
+      ],
+    );
+  });
 
   it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
     const md = renderMarkdown(__er(namedPhantomSuspense), ctx);

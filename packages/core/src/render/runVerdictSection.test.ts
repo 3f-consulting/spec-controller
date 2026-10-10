@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
@@ -17,7 +17,10 @@ const ctx: RunContext = {
 };
 
 describe("[SCN-CLI-019] the run verdict on a ledger with no accounts reads NOTHING TO RECONCILE, never BALANCED", () => {
-  const empty: Ledger = reconcile([], []);
+  let empty: Ledger;
+  beforeEach(() => {
+    empty = reconcile([], []);
+  });
 
   it("names the run's own state and the exit code it maps to", () => {
     const md = renderMarkdown(er(empty), ctx);

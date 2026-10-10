@@ -28,17 +28,17 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const HELP_REQUEST: Record<string, string[]> = {
-  alone: ["--help"],
-  "by its short name, alone": ["-h"],
-  "after a part": ["ONE", "--help"],
-  "after a part not in canon's form": ["fit", "--help"],
-  "beside a flag the command does not take": ["--bogus", "--help"],
-};
+const HELP_REQUEST: readonly (readonly [request: string, argv: string[]])[] = [
+  ["alone", ["--help"]],
+  ["by its short name, alone", ["-h"]],
+  ["after a part", ["ONE", "--help"]],
+  ["after a part not in canon's form", ["fit", "--help"]],
+  ["beside a flag the command does not take", ["--bogus", "--help"]],
+];
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new, and exits 0 whatever else is given", () => {
-  it.each(Object.keys(HELP_REQUEST))("answers with allocate's help and gives no code, asked %s", (request) => {
-    const answered = allocateIn(headedOneCarryingThree(), HELP_REQUEST[request] as string[]);
+  it.each(HELP_REQUEST)("answers with allocate's help and gives no code, asked %s", (_request, argv) => {
+    const answered = allocateIn(headedOneCarryingThree(), argv);
 
     expect(answered.stdout).toBe(renderCommandHelp(allocateCommand) + "\n");
     expect(answered.stdout).toContain("<FFF>");

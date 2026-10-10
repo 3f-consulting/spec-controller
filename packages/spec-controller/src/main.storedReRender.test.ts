@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
 import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cli-registry.js";
 import { answerUnknownCommand } from "./host.js";
@@ -15,6 +15,32 @@ interface Answered {
   exitCode: typeof process.exitCode;
   storeMade: boolean;
 }
+
+let savedDir: string;
+let savedReport: string;
+
+beforeEach(() => {
+  const outOfBalance = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
+  savedDir = mkdtempSync(join(tmpdir(), "main-stored-re-render-saved-"));
+  savedReport = join(savedDir, "saved.json");
+  const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  try {
+    runBalance([
+      "--features", join(outOfBalance, "features"),
+      "--vitest", join(outOfBalance, "vitest.json"),
+      "--ci", outOfBalance,
+      "--format", `json:${savedReport}`,
+    ]);
+  } finally {
+    quiet.mockRestore();
+    process.exitCode = undefined;
+  }
+  if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
+});
+
+afterEach(() => {
+  rmSync(savedDir, { recursive: true, force: true });
+});
 
 let stdout: string[];
 let stderr: string[];
@@ -54,39 +80,14 @@ function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answere
   }
 }
 
-const OUT_OF_BALANCE = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
-
-let savedDir: string;
-let savedReport: string;
-
-beforeAll(() => {
-  savedDir = mkdtempSync(join(tmpdir(), "main-stored-re-render-saved-"));
-  savedReport = join(savedDir, "saved.json");
-  const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-  try {
-    runBalance([
-      "--features", join(OUT_OF_BALANCE, "features"),
-      "--vitest", join(OUT_OF_BALANCE, "vitest.json"),
-      "--ci", OUT_OF_BALANCE,
-      "--format", `json:${savedReport}`,
-    ]);
-  } finally {
-    quiet.mockRestore();
-    process.exitCode = undefined;
-  }
-  if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
-});
-
-afterAll(() => {
-  rmSync(savedDir, { recursive: true, force: true });
-});
-
 function refusalNaming(modifiers: string, closing: string): string {
   return `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ReRenderNotStored](modifiers)}\n${closing}\n`;
 }
 
 const NAMING_THE_STORE = (): string => refusalNaming("--store", APP_MESSAGES[AppMessage.ReRenderWithoutIt]());
 const NAMING_BOTH = (): string => refusalNaming("--store, --run-id", APP_MESSAGES[AppMessage.ReRenderWithoutThem]());
+
+const missingFromSavedDir = (): string[] => ["--render-from-json", join(savedDir, "missing.json")];
 
 const EXAMPLES: { saved: string; beside: string; reRender: () => string[] }[] = [
   { saved: "of an out-of-balance run", beside: "with nothing else", reRender: () => ["--render-from-json", savedReport] },
@@ -99,7 +100,7 @@ const EXAMPLES: { saved: string; beside: string; reRender: () => string[] }[] = 
   {
     saved: "at a path that is missing",
     beside: "with nothing else",
-    reRender: () => ["--render-from-json", join(savedDir, "missing.json")],
+    reRender: missingFromSavedDir,
   },
 ];
 

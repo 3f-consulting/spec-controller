@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { renderJson } from "./json.js";
 import type { Ledger } from "../model.js";
@@ -24,13 +24,16 @@ function headline(md: string): string {
 }
 
 describe("[SCN-CLI-011] an only-Pending-Items run under --strict is headlined as the exit 3 it gives", () => {
-  const onlyPending: Ledger = reconcile(
-    [
-      { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
-      { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
-    ],
-    [],
-  );
+  let onlyPending: Ledger;
+  beforeEach(() => {
+    onlyPending = reconcile(
+      [
+        { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+        { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+      ],
+      [],
+    );
+  });
 
   it("names exit 3 under a strict run, and never reads as balanced", () => {
     const line = headline(renderMarkdown(er(onlyPending), ctxOf(true)));

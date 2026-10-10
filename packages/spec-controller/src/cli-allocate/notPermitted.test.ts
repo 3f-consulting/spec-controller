@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, made, freshDirectory, taken, withhold } from "./repository.testkit.js";
@@ -54,9 +54,13 @@ const EXAMPLES: readonly Withheld[] = [
   { copy: "copy without git", path: "docs", subject: "a directory in the tree" },
 ];
 
-const asRoot = process.getuid?.() === 0;
+const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
-describe.skipIf(asRoot)("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
+describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
+  beforeEach(({ skip }) => {
+    skip(runsAsRoot());
+  });
+
   it.each(EXAMPLES)("refuses ONE in a $copy whose $path it may not read, naming it", ({ copy, path, subject }) => {
     const root = copy === "repository" ? repository() : copyWithoutGit();
     withhold(join(root, path), 0o000);

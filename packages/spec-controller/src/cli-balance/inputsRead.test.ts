@@ -6,10 +6,14 @@ import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { inputsReadBy, type InputReader } from "./inputsRead.js";
 
+function workflowFilesAt(path: string): string[] {
+  return path.endsWith(".yml") ? [path] : [`${path}/ci.yml`, `${path}/nightly.yaml`];
+}
+
 const reader: InputReader = {
   exists: () => true,
   featureFiles: (dir) => [`${dir}/a.feature`],
-  workflowFiles: (path) => (path.endsWith(".yml") ? [path] : [`${path}/ci.yml`, `${path}/nightly.yaml`]),
+  workflowFiles: workflowFilesAt,
 };
 
 describe("[SCN-FMT-013] the files a run reads are named by how the run came to read them", () => {

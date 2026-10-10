@@ -10,10 +10,8 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const temporaryDirectory = temporaryDirectoryIn(made);
-
 function corpus(files: Record<string, string>): string {
-  const dir = join(temporaryDirectory("scn-stg-017-"), "features");
+  const dir = join(temporaryDirectoryIn(made, "scn-stg-017-"), "features");
   mkdirSync(dir);
   for (const [name, source] of Object.entries(files)) writeFileSync(join(dir, name), source);
   return dir;

@@ -19,14 +19,14 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     enforcedOverRealSource: true,
     status,
   });
-  const passing = staticCredit("lint:a", "passed");
-  const failed = staticCredit("lint:b", "failed");
+  const passing = () => staticCredit("lint:a", "passed");
+  const failed = () => staticCredit("lint:b", "failed");
 
   it("reads failing, carrying the failed credit, with the row and the run out of balance", () => {
-    const ledger = reconcile(rowNamingCheck, [passing, failed]);
+    const ledger = reconcile(rowNamingCheck, [passing(), failed()]);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
     expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheck, i.outcome, i.evidenceObservation])).toEqual([
-      ["fitness", "failing", failed],
+      ["fitness", "failing", failed()],
     ]);
     expect(row.verdict).toBe("out-of-balance");
     expect(isBalanced(ledger)).toBe(false);
@@ -36,12 +36,12 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     ["passing first", [passing, failed]],
     ["failed first", [failed, passing]],
   ])("reads failing with the two handed to the rule %s", (_order, credits) => {
-    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "fitness" }, credits);
-    expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failed]);
+    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "fitness" }, credits.map((c) => c()));
+    expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failed()]);
   });
 
   it("still reads satisfied when every credit for the check passed", () => {
-    const ledger = reconcile(rowNamingCheck, [passing, staticCredit("lint:b", "passed")]);
+    const ledger = reconcile(rowNamingCheck, [passing(), staticCredit("lint:b", "passed")]);
     expect(isBalanced(ledger)).toBe(true);
   });
 });
@@ -65,16 +65,19 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
   };
 
   it.each([
-    ["the wired run's file sorts first", runOf(true, "a.feature"), runOf(false, "z.feature")],
-    ["the severed run's file sorts first", runOf(true, "z.feature"), runOf(false, "a.feature")],
-  ])("reads watermelon, carrying the severed credit, with the row and the run out of balance, when %s", (_order, wired, severed) => {
+    ["the wired run's file sorts first", "a.feature", "z.feature"],
+    ["the severed run's file sorts first", "z.feature", "a.feature"],
+  ])("reads watermelon, carrying the severed credit, with the row and the run out of balance, when %s", (_order, wiredLocator, severedLocator) => {
+    const wired = runOf(true, wiredLocator);
+    const severed = runOf(false, severedLocator);
     expect(itemOf([wired, severed])).toEqual({ outcome: "watermelon", carried: severed, verdict: "out-of-balance", balanced: false });
   });
 
   it.each([
-    ["wired first", [runOf(true, "m.feature"), runOf(false, "m.feature")]],
-    ["severed first", [runOf(false, "m.feature"), runOf(true, "m.feature")]],
-  ])("reads watermelon, carrying the severed credit, with the two handed to the rule %s", (_order, credits) => {
+    ["wired first", [true, false]],
+    ["severed first", [false, true]],
+  ])("reads watermelon, carrying the severed credit, with the two handed to the rule %s", (_order, wiredness) => {
+    const credits = wiredness.map((enforcedOverRealSource) => runOf(enforcedOverRealSource, "m.feature"));
     const item = reconcileEvidenceObligation(SCN, obligation, credits);
     expect([item.outcome, item.evidenceObservation]).toEqual(["watermelon", runOf(false, "m.feature")]);
   });
@@ -111,9 +114,11 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
   });
 
   it.each([
-    ["the failed run's file sorts first", failedRun("a.feature"), severedRun("z.feature")],
-    ["the severed run's file sorts first", failedRun("z.feature"), severedRun("a.feature")],
-  ])("reads failing, carrying the failed credit, with the row and the run out of balance, when %s", (_order, failed, severed) => {
+    ["the failed run's file sorts first", "a.feature", "z.feature"],
+    ["the severed run's file sorts first", "z.feature", "a.feature"],
+  ])("reads failing, carrying the failed credit, with the row and the run out of balance, when %s", (_order, failedLocator, severedLocator) => {
+    const failed = failedRun(failedLocator);
+    const severed = severedRun(severedLocator);
     const ledger = reconcile(rowNamingCheck, [severed, failed]);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
     const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
@@ -126,10 +131,10 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
   });
 
   it.each([
-    ["failed first", [failedRun("m.feature"), severedRun("m.feature")]],
-    ["severed first", [severedRun("m.feature"), failedRun("m.feature")]],
-  ])("reads failing, carrying the failed credit, with the two handed to the rule %s", (_order, credits) => {
-    const item = reconcileEvidenceObligation(SCN, obligation, credits);
+    ["failed first", [failedRun, severedRun]],
+    ["severed first", [severedRun, failedRun]],
+  ])("reads failing, carrying the failed credit, with the two handed to the rule %s", (_order, runs) => {
+    const item = reconcileEvidenceObligation(SCN, obligation, runs.map((run) => run("m.feature")));
     expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failedRun("m.feature")]);
   });
 });

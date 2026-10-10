@@ -16,30 +16,40 @@ const meta: RunManifestMeta = {
   date: "2026-09-26T00:00:00.000Z",
 };
 
+function regularFile(dir: string): string {
+  writeFileSync(join(dir, "regular"), "");
+  return join(dir, "regular");
+}
+
+function pathUnderRegularFile(dir: string): string {
+  writeFileSync(join(dir, "regular"), "");
+  return join(dir, "regular", "store");
+}
+
+function readOnlyDirectory(dir: string): string {
+  mkdirSync(join(dir, "read-only"));
+  chmodSync(join(dir, "read-only"), 0o555);
+  return join(dir, "read-only");
+}
+
+function pathUnderReadOnlyDirectory(dir: string): string {
+  mkdirSync(join(dir, "read-only"));
+  chmodSync(join(dir, "read-only"), 0o555);
+  return join(dir, "read-only", "store");
+}
+
+function rootWhoseRunDirectoryIsAFile(dir: string): string {
+  mkdirSync(join(dir, "store", TARGET), { recursive: true });
+  writeFileSync(join(dir, "store", TARGET, RUN_ID), "");
+  return join(dir, "store");
+}
+
 const UNCREATABLE: ReadonlyArray<readonly [string, (dir: string) => string, string]> = [
-  ["a regular file", (dir) => {
-    writeFileSync(join(dir, "regular"), "");
-    return join(dir, "regular");
-  }, "ENOTDIR"],
-  ["a path under a regular file", (dir) => {
-    writeFileSync(join(dir, "regular"), "");
-    return join(dir, "regular", "store");
-  }, "ENOTDIR"],
-  ["a directory it may not write", (dir) => {
-    mkdirSync(join(dir, "read-only"));
-    chmodSync(join(dir, "read-only"), 0o555);
-    return join(dir, "read-only");
-  }, "EACCES"],
-  ["a path under a directory it may not write", (dir) => {
-    mkdirSync(join(dir, "read-only"));
-    chmodSync(join(dir, "read-only"), 0o555);
-    return join(dir, "read-only", "store");
-  }, "EACCES"],
-  ["a root whose run directory is a file", (dir) => {
-    mkdirSync(join(dir, "store", TARGET), { recursive: true });
-    writeFileSync(join(dir, "store", TARGET, RUN_ID), "");
-    return join(dir, "store");
-  }, "EEXIST"],
+  ["a regular file", regularFile, "ENOTDIR"],
+  ["a path under a regular file", pathUnderRegularFile, "ENOTDIR"],
+  ["a directory it may not write", readOnlyDirectory, "EACCES"],
+  ["a path under a directory it may not write", pathUnderReadOnlyDirectory, "EACCES"],
+  ["a root whose run directory is a file", rootWhoseRunDirectoryIsAFile, "EEXIST"],
 ];
 
 let scratch: string;

@@ -20,28 +20,38 @@ interface WrongKind {
   reason: RegExp;
 }
 
+function replaceWithARegularFile(at: string): void {
+  rmSync(at, { recursive: true, force: true });
+  writeFileSync(at, "not a directory\n");
+}
+
+function makeADirectory(at: string): void {
+  mkdirSync(at);
+}
+
+function linkToAFileNotThere(at: string): void {
+  symlinkSync(join(dirname(at), "nowhere.feature"), at);
+}
+
 const WRONG_KINDS: readonly WrongKind[] = [
   {
     path: "features",
     kind: "a regular file",
-    make: (at) => {
-      rmSync(at, { recursive: true, force: true });
-      writeFileSync(at, "not a directory\n");
-    },
+    make: replaceWithARegularFile,
     subject: "the feature corpus",
     reason: /^ENOTDIR: /,
   },
   {
     path: "features/two.feature",
     kind: "a directory",
-    make: (at) => mkdirSync(at),
+    make: makeADirectory,
     subject: "a feature file",
     reason: /^EISDIR: /,
   },
   {
     path: "features/two.feature",
     kind: "a link to a file that is not there",
-    make: (at) => symlinkSync(join(dirname(at), "nowhere.feature"), at),
+    make: linkToAFileNotThere,
     subject: "a feature file",
     reason: /^ENOENT: /,
   },

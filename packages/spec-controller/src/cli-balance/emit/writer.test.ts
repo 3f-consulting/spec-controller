@@ -15,31 +15,43 @@ const ctx: RunContext = {
   sourceSha: null,
 };
 
-const payloads: OutputPayloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
+let payloads: OutputPayloads;
+
+function aReadOnlyFile(dir: string): string {
+  const path = join(dir, "read-only.json");
+  writeFileSync(path, "earlier\n");
+  chmodSync(path, 0o444);
+  return path;
+}
+
+function aPathUnderARegularFile(dir: string): string {
+  writeFileSync(join(dir, "regular"), "");
+  return join(dir, "regular", "report.json");
+}
+
+function aFileInADirectoryItMayNotWrite(dir: string): string {
+  const readOnly = join(dir, "read-only");
+  mkdirSync(readOnly);
+  chmodSync(readOnly, 0o555);
+  return join(readOnly, "report.json");
+}
+
+function anExistingDirectory(dir: string): string {
+  const path = join(dir, "a-directory");
+  mkdirSync(path);
+  return path;
+}
+
+function aFileWhoseParentDoesNotExist(dir: string): string {
+  return join(dir, "missing", "report.json");
+}
 
 const UNWRITABLE: ReadonlyArray<readonly [string, (dir: string) => string, string]> = [
-  ["a read-only file", (dir) => {
-    const path = join(dir, "read-only.json");
-    writeFileSync(path, "earlier\n");
-    chmodSync(path, 0o444);
-    return path;
-  }, "EACCES"],
-  ["a path under a regular file", (dir) => {
-    writeFileSync(join(dir, "regular"), "");
-    return join(dir, "regular", "report.json");
-  }, "ENOTDIR"],
-  ["a file in a directory it may not write", (dir) => {
-    const readOnly = join(dir, "read-only");
-    mkdirSync(readOnly);
-    chmodSync(readOnly, 0o555);
-    return join(readOnly, "report.json");
-  }, "EACCES"],
-  ["an existing directory", (dir) => {
-    const path = join(dir, "a-directory");
-    mkdirSync(path);
-    return path;
-  }, "EISDIR"],
-  ["a file whose parent directory does not exist", (dir) => join(dir, "missing", "report.json"), "ENOENT"],
+  ["a read-only file", aReadOnlyFile, "EACCES"],
+  ["a path under a regular file", aPathUnderARegularFile, "ENOTDIR"],
+  ["a file in a directory it may not write", aFileInADirectoryItMayNotWrite, "EACCES"],
+  ["an existing directory", anExistingDirectory, "EISDIR"],
+  ["a file whose parent directory does not exist", aFileWhoseParentDoesNotExist, "ENOENT"],
 ];
 
 const toFile = (path: string, fmt: "md" | "json" = "json"): OutputPlan => ({
@@ -60,6 +72,7 @@ function volumeIsCaseSensitive(): boolean {
 }
 
 beforeEach(() => {
+  payloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
   scratch = mkdtempSync(join(tmpdir(), "spec-controller-writer-"));
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {

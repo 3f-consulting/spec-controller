@@ -4,16 +4,16 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
 describe("[SCN-RMD-008] the missing split carries every quality-check in canonical order", () => {
-  const feature = [
+  const featureLines = [
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
     "    @unit @integration @e2e @performance @fitness @SCN-RMD-008",
     "    Scenario: a fixture scenario",
-  ].join("\n");
+  ];
 
   it("names fitness, unit, integration, e2e and performance, in that order", () => {
-    const tally = ledgerTally(reconcile(parseScenarios(feature), []));
+    const tally = ledgerTally(reconcile(parseScenarios(featureLines.join("\n")), []));
 
     expect(tally.evidenceObligations.total).toBe(5);
     expect(tally.evidenceObligations.byOutcome.missing).toBe(5);

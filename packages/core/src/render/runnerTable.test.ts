@@ -26,7 +26,7 @@ const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
 const tableHeader = CORE_MESSAGES[CoreMessage.BehaviouralRunnersTableHeader];
 const separator = "| --- | --- | --- |";
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const accountLines = (lines: readonly string[]): string[] => lines.filter((line) => line.startsWith("- "));
 

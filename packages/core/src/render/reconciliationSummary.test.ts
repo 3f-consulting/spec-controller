@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -114,12 +114,15 @@ function expectedTable(
 }
 
 describe("[SCN-PND-011] the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance", () => {
-  const settledTable = expectedTable(
-    { total: 4, balanced: 1, outOfBalance: 3 },
-    { total: 5, satisfied: 2 },
-    { missing: 2, failing: 1 },
-    "1 unit + 1 integration"
-  );
+  let settledTable: string[];
+  beforeEach(() => {
+    settledTable = expectedTable(
+      { total: 4, balanced: 1, outOfBalance: 3 },
+      { total: 5, satisfied: 2 },
+      { missing: 2, failing: 1 },
+      "1 unit + 1 integration"
+    );
+  });
 
   it("with no Pending Item: the table, then one blank line, and no tally line", () => {
     expect(sectionLines(render(SETTLED))).toEqual([...settledTable, ""]);

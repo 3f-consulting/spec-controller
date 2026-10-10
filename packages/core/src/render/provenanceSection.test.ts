@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
@@ -7,10 +7,13 @@ import type { RunContext } from "../provenance/provenance.js";
 
 const er = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 
-const balance: Ledger = reconcile(
-  [{ scnId: "SCN-RPT-028", evidenceObligations: [{ qualityCheck: "unit" }] }],
-  [{ qualityCheck: "unit", scnId: "SCN-RPT-028", status: "passed" }],
-);
+let balance: Ledger;
+beforeEach(() => {
+  balance = reconcile(
+    [{ scnId: "SCN-RPT-028", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ qualityCheck: "unit", scnId: "SCN-RPT-028", status: "passed" }],
+  );
+});
 
 const handed = (inputs: RunContext["inputs"]): RunContext => ({
   target: "partly-handed-target",

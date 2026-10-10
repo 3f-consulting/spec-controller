@@ -1,27 +1,35 @@
-import { describe, it, expect } from "vitest";
-import { cliRegistry } from "./cli-registry.js";
+import { beforeEach, describe, it, expect } from "vitest";
+import { cliRegistry, type FlagSpec } from "./cli-registry.js";
 import { parseHostInvocation } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
-const valueModifiers = cliRegistry.global.filter((flag) => flag.arg !== undefined);
+let valueModifiers: FlagSpec[];
+
+beforeEach(() => {
+  valueModifiers = cliRegistry.global.filter((flag) => flag.arg !== undefined);
+});
 
 const otherThan = (name: string): string =>
   valueModifiers.find((flag) => flag.name !== name)?.name ?? "";
 
-const MISSING: Record<string, (modifier: string) => string[]> = {
-  alone: (modifier) => [modifier],
-  "followed by the other modifier": (modifier) => [modifier, otherThan(modifier), "r1", "balance"],
-  "at the end, after the other modifier": (modifier) => [otherThan(modifier), "v", modifier],
-  "with an empty value": (modifier) => [modifier, "", "balance"],
-};
+const followedByTheOther = (modifier: string): string[] => [modifier, otherThan(modifier), "r1", "balance"];
+const atTheEndAfterTheOther = (modifier: string): string[] => [otherThan(modifier), "v", modifier];
+
+const MISSING: [string, (modifier: string) => string[]][] = [
+  ["alone", (modifier) => [modifier]],
+  ["followed by the other modifier", followedByTheOther],
+  ["at the end, after the other modifier", atTheEndAfterTheOther],
+  ["with an empty value", (modifier) => [modifier, "", "balance"]],
+];
 
 describe("[SCN-CLI-059] the host refuses a modifier given no value as a usage fault, and stores nothing", () => {
   it("reads its value modifiers from the registry, and finds --store and --run-id", () => {
     expect(valueModifiers.map((flag) => flag.name)).toEqual(["--store", "--run-id"]);
   });
 
-  for (const flag of valueModifiers) {
-    for (const [shape, argvOf] of Object.entries(MISSING)) {
+  for (const flag of cliRegistry.global) {
+    if (flag.arg === undefined) continue;
+    for (const [shape, argvOf] of MISSING) {
       it(`refuses ${flag.name} ${shape} as a value missing at the host, before any command is taken`, () => {
         const inv = parseHostInvocation(argvOf(flag.name));
         expect(inv).toEqual({

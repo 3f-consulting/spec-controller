@@ -1,35 +1,41 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
 import { runningStaticChecks } from "./runningStaticChecks.js";
 import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
 import { RELEASE_YML } from "./releaseWorkflow.testkit.js";
 
-const CI_YML = [
-  "jobs:",
-  "  ci:",
-  "    steps:",
-  "      - uses: actions/checkout@v4",
-  "      - name: Install",
-  "        run: pnpm install --frozen-lockfile",
-  "      - name: Unit tests",
-  "        run: pnpm test",
-  "      - name: Rule check",
-  "        run: pnpm lint:rules",
-].join("\n");
+let CI_YML: string;
+beforeEach(() => {
+  CI_YML = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - uses: actions/checkout@v4",
+    "      - name: Install",
+    "        run: pnpm install --frozen-lockfile",
+    "      - name: Unit tests",
+    "        run: pnpm test",
+    "      - name: Rule check",
+    "        run: pnpm lint:rules",
+  ].join("\n");
+});
 
-const NIGHTLY_YML = [
-  "jobs:",
-  "  sweep:",
-  "    steps:",
-  "      - name: Sweep check",
-  "        run: pnpm lint:sweep",
-  "      - name: Depth check",
-  "        run: pnpm lint:depth",
-  "  audit:",
-  "    steps:",
-  "      - name: Audit",
-  "        run: pnpm audit --audit-level=high",
-].join("\n");
+let NIGHTLY_YML: string;
+beforeEach(() => {
+  NIGHTLY_YML = [
+    "jobs:",
+    "  sweep:",
+    "    steps:",
+    "      - name: Sweep check",
+    "        run: pnpm lint:sweep",
+    "      - name: Depth check",
+    "        run: pnpm lint:depth",
+    "  audit:",
+    "    steps:",
+    "      - name: Audit",
+    "        run: pnpm audit --audit-level=high",
+  ].join("\n");
+});
 
 const SCRIPTS = {
   scripts: {
@@ -98,7 +104,10 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
 });
 
 describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones posted", () => {
-  const sources = [CI_YML, NIGHTLY_YML];
+  let sources: string[];
+  beforeEach(() => {
+    sources = [CI_YML, NIGHTLY_YML];
+  });
   const names = ["ci.yml", "nightly.yml"];
 
   const totalCandidates = (isExcluded: (step: CiWorkflowStep) => boolean): number =>
@@ -123,7 +132,10 @@ describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones
 });
 
 describe("[SCN-USG-020] discoveryScope — one settled order", () => {
-  const inOrder = discoveryScope([CI_YML, NIGHTLY_YML], ["ci.yml", "nightly.yml"], SCRIPTS, NO_RUNNERS, excludingNothing);
+  let inOrder: ReturnType<typeof discoveryScope>;
+  beforeEach(() => {
+    inOrder = discoveryScope([CI_YML, NIGHTLY_YML], ["ci.yml", "nightly.yml"], SCRIPTS, NO_RUNNERS, excludingNothing);
+  });
 
   it("sorts the jobs of one workflow, whatever order the workflow writes them in", () => {
     expect(inOrder.map((entry) => `${entry.source}:${entry.job}`)).toEqual([

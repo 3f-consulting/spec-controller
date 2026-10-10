@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -51,11 +51,11 @@ function answerIn(cwd: string, argv: string[]): Answered {
 describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to three digits", () => {
   let repo = "";
 
-  beforeAll(() => {
+  beforeEach(() => {
     repo = repositoryHeaded("ONE", "SCN-ONE-7");
   });
 
-  afterAll(() => {
+  afterEach(() => {
     rmSync(repo, { recursive: true, force: true });
   });
 

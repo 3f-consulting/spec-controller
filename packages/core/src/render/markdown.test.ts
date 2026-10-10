@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
@@ -7,10 +7,13 @@ import { isBalanced } from "../domain/ledger.js";
 import { adopterReportCtx as ctx } from "./runContext.testkit.js";
 import { __er } from "../evidenceReconciliation.testkit.js";
 
-const balance: Ledger = reconcile(
-  [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-  [{ qualityCheck: "unit", scnId: "SCN-RPT-001", status: "passed" }],
-);
+let balance: Ledger;
+beforeEach(() => {
+  balance = reconcile(
+    [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ qualityCheck: "unit", scnId: "SCN-RPT-001", status: "passed" }],
+  );
+});
 
 describe("[SCN-RPT-001] the markdown report opens with a Run provenance header", () => {
   it("renders all four provenance facts: target repo, inputs used, UTC timestamp, source SHA", () => {
@@ -55,18 +58,21 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
 });
 
 describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by reconciliation outcome", () => {
-  const spanning: Ledger = reconcile(
-    [
-      { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-      { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-      { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
-    ]
-  );
+  let spanning: Ledger;
+  beforeEach(() => {
+    spanning = reconcile(
+      [
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
+        { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
+        { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
+      ]
+    );
+  });
 
   it("renders a '### Evidence reconciliation' table with subjects as rows and balanced / out-of-balance as columns", () => {
     const md = renderMarkdown(__er(spanning), ctx);
@@ -169,20 +175,23 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(iHeadline).toBeLessThan(iLedger);
   });
 
-  const threeNamedPlusSuspense: Ledger = reconcile(
-    [
-      { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-B", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
-      { qualityCheck: "unit", scnId: null, status: "passed" },
-      { qualityCheck: "integration", scnId: null, status: "passed" },
-    ]
-  );
+  let threeNamedPlusSuspense: Ledger;
+  beforeEach(() => {
+    threeNamedPlusSuspense = reconcile(
+      [
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheck: "unit", scnId: "SCN-B", status: "passed" },
+        { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
+        { qualityCheck: "unit", scnId: null, status: "passed" },
+        { qualityCheck: "integration", scnId: null, status: "passed" },
+      ]
+    );
+  });
 
   it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(__er(threeNamedPlusSuspense), ctx);
@@ -209,28 +218,31 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 });
 
 describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligations as their own section", () => {
-  const spanning: Ledger = reconcile(
-    [
-      {
-        scnId: "SCN-A",
-        evidenceObligations: [
-          { qualityCheck: "unit" },
-          { qualityCheck: "fitness" },
-          { qualityCheck: "integration" },
-        ],
-      },
-      {
-        scnId: "SCN-B",
-        evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "e2e" }],
-      },
-    ],
-    [
-      { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "fitness", staticCheck: "lint:guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
-    ]
-  );
+  let spanning: Ledger;
+  beforeEach(() => {
+    spanning = reconcile(
+      [
+        {
+          scnId: "SCN-A",
+          evidenceObligations: [
+            { qualityCheck: "unit" },
+            { qualityCheck: "fitness" },
+            { qualityCheck: "integration" },
+          ],
+        },
+        {
+          scnId: "SCN-B",
+          evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "e2e" }],
+        },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
+        { qualityCheck: "fitness", staticCheck: "lint:guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
+      ]
+    );
+  });
 
   it("renders a '### Fitness evidence obligations' table with each fitness row's scenario and glyphed outcome — including the watermelon", () => {
     const md = renderMarkdown(__er(spanning), ctx);

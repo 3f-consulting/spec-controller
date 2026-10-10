@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,16 +21,13 @@ function repositoryHeaded(part: string, code: string): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to three digits", () => {
   let repo = "";
 
-  beforeAll(() => {
+  beforeEach(() => {
     repo = repositoryHeaded("ONE", "SCN-ONE-7");
   });
 

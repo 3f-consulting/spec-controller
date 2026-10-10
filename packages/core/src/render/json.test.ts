@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderJson } from "./json.js";
 import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -6,10 +6,13 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { adopterReportCtx as ctx } from "./runContext.testkit.js";
 import { __er } from "../evidenceReconciliation.testkit.js";
 
-const balancedLedger: Ledger = reconcile(
-  [{ scnId: "SCN-RPT-002", evidenceObligations: [{ qualityCheck: "unit" }] }],
-  [{ qualityCheck: "unit", scnId: "SCN-RPT-002", status: "passed" }],
-);
+let balancedLedger: Ledger;
+beforeEach(() => {
+  balancedLedger = reconcile(
+    [{ scnId: "SCN-RPT-002", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ qualityCheck: "unit", scnId: "SCN-RPT-002", status: "passed" }],
+  );
+});
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   it("carries a top-level provenance with target, source SHA, UTC timestamp, and the inputs used", () => {
@@ -95,7 +98,10 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
-  const rpt010Balance: Ledger = reconcile(rpt010Scenarios, rpt010Observations);
+  let rpt010Balance: Ledger;
+  beforeEach(() => {
+    rpt010Balance = reconcile(rpt010Scenarios, rpt010Observations);
+  });
 
   it("carries NO evidenceObservations section — the raw totals re-home onto summary.rawByRuntimeQualityCheck", () => {
     const parsed = JSON.parse(renderJson(__er(rpt010Balance, true, false), ctx));

@@ -1,9 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { tallyOfEveryCreditKind } from "./runtimeObservationTally.testkit.js";
 
 describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scenario-kind and quality-check", () => {
-  const tally = tallyOfEveryCreditKind();
+  let tally: ReturnType<typeof tallyOfEveryCreditKind>;
+  beforeEach(() => {
+    tally = tallyOfEveryCreditKind();
+  });
 
   it("counts credits on a scenario's account as onScenario (matched-attributed AND no-evidence-obligation)", () => {
     expect(tally.onScenario).toBe(3);

@@ -1,15 +1,21 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { cliRegistry } from "../cli-registry.js";
+import { balanceCommand, cliRegistry } from "../cli-registry.js";
 import { headlineExit } from "./balanceRun.testkit.js";
 import { liveSaver, runPinned } from "./savedRun.testkit.js";
 
-const scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
-afterAll(() => rmSync(scratch, { recursive: true, force: true }));
-const saveLive = liveSaver(scratch);
+let scratch: string;
+let saveLive: ReturnType<typeof liveSaver>;
+
+beforeEach(() => {
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
+  saveLive = liveSaver(scratch);
+});
+
+afterEach(() => rmSync(scratch, { recursive: true, force: true }));
 
 function fixtureArgv(fixture: string): string[] {
   const dir = `tests/fixtures/${fixture}`;
@@ -42,8 +48,6 @@ describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its
 });
 
 describe("[SCN-CLI-070] a re-render is strict when the saved run was strict or the re-render is given --strict", () => {
-  const PENDING_ONLY = fixtureArgv("pending-only");
-
   function unrecorded(path: string): string {
     const report = JSON.parse(readFileSync(path, "utf8")) as { runProvenance: Record<string, unknown> };
     delete report.runProvenance["strict"];
@@ -61,7 +65,7 @@ describe("[SCN-CLI-070] a re-render is strict when the saved run was strict or t
 
   for (const row of ROWS) {
     it(`saved ${row.saved}, re-rendered ${row.given.length > 0 ? "with --strict" : "bare"}: exits ${row.code} and its headline names it`, () => {
-      const saved = saveLive(`pending${row.liveFlags.join("")}`, [...PENDING_ONLY, ...row.liveFlags]);
+      const saved = saveLive(`pending${row.liveFlags.join("")}`, [...fixtureArgv("pending-only"), ...row.liveFlags]);
       const path = row.older ? unrecorded(saved.json) : saved.json;
       const regenerated = runPinned(["--render-from-json", path, ...row.given]);
       expect(regenerated.exitCode).toBe(row.code);
@@ -97,14 +101,15 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
   }
 
   const READ_BY_A_RE_RENDER = new Set(["--render-from-json", "--strict", "--exit-zero", "--help"]);
-  const balance = cliRegistry.commands.find((command) => command.name === "balance");
-  const refused = (balance?.flags ?? []).filter((flag) => !READ_BY_A_RE_RENDER.has(flag.name));
 
   it("the registry leaves at least the nine flags the acceptance names", () => {
+    const balance = cliRegistry.commands.find((command) => command.name === "balance");
+    const refused = (balance?.flags ?? []).filter((flag) => !READ_BY_A_RE_RENDER.has(flag.name));
     expect(refused.length).toBeGreaterThanOrEqual(9);
   });
 
-  for (const flag of refused) {
+  for (const flag of balanceCommand.flags) {
+    if (READ_BY_A_RE_RENDER.has(flag.name)) continue;
     it(`${flag.name}: exits 2, names the flag on stderr, and prints nothing`, () => {
       const saved = saveLive("refusal-source", fixtureArgv("evidence-observation"));
       const value = flag.name === "--format" ? `json:${join(scratch, "refused-out.json")}` : "/nonexistent";

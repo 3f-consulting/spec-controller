@@ -10,7 +10,7 @@ function phantomCredit(scnId: string): EvidenceObservation {
   return { qualityCheck: "unit", scnId, status: "passed", locator: `src/${scnId}.test.ts` };
 }
 
-const tallyBlock = tallyBlockOf(scenarios);
+const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);
 
 describe("[SCN-LDG-006] a credit citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance", () => {
   it("states only the total when no credit cites an unknown scenario", () => {

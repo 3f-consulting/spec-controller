@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
 import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
@@ -10,7 +10,10 @@ function file(slug: string, code: string | null, ids: readonly string[]): Corpus
 }
 
 describe("[SCN-STG-011] a scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file", () => {
-  const one = file("one", "ONE", ["SCN-ONE-001"]);
+  let one: CorpusFile;
+  beforeEach(() => {
+    one = file("one", "ONE", ["SCN-ONE-001"]);
+  });
 
   it("lists the foreign id, naming the file, the id and the code the file carries", () => {
     const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);

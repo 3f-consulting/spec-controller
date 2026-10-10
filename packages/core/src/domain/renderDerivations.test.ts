@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import { brokenItemsOf, fitnessReconciliationsOf, fitnessTally, hasBrokenEvidence } from "./ledger.js";
@@ -31,19 +31,25 @@ const evidenceObservations: EvidenceObservation[] = [
   },
 ];
 
-const ledger: Ledger = reconcile(scenarios, evidenceObservations);
+let ledger: Ledger;
+beforeEach(() => {
+  ledger = reconcile(scenarios, evidenceObservations);
+});
 const rowOf = (scnId: string) =>
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId)!;
 
 describe("[SCN-LDG-001] isScenario names only the named thing", () => {
-  const mixed = reconcile(
-    [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [
-      { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
-      { qualityCheck: "unit", scnId: null, status: "passed" },
-    ]
-  );
+  let mixed: Ledger;
+  beforeEach(() => {
+    mixed = reconcile(
+      [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
+        { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
+        { qualityCheck: "unit", scnId: null, status: "passed" },
+      ]
+    );
+  });
   const kindOf = (k: string) => mixed.scenarioReconciliations.find((r) => r.kind === k)!;
 
   it.each([

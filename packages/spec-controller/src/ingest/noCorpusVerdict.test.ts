@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 
-import { CORPUS_DIR, EMPTY_CORPUS, targetMaker, type Shape } from "./corpusFixtures.testkit.js";
+import { CORPUS_DIR, EMPTY_CORPUS, targetIn, type Shape } from "./corpusFixtures.testkit.js";
 import { runReconcile } from "./ingestQualityChecks.js";
 
 const made: string[] = [];
@@ -12,23 +12,23 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const targetFor = targetMaker(made);
-
 const NO_CORPUS_DIRECTORY: Shape = { shape: "no corpus directory", build: () => {} };
+
+function buildCorpusDeclaringNothing(root: string): void {
+  mkdirSync(join(root, CORPUS_DIR));
+  writeFileSync(
+    join(root, CORPUS_DIR, "target.feature"),
+    "Feature: a corpus that declares nothing\n\n  Prose only. No scenario is declared in this file.\n"
+  );
+}
 
 const CORPUS_DECLARING_NOTHING: Shape = {
   shape: "a corpus declaring no scenario",
-  build: (root) => {
-    mkdirSync(join(root, CORPUS_DIR));
-    writeFileSync(
-      join(root, CORPUS_DIR, "target.feature"),
-      "Feature: a corpus that declares nothing\n\n  Prose only. No scenario is declared in this file.\n"
-    );
-  },
+  build: buildCorpusDeclaringNothing,
 };
 
 function verdictFor(target: Shape): string {
-  const root = targetFor(target);
+  const root = targetIn(made, target);
   const balance = runReconcile({
     features: join(root, CORPUS_DIR),
     packageJson: join(root, "package.json"),
@@ -51,7 +51,7 @@ describe("[SCN-CLI-018] absent, empty and scenario-less corpora are one answer, 
   const absent = () => verdictFor(NO_CORPUS_DIRECTORY);
 
   it("has genuinely built the absent shape rather than an empty one", () => {
-    expect(existsSync(join(targetFor(NO_CORPUS_DIRECTORY), CORPUS_DIR))).toBe(false);
+    expect(existsSync(join(targetIn(made, NO_CORPUS_DIRECTORY), CORPUS_DIR))).toBe(false);
   });
 
   it("tells a target whose corpus is empty exactly what it tells one with no corpus directory", () => {

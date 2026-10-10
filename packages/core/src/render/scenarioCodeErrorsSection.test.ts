@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown, renderReportFromJson } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
@@ -28,7 +28,10 @@ function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): Evidenc
 }
 
 describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
-  const md = renderMarkdown(balancedWith([FOREIGN]), ctx);
+  let md: string;
+  beforeEach(() => {
+    md = renderMarkdown(balancedWith([FOREIGN]), ctx);
+  });
 
   it("lists the error by its handle and message, in a section of its own", () => {
     expect(md).toContain("## Scenario code errors");
@@ -98,30 +101,32 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
   const noCoded = CORE_MESSAGES[CoreMessage.CleanNoCodedScenario];
 
   const cases = [
-    { codes: ["ONE"], plain: 0, statement: ownCode(over(`1 ${F}`, `1 ${C}`)) },
-    { codes: ["ONE", "TWO"], plain: 0, statement: ownCode(over(`2 ${F}s`, `2 ${C}s`)) },
-    {
-      codes: ["ONE", "TWO"],
-      plain: 1,
-      statement: othersUncoded(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
-    },
-    {
-      codes: ["ONE", "TWO"],
-      plain: 2,
-      statement: othersUncoded(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
-    },
-    {
-      codes: ["ONE"],
-      plain: 1,
-      statement: othersUncoded(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
-    },
-    { codes: [], plain: 1, statement: noCoded(over(`1 ${F}`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ItPronoun]) },
-    { codes: [], plain: 2, statement: noCoded(over(`2 ${F}s`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ThemPronoun]) },
+    { codes: ["ONE"], plain: 0 },
+    { codes: ["ONE", "TWO"], plain: 0 },
+    { codes: ["ONE", "TWO"], plain: 1 },
+    { codes: ["ONE", "TWO"], plain: 2 },
+    { codes: ["ONE"], plain: 1 },
+    { codes: [], plain: 1 },
+    { codes: [], plain: 2 },
   ];
 
-  for (const { codes, plain, statement } of cases) {
+  function statements(): string[] {
+    return [
+      ownCode(over(`1 ${F}`, `1 ${C}`)),
+      ownCode(over(`2 ${F}s`, `2 ${C}s`)),
+      othersUncoded(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+      othersUncoded(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
+      othersUncoded(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+      noCoded(over(`1 ${F}`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ItPronoun]),
+      noCoded(over(`2 ${F}s`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ThemPronoun]),
+    ];
+  }
+
+  for (let row = 0; row < cases.length; row++) {
+    const { codes, plain } = cases[row]!;
     const files = codes.length + plain;
     it(`states the codes clean over ${files} files carrying ${codes.length} codes, counted from the corpus`, () => {
+      const statement = statements()[row];
       const judged = judgedCorpus(codes, plain);
       expect(judged.scenarioCodeErrors).toEqual([]);
       expect(judged.scenarioCodePopulation).toEqual({ featureFiles: files, featureCodes: codes.length });
@@ -157,7 +162,10 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
 });
 
 describe("[SCN-STG-023] a corpus with no feature file is never stated clean", () => {
-  const empty = judgedCorpus([], 0);
+  let empty: EvidenceReconciliation;
+  beforeEach(() => {
+    empty = judgedCorpus([], 0);
+  });
   const noFileSection = [
     HEADING,
     "",
@@ -218,9 +226,14 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
   const framing = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming];
 
   describe("a file headed @TWO holding a scenario coded @SCN-ONE-002, beside a file headed @ONE", () => {
-    const files = [featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])];
-    const parsed = foreignScenarioCodes(files);
-    const md = renderMarkdown(reconciled(files), ctx);
+    let files: CorpusFile[];
+    let parsed: ScenarioCodeError[];
+    let md: string;
+    beforeEach(() => {
+      files = [featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])];
+      parsed = foreignScenarioCodes(files);
+      md = renderMarkdown(reconciled(files), ctx);
+    });
 
     it("is judged one foreign-scn-code and nothing else", () => {
       expect(parsed.map((error) => error.kind)).toEqual(["foreign-scn-code"]);
@@ -248,13 +261,18 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
   });
 
   describe("a second file also headed @ONE, so the corpus holds a duplicate feature code and a foreign scenario code", () => {
-    const files = [
-      featureFile("one", "ONE", ["SCN-ONE-001"]),
-      featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"]),
-      featureFile("uno", "ONE", ["SCN-ONE-003"]),
-    ];
-    const parsed = [...duplicateFeatureCodes(files), ...foreignScenarioCodes(files)];
-    const md = renderMarkdown(reconciled(files), ctx);
+    let files: CorpusFile[];
+    let parsed: ScenarioCodeError[];
+    let md: string;
+    beforeEach(() => {
+      files = [
+        featureFile("one", "ONE", ["SCN-ONE-001"]),
+        featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"]),
+        featureFile("uno", "ONE", ["SCN-ONE-003"]),
+      ];
+      parsed = [...duplicateFeatureCodes(files), ...foreignScenarioCodes(files)];
+      md = renderMarkdown(reconciled(files), ctx);
+    });
 
     it("is judged one duplicate-feature-code and one foreign-scn-code", () => {
       expect(parsed.map((error) => error.kind)).toEqual(["duplicate-feature-code", "foreign-scn-code"]);

@@ -178,3 +178,8 @@ Feature: The fitness checks this repository declares, one scenario per check
 
     @fitness @SCN-FIT-041
     Scenario: no production source file in the packages writes human-facing message prose outside its package's catalogue
+
+  Rule: a unit test does its work inside the test, so mutation reads each mutant against the tests that cover it
+
+    @fitness @SCN-FIT-042
+    Scenario: no unit test file runs code at collection time or in a hook that runs once for many tests

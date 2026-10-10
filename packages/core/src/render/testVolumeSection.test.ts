@@ -40,7 +40,7 @@ const heading = CORE_MESSAGES[CoreMessage.TestVolumeHeading];
 const sum = CORE_MESSAGES[CoreMessage.TestVolumeSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.TestVolumeTableHeader];
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");

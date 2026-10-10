@@ -33,7 +33,7 @@ const excludedLine = (step: string): string => `- ${CORE_MESSAGES[CoreMessage.St
 const unmatchedLine = (entry: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](entry)}`;
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
   it("lists the excluded step on one line with its reason, under a heading and a blank line, then one blank line", () => {

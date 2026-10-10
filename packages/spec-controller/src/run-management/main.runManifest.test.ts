@@ -9,9 +9,13 @@ import { main } from "../main.js";
 import { resolveToolIdentity } from "./resolveRunInputs.js";
 
 let made: string[];
+let outOfBalance: string;
+let vitest: string;
 
 beforeEach(() => {
   made = [];
+  outOfBalance = fileURLToPath(new URL("../../../../tests/fixtures/evidence-observation", import.meta.url));
+  vitest = join(outOfBalance, "vitest.json");
   vi.spyOn(process.stdout, "write").mockImplementation(() => true);
   vi.spyOn(process.stderr, "write").mockImplementation(() => true);
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -26,8 +30,6 @@ afterEach(() => {
 });
 
 const PINNED = new Date("2026-03-04T05:06:07.890Z");
-const OUT_OF_BALANCE = fileURLToPath(new URL("../../../../tests/fixtures/evidence-observation", import.meta.url));
-const VITEST = join(OUT_OF_BALANCE, "vitest.json");
 const RUN_ID = "r1";
 
 function tempDir(prefix: string): string {
@@ -38,7 +40,7 @@ function tempDir(prefix: string): string {
 
 function featuresCopiedInto(dir: string): string {
   const features = join(dir, "features");
-  cpSync(join(OUT_OF_BALANCE, "features"), features, { recursive: true });
+  cpSync(join(outOfBalance, "features"), features, { recursive: true });
   return features;
 }
 
@@ -74,8 +76,8 @@ function expectToolIdentityAndDate(manifest: Record<string, unknown>): void {
 describe("[SCN-RMG-002] a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts", () => {
   it("names the target and source SHA the operator gave, in balance mode", () => {
     const manifest = storedManifest("t", [
-      "--features", join(OUT_OF_BALANCE, "features"),
-      "--vitest", VITEST,
+      "--features", join(outOfBalance, "features"),
+      "--vitest", vitest,
       "--target", "t",
       "--source-sha", "s",
     ]);
@@ -88,7 +90,7 @@ describe("[SCN-RMG-002] a kept run stamps run.yaml with schema_version, run_id, 
 
   it("with no target and no source SHA, names an unknown target and the HEAD of the repository holding the features", () => {
     const { features, head } = gitRepoHoldingFeatures();
-    const manifest = storedManifest("unknown-target", ["--features", features, "--vitest", VITEST]);
+    const manifest = storedManifest("unknown-target", ["--features", features, "--vitest", vitest]);
 
     expect(manifest["target"]).toBe("unknown-target");
     expect(manifest["source_sha"]).toBe(head);
@@ -98,7 +100,7 @@ describe("[SCN-RMG-002] a kept run stamps run.yaml with schema_version, run_id, 
 
   it("with the features outside any repository, names the source SHA unknown", () => {
     const features = featuresCopiedInto(tempDir("main-run-manifest-plain-"));
-    const manifest = storedManifest("unknown-target", ["--features", features, "--vitest", VITEST]);
+    const manifest = storedManifest("unknown-target", ["--features", features, "--vitest", vitest]);
 
     expect(manifest["source_sha"]).toBe("unknown");
     expectToolIdentityAndDate(manifest);

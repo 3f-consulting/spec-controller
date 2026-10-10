@@ -1,13 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
+import { beforeEach, describe, it, expect } from "vitest";
+import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkArgvShape, positionalArguments } from "./cli-args.js";
 import { formatFilePaths } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { runBalanceCaptured } from "../test-support/runBalance.js";
 
-const balanceFlags: readonly FlagSpec[] = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
+const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
-const wellFormed: string[] = balanceFlags.flatMap((flag) => (flag.arg === undefined ? [flag.name] : [flag.name, "v"]));
+let wellFormed: string[];
+
+beforeEach(() => {
+  wellFormed = balanceFlags.flatMap((flag) => (flag.arg === undefined ? [flag.name] : [flag.name, "v"]));
+});
 
 function withBalanceFlag(flag: FlagSpec): CliRegistry {
   return {
@@ -27,15 +31,15 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
   const notAFlag = (token: string): string =>
     `${APP_MESSAGES[AppMessage.NotAFlag](token, BALANCE_SCOPE)}\n${APP_MESSAGES[AppMessage.SeeFlags](BALANCE_SCOPE)}`;
 
-  const NOT_A_FLAG: Record<string, { argv: string[]; token: string }> = {
-    "a directory with no flag before it": { argv: ["features"], token: "features" },
-    "a stray word after the flags": { argv: ["--features", "f", "extra", "--exit-zero"], token: "extra" },
-    "a single-dash token": { argv: ["--features", "f", "-x"], token: "-x" },
-    "the command given twice": { argv: ["balance", "--features", "f"], token: "balance" },
-    "a stray word after a flag's value": { argv: ["--features", "dir", "stray"], token: "stray" },
-  };
+  const NOT_A_FLAG: [string, { argv: string[]; token: string }][] = [
+    ["a directory with no flag before it", { argv: ["features"], token: "features" }],
+    ["a stray word after the flags", { argv: ["--features", "f", "extra", "--exit-zero"], token: "extra" }],
+    ["a single-dash token", { argv: ["--features", "f", "-x"], token: "-x" }],
+    ["the command given twice", { argv: ["balance", "--features", "f"], token: "balance" }],
+    ["a stray word after a flag's value", { argv: ["--features", "dir", "stray"], token: "stray" }],
+  ];
 
-  for (const [shape, { argv, token }] of Object.entries(NOT_A_FLAG)) {
+  for (const [shape, { argv, token }] of NOT_A_FLAG) {
     it(`refuses ${shape} at balance's scope, naming it as not a flag`, () => {
       expect(checkArgvShape(argv, cliRegistry, "balance")).toBe(notAFlag(token));
     });
@@ -93,7 +97,11 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
 });
 
 describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none, naming both", () => {
-  const takesNoValue = balanceFlags.filter((flag) => flag.arg === undefined).map((flag) => flag.name);
+  let takesNoValue: string[];
+
+  beforeEach(() => {
+    takesNoValue = balanceFlags.filter((flag) => flag.arg === undefined).map((flag) => flag.name);
+  });
 
   const BALANCE_SCOPE = "spec-controller balance";
   const refusalFor = (flag: string, value: string): string =>
@@ -104,7 +112,8 @@ describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none,
     expect(takesNoValue).toEqual(expect.arrayContaining(["--strict", "--exit-zero"]));
   });
 
-  for (const flag of takesNoValue) {
+  for (const { name: flag, arg } of balanceFlags) {
+    if (arg !== undefined) continue;
     it(`refuses ${flag} given a value at balance's scope, naming the flag and the value`, () => {
       expect(checkArgvShape(["--features", "f", flag, "foo"], cliRegistry, "balance")).toBe(refusalFor(flag, "foo"));
     });
@@ -137,8 +146,11 @@ describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none,
 });
 
 describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
-  const once = balanceFlags.filter((flag) => flag.repeatable !== true);
-  const repeatable = balanceFlags.filter((flag) => flag.repeatable === true).map((flag) => flag.name);
+  let repeatable: string[];
+
+  beforeEach(() => {
+    repeatable = balanceFlags.filter((flag) => flag.repeatable === true).map((flag) => flag.name);
+  });
 
   it("reads the one repeatable flag from the registry: --format", () => {
     expect(repeatable).toEqual(["--format"]);
@@ -148,7 +160,8 @@ describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused nam
   const givenTwice = (flag: string): string =>
     `${APP_MESSAGES[AppMessage.GivenTwice](flag, BALANCE_SCOPE)}\n${APP_MESSAGES[AppMessage.SeeFlags](BALANCE_SCOPE)}`;
 
-  for (const flag of once) {
+  for (const flag of balanceFlags) {
+    if (flag.repeatable === true) continue;
     const given = flag.arg === undefined ? [flag.name] : [flag.name, "v"];
     it(`refuses ${flag.name} given twice, equal values and all, naming it at balance's scope`, () => {
       expect(checkArgvShape([...given, "--features", "f", ...given], cliRegistry, "balance")).toBe(givenTwice(flag.name));

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -74,7 +74,10 @@ const brokenCell = (qualityCheck: string, where: string): string =>
   `${qualityCheck} 💥 ${OUTCOME_DESCRIPTION.broken} (${where})`;
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
-  const checkDidNotRun = ciStepRecordCredits(SKIPPED_CHECK)[0]!.message!;
+  let checkDidNotRun: string;
+  beforeEach(() => {
+    checkDidNotRun = ciStepRecordCredits(SKIPPED_CHECK)[0]!.message!;
+  });
 
   it("one broken evidence: the stamp counts one proof, then names its file and prints its error verbatim, each block followed by a blank line", () => {
     const md = render(collectionFailed(`${ROOT}/${COLLECTION_FAILED_LOCATOR}`, COLLECTION_FAILED_MESSAGE));

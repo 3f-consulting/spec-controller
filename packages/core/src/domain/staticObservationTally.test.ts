@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import { staticObservationTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
@@ -29,8 +29,10 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
     { qualityCheck: "fitness", staticCheck: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
     { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
-  const ledger: Ledger = reconcile(scenarios, observations);
-  const tally = staticObservationTally(ledger);
+  let tally: ReturnType<typeof staticObservationTally>;
+  beforeEach(() => {
+    tally = staticObservationTally(reconcile(scenarios, observations));
+  });
 
   it("counts every check that ran, the watermelon included, and not the missing one", () => {
     expect(tally.runningStaticCheckCount).toBe(3);
@@ -73,7 +75,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
       cucumber: "cucumber-js",
     },
   };
-  const ci = [
+  const ciLines = [
     "jobs:",
     "  ci:",
     "    steps:",
@@ -81,7 +83,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     "      - run: pnpm lint:bar",
     "      - run: pnpm test",
     "      - run: pnpm cucumber",
-  ].join("\n");
+  ];
 
   const fitness: Scenario[] = [
     { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -90,10 +92,15 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   const citedScn = (script: string): ScriptCitation | null =>
     script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
 
-  const runningCredits = runningStaticChecks([ci], pkg, SUITE_RUNNERS, citedScn);
-  const citedCredits = runningCredits.filter((o) => o.staticCheck === "lint:foo");
-  const uncitedCredits = runningCredits.filter((o) => o.staticCheck !== "lint:foo");
-  const ledger: Ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
+  let citedCredits: ReturnType<typeof runningStaticChecks>;
+  let uncitedCredits: ReturnType<typeof runningStaticChecks>;
+  let ledger: Ledger;
+  beforeEach(() => {
+    const runningCredits = runningStaticChecks([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
+    citedCredits = runningCredits.filter((o) => o.staticCheck === "lint:foo");
+    uncitedCredits = runningCredits.filter((o) => o.staticCheck !== "lint:foo");
+    ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
+  });
 
   it("derives one citing credit and one uncited credit from the CI source (the corpus is real, not seeded)", () => {
     expect(citedCredits).toEqual([
@@ -160,7 +167,7 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
       cucumber: "cucumber-js",
     },
   };
-  const guardCi = [
+  const guardCiLines = [
     "jobs:",
     "  ci:",
     "    steps:",
@@ -168,21 +175,25 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
     "      - run: pnpm domain-purity",
     "      - run: pnpm test",
     "      - run: pnpm cucumber",
-  ].join("\n");
+  ];
 
   const citedScn = (script: string): ScriptCitation | null =>
     script === "domain-purity" ? { scnId: "SCN-GRD-001" } : null;
 
-  const credits = runningStaticChecks([guardCi], guardPkg, SUITE_RUNNERS, citedScn).filter(
-    (o) => o.staticCheck === "domain-purity"
-  );
   const fitness: Scenario[] = [
     {
       scnId: "SCN-GRD-001",
       evidenceObligations: [{ qualityCheck: "fitness" }],
     },
   ];
-  const ledger: Ledger = reconcile(fitness, credits);
+  let credits: ReturnType<typeof runningStaticChecks>;
+  let ledger: Ledger;
+  beforeEach(() => {
+    credits = runningStaticChecks([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
+      (o) => o.staticCheck === "domain-purity"
+    );
+    ledger = reconcile(fitness, credits);
+  });
 
   const observation = {
     qualityCheck: "fitness",

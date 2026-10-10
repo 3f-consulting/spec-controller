@@ -42,18 +42,28 @@ function refusalReason(answered: Answered, subject: string, path: string): strin
   return answered.stderr.slice(opening.length, -2);
 }
 
+function writeAnUntrackedDraft(repo: string): void {
+  writeInto(repo, "drafts/new.md", "Cites SCN-ONE-016.\n");
+}
+
+function editTheTrackedNotes(repo: string): void {
+  writeInto(repo, "docs/notes.md", "Cites SCN-ONE-016.\n");
+}
+
+function editTheFeatureFile(repo: string): void {
+  const path = join(repo, "features", "one.feature");
+  writeFileSync(path, `${readFileSync(path, "utf8")}\n  @SCN-ONE-016 @unit\n  Scenario: a new scenario\n    Given a step\n`);
+}
+
 const CARRIERS = {
-  "an untracked file, drafts/new.md": { path: "drafts/new.md", write: (repo: string) => writeInto(repo, "drafts/new.md", "Cites SCN-ONE-016.\n") },
+  "an untracked file, drafts/new.md": { path: "drafts/new.md", write: writeAnUntrackedDraft },
   "a tracked file with an edit not yet committed, docs/notes.md": {
     path: "docs/notes.md",
-    write: (repo: string) => writeInto(repo, "docs/notes.md", "Cites SCN-ONE-016.\n"),
+    write: editTheTrackedNotes,
   },
   "the feature file, with an edit not yet committed": {
     path: "features/one.feature",
-    write: (repo: string) => {
-      const path = join(repo, "features", "one.feature");
-      writeFileSync(path, `${readFileSync(path, "utf8")}\n  @SCN-ONE-016 @unit\n  Scenario: a new scenario\n    Given a step\n`);
-    },
+    write: editTheFeatureFile,
   },
 } as const;
 
@@ -66,37 +76,61 @@ interface Row {
   subject: string;
 }
 
+function theFile(repo: string, file: string): [path: string, mode: number] {
+  return [join(repo, file), 0o000];
+}
+
+function itsDirectory(repo: string, file: string): [path: string, mode: number] {
+  return [dirname(join(repo, file)), 0o000];
+}
+
+function itsDirectoryListedButNotEntered(repo: string, file: string): [path: string, mode: number] {
+  return [dirname(join(repo, file)), 0o600];
+}
+
+function theDraft(repo: string): string {
+  return join(repo, "drafts", "new.md");
+}
+
+function theDraftsDirectory(repo: string): string {
+  return join(repo, "drafts");
+}
+
+function theNotes(repo: string): string {
+  return join(repo, "docs", "notes.md");
+}
+
 const EXAMPLES: readonly Row[] = [
   {
     file: "an untracked file, drafts/new.md",
     unreadable: "allocate is not permitted to read it",
-    withheld: (repo, file) => [join(repo, file), 0o000],
+    withheld: theFile,
     where: "its top",
-    named: (repo) => join(repo, "drafts", "new.md"),
+    named: theDraft,
     subject: "a file in the tree",
   },
   {
     file: "an untracked file, drafts/new.md",
     unreadable: "allocate is not permitted to list its directory",
-    withheld: (repo, file) => [dirname(join(repo, file)), 0o000],
+    withheld: itsDirectory,
     where: "its top",
-    named: (repo) => join(repo, "drafts"),
+    named: theDraftsDirectory,
     subject: "a directory in the tree",
   },
   {
     file: "an untracked file, drafts/new.md",
     unreadable: "allocate may list its directory but not enter it",
-    withheld: (repo, file) => [dirname(join(repo, file)), 0o600],
+    withheld: itsDirectoryListedButNotEntered,
     where: "its top",
-    named: (repo) => join(repo, "drafts"),
+    named: theDraftsDirectory,
     subject: "a directory in the tree",
   },
   {
     file: "a tracked file with an edit not yet committed, docs/notes.md",
     unreadable: "allocate is not permitted to read it",
-    withheld: (repo, file) => [join(repo, file), 0o000],
+    withheld: theFile,
     where: "its top",
-    named: (repo) => join(repo, "docs", "notes.md"),
+    named: theNotes,
     subject: "a file in the tree",
   },
   {
@@ -109,13 +143,15 @@ const EXAMPLES: readonly Row[] = [
   },
 ];
 
-const asRoot = process.getuid?.() === 0;
+const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
   // On macOS, git resolving a working directory beneath a top it may not list scans every ancestor, so a crowded temporary directory can take seconds.
-  it.skipIf(asRoot).each(EXAMPLES)(
+  it.for(EXAMPLES)(
     "refuses ONE when $file carries a higher code and $unreadable, standing in $where, naming it",
-    ({ file, withheld, where, named, subject }) => {
+    { timeout: 30_000 },
+    ({ file, withheld, where, named, subject }, { skip }) => {
+      skip(runsAsRoot());
       const repo = repository();
       const carrier = CARRIERS[file];
       carrier.write(repo);
@@ -126,7 +162,6 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
 
       expect(refusalReason(answered, subject, named(repo))).toMatch(/^(EACCES|EPERM): /);
     },
-    30_000,
   );
 
   it("refuses ONE, naming the tree, when git cannot list the repository's files", () => {

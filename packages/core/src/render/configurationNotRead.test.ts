@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown, renderReportFromJson } from "./markdown.js";
 import { renderJson } from "./json.js";
 import type { Ledger } from "../model.js";
@@ -6,10 +6,13 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../provenance/provenance.js";
 
-const ledger: Ledger = reconcile(
-  [{ scnId: "SCN-USG-025", evidenceObligations: [{ qualityCheck: "unit" }] }],
-  [{ qualityCheck: "unit", scnId: "SCN-USG-025", status: "passed" }],
-);
+let ledger: Ledger;
+beforeEach(() => {
+  ledger = reconcile(
+    [{ scnId: "SCN-USG-025", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ qualityCheck: "unit", scnId: "SCN-USG-025", status: "passed" }],
+  );
+});
 
 const ctx: RunContext = {
   target: "config-target",

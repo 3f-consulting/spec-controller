@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { CORPUS_DIR, EMPTY_CORPUS, targetMaker } from "./corpusFixtures.testkit.js";
+import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.testkit.js";
 import { readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
 import { extractFeatureCode } from "./ingestScenarios.js";
 
@@ -12,8 +12,6 @@ const made: string[] = [];
 afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
-
-const targetFor = targetMaker(made);
 
 describe("[SCN-STG-022] a feature part no file's header carries has no file behind its by-feature row", () => {
   it("maps no file to THR when the only scenario coded for it sits in a file headed @TWO", () => {
@@ -37,7 +35,7 @@ describe("[SCN-STG-022] a feature part no file's header carries has no file behi
 
 describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped", () => {
   it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
-    const root = targetFor(EMPTY_CORPUS);
+    const root = targetIn(made, EMPTY_CORPUS);
     const balance = runReconcile({
       features: join(root, CORPUS_DIR),
       packageJson: join(root, "package.json"),

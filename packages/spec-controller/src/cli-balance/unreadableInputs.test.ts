@@ -1,4 +1,4 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -215,7 +215,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
 });
 
 describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, naming it and the path", () => {
-  const asRoot = process.getuid?.() === 0;
+  const runsAsRoot = (): boolean => process.getuid?.() === 0;
   const locked: string[] = [];
 
   afterEach(() => {
@@ -243,7 +243,8 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     return { report: stdout, stderr, exitCode };
   }
 
-  it.skipIf(asRoot)("runBalance refuses a given --features corpus it may not read at exit 2, naming the flag, the path and the refusal to read it, reconciling nothing", () => {
+  it("runBalance refuses a given --features corpus it may not read at exit 2, naming the flag, the path and the refusal to read it, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
     const features = lock(targetOnDisk().features);
     const reason = osReasonFor(() => readdirSync(features));
 
@@ -254,7 +255,8 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     });
   });
 
-  it.skipIf(asRoot)("runBalance refuses a given --vitest report it may not read at exit 2, calling the file unreadable rather than misshapen, reconciling nothing", () => {
+  it("runBalance refuses a given --vitest report it may not read at exit 2, calling the file unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
     const dir = mkdtempSync(join(tmpdir(), "vitest-not-permitted-"));
     made.push(dir);
     const path = join(dir, "vitest.json");
@@ -269,7 +271,8 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     });
   });
 
-  it.skipIf(asRoot)("names the feature corpus read by default, and its path, when no --features is given and the working directory's corpus may not be read", () => {
+  it("names the feature corpus read by default, and its path, when no --features is given and the working directory's corpus may not be read", ({ skip }) => {
+    skip(runsAsRoot());
     const target = targetOnDisk();
     const features = lock(target.features);
     vi.spyOn(process, "cwd").mockReturnValue(join(features, ".."));
@@ -382,7 +385,11 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     return { path, report: stdout, stderr, exitCode };
   }
 
-  const theFile = APP_MESSAGES[AppMessage.FlaggedFile]("--render-from-json");
+  let theFile: string;
+
+  beforeEach(() => {
+    theFile = APP_MESSAGES[AppMessage.FlaggedFile]("--render-from-json");
+  });
 
   it("runBalance refuses a saved file with NO LEDGER at exit 2, naming the file and the missing part, rendering nothing", () => {
     const run = reRendering({ ...SAVED, ledger: undefined });

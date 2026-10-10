@@ -12,8 +12,6 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const temporaryDirectory = temporaryDirectoryIn(made);
-
 const WELL_FORMED = `@AAA
 Feature: alpha
 
@@ -44,7 +42,7 @@ function corpusWithTwoUnreadableFiles(): {
   firstBad: string;
   secondBad: string;
 } {
-  const dir = join(temporaryDirectory(`scn-gpg-001-${process.pid}-`), "features");
+  const dir = join(temporaryDirectoryIn(made, `scn-gpg-001-${process.pid}-`), "features");
   mkdirSync(dir, { recursive: true });
 
   const good = join(dir, "a-alpha.feature");
@@ -104,7 +102,7 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
   });
 
   it("returns the corpus as before when every file parses, only its .feature files, in name order", () => {
-    const dir = join(temporaryDirectory(`scn-gpg-001-ok-${process.pid}-`), "features");
+    const dir = join(temporaryDirectoryIn(made, `scn-gpg-001-ok-${process.pid}-`), "features");
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "c-gamma.feature"), WELL_FORMED.replace("@AAA", "@CCC"));
     writeFileSync(join(dir, "b-beta.feature"), WELL_FORMED.replace("@AAA", "@BBB"));

@@ -64,7 +64,11 @@ const REQUESTS: { request: string; argvAt: (storeRoot: string) => string[] }[] =
 ];
 
 describe("[SCN-CLI-068] help after a modifier, or nothing given at all, still answers the top-level help", () => {
-  const expected = renderTopLevelHelp(cliRegistry) + "\n";
+  let expected: string;
+
+  beforeEach(() => {
+    expected = renderTopLevelHelp(cliRegistry) + "\n";
+  });
 
   describe.each(REQUESTS)("$request", ({ argvAt }) => {
     it("answers the top-level help on stdout", () => {

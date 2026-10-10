@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
@@ -47,8 +47,12 @@ const pendingScenario: Scenario = {
 const passed: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-VRD-001", status: "passed" };
 const unattributed: EvidenceObservation = { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" };
 
-const BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, CORE_MESSAGES[CoreMessage.BalancedGloss], 0);
-const OUT_OF_BALANCE_LINE = verdictLine(CoreMessage.OutOfBalanceHeadline, CORE_MESSAGES[CoreMessage.OutOfBalanceGloss], 1);
+let BALANCED_LINE: string;
+let OUT_OF_BALANCE_LINE: string;
+beforeEach(() => {
+  BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, CORE_MESSAGES[CoreMessage.BalancedGloss], 0);
+  OUT_OF_BALANCE_LINE = verdictLine(CoreMessage.OutOfBalanceHeadline, CORE_MESSAGES[CoreMessage.OutOfBalanceGloss], 1);
+});
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   it("a balanced ledger: the heading, a blank line, the verdict naming exit 0, and one blank line", () => {

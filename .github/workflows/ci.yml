@@ -267,6 +267,11 @@ jobs:
           git ls-files -- ':(glob)packages/*/src/**/*.ts' ':(exclude,glob)packages/**/*.test.ts' ':(exclude,glob)packages/**/*.testkit.ts' "${excludes[@]}" \
             | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
 
+      - name: No unit test file runs code at collection time or in a hook that runs once for many tests
+        id: SCN-FIT-042
+        if: always()
+        run: pnpm exec eslint --config eslint.collection.js packages
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()

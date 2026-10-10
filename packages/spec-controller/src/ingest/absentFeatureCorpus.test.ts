@@ -17,8 +17,6 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const temporaryDirectory = temporaryDirectoryIn(made);
-
 function absentCorpus(): { features: string; packageJson: string; ci: string } {
   const root = mkdtempSync(join(tmpdir(), `scn-cli-017-absent-${process.pid}-`));
   made.push(root);
@@ -95,7 +93,7 @@ describe("[SCN-CLI-017] a corpus that is PRESENT and unreadable is still refused
 
 describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
   function absentDir(): string {
-    const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
+    const dir = join(temporaryDirectoryIn(made, `scn-cli-017-${process.pid}-`), "features");
     expect(existsSync(dir)).toBe(false);
     return dir;
   }
@@ -123,7 +121,7 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
   });
 
   it("rethrows what is NOT an absence — a `features` path that is a FILE is a different fault", () => {
-    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
+    const notADirectory = join(temporaryDirectoryIn(made, `scn-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
     const { thrown } = discover(notADirectory);
@@ -133,7 +131,7 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
   });
 
   it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {
-    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
+    const notADirectory = join(temporaryDirectoryIn(made, `scn-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
     let returned: unknown;

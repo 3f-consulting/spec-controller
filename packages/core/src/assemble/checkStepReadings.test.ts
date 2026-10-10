@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
@@ -82,7 +82,10 @@ const record: CiStepRecord = {
   "dump-the-step-record": { outcome: "success", conclusion: "success" },
 };
 
-const reconcile = checkStepReconciler(corpus, manifest, ci, record);
+let reconcile: ReturnType<typeof checkStepReconciler>;
+beforeEach(() => {
+  reconcile = checkStepReconciler(corpus, manifest, ci, record);
+});
 
 function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, unknown[]][] {
   return reconciliation.ledger.scenarioReconciliations

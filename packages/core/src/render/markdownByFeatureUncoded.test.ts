@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown, renderReportFromJson } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf, type EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -30,10 +30,13 @@ function byFeatureRows(md: string): string[][] {
 }
 
 describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
-  const checkout = ["pay by card", "pay by voucher", "pay on account"].map((scenario) => ({
-    feature: "checkout.feature",
-    scenario,
-  }));
+  let checkout: UntaggedScenario[];
+  beforeEach(() => {
+    checkout = ["pay by card", "pay by voucher", "pay on account"].map((scenario) => ({
+      feature: "checkout.feature",
+      scenario,
+    }));
+  });
 
   it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
     const { reconciliation, census } = uncodedCorpus(checkout);

@@ -312,7 +312,6 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     expect(refusal).toMatch(/bump the pin/i);
   });
 
-  const balance = cliRegistry.commands.find((command) => command.name === "balance");
   const namesOf = (flag: FlagSpec): string[] => [flag.name, ...(flag.aliases ?? [])];
   const givenOnce = (flag: FlagSpec, name: string): string[] => {
     const read = `--${name.replace(/^-+/, "")}`;
@@ -327,6 +326,7 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
   });
 
   it("accepts every flag and alias balance registers, each given once as the registry spells it", () => {
+    const balance = cliRegistry.commands.find((command) => command.name === "balance");
     const names = (balance?.flags ?? [])
       .flatMap((flag) => namesOf(flag).map((name) => ({ flag, name })))
       .filter(({ name }) => name.startsWith("--"));

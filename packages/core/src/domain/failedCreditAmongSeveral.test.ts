@@ -33,21 +33,21 @@ describe("[SCN-LDG-036] a failing test in a file that sorts after a passing one 
   it.each([
     [
       "reads failing, carrying the failed credit, with the row and the run out of balance",
-      [unitCredit("a.test.ts", "passed"), unitCredit("z.test.ts", "failed")],
+      [["a.test.ts", "passed"], ["z.test.ts", "failed"]],
       { outcome: "failing", carried: "z.test.ts=failed", verdict: "out-of-balance", balanced: false },
     ],
     [
       "reads the same whichever order the runner reported the two files in",
-      [unitCredit("z.test.ts", "failed"), unitCredit("a.test.ts", "passed")],
+      [["z.test.ts", "failed"], ["a.test.ts", "passed"]],
       { outcome: "failing", carried: "z.test.ts=failed", verdict: "out-of-balance", balanced: false },
     ],
     [
       "still reads satisfied, naming the first credit, when every test citing it passed",
-      [unitCredit("z.test.ts", "passed"), unitCredit("a.test.ts", "passed")],
+      [["z.test.ts", "passed"], ["a.test.ts", "passed"]],
       { outcome: "satisfied", carried: "a.test.ts=passed", verdict: "balanced", balanced: true },
     ],
-  ])("%s", (_title, credits, expected) => {
-    expect(unitItemOf(credits)).toEqual(expected);
+  ] as const)("%s", (_title, credits, expected) => {
+    expect(unitItemOf(credits.map(([locator, status]) => unitCredit(locator, status)))).toEqual(expected);
   });
 
   it("names the first failed credit in evidence order when more than one failed", () => {
@@ -62,19 +62,19 @@ describe("[SCN-LDG-036] a failing test in a file that sorts after a passing one 
 });
 
 describe("[SCN-LDG-037] a passing and a failing test in one file citing the same scenario read failing, whichever order the two credits arrive in", () => {
-  const passed = unitCredit("m.test.ts", "passed");
-  const failed = unitCredit("m.test.ts", "failed");
+  const passed = () => unitCredit("m.test.ts", "passed");
+  const failed = () => unitCredit("m.test.ts", "failed");
 
   it.each([
     ["passed first", [passed, failed]],
     ["failed first", [failed, passed]],
   ])("reads failing, carrying the failed credit, with the two handed to the rule %s", (_order, credits) => {
-    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "unit" }, credits);
-    expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failed]);
+    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "unit" }, credits.map((c) => c()));
+    expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failed()]);
   });
 
   it("puts the row and the run out of balance through the reconciliation", () => {
-    expect(unitItemOf([passed, failed])).toEqual({
+    expect(unitItemOf([passed(), failed()])).toEqual({
       outcome: "failing",
       carried: "m.test.ts=failed",
       verdict: "out-of-balance",
@@ -83,7 +83,7 @@ describe("[SCN-LDG-037] a passing and a failing test in one file citing the same
   });
 
   it("still reads satisfied when both tests in the file passed", () => {
-    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "unit" }, [passed, unitCredit("m.test.ts", "passed")]);
+    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "unit" }, [passed(), unitCredit("m.test.ts", "passed")]);
     expect(item.outcome).toBe("satisfied");
   });
 });

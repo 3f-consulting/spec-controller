@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { renderJson } from "../render/json.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -8,23 +8,26 @@ import { reportLedger } from "./renderInput.testkit.js";
 import { __er } from "../evidenceReconciliation.testkit.js";
 
 describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate from the verdict counts", () => {
-  const pendingBalance: Ledger = reconcile(
-    [
-      {
-        scnId: "SCN-PDX-001",
-        evidenceObligations: [
-          { qualityCheck: "unit", pending: true },
-          { qualityCheck: "integration", pending: true },
-        ],
-      },
-      {
-        scnId: "SCN-PDX-002",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-      },
-      { scnId: "SCN-PDX-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-    ],
-    [{ qualityCheck: "unit", scnId: "SCN-PDX-003", status: "passed" }],
-  );
+  let pendingBalance: Ledger;
+  beforeEach(() => {
+    pendingBalance = reconcile(
+      [
+        {
+          scnId: "SCN-PDX-001",
+          evidenceObligations: [
+            { qualityCheck: "unit", pending: true },
+            { qualityCheck: "integration", pending: true },
+          ],
+        },
+        {
+          scnId: "SCN-PDX-002",
+          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+        },
+        { scnId: "SCN-PDX-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [{ qualityCheck: "unit", scnId: "SCN-PDX-003", status: "passed" }],
+    );
+  });
 
   it("materialises summary.pending counting Pending Items across the rows", () => {
     const report = assembleRenderInput(__er(pendingBalance), ctx);
@@ -57,7 +60,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   });
 
   it("is always present — a pure balance derive reading 0 when no scenario names a pending obligation", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx);
+    const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.summary.pending).toBe(0);
   });
 

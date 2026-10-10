@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
@@ -37,7 +37,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-G", status: "passed" },
   ];
-  const balance: Ledger = reconcile(scenarios, observations);
+  let balance: Ledger;
+  beforeEach(() => {
+    balance = reconcile(scenarios, observations);
+  });
 
   it("builds the fixture through the reconciler — the no-evidence-obligation credit is OUT of an evidence obligation", () => {
     const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
@@ -188,10 +191,13 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 });
 
 describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the named-corpus census", () => {
-  const balanced: Ledger = reconcile(
-    [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }],
-  );
+  let balanced: Ledger;
+  beforeEach(() => {
+    balanced = reconcile(
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }],
+    );
+  });
   const evidenceObligations = {
     rawScnOccurrences: 0,
     scenarioCount: 0,
@@ -233,13 +239,16 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the na
 });
 
 describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outcomes with no group rows", () => {
-  const spanning: Ledger = reconcile(
-    [
-      { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-C", evidenceObligations: [] },
-    ],
-    [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
-  );
+  let spanning: Ledger;
+  beforeEach(() => {
+    spanning = reconcile(
+      [
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-C", evidenceObligations: [] },
+      ],
+      [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
+    );
+  });
 
   const LEAVES = [
     "missing",
@@ -267,9 +276,12 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outco
     "no-evidence-obligation": true,
     "both-missing": true,
   };
-  const EXPECTED_LEAVES = (Object.keys(ALL_OUTCOMES) as Outcome[]).filter(
-    (outcome) => outcome !== "satisfied"
-  );
+  let EXPECTED_LEAVES: Outcome[];
+  beforeEach(() => {
+    EXPECTED_LEAVES = (Object.keys(ALL_OUTCOMES) as Outcome[]).filter(
+      (outcome) => outcome !== "satisfied"
+    );
+  });
 
   it("decomposes the evidence-obligation out-of-balance into exactly the ten leaf outcome rows", () => {
     const md = renderMarkdown(__er(spanning), ctx);

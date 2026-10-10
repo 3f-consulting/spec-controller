@@ -102,19 +102,17 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
 describe("[SCN-PND-016] a recognised community deferral tag defers every named obligation on its scenario", () => {
   const COMMUNITY_TAGS = ["@wip", "@ignore", "@skip", "@todo", "@pending"] as const;
 
-  COMMUNITY_TAGS.forEach((tag, i) => {
-    it(`${tag} marks both the @unit and @integration obligation pending`, () => {
-      const source = [
-        `${tag} @unit @integration @SCN-XXX-${100 + i}`,
-        "Scenario: a community-deferred scenario naming unit and integration obligations",
-        "  Given a step",
-      ].join("\n");
-      const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
-      expect(scenario!.evidenceObligations).toEqual([
-        { qualityCheck: "unit", pending: true },
-        { qualityCheck: "integration", pending: true },
-      ]);
-    });
+  it.each(COMMUNITY_TAGS)("%s marks both the @unit and @integration obligation pending", (tag) => {
+    const source = [
+      `${tag} @unit @integration @SCN-XXX-${100 + COMMUNITY_TAGS.indexOf(tag)}`,
+      "Scenario: a community-deferred scenario naming unit and integration obligations",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
   });
 
   it("defers a FITNESS obligation too — the whole scenario is deferred", () => {

@@ -47,19 +47,27 @@ function inTemporaryStore(run: (storeRoot: string) => Answered): Answered {
   }
 }
 
+const askTypo = (): Answered => answer(["blance"]);
+const askNoCommand = (): Answered => answer(["nosuchcommand"]);
+const askNoCommandStored = (): Answered => inTemporaryStore((storeRoot) => answer(["--store", storeRoot, "nosuchcommand"]));
+
 const REQUESTS: { request: string; command: string; ask: () => Answered }[] = [
-  { request: "a typo of a command", command: "blance", ask: () => answer(["blance"]) },
-  { request: "a name that is no command", command: "nosuchcommand", ask: () => answer(["nosuchcommand"]) },
+  { request: "a typo of a command", command: "blance", ask: askTypo },
+  { request: "a name that is no command", command: "nosuchcommand", ask: askNoCommand },
   {
     request: "a name that is no command, as a stored run",
     command: "nosuchcommand",
-    ask: () => inTemporaryStore((storeRoot) => answer(["--store", storeRoot, "nosuchcommand"])),
+    ask: askNoCommandStored,
   },
 ];
 
 describe("[SCN-CLI-056] an unknown command is a usage fault", () => {
   describe.each(REQUESTS)("$request", ({ command, ask }) => {
-    const expected = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
+    let expected: ReturnType<typeof answerUnknownCommand>;
+
+    beforeEach(() => {
+      expected = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
+    });
 
     it("refuses on stderr with the answer naming the command, then the top-level help", () => {
       expect(ask().stderr).toBe(expected.stderr);

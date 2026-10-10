@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { renderJson } from "../render/json.js";
@@ -47,14 +47,14 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   it("renames the provenance section to runProvenance carrying the run facts", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx);
+    const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.runProvenance.target).toBe("an-adopters-repository");
     expect(report.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
     expect(report.runProvenance.runTimestamp).toBe("2026-07-02T08:17:53Z");
   });
 
   it("materialises the summary totals from the balance", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx);
+    const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
     expect(report.summary.evidenceObligations.total).toBe(3);
     expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
@@ -75,7 +75,10 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
     { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
-  const balanceWithSuspense: Ledger = reconcile(suspenseScenarios, suspenseObservations);
+  let balanceWithSuspense: Ledger;
+  beforeEach(() => {
+    balanceWithSuspense = reconcile(suspenseScenarios, suspenseObservations);
+  });
 
   it("counts the suspense reconciliation in the summary totals — a run whose only out-of-balance row is the suspense row tallies 1 out-of-balance, not 0", () => {
     const report = assembleRenderInput(__er(balanceWithSuspense), ctx);
@@ -109,14 +112,14 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   it("carries no warnings key — the retired authoring-quality axis", () => {
-    const report = assembleRenderInput(__er(reportLedger), ctx) as unknown as Record<string, unknown>;
+    const report = assembleRenderInput(__er(reportLedger()), ctx) as unknown as Record<string, unknown>;
     expect(report).not.toHaveProperty("warnings");
     expect(((report.ledger as { scenarioReconciliations: unknown[] }).scenarioReconciliations)).toHaveLength(2);
   });
 
   it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger, false, false), ctx, evidenceObligations));
-    expect(parsed).toEqual(assembleRenderInput(__er(reportLedger, false, false), ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(reportLedger(), false, false), ctx, evidenceObligations));
+    expect(parsed).toEqual(assembleRenderInput(__er(reportLedger(), false, false), ctx, evidenceObligations));
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.summary.scenarioReconciliations.total).toBe(2);
     expect(parsed).not.toHaveProperty("provenance");
@@ -125,7 +128,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
 
 describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
   it("carries the grid of Scenario Reconciliations under ledger — never evidenceReconciliation, never scenarios", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
     expect(Array.isArray(parsed.ledger)).toBe(false);
     expect(Array.isArray(parsed.ledger.scenarioReconciliations)).toBe(true);
     expect(parsed.ledger.scenarioReconciliations).toHaveLength(2);
@@ -135,7 +138,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries the ledger BESIDE summary — chain step 6: the summary has the totals and the ledger the detail", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
     const keys = Object.keys(parsed);
     expect(keys).toContain("summary");
     expect(keys).toContain("ledger");
@@ -163,7 +166,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries each quality check reconciliation's outcome field with the reconciliation-outcome literals", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger), ctx));
+    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
     const outOfBalance = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
     );
@@ -184,7 +187,10 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
-  const rmd003Balance: Ledger = reconcile(rmd003Scenarios, rmd003Observations);
+  let rmd003Balance: Ledger;
+  beforeEach(() => {
+    rmd003Balance = reconcile(rmd003Scenarios, rmd003Observations);
+  });
 
   it("carries NO evidenceObservations section — the raw totals re-home onto summary", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
@@ -218,13 +224,16 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
 });
 
 describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
-  const staticChecksBalance: Ledger = reconcile(
-    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] }],
-    [
-      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-    ]
-  );
+  let staticChecksBalance: Ledger;
+  beforeEach(() => {
+    staticChecksBalance = reconcile(
+      [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] }],
+      [
+        { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      ]
+    );
+  });
 
   it("carries NO standalone staticChecks (or guards) section — the census collapsed to summary counts", () => {
     const parsed = JSON.parse(renderJson(__er(staticChecksBalance, false, true), ctx, undefined, undefined));

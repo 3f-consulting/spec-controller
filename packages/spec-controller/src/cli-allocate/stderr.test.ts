@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnSighting } from "@3f-consulting/spec-controller-core";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 
@@ -27,7 +27,11 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
 });
 
 describe("[SCN-ALC-004] with no history to read, a code is still offered and the boundary is stated", () => {
-  const allocation = nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "@SCN-ONE-001", path: "features/one.feature", line: 4 }]);
+  let allocation: Allocation;
+
+  beforeEach(() => {
+    allocation = nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "@SCN-ONE-001", path: "features/one.feature", line: 4 }]);
+  });
 
   it("states that no history was read outside a git repository, and what that risks", () => {
     expect(historyBoundaryLine({ kind: "not-a-repository" }, allocation)).toBe(

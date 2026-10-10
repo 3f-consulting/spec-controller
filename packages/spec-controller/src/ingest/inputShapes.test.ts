@@ -1,14 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CI_STEP_RECORD, CUCUMBER_REPORT, PACKAGE_MANIFEST, shapeFaultIn, VITEST_REPORT } from "./inputShapes.js";
 
-const FIXTURES = fileURLToPath(new URL("../../../../tests/fixtures", import.meta.url));
+let fixtures: string;
+
+beforeEach(() => {
+  fixtures = fileURLToPath(new URL("../../../../tests/fixtures", import.meta.url));
+});
 
 function fixtureReports(file: string): Array<[string, unknown]> {
-  return readdirSync(FIXTURES)
-    .map((dir) => join(FIXTURES, dir, file))
+  return readdirSync(fixtures)
+    .map((dir) => join(fixtures, dir, file))
     .filter((path) => existsSync(path))
     .map((path) => [path, JSON.parse(readFileSync(path, "utf8"))]);
 }
@@ -34,7 +38,7 @@ describe("[SCN-CLI-076] a Vitest report is read only in the shape the Vitest JSO
   });
 
   it("names a fault in a test file past the first, when the files before it are well-formed", () => {
-    const report = JSON.parse(readFileSync(join(FIXTURES, "every-outcome-corpus", "vitest.json"), "utf8"));
+    const report = JSON.parse(readFileSync(join(fixtures, "every-outcome-corpus", "vitest.json"), "utf8"));
     report.testResults[1].status = 7;
     expect(shapeFaultIn(report, VITEST_REPORT)).toBe("testResults[1].status is a number, not a string");
   });
@@ -68,7 +72,7 @@ describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber
   });
 
   it("names a step whose result's status is not a string, in a report otherwise in the formatter's shape", () => {
-    const report = JSON.parse(readFileSync(join(FIXTURES, "every-outcome-corpus", "cucumber.json"), "utf8"));
+    const report = JSON.parse(readFileSync(join(fixtures, "every-outcome-corpus", "cucumber.json"), "utf8"));
     report[0].elements[0].steps[0].result.status = 7;
     expect(shapeFaultIn(report, CUCUMBER_REPORT)).toBe("[0].elements[0].steps[0].result.status is a number, not a string");
   });
@@ -99,7 +103,7 @@ describe("[SCN-CLI-078] a CI step record is read only as a record of step outcom
   });
 
   it("names a fault in a step past the first, when the steps before it are well-formed", () => {
-    const record = JSON.parse(readFileSync(join(FIXTURES, "scn-lnt-026", "ci-steps.json"), "utf8"));
+    const record = JSON.parse(readFileSync(join(fixtures, "scn-lnt-026", "ci-steps.json"), "utf8"));
     record["SCN-CVT-002"].outcome = 7;
     expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("SCN-CVT-002.outcome is a number, not a string");
   });

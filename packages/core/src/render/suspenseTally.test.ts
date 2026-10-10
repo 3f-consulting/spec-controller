@@ -11,7 +11,7 @@ function uncitedCredit(locator: string): EvidenceObservation {
   return { qualityCheck: "unit", scnId: null, status: "passed", locator };
 }
 
-const tallyBlock = tallyBlockOf(scenarios);
+const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);
 
 describe("[SCN-LDG-007] a credit citing no scenario is reported as a suspense-scenario reconciliation, out of balance", () => {
   it("states only the total when every credit cites a scenario", () => {

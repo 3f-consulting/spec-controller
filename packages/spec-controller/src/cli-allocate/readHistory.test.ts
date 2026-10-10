@@ -1,36 +1,40 @@
-import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
-import { cpSync, mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { afterAll, afterEach, beforeEach, describe, it, expect } from "vitest";
+import { mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
 import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.testkit.js";
 import { thrownBy } from "./answered.testkit.js";
 
-const LOG_WITH_MESSAGE = [
-  "commit 0123456789abcdef0123456789abcdef01234567",
-  "Author: fixture <fixture@example.invalid>",
-  "Date:   Thu Sep 25 12:00:00 2026 +0000",
-  "",
-  "    Retag the scenario",
-  "",
-  "    See SCN-ONE-900 for why.",
-  "",
-  "diff --git a/features/one.feature b/features/one.feature",
-  "index 1111111..2222222 100644",
-  "--- a/features/one.feature",
-  "+++ b/features/one.feature",
-  "@@ -4 +4 @@ Feature: part ONE",
-  "-  @SCN-ONE-001 @unit",
-  "+  @SCN-ONE-001 @unit @smoke",
-].join("\n");
-
 describe("[SCN-ALC-015] a code that appears only in a commit message is not retired", () => {
+  let logWithMessage: string;
+
+  beforeEach(() => {
+    logWithMessage = [
+      "commit 0123456789abcdef0123456789abcdef01234567",
+      "Author: fixture <fixture@example.invalid>",
+      "Date:   Thu Sep 25 12:00:00 2026 +0000",
+      "",
+      "    Retag the scenario",
+      "",
+      "    See SCN-ONE-900 for why.",
+      "",
+      "diff --git a/features/one.feature b/features/one.feature",
+      "index 1111111..2222222 100644",
+      "--- a/features/one.feature",
+      "+++ b/features/one.feature",
+      "@@ -4 +4 @@ Feature: part ONE",
+      "-  @SCN-ONE-001 @unit",
+      "+  @SCN-ONE-001 @unit @smoke",
+    ].join("\n");
+  });
+
   it("sights the added and removed lines of a patch and nothing else", () => {
-    const texts = diffLineSightings(LOG_WITH_MESSAGE).map((sighting) => sighting.text);
+    const texts = diffLineSightings(logWithMessage).map((sighting) => sighting.text);
     expect(texts).toEqual(["-  @SCN-ONE-001 @unit", "+  @SCN-ONE-001 @unit @smoke"]);
   });
 
   it("never sights a message line, whatever it mentions", () => {
-    const texts = diffLineSightings(LOG_WITH_MESSAGE).map((sighting) => sighting.text);
+    const texts = diffLineSightings(logWithMessage).map((sighting) => sighting.text);
     expect(texts.some((text) => text.includes("SCN-ONE-900"))).toBe(false);
   });
 
@@ -41,26 +45,30 @@ describe("[SCN-ALC-015] a code that appears only in a commit message is not reti
 });
 
 describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
-  const log = [
-    "\u0001abc1234",
-    "",
-    "diff --git a/features/one.feature b/features/one.feature",
-    "index 1111111..2222222 100644",
-    "--- a/features/one.feature",
-    "+++ b/features/one.feature",
-    "@@ -8,3 +7,0 @@ Feature: part ONE",
-    "-  @SCN-ONE-005 @unit",
-    "-  Scenario: scenario 2",
-    "\u0001def5678",
-    "",
-    "diff --git a/features/one.feature b/features/one.feature",
-    "new file mode 100644",
-    "--- /dev/null",
-    "+++ b/features/one.feature",
-    "@@ -0,0 +4,2 @@",
-    "+  @SCN-ONE-001 @unit",
-    "+  Scenario: scenario 1",
-  ].join("\n");
+  let log: string;
+
+  beforeEach(() => {
+    log = [
+      "\u0001abc1234",
+      "",
+      "diff --git a/features/one.feature b/features/one.feature",
+      "index 1111111..2222222 100644",
+      "--- a/features/one.feature",
+      "+++ b/features/one.feature",
+      "@@ -8,3 +7,0 @@ Feature: part ONE",
+      "-  @SCN-ONE-005 @unit",
+      "-  Scenario: scenario 2",
+      "\u0001def5678",
+      "",
+      "diff --git a/features/one.feature b/features/one.feature",
+      "new file mode 100644",
+      "--- /dev/null",
+      "+++ b/features/one.feature",
+      "@@ -0,0 +4,2 @@",
+      "+  @SCN-ONE-001 @unit",
+      "+  Scenario: scenario 1",
+    ].join("\n");
+  });
 
   it.each([
     [
@@ -96,7 +104,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen — a remov
   });
 });
 
-function templateRepository(): string {
+function repositoryWithHistory(): string {
   const repo = freshDirectory("allocate-history-");
   git(repo, ["init", "-q", "-b", "main"]);
   writeFileSync(join(repo, "one.md"), "SCN-ONE-001\nSCN-ONE-005\n");
@@ -104,18 +112,6 @@ function templateRepository(): string {
   git(repo, ["commit", "-q", "-m", "both"]);
   writeFileSync(join(repo, "one.md"), "SCN-ONE-001\n");
   git(repo, ["commit", "-q", "-am", "retire 005"]);
-  return repo;
-}
-
-let template = "";
-
-beforeAll(() => {
-  template = templateRepository();
-});
-
-function repositoryWithHistory(): string {
-  const repo = freshDirectory("allocate-history-");
-  cpSync(template, repo, { recursive: true });
   return repo;
 }
 
@@ -176,10 +172,11 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
   });
 
   it("still reads a repository with no git to ask as no repository", () => {
+    const repo = repositoryWithHistory();
     const path = process.env.PATH;
     process.env.PATH = "";
     try {
-      expect(repositoryTop(repositoryWithHistory())).toBeNull();
+      expect(repositoryTop(repo)).toBeNull();
     } finally {
       process.env.PATH = path;
     }

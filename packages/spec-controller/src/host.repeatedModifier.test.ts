@@ -9,7 +9,7 @@ const givenTwice = (flag: string): string =>
   `${APP_MESSAGES[AppMessage.GivenTwice](flag, HOST_SCOPE)}\n${APP_MESSAGES[AppMessage.SeeFlags](HOST_SCOPE)}`;
 
 describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
-  for (const modifier of cliRegistry.global.map((flag) => flag.name)) {
+  for (const { name: modifier } of cliRegistry.global) {
     it(`refuses ${modifier} given twice, equal values and all, naming it at the host's scope, and takes no command`, () => {
       expect(parseHostInvocation([modifier, "a", modifier, "a", "balance"])).toEqual({
         commandArgs: [],

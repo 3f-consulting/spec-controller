@@ -27,19 +27,25 @@ function headedOneAndTwo(): string {
   return repo;
 }
 
-const WHERE: Record<string, (repo: string) => void> = {
-  "no file mentions ZZZ": () => undefined,
-  "a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004": (repo) => {
-    writeInto(repo, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-004"]));
-    commitAll(repo, "a test fixture");
-  },
-  "a feature file headed ZZZ was deleted by a later commit": (repo) => {
-    writeInto(repo, "features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-009"]));
-    commitAll(repo, "a feature that did not last");
-    git(repo, ["rm", "-q", "features/zzz.feature"]);
-    git(repo, ["commit", "-q", "-m", "retire the feature"]);
-  },
-};
+function mentionNothing(): void {}
+
+function addAFixtureHeadedZzz(repo: string): void {
+  writeInto(repo, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-004"]));
+  commitAll(repo, "a test fixture");
+}
+
+function addThenDeleteAFeatureHeadedZzz(repo: string): void {
+  writeInto(repo, "features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-009"]));
+  commitAll(repo, "a feature that did not last");
+  git(repo, ["rm", "-q", "features/zzz.feature"]);
+  git(repo, ["commit", "-q", "-m", "retire the feature"]);
+}
+
+const WHERE: readonly (readonly [where: string, arrange: (repo: string) => void])[] = [
+  ["no file mentions ZZZ", mentionNothing],
+  ["a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004", addAFixtureHeadedZzz],
+  ["a feature file headed ZZZ was deleted by a later commit", addThenDeleteAFeatureHeadedZzz],
+];
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -51,9 +57,9 @@ afterAll(() => {
 });
 
 describe("[SCN-ALC-010] a part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else", () => {
-  it.each(Object.keys(WHERE))("refuses ZZZ at the usage status, listing ONE and TWO alone, where %s", (where) => {
+  it.each(WHERE)("refuses ZZZ at the usage status, listing ONE and TWO alone, where %s", (_where, arrange) => {
     const repo = headedOneAndTwo();
-    WHERE[where]?.(repo);
+    arrange(repo);
 
     const answered = allocateIn(repo, ["ZZZ"]);
 

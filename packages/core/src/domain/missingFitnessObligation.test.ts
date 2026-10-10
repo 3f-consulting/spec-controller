@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarios.js";
 
-const CORPUS = [
+const CORPUS_LINES = [
   "@HCV",
   "Feature: a half-declared target's fitness corpus",
   "  Rule: the tree stays inside its thresholds",
@@ -10,7 +10,7 @@ const CORPUS = [
   "    Scenario: the codebase stays under its complexity threshold",
   "    @fitness @SCN-HCV-002",
   "    Scenario: the tree stays above its mutation floor",
-].join("\n");
+];
 
 const creditFor = (scnId: string) => ({
   qualityCheck: "fitness" as const,
@@ -23,7 +23,7 @@ const creditFor = (scnId: string) => ({
 
 describe("[SCN-LNT-020] a @fitness scenario nothing cites reconciles missing, and its row is out of balance", () => {
   it("answers the cited scenario and leaves the uncited one missing", () => {
-    const ledger = reconcile(parseScenarios(CORPUS), [creditFor("SCN-HCV-001")]);
+    const ledger = reconcile(parseScenarios(CORPUS_LINES.join("\n")), [creditFor("SCN-HCV-001")]);
     const rowOf = (scnId: string) =>
       ledger.scenarioReconciliations.find((row) => row.scnId === scnId);
 
@@ -44,7 +44,7 @@ describe("[SCN-LNT-020] a @fitness scenario nothing cites reconciles missing, an
   });
 
   it("leaves a corpus nothing cites at all entirely missing, rather than entirely silent", () => {
-    const ledger = reconcile(parseScenarios(CORPUS), []);
+    const ledger = reconcile(parseScenarios(CORPUS_LINES.join("\n")), []);
     expect(
       ledger.scenarioReconciliations.map((row) => [
         row.scnId,

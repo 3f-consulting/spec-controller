@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveRunners } from "./targetManifest.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
@@ -18,15 +18,18 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
       cucumber: "cucumber-js",
     },
   };
-  const usgCi = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - run: pnpm lint:foo",
-    "      - run: pnpm lint:bar",
-    "      - run: pnpm test",
-    "      - run: pnpm cucumber",
-  ].join("\n");
+  let usgCi: string;
+  beforeEach(() => {
+    usgCi = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - run: pnpm lint:foo",
+      "      - run: pnpm lint:bar",
+      "      - run: pnpm test",
+      "      - run: pnpm cucumber",
+    ].join("\n");
+  });
 
   it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
     expect(runningStaticChecks([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
@@ -73,14 +76,17 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
     specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
   };
   const pkg2: PackageJsonScripts = { scripts: manifest.scripts };
-  const ci2 = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - run: pnpm lint:foo",
-    "      - run: pnpm test",
-    "      - run: pnpm cucumber",
-  ].join("\n");
+  let ci2: string;
+  beforeEach(() => {
+    ci2 = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - run: pnpm lint:foo",
+      "      - run: pnpm test",
+      "      - run: pnpm cucumber",
+    ].join("\n");
+  });
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
     const { tiers } = resolveRunners(manifest);
@@ -117,14 +123,17 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
     specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
   };
   const unprefixedPkg: PackageJsonScripts = { scripts: unprefixedManifest.scripts };
-  const unprefixedCi = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - run: pnpm domain-purity",
-    "      - run: pnpm test",
-    "      - run: pnpm cucumber",
-  ].join("\n");
+  let unprefixedCi: string;
+  beforeEach(() => {
+    unprefixedCi = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - run: pnpm domain-purity",
+      "      - run: pnpm test",
+      "      - run: pnpm cucumber",
+    ].join("\n");
+  });
   const membership = SUITE_RUNNERS;
 
   it("emits a FitnessEvidenceObservation for a script no convention of ours reaches", () => {
@@ -190,13 +199,19 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
   const pkg: PackageJsonScripts = {
     scripts: { "lint:sweep": "echo sweep", test: "vitest run" },
   };
-  const ci = ["jobs:", "  ci:", "    steps:", "      - run: pnpm test"].join("\n");
-  const nightly = [
-    "jobs:",
-    "  nightly:",
-    "    steps:",
-    "      - run: pnpm lint:sweep",
-  ].join("\n");
+  let ci: string;
+  beforeEach(() => {
+    ci = ["jobs:", "  ci:", "    steps:", "      - run: pnpm test"].join("\n");
+  });
+  let nightly: string;
+  beforeEach(() => {
+    nightly = [
+      "jobs:",
+      "  nightly:",
+      "    steps:",
+      "      - run: pnpm lint:sweep",
+    ].join("\n");
+  });
 
   it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
     expect(runningStaticChecks([ci, nightly], pkg, SUITE_RUNNERS)).toEqual([
@@ -224,16 +239,19 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   const pkg: PackageJsonScripts = {
     scripts: { "domain-purity": "echo domain-purity", test: "vitest run" },
   };
-  const ci = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - uses: github/codeql-action/analyze@v3",
-    "      - name: Dependency review",
-    "        uses: actions/dependency-review-action@v4",
-    "      - run: pnpm domain-purity",
-    "      - run: pnpm test",
-  ].join("\n");
+  let ci: string;
+  beforeEach(() => {
+    ci = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - uses: github/codeql-action/analyze@v3",
+      "      - name: Dependency review",
+      "        uses: actions/dependency-review-action@v4",
+      "      - run: pnpm domain-purity",
+      "      - run: pnpm test",
+    ].join("\n");
+  });
 
   it("observes an action step, named by the action it uses", () => {
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual([
@@ -301,16 +319,19 @@ describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is n
       cucumber: "cucumber-js",
     },
   };
-  const ci = [
-    "jobs:",
-    "  ci:",
-    "    steps:",
-    "      - run: |",
-    "          pnpm check:format",
-    "          pnpm check:types",
-    "      - run: pnpm test",
-    "      - run: pnpm cucumber",
-  ].join("\n");
+  let ci: string;
+  beforeEach(() => {
+    ci = [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      "      - run: |",
+      "          pnpm check:format",
+      "          pnpm check:types",
+      "      - run: pnpm test",
+      "      - run: pnpm cucumber",
+    ].join("\n");
+  });
 
   it("names the step by the first script it invokes, not the second", () => {
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS)).toEqual([

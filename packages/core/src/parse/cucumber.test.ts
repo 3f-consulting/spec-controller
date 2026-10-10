@@ -266,11 +266,11 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     ]);
   });
 
-  it.each<[string, { keyword?: string; name?: string }, string]>([
-    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
-    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
-    ["as a step, when it has neither keyword nor text", {}, CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
-  ])("names the ambiguous step %s", (_case, step, message) => {
+  it.each<[string, { keyword?: string; name?: string }, () => string]>([
+    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
+    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
+    ["as a step, when it has neither keyword nor text", {}, () => CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
+  ])("names the ambiguous step %s", (_case, step, messageOf) => {
     const report: CucumberJsonReport = [
       {
         uri: "features/ldg019.feature",
@@ -278,7 +278,7 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
       },
     ];
 
-    expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([{ broken: true, message }]);
+    expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([{ broken: true, message: messageOf() }]);
   });
 
   it("emits the broken observation for an UNCITED ambiguous scenario too — scnId null, still broken", () => {

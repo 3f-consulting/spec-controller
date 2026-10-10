@@ -36,15 +36,19 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-const OUT_OF_BALANCE = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
 const TARGET = "demo-store";
 const RUN_ID = "r1";
 
-const BALANCE_ARGS = [
-  "--features", join(OUT_OF_BALANCE, "features"),
-  "--vitest", join(OUT_OF_BALANCE, "vitest.json"),
-  "--target", TARGET,
-];
+let balanceArgs: string[];
+
+beforeEach(() => {
+  const outOfBalance = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
+  balanceArgs = [
+    "--features", join(outOfBalance, "features"),
+    "--vitest", join(outOfBalance, "vitest.json"),
+    "--target", TARGET,
+  ];
+});
 
 function ranIn(hostArgvAt: (storeRoot: string) => string[], inspect: (answered: Answered) => void): void {
   const cwd = mkdtempSync(join(tmpdir(), "main-stored-run-"));
@@ -65,8 +69,8 @@ function ranIn(hostArgvAt: (storeRoot: string) => string[], inspect: (answered: 
   }
 }
 
-const STORED = (storeRoot: string): string[] => ["--store", storeRoot, "--run-id", RUN_ID, "balance", ...BALANCE_ARGS];
-const UNSTORED = (): string[] => ["balance", ...BALANCE_ARGS];
+const STORED = (storeRoot: string): string[] => ["--store", storeRoot, "--run-id", RUN_ID, "balance", ...balanceArgs];
+const UNSTORED = (): string[] => ["balance", ...balanceArgs];
 
 describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
   describe("balance under the store modifier and the run-name modifier", () => {

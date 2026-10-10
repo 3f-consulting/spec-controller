@@ -28,7 +28,7 @@ function reportLines(runners?: Record<string, string | null>): string[] {
   return renderMarkdown(reconcile(runners), ctx).split("\n");
 }
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const accountLines = (lines: readonly string[]): string[] => lines.filter((line) => line.startsWith("- "));
 

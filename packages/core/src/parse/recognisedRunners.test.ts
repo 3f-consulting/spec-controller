@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
 import { resolveRunners } from "./targetManifest.js";
 
@@ -6,11 +6,14 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
   const ciWith = (...steps: string[]): string =>
     ["jobs:", "  ci:", "    steps:", ...steps].join("\n");
 
-  const aliasCi = ciWith(
-    "      - run: pnpm install --frozen-lockfile",
-    "      - name: Unit tests",
-    "        run: pnpm test"
-  );
+  let aliasCi: string;
+  beforeEach(() => {
+    aliasCi = ciWith(
+      "      - run: pnpm install --frozen-lockfile",
+      "      - name: Unit tests",
+      "        run: pnpm test"
+    );
+  });
 
   it.each([
     ["recognises the runner a step reaches through the manifest script it invokes", "vitest"],

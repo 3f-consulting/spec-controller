@@ -7,7 +7,7 @@ import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "..
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
-const section = sectionUnder(heading);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 describe("[SCN-USG-018] candidates, runners, the reconciler and the excluded sum to the steps read", () => {
   it("tables each count the assembler computed under its header, then states that every step read is accounted for", () => {
