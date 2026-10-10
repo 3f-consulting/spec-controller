@@ -155,9 +155,9 @@ and their teeth are their own exit codes, unchanged. What a local run does not h
 view of them: a fitness row's local `satisfied` is a view of the pipeline's text, and the one place
 the view of a run is real is CI.
 
-## The report's `### Static checks` line, and which of its zeros is vacuous
+## The report's `### Fitness functions` line, and which of its zeros is vacuous
 
-**`0 uncited static check(s)` has two readings and they are not the same claim.** Over a
+**`0 uncited fitness function(s)` has two readings and they are not the same claim.** Over a
 **populated** discoverable set it means every discovered check cites a scenario — a zero the axis
 reached. Over an **empty** set it means nothing was discoverable — a zero it inherited. A capability
 exercised by nothing and reporting green is the fault this product is named for, so read the
