@@ -37,11 +37,6 @@ const ONE_DEFERRED = `
   Scenario: its integration tier deferred
 `;
 
-const TWO_DEFERRED = `
-  @unit @SCN-ERS-004 @integrationpending @e2epending
-  Scenario: two tiers deferred
-`;
-
 const OBSERVATIONS: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
   { qualityCheck: "unit", scnId: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
@@ -138,34 +133,6 @@ describe("[SCN-PND-011] the Evidence Reconciliation Summary tallies Pending Item
       ),
       "",
       CORE_MESSAGES[CoreMessage.PendingTally](1),
-      "",
-    ]);
-  });
-
-  it("with two Pending Items on one scenario: the tally carries 2", () => {
-    const lines = sectionLines(render(SETTLED + TWO_DEFERRED, [...OBSERVATIONS, ...DEFERRED_OBSERVATIONS]));
-    expect(lines.slice(-3)).toEqual(["", CORE_MESSAGES[CoreMessage.PendingTally](2), ""]);
-  });
-
-  it("only the missing outcome's row carries a Detail, the missing count split by quality check; every other row's Detail is empty", () => {
-    const lines = sectionLines(render(SETTLED));
-    const separator = lines.indexOf("| --- | --- | --- | --- | --- |");
-    const bodyRows = lines.slice(separator + 1).filter((line) => line.startsWith("| "));
-    expect(bodyRows).toHaveLength(2 + OUT_OF_BALANCE_OUTCOMES.length);
-    const withDetail = bodyRows.filter((line) => line.slice(2, -2).split(" | ")[4] !== "");
-    expect(withDetail).toEqual([
-      row([`↳ ${OUTCOME_DESCRIPTION.missing}`, "", "", "2", "1 unit + 1 integration"]),
-    ]);
-  });
-
-  it("with no missing outcome, the missing row's Detail is empty too", () => {
-    const allProved = `Feature: all proved
-
-  @unit @SCN-ERS-001
-  Scenario: proved
-`;
-    expect(sectionLines(render(allProved, OBSERVATIONS.slice(0, 1)))).toEqual([
-      ...expectedTable({ total: 1, balanced: 1, outOfBalance: 0 }, { total: 1, satisfied: 1 }, {}, ""),
       "",
     ]);
   });

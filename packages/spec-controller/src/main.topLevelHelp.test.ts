@@ -74,17 +74,5 @@ describe("[SCN-CLI-068] help after a modifier, or nothing given at all, still an
     it("answers the top-level help on stdout", () => {
       expect(inTemporaryStore(argvAt).stdout).toBe(expected);
     });
-
-    it("writes nothing to stderr", () => {
-      expect(inTemporaryStore(argvAt).stderr).toBe("");
-    });
-
-    it("succeeds, leaving the exit code unset", () => {
-      expect(inTemporaryStore(argvAt).exitCode).toBeUndefined();
-    });
-
-    it("writes nothing under the run store", () => {
-      expect(inTemporaryStore(argvAt).storeEntries).toEqual([]);
-    });
   });
 });

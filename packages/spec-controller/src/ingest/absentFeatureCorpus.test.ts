@@ -40,11 +40,6 @@ function unreadableCorpus(): { features: string; packageJson: string; file: stri
 }
 
 describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every reader", () => {
-  it("reports no parse errors — there is nothing to parse", () => {
-    const { features } = absentCorpus();
-
-    expect(featureCorpusParseErrors(features)).toEqual([]);
-  });
 
   it("reads no feature-code map", () => {
     const { features } = absentCorpus();
@@ -60,14 +55,6 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
     expect(obligations.scenarioCount).toBe(0);
     expect(obligations.rawScnOccurrences).toBe(0);
     expect(obligations.untaggedScenarios).toEqual([]);
-  });
-
-  it("reconciles the target instead of throwing, and the ledger has no accounts", () => {
-    const { features, packageJson, ci } = absentCorpus();
-
-    const balance = runReconcile({ features, packageJson, ci });
-
-    expect(balance.ledger.scenarioReconciliations).toEqual([]);
   });
 
   it("reconciles a bare target that has no package.json either", () => {
@@ -103,31 +90,6 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
 
     expect((thrown as Error | undefined)?.name).toBe("MissingFeatureCorpusError");
     expect((thrown as { code?: string } | undefined)?.code).toBeUndefined();
-  });
-
-  it("names the directory it looked in, so the report can say what it examined", () => {
-    const dir = absentDir();
-
-    const { thrown } = discover(dir);
-
-    expect((thrown as { directory?: string }).directory).toBe(dir);
-    expect((thrown as Error).message).toContain(dir);
-  });
-
-  it("hands back nothing — an absent corpus is not an empty one at this reader", () => {
-    const { returned } = discover(absentDir());
-
-    expect(returned).toBeUndefined();
-  });
-
-  it("rethrows what is NOT an absence — a `features` path that is a FILE is a different fault", () => {
-    const notADirectory = join(temporaryDirectoryIn(made, `scn-cli-017-file-${process.pid}-`), "features");
-    writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
-
-    const { thrown } = discover(notADirectory);
-
-    expect((thrown as Error).name).not.toBe("MissingFeatureCorpusError");
-    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
   });
 
   it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {

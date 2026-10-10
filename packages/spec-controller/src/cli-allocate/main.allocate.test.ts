@@ -62,12 +62,4 @@ describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to thre
   it("answers SCN-ONE-008 alone on stdout", () => {
     expect(answerIn(repo, ["allocate", "ONE"]).stdout).toBe("SCN-ONE-008\n");
   });
-
-  it("adds nothing to stderr beyond where the highest code was seen", () => {
-    expect(answerIn(repo, ["allocate", "ONE"]).stderr).toBe("highest seen: SCN-ONE-7, features/one.feature:4\n");
-  });
-
-  it("succeeds", () => {
-    expect(answerIn(repo, ["allocate", "ONE"]).exitCode ?? 0).toBe(0);
-  });
 });

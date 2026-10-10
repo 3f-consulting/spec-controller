@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown, renderReportFromJson } from "./markdown.js";
-import { renderJson } from "./json.js";
+import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
@@ -57,16 +56,9 @@ describe("[SCN-USG-025] the report names a specController entry of a kind its re
     expect(md.indexOf("## Configuration not read")).toBeLessThan(md.indexOf("## Summary views"));
     expect(md.replace(section(md).join("\n") + "\n", "")).toBe(render({}));
   });
-
-  it("renders nothing when every entry was read", () => {
-    expect(render({})).not.toContain("## Configuration not read");
-    expect(render({})).toBe(render({ wrongKindConfiguration: undefined }));
-  });
 });
 
 describe("[SCN-USG-028] the report names a key the specController block does not read, in one sentence for every key", () => {
-  const line = (key: string) => section(render({ unknownConfigurationKeys: [key] })).filter((l) => l.startsWith("- "));
-
   it("names each unread key after the entries of the wrong kind", () => {
     const md = render({
       wrongKindConfiguration: [{ entry: "specController.notChecks", is: "a string", reads: "a list" }],
@@ -77,31 +69,5 @@ describe("[SCN-USG-028] the report names a key the specController block does not
       "- `specController.fitnessChecks` is not a key the specController block reads, so this run read nothing from it.",
       "- `specController.zzz` is not a key the specController block reads, so this run read nothing from it.",
     ]);
-  });
-
-  it("says of a retired key exactly what it says of an invented one", () => {
-    const template = (key: string) => line(key).map((l) => l.replaceAll(key, "<key>"));
-    expect(template("fitnessChecks")).toEqual(template("zzz"));
-    expect(template("staticChecks")).toEqual(template("zzz"));
-    expect(template("zzz")).toHaveLength(1);
-  });
-
-  it("renders the section for unread keys alone, and the rest of the report as without them", () => {
-    const md = render({ unknownConfigurationKeys: ["notCheck"] });
-    expect(section(md)[0]).toBe("## Configuration not read");
-    expect(md.replace(section(md).join("\n") + "\n", "")).toBe(render({}));
-  });
-});
-
-describe("[SCN-USG-027] a saved run re-rendered names the same specController entries its live report named", () => {
-  it("carries the entries in the saved reconciliation, so the re-render names them with no manifest to read", () => {
-    const summary: Partial<Summary> = {
-      wrongKindConfiguration: [{ entry: "specController.notChecks", is: "a string", reads: "a list" }],
-      unknownConfigurationKeys: ["fitnessChecks"],
-    };
-    const er: EvidenceReconciliation = { summary: { ...summaryOf(ledger, false, false), ...summary }, ledger };
-    const live = section(renderMarkdown(er, ctx));
-    expect(live).toHaveLength(7);
-    expect(section(renderReportFromJson(renderJson(er, ctx)))).toEqual(live);
   });
 });

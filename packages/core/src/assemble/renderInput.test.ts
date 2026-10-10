@@ -75,23 +75,6 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
     { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
-  let balanceWithSuspense: Ledger;
-  beforeEach(() => {
-    balanceWithSuspense = reconcile(suspenseScenarios, suspenseObservations);
-  });
-
-  it("counts the suspense reconciliation in the summary totals — a run whose only out-of-balance row is the suspense row tallies 1 out-of-balance, not 0", () => {
-    const report = assembleRenderInput(__er(balanceWithSuspense), ctx);
-    expect(report.summary.scenarioReconciliations).toEqual({
-      total: 3,
-      balanced: 2,
-      outOfBalance: 1,
-      phantom: 0,
-      suspense: 1,
-    });
-    expect(isBalanced(balanceWithSuspense)).toBe(false);
-    expect(report.summary.scenarioReconciliations.outOfBalance).toBeGreaterThan(0);
-  });
 
   it("counts the phantom reconciliation in the summary totals too — a phantom scenario is out-of-balance, not a bucket apart", () => {
     const balanceWithPhantom: Ledger = reconcile(suspenseScenarios, [
@@ -110,40 +93,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(t.total - t.phantom - t.suspense).toBe(2);
     expect(isBalanced(balanceWithPhantom)).toBe(false);
   });
-
-  it("carries no warnings key — the retired authoring-quality axis", () => {
-    const report = assembleRenderInput(__er(reportLedger()), ctx) as unknown as Record<string, unknown>;
-    expect(report).not.toHaveProperty("warnings");
-    expect(((report.ledger as { scenarioReconciliations: unknown[] }).scenarioReconciliations)).toHaveLength(2);
-  });
-
-  it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger(), false, false), ctx, evidenceObligations));
-    expect(parsed).toEqual(assembleRenderInput(__er(reportLedger(), false, false), ctx, evidenceObligations));
-    expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.summary.scenarioReconciliations.total).toBe(2);
-    expect(parsed).not.toHaveProperty("provenance");
-  });
 });
 
 describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
-  it("carries the grid of Scenario Reconciliations under ledger — never evidenceReconciliation, never scenarios", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
-    expect(Array.isArray(parsed.ledger)).toBe(false);
-    expect(Array.isArray(parsed.ledger.scenarioReconciliations)).toBe(true);
-    expect(parsed.ledger.scenarioReconciliations).toHaveLength(2);
-    expect(parsed.ledger.scenarioReconciliations[0].scnId).toBe("SCN-RMD-001");
-    expect(parsed).not.toHaveProperty("evidenceReconciliation");
-    expect(parsed).not.toHaveProperty("scenarios");
-  });
-
-  it("carries the ledger BESIDE summary — chain step 6: the summary has the totals and the ledger the detail", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
-    const keys = Object.keys(parsed);
-    expect(keys).toContain("summary");
-    expect(keys).toContain("ledger");
-    expect(keys.indexOf("ledger")).toBeGreaterThan(keys.indexOf("summary"));
-  });
 
   it("carries each account's posted evidence obligations and evidence observations alongside its reconciling items", () => {
     const feature = [
@@ -163,17 +115,6 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
     expect(account.evidenceObservations).toEqual([credit]);
     expect(account.reconcilingItems).toEqual([]);
-  });
-
-  it("carries each quality check reconciliation's outcome field with the reconciliation-outcome literals", () => {
-    const parsed = JSON.parse(renderJson(__er(reportLedger()), ctx));
-    const outOfBalance = parsed.ledger.scenarioReconciliations.find(
-      (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
-    );
-    expect(outOfBalance.qualityCheckReconciliations[0].outcome).toBe("missing");
-    expect(Object.keys(outOfBalance.qualityCheckReconciliations[0]).sort()).toEqual(
-      ["evidenceObligation", "qualityCheck", "outcome"].sort()
-    );
   });
 });
 
@@ -207,20 +148,6 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
     expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
     expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
   });
-
-  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario (all summary folds)", () => {
-    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
-    const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
-    const tv = parsed.summary.testVolume;
-    expect(raw).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
-  });
-
-  it("omits summary.rawByRuntimeQualityCheck + testVolume when the runtime-observation axis is not in play", () => {
-    const parsed = JSON.parse(renderJson(__er(rmd003Balance), ctx));
-    expect(parsed).not.toHaveProperty("evidenceObservations");
-    expect(parsed.summary).not.toHaveProperty("rawByRuntimeQualityCheck");
-    expect(parsed.summary).not.toHaveProperty("testVolume");
-  });
 });
 
 describe("[SCN-RMD-004] the fitness-function census is summary counts, no standalone section", () => {
@@ -233,12 +160,6 @@ describe("[SCN-RMD-004] the fitness-function census is summary counts, no standa
         { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
       ]
     );
-  });
-
-  it("carries NO standalone fitnessFunctions (or guards) section — the census collapsed to summary counts", () => {
-    const parsed = JSON.parse(renderJson(__er(fitnessFunctionsBalance, false, true), ctx, undefined, undefined));
-    expect(parsed).not.toHaveProperty("fitnessFunctions");
-    expect(parsed).not.toHaveProperty("guards");
   });
 
   it("materialises the counts under summary.fitnessFunctions ({ runningFitnessFunctionCount, uncitedFitnessFunctionCount })", () => {

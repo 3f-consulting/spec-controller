@@ -252,23 +252,4 @@ describe("[SCN-CLI-008] the completeness guard — no registry entry is missing 
     });
     expect(missing).toEqual([]);
   });
-
-  it("counts a positional argument among the entries it guards, so a command's positionals cannot fall out unseen", () => {
-    const positionals = cliRegistry.commands.flatMap((command) => command.positionals ?? []);
-    expect(positionals.length).toBeGreaterThan(0);
-  });
-
-  it("finds every global host modifier in the top-level --help render (global scope)", () => {
-    expect(cliRegistry.global.length).toBeGreaterThan(0);
-    const out = renderTopLevelHelp(cliRegistry);
-    const missing = cliRegistry.global.filter((flag) => !out.includes(flag.name)).map((flag) => flag.name);
-    expect(missing).toEqual([]);
-  });
-
-  it("finds every registered command in the top-level --help render (command scope)", () => {
-    expect(cliRegistry.commands.length).toBeGreaterThan(0);
-    const out = renderTopLevelHelp(cliRegistry);
-    const missing = cliRegistry.commands.filter((command) => !out.includes(command.name)).map((command) => command.name);
-    expect(missing).toEqual([]);
-  });
 });

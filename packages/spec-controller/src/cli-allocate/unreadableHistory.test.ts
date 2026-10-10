@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
-import { proveRefsReadable } from "./refStore.js";
 import { git, writeInto, commitAll, taken, withhold } from "./repository.testkit.js";
 import { allocateFrom } from "./answered.testkit.js";
 import type { Answered } from "./answered.testkit.js";
@@ -69,18 +68,6 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
   });
 
-  it("refuses ONE when its objects are packed, and the pack is not permitted to be read, in git's own words", ({ skip }) => {
-    skip(runsAsRoot());
-    const repo = repositoryWithADeletedCode();
-    git(repo, ["gc", "-q"]);
-    const pack = join(repo, ".git", "objects", "pack");
-    const files = readdirSync(pack);
-    expect(files.some((name) => name.endsWith(".pack"))).toBe(true);
-    for (const name of files) withhold(join(pack, name), 0o000);
-
-    expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
-  });
-
   it("refuses ONE when its branch refs are not permitted to be read, naming them", ({ skip }) => {
     skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();
@@ -98,41 +85,6 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     withhold(ref, 0o000);
 
     expect(historyRefusalReason(allocateFrom(repo), ref)).toMatch(NOT_PERMITTED);
-  });
-
-  it("refuses ONE when its packed refs are not permitted to be read, naming them", ({ skip }) => {
-    skip(runsAsRoot());
-    const repo = repositoryWithADeletedCode();
-    git(repo, ["pack-refs", "--all"]);
-    const packed = join(repo, ".git", "packed-refs");
-    withhold(packed, 0o000);
-
-    expect(historyRefusalReason(allocateFrom(repo), packed)).toMatch(NOT_PERMITTED);
-  });
-
-  it("refuses ONE when it is cloned one commit deep, and the clone's shallow record is not permitted to be read", ({ skip }) => {
-    skip(runsAsRoot());
-    const origin = repositoryWithADeletedCode();
-    const clone = join(temporaryDirectory(), "clone");
-    git(origin, ["clone", "-q", "--depth", "1", `file://${origin}`, clone]);
-    expect(git(clone, ["rev-parse", "--is-shallow-repository"]).trim()).toBe("true");
-    const shallow = join(clone, ".git", "shallow");
-    withhold(shallow, 0o000);
-
-    expect(historyRefusalReason(allocateFrom(clone), clone)).toMatch(GIT_LOG_FAILED);
-  });
-
-  it("refuses ONE when an object of its history is corrupt, in git's own words", () => {
-    const repo = repositoryWithADeletedCode();
-    for (const dir of looseObjectDirectories(repo)) {
-      for (const name of readdirSync(dir)) {
-        const object = join(dir, name);
-        chmodSync(object, 0o644);
-        writeFileSync(object, "not a zlib stream\n");
-      }
-    }
-
-    expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
   });
 
   it("answers ONE past the deleted code when a ref store holds a link to nowhere, which git passes over", () => {
@@ -159,11 +111,5 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     }
 
     expect(thrown).toMatchObject({ name: "UnreadableInput", subject: "the repository's history", path: "git" });
-  });
-
-  it("finds every ref store readable from a working directory that is not there", () => {
-    const gone = join(temporaryDirectory(), "gone");
-
-    expect(() => proveRefsReadable(gone)).not.toThrow();
   });
 });

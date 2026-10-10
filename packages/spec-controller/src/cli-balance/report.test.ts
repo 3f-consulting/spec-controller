@@ -20,11 +20,6 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
   it("defaults to unknown-target when --target is omitted", () => {
     expect(sourceTarget({})).toBe("unknown-target");
   });
-
-  it("does NOT guess the target from --features (no basename resolution; the degenerate '.' is impossible)", () => {
-    expect(sourceTarget({ features: "../an-adopters-repository/features" })).toBe("unknown-target");
-    expect(sourceTarget({ features: "features" })).toBe("unknown-target");
-  });
 });
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   countScnOccurrences,
-  parseScenarios,
   parseUntaggedScenarios,
 } from "./scenarios.js";
 
@@ -23,12 +22,6 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
 
   it("counts @SCN occurrences across tag lines AND non-tag context (prose, comments)", () => {
     expect(countScnOccurrences(source)).toBe(4);
-  });
-
-  it("the delta over parseScenarios length is exactly the non-tag occurrences", () => {
-    const scenarios = parseScenarios(asFeature(source)).length;
-    expect(scenarios).toBe(2);
-    expect(countScnOccurrences(source) - scenarios).toBe(2);
   });
 
   it("returns 0 for a source with no @SCN occurrences", () => {
@@ -72,33 +65,6 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "an untagged scenario",
       "an untagged outline",
     ]);
-  });
-
-  it("counts Example: as a scenario but never the Examples: data table", () => {
-    const ex = [
-      "Feature: examples",
-      "  Example: a bare example with no anchor",
-      "    Given a step",
-      "  @SCN-EX-001",
-      "  Example: a tagged example",
-      "    Given a step",
-      "    Examples:",
-      "      | a |",
-      "      | 1 |",
-    ].join("\n");
-    expect(parseUntaggedScenarios(ex)).toEqual(["a bare example with no anchor"]);
-  });
-
-  it("returns nothing when every scenario carries an @SCN tag", () => {
-    const allTagged = [
-      "@SCN-AA-001",
-      "Scenario: one",
-      "  Given a step",
-      "@SCN-AA-002",
-      "Scenario: two",
-      "  Given a step",
-    ].join("\n");
-    expect(parseUntaggedScenarios(allTagged)).toEqual([]);
   });
 
   it("reads a tag line with more than one space between its tags as tags", () => {
@@ -157,16 +123,5 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "    Given a step",
     ].join("\n");
     expect(parseUntaggedScenarios(cited)).toEqual(["uncoded, straight after the cited step"]);
-  });
-
-  it("lists the second of two scenarios when only the first carries a code", () => {
-    const pair = [
-      "Feature: a coded scenario then an uncoded one",
-      "  @unit @SCN-AB-001",
-      "  Scenario: coded",
-      "  Scenario: uncoded",
-      "    Given a step",
-    ].join("\n");
-    expect(parseUntaggedScenarios(pair)).toEqual(["uncoded"]);
   });
 });

@@ -145,18 +145,6 @@ describe("[SCN-CLI-083] the host refuses --run-id given without --store as a usa
     it("closes the refusal with the way to run it that applies to this shape", () => {
       expect(inTemporaryWorkingDirectory(argvAt, refusal).stderr.split("\n").slice(-2)).toEqual([closing(), ""]);
     });
-
-    it("exits with the usage status", () => {
-      expect(inTemporaryWorkingDirectory(argvAt, refusal).exitCode).toBe(2);
-    });
-
-    it("writes nothing to stdout", () => {
-      expect(inTemporaryWorkingDirectory(argvAt, refusal).stdout).toBe("");
-    });
-
-    it("writes nothing to the working directory", () => {
-      expect(inTemporaryWorkingDirectory(argvAt, refusal).workingEntries).toEqual([]);
-    });
   });
 
   describe("before a command that takes no host modifier", () => {

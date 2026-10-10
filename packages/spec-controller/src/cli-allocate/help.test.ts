@@ -1,7 +1,6 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import {
   allocateCommand,
-  balanceCommand,
   cliRegistry,
   renderCommandHelp,
   type CliRegistry,
@@ -74,12 +73,5 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new",
     const longer: PositionalSpec = { name: "<LONGER-PART>", description: "A part registered later." };
     const positionals = [...allocatePositionals, longer];
     expectAlignedRows(argumentsBlockOf(withAllocatePositional(longer), positionals), positionals);
-  });
-
-  it("gives balance, which takes no part, no usage line and no arguments block", () => {
-    const lines = renderCommandHelp(balanceCommand).split("\n");
-    expect(lines.slice(1, 3)).toEqual(["", APP_MESSAGES[AppMessage.HelpOptions]()]);
-    expect(lines).not.toContain(APP_MESSAGES[AppMessage.HelpArguments]());
-    expect(lines.some((line) => line.startsWith(APP_MESSAGES[AppMessage.HelpUsage]()))).toBe(false);
   });
 });

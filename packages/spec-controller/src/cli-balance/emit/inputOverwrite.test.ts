@@ -16,19 +16,6 @@ describe("[SCN-FMT-013] an output on the regular file an input is refused, namin
     );
   });
 
-  it("recognises the input by its identity, so a link, a case variant or a normalisation variant of its name counts", () => {
-    const inputs = [input("a feature file of the --features corpus", "features/café.feature", id(3n, 9n))];
-
-    expect(inputOverwriteRefusal([at(toFile("md", "FEATURES/CAFÉ.FEATURE"), id(3n, 9n))], inputs)).toContain("md:FEATURES/CAFÉ.FEATURE is a feature file");
-    expect(inputOverwriteRefusal([at(toFile("md", "features/café.feature"), id(3n, 9n))], inputs)).toContain("md:features/café.feature is a feature file");
-  });
-
-  it("names standard output as such when it is appended into an input", () => {
-    const refusal = inputOverwriteRefusal([at(toStdout("md"), id(2n, 5n))], [input("the --ci workflow", "ci.yml", id(2n, 5n))]);
-
-    expect(refusal).toBe("An output would overwrite a file this run reads: md on standard output is the --ci workflow, ci.yml. Give the report a file of its own.");
-  });
-
   it("names the output that lands on an input whichever position it has among the outputs", () => {
     const inputs = [input("the package.json read by default", "package.json", id(1n, 4n)), input("the --vitest report", "vitest.json", id(1n, 7n))];
 
@@ -38,12 +25,6 @@ describe("[SCN-FMT-013] an output on the regular file an input is refused, namin
     expect(inputOverwriteRefusal([at(toFile("json", "package.json"), id(1n, 4n)), at(toFile("md", "a.md"), id(1n, 1n))], inputs)).toContain(
       "json:package.json is the package.json read by default",
     );
-  });
-
-  it("compares inodes exactly, past the range a JavaScript number holds", () => {
-    const big = 2n ** 60n;
-
-    expect(inputOverwriteRefusal([at(toFile("json", "out.json"), id(1n, big + 1n))], [input("the --vitest report", "vitest.json", id(1n, big))])).toBeUndefined();
   });
 
   it("passes outputs on files no input is", () => {

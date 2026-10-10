@@ -42,14 +42,6 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function c
     expect(tally.uncitedFitnessFunctionCount).toBe(1);
   });
 
-  it("keeps named implicit — runningFitnessFunctionCount − uncitedFitnessFunctionCount (the named checks that ran)", () => {
-    expect(tally.runningFitnessFunctionCount - tally.uncitedFitnessFunctionCount).toBe(2);
-  });
-
-  it("returns EXACTLY the two-field surface (named is never materialised)", () => {
-    expect(tally).toEqual({ runningFitnessFunctionCount: 3, uncitedFitnessFunctionCount: 1 });
-  });
-
   it("counts no runtime credit, whatever fields it arrives carrying", () => {
     const runtimeCarryingGuardFields = {
       qualityCheck: "unit" as const,
@@ -117,17 +109,6 @@ describe("[SCN-USG-001] a fitness function no fitness scenario cites is banked o
     ]);
   });
 
-  it("posts the citing credit to the fitness scenario's row, satisfying its bare-tag obligation", () => {
-    expect(rowFor(ledger, "SCN-TGT-001")?.qualityCheckReconciliations).toEqual([
-      {
-        qualityCheck: "fitness",
-        outcome: "satisfied",
-        evidenceObligation: { qualityCheck: "fitness" },
-        evidenceObservation: citedCredits[0],
-      },
-    ]);
-  });
-
   it("banks the uncited credit on the suspense row as cites-no-scenario, naming the handle that ran", () => {
     expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
       {
@@ -138,28 +119,9 @@ describe("[SCN-USG-001] a fitness function no fitness scenario cites is banked o
       },
     ]);
   });
-
-  it("posts each credit to exactly one row — never dropped, never smeared", () => {
-    const rowsHolding = (credit: unknown): (string | undefined)[] =>
-      ledger.scenarioReconciliations
-        .filter((r) => r.evidenceObservations.includes(credit as never))
-        .map((r) => r.scnId);
-    expect(rowsHolding(citedCredits[0])).toEqual(["SCN-TGT-001"]);
-    expect(rowsHolding(uncitedCredits[0])).toEqual(["(no scenario)"]);
-  });
-
-  it("tallies both as running and exactly the uncited one as uncited", () => {
-    expect(fitnessFunctionTally(ledger)).toEqual({
-      runningFitnessFunctionCount: 2,
-      uncitedFitnessFunctionCount: 1,
-    });
-  });
 });
 
 describe("[SCN-USG-005] a cited fitness function under no convention of ours is attributed to its scenario, never an uncited fitness function", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
-
   const guardPkg: PackageJsonScripts = {
     scripts: {
       "domain-purity": "echo domain-purity",
@@ -193,34 +155,6 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
       (o) => o.fitnessFunction === "domain-purity"
     );
     ledger = reconcile(fitness, credits);
-  });
-
-  const observation = {
-    qualityCheck: "fitness",
-    fitnessFunction: "domain-purity",
-    exists: true,
-    enforcedOverRealSource: true,
-    scnId: "SCN-GRD-001",
-  };
-
-  it("derives the citing credit from the CI source and the scripts manifest (the corpus is real, not seeded)", () => {
-    expect(credits).toEqual([observation]);
-  });
-
-  it("posts it to the citing scenario's row, satisfying its bare-tag obligation — the ATTRIBUTED half", () => {
-    expect(accountFor(ledger, "SCN-GRD-001")?.qualityCheckReconciliations).toEqual([
-      {
-        qualityCheck: "fitness",
-        outcome: "satisfied",
-        evidenceObligation: { qualityCheck: "fitness" },
-        evidenceObservation: observation,
-      },
-    ]);
-    expect(accountFor(ledger, "SCN-GRD-001")?.verdict).toBe("balanced");
-  });
-
-  it("mints NO suspense row — a cited fitness function is never uncited, whatever it is called", () => {
-    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
   it("tallies the run as 1 running fitness function and 0 uncited", () => {

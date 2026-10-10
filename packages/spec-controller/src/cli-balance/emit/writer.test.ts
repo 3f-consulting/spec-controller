@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, fstatSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, closeSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, closeSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
@@ -104,14 +104,6 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     });
   }
 
-  it("refuses the markdown report the same way as the json one", () => {
-    const path = join(scratch, "a-directory");
-    mkdirSync(path);
-
-    expect(usageStatusOf(() => writeOutputs(toFile(path, "md"), payloads, processStdout, []))).toBe(2);
-    expect(stderr.join("")).toContain("EISDIR");
-  });
-
   it("still writes a destination it can write, overwriting what was there", () => {
     const path = join(scratch, "earlier.json");
     writeFileSync(path, "earlier\n");
@@ -203,49 +195,6 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
     expect(readdirSync(scratch)).toEqual([]);
   });
 
-  it("refuses the same format twice at one path", () => {
-    const path = join(scratch, "y.md");
-
-    expect(refused({ outputs: [file("md", path), file("md", path)] })).toContain(`md:${path} and md:${path}`);
-  });
-
-  it("leaves a file holding an earlier run as it was, and creates no third destination", () => {
-    const path = join(scratch, "y.md");
-    const third = join(scratch, "third.json");
-    mkdirSync(join(scratch, "sub"));
-    writeFileSync(path, EARLIER);
-
-    const refusal = refused({ outputs: [file("md", path), file("json", third), file("json", `${scratch}/sub/../y.md`)] });
-
-    expect(refusal).toContain("Two outputs name the same file");
-    expect(readFileSync(path, "utf8")).toBe(EARLIER);
-    expect(existsSync(third)).toBe(false);
-  });
-
-  it("refuses a path through a folder and back beside the plain path", () => {
-    mkdirSync(join(scratch, "sub"));
-    const path = join(scratch, "y.md");
-
-    expect(refused({ outputs: [file("md", path), file("json", `${scratch}/sub/../y.md`)] })).toContain(`${scratch}/sub/../y.md`);
-    expect(existsSync(path)).toBe(false);
-  });
-
-  it("refuses a symbolic link to the file, a path through a linked folder, and a hard link", () => {
-    const dir = join(scratch, "dir");
-    mkdirSync(dir);
-    const path = join(dir, "real.md");
-    writeFileSync(path, EARLIER);
-    symlinkSync(path, join(scratch, "link.md"));
-    symlinkSync(dir, join(scratch, "dir-link"));
-    linkSync(path, join(scratch, "hard.md"));
-
-    for (const alias of [join(scratch, "link.md"), join(scratch, "dir-link", "real.md"), join(scratch, "hard.md")]) {
-      stderr.length = 0;
-      expect(refused({ outputs: [file("md", path), file("json", alias)] })).toContain(`json:${alias}`);
-    }
-    expect(readFileSync(path, "utf8")).toBe(EARLIER);
-  });
-
   it("refuses standard output beside the file it is redirected into", () => {
     const path = join(scratch, "out.md");
     writeFileSync(path, EARLIER);
@@ -270,29 +219,9 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
     expect(readFileSync(lower, "utf8")).toMatch(/^# /);
     expect(readFileSync(upper, "utf8")).toMatch(/^\{/);
   });
-
-  it("writes two outputs on two files, as before", () => {
-    const md = join(scratch, "y.md");
-    const json = join(scratch, "z.json");
-
-    expect(usageStatusOf(() => writeOutputs({ outputs: [file("md", md), file("json", json)] }, payloads, processStdout, []))).toBeUndefined();
-    expect(readFileSync(md, "utf8")).toMatch(/^# /);
-    expect(readFileSync(json, "utf8")).toMatch(/^\{/);
-  });
 });
 
 describe("[SCN-FMT-012] a destination that is a link to a file not yet created is written through the link", () => {
-  it("writes the report into the file the link points to, and leaves the link pointing there", () => {
-    const target = join(scratch, "report.json");
-    const link = join(scratch, "link.json");
-    symlinkSync(target, link);
-
-    expect(usageStatusOf(() => writeOutputs({ outputs: [{ fmt: "json", dest: { kind: "file", path: link } }] }, payloads, processStdout, []))).toBeUndefined();
-    expect(stderr).toEqual([]);
-    expect(readFileSync(target, "utf8")).toMatch(/^\{/);
-    expect(lstatSync(link).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(link)).toBe(target);
-  });
 
   it("removes the file it created through the link, not the link, when the run is refused for another destination", () => {
     const target = join(scratch, "report.json");

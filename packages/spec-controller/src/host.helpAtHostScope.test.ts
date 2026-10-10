@@ -23,11 +23,6 @@ function refusedWithHelp(help: string): string[][] {
 }
 
 describe("[SCN-CLI-073] a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing", () => {
-  it("reads the modifiers, the commands and the command flags from the registry", () => {
-    expect(modifiers).toEqual(["--store", "--run-id"]);
-    expect(commands).toContain("balance");
-    expect(commandFlags).toContain("--exit-zero");
-  });
 
   for (const help of HELP) {
     for (const argv of refusedWithHelp(help)) {

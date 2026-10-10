@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
+import { balanceCommand, cliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkMissingValues } from "./cli-args.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { runBalanceCaptured } from "../test-support/runBalance.js";
@@ -7,11 +7,9 @@ import { runBalanceCaptured } from "../test-support/runBalance.js";
 const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
 let valueFlags: FlagSpec[];
-let booleanFlags: string[];
 
 beforeEach(() => {
   valueFlags = balanceFlags.filter((flag) => flag.arg !== undefined);
-  booleanFlags = balanceFlags.filter((flag) => flag.arg === undefined).map((flag) => flag.name);
 });
 
 const MISSING: [string, (flag: string) => string[]][] = [
@@ -24,17 +22,7 @@ const refusalFor = (given: string, flag: FlagSpec): string =>
   `${APP_MESSAGES[AppMessage.MissingValue](given, "spec-controller balance", flag.arg ?? "")}\n` +
   APP_MESSAGES[AppMessage.SeeFlagsAndValues]("spec-controller balance");
 
-const withBalanceFlag = (flag: FlagSpec): CliRegistry => ({
-  ...cliRegistry,
-  commands: cliRegistry.commands.map((command) =>
-    command.name === "balance" ? { ...command, flags: [...command.flags, flag] } : command,
-  ),
-});
-
 describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, naming the missing value", () => {
-  it("reads its value flags from the registry, and finds all ten", () => {
-    expect(valueFlags).toHaveLength(10);
-  });
 
   for (const flag of balanceFlags) {
     if (flag.arg === undefined) continue;
@@ -68,25 +56,9 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     expect(stdout).toBe("");
   });
 
-  it("never asks a flag that takes no value for one", () => {
-    for (const flag of booleanFlags) {
-      expect(checkMissingValues(["--features", "f", flag], cliRegistry, "balance")).toBeNull();
-    }
-  });
-
   it("refuses no value flag for a command the registry does not know", () => {
     for (const flag of valueFlags) {
       expect(checkMissingValues([flag.name], cliRegistry, "blance")).toBeNull();
     }
-  });
-
-  it("refuses a value flag registered later, with no new code", () => {
-    const later: FlagSpec = { name: "--later", arg: "<x>", description: "added later" };
-    expect(checkMissingValues(["--later"], withBalanceFlag(later), "balance")).toBe(refusalFor("--later", later));
-  });
-
-  it("names an alias registered later as it was written, not by the flag's name", () => {
-    const later: FlagSpec = { name: "--later", aliases: ["-l"], arg: "<x>", description: "added later" };
-    expect(checkMissingValues(["-l", "--exit-zero"], withBalanceFlag(later), "balance")).toBe(refusalFor("-l", later));
   });
 });

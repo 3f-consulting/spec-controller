@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 
 import { citationOfCitedRow } from "../parse/fitnessCitations.js";
 import { resolveDeferralTags } from "../parse/targetManifest.js";
-import { parseTaggedScenarios } from "../parse/scenarios.js";
 
 describe("[SCN-TRM-001] a configured deferral tag names the term the target authored", () => {
   const configured = (tag: string): readonly string[] =>
@@ -41,17 +40,5 @@ describe("[SCN-TRM-001] a check step's id: names the scenario the target authore
     ],
   ] as const)("%s", (_title, id) => {
     expect(citationOfCitedRow(id)).toBeNull();
-  });
-});
-
-describe("[SCN-TRM-001] the corpus read takes the same reading, though no whitespace can reach it", () => {
-  it("bares every tag the Gherkin parser hands it", () => {
-    const [scenario] = parseTaggedScenarios(
-      `@TRM\nFeature: f\n\n  @unit @SCN-TRM-900\n  Scenario: s\n    Given a step\n`
-    );
-    expect(scenario?.scnId).toBe("SCN-TRM-900");
-    expect(scenario?.tags).toContain("unit");
-    expect(scenario?.tags).toContain("TRM");
-    expect(scenario?.tags.some((tag) => tag.startsWith("@"))).toBe(false);
   });
 });

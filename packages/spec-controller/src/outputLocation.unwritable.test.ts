@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, fstatSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { fstatSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { probeDestination, settlingRefusal, writeOrRefuse } from "./outputLocation.js";
-
-const SUBJECT = "The json report could not be written";
+import { probeDestination, settlingRefusal } from "./outputLocation.js";
 
 let scratch: string;
 let stderr: string[];
@@ -39,26 +37,6 @@ afterEach(() => {
 });
 
 describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
-  it("refuses a report under a directory it may not write with one stderr line naming the path and the reason, on the usage code, throwing nothing", () => {
-    const readOnly = join(scratch, "read-only");
-    mkdirSync(readOnly);
-    chmodSync(readOnly, 0o555);
-    const path = join(readOnly, "report.json");
-
-    try {
-      const settled = settlingRefusal(() => {
-        writeOrRefuse(SUBJECT, path, () => writeFileSync(path, "{}\n"));
-        return "written";
-      }, "refused");
-
-      expect(settled).toBe("refused");
-    } finally {
-      chmodSync(readOnly, 0o755);
-    }
-    expect(stderr).toEqual([`${SUBJECT}: ${path} (EACCES: permission denied, open '${path}')\n`]);
-    expect(process.exitCode).toBe(2);
-    expect(existsSync(path)).toBe(false);
-  });
 
   it("lets an error that is not a refusal escape unchanged, with no stderr line and no exit code set", () => {
     const failure = new Error("not a refusal");

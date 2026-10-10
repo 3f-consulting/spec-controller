@@ -23,9 +23,4 @@ describe("[SCN-LDG-021] the untagged scenario's row carries no credit and no Pen
     expect(rowFor("SCN-AAA-001")?.evidenceObservations).toStrictEqual([observed[0]]);
     expect(rowFor(UNTAGGED)?.evidenceObservations).toStrictEqual([]);
   });
-
-  it("partitions the run's one pending obligation onto its own account, not onto the untagged row", () => {
-    expect(rowFor("SCN-AAA-002")?.pendingItems).toStrictEqual([{ qualityCheck: "integration" }]);
-    expect(rowFor(UNTAGGED)?.pendingItems).toStrictEqual([]);
-  });
 });

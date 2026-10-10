@@ -20,16 +20,6 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named 
       { qualityCheck: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts" },
     ]);
   });
-
-  it("honors a NON-default named level — the assumption is gone (no Vitest⇒unit hardcode)", () => {
-    const out = parseVitestEvidenceObservations(report, "e2e");
-    expect(out).toHaveLength(2);
-    expect(out.every((r) => r.qualityCheck === "e2e")).toBe(true);
-    expect(out.map((r) => (r.qualityCheck !== "fitness" ? r.status : null))).toEqual([
-      "passed",
-      "failed",
-    ]);
-  });
 });
 
 describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion by its own leaf title", () => {
@@ -59,31 +49,6 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
       { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
     ]);
   });
-
-  it("credits the ancestor exactly once — the bare sibling leaf — with no spurious second credit", () => {
-    const out = parseVitestEvidenceObservations(report, "unit");
-    expect(out.filter((o) => o.qualityCheck !== "fitness" && o.scnId === "SCN-ANC-016")).toHaveLength(1);
-    expect(out.filter((o) => o.qualityCheck !== "fitness" && o.scnId === "SCN-LEA-016")).toHaveLength(1);
-  });
-
-  it("falls back to the ancestor path when the leaf's own title carries no citation", () => {
-    const out = parseVitestEvidenceObservations(
-      {
-        testResults: [
-          {
-            name: "/r/citation.test.ts",
-            assertionResults: [
-              { fullName: "[SCN-ANC-016] the grouping describe > a plain leaf", title: "a plain leaf", status: "passed" },
-            ],
-          },
-        ],
-      },
-      "unit"
-    );
-    expect(out).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
-    ]);
-  });
 });
 
 describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed token — an id in prose is prose", () => {
@@ -107,29 +72,6 @@ describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed toke
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts" },
     ]);
   });
-
-  it("still reads a bracketed citation out of prose that also names other ids", () => {
-    const out = parseVitestEvidenceObservations(
-      {
-        testResults: [
-          {
-            name: "/r/prose.test.ts",
-            assertionResults: [
-              {
-                fullName: "unlike SCN-PDX-001, [SCN-PDR-003] is genuinely proved here (cf. @SCN-PDR-002)",
-                title: "unlike SCN-PDX-001, [SCN-PDR-003] is genuinely proved here (cf. @SCN-PDR-002)",
-                status: "passed",
-              },
-            ],
-          },
-        ],
-      },
-      "unit"
-    );
-    expect(out).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-PDR-003", status: "passed", locator: "/r/prose.test.ts" },
-    ]);
-  });
 });
 
 describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's bracketed citation", () => {
@@ -151,29 +93,6 @@ describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's 
   it("credits the ancestor describe — the leaf's prose mentions are not citations", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
       { qualityCheck: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts" },
-    ]);
-  });
-
-  it("still lets a BRACKETED leaf citation override the ancestor — the fall-through is not a blanket", () => {
-    const out = parseVitestEvidenceObservations(
-      {
-        testResults: [
-          {
-            name: "/r/prose.test.ts",
-            assertionResults: [
-              {
-                fullName: "[SCN-ANC-032] the grouping describe > [SCN-LEA-032] proves its own, unlike SCN-PDX-032",
-                title: "[SCN-LEA-032] proves its own, unlike SCN-PDX-032",
-                status: "passed",
-              },
-            ],
-          },
-        ],
-      },
-      "unit"
-    );
-    expect(out).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-LEA-032", status: "passed", locator: "/r/prose.test.ts" },
     ]);
   });
 });

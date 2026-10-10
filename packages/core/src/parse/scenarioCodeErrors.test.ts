@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
-import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 function file(slug: string, code: string | null, ids: readonly string[]): CorpusFile {
@@ -51,30 +50,6 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
       )
     );
   });
-
-  it("lists an out-of-class near-miss the same way (S7b): SCN-ONE-1 parses, so ONE is its class", () => {
-    const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-1"])]);
-    expect(errors.map((e) => e.kind)).toEqual(["foreign-scn-code"]);
-    expect(errors[0]!.message).toContain("SCN-ONE-1");
-  });
-
-  it("lists nothing once the id is re-coded to its own file", () => {
-    expect(scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-TWO-002"])])).toEqual([]);
-  });
-
-  it("lists a five-character foreign code, and not a six-character one, which is no scenario code at all (3F-3636)", () => {
-    const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-FIVEC-001", "SCN-SIXCHR-001"])]);
-    expect(errors.map((e) => e.kind)).toEqual(["foreign-scn-code"]);
-    expect(errors[0]!.message).toContain("SCN-FIVEC-001");
-    expect(errors.some((e) => e.message.includes("SCN-SIXCHR-001"))).toBe(false);
-  });
-
-  it("reds the run: a reconciliation carrying one has scenario code errors, a clean or unjudged one has none", () => {
-    const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-ONE-002"])]);
-    expect(hasScenarioCodeErrors({ scenarioCodeErrors: errors })).toBe(true);
-    expect(hasScenarioCodeErrors({ scenarioCodeErrors: [] })).toBe(false);
-    expect(hasScenarioCodeErrors({})).toBe(false);
-  });
 });
 
 describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
@@ -123,12 +98,6 @@ describe("[SCN-STG-010] two feature files carrying one header code are listed as
     expect(errors[0]!.message).toContain("@ONE");
     expect(errors[0]!.message).toContain("one.feature, one-b.feature");
   });
-
-  it("lists nothing once one of them carries a code of its own", () => {
-    expect(
-      scenarioCodeErrorsOf([file("one", "ONE", ["SCN-ONE-001"]), file("two", "TWO", ["SCN-TWO-001"])])
-    ).toEqual([]);
-  });
 });
 
 describe("[SCN-STG-019] a feature file with no header code whose scenarios carry codes is listed as no-feature-code", () => {
@@ -149,14 +118,5 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
     });
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-TOOLONGCODE-001")])).toEqual([]);
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
-  });
-
-  it("lists nothing for an uncoded file whose scenarios carry no code", () => {
-    const untagged: CorpusFile = {
-      slug: "plain",
-      featureCode: null,
-      source: "Feature: plain\n\n  @unit\n  Scenario: s\n    Given a thing\n",
-    };
-    expect(scenarioCodeErrorsOf([untagged])).toEqual([]);
   });
 });

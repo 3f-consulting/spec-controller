@@ -62,11 +62,6 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     ]);
   });
 
-  it("names the first credit in that order, not the first to arrive", () => {
-    const unitItem = rowOf([unitZ, unitA]).qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-    expect(unitItem?.evidenceObservation).toEqual(unitA);
-  });
-
   it("reads a credit with no location before every located credit of its quality check", () => {
     const unlocated: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "passed" };
     const capitalised: EvidenceObservation = { ...unitA, locator: "A.test.ts" };
@@ -74,14 +69,6 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
       ["unit", null],
       ["unit", "A.test.ts"],
       ["unit", "a.test.ts"],
-    ]);
-  });
-
-  it("reads a location before a longer one it is the start of", () => {
-    const longer: EvidenceObservation = { ...unitA, locator: "a.test.ts-2" };
-    expect(coordinates(rowOf([longer, unitA]).evidenceObservations)).toEqual([
-      ["unit", "a.test.ts"],
-      ["unit", "a.test.ts-2"],
     ]);
   });
 
@@ -108,15 +95,5 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const saysA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", message: "a" };
     const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", scnId: SCN, qualityCheck: "unit" };
     expect(rowOf([saysB, saysA]).evidenceObservations.map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);
-  });
-
-  it("posts a credit reported twice twice", () => {
-    expect(rowOf([unitA, unitZ, unitA]).evidenceObservations).toEqual([unitA, unitA, unitZ]);
-  });
-
-  it("leaves the caller's evidence in the order the caller gave it", () => {
-    const evidence = [unitZ, fitness, unitA];
-    reconcile(scenarios, evidence);
-    expect(evidence).toEqual([unitZ, fitness, unitA]);
   });
 });

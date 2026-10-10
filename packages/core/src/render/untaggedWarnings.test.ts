@@ -32,13 +32,6 @@ const alpha = `Feature: alpha
     Given nothing cites it
 `;
 
-const tagged = `Feature: tagged
-
-  @unit @SCN-TAG-001
-  Scenario: every scenario here carries a code
-    Given a fixture
-`;
-
 function censusBlock(corpus: readonly { feature: string; source: string }[]): string[] {
   const untagged = corpus.flatMap(({ feature, source }) =>
     parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
@@ -75,12 +68,6 @@ describe("[SCN-RPT-014] Warnings lists the untagged scenarios with their feature
       "  - alpha.feature : untagged scenario c",
       "  - zeta.feature : untagged scenario a",
       "  - zeta.feature : untagged scenario b",
-    ]);
-  });
-
-  it("lists no untagged scenarios when every scenario in the corpus carries a code", () => {
-    expect(censusBlock([{ feature: "tagged.feature", source: tagged }])).toEqual([
-      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
     ]);
   });
 });

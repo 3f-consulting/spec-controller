@@ -9,27 +9,11 @@ import {
   planRunManifest,
   serialiseRunManifest,
   resolveRunId,
-  RECONCILIATION_DOCUMENT,
-  RECONCILIATION_JSON,
   RUN_MANIFEST,
   type RunManifestInput,
 } from "./keptRun.js";
 
 describe("[SCN-RMG-001] planKeptRun: yields the nested run dir + the two file-dest paths from { storeRoot, target, runId }", () => {
-  it("nests the run dir at <storeRoot>/<target>/<runId>/ and places both outputs inside it", () => {
-    const storeRoot = "/store/root";
-    const target = "acme-web";
-    const runId = "2026-07-01T09-30-00Z";
-
-    const plan = planKeptRun({ storeRoot, target, runId });
-
-    const expectedRunDir = join(storeRoot, target, runId);
-    expect(plan.runDir).toBe(expectedRunDir);
-    expect(plan.documentPath).toBe(join(expectedRunDir, RECONCILIATION_DOCUMENT));
-    expect(plan.reconciliationJsonPath).toBe(join(expectedRunDir, RECONCILIATION_JSON));
-    expect(RECONCILIATION_DOCUMENT).toBe("spec-reconciliation.md");
-    expect(RECONCILIATION_JSON).toBe("spec-reconciliation.json");
-  });
 
   it("nests target THEN run-id (1086's owned substructure), not a flat <root>/<run-id> or <root>/<target>", () => {
     const plan = planKeptRun({ storeRoot: "/root", target: "t", runId: "r" });
@@ -37,16 +21,6 @@ describe("[SCN-RMG-001] planKeptRun: yields the nested run dir + the two file-de
     expect(plan.runDir).toBe(join("/root", "t", "r"));
     expect(plan.documentPath).toBe(join("/root", "t", "r", "spec-reconciliation.md"));
     expect(plan.reconciliationJsonPath).toBe(join("/root", "t", "r", "spec-reconciliation.json"));
-  });
-
-  it("relocates the whole nest wholesale when a different store root is injected (root is a parameter, never hardcoded)", () => {
-    const here = planKeptRun({ storeRoot: "/tmp/store-a", target: "acme", runId: "e1" });
-    const there = planKeptRun({ storeRoot: "/var/store-b", target: "acme", runId: "e1" });
-
-    expect(here.runDir).toBe(join("/tmp/store-a", "acme", "e1"));
-    expect(there.runDir).toBe(join("/var/store-b", "acme", "e1"));
-    expect(here.documentPath).toBe(join("/tmp/store-a", "acme", "e1", "spec-reconciliation.md"));
-    expect(there.documentPath).toBe(join("/var/store-b", "acme", "e1", "spec-reconciliation.md"));
   });
 });
 

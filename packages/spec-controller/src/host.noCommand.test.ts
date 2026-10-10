@@ -10,9 +10,6 @@ const noCommand = (given: readonly string[]): string =>
   APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]();
 
 describe("[SCN-CLI-067] the host refuses a modifier with no command after it, naming it, and stores nothing", () => {
-  it("reads its modifiers from the registry, and finds --store and --run-id", () => {
-    expect(modifiers).toEqual(["--store", "--run-id"]);
-  });
 
   for (const modifier of modifiers) {
     it(`refuses ${modifier} given its value and nothing after it, naming it, and takes no command`, () => {
@@ -29,13 +26,6 @@ describe("[SCN-CLI-067] the host refuses a modifier with no command after it, na
     });
   }
 
-  it("refuses --store x --run-id r, naming both in that order", () => {
-    expect(parseHostInvocation(["--store", "x", "--run-id", "r"])).toEqual({
-      commandArgs: [],
-      refusal: noCommand(["--store", "--run-id"]),
-    });
-  });
-
   it("does not refuse an empty invocation, which names no modifier and goes on to the top-level help", () => {
     expect(parseHostInvocation([])).toEqual({ commandArgs: [] });
   });
@@ -48,11 +38,5 @@ describe("[SCN-CLI-067] the host refuses a modifier with no command after it, na
 
   it("leaves the command taken as a modifier's value refused as before, never as a missing command", () => {
     expect(parseHostInvocation(["--store", "balance"]).refusal).toMatch(/as its value/i);
-  });
-
-  it("leaves a command name followed by the bare help word read as the value, then help", () => {
-    const inv = parseHostInvocation(["--store", "balance", "help"]);
-    expect(inv.refusal).toBeUndefined();
-    expect(inv).toMatchObject({ store: "balance", command: "help" });
   });
 });

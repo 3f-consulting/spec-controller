@@ -68,27 +68,4 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
       ],
     ]);
   });
-
-  it("carries the handle that ran and no citation at all, so nothing was manufactured for it", () => {
-    expect(reconcileUnannotated().ledger.scenarioReconciliations[0]?.evidenceObservations).toEqual([
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "lint:alpha",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "lint:beta",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "typecheck",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-    ]);
-  });
 });

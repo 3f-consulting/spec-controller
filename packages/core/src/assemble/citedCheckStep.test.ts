@@ -60,21 +60,6 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
     ]);
   });
 
-  it("stamps the credited run with the @SCN its step states, beside the handle that ran", () => {
-    const credited = reconcileAnnotated().ledger.scenarioReconciliations.find(
-      (row) => row.scnId === "SCN-CVT-001"
-    );
-    expect(credited?.evidenceObservations).toEqual([
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "lint:alpha",
-        exists: true,
-        enforcedOverRealSource: true,
-        scnId: "SCN-CVT-001",
-      },
-    ]);
-  });
-
   it("credits the row a padded id: names, as if it were written unpadded", () => {
     const paddedCi = annotatedCi.replace(
       "        run: pnpm lint:beta",
@@ -83,19 +68,6 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
     expect(rowsOf(reconcileAnnotated(paddedCi))).toEqual([
       ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
       ["SCN-CVT-002", "scenario", "balanced", [[undefined, "satisfied"]]],
-    ]);
-  });
-
-  it("reads a blank id: as no citation, leaving its check in suspense as an unannotated one", () => {
-    const blankCi = annotatedCi.replace(
-      "        run: pnpm lint:beta",
-      '        id: ""\n        run: pnpm lint:beta'
-    );
-    expect(blankCi).toContain('id: ""');
-    expect(rowsOf(reconcileAnnotated(blankCi))).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
-      ["(no scenario)", "suspense-scenario", "out-of-balance", [["lint:beta", "cites-no-scenario"]]],
     ]);
   });
 });

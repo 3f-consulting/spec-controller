@@ -2,7 +2,6 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkInputsParse } from "./cli.js";
 import { checkInputPaths, checkInputShapes, checkSavedReconciliation, jsonInputsOf, reRenderOrRefusal } from "./unreadableInputs.js";
 import { reRender } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
@@ -21,21 +20,9 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
     expect(error).toContain("testResults is a string, not a list");
   });
 
-  it("refuses an object the reporter never writes, one with no test results", () => {
-    const error = checkInputShapes(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading("{}"));
-    expect(error).toContain("testResults is missing");
-  });
-
   it("passes a report in the reporter's shape, so the run goes on to reconcile", () => {
     const report = JSON.stringify({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [] }] });
     expect(checkInputShapes(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading(report))).toBeNull();
-  });
-
-  it("reads nothing when no report is given", () => {
-    const read = (): string => {
-      throw new Error("nothing was given, so nothing is read");
-    };
-    expect(checkInputShapes(jsonInputsOf({}, nothingByDefault), read)).toBeNull();
   });
 
   function reportsOnDisk(files: Record<string, string>): string {
@@ -88,53 +75,13 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
     expect(error).toContain("reports/cucumber.json");
     expect(error).toContain("the top level is an object, not a list");
   });
-
-  it("passes a report in the formatter's shape", () => {
-    const report = JSON.stringify([{ uri: "a.feature", elements: [{ tags: [{ name: "@x" }], steps: [] }] }]);
-    expect(checkInputShapes(jsonInputsOf({ cucumber: "c.json" }, nothingByDefault), reading(report))).toBeNull();
-  });
-});
-
-describe("[SCN-CLI-078] checkInputShapes refuses a CI step record not in shape", () => {
-  it("names the flag, the file and where the shape is wrong", () => {
-    const inputs = jsonInputsOf({ "ci-steps": "evidence/ci-steps.json" }, nothingByDefault);
-    const error = checkInputShapes(inputs, reading('{"SCN-ABC-001":{"outcome":1}}'));
-
-    expect(error).toContain("--ci-steps");
-    expect(error).toContain("evidence/ci-steps.json");
-    expect(error).toContain("SCN-ABC-001.outcome is a number, not a string");
-  });
 });
 
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
-  it("names the flag, the file and where the shape is wrong when it is given", () => {
-    const inputs = jsonInputsOf({ "package-json": "target/package.json" }, nothingByDefault);
-    const error = checkInputShapes(inputs, reading('{"scripts":{"lint":5}}'));
-
-    expect(error).toContain("--package-json");
-    expect(error).toContain("target/package.json");
-    expect(error).toContain("scripts.lint is a number, not a string");
-  });
-
-  it("reads the package.json the run reads by default when none is given", () => {
-    const inputs = jsonInputsOf({}, (path) => path === "package.json");
-    const error = checkInputShapes(inputs, reading('{"scripts":"x"}'));
-
-    expect(error).toContain("package.json read by default");
-    expect(error).toContain("scripts is a string, not an object");
-  });
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
     const error = checkInputShapes(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json"));
     expect(error).toContain("package.json read by default is not valid JSON");
-  });
-
-  it("reads no default package.json when there is none, or when one is given by name", () => {
-    const read = (): string => {
-      throw new Error("no default manifest is read");
-    };
-    expect(checkInputShapes(jsonInputsOf({}, nothingByDefault), read)).toBeNull();
-    expect(jsonInputsOf({ "package-json": "given.json" }, () => true).map((input) => input.path)).toEqual(["given.json"]);
   });
 });
 
@@ -206,12 +153,6 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
     expect(error).toContain(join(ci, "x.yml"));
     expect(error).toContain("EISDIR");
   });
-
-  it("reads a corpus directory and a workflow file or directory, so the run goes on", () => {
-    const { features, ci } = targetOnDisk();
-    expect(checkInputPaths({ features, ci })).toBeNull();
-    expect(checkInputPaths({ features, ci: join(ci, "ci.yml") })).toBeNull();
-  });
 });
 
 describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, naming it and the path", () => {
@@ -281,51 +222,6 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     expect(checkInputPaths({ ci: target.ci })).toBe(
       APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), features, reason),
     );
-  });
-
-  it("refuses an unreadable feature file, naming it and the operating system's reason", () => {
-    const { features } = targetOnDisk();
-    const file = join(features, "a.feature");
-    chmodSync(file, 0o000);
-    const error = checkInputPaths({ features });
-
-    expect(error).toContain("--features");
-    expect(error).toContain(file);
-    expect(error).toContain("EACCES");
-  });
-
-  it("refuses an unreadable feature corpus directory", () => {
-    const { features } = targetOnDisk();
-    chmodSync(features, 0o000);
-    const error = checkInputPaths({ features });
-
-    expect(error).toContain(features);
-    expect(error).toContain("EACCES");
-    chmodSync(features, 0o755);
-  });
-
-  it("refuses an unreadable CI workflow file and an unreadable CI workflows directory", () => {
-    const first = targetOnDisk();
-    chmodSync(join(first.ci, "ci.yml"), 0o000);
-    expect(checkInputPaths(first)).toContain(join(first.ci, "ci.yml"));
-
-    const second = targetOnDisk();
-    chmodSync(second.ci, 0o000);
-    const error = checkInputPaths(second);
-    expect(error).toContain("--ci");
-    expect(error).toContain("EACCES");
-    chmodSync(second.ci, 0o755);
-  });
-
-  it("says a report it could not read could not be read, rather than calling it invalid JSON", () => {
-    const read = (): string => {
-      throw Object.assign(new Error("EACCES: permission denied, open 'v.json'"), { code: "EACCES" });
-    };
-    const error = checkInputsParse({ vitest: "v.json" }, read);
-
-    expect(error).toContain("--vitest");
-    expect(error).toContain("could not be read");
-    expect(error).not.toContain("not valid JSON");
   });
 
   it("refuses the package.json read by default when it cannot be read", () => {

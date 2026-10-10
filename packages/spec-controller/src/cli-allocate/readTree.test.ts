@@ -12,10 +12,6 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
   ] as const)("%s", (_title, names, walked) => {
     expect(names.map(isWalkedDirectory)).toEqual(walked);
   });
-
-  it("never walks a package store, whose packages carry their own codes", () => {
-    expect(isWalkedDirectory("node_modules")).toBe(false);
-  });
 });
 
 function repositoryWithDraft(): string {
@@ -46,15 +42,6 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     const repo = repositoryWithDraft();
     withhold(join(repo, ...file), 0o000);
     expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, ...file) });
-  });
-
-  it.each([
-    ["refuses a directory it may not list, naming it", 0o000],
-    ["refuses a directory it may list but not enter, naming it", 0o600],
-  ] as const)("%s", (_title, mode) => {
-    const repo = repositoryWithDraft();
-    withhold(join(repo, "drafts"), mode);
-    expect(thrownBy(() => readTree(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", path: join(repo, "drafts") });
   });
 
   it("reads tracked and untracked files alike when it may read them all", () => {

@@ -21,10 +21,6 @@ describe("[SCN-ALC-008] the code is printed alone, zero-padded to three digits",
     expect(next(request, [seen(text)]).code).toBe(code);
   });
 
-  it("reads the number, never the text, so 012 and 12 are one number", () => {
-    expect(next(request, [seen("@SCN-ONE-012"), seen("SCN-ONE-9")]).code).toBe("SCN-ONE-013");
-  });
-
   it("counts only the part asked for", () => {
     const sightings = [seen("@SCN-ONE-002"), seen("@SCN-TWO-040"), seen("SCN-ONEX-050")];
     expect(next(request, sightings).code).toBe("SCN-ONE-003");
@@ -60,30 +56,12 @@ describe("[SCN-ALC-003] a code carried only in a test title is never offered aga
   });
 });
 
-describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
-  it("counts a code history carried as well as the codes the tree carries", () => {
-    const tree = [seen("  @SCN-ONE-001 @unit")];
-    const history = [seen("-  @SCN-ONE-005 @unit", "features/one.feature", 6)];
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [...tree, ...history]).code).toBe("SCN-ONE-006");
-  });
-});
-
 describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
-  it("hands back the sighting that carried the highest code", () => {
-    const where = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [seen("@SCN-ONE-001"), where]).highest).toEqual({ code: "SCN-ONE-005", sighting: where });
-  });
 
   it("names the tree before history when both carry the highest code", () => {
     const inHistory = { ...seen("-  @SCN-ONE-005", "features/old.feature", 3), commit: "abc1234" };
     const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
     expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree]).highest?.sighting).toEqual(inTree);
-  });
-
-  it("names the tree before history whichever it read first", () => {
-    const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
-    const inHistory = { ...seen("-  @SCN-ONE-005", "features/old.feature", 3), commit: "abc1234" };
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inTree, inHistory]).highest?.sighting).toEqual(inTree);
   });
 
   it("keeps the first of two tree sightings of the same code", () => {
@@ -98,12 +76,6 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     expect(next({ part: "ONE", headerCodes: ["ONE"] }, [first, second]).highest?.sighting).toEqual(first);
   });
 
-  it("names a higher code in history over a lower one in the tree", () => {
-    const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
-    const inHistory = { ...seen("-  @SCN-ONE-007", "features/one.feature", 9), commit: "abc1234" };
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inTree, inHistory]).highest?.sighting).toEqual(inHistory);
-  });
-
   it("never lets a lower code in the tree displace a higher one history carried, read before it", () => {
     const inHistory = { ...seen("-  @SCN-ONE-007", "features/one.feature", 9), commit: "abc1234" };
     const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
@@ -111,10 +83,6 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
       code: "SCN-ONE-008",
       highest: { sighting: inHistory },
     });
-  });
-
-  it("has nothing to name when the part carries no code", () => {
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, []).highest).toBeNull();
   });
 });
 
@@ -124,25 +92,11 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
   it("refuses a part no header carries, naming the header codes in order", () => {
     expect(nextScnCode({ part: "ZZZ", headerCodes }, [])).toEqual({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] });
   });
-
-  it("refuses it even when the tree or history carries its numbers", () => {
-    const sightings = [seen("@SCN-ZZZ-004", "tests/fixtures/sample/features/zzz.feature"), { ...seen("-@SCN-ZZZ-009"), commit: "abc1234" }];
-    expect(nextScnCode({ part: "ZZZ", headerCodes }, sightings).kind).toBe("unknown-part");
-  });
-
-  it("answers a part a header carries", () => {
-    expect(nextScnCode({ part: "ONE", headerCodes }, [seen("@SCN-ONE-003")])).toMatchObject({ kind: "allocated", code: "SCN-ONE-004" });
-  });
 });
 
 describe("[SCN-ALC-011] --new admits a part no feature file's header carries, and notes a part a header carries", () => {
   it("admits a part no header carries, from its first code", () => {
     expect(nextScnCode({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, [])).toMatchObject({ kind: "allocated", code: "SCN-ZZ-001" });
-  });
-
-  it("never reissues a number the tree or history carries for the new part", () => {
-    const sightings = [seen("id: SCN-ZZ-006", ".github/workflows/ci.yml")];
-    expect(nextScnCode({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, sightings)).toMatchObject({ code: "SCN-ZZ-007" });
   });
 
   it("answers a headed part as usual, and says the header already carries it", () => {

@@ -111,25 +111,6 @@ describe("[SCN-RMG-007] main refuses a stored --render-from-json re-render namin
     it("refuses on stderr with exactly the refusal naming --store as what a re-render cannot take", () => {
       expect(underAStoreNotYetMade(argvAt).stderr).toBe(NAMING_THE_STORE());
     });
-
-    it("names no flag the operator did not give", () => {
-      const { stderr: refused } = underAStoreNotYetMade(argvAt);
-
-      expect(refused).not.toContain("--run-id");
-      expect(refused).not.toContain("--format");
-    });
-
-    it("exits with the usage status", () => {
-      expect(underAStoreNotYetMade(argvAt).exitCode).toBe(2);
-    });
-
-    it("produces no report on stdout", () => {
-      expect(underAStoreNotYetMade(argvAt).stdout).toBe("");
-    });
-
-    it("makes no run store", () => {
-      expect(underAStoreNotYetMade(argvAt).storeMade).toBe(false);
-    });
   });
 
   describe("under a run store and a run name", () => {

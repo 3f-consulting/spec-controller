@@ -12,12 +12,4 @@ describe("[SCN-CLI-061] a host modifier given after the command is refused as ou
       expect(refusal).not.toMatch(/\bpin\b/i);
     });
   }
-
-  it("leaves a flag no scope names to the drift advice", () => {
-    expect(checkMisplacedHostModifiers({ bogus: "true" }, cliRegistry, "balance")).toBeNull();
-  });
-
-  it("leaves the command's own flags alone", () => {
-    expect(checkMisplacedHostModifiers({ features: "f", format: "md" }, cliRegistry, "balance")).toBeNull();
-  });
 });

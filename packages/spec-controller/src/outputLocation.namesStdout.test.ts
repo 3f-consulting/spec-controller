@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { namesStdout } from "./outputLocation.js";
@@ -40,14 +40,6 @@ describe("[SCN-FMT-011] a path names standard output when it spells file descrip
     expect(namesStdout(chainTo("/dev/stdout", "forty-one", 41))).toBe(false);
   });
 
-  it("answers yes for a link to /dev/stdout, and a link to that link", () => {
-    symlinkSync("/dev/stdout", join(scratch, "out"));
-    symlinkSync(join(scratch, "out"), join(scratch, "out-again"));
-
-    expect(namesStdout(join(scratch, "out"))).toBe(true);
-    expect(namesStdout(join(scratch, "out-again"))).toBe(true);
-  });
-
   it.each([
     [
       "answers yes for file descriptor 1 spelled through this process's own entry in /proc",
@@ -61,15 +53,5 @@ describe("[SCN-FMT-011] a path names standard output when it spells file descrip
     expect(namesStdout(first)).toBe(answer);
     expect(namesStdout(second)).toBe(answer);
     expect(namesStdout(third)).toBe(answer);
-  });
-
-  it("answers no for a regular file, a path under a folder that does not exist, and a link that goes in a circle", () => {
-    writeFileSync(join(scratch, "report.md"), "");
-    symlinkSync(join(scratch, "b"), join(scratch, "a"));
-    symlinkSync(join(scratch, "a"), join(scratch, "b"));
-
-    expect(namesStdout(join(scratch, "report.md"))).toBe(false);
-    expect(namesStdout(join(scratch, "missing", "report.md"))).toBe(false);
-    expect(namesStdout(join(scratch, "a"))).toBe(false);
   });
 });

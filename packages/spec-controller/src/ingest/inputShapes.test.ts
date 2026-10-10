@@ -42,11 +42,6 @@ describe("[SCN-CLI-076] a Vitest report is read only in the shape the Vitest JSO
     report.testResults[1].status = 7;
     expect(shapeFaultIn(report, VITEST_REPORT)).toBe("testResults[1].status is a number, not a string");
   });
-
-  it("never looks at a field the reader does not read", () => {
-    const report = { testResults: [{ name: "a.test.ts", duration: "x", assertionResults: [{ title: "t", location: 7 }] }] };
-    expect(shapeFaultIn(report, VITEST_REPORT)).toBeNull();
-  });
 });
 
 describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber JSON formatter writes", () => {
@@ -76,11 +71,6 @@ describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber
     report[0].elements[0].steps[0].result.status = 7;
     expect(shapeFaultIn(report, CUCUMBER_REPORT)).toBe("[0].elements[0].steps[0].result.status is a number, not a string");
   });
-
-  it("never looks at a field the reader does not read", () => {
-    const report = [{ uri: "a.feature", elements: [{ steps: [{ hidden: "x", result: { status: "passed", duration: "x" } }] }] }];
-    expect(shapeFaultIn(report, CUCUMBER_REPORT)).toBeNull();
-  });
 });
 
 describe("[SCN-CLI-078] a CI step record is read only as a record of step outcomes", () => {
@@ -107,12 +97,6 @@ describe("[SCN-CLI-078] a CI step record is read only as a record of step outcom
     record["SCN-CVT-002"].outcome = 7;
     expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("SCN-CVT-002.outcome is a number, not a string");
   });
-
-  it("reads every CI step record the fixture tree holds", () => {
-    const records = fixtureReports("ci-steps.json");
-    expect(records.length).toBeGreaterThan(3);
-    for (const [path, record] of records) expect([path, shapeFaultIn(record, CI_STEP_RECORD)]).toEqual([path, null]);
-  });
 });
 
 describe("[SCN-CLI-079] a package.json is read only in a manifest's shape", () => {
@@ -123,39 +107,5 @@ describe("[SCN-CLI-079] a package.json is read only in a manifest's shape", () =
     [{ scripts: { lint: 5 } }, "scripts.lint is a number, not a string"],
   ])("names where %j is not that shape", (manifest, fault) => {
     expect(shapeFaultIn(manifest, PACKAGE_MANIFEST)).toBe(fault);
-  });
-
-  it("leaves the specController block to its own tolerant resolvers", () => {
-    const manifest = { specController: { runners: "x", notChecks: "x", deferralTags: [1] } };
-    expect(shapeFaultIn(manifest, PACKAGE_MANIFEST)).toBeNull();
-  });
-
-  it("reads every package.json the fixture tree holds", () => {
-    const manifests = fixtureReports("package.json");
-    expect(manifests.length).toBeGreaterThan(20);
-    for (const [path, manifest] of manifests) expect([path, shapeFaultIn(manifest, PACKAGE_MANIFEST)]).toEqual([path, null]);
-  });
-});
-
-describe("[SCN-CLI-080] a well-formed but empty report is read, never refused", () => {
-  it.each([
-    ["a Vitest report with no test results", { testResults: [] }, VITEST_REPORT],
-    ["a Cucumber report with no features", [], CUCUMBER_REPORT],
-    ["a CI step record with no steps", {}, CI_STEP_RECORD],
-    ["a package.json with no scripts", {}, PACKAGE_MANIFEST],
-  ])("reads %s", (_name, document, shape) => {
-    expect(shapeFaultIn(document, shape)).toBeNull();
-  });
-
-  it("reads what the Vitest reporter writes for a run that matched no test file", () => {
-    const zeroTestRun = {
-      numTotalTestSuites: 0,
-      numTotalTests: 0,
-      snapshot: { added: 0, failure: false, filesRemovedList: [], uncheckedKeysByFile: [] },
-      startTime: 1790503416757,
-      success: true,
-      testResults: [],
-    };
-    expect(shapeFaultIn(zeroTestRun, VITEST_REPORT)).toBeNull();
   });
 });

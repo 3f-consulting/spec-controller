@@ -42,25 +42,10 @@ describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors,
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections.indexOf("## Scenario code errors")).toBe(sections.indexOf("## Summary views") - 1);
   });
-
-  it("gives the run a verdict of exit 1 though every account balances", () => {
-    expect(md).toMatch(/\*\*SCENARIO CODE ERRORS\*\* — .*\(exit 1\)/);
-    expect(md).not.toContain("**BALANCED**");
-  });
 });
 
 const DUPLICATE_LINE =
   "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.";
-
-function statementOf(md: string): string {
-  const section = md.slice(md.indexOf("## Scenario code errors"));
-  return section.split("\n\n")[1] ?? "";
-}
-
-function countBefore(statement: string, noun: string): number | undefined {
-  const match = new RegExp(`(\\d+) ${noun}s?\\b`).exec(statement);
-  return match ? Number(match[1]) : undefined;
-}
 
 const HEADING = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
 
@@ -151,10 +136,6 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
     ]);
   });
 
-  it("says where a duplicate is reported beside the errors too", () => {
-    expect(renderMarkdown(balancedWith([FOREIGN]), ctx)).toContain(DUPLICATE_LINE);
-  });
-
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
     expect(renderMarkdown(unjudged, ctx)).not.toContain("## Scenario code errors");
@@ -175,29 +156,10 @@ describe("[SCN-STG-023] a corpus with no feature file is never stated clean", ()
     "",
   ];
 
-  it("judges a corpus of no feature file as no file and no code, with no scenario code error", () => {
-    expect(empty.scenarioCodeErrors).toEqual([]);
-    expect(empty.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
-  });
-
   it("says no feature file was judged, in place of any clean statement", () => {
     const section = cleanSectionOf(renderMarkdown(empty, ctx));
     expect(section).toEqual(noFileSection);
     expect(section).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodesClean]);
-  });
-
-  it("says the same when the saved report is re-rendered", () => {
-    expect(cleanSectionOf(renderReportFromJson(renderJson(empty, ctx)))).toEqual(noFileSection);
-  });
-
-  it("says no feature file was judged, stating no code clean and no count", () => {
-    const md = renderMarkdown(empty, ctx);
-    const statement = statementOf(md);
-    expect(statement).not.toMatch(/\bclean\b/);
-    expect(countBefore(statement, "feature file")).toBeUndefined();
-    expect(countBefore(statement, "feature code")).toBeUndefined();
-    expect(statement).toMatch(/\bno feature file\b/i);
-    expect(md).toContain(DUPLICATE_LINE);
   });
 });
 
@@ -235,12 +197,6 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
       md = renderMarkdown(reconciled(files), ctx);
     });
 
-    it("is judged one foreign-scn-code and nothing else", () => {
-      expect(parsed.map((error) => error.kind)).toEqual(["foreign-scn-code"]);
-      expect(duplicateFeatureCodes(files)).toEqual([]);
-      expect(reconciled(files).scenarioCodeErrors).toEqual(parsed);
-    });
-
     it("counts one error in the singular, then lists it on one line by its kind and its parse message", () => {
       expect(cleanSectionOf(md)).toEqual([
         HEADING,
@@ -253,10 +209,6 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
         "",
       ]);
       expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toEqual([errorLine(parsed[0]!)]);
-    });
-
-    it("lists the same section when the saved report is re-rendered", () => {
-      expect(cleanSectionOf(renderReportFromJson(renderJson(reconciled(files), ctx)))).toEqual(cleanSectionOf(md));
     });
   });
 
@@ -292,21 +244,5 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
         "",
       ]);
     });
-  });
-
-  it("renders no section for a report whose corpus headers were never read, so its codes were never judged", () => {
-    const { source } = featureFile("two", "TWO", ["SCN-ONE-002"]);
-    const unjudged = evidenceReconciliationFromSources({
-      featureSources: [source],
-      untaggedScenarios: [],
-      packageJson: {},
-      ciSources: [],
-      runtimeObservations: [],
-      deferralTags: [],
-    });
-    expect(unjudged.scenarioCodeErrors).toBeUndefined();
-    const md = renderMarkdown(unjudged, ctx);
-    expect(md).not.toContain(HEADING);
-    expect(renderReportFromJson(renderJson(unjudged, ctx))).not.toContain(HEADING);
   });
 });

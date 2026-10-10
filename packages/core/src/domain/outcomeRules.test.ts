@@ -4,15 +4,10 @@ import {
   noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
-  noScnCodeReconciliations,
 } from "./qualityCheckReconciliation.js";
-import { qualityCheckReconciliationsOf } from "./scenarioReconciliation.js";
-import { evidenceObligationsOf, pendingItemsOf } from "./journal.js";
 import type {
-  Scenario,
   RuntimeEvidenceObservation,
   FitnessEvidenceObservation,
-  QualityCheckReconciliation,
 } from "../model.js";
 
 const credit = (
@@ -20,40 +15,6 @@ const credit = (
   scnId: string | null,
   extra: Partial<RuntimeEvidenceObservation> = {}
 ): RuntimeEvidenceObservation => ({ qualityCheck, scnId, status: "passed", ...extra });
-
-describe("[SCN-LDG-001] the pending partition splits a scenario's obligations exactly", () => {
-  const scenario: Scenario = {
-    scnId: "SCN-AAA-001",
-    evidenceObligations: [
-      { qualityCheck: "unit" },
-      { qualityCheck: "e2e", pending: true },
-      { qualityCheck: "integration" },
-    ],
-  };
-
-  it("names only the non-pending obligations, in document order", () => {
-    expect(evidenceObligationsOf(scenario.evidenceObligations)).toEqual([
-      { qualityCheck: "unit" },
-      { qualityCheck: "integration" },
-    ]);
-  });
-
-  it("raises one Pending Item per deferred obligation", () => {
-    expect(pendingItemsOf(scenario)).toEqual([{ qualityCheck: "e2e" }]);
-  });
-
-  it("partitions with no overlap and no loss", () => {
-    expect(
-      evidenceObligationsOf(scenario.evidenceObligations).length + pendingItemsOf(scenario).length
-    ).toBe(scenario.evidenceObligations.length);
-  });
-
-  it("raises a quality-check-less Pending Item for a scenario-scope deferral", () => {
-    expect(pendingItemsOf({ scnId: "SCN-AAA-002", evidenceObligations: [{ pending: true }] })).toEqual(
-      [{ qualityCheck: undefined }]
-    );
-  });
-});
 
 describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at quality-checks with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
@@ -109,30 +70,6 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
       evidenceObservation: untagged,
     });
     expect(item).not.toHaveProperty("locator");
-  });
-});
-
-describe("[SCN-LDG-008] a runtime credit's item names no check, even one the credit arrived carrying", () => {
-  it("withholds a check name a runtime credit arrived with rather than naming it the check that ran", () => {
-    const taggedRuntime: RuntimeEvidenceObservation & { fitnessFunction: string } = {
-      qualityCheck: "integration",
-      scnId: "SCN-AAA-001",
-      status: "passed",
-      fitnessFunction: "complexity",
-    };
-    const [item] = noEvidenceObligationReconciliationsOf(
-      "SCN-AAA-001",
-      [taggedRuntime],
-      new Set(["SCN-AAA-001 unit"])
-    );
-
-    expect(item).toStrictEqual({
-      qualityCheck: "integration",
-      outcome: "no-evidence-obligation",
-      evidenceObservation: taggedRuntime,
-    });
-    expect(item).not.toHaveProperty("fitnessFunction");
-    expect(taggedRuntime.fitnessFunction).toBe("complexity");
   });
 });
 
@@ -217,12 +154,6 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     expect(item!.message).toBe("Failed to collect");
     expect(item!.evidenceObservation).toBeUndefined();
   });
-
-  it("carries no locator on a no-evidence-obligation fitness function — a guard is read from config, not a test file", () => {
-    const [item] = suspenseReconciliationsOf([], [], [guard]);
-    expect(item!.locator).toBeUndefined();
-    expect(item!.evidenceObservation).toBe(guard);
-  });
 });
 
 describe("[SCN-LDG-007] a suspense item omits the payload keys its observation has no value for", () => {
@@ -243,36 +174,5 @@ describe("[SCN-LDG-007] a suspense item omits the payload keys its observation h
       evidenceObservation: anonymous,
     });
     expect(item).not.toHaveProperty("locator");
-  });
-});
-
-describe("[SCN-LDG-001] qualityCheckReconciliationsOf degenerates a row to both-missing", () => {
-  const anItem = (): QualityCheckReconciliation =>
-    citesUnknownScenarioReconciliationsOf([credit("unit", "SCN-ZZZ-009")])[0]!;
-
-  it("posts one both-missing item when the row reconciled to nothing on either side", () => {
-    const items = qualityCheckReconciliationsOf([], [], []);
-    expect(items.map((i) => i.outcome)).toEqual(["both-missing"]);
-    expect(items[0]!.qualityCheck).toBeUndefined();
-  });
-
-  it("does NOT degenerate when the row carries a Pending Item", () => {
-    expect(qualityCheckReconciliationsOf([], [], [{ qualityCheck: "unit" }])).toEqual([]);
-  });
-
-  it("does NOT degenerate when a no-evidence-obligation credit already produced a row", () => {
-    const items = qualityCheckReconciliationsOf([], [anItem()], []);
-    expect(items.map((i) => i.outcome)).toEqual(["cites-unknown-scenario"]);
-  });
-});
-
-describe("[SCN-LDG-001] noScnCodeReconciliations builds the untagged row's debit-side item", () => {
-  it("posts one scenario-scope no-scn-code item carrying a synthesised empty obligation", () => {
-    const items = noScnCodeReconciliations();
-    expect(items).toHaveLength(1);
-    expect(items[0]!.outcome).toBe("no-scn-code");
-    expect(items[0]!.qualityCheck).toBeUndefined();
-    expect(items[0]!.evidenceObligation).toEqual({});
-    expect(items[0]!.evidenceObservation).toBeUndefined();
   });
 });

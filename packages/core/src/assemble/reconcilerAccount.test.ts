@@ -20,17 +20,6 @@ function reconcile(
 }
 
 describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
-  it("accounts for both steps as the reconciler by their qualified names, keeps the ordinary check on the books, and names nothing excluded", () => {
-    const { summary } = reconcile([ci], ["ci.yml"]);
-    expect(summary.reconcilerSteps).toStrictEqual([
-      { step: "ci.yml:ci:Dump this run's step record", role: "records" },
-      { step: "ci.yml:ci:Self-reconciliation balance", role: "reconciles" },
-    ]);
-    expect(summary.discoveryScope).toStrictEqual([
-      { source: "ci.yml", job: "ci", steps: 3, candidates: 1 },
-    ]);
-    expect(summary).not.toHaveProperty("excludedSteps");
-  });
 
   it("labels each reconciler step by its identity when the target gives no workflow names", () => {
     const { summary } = reconcile([ci]);

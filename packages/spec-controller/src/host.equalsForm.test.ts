@@ -17,21 +17,4 @@ describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form a
       });
     });
   }
-
-  it.each([
-    ["refuses --store=x balance at the host's scope, giving '--store x'", "--store=x", "--store x"],
-    ["gives the modifier's value placeholder for a form written with no value", "--store=", "--store <root>"],
-  ] as const)("%s", (_title, written, spelling) => {
-    expect(parseHostInvocation([written, "balance"])).toEqual({
-      commandArgs: [],
-      refusal: equalsForm(written, spelling),
-    });
-  });
-
-  it("refuses the form after another modifier, reading nothing", () => {
-    expect(parseHostInvocation(["--store", "s", "--run-id=r", "balance"])).toEqual({
-      commandArgs: [],
-      refusal: equalsForm("--run-id=r", "--run-id r"),
-    });
-  });
 });

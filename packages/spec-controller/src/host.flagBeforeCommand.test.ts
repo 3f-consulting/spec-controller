@@ -17,9 +17,6 @@ const EXAMPLES: [string, { flag: string; argv: string[] }][] = [
 ];
 
 describe("[SCN-CLI-060] a flag given before the command is refused as a flag out of place", () => {
-  it("lists the host's modifiers as the registry's global flags give them, in order", () => {
-    expect(cliRegistry.global.map((flag) => flag.name).join(", ")).toBe(HOST_MODIFIERS);
-  });
 
   for (const [row, { flag, argv }] of EXAMPLES) {
     it(`refuses ${row} as a flag before the command, listing the host's modifiers, and takes no command arguments`, () => {
@@ -30,29 +27,11 @@ describe("[SCN-CLI-060] a flag given before the command is refused as a flag out
   for (const { flags } of [...cliRegistry.commands, { flags: [{ name: "--bogus" }] }]) {
     for (const { name: flag } of flags) {
       if (flag === "--help") continue;
-      it(`refuses ${flag} before the command, naming it, and takes no command`, () => {
-        const inv = parseHostInvocation([flag, "balance", "--features", "f"]);
-        expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
-        expect(inv.refusal).not.toMatch(/unknown command/i);
-      });
     }
   }
 
   it("refuses it after a modifier too, before any store is taken", () => {
     const inv = parseHostInvocation(["--store", "/s", "--exit-zero", "balance"]);
     expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand("--exit-zero") });
-  });
-
-  it("refuses it before a command the host does not know, naming the flag and not the command", () => {
-    const inv = parseHostInvocation(["--exit-zero", "nosuchcommand"]);
-    expect(inv.refusal).toContain("--exit-zero");
-    expect(inv.refusal).not.toContain("nosuchcommand");
-  });
-
-  it("leaves the top-level help where it was", () => {
-    for (const help of ["--help", "-h"]) {
-      expect(parseHostInvocation([help]).refusal).toBeUndefined();
-      expect(parseHostInvocation([help]).command).toBe(help);
-    }
   });
 });

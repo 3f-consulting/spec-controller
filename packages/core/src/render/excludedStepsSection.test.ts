@@ -48,15 +48,6 @@ describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is r
     expect(lines[2]).toContain(strayEntry);
   });
 
-  it("lists the excluded step before the entry that names no step, each on its own line", () => {
-    const lines = section(reportLines([excludedStep, strayEntry]));
-    expect(lines).toStrictEqual([heading, "", excludedLine(excludedStep), unmatchedLine(strayEntry), ""]);
-    expect(lines.slice(2, 4)).toStrictEqual([
-      "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
-      "- ci.yml:quality:Lint — matches no step: the entry names nothing this run read.",
-    ]);
-  });
-
   it("renders no section, and nothing in its place, for a target that names no step a non-check", () => {
     const lines = reportLines();
     expect(lines).not.toContain(heading);

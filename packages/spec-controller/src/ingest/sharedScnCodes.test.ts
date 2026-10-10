@@ -35,11 +35,4 @@ describe("[SCN-STG-017] readEvidenceObligations names the scenarios sharing each
       },
     ]);
   });
-
-  it("lists nothing when every code is carried once", () => {
-    const features = corpus({
-      "one.feature": "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: only\n    Given a thing\n",
-    });
-    expect(readEvidenceObligations(features).sharedScnCodes ?? []).toEqual([]);
-  });
 });

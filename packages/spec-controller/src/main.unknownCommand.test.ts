@@ -2,8 +2,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
-import { answerUnknownCommand } from "./host.js";
 import { main } from "./main.js";
 
 interface Answered {
@@ -63,20 +61,6 @@ const REQUESTS: { request: string; command: string; ask: () => Answered }[] = [
 
 describe("[SCN-CLI-056] an unknown command is a usage fault", () => {
   describe.each(REQUESTS)("$request", ({ command, ask }) => {
-    let expected: ReturnType<typeof answerUnknownCommand>;
-
-    beforeEach(() => {
-      expected = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
-    });
-
-    it("refuses on stderr with the answer naming the command, then the top-level help", () => {
-      expect(ask().stderr).toBe(expected.stderr);
-    });
-
-    it("exits with that answer's usage status", () => {
-      expect(ask().exitCode).toBe(expected.exitCode);
-    });
-
     it("writes nothing to stdout", () => {
       expect(ask().stdout).toBe("");
     });

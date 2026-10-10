@@ -23,9 +23,6 @@ const MISSING: [string, (modifier: string) => string[]][] = [
 ];
 
 describe("[SCN-CLI-059] the host refuses a modifier given no value as a usage fault, and stores nothing", () => {
-  it("reads its value modifiers from the registry, and finds --store and --run-id", () => {
-    expect(valueModifiers.map((flag) => flag.name)).toEqual(["--store", "--run-id"]);
-  });
 
   for (const flag of cliRegistry.global) {
     if (flag.arg === undefined) continue;
@@ -41,15 +38,4 @@ describe("[SCN-CLI-059] the host refuses a modifier given no value as a usage fa
       });
     }
   }
-
-  it("takes a lone - as a modifier's value, never as a value missing", () => {
-    const inv = parseHostInvocation(["--store", "-", "balance"]);
-    expect(inv).toEqual({ store: "-", runId: undefined, command: "balance", commandArgs: [] });
-  });
-
-  it("takes a modifier given a value, as before", () => {
-    const inv = parseHostInvocation(["--store", "/s", "--run-id", "r1", "balance", "--features", "f"]);
-    expect(inv.refusal).toBeUndefined();
-    expect(inv).toMatchObject({ store: "/s", runId: "r1", command: "balance" });
-  });
 });

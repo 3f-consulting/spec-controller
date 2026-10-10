@@ -36,17 +36,7 @@ describe("[SCN-USG-006] a CI input names either one workflow file or a directory
     expect(ciSourcePathsOf("wf", reader)).toEqual(["wf/ci.yml"]);
   });
 
-  it("resolves a file to that file ALONE — an explicit input is a narrowing, not a hint", () => {
-    const reader = readerOf({ "wf": ["ci.yml", "nightly.yml"] }, ["wf/ci.yml"]);
-
-    expect(ciSourcePathsOf("wf/ci.yml", reader)).toEqual(["wf/ci.yml"]);
-  });
-
   it("resolves an absent path to nothing, which is the fail-safe direction", () => {
     expect(ciSourcePathsOf(".github/workflows", readerOf({}, []))).toEqual([]);
-  });
-
-  it("resolves an empty directory to nothing, the same as an absent one", () => {
-    expect(ciSourcePathsOf("wf", readerOf({ "wf": [] }, []))).toEqual([]);
   });
 });

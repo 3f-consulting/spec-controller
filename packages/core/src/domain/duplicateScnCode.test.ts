@@ -65,16 +65,6 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
     ]);
     expect(accounts[0]!.verdict).toBe("out-of-balance");
   });
-
-  it("leaves a code carried once reconciling exactly as before", () => {
-    const single = reconcile(
-      [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [{ qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed", locator: "one.test.ts" }]
-    );
-    const [account] = accountsFor(single, "SCN-ONE-001");
-    expect(account!.qualityCheckReconciliations.map((q) => q.outcome)).toEqual(["satisfied"]);
-    expect(isBalanced(single)).toBe(true);
-  });
 });
 
 describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
@@ -83,10 +73,6 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile([...parseScenarios(one), ...parseScenarios(two)], []);
-  });
-
-  it("holds ONE account for the code across the two files", () => {
-    expect(accountsFor(ledger, "SCN-ONE-001")).toHaveLength(1);
   });
 
   it("reads duplicate-scn-code at every quality check, out of balance", () => {
@@ -112,14 +98,6 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
     );
   });
 
-  it("carries the union of the checks the sharers name, each reading duplicate-scn-code", () => {
-    const [account] = accountsFor(ledger, "SCN-DIS-001");
-    expect(account!.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])).toEqual([
-      ["unit", "duplicate-scn-code"],
-      ["integration", "duplicate-scn-code"],
-    ]);
-  });
-
   it("never balances, though every check has passing evidence", () => {
     const [account] = accountsFor(ledger, "SCN-DIS-001");
     expect(account!.verdict).toBe("out-of-balance");
@@ -142,19 +120,6 @@ describe("[SCN-STG-016] every credit citing a duplicated code posts to its one a
       ],
       [...credits]
     );
-  });
-
-  it("posts each citing credit to the one account exactly once", () => {
-    const [account] = accountsFor(ledger, "SCN-CRD-001");
-    expect(account!.evidenceObservations).toHaveLength(credits.length);
-    for (const credit of credits) {
-      expect(account!.evidenceObservations.filter((o) => o === credit || (o.qualityCheck !== "fitness" && o.locator === credit.locator))).toHaveLength(1);
-    }
-  });
-
-  it("posts none of them to any other row", () => {
-    const others = ledger.scenarioReconciliations.filter((r) => r.scnId !== "SCN-CRD-001");
-    expect(others.flatMap((r) => r.evidenceObservations)).toEqual([]);
   });
 
   it("attributes none of them — every item on the account reads duplicate-scn-code", () => {

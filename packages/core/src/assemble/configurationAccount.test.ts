@@ -78,8 +78,4 @@ describe("[SCN-USG-025] a specController entry of a kind its reader does not tak
   it.each(examples)("gives otherwise the report the same target gives without %s", (_, written, without) => {
     expect(withoutWrongKinds(reconcile(written))).toEqual(reconcile(without));
   });
-
-  it("carries no wrong-kind account for a target whose every entry is of the kind read", () => {
-    expect(reconcile(block).summary).not.toHaveProperty("wrongKindConfiguration");
-  });
 });

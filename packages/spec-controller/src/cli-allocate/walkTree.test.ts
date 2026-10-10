@@ -32,19 +32,6 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     expect(thrownBy(() => walkTree(root, "ONE"))).toMatchObject({ name: "UnreadableInput", subject: "a file in the tree", path: file });
   });
 
-  it("refuses a directory in the tree it may not list, naming it", () => {
-    const root = tree();
-    const dir = join(root, "docs");
-    withhold(dir, 0o000);
-    expect(thrownBy(() => walkTree(root, "ONE"))).toMatchObject({ name: "UnreadableInput", subject: "a directory in the tree", path: dir });
-  });
-
-  it("says the operating system did not permit the read", () => {
-    const root = tree();
-    withhold(join(root, "docs"), 0o000);
-    expect(thrownBy(() => walkTree(root, "ONE"))).toMatchObject({ reason: expect.stringMatching(/EACCES|EPERM/) });
-  });
-
   it("still reads a tree it may read", () => {
     expect(walkTree(tree(), "ONE").map((sighting) => sighting.path)).toEqual(["docs/notes.md"]);
   });

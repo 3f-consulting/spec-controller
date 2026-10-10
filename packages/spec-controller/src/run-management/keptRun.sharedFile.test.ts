@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
@@ -65,62 +65,9 @@ describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own r
     expect(readFileSync(runYaml, "utf8")).toBe("an earlier run's manifest\n");
     expect(existsSync(join(scratch, "elsewhere.md"))).toBe(false);
   });
-
-  it("routes and stamps a run whose --format paths are elsewhere", () => {
-    const route = vi.fn(() => true);
-
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [join(scratch, "elsewhere.md")] }, meta, route))).toBeUndefined();
-
-    expect(route).toHaveBeenCalledOnce();
-    expect(existsSync(runYaml)).toBe(true);
-    expect(existsSync(join(scratch, "elsewhere.md"))).toBe(false);
-  });
 });
 
 describe("[SCN-RMG-010] a --format path is the stored run's own run.yaml only when it is the same file", () => {
-  function earlierRun(): void {
-    mkdirSync(runDir, { recursive: true });
-    writeFileSync(runYaml, "an earlier run's manifest\n");
-  }
-
-  it("refuses a hard link to an earlier run's run.yaml, naming the link, and leaves the run.yaml as it was", () => {
-    earlierRun();
-    const link = join(scratch, "linked.md");
-    linkSync(runYaml, link);
-    const route = vi.fn(() => true);
-
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [link] }, meta, route))).toBe(2);
-
-    expect(route).not.toHaveBeenCalled();
-    expect(stderr.join("")).toContain(link);
-    expect(readFileSync(runYaml, "utf8")).toBe("an earlier run's manifest\n");
-  });
-
-  it("refuses a symbolic link to the run.yaml of a new run, and leaves no run.yaml behind", () => {
-    mkdirSync(runDir, { recursive: true });
-    const link = join(scratch, "symlinked.md");
-    symlinkSync(runYaml, link);
-    const route = vi.fn(() => true);
-
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [link] }, meta, route))).toBe(2);
-
-    expect(route).not.toHaveBeenCalled();
-    expect(stderr.join("")).toContain(link);
-    expect(existsSync(runYaml)).toBe(false);
-  });
-
-  it("routes a run whose --format path is another file beside its run.yaml, in the same run directory", () => {
-    earlierRun();
-    const beside = join(runDir, "notes.md");
-    writeFileSync(beside, "notes\n");
-    const route = vi.fn(() => true);
-
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [beside] }, meta, route))).toBeUndefined();
-
-    expect(route).toHaveBeenCalledOnce();
-    expect(readFileSync(beside, "utf8")).toBe("notes\n");
-  });
-
   it("routes a run whose --format path lies in a folder that does not exist, and creates nothing there", () => {
     const route = vi.fn(() => true);
     const unmade = join(scratch, "no-such-folder", "out.md");

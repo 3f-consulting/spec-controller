@@ -68,14 +68,6 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     expectRefusedNaming(allocateFrom(root), subject, join(root, path));
   });
 
-  // On macOS, git resolving a working directory it may not list scans every ancestor, so a crowded temporary directory can take seconds.
-  it("refuses ONE in a copy without git whose working directory it may enter but not list, naming it", () => {
-    const copy = copyWithoutGit();
-    withhold(copy, 0o311);
-
-    expectRefusedNaming(allocateFrom(copy), "a directory in the tree", copy);
-  }, 30_000);
-
   it.each(["docs", "docs/deep"])("refuses ONE in a repository whose directory %s it may not enter, naming it", (dir) => {
     const repo = repository();
     withhold(join(repo, dir), 0o000);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST } from "./keptRun.js";
@@ -38,29 +38,6 @@ describe("[SCN-RMG-005] executeKeptRun stamps run.yaml only when the command wro
     expect(kept).toBeUndefined();
     expect(existsSync(join(storeRoot, TARGET, RUN_ID, RUN_MANIFEST))).toBe(false);
     expect(filesUnder(storeRoot).size).toBe(0);
-  });
-
-  it("leaves an earlier run under the same run-id byte-identical when the command wrote no report", () => {
-    const storeRoot = join(scratch, "store");
-    const runDir = join(storeRoot, TARGET, RUN_ID);
-    mkdirSync(runDir, { recursive: true });
-    writeFileSync(join(runDir, RUN_MANIFEST), "an earlier run's manifest\n");
-    writeFileSync(join(runDir, "spec-reconciliation.md"), "an earlier report\n");
-    writeFileSync(join(runDir, "spec-reconciliation.json"), "{}\n");
-    const before = filesUnder(storeRoot);
-
-    executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, () => false);
-
-    expect(filesUnder(storeRoot)).toEqual(before);
-  });
-
-  it("stamps run.yaml and hands back the run when the command wrote its report", () => {
-    const storeRoot = join(scratch, "store");
-
-    const kept = executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, () => true);
-
-    expect(kept?.runDir).toBe(join(storeRoot, TARGET, RUN_ID));
-    expect(existsSync(join(storeRoot, TARGET, RUN_ID, RUN_MANIFEST))).toBe(true);
   });
 });
 

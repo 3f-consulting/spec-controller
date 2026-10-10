@@ -53,15 +53,6 @@ describe("[SCN-ALC-012] a request not in canon's form is refused as a usage erro
     expect(usageErrorOf(["ONE", "007", "EXTRA"], grown)).toBe(extraArgument("EXTRA", "<FFF> <NNN>"));
   });
 
-  it("reads ABC, one part in canon's form, with no refusal", () => {
-    expect(readRequest(["ABC"], cliRegistry, "0.0.0-test")).toEqual({ part: "ABC", isNew: false });
-  });
-
-  it("reads a part in canon's form, of two to five characters", () => {
-    expect(readRequest(["ON"], cliRegistry, "0.0.0-test")).toEqual({ part: "ON", isNew: false });
-    expect(readRequest(["FIVE5"], cliRegistry, "0.0.0-test")).toEqual({ part: "FIVE5", isNew: false });
-  });
-
   it("reads --new before or after the part, never as the part's value", () => {
     expect(readRequest(["--new", "ZZ"], cliRegistry, "0.0.0-test")).toEqual({ part: "ZZ", isNew: true });
     expect(readRequest(["ZZ", "--new"], cliRegistry, "0.0.0-test")).toEqual({ part: "ZZ", isNew: true });

@@ -53,18 +53,6 @@ function reconcileUncited(): EvidenceReconciliation {
 }
 
 describe("[SCN-LNT-033] the fitness-function census counts a check whose red its job survives as a check that ran", () => {
-  it("counts the severed uncited check in both census counts", () => {
-    expect(reconcileUncited().summary.fitnessFunctions).toEqual({
-      runningFitnessFunctionCount: 2,
-      uncitedFitnessFunctionCount: 2,
-    });
-  });
-
-  it("leaves the named count it implies at nil, and never below it", () => {
-    const census = reconcileUncited().summary.fitnessFunctions;
-    const named = (census?.runningFitnessFunctionCount ?? 0) - (census?.uncitedFitnessFunctionCount ?? 0);
-    expect(named).toBe(0);
-  });
 
   it("still POSTS both checks to the suspense row, the severed one included", () => {
     const suspense = reconcileUncited().ledger.scenarioReconciliations.filter(

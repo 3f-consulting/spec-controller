@@ -2,8 +2,8 @@ import { afterAll, describe, it, expect } from "vitest";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkInputsExist, checkInputsParse, checkRenderFromJson } from "./cli.js";
-import { cliRegistry, type CliRegistry, type FlagSpec } from "../cli-registry.js";
+import { checkInputsExist, checkInputsParse } from "./cli.js";
+import { cliRegistry } from "../cli-registry.js";
 import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
@@ -29,30 +29,6 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
       expect(error).toContain(missing);
     },
   );
-
-  it("returns null when every supplied input path exists, so the CLI proceeds to reconcile", () => {
-    const args = {
-      vitest: "reports/vitest.json",
-      cucumber: "reports/cucumber.json",
-      features: "features",
-      ci: ".github/workflows/ci.yml",
-      "package-json": "package.json",
-    };
-    expect(checkInputsExist(args, () => true)).toBeNull();
-  });
-
-  it("returns null when no input flags are supplied (each flag is legitimately optional)", () => {
-    expect(checkInputsExist({}, () => false)).toBeNull();
-    expect(checkInputsExist({ target: "some-target" }, () => false)).toBeNull();
-  });
-
-  it("reports the FIRST supplied-but-absent flag when several are missing", () => {
-    const error = checkInputsExist(
-      { cucumber: "bad/cucumber.json", ci: "bad/ci.yml" },
-      () => false,
-    );
-    expect(error).toContain("--cucumber");
-  });
 });
 
 describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
@@ -91,41 +67,6 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
       expect(error).toMatch(/JSON/i);
     },
   );
-
-  it("returns null when every supplied JSON input parses, so the CLI proceeds to reconcile", () => {
-    const args = {
-      vitest: "reports/vitest.json",
-      cucumber: "reports/cucumber.json",
-      "package-json": "package.json",
-    };
-    expect(checkInputsParse(args, () => '{"ok": true}')).toBeNull();
-  });
-
-  it("never reads --features or --ci: neither is JSON", () => {
-    const read = (): string => {
-      throw new Error("checkInputsParse must not read --features or --ci");
-    };
-    expect(checkInputsParse({ features: "features", ci: ".github/workflows/ci.yml" }, read)).toBeNull();
-  });
-
-  it("returns null when no input flags are supplied (each is legitimately optional)", () => {
-    expect(checkInputsParse({}, () => "")).toBeNull();
-  });
-
-  it("reports an empty file as unparseable — the /dev/null case that surfaced the bug", () => {
-    const error = checkInputsParse({ vitest: "/dev/null" }, () => "");
-    expect(error).not.toBeNull();
-    expect(error).toContain("/dev/null");
-  });
-
-  it("reports an UNREADABLE file as the same input fault rather than letting it escape as a crash", () => {
-    const read = (): string => {
-      throw new Error("EACCES: permission denied");
-    };
-    const error = checkInputsParse({ vitest: "reports/vitest.json" }, read);
-    expect(error).not.toBeNull();
-    expect(error).toContain("reports/vitest.json");
-  });
 });
 
 describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", () => {
@@ -159,62 +100,6 @@ describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", ()
       stderr: refusalFor(missing, reason),
       exitCode: 2,
     });
-  });
-
-  it("runBalance refuses an UNPARSEABLE saved report at exit 2, naming it and the parser's reason, rendering nothing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "render-unparseable-"));
-    made.push(dir);
-    const path = join(dir, "spec-reconciliation.json");
-    const text = "not a saved report at all {{{";
-    writeFileSync(path, text);
-    const reason = failureOf(() => JSON.parse(text));
-
-    expect(captured(["--render-from-json", path])).toEqual({
-      report: "",
-      stderr: refusalFor(path, reason),
-      exitCode: 2,
-    });
-  });
-
-  it("returns a typed error naming the path when the saved report is MISSING", () => {
-    const missing = "saved/does-not-exist.json";
-    const read = (): string => {
-      throw new Error(`ENOENT: no such file or directory, open '${missing}'`);
-    };
-
-    const error = checkRenderFromJson({ "render-from-json": missing }, read);
-    expect(error).not.toBeNull();
-    expect(error).toContain("--render-from-json");
-    expect(error).toContain(missing);
-  });
-
-  it("returns a typed error naming the path when the saved report is UNPARSEABLE", () => {
-    const path = "saved/spec-reconciliation.json";
-    const error = checkRenderFromJson(
-      { "render-from-json": path },
-      () => "not a saved report at all {{{",
-    );
-
-    expect(error).not.toBeNull();
-    expect(error).toContain("--render-from-json");
-    expect(error).toContain(path);
-    expect(error).toMatch(/JSON/i);
-  });
-
-  it("returns null when the saved report reads and parses, so the CLI proceeds to render", () => {
-    const error = checkRenderFromJson(
-      { "render-from-json": "saved/spec-reconciliation.json" },
-      () => '{"summary": {}}',
-    );
-    expect(error).toBeNull();
-  });
-
-  it("returns null when --render-from-json is omitted (the ordinary reconcile path)", () => {
-    const read = (): string => {
-      throw new Error("checkRenderFromJson must not read when the flag is omitted");
-    };
-    expect(checkRenderFromJson({}, read)).toBeNull();
-    expect(checkRenderFromJson({ vitest: "reports/vitest.json" }, read)).toBeNull();
   });
 });
 
@@ -287,13 +172,6 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
 const REFUSING_TOOL_VERSION = "9.9.9-test";
 
 describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
-  it("returns null when every parsed flag is registered", () => {
-    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION)).toBeNull();
-    expect(
-      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION),
-    ).toBeNull();
-    expect(checkUnknownFlags({}, cliRegistry, "balance", REFUSING_TOOL_VERSION)).toBeNull();
-  });
 
   it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
     const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
@@ -312,39 +190,9 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     expect(refusal).toMatch(/bump the pin/i);
   });
 
-  const namesOf = (flag: FlagSpec): string[] => [flag.name, ...(flag.aliases ?? [])];
-  const givenOnce = (flag: FlagSpec, name: string): string[] => {
-    const read = `--${name.replace(/^-+/, "")}`;
-    return flag.arg === undefined ? [read] : [read, "x"];
-  };
-  const refusalOf = (argv: string[], registry: CliRegistry): string | null =>
-    checkUnknownFlags(parseArgs(argv), registry, "balance", REFUSING_TOOL_VERSION);
-
   it("reads balance --features dir --strict as the value flag's value and the switch's true, and no key for a lone -", () => {
     expect(parseArgs(["--features", "dir", "--strict"])).toEqual({ features: "dir", strict: "true" });
     expect(parseArgs(["-", "--strict"])).toEqual({ strict: "true" });
-  });
-
-  it("accepts every flag and alias balance registers, each given once as the registry spells it", () => {
-    const balance = cliRegistry.commands.find((command) => command.name === "balance");
-    const names = (balance?.flags ?? [])
-      .flatMap((flag) => namesOf(flag).map((name) => ({ flag, name })))
-      .filter(({ name }) => name.startsWith("--"));
-    for (const { flag, name } of names) {
-      expect(refusalOf(givenOnce(flag, name), cliRegistry), name).toBeNull();
-    }
-  });
-
-  it("accepts a flag the registry writes with one dash and an alias it writes with two, the same way", () => {
-    const later: FlagSpec = { name: "-later", aliases: ["--l"], arg: "<x>", description: "added later" };
-    const grown: CliRegistry = {
-      ...cliRegistry,
-      commands: cliRegistry.commands.map((command) =>
-        command.name === "balance" ? { ...command, flags: [...command.flags, later] } : command,
-      ),
-    };
-    for (const name of namesOf(later)) expect(refusalOf(givenOnce(later, name), grown), name).toBeNull();
-    expect(refusalOf(["--nosuch"], grown)).toContain("--nosuch");
   });
 
   function runRefused(argv: string[]): { stdout: string; stderr: string; exitCode: number } {

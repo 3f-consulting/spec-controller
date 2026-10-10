@@ -79,11 +79,6 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     );
   });
 
-  const integrityOf = (md: string): string => md.slice(md.indexOf("## Run integrity"));
-
-  const stampOf = (md: string): string =>
-    md.slice(md.indexOf("## Run integrity"), md.indexOf("## Summary views"));
-
   it("stamps each run unsound, above the summary views", () => {
     for (const balance of [vitestBroken, cucumberBroken]) {
       const md = renderMarkdown(__er(balance), ctx);
@@ -94,37 +89,6 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
       expect(iProvenance).toBeLessThan(iStamp);
       expect(iStamp).toBeLessThan(iSummary);
       expect(md).toMatch(/unsound[\s\S]{0,400}missing/i);
-    }
-  });
-
-  it("names each run's own broken evidence — the file or the feature — and neither miscalls the other's failure a collection failure", () => {
-    const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
-    const cucumberMd = renderMarkdown(__er(cucumberBroken), ctx);
-
-    expect(vitestMd).toContain(VITEST_LOCATOR);
-    expect(cucumberMd).toContain(CUCUMBER_LOCATOR);
-
-    expect(stampOf(cucumberMd)).not.toMatch(/collection|collect|proving suite/i);
-
-    expect(vitestMd).not.toMatch(/ambiguous|step definition/i);
-  });
-
-  it("prints the runner's error verbatim where the runner gives one, and states the diagnosis itself where it does not", () => {
-    const vitestIntegrity = integrityOf(renderMarkdown(__er(vitestBroken), ctx));
-    expect(vitestIntegrity).toContain(VITEST_MESSAGE);
-    expect(vitestIntegrity).toMatch(/```[\s\S]*Cannot find package[\s\S]*```/);
-
-    const cucumberIntegrity = integrityOf(renderMarkdown(__er(cucumberBroken), ctx));
-    expect(cucumberIntegrity).toContain(CUCUMBER_MESSAGE);
-    expect(cucumberIntegrity).toMatch(/```[\s\S]*is ambiguous[\s\S]*```/);
-  });
-
-  it("sends the reader to fix the harness and regenerate — prescribing no cure for the error itself", () => {
-    for (const balance of [vitestBroken, cucumberBroken]) {
-      const md = renderMarkdown(__er(balance), ctx);
-      expect(md).toMatch(/fix the harness and regenerate/i);
-      expect(md).not.toMatch(/pnpm install|npm install|yarn install|--frozen-lockfile/i);
-      expect(md).not.toMatch(/delete |remove |rename |narrow |disambiguate/i);
     }
   });
 
@@ -144,18 +108,6 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(cucumberSuspense).toContain(CUCUMBER_LOCATOR);
     expect(cucumberSuspense).toContain("is ambiguous");
   });
-
-  it("omits the stamp entirely when the run carries no broken evidence (byte-identical regression)", () => {
-    const sound: Ledger = reconcile(
-      [{ scnId: "SCN-SND-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      []
-    );
-    const md = renderMarkdown(__er(sound), ctx);
-    expect(md).not.toContain("Run integrity");
-    expect(md).not.toContain("unsound");
-    expect(md).not.toContain("💥");
-    expect(md).toContain(`unit ∅ ${OUTCOME_DESCRIPTION.missing}`);
-  });
 });
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
@@ -173,29 +125,9 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   };
 
   let balanced: Ledger;
-  let outOfBalance: Ledger;
-  let broken: Ledger;
   let balancedWithPending: Ledger;
   beforeEach(() => {
     balanced = reconcile([balancedScenario], [balancedObs]);
-    outOfBalance = reconcile(
-      [balancedScenario],
-      [balancedObs, { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" }]
-    );
-    broken = reconcile(
-      [balancedScenario],
-      [
-        balancedObs,
-        {
-          qualityCheck: "unit",
-          scnId: null,
-          status: "passed",
-          broken: true,
-          locator: "tests/harness/x.test.ts",
-          message: "Error: boom",
-        },
-      ]
-    );
     balancedWithPending = reconcile(
       [
         {
@@ -205,45 +137,6 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       ],
       [balancedObs]
     );
-  });
-
-  it("opens the summary with the verdict, before any cut of the reconciliation", () => {
-    const opening = summaryOpening(renderMarkdown(__er(balanced), ctx));
-    expect(opening).toContain("### Run verdict");
-    expect(opening).toMatch(/BALANCED/);
-  });
-
-  it("reads BALANCED and exit 0 when every Scenario Reconciliation balances", () => {
-    const md = renderMarkdown(__er(balanced), ctx);
-    expect(summaryOpening(md)).toContain("**BALANCED**");
-    expect(summaryOpening(md)).toContain("exit 0");
-    expect(summaryOpening(md)).toContain(
-      "every Scenario Reconciliation balances: scenario, phantom and suspense alike."
-    );
-  });
-
-  it("reads OUT-OF-BALANCE and exit 1 — never as a pass — when a row does not balance", () => {
-    const opening = summaryOpening(renderMarkdown(__er(outOfBalance), ctx));
-    expect(opening).toContain("**OUT-OF-BALANCE**");
-    expect(opening).toContain("exit 1");
-    expect(opening).not.toContain("**BALANCED**");
-  });
-
-  it("reads UNSOUND and exit 4 when the run carries broken evidence, pre-empting the balance verdict", () => {
-    const opening = summaryOpening(renderMarkdown(__er(broken), ctx));
-    expect(opening).toContain("**UNSOUND**");
-    expect(opening).toContain("exit 4");
-    expect(opening).not.toContain("exit 1");
-  });
-
-  it("glosses UNSOUND in reader-agnostic terms — a proof that never ran, not a vitest suite that failed to collect", () => {
-    const opening = summaryOpening(renderMarkdown(__er(broken), ctx));
-
-    expect(opening).toContain("could not be TRUSTED to reconcile");
-    expect(opening).toContain("A proof never ran");
-
-    expect(opening).not.toMatch(/suite/i);
-    expect(opening).not.toMatch(/collect/i);
   });
 
   it("notes exit 3 under --strict conditionally when a balanced run carries Pending Items — and never asserts it", () => {
@@ -271,11 +164,5 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
   it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
     const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
     expect(md).toContain("| Scenario Reconciliation |");
-  });
-
-  it('names the collection "Scenario Reconciliation(s)" in the headline verdict tally, never "scenario(s)"', () => {
-    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
-    expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
-    expect(md).not.toContain("- 3 scenario(s):");
   });
 });

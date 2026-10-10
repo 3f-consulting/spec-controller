@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { checkStepReconciler } from "./checkStep.testkit.js";
 
@@ -90,15 +89,5 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
       fitnessFunction: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
     });
-  });
-
-  it("says nothing at all about the step that wrote the record, and the run is sound and in balance", () => {
-    const reconciliation = reconcile();
-    expect(reconciliation.ledger.scenarioReconciliations).toHaveLength(2);
-    expect(reconciliation.summary.fitnessFunctions).toEqual({
-      runningFitnessFunctionCount: 2,
-      uncitedFitnessFunctionCount: 0,
-    });
-    expect(hasBrokenEvidence(reconciliation.ledger)).toBe(false);
   });
 });

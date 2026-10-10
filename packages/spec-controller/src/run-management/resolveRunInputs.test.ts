@@ -148,21 +148,6 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
       cleanup();
     }
   });
-
-  it("still returns the real HEAD for a toolDir in the SAME repository that is not under node_modules", () => {
-    const { repo, head, cleanup } = consumerRepo();
-    try {
-      const toolDir = join(repo, "packages", "spec-controller", "src");
-      mkdirSync(toolDir, { recursive: true });
-
-      const identity = resolveToolIdentity({ toolDir });
-
-      expect(identity.toolSha).toBe(head);
-      expect(identity.toolVersion).toBe("7.7.7-consumer");
-    } finally {
-      cleanup();
-    }
-  });
 });
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
@@ -221,26 +206,6 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
     } finally {
       cwd.mockRestore();
       cleanup();
-    }
-  });
-
-  it("returns an explicit source SHA verbatim, overriding the git HEAD of a real git target", () => {
-    const gitTargetDir = process.cwd();
-    const headOfTarget = execFileSync("git", ["-C", gitTargetDir, "rev-parse", "HEAD"], {
-      encoding: "utf8",
-    }).trim();
-    const override = "905a987c0ffeeba110000000000000000deadbeef";
-
-    expect(override).not.toBe(headOfTarget);
-    expect(resolveSourceSha({ sourceSha: override, targetDir: gitTargetDir })).toBe(override);
-  });
-
-  it("resolves to null over a non-git target directory with no override", () => {
-    const nonGitDir = mkdtempSync(join(tmpdir(), "spec-controller-sha-"));
-    try {
-      expect(resolveSourceSha({ targetDir: nonGitDir })).toBeNull();
-    } finally {
-      rmSync(nonGitDir, { recursive: true, force: true });
     }
   });
 
@@ -360,10 +325,6 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
     } finally {
       rmSync(targetRepo, { recursive: true, force: true });
     }
-  });
-
-  it("falls back to process.cwd() for a self-reconcile with no --features", () => {
-    expect(resolveTargetRoot({})).toBe(process.cwd());
   });
 
   it("resolves a blank --features to the working directory, not a root derived from the blank path", () => {

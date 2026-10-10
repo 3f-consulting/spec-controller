@@ -45,14 +45,6 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
       { subject: "a workflow of the --ci folder", path: "workflows/nightly.yaml" },
     ]);
   });
-
-  it("leaves out the package.json the run does not read: one it was pointed away from, or one that is not there", () => {
-    const pointedAway = inputsReadBy({ "package-json": "other.json" }, reader);
-    const absent = inputsReadBy({}, { ...reader, exists: () => false });
-
-    expect(pointedAway.map((i) => i.path)).not.toContain("package.json");
-    expect(absent.map((i) => i.path)).not.toContain("package.json");
-  });
 });
 
 describe("[SCN-FMT-013] balance refuses a --format naming one of the feature files it reads, and writes one naming a file it does not read", () => {

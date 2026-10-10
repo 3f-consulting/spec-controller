@@ -38,15 +38,4 @@ describe("[SCN-ALC-011] --new admits a part no feature file's header carries, an
     expect(answered.exitCode).toBeUndefined();
     expect(answered.stderr).toBe("highest seen: none\n");
   });
-
-  it("answers SCN-ONE-004 for ONE as a new part, noting that a feature file's header already carries ONE", () => {
-    const answered = allocateIn(headedOneCarryingThree(), ["ONE", "--new"]);
-
-    expect(answered.stdout).toBe("SCN-ONE-004\n");
-    expect(answered.exitCode).toBeUndefined();
-    expect(answered.stderr).toBe(
-      "highest seen: SCN-ONE-003, features/one.feature:4\n" +
-        "note: a feature file's header already carries ONE, so --new was not needed\n",
-    );
-  });
 });

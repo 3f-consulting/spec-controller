@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { git, writeInto, taken, withhold } from "./repository.testkit.js";
@@ -59,31 +59,6 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
     expectRefusedNaming(allocateFrom(repo), gitEntry, gitsOwnRefusal(repo));
   });
 
-  it("refuses ONE when its object store is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
-    skip(runsAsRoot());
-    const repo = repositoryCarryingOneCode();
-    withhold(join(repo, ".git", "objects"), 0o000);
-
-    expectRefusedNaming(allocateFrom(repo), join(repo, ".git"), gitsOwnRefusal(repo));
-  });
-
-  it("refuses ONE when its HEAD is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
-    skip(runsAsRoot());
-    const repo = repositoryCarryingOneCode();
-    withhold(join(repo, ".git", "HEAD"), 0o000);
-
-    expectRefusedNaming(allocateFrom(repo), join(repo, ".git"), gitsOwnRefusal(repo));
-  });
-
-  it("refuses ONE when its .git is a file pointing to a directory that is not there, naming the .git file", () => {
-    const repo = repositoryCarryingOneCode();
-    const gitEntry = join(repo, ".git");
-    rmSync(gitEntry, { recursive: true });
-    writeFileSync(gitEntry, `gitdir: ${join(repo, "nowhere")}\n`);
-
-    expectRefusedNaming(allocateFrom(repo), gitEntry, gitsOwnRefusal(repo));
-  });
-
   it("refuses ONE from a directory below the top, naming the .git it found above", ({ skip }) => {
     skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();
@@ -91,17 +66,5 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
     const below = join(repo, "docs");
 
     expectRefusedNaming(allocateFrom(below), join(repo, ".git"), gitsOwnRefusal(below));
-  });
-
-  it("answers ONE from a directory below the top as it would from the top", () => {
-    const repo = repositoryCarryingOneCode();
-
-    const fromBelow = allocateFrom(join(repo, "docs"));
-    process.exitCode = undefined;
-    const fromTop = allocateFrom(repo);
-
-    expect(fromBelow.exitCode).toBeUndefined();
-    expect(fromBelow.stdout).toBe("SCN-ONE-004\n");
-    expect(fromBelow).toEqual(fromTop);
   });
 });

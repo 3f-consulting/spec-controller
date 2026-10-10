@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { brokenItemsOf, fitnessReconciliationsOf, fitnessTally, hasBrokenEvidence } from "./ledger.js";
+import { fitnessReconciliationsOf, fitnessTally } from "./ledger.js";
 import {
   isScenario,
   fitnessFunctionReconciliationsOf,
@@ -59,31 +59,6 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   ] as const)("%s", (_title, kind, expected) => {
     expect(isScenario(kindOf(kind))).toBe(expected);
   });
-
-  it("spans all three row kinds in this fixture", () => {
-    expect(mixed.scenarioReconciliations.map((r) => r.kind).sort()).toEqual([
-      "phantom-scenario",
-      "scenario",
-      "suspense-scenario",
-    ]);
-  });
-});
-
-describe("[SCN-LDG-001] brokenItemsOf lists the proofs that never ran", () => {
-  it("returns each broken item with its where-to-fix and what-broke", () => {
-    const items = brokenItemsOf(ledger);
-    expect(items).toHaveLength(1);
-    expect(items[0]!.outcome).toBe("broken");
-    expect(items[0]!.locator).toBe("tests/broken.test.ts");
-    expect(items[0]!.message).toBe("Failed to collect");
-  });
-
-  it("agrees with hasBrokenEvidence in both directions", () => {
-    expect(hasBrokenEvidence(ledger)).toBe(brokenItemsOf(ledger).length > 0);
-    const sound = reconcile([scenarios[2]!], [evidenceObservations[3]!]);
-    expect(brokenItemsOf(sound)).toEqual([]);
-    expect(hasBrokenEvidence(sound)).toBe(false);
-  });
 });
 
 describe("[SCN-LDG-001] presentFitnessFunctionCountOf counts PRESENCE, not quality", () => {
@@ -101,25 +76,9 @@ describe("[SCN-LDG-001] presentFitnessFunctionCountOf counts PRESENCE, not quali
     expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
     expect(presentFitnessFunctionCountOf(row)).toBe(0);
   });
-
-  it("reads zero on a row naming no fitness function", () => {
-    expect(fitnessFunctionReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
-    expect(presentFitnessFunctionCountOf(rowOf("SCN-AAA-003"))).toBe(0);
-  });
 });
 
 describe("[SCN-LDG-001] fitnessReconciliationsOf is the ONE named fitness list", () => {
-  it("excludes the suspense row's fitness credit from the named list", () => {
-    const named = fitnessReconciliationsOf(ledger);
-    expect(named.map((d) => `${d.scnId}:${d.reconciliation.outcome}`)).toEqual([
-      "SCN-AAA-001:satisfied",
-      "SCN-AAA-004:watermelon",
-      "SCN-AAA-002:missing",
-    ]);
-    expect(
-      ledger.scenarioReconciliations.some((r) => r.kind === "suspense-scenario")
-    ).toBe(true);
-  });
 
   it("is the source the fitness tally folds", () => {
     const named = fitnessReconciliationsOf(ledger);

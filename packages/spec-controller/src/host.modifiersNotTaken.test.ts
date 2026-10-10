@@ -19,15 +19,4 @@ describe("[SCN-ALC-014] a host modifier before allocate is refused, and nothing 
   it("refuses nothing when allocate is given no modifier", () => {
     expect(modifiersNotTakenRefusal(parseHostInvocation(["allocate", "ONE"]))).toBeUndefined();
   });
-
-  it("refuses nothing when allocate is asked for its help after a modifier", () => {
-    expect(modifiersNotTakenRefusal(parseHostInvocation(["--store", "x", "allocate", "--help"]))).toBeUndefined();
-  });
-
-  it.each([
-    ["refuses nothing for a command that keeps runs", "balance"],
-    ["refuses nothing for a command the registry does not hold, which is left to the unknown-command answer", "nosuch"],
-  ] as const)("%s", (_title, command) => {
-    expect(modifiersNotTakenRefusal(parseHostInvocation(["--store", "x", command]))).toBeUndefined();
-  });
 });

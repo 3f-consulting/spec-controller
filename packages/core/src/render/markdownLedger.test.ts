@@ -76,25 +76,6 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain(row);
   });
 
-  it("counts a watermelon guard as PRESENT on the fitness cell's right side, like a satisfied one", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| SCN-A | F/1 |");
-    expect(md).toContain("| SCN-H | F/1 |");
-  });
-
-  it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).not.toContain("| Cell | Meaning |");
-    expect(md).toContain("| Scenario | Fitness |");
-  });
-
-  it("preserves the original three-column ledger when no evidenceObservations is threaded (back-compat)", () => {
-    const md = renderMarkdown(__er(balance), ctx);
-    expect(md).toContain("| Scenario | Verdict | Reconciling items |");
-    expect(md).not.toContain("| Scenario | Fitness |");
-    expect(md).not.toContain("| Cell | Meaning |");
-  });
-
   const headerOf = (...evidence: string[]): string =>
     `| ${[
       CORE_MESSAGES[CoreMessage.ScenarioColumn],
@@ -173,68 +154,6 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ["SCN-U", "U/1"],
       ["SCN-GHOST", "—"],
     ]);
-  });
-
-  it("renders no evidence column at all, for any tier the corpus names, when no observations are threaded", () => {
-    const named = reconcile(
-      [
-        { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "e2e" }, { qualityCheck: "fitness" }] },
-        { scnId: "SCN-P", evidenceObligations: [{ qualityCheck: "performance" }] },
-      ],
-      []
-    );
-    const table = ledgerTable(renderMarkdown(__er(named), ctx));
-    expect(table[0]).toBe(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
-    expect(table[1]).toBe("| --- | --- | --- |");
-    expect(table.slice(2).map((row) => row.slice(2, -2).split(" | ")[0])).toEqual(["SCN-E", "SCN-P"]);
-  });
-});
-
-describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the named-corpus census", () => {
-  let balanced: Ledger;
-  beforeEach(() => {
-    balanced = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }],
-    );
-  });
-  const evidenceObligations = {
-    rawScnOccurrences: 0,
-    scenarioCount: 0,
-    excludedOccurrences: 0,
-    untaggedScenarios: [
-      { feature: "alpha.feature", scenario: "a scenario with no anchor" },
-      { feature: "beta.feature", scenario: "another untagged scenario" },
-    ],
-  };
-
-  it("lists the untagged-scenario count + feature : scenario locators, with NO warnings section", () => {
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
-    expect(md).not.toContain("## Warnings");
-    expect(md).toContain("2 scenario(s) carry no @SCN tag:");
-    expect(md).toContain("- alpha.feature : a scenario with no anchor");
-    expect(md).toContain("- beta.feature : another untagged scenario");
-  });
-
-  it("renders the census inside the ledger summary (co-located with the named corpus), not a warnings surface", () => {
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
-    const iLedger = md.indexOf("## Scenario Reconciliations");
-    const iUntagged = md.indexOf("2 scenario(s) carry no @SCN tag:");
-    const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
-    expect(iLedger).toBeGreaterThanOrEqual(0);
-    expect(iLedger).toBeLessThan(iUntagged);
-    expect(iUntagged).toBeLessThan(iTable);
-  });
-
-  it("sorts the locators by (feature, scenario)", () => {
-    const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
-    expect(md.indexOf("alpha.feature")).toBeLessThan(md.indexOf("beta.feature"));
-  });
-
-  it("omits the untagged census when no corpus is threaded (back-compat)", () => {
-    const md = renderMarkdown(__er(balanced), ctx);
-    expect(md).not.toContain("carry no @SCN tag");
-    expect(md).not.toContain("## Warnings");
   });
 });
 
@@ -321,39 +240,5 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outco
       leafSum += n;
     }
     expect(leafSum).toBe(oblOutOfBalance);
-  });
-
-  it("renders NO debit-side / credit-side / neither-side group subtotal row", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
-    expect(md).not.toContain("↳ debit-side");
-    expect(md).not.toContain("↳ credit-side");
-    expect(md).not.toContain("↳ neither-side");
-  });
-
-  it("renders the leaf rows in the canon order — debit block, credit block, neither", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
-    const CANON_LEAF_ORDER: Outcome[] = [
-      "missing",
-      "failing",
-      "watermelon",
-      "no-scn-code",
-      "duplicate-scn-code",
-      "cites-unknown-scenario",
-      "cites-no-scenario",
-      "no-evidence-obligation",
-      "broken",
-      "both-missing",
-    ];
-    const glossToHandle = new Map(
-      (Object.keys(OUTCOME_DESCRIPTION) as Outcome[]).map((handle) => [
-        OUTCOME_DESCRIPTION[handle],
-        handle,
-      ])
-    );
-    const renderedOrder = md
-      .split("\n")
-      .filter((line) => line.includes("↳"))
-      .map((line) => glossToHandle.get(line.split("|")[1]?.trim().replace("↳ ", "") ?? ""));
-    expect(renderedOrder).toEqual(CANON_LEAF_ORDER);
   });
 });

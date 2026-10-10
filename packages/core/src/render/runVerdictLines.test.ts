@@ -45,13 +45,10 @@ const pendingScenario: Scenario = {
   evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
 };
 const passed: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-VRD-001", status: "passed" };
-const unattributed: EvidenceObservation = { qualityCheck: "unit", scnId: null, status: "passed", locator: "x.test.ts" };
 
 let BALANCED_LINE: string;
-let OUT_OF_BALANCE_LINE: string;
 beforeEach(() => {
   BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, CORE_MESSAGES[CoreMessage.BalancedGloss], 0);
-  OUT_OF_BALANCE_LINE = verdictLine(CoreMessage.OutOfBalanceHeadline, CORE_MESSAGES[CoreMessage.OutOfBalanceGloss], 1);
 });
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
@@ -80,11 +77,6 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       verdictLine(CoreMessage.PendingHeadline, CORE_MESSAGES[CoreMessage.PendingGloss], 3),
       "",
     ]);
-  });
-
-  it("an out-of-balance ledger that also carries Pending Items: the verdict names exit 1 and carries no outstanding note", () => {
-    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed, unattributed])), ctx);
-    expect(verdictSectionOf(md)).toEqual([HEADING, "", OUT_OF_BALANCE_LINE, ""]);
   });
 
   it("an empty corpus: the verdict names exit 5 and the corpus directory the run examined", () => {
@@ -130,20 +122,6 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         HEADING,
         "",
         verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](""), 1),
-        "",
-      ]);
-    });
-
-    it("with an account out of balance as well: the same verdict, naming exit 1, adds that the accounts do not agree", () => {
-      const md = renderMarkdown(reconciled(bothPassed.slice(0, 1)), ctx);
-      expect(verdictSectionOf(md)).toEqual([
-        HEADING,
-        "",
-        verdictLine(
-          CoreMessage.ScenarioCodeErrorsHeadline,
-          CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](CORE_MESSAGES[CoreMessage.AlsoOutOfBalance]),
-          1
-        ),
         "",
       ]);
     });

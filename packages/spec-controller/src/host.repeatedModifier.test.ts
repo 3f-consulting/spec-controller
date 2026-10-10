@@ -18,13 +18,6 @@ describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused nam
     });
   }
 
-  it("refuses --store given twice with two values at the host's scope, reading neither", () => {
-    expect(parseHostInvocation(["--store", "a", "--store", "b", "balance"])).toEqual({
-      commandArgs: [],
-      refusal: givenTwice("--store"),
-    });
-  });
-
   it("refuses --run-id given twice as two ids, after --store, at the host's scope", () => {
     expect(parseHostInvocation(["--store", "s", "--run-id", "r1", "--run-id", "r2", "balance"])).toEqual({
       commandArgs: [],

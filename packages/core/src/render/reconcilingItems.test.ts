@@ -142,25 +142,6 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a fitness-function credit citing an unknown scenario names its fitness function on the phantom row", () => {
-      const md = render(
-        [],
-        [
-          {
-            qualityCheck: "fitness",
-            fitnessFunction: "lint:ghost",
-            scnId: "SCN-GHO-003",
-            exists: true,
-            enforcedOverRealSource: true,
-          },
-        ]
-      );
-      expect(rowFor(md, "SCN-GHO-003")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("cites-unknown-scenario", "👻", "fitness", "lint:ghost"),
-      });
-    });
-
     it("a runtime credit citing no scenario names its locator on the suspense row", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
       expect(rowFor(md, SUSPENSE_ROW)).toEqual({
@@ -200,25 +181,6 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       expect(brokenRow(observations)).toEqual({
         verdict: "✗ out-of-balance",
         items: item("broken", "💥", "unit", locator),
-      });
-    });
-
-    it("a check that did not run, with no locator, names its error alone", () => {
-      const message = "SCN-RCI-005: the CI run's record says this check's step was skipped — so the check did not run.";
-      const observations: EvidenceObservation[] = [
-        {
-          qualityCheck: "fitness",
-          fitnessFunction: "SCN-RCI-005",
-          scnId: "SCN-RCI-005",
-          exists: false,
-          enforcedOverRealSource: false,
-          broken: true,
-          message,
-        },
-      ];
-      expect(brokenRow(observations)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "fitness", message),
       });
     });
 

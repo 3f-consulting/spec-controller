@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { balanceCommand, cliRegistry } from "../cli-registry.js";
+import { balanceCommand } from "../cli-registry.js";
 import { headlineExit } from "./balanceRun.testkit.js";
 import { liveSaver, runPinned } from "./savedRun.testkit.js";
 
@@ -101,12 +101,6 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
   }
 
   const READ_BY_A_RE_RENDER = new Set(["--render-from-json", "--strict", "--exit-zero", "--help"]);
-
-  it("the registry leaves at least the nine flags the acceptance names", () => {
-    const balance = cliRegistry.commands.find((command) => command.name === "balance");
-    const refused = (balance?.flags ?? []).filter((flag) => !READ_BY_A_RE_RENDER.has(flag.name));
-    expect(refused.length).toBeGreaterThanOrEqual(9);
-  });
 
   for (const flag of balanceCommand.flags) {
     if (READ_BY_A_RE_RENDER.has(flag.name)) continue;

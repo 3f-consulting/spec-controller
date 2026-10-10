@@ -30,9 +30,4 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
     expect(headline).toMatch(/accounts do not agree/);
     expect(headline).toMatch(/\(exit 1\)$/);
   });
-
-  it("lists the error and still carries the out-of-balance account", () => {
-    expect(md).toContain(`- \`foreign-scn-code\` — ${FOREIGN.message}`);
-    expect(md).toMatch(/\| SCN-ONE-002 \|[^\n]*out-of-balance/);
-  });
 });

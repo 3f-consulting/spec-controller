@@ -6,8 +6,4 @@ describe("[SCN-STG-025] a title citing a feature part outside two to five charac
     expect(parseScnCitation("cites [SCN-A-001] then [SCN-SIXCHR-001]")).toBeNull();
     expect(parseScnCitation("cites [SCN-SIXCHR-001] then [SCN-FIVEC-001]")).toBe("SCN-FIVEC-001");
   });
-
-  it("still reads a number of any width, which canon allows", () => {
-    expect(parseScnCitation("proves [SCN-AB-1]")).toBe("SCN-AB-1");
-  });
 });

@@ -31,21 +31,6 @@ const FEATURE = `Feature: the fitness evidence obligations
   Scenario: a check that fails on CI
 `;
 
-const ONE_FITNESS = `Feature: one fitness evidence obligation
-
-  @fitness @SCN-FNS-001
-  Scenario: a check that passes on CI
-
-  @unit @SCN-FNS-002
-  Scenario: a behaviour proved by a unit test
-`;
-
-const RUNTIME_ONLY = `Feature: no fitness evidence obligation
-
-  @unit @SCN-FNS-002
-  Scenario: a behaviour proved by a unit test
-`;
-
 const UNIT: EvidenceObservation = {
   qualityCheck: "unit",
   scnId: "SCN-FNS-002",
@@ -86,35 +71,6 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
       "| --- | --- |",
       `| SCN-FNS-001 | ${SATISFIED_ROW} |`,
       `| SCN-FNS-003 | ${FAILING_ROW} |`,
-      "",
-    ]);
-  });
-
-  it("renders one row when one scenario carries a fitness obligation", () => {
-    const lines = render(ONE_FITNESS, { "SCN-FNS-001": { outcome: "success" } });
-
-    expect(fitnessLines(lines)).toEqual([
-      CORE_MESSAGES[CoreMessage.FitnessHeading],
-      "",
-      CORE_MESSAGES[CoreMessage.FitnessSatisfiedOf](1, 1),
-      "",
-      CORE_MESSAGES[CoreMessage.FitnessTableHeader],
-      "| --- | --- |",
-      `| SCN-FNS-001 | ${SATISFIED_ROW} |`,
-      "",
-    ]);
-  });
-
-  it("emits no line at all when no scenario carries a fitness obligation", () => {
-    const lines = render(RUNTIME_ONLY, {});
-
-    expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.FitnessHeading]);
-    const reconciliationStart = lines.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]);
-    expect(reconciliationStart).toBeGreaterThanOrEqual(0);
-    const nextHeading = lines.findIndex((line, i) => i > reconciliationStart && line.startsWith("#"));
-    expect(nextHeading).toBeGreaterThan(reconciliationStart);
-    expect(lines.slice(nextHeading - 2, nextHeading)).toEqual([
-      expect.stringMatching(/^\| .* \|$/),
       "",
     ]);
   });

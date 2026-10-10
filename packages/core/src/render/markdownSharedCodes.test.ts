@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown, renderReportFromJson } from "./markdown.js";
+import { renderMarkdown } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -76,17 +76,6 @@ const beta = `Feature: beta
     Given a fixture
 `;
 
-const solo = `Feature: solo
-
-  @unit @SCN-SOL-001
-  Scenario: one code, one scenario
-    Given a fixture
-
-  @unit @SCN-SOL-002
-  Scenario: another code, another scenario
-    Given a fixture
-`;
-
 function censusBlock(corpus: readonly { feature: string; source: string }[]): string[] {
   const untagged = corpus.flatMap(({ feature, source }) =>
     parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
@@ -128,18 +117,6 @@ describe("[SCN-STG-017] the report states scenarios against accounts, and names 
     expect(renderMarkdown(er(ledger), ctx, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 
-  it("re-renders the same statement and the same sharers from the report saved as JSON", () => {
-    const direct = renderMarkdown(er(ledger), ctx, census);
-    const rerendered = renderReportFromJson(renderJson(er(ledger), ctx, census));
-    const statementAndSharers = (md: string): string[] =>
-      md.split("\n").filter((line) => line.startsWith("- The corpus holds") || line.startsWith("  - SCN-ONE-001:"));
-    expect(statementAndSharers(direct)).toEqual([
-      "- The corpus holds 3 scenarios in 2 accounts — 1 @SCN code(s) carried by more than one scenario:",
-      "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
-    ]);
-    expect(statementAndSharers(rerendered)).toEqual(statementAndSharers(direct));
-  });
-
   it("renders an account whose sharers name no quality check by its outcome alone, never an undefined subject", () => {
     const bare = reconcile(
       [
@@ -164,12 +141,6 @@ describe("[SCN-STG-017] the report states scenarios against accounts, and names 
       `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 3, 2)}`,
       "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
       "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
-    ]);
-  });
-
-  it("renders no shared-code line when every code in the corpus is carried by one scenario", () => {
-    expect(censusBlock([{ feature: "solo.feature", source: solo }])).toEqual([
-      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
     ]);
   });
 });

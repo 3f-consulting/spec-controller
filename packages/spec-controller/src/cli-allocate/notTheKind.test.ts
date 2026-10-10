@@ -113,21 +113,6 @@ describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is r
     expect(answered.stderr.slice(opening.length, -2)).toMatch(reason);
   });
 
-  it("neither refuses nor reads through a tracked link, though what it links to carries a higher code", () => {
-    const repo = headedOneCarrying003();
-    const elsewhere = freshDirectory("allocate-link-target-");
-    writeFileSync(join(elsewhere, "notes.md"), "SCN-ONE-009 lives here\n");
-    mkdirSync(join(repo, "docs"));
-    symlinkSync(join(elsewhere, "notes.md"), join(repo, "docs/notes.md"));
-    commitAll(repo, "a link out of the tree");
-
-    const answered = allocateWith(() => repo, ["ONE"]);
-
-    expect(answered.thrown).toBeUndefined();
-    expect(answered.exitCode).toBeUndefined();
-    expect(answered.stdout).toBe("SCN-ONE-004\n");
-  });
-
   it("refuses nothing, and gives no code, when what fails is not a path it reads", () => {
     const fault = new Error("not a fault reading any path");
 

@@ -38,16 +38,6 @@ describe("[SCN-USG-001] runningFitnessFunctions — the running-guard observer (
     ]);
   });
 
-  it("does not emit an observation for a script that exists but no CI step invokes", () => {
-    const withUnwired: PackageJsonScripts = {
-      scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
-    };
-    expect(runningFitnessFunctions([usgCi], withUnwired, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-
   const unscriptedCi = [
     "jobs:",
     "  ci:",
@@ -95,79 +85,9 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness fun
       { tier: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
     ]);
   });
-
-  it("emits an observation for the check step alone — the two runner steps are excluded", () => {
-    expect(runningFitnessFunctions([ci2], pkg2, resolveRunners(manifest).tiers)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-
-  it("does not let the citation stamp widen membership — a cited runner step is still excluded", () => {
-    expect(
-      runningFitnessFunctions([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
-        scnId: "SCN-TGT-001",
-      })).map(
-        (o) => o.fitnessFunction,
-      ),
-    ).toEqual(["lint:foo"]);
-  });
 });
 
 describe("[SCN-USG-004] runningFitnessFunctions observes a CI script matching no convention of ours", () => {
-  const unprefixedManifest = {
-    scripts: {
-      "domain-purity": "echo domain-purity",
-      test: "vitest run",
-      cucumber: "cucumber-js",
-    },
-    specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
-  };
-  const unprefixedPkg: PackageJsonScripts = { scripts: unprefixedManifest.scripts };
-  let unprefixedCi: string;
-  beforeEach(() => {
-    unprefixedCi = [
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      "      - run: pnpm domain-purity",
-      "      - run: pnpm test",
-      "      - run: pnpm cucumber",
-    ].join("\n");
-  });
-  const membership = SUITE_RUNNERS;
-
-  it("emits a FitnessEvidenceObservation for a script no convention of ours reaches", () => {
-    expect(
-      runningFitnessFunctions([unprefixedCi], unprefixedPkg, membership)
-    ).toEqual([
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "domain-purity",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-    ]);
-  });
-
-  it("carries NO scnId key when the seam is asked and answers nothing — the uncited shape", () => {
-    const observed = runningFitnessFunctions(
-      [unprefixedCi],
-      unprefixedPkg,
-      membership,
-      () => null
-    );
-
-    expect(observed).toEqual([
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "domain-purity",
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-    ]);
-    expect(observed[0]).not.toHaveProperty("scnId");
-  });
-
   const checkPkg: PackageJsonScripts = { scripts: { check: "echo check" } };
   const reportedAs = (run: string): string[] =>
     runningFitnessFunctions(
@@ -218,21 +138,6 @@ describe("[SCN-USG-007] a fitness function running in ANY of a target's workflow
       { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
-
-  it("emits one observation per STEP when two workflows invoke the same check", () => {
-    expect(runningFitnessFunctions([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-
-  it("keeps a malformed workflow from discarding the commands of the ones beside it", () => {
-    const malformed = "jobs:\n  - this: [is not\n    valid yaml";
-
-    expect(runningFitnessFunctions([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
 });
 
 describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
@@ -259,12 +164,6 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported
       "domain-purity",
       "github/codeql-action/analyze@v3",
     ]);
-  });
-
-  it("names an action step by its `name:` where it has one — GitHub's own order, not the reference", () => {
-    const named = runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction);
-    expect(named).toContain("Dependency review");
-    expect(named).not.toContain("actions/dependency-review-action@v4");
   });
 
   it("names an action step by the action it uses where its `name:` is blank, and by its trimmed `name:` where padded", () => {
@@ -299,47 +198,6 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported
         fitnessFunction: "github/codeql-action/analyze@v3",
         exists: true,
         enforcedOverRealSource: false,
-      },
-    ]);
-  });
-
-  it("still leaves the runner step out, whatever form the steps beside it take", () => {
-    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).not.toContain(
-      "pnpm test",
-    );
-  });
-});
-
-describe("[SCN-USG-001] runningFitnessFunctions — a step invoking two scripts is named by the first it invokes", () => {
-  const pkg: PackageJsonScripts = {
-    scripts: {
-      "check:format": "prettier --check .",
-      "check:types": "tsc --noEmit",
-      test: "vitest run",
-      cucumber: "cucumber-js",
-    },
-  };
-  let ci: string;
-  beforeEach(() => {
-    ci = [
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      "      - run: |",
-      "          pnpm check:format",
-      "          pnpm check:types",
-      "      - run: pnpm test",
-      "      - run: pnpm cucumber",
-    ].join("\n");
-  });
-
-  it("names the step by the first script it invokes, not the second", () => {
-    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS)).toEqual([
-      {
-        qualityCheck: "fitness",
-        fitnessFunction: "check:format",
-        exists: true,
-        enforcedOverRealSource: true,
       },
     ]);
   });

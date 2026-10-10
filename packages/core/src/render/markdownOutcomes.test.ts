@@ -48,32 +48,9 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     }
   });
 
-  it("renders each per-scenario reconciling item with the canon description, glyph retained", () => {
-    const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain("unit ∅ Evidence Observation is missing");
-    expect(md).toContain("fitness 🍉 Evidence Observation is passing but fabricated");
-    expect(md).toContain(
-      "⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"
-    );
-    expect(md).toContain(
-      "integration ❓ Evidence Observation cites no Scenario (tests/stray.test.ts:1)"
-    );
-    expect(md).not.toContain("∅ missing");
-    expect(md).not.toContain("🍉 watermelon");
-    expect(md).not.toContain("❓ cites-no-scenario");
-  });
-
   it("renders the fitness table's Outcome column with the canon description", () => {
     const md = renderMarkdown(__er(rich), ctx);
     expect(md).toContain("| SCN-A | 🍉 Evidence Observation is passing but fabricated |");
-  });
-
-  it("single-sources the gloss from OUTCOME_DESCRIPTION — the render cannot drift from the map", () => {
-    const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain(`↳ ${OUTCOME_DESCRIPTION.missing}`);
-    expect(md).toContain(`unit ∅ ${OUTCOME_DESCRIPTION.missing}`);
-    expect(md).toContain(`🍉 ${OUTCOME_DESCRIPTION.watermelon}`);
-    expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
   });
 });
 

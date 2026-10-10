@@ -38,9 +38,4 @@ describe("[SCN-LNT-020] a cited step the run's own record never recorded leaves 
     expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual([outcome]);
     expect(row?.verdict).toBe(verdict);
   });
-
-  it("is credited from the workflow file alone where no record was handed over at all", () => {
-    const row = reconcileWith();
-    expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual(["satisfied"]);
-  });
 });

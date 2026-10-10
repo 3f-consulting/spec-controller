@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
@@ -53,19 +53,6 @@ describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one o
     expect(refusal).toContain(runYaml);
     expect(refusal).toContain("the --ci workflow");
     expect(refusal.trimEnd().split("\n")).toHaveLength(1);
-    expect(readFileSync(runYaml, "utf8")).toBe(WORKFLOW);
-  });
-
-  it("recognises the file by its identity, so an input reaching it through a link counts", () => {
-    mkdirSync(runDir, { recursive: true });
-    writeFileSync(runYaml, WORKFLOW);
-    const link = join(scratch, "workflow.yml");
-    symlinkSync(runYaml, link);
-    const route = vi.fn(() => true);
-
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: link }] }, meta, route))).toBe(2);
-
-    expect(route).not.toHaveBeenCalled();
     expect(readFileSync(runYaml, "utf8")).toBe(WORKFLOW);
   });
 

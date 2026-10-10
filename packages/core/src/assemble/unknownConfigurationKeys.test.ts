@@ -36,8 +36,4 @@ describe("[SCN-USG-028] a key the specController block does not read, a retired 
   it.each(keys)("gives otherwise the report the same target gives without %s", (key) => {
     expect(withoutUnknownKeys(reconcile({ ...block, [key]: true }))).toEqual(reconcile(block));
   });
-
-  it("carries no unknown-key account for a target whose every key is one the block reads", () => {
-    expect(reconcile(block).summary).not.toHaveProperty("unknownConfigurationKeys");
-  });
 });

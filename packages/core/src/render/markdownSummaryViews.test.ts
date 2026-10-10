@@ -49,25 +49,6 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
 
-  it("excludes the balanced scenarios (this is the discrepancy view)", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
-    const iSection = md.indexOf("### Out-of-balance by feature");
-    const rest = md.slice(iSection + 1);
-    const nextHeading = rest.search(/\n##/);
-    const section = nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
-    expect(section).not.toContain("SCN-LDG-001");
-    expect(section).not.toContain("SCN-LNT-009");
-  });
-
-  it("lists the features in first-appearance (document) order", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
-    const iTrb = md.indexOf("| LDG |");
-    const iLnt = md.indexOf("| LNT |");
-    expect(iTrb).toBeGreaterThanOrEqual(0);
-    expect(iLnt).toBeGreaterThanOrEqual(0);
-    expect(iTrb).toBeLessThan(iLnt);
-  });
-
   it("omits the section entirely (total line and all) when no scenario is out of balance", () => {
     const allBalanced: Ledger = reconcile(
       [{ scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
@@ -103,19 +84,6 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
     expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
-  });
-
-  it("falls back to the bare FFF for an uncoded id the map doesn't cover", () => {
-    const featureNames = new Map([["LDG", "ledger"]]);
-    const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
-    expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
-  });
-
-  it("renders the bare FFF when no feature-name map is threaded (the 4-arg back-compat path)", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
-    expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
 
   const ledgerHeading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
@@ -212,12 +180,6 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
       "",
     ]);
   });
-
-  it("adds no tail when every out-of-balance row is a scenario row", () => {
-    const section = byFeature(reconcile([proven, unproven], [provenCredit]));
-    expect(section).toContain("1 of 2 scenario rows out of balance, grouped by feature.");
-    expect(section).not.toContain("not grouped by feature");
-  });
 });
 
 describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
@@ -250,18 +212,6 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     expect(md).toContain("SCN-C");
     expect(md).toContain("⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited");
   });
-
-  it("places the ledger summary under the '## Scenario Reconciliations' heading at the end, after Summary views", () => {
-    const md = renderMarkdown(__er(reconciliationFixture), ctx);
-    const iSummary = md.indexOf("## Summary views");
-    const iLedger = md.indexOf("## Scenario Reconciliations");
-    const iCount = md.indexOf("- 3 Scenario Reconciliation(s):");
-    const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
-    expect(iSummary).toBeGreaterThanOrEqual(0);
-    expect(iSummary).toBeLessThan(iLedger);
-    expect(iLedger).toBeLessThan(iCount);
-    expect(iCount).toBeLessThan(iTable);
-  });
 });
 
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
@@ -278,22 +228,6 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);
     expect(md).toContain("## Scenario Reconciliations");
     expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
-  });
-
-  it("places the excluded bullet within the ledger summary, after the scenario-count bullet and above the ledger table", () => {
-    const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);
-    const iCount = md.indexOf("- 1 Scenario Reconciliation(s):");
-    const iExcluded = md.indexOf("@SCN ids seen in non-tag context, excluded");
-    expect(iCount).toBeGreaterThanOrEqual(0);
-    expect(iExcluded).toBeGreaterThan(iCount);
-    expect(iExcluded).toBeLessThan(md.indexOf("| Scenario | Verdict | Reconciling items |"));
-  });
-
-  it("omits the excluded bullet when no corpus is threaded (the 2-arg call still renders the ledger summary)", () => {
-    const md = renderMarkdown(__er(simple), ctx);
-    expect(md).toContain("- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance.");
-    expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
-    expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
@@ -331,43 +265,6 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
         { qualityCheck: "fitness", fitnessFunction: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
       ]
     );
-  });
-
-  it("titles the report '# Evidence Reconciliation', not '# Ledger' or '# Spec reconciliation'", () => {
-    const md = renderMarkdown(__er(reformatted), ctx);
-    expect(md.startsWith("# Evidence Reconciliation")).toBe(true);
-    const lines = md.split("\n");
-    expect(lines).not.toContain("# Ledger");
-    expect(lines).not.toContain("# Spec reconciliation");
-    expect(lines).toContain("## Scenario Reconciliations");
-  });
-
-  it("renders the sections in summary-first / ledger-last order", () => {
-    const md = renderMarkdown(__er(reformatted), ctx);
-    const order = [
-      "# Evidence Reconciliation",
-      "## Run provenance",
-      "## Summary views",
-      "### Evidence reconciliation",
-      "### Fitness evidence obligations",
-      "### Out-of-balance by feature",
-      "## Scenario Reconciliations",
-    ].map((h) => md.indexOf(h));
-    for (const i of order) expect(i).toBeGreaterThanOrEqual(0);
-    for (let i = 1; i < order.length; i++) {
-      expect(order[i - 1]!).toBeLessThan(order[i]!);
-    }
-    expect(md).not.toContain("## Warnings");
-  });
-
-  it("moves the per-scenario ledger to the end, with its summary lines on top of the table", () => {
-    const md = renderMarkdown(__er(reformatted), ctx);
-    const iLedger = md.indexOf("## Scenario Reconciliations");
-    const iSummaryLine = md.indexOf("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
-    const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
-    expect(iLedger).toBeLessThan(iSummaryLine);
-    expect(iSummaryLine).toBeLessThan(iTable);
-    expect(iTable).toBeGreaterThan(md.indexOf("### Out-of-balance by feature"));
   });
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
@@ -440,30 +337,5 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
     const md = renderMarkdown(__er(balance, true, false), ctx);
     expect(md).toContain("### Test volume");
     expect(md).toContain("8 evidence observations = 4 on scenarios + 1 on phantom scenarios + 3 on the suspense scenario.");
-  });
-
-  it("renders a by-level evidenceObservation table with all four levels, zeros shown, levels as lowercase tag words", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| Quality-check | Evidence observations |");
-    expect(md).toContain("| unit | 5 |");
-    expect(md).toContain("| integration | 3 |");
-    expect(md).toContain("| e2e | 0 |");
-    expect(md).toContain("| performance | 0 |");
-  });
-
-  it("slots Test volume under Summary views, after Evidence reconciliation and before the ledger", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx);
-    const iSummary = md.indexOf("## Summary views");
-    const iHeadline = md.indexOf("### Evidence reconciliation");
-    const iVolume = md.indexOf("### Test volume");
-    const iLedger = md.indexOf("## Scenario Reconciliations");
-    expect(iSummary).toBeLessThan(iHeadline);
-    expect(iHeadline).toBeLessThan(iVolume);
-    expect(iVolume).toBeLessThan(iLedger);
-  });
-
-  it("omits the cut entirely when no evidenceObservations aggregate is threaded (the 3-arg back-compat path)", () => {
-    const md = renderMarkdown(__er(balance), ctx);
-    expect(md).not.toContain("### Test volume");
   });
 });

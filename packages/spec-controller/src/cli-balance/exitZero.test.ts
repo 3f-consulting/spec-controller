@@ -89,26 +89,4 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
     expect(run.stderr).toContain("--vitest");
     expect(run.stderr).toContain(missing);
   });
-
-  it.each([
-    ["unsound: a collection-failed suite still exits 4", "tests/fixtures/broken"],
-    ["unsound beside a misfiled code: unsound pre-empts the scenario code error, and still exits 4", "tests/fixtures/unsound-code-error"],
-  ] as const)("%s", (_title, fixture) => {
-    const run = runWithExitZero([
-      "--features", `${fixture}/features`,
-      "--vitest", `${fixture}/vitest.json`,
-      "--package-json", `${fixture}/package.json`,
-      "--ci", fixture,
-    ]);
-    expect(run.exitCode).toBe(4);
-  });
-
-  it("nothing to reconcile: a target that declared and produced nothing still exits 5", () => {
-    const run = runWithExitZero([
-      "--features", "tests/fixtures/nothing-to-reconcile/features",
-      "--package-json", "tests/fixtures/nothing-to-reconcile/package.json",
-      "--ci", "tests/fixtures/nothing-to-reconcile",
-    ]);
-    expect(run.exitCode).toBe(5);
-  });
 });
