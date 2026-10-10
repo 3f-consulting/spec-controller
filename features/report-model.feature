@@ -64,31 +64,31 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-003
     Scenario: the runtime-observation totals re-home onto summary and the balancing identity holds on the persisted file
 
-  Rule: the static-check census is summary counts, no standalone section
+  Rule: the fitness-function census is summary counts, no standalone section
 
-    The static-axis manifesto on the JSON surface. The static-check census is
-    summary.staticChecks COUNTS alone — a pure counter over the fitness observations, symmetric
+    The fitness-function-axis manifesto on the JSON surface. The fitness-function census is
+    summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
     with the runtime testVolume counter. There is no standalone member-list section, because
     each check's detail lives on the rows: a cited check on its fitness scenario's own row, an
     uncited one as a cites-no-scenario credit on the suspense row, so nothing is reported twice.
-    The persisted summary carries runningStaticCheckCount and uncitedStaticCheckCount; the cited
+    The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited
     count is implicit, running − uncited. A pure derive over the model, held in isolation by
     Vitest.
 
     @unit @SCN-RMD-004
-    Scenario: the static-check census is summary counts with no standalone section
+    Scenario: the fitness-function census is summary counts with no standalone section
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 
     The whole document is one report model, so the numbers the markdown prints are model data,
-    not renderer arithmetic. The Test-volume totals, the static-check totals and the fitness
+    not renderer arithmetic. The Test-volume totals, the fitness-function totals and the fitness
     tally are materialised on report.summary, where a JSON consumer reads them and the markdown
     reads them too. The test-volume identity line is a reconciliation fact (a balance check,
     Σ = Σ) that belongs in the model, not asserted by the renderer:
 
       Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
-    The static-check census carries runningStaticCheckCount and uncitedStaticCheckCount; the
+    The fitness-function census carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the
     cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
     obligation cut (satisfied of total), under summary.fitness: the outcome breakdown under
     summary.evidenceObligations is kind-agnostic and cannot give the fitness-only total, so it is
@@ -96,7 +96,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     in isolation.
 
     @unit @SCN-RMD-005
-    Scenario: the summary materialises the test-volume, static-check, and fitness totals with the test-volume balance identity and the static-check shape holding on the persisted file
+    Scenario: the summary materialises the test-volume, fitness-function, and fitness totals with the test-volume balance identity and the fitness-function shape holding on the persisted file
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 

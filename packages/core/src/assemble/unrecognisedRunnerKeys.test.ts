@@ -27,7 +27,7 @@ function suspenseChecks(reconciliation: EvidenceReconciliation) {
   return reconciliation.ledger.scenarioReconciliations
     .filter((row) => row.kind === "suspense-scenario")
     .flatMap((row) =>
-      row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome])
+      row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome])
     );
 }
 

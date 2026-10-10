@@ -29,7 +29,7 @@ describe("[SCN-USG-017] a target with no runners block reports every step of its
     const { summary, ledger } = reconcile();
     const suspense = ledger.scenarioReconciliations
       .filter((row) => row.kind === "suspense-scenario")
-      .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]));
+      .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]));
     expect(suspense).toStrictEqual([
       ["Checkout", "cites-no-scenario"],
       ["Install", "cites-no-scenario"],
@@ -37,7 +37,7 @@ describe("[SCN-USG-017] a target with no runners block reports every step of its
       ["lint", "cites-no-scenario"],
       ["test", "cites-no-scenario"],
     ]);
-    expect(summary.staticChecks).toStrictEqual({ runningStaticCheckCount: 5, uncitedStaticCheckCount: 5 });
+    expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 5, uncitedFitnessFunctionCount: 5 });
     expect(summary).not.toHaveProperty("behaviouralRunners");
     expect(summary).not.toHaveProperty("runnerTiers");
     expect(summary).not.toHaveProperty("unrecognisedRunnerKeys");

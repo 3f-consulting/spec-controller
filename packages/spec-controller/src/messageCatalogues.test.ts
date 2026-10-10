@@ -74,7 +74,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.NothingToReconcileGloss]: ["features"],
   [CoreMessage.PendingTally]: [1],
   [CoreMessage.TestVolumeSum]: [3, 1, 1, 1],
-  [CoreMessage.StaticChecksCounts]: [2, 1],
+  [CoreMessage.FitnessFunctionsCounts]: [2, 1],
   [CoreMessage.RunnerTierNamesNone]: ["e2e"],
   [CoreMessage.RunnerTierUnnamed]: ["performance"],
   [CoreMessage.RunnerKeyNotATier]: ["smoke"],

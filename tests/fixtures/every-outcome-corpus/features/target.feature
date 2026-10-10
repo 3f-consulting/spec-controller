@@ -31,7 +31,7 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
   # registry-only route), but its red does not gate the job, so the running-check observer reads it
   # exists-and-unenforced: the watermelon by the SEVERED-STEP route (@SCN-LNT-032), not the registry.
   @fitness @SCN-TOC-004
-  Scenario: watermelon — a static check whose step runs but whose red the job swallows
+  Scenario: watermelon — a fitness function whose step runs but whose red the job swallows
 
   @e2e @SCN-TOC-005
   Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named

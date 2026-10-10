@@ -1,6 +1,6 @@
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
-import { staticCheckReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
+import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, FitnessEvidenceObservation } from "./journal.js";
 
 export interface Ledger {
@@ -37,7 +37,7 @@ export function fitnessReconciliationsOf(
   return reconciliation.scenarioReconciliations
     .filter(isScenario)
     .flatMap((row) =>
-      staticCheckReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
+      fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
     );
 }
 
@@ -189,23 +189,23 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
   return { rawByRuntimeQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
 }
 
-export interface StaticObservationTally {
-  runningStaticCheckCount: number;
-  uncitedStaticCheckCount: number;
+export interface FitnessFunctionTally {
+  runningFitnessFunctionCount: number;
+  uncitedFitnessFunctionCount: number;
 }
 
-export function staticObservationTally(ledger: Ledger): StaticObservationTally {
-  let runningStaticCheckCount = 0;
-  let uncitedStaticCheckCount = 0;
+export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
+  let runningFitnessFunctionCount = 0;
+  let uncitedFitnessFunctionCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
       if (obs.qualityCheck !== "fitness") continue;
       if (obs.broken === true) continue;
       if (!obs.exists) continue;
-      runningStaticCheckCount++;
-      if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
+      runningFitnessFunctionCount++;
+      if (row.kind === "suspense-scenario") uncitedFitnessFunctionCount++;
     }
   }
 
-  return { runningStaticCheckCount, uncitedStaticCheckCount };
+  return { runningFitnessFunctionCount, uncitedFitnessFunctionCount };
 }

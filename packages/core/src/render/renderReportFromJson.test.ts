@@ -16,8 +16,8 @@ const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 let balance: Ledger;
 beforeEach(() => {
@@ -58,7 +58,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
-    expect(regenerated).toContain("2 static check(s) run, 1 uncited static check(s).");
+    expect(regenerated).toContain("2 fitness function(s) run, 1 uncited fitness function(s).");
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');
     expect(regenerated).toContain("fitness ❓ Evidence Observation cites no Scenario (lint:bar)");
     expect(regenerated).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");

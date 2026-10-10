@@ -1,5 +1,5 @@
 @FIT
-Feature: The fitness checks this repository declares, one scenario per check
+Feature: The fitness functions this repository declares, one scenario per check
 
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
   a tag line carrying `@fitness` and a freshly minted code, and a title saying what the check

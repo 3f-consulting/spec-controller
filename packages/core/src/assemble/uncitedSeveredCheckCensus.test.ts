@@ -3,7 +3,7 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 
 const uncitedCorpus = `@TSC
-Feature: a fixture target whose corpus names neither of the two static checks its CI runs
+Feature: a fixture target whose corpus names neither of the two fitness functions its CI runs
 
   Rule: the target holds itself to the one behaviour it has written down
 
@@ -52,17 +52,17 @@ function reconcileUncited(): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-LNT-033] the static-check census counts a check whose red its job survives as a check that ran", () => {
+describe("[SCN-LNT-033] the fitness-function census counts a check whose red its job survives as a check that ran", () => {
   it("counts the severed uncited check in both census counts", () => {
-    expect(reconcileUncited().summary.staticChecks).toEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 2,
+    expect(reconcileUncited().summary.fitnessFunctions).toEqual({
+      runningFitnessFunctionCount: 2,
+      uncitedFitnessFunctionCount: 2,
     });
   });
 
   it("leaves the named count it implies at nil, and never below it", () => {
-    const census = reconcileUncited().summary.staticChecks;
-    const named = (census?.runningStaticCheckCount ?? 0) - (census?.uncitedStaticCheckCount ?? 0);
+    const census = reconcileUncited().summary.fitnessFunctions;
+    const named = (census?.runningFitnessFunctionCount ?? 0) - (census?.uncitedFitnessFunctionCount ?? 0);
     expect(named).toBe(0);
   });
 
@@ -73,13 +73,13 @@ describe("[SCN-LNT-033] the static-check census counts a check whose red its job
     expect(suspense.flatMap((row) => row.evidenceObservations)).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:advisory",
+        fitnessFunction: "lint:advisory",
         exists: true,
         enforcedOverRealSource: false,
       },
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:enforced",
+        fitnessFunction: "lint:enforced",
         exists: true,
         enforcedOverRealSource: true,
       },

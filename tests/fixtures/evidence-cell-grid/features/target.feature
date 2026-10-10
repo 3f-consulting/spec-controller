@@ -27,7 +27,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   registry-route migration (3F-3395). Canon settles why it has no replacement: `double-entry-
   manifesto.md`'s Quality Check definition makes the check ITSELF the scenario, and several checks
   of one kind are several SCENARIOS, told apart by `@SCN` —
-  one scenario is one fitness check BY CONSTRUCTION. A row naming two checks has no
+  one scenario is one fitness function BY CONSTRUCTION. A row naming two checks has no
   expression in the target model this fixture exercises, so there is nothing left to plant it
   with. The `L2`/`L3` rendering branch this scenario was the only producer of went too (3F-3411):
   the Fitness cell's left is the single `F`.

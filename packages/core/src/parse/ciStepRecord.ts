@@ -31,7 +31,7 @@ function checkDidNotRunMessage(scnId: string, outcome: string | undefined): stri
 function namedOf(citedScn: string) {
   return {
     qualityCheck: "fitness",
-    staticCheck: citedScn,
+    fitnessFunction: citedScn,
     scnId: citedScn,
   } as const;
 }

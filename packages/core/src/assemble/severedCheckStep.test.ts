@@ -105,14 +105,14 @@ describe("[SCN-LNT-032] a check the job's verdict does not depend on reconciles 
     expect(observed).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:alpha",
+        fitnessFunction: "lint:alpha",
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-CVT-001",
       },
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:beta",
+        fitnessFunction: "lint:beta",
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-CVT-002",

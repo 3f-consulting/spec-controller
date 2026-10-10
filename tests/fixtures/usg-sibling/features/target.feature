@@ -1,8 +1,8 @@
 @TGS
-Feature: a fixture target whose static check runs in a sibling workflow
+Feature: a fixture target whose fitness function runs in a sibling workflow
 
   A FIXTURE target (NOT under features/) standing in for a codebase that splits its
-  pipeline: ci.yml runs the suites and no static check at all, while nightly.yml runs
+  pipeline: ci.yml runs the suites and no fitness function at all, while nightly.yml runs
   lint:nightly on a schedule — the ordinary layout a slow gate ends up in.
 
   The target CITES that check: the lint:nightly step in nightly.yml carries the code of its

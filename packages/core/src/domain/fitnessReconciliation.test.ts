@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { runningStaticChecks } from "../parse/runningStaticChecks.js";
+import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
 
@@ -46,13 +46,13 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
       "    Scenario: the corpus keeps its feature codes inside the threshold",
     ].join("\n");
 
-    const evidenceObservations = runningStaticChecks(
+    const evidenceObservations = runningFitnessFunctions(
       [ciSource],
       packageJson,
       NO_RUNNERS,
       citedScn
     );
-    const observation = evidenceObservations.find((o) => o.staticCheck === REAL_GUARD);
+    const observation = evidenceObservations.find((o) => o.fitnessFunction === REAL_GUARD);
     expect(observation?.scnId).toBe("SCN-AAA-001");
 
     const scenarios = parseScenarios(
@@ -69,7 +69,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     expect(phantom?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: REAL_GUARD,
+        fitnessFunction: REAL_GUARD,
         outcome: "cites-unknown-scenario",
         evidenceObservation: observation,
       },
@@ -87,7 +87,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
 
 const SEVERED_SCRIPT = "lint:severed-check";
 
-describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness check reports each independently", () => {
+describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness function reports each independently", () => {
   it("answers each obligation from a credit of its own axis — the unit credit satisfies the unit obligation, the citing fitness credit the watermelon — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);
@@ -113,16 +113,16 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       scnId: "SCN-AAA-001",
       status: "passed",
     };
-    const fitnessCredits = runningStaticChecks(
+    const fitnessCredits = runningFitnessFunctions(
       [plantedCi],
       plantedPackageJson,
       NO_RUNNERS,
       citedScn
-    ).filter((o) => o.staticCheck === SEVERED_SCRIPT);
+    ).filter((o) => o.fitnessFunction === SEVERED_SCRIPT);
     expect(fitnessCredits).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: SEVERED_SCRIPT,
+        fitnessFunction: SEVERED_SCRIPT,
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-AAA-001",

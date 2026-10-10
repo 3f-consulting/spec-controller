@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
+import { recognisedRunners, runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { resolveRunners } from "./targetManifest.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
@@ -30,13 +30,13 @@ describe("[SCN-USG-017] a target that has named no runners — every step of its
   });
 
   const candidateHandles = (runners: Readonly<Record<string, string | null>>): string[] =>
-    runningStaticChecks([ci], pkg, runners).map((observation) => observation.staticCheck);
+    runningFitnessFunctions([ci], pkg, runners).map((observation) => observation.fitnessFunction);
 
   it("reads a manifest that has said nothing as a target that has said nothing, and calls it no error", () => {
     expect(resolveRunners(manifest)).toStrictEqual({ tiers: {}, unrecognisedKeys: [] });
   });
 
-  it("makes every step of the pipeline a candidate fitness check, whatever form it takes", () => {
+  it("makes every step of the pipeline a candidate fitness function, whatever form it takes", () => {
     expect(candidateHandles(resolveRunners(manifest).tiers)).toEqual([
       "actions/checkout@v4",
       "actions/setup-node@v4",

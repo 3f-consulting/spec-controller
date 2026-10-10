@@ -103,14 +103,14 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a static-check credit on a scenario with no fitness obligation names its static check", () => {
+    it("a fitness-function credit on a scenario with no fitness obligation names its fitness function", () => {
       const md = render(
         [{ scnId: "SCN-RCI-004", evidenceObligations: [{ qualityCheck: "unit" }] }],
         [
           { qualityCheck: "unit", scnId: "SCN-RCI-004", status: "passed", locator: "src/d.test.ts" },
           {
             qualityCheck: "fitness",
-            staticCheck: "lint:rci",
+            fitnessFunction: "lint:rci",
             scnId: "SCN-RCI-004",
             exists: true,
             enforcedOverRealSource: true,
@@ -142,13 +142,13 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a static-check credit citing an unknown scenario names its static check on the phantom row", () => {
+    it("a fitness-function credit citing an unknown scenario names its fitness function on the phantom row", () => {
       const md = render(
         [],
         [
           {
             qualityCheck: "fitness",
-            staticCheck: "lint:ghost",
+            fitnessFunction: "lint:ghost",
             scnId: "SCN-GHO-003",
             exists: true,
             enforcedOverRealSource: true,
@@ -208,7 +208,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       const observations: EvidenceObservation[] = [
         {
           qualityCheck: "fitness",
-          staticCheck: "SCN-RCI-005",
+          fitnessFunction: "SCN-RCI-005",
           scnId: "SCN-RCI-005",
           exists: false,
           enforcedOverRealSource: false,

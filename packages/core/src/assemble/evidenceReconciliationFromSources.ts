@@ -3,7 +3,7 @@ import { bareTerm } from "../lib/bareTerm.js";
 import type { EvidenceObservation } from "../model.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import { ciStepRecordCredits, type CiStepRecord } from "../parse/ciStepRecord.js";
-import { recognisedRunners, runningStaticChecks } from "../parse/runningStaticChecks.js";
+import { recognisedRunners, runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
 import { discoveryScope } from "../parse/discoveryScope.js";
@@ -67,7 +67,7 @@ export interface EvidenceReconciliationSources {
   ciStepRecord?: CiStepRecord;
 }
 
-export interface FeatureFileHeader {
+interface FeatureFileHeader {
   readonly slug: string;
   readonly featureCode: string | null;
 }
@@ -289,7 +289,7 @@ function checkObservations(
   recordAnswersCitingSteps: boolean
 ): EvidenceObservation[] {
   return [
-    ...runningStaticChecks(
+    ...runningFitnessFunctions(
       ciSources,
       packageJson,
       runnerTiers,

@@ -65,7 +65,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
       { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ];
     const credit: EvidenceObservation = {
-      scnId: "SCN-AAA-001", qualityCheck: "fitness", staticCheck: "lint:x", exists: true, enforcedOverRealSource: true,
+      scnId: "SCN-AAA-001", qualityCheck: "fitness", fitnessFunction: "lint:x", exists: true, enforcedOverRealSource: true,
     };
     const ledger = reconcile(fitness, [credit]);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
@@ -74,7 +74,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 
   it("posts an UNCITED fitness credit to suspense — it cites no scenario", () => {
     const credit: EvidenceObservation = {
-      qualityCheck: "fitness", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "fitness", fitnessFunction: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
     };
     const ledger = reconcile(namedScenarios, [credit]);
     expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
@@ -98,12 +98,12 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
       { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ];
     const credit: EvidenceObservation = {
-      scnId: "SCN-DEM-001", qualityCheck: "fitness", staticCheck: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
+      scnId: "SCN-DEM-001", qualityCheck: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
     };
     const ledger = reconcile(fitness, [credit]);
 
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "fitness", outcome: "satisfied", evidenceObligation: { qualityCheck: "fitness" }, evidenceObservation: { scnId: "SCN-DEM-001", qualityCheck: "fitness", staticCheck: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },
+      { qualityCheck: "fitness", outcome: "satisfied", evidenceObligation: { qualityCheck: "fitness" }, evidenceObservation: { scnId: "SCN-DEM-001", qualityCheck: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();

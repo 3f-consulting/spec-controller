@@ -80,11 +80,11 @@ Then(
     );
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `a fitness scenario cites lint:foo; it must not surface as an uncited static-check credit; got:\n${activeMd}`
+      `a fitness scenario cites lint:foo; it must not surface as an uncited fitness-function credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 uncited static check(s)); got:\n${activeMd}`
+      activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
+      `expected lint:foo folded into the running volume (2 run, 1 uncited fitness function(s)); got:\n${activeMd}`
     );
   }
 );
@@ -92,7 +92,7 @@ Then(
 let siblingStatus: number | null;
 
 Given(
-  "a target whose ci.yml runs no static check and whose nightly.yml runs lint:nightly",
+  "a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly",
   function () {
     activeFixture = USG_SIBLING_FIXTURE;
     activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg006-"));
@@ -166,9 +166,9 @@ When("the reconciliation report is rendered for that target's ci.yml alone", fun
   activeMd = readFileSync(reportPath, "utf8");
 });
 
-Then("lint:sweep is not counted among the running static checks", function () {
+Then("lint:sweep is not counted among the running fitness functions", function () {
   assert.ok(
-    activeMd.includes("0 static check(s) run, 0 uncited static check(s)"),
+    activeMd.includes("0 fitness function(s) run, 0 uncited fitness function(s)"),
     `expected NOTHING observed: the caller named one workflow, and lint:sweep runs in ` +
       `another. Sweeping the parent directory off a file argument would widen a scope ` +
       `the caller chose deliberately. Got:\n${activeMd}`,

@@ -1,25 +1,27 @@
 @USG
-Feature: Detect uncited static-checks — a CI check no fitness scenario cites
+Feature: Detect uncited fitness-functions — a CI check no fitness scenario cites
 
-  The static-check axis's UNCITED detection — the mirror of the
+  The fitness-function axis's UNCITED detection — the mirror of the
   runtime axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
   cites is an unposted credit, and the axis sees it because its whole input is the running-check
   observer below, not the checks an obligation names.
 
   The running-check observer emits every check a CI step runs into the reconcile stream, so the
-  ONE reconcile engine sees the complete static stream: a check a fitness scenario cites posts to
+  ONE reconcile engine sees the complete fitness-function stream: a check a fitness scenario cites posts to
   that scenario's row; one no fitness scenario cites — the citation seam reaches no @SCN for it —
-  cites no scenario, so reconcile folds it to the suspense row (an UNCITED static-check). The
-  report's static census is a pure count over the stream, runningStaticCheckCount and
-  uncitedStaticCheckCount; the cited count is implicit, running − uncited. It is the static-axis
+  cites no scenario, so reconcile folds it to the suspense row (an UNCITED fitness-function). The
+  report's fitness-function census is a pure count over the stream, runningFitnessFunctionCount and
+  uncitedFitnessFunctionCount; the cited count is implicit, running − uncited. It is the fitness-function-axis
   mirror of the runtime count under Test volume. The report surfaces the counts under
-  "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows.
+  "### Fitness functions", mirroring "### Test volume"; the guard member detail lives in the rows.
 
-  WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION. Membership is a PROPERTY of the check — does it analyse source without executing it
-  and red the build on a violation — never a property of its name. No naming heuristic decides it,
+  WHICH STEPS ARE FITNESS FUNCTIONS, AND WHY IT IS NOT A NAMING QUESTION. Membership is every CI
+  step left once declared runners, the reconciler and declared non-checks are taken out — never a property of its name, and never whether it reads
+  source or executes code: a step that runs a mutation verdict or a temp-directory check is a
+  fitness function as much as a lint is. No naming heuristic decides it,
   neither a lint:/guard: prefix nor the target's own specController.staticChecks:
   membership is decided by subtraction, and a run: step of the workflows --ci names is a
-  candidate fitness check unless it runs a behavioural runner the manifest names, is the
+  candidate fitness function unless it runs a behavioural runner the manifest names, is the
   reconciler, or is a step the manifest names a non-check. install and checkout are steps like
   any other and leave by that third door; test and cucumber are the runtime axis's observed
   evidence and leave by the first, which is what the manifest's runners block says.
@@ -48,7 +50,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   specController block does not read, with no word of what it once did. That engages no
   major version: at 0.x no compatibility commitment names one.
 
-  What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
+  What is NOT vacuous over this tree is the number beside it. The "fitness function(s) run" figure counts
   the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
   and only the uncited count is answered by discovery. Reading both as products of the same mechanism
   is the misreading this paragraph forecloses.
@@ -62,13 +64,13 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   here that keep a Cucumber layer also drive the real file reads (ci.yml + package.json +
   features) over a fixture target and assert the rendered report surface.
 
-  Rule: a CI check no fitness scenario cites is reported as an uncited static check
+  Rule: a CI check no fitness scenario cites is reported as an uncited fitness function
 
     A CHECK IS UNCITED WHEN ITS STEP NAMES NO SCENARIO. A check's CI step cites the scenario it
     answers by carrying that scenario's @SCN as its `id:`, and the credit carries the citation
     from there; a step that carries none reaches no scenario at all, and its check is uncited.
     The reader-visible landing is cites-no-scenario on the suspense row, surfaced under
-    "### Static checks", because what this axis reports is a check nobody has taken
+    "### Fitness functions", because what this axis reports is a check nobody has taken
     responsibility for.
 
     THE CREDIT IS NEVER DROPPED, which is the clause worth saying out loud on the credit side.
@@ -85,9 +87,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     cited one and the uncited one is whether the step carries a scenario's code.
 
     @unit @SCN-USG-001
-    Scenario: a CI check no fitness scenario cites is reported as an uncited static check
+    Scenario: a CI check no fitness scenario cites is reported as an uncited fitness function
 
-  Rule: a check a fitness scenario cites is attributed, not an uncited static check
+  Rule: a check a fitness scenario cites is attributed, not an uncited fitness function
 
     THE POSITIVE TWIN, AND WHY THE PAIR IS NOT ONE SCENARIO SAID TWICE. The rule above is
     satisfied on its own by a reader that places NOTHING and calls every running check uncited;
@@ -107,13 +109,13 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     distinguishable — every observation lands somewhere — so this scenario names where.
 
     @integration @SCN-USG-002
-    Scenario: a check a fitness scenario cites is attributed, not an uncited static check
+    Scenario: a check a fitness scenario cites is attributed, not an uncited fitness function
       Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is cited by a fitness scenario
       When the reconciliation report is rendered for the target
       Then lint:foo is attributed to the scenario citing it, not reported uncited
 
-  Rule: a step invoking a runner the manifest names is not a candidate fitness check
+  Rule: a step invoking a runner the manifest names is not a candidate fitness function
 
     THE EXCLUSION SURVIVES THE RULE CHANGE; WHAT DRAWS IT HAS MOVED. What takes a pipeline step
     out of this axis is the target saying which commands run its behavioural suites: its
@@ -125,7 +127,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE FAULT IS DOUBLE-COUNTING, NOT A WRONG NUMBER. pnpm test and pnpm cucumber ARE evidence:
     they are how a corpus's behavioural scenarios get their observations at all. A reader that
     derived them here would post one run twice — once as the behavioural evidence it is, and
-    once as a fitness check nobody wrote a threshold for — and the tree would be reported
+    once as a fitness function nobody wrote a threshold for — and the tree would be reported
     running more gates than it has, with the invented ones redding as uncited for no fault of
     the tree's.
 
@@ -137,16 +139,16 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     step inflated it.
 
     @unit @SCN-USG-003
-    Scenario: test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners
+    Scenario: test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners
 
-  Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited static check
+  Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited fitness function
 
     NO PREFIX FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET TO FIND WITH. Discovery
     once read a target's scripts through an observed prefix set — lint: and guard: —
     and this scenario's script carried guard: so that it would be found. The set of names a quality
     check might be given belongs to the consumer and is unbounded; a list of two was a sample of it,
     and a longer list would have been a bigger sample. So the membership rule is inverted: a step of
-    the pipeline is a candidate fitness check UNLESS it invokes a runner the manifest names, is the
+    the pipeline is a candidate fitness function UNLESS it invokes a runner the manifest names, is the
     reconciler, or is a step the consumer named a non-check. The script below is called
     domain-purity, which matches no convention this tool has ever recognised, and it is found
     because nothing takes it out.
@@ -174,9 +176,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     scenario asserts it in the same terms rather than settling for the absence of an attribution.
 
     @unit @SCN-USG-004
-    Scenario: an uncited check whose script name carries no prefix of ours is an uncited static check
+    Scenario: an uncited check whose script name carries no prefix of ours is an uncited fitness function
 
-  Rule: a static check is observed wherever in the workflows it runs
+  Rule: a fitness function is observed wherever in the workflows it runs
 
     BOTH observers read a target's CI from ONE source. A check enforced from a sibling
     workflow — a nightly sweep, a security scan, an ordinary split of a pipeline — is
@@ -233,14 +235,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     ingest edge's, which knows where GitHub keeps workflows and nothing more.
 
     @unit @integration @SCN-USG-006
-    Scenario: a cited fitness check enforced from a sibling workflow is satisfied, with no watermelon raised against it
-      Given a target whose ci.yml runs no static check and whose nightly.yml runs lint:nightly
+    Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
+      Given a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly
       And a fitness scenario cites lint:nightly
       When the reconciliation report is rendered over the target's workflow directory
       Then lint:nightly reconciles satisfied, with no watermelon raised against it
 
     @unit @SCN-USG-007
-    Scenario: an uncited fitness check running in a sibling workflow is reported uncited
+    Scenario: an uncited fitness function running in a sibling workflow is reported uncited
 
   Rule: an explicitly supplied CI file narrows observation to that file
 
@@ -262,7 +264,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     Scenario: an explicitly supplied CI file narrows observation to that file alone
       Given a target whose nightly.yml runs lint:sweep and whose ci.yml does not
       When the reconciliation report is rendered for that target's ci.yml alone
-      Then lint:sweep is not counted among the running static checks
+      Then lint:sweep is not counted among the running fitness functions
 
   Rule: a CI check whose script name matches no convention of the tool's, that a fitness scenario cites, is attributed
 
@@ -294,7 +296,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     now carries none at all and is attributed anyway.
 
     @unit @SCN-USG-005
-    Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited static check
+    Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited fitness function
 
   Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
 
@@ -308,20 +310,20 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     WHOLE SHELL TOKENS, NEVER A SUBSTRING. The substring form recognises 2 of those same 113 and
     both are false: one of them is the reconciler's own balance step, matched on the filename
-    vitest.json inside its --vitest argument. Excluding a fitness check as a runner is the one
+    vitest.json inside its --vitest argument. Excluding a fitness function as a runner is the one
     direction this axis cannot tolerate, because it is silent — and it happens on the first real
     pipeline a substring rule is pointed at. The sibling scenario one Rule along is welded to that
     line; this one is why the hop exists at all.
 
     A STEP INVOKES A SCRIPT BY THE PRODUCT'S OWN EXACT PACKAGE-MANAGER TEST, the same reading a
-    static check's enforcement is already taken through, so two readers cannot come to disagree
+    fitness function's enforcement is already taken through, so two readers cannot come to disagree
     about what pnpm test invokes. The script's body is then read for the runner as a whole token,
     and a script invoking another script is followed to a depth of three under a visited set: a
     deeper chain is a shape no pipeline in the portfolio has, and an unbounded walk over a
     manifest the consumer wrote is an input this tool does not control.
 
     THIS RECOGNITION IS BOTH THE READER AND THE VERDICT. A step recognised as a runner is NAMED
-    on the report rather than left silent, and what keeps a runner step off the static axis is
+    on the report rather than left silent, and what keeps a runner step off the fitness-function axis is
     this rule and nothing else. Both readings go through one comparison, so the report and the
     books cannot disagree about which step ran a runner.
 
@@ -445,7 +447,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     THE KEY EXCLUDES NOTHING, WHICH IS THE HALF THAT NEEDS A CHECK BESIDE IT. An absence proves
     little on its own: a reader recognising nothing anywhere satisfies it. So its tests' target
     runs a real check whose script the bogus key names, and that check has to reach the books as
-    an uncited static check — the presence that makes the absence mean something.
+    an uncited fitness function — the presence that makes the absence mean something.
 
     @unit @SCN-USG-019
     Scenario: a runners key that is not one of the four tiers is reported, never silently honoured
@@ -491,7 +493,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   Rule: a step the manifest names a non-check is excluded, and the report says so
 
     THE THIRD EXCLUSION, AND THE ONLY ONE THAT IS THE CONSUMER'S OWN LIST. Not everything that
-    is not a behavioural runner is a fitness check — a checkout, a corepack enable, a dependency
+    is not a behavioural runner is a fitness function — a checkout, a corepack enable, a dependency
     install, a deploy — and a rule calling those checks fills a consumer's first report with
     noise. So the consumer gets to say which steps are not checks, about their own pipeline,
     once. It is a list of THEIR steps, never a list of check names of ours, and that is what
@@ -550,7 +552,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     notChecks entries produces exactly this report — no balance row, no dump row — over exactly
     this pipeline. The two answers part company at the consumer who never wrote the entries, and
     under the configured one their very first run reports their own reconciler as an uncited
-    fitness check on their books. So its tests' target carries no such list at all, and the report
+    fitness function on their books. So its tests' target carries no such list at all, and the report
     it produces must name nothing as excluded: an exclusion section appearing here would say the
     consumer's own configuration did the work, and there is no configuration to do it.
 
@@ -611,7 +613,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     ordinary command check has to stay on the books in the same run.
 
     @unit @SCN-USG-013
-    Scenario: a `uses:` step is a candidate fitness check, reported by the action it uses
+    Scenario: a `uses:` step is a candidate fitness function, reported by the action it uses
 
   Rule: a manifest naming no runners makes every step a candidate
 
@@ -619,7 +621,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     and does nothing else a report of every check their pipeline ran, listed — and under the prefix
     rule that promise was conditional on a naming convention they had never heard of. Measured over
     the planted consumer at the head of this axis's analysis, a manifest carrying an empty
-    specController block reported ONE static check run over a pipeline of eleven steps, and said
+    specController block reported ONE fitness function run over a pipeline of eleven steps, and said
     nothing whatever about the other ten. This scenario is that promise made true, and the shape
     that makes it true is subtraction: nothing was named, so nothing is taken out.
 
@@ -708,7 +710,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   Rule: every step the reader saw is accounted for
 
     THIS AXIS'S FIRST NON-NEGOTIABLE IS A CLAIM ABOUT CODE, AND PROSE CANNOT HOLD IT. Nothing seen
-    is dropped: a step that reaches this reader leaves it as a candidate fitness check, as one of
+    is dropped: a step that reaches this reader leaves it as a candidate fitness function, as one of
     the runners the target named, as the reconciler, or as a step the consumer called a non-check.
     There is no fifth outcome. Four exhaustive dispositions is not a sentence any reader can check
     by reading, and the fault it forecloses is the exact one this whole axis exists to end — a step

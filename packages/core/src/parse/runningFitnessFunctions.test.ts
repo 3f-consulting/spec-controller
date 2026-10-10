@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
+import { recognisedRunners, runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { resolveRunners } from "./targetManifest.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
@@ -9,7 +9,7 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emits a FitnessEvidenceObservation per running CI guard)", () => {
+describe("[SCN-USG-001] runningFitnessFunctions — the running-guard observer (emits a FitnessEvidenceObservation per running CI guard)", () => {
   const usgPkg: PackageJsonScripts = {
     scripts: {
       "lint:foo": "echo foo",
@@ -32,9 +32,9 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
   });
 
   it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
-    expect(runningStaticChecks([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -42,9 +42,9 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     const withUnwired: PackageJsonScripts = {
       scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
     };
-    expect(runningStaticChecks([usgCi], withUnwired, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([usgCi], withUnwired, SUITE_RUNNERS)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -58,19 +58,19 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
 
   it("reports an unnamed step that invokes no script by its first non-blank command, trimmed, whatever its line endings", () => {
     expect(
-      runningStaticChecks([unscriptedCi.join("\n")], usgPkg, SUITE_RUNNERS).map((o) => o.staticCheck)
+      runningFitnessFunctions([unscriptedCi.join("\n")], usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)
     ).toEqual(["./scripts/audit.sh", "./scripts/check.sh"]);
   });
 
   it("still reports the checks beside a step whose command is blank", () => {
     const withBlank = [...unscriptedCi, '      - run: ""'].join("\n");
-    expect(runningStaticChecks([withBlank], usgPkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual(
+    expect(runningFitnessFunctions([withBlank], usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual(
       expect.arrayContaining(["./scripts/audit.sh", "./scripts/check.sh"])
     );
   });
 });
 
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
+describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   const manifest = {
     scripts: { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" },
     specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
@@ -97,23 +97,23 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
   });
 
   it("emits an observation for the check step alone — the two runner steps are excluded", () => {
-    expect(runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([ci2], pkg2, resolveRunners(manifest).tiers)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
   it("does not let the citation stamp widen membership — a cited runner step is still excluded", () => {
     expect(
-      runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
+      runningFitnessFunctions([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
         scnId: "SCN-TGT-001",
       })).map(
-        (o) => o.staticCheck,
+        (o) => o.fitnessFunction,
       ),
     ).toEqual(["lint:foo"]);
   });
 });
 
-describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no convention of ours", () => {
+describe("[SCN-USG-004] runningFitnessFunctions observes a CI script matching no convention of ours", () => {
   const unprefixedManifest = {
     scripts: {
       "domain-purity": "echo domain-purity",
@@ -138,11 +138,11 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
 
   it("emits a FitnessEvidenceObservation for a script no convention of ours reaches", () => {
     expect(
-      runningStaticChecks([unprefixedCi], unprefixedPkg, membership)
+      runningFitnessFunctions([unprefixedCi], unprefixedPkg, membership)
     ).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "domain-purity",
+        fitnessFunction: "domain-purity",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -150,7 +150,7 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
   });
 
   it("carries NO scnId key when the seam is asked and answers nothing — the uncited shape", () => {
-    const observed = runningStaticChecks(
+    const observed = runningFitnessFunctions(
       [unprefixedCi],
       unprefixedPkg,
       membership,
@@ -160,7 +160,7 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
     expect(observed).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "domain-purity",
+        fitnessFunction: "domain-purity",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -170,11 +170,11 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
 
   const checkPkg: PackageJsonScripts = { scripts: { check: "echo check" } };
   const reportedAs = (run: string): string[] =>
-    runningStaticChecks(
+    runningFitnessFunctions(
       [["jobs:", "  ci:", "    steps:", `      - run: ${JSON.stringify(run)}`].join("\n")],
       checkPkg,
       NO_RUNNERS
-    ).map((o) => o.staticCheck);
+    ).map((o) => o.fitnessFunction);
 
   it.each([
     ["pnpm check", "check"],
@@ -195,7 +195,7 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
   });
 });
 
-describe("[SCN-USG-007] a static check running in ANY of a target's workflows is observed", () => {
+describe("[SCN-USG-007] a fitness function running in ANY of a target's workflows is observed", () => {
   const pkg: PackageJsonScripts = {
     scripts: { "lint:sweep": "echo sweep", test: "vitest run" },
   };
@@ -214,28 +214,28 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
   });
 
   it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
-    expect(runningStaticChecks([ci, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([ci, nightly], pkg, SUITE_RUNNERS)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
   it("emits one observation per STEP when two workflows invoke the same check", () => {
-    expect(runningStaticChecks([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
   it("keeps a malformed workflow from discarding the commands of the ones beside it", () => {
     const malformed = "jobs:\n  - this: [is not\n    valid yaml";
 
-    expect(runningStaticChecks([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+    expect(runningFitnessFunctions([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
+      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
 
-describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by the action it uses", () => {
+describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
   const pkg: PackageJsonScripts = {
     scripts: { "domain-purity": "echo domain-purity", test: "vitest run" },
   };
@@ -254,7 +254,7 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 
   it("observes an action step, named by the action it uses", () => {
-    expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual([
+    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
       "Dependency review",
       "domain-purity",
       "github/codeql-action/analyze@v3",
@@ -262,7 +262,7 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 
   it("names an action step by its `name:` where it has one — GitHub's own order, not the reference", () => {
-    const named = runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck);
+    const named = runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction);
     expect(named).toContain("Dependency review");
     expect(named).not.toContain("actions/dependency-review-action@v4");
   });
@@ -278,7 +278,7 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
       '      - name: "  Lint  "',
       "        uses: super-linter/super-linter@v7",
     ].join("\n");
-    expect(runningStaticChecks([shapes], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).toEqual([
+    expect(runningFitnessFunctions([shapes], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
       "actions/dependency-review-action@v4",
       "github/codeql-action/analyze@v3",
       "Lint",
@@ -293,10 +293,10 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
       "      - uses: github/codeql-action/analyze@v3",
       "        continue-on-error: true",
     ].join("\n");
-    expect(runningStaticChecks([severed], pkg, SUITE_RUNNERS)).toEqual([
+    expect(runningFitnessFunctions([severed], pkg, SUITE_RUNNERS)).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "github/codeql-action/analyze@v3",
+        fitnessFunction: "github/codeql-action/analyze@v3",
         exists: true,
         enforcedOverRealSource: false,
       },
@@ -304,13 +304,13 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 
   it("still leaves the runner step out, whatever form the steps beside it take", () => {
-    expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).not.toContain(
+    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).not.toContain(
       "pnpm test",
     );
   });
 });
 
-describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is named by the first it invokes", () => {
+describe("[SCN-USG-001] runningFitnessFunctions — a step invoking two scripts is named by the first it invokes", () => {
   const pkg: PackageJsonScripts = {
     scripts: {
       "check:format": "prettier --check .",
@@ -334,10 +334,10 @@ describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is n
   });
 
   it("names the step by the first script it invokes, not the second", () => {
-    expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS)).toEqual([
+    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS)).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "check:format",
+        fitnessFunction: "check:format",
         exists: true,
         enforcedOverRealSource: true,
       },

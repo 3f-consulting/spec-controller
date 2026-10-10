@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { runningStaticChecks } from "../parse/runningStaticChecks.js";
+import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
@@ -33,17 +33,17 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
       ["SCN-AAA-001", [{ qualityCheck: "fitness" }]],
     ]);
 
-    const evidenceObservations = runningStaticChecks(
+    const evidenceObservations = runningFitnessFunctions(
       PLANTED_CI,
       PLANTED_PACKAGE_JSON,
       NO_RUNNERS,
       citedScn
     );
     expect(evidenceObservations).toHaveLength(1);
-    const observation = evidenceObservations.find((o) => o.staticCheck === UNREGISTERED_HANDLE);
+    const observation = evidenceObservations.find((o) => o.fitnessFunction === UNREGISTERED_HANDLE);
     expect(observation).toEqual({
       qualityCheck: "fitness",
-      staticCheck: UNREGISTERED_HANDLE,
+      fitnessFunction: UNREGISTERED_HANDLE,
       exists: true,
       enforcedOverRealSource: true,
     });
@@ -56,7 +56,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     expect(suspense?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: UNREGISTERED_HANDLE,
+        fitnessFunction: UNREGISTERED_HANDLE,
         outcome: "cites-no-scenario",
         evidenceObservation: observation,
       },

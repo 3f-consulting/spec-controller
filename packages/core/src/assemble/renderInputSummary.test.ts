@@ -24,9 +24,9 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: "SCN-RMD-002", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
-    { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", fitnessFunction: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
   let rmd005Balance: Ledger;
   let lintBalance: Ledger;
@@ -38,8 +38,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
       ],
       [
-        { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "fitness", staticCheck: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+        { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
       ],
     );
   });
@@ -65,19 +65,19 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     expect(tv.totalEvidenceObservations).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
-  it("materialises the static-check totals", () => {
+  it("materialises the fitness-function totals", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
-    expect(report.summary.staticChecks).toEqual({
-      runningStaticCheckCount: 3,
-      uncitedStaticCheckCount: 1,
+    expect(report.summary.fitnessFunctions).toEqual({
+      runningFitnessFunctionCount: 3,
+      uncitedFitnessFunctionCount: 1,
     });
   });
 
   it("carries the 2-field census shape, with the evidence-obligation count implicit", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
-    const sg = report.summary.staticChecks!;
-    expect(sg.runningStaticCheckCount - sg.uncitedStaticCheckCount).toBe(2);
-    expect(Object.keys(sg).sort()).toEqual(["runningStaticCheckCount", "uncitedStaticCheckCount"]);
+    const sg = report.summary.fitnessFunctions!;
+    expect(sg.runningFitnessFunctionCount - sg.uncitedFitnessFunctionCount).toBe(2);
+    expect(Object.keys(sg).sort()).toEqual(["runningFitnessFunctionCount", "uncitedFitnessFunctionCount"]);
   });
 
   it("materialises the fitness-only tally (satisfied / total) under summary.fitness, ignoring runtime evidenceObligations", () => {
@@ -86,17 +86,17 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     expect(report.summary).not.toHaveProperty("lint");
   });
 
-  it("omits testVolume / staticChecks when their sibling read is not threaded, but always carries the fitness tally", () => {
+  it("omits testVolume / fitnessFunctions when their sibling read is not threaded, but always carries the fitness tally", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
-    expect(report.summary).not.toHaveProperty("staticChecks");
+    expect(report.summary).not.toHaveProperty("fitnessFunctions");
     expect(report.summary.fitness).toEqual({ satisfied: 0, total: 0 });
   });
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
-    expect(parsed.summary.staticChecks).toEqual({ runningStaticCheckCount: 3, uncitedStaticCheckCount: 1 });
+    expect(parsed.summary.fitnessFunctions).toEqual({ runningFitnessFunctionCount: 3, uncitedFitnessFunctionCount: 1 });
     expect(parsed.summary.fitness).toEqual({ satisfied: 1, total: 2 });
   });
 });
@@ -109,7 +109,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
         { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
       ],
-      [{ qualityCheck: "fitness", staticCheck: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
+      [{ qualityCheck: "fitness", fitnessFunction: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
     );
   });
   const featureNames = new Map([
@@ -205,7 +205,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .find((o) => o.qualityCheck === "fitness");
     expect(fitness).toBeDefined();
     expect(fitness!.qualityCheck).toBe("fitness");
-    expect(fitness).not.toHaveProperty("staticCheck");
+    expect(fitness).not.toHaveProperty("fitnessFunction");
   });
 
   it("keys a runtime sub-row by its level as the quality-check", () => {
@@ -214,7 +214,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "unit");
     expect(runtime).toBeDefined();
-    expect(runtime).not.toHaveProperty("staticCheck");
+    expect(runtime).not.toHaveProperty("fitnessFunction");
   });
 
   it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {

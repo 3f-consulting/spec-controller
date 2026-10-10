@@ -38,16 +38,16 @@ function armsOf(): Record<"runtime" | "fitness", Arm> {
       obligation: { qualityCheck: "fitness" },
       credit: fc
         .record({
-          staticCheck: fc.constantFrom("lint:a", "lint:b"),
+          fitnessFunction: fc.constantFrom("lint:a", "lint:b"),
           exists: fc.boolean(),
           enforcedOverRealSource: fc.boolean(),
           status: fc.constantFrom(undefined, "passed" as const, "failed" as const),
           locator,
           broken: fc.constantFrom(undefined, true as const),
         })
-        .map(({ staticCheck, exists, enforcedOverRealSource, status, locator, broken }) => ({
+        .map(({ fitnessFunction, exists, enforcedOverRealSource, status, locator, broken }) => ({
           qualityCheck: "fitness" as const,
-          staticCheck,
+          fitnessFunction,
           scnId: SCN,
           exists,
           enforcedOverRealSource,

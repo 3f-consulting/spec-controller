@@ -23,7 +23,7 @@ import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { configurationNotReadSection } from "./configurationNotRead.js";
 import { discoveryScopeSection } from "./discoveryScope.js";
-import { staticChecksSection } from "./staticChecks.js";
+import { fitnessFunctionsSection } from "./fitnessFunctions.js";
 import { behaviouralRunnersSection } from "./behaviouralRunners.js";
 import { excludedStepsSection } from "./excludedSteps.js";
 import { reconcilerSection } from "./reconcilerSteps.js";
@@ -76,7 +76,7 @@ function creditSuffix(item: ScenarioReconciliation["reconcilingItems"][number]):
       .join(": ");
     return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
   }
-  if (isCredit && item.staticCheck) return ` (${item.staticCheck})`;
+  if (isCredit && item.fitnessFunction) return ` (${item.fitnessFunction})`;
   if (isCredit && item.locator !== undefined) return ` (${item.locator})`;
   return undefined;
 }
@@ -392,7 +392,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   evidenceReconciliationSection,
   testVolumeSection,
   discoveryScopeSection,
-  staticChecksSection,
+  fitnessFunctionsSection,
   behaviouralRunnersSection,
   reconcilerSection,
   excludedStepsSection,

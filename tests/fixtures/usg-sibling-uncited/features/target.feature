@@ -1,5 +1,5 @@
 @TGU
-Feature: a fixture target whose uncited static check runs in a sibling workflow
+Feature: a fixture target whose uncited fitness function runs in a sibling workflow
 
   A FIXTURE target (NOT under features/) standing in for the case a check ARRIVES as:
   added to package.json and to a nightly workflow, cited by no scenario, passing green

@@ -1,5 +1,5 @@
 import { ciWorkflowSteps, type CiWorkflowStep, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
-import { isCandidateStep } from "./runningStaticChecks.js";
+import { isCandidateStep } from "./runningFitnessFunctions.js";
 import type { JobDiscoveryScope } from "../domain/evidenceReconciliation.js";
 
 type Tally = { source?: string; job: string; steps: number; candidates: number };

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { stepExclusions } from "./stepExclusions.js";
-import { runningStaticChecks } from "./runningStaticChecks.js";
+import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { resolveNotChecks } from "./targetManifest.js";
 
 let CI_YML: string;
@@ -138,16 +138,16 @@ describe("[SCN-USG-015] stepExclusions — an entry naming no step", () => {
   });
 });
 
-describe("[SCN-USG-015] runningStaticChecks — a check whose every step the target excluded", () => {
+describe("[SCN-USG-015] runningFitnessFunctions — a check whose every step the target excluded", () => {
   const PLUMBING = ["ci.yml:ci:actions/checkout@v4", "ci.yml:ci:pnpm install --frozen-lockfile"];
   const observed = (notChecks: readonly string[]): string[] =>
-    runningStaticChecks(
+    runningFitnessFunctions(
       [CI_YML],
       SCRIPTS,
       NO_RUNNERS,
       () => null,
       stepExclusions([CI_YML], ["ci.yml"], [...PLUMBING, ...notChecks]).isExcluded
-    ).map((observation) => observation.staticCheck);
+    ).map((observation) => observation.fitnessFunction);
 
   it("observes both checks when the target excludes neither of them", () => {
     expect(observed([])).toEqual(["lint:rules", "lint:sweep"]);
@@ -172,8 +172,8 @@ describe("[SCN-USG-015] runningStaticChecks — a check whose every step the tar
       "        run: pnpm lint:rules",
     ].join("\n");
     const resolved = stepExclusions([twice], ["ci.yml"], ["ci.yml:ci:Rule check"]);
-    const checks = runningStaticChecks([twice], SCRIPTS, NO_RUNNERS, () => null, resolved.isExcluded);
-    expect(checks.map((observation) => observation.staticCheck)).toEqual(["lint:rules", "lint:sweep"]);
+    const checks = runningFitnessFunctions([twice], SCRIPTS, NO_RUNNERS, () => null, resolved.isExcluded);
+    expect(checks.map((observation) => observation.fitnessFunction)).toEqual(["lint:rules", "lint:sweep"]);
   });
 });
 

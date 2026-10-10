@@ -13,7 +13,7 @@ export type {
 export type {
   Summary,
   TestVolumeTotals,
-  StaticCheckTotals,
+  FitnessFunctionTotals,
   EvidenceReconciliation,
 } from "../domain/evidenceReconciliation.js";
 

@@ -1,5 +1,5 @@
 import { ciWorkflowSteps, type CiWorkflowStep, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
-import { isCandidateStep, runsNamedRunner } from "./runningStaticChecks.js";
+import { isCandidateStep, runsNamedRunner } from "./runningFitnessFunctions.js";
 import type { StepAccounting } from "../domain/evidenceReconciliation.js";
 
 export function stepAccounting(

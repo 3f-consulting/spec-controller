@@ -40,7 +40,7 @@ describe("[SCN-LNT-030] the reader takes the step's outcome, so a swallowed red 
         row.scnId,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
       ])
     ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]]);
 

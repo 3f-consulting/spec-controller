@@ -39,7 +39,7 @@ declare const qualityCheckReconciliationBrand: unique symbol;
 
 interface QualityCheckReconciliationFields {
   qualityCheck?: QualityCheck;
-  staticCheck?: string;
+  fitnessFunction?: string;
   outcome: Outcome;
   evidenceObligation?: EvidenceObligation;
   evidenceObservation?: EvidenceObservation;
@@ -174,9 +174,9 @@ export function reconcileEvidenceObligation(
   });
 }
 
-function fitnessCheckNameOf(observation: EvidenceObservation): string | undefined {
+function fitnessFunctionNameOf(observation: EvidenceObservation): string | undefined {
   return isFitnessObservation(observation)
-    ? observation.staticCheck
+    ? observation.fitnessFunction
     : undefined;
 }
 
@@ -194,7 +194,7 @@ export function noEvidenceObligationReconciliationsOf(
       makeQualityCheckReconciliation({
         qualityCheck: o.qualityCheck,
         outcome: "no-evidence-obligation" as const,
-        ...(fitnessCheckNameOf(o) !== undefined ? { staticCheck: fitnessCheckNameOf(o) } : {}),
+        ...(fitnessFunctionNameOf(o) !== undefined ? { fitnessFunction: fitnessFunctionNameOf(o) } : {}),
         evidenceObservation: o,
         ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
       })
@@ -207,7 +207,7 @@ export function citesUnknownScenarioReconciliationsOf(
   return credits.map((o) =>
     makeQualityCheckReconciliation({
       qualityCheck: o.qualityCheck,
-      ...(isFitnessObservation(o) ? { staticCheck: o.staticCheck } : {}),
+      ...(isFitnessObservation(o) ? { fitnessFunction: o.fitnessFunction } : {}),
       outcome: "cites-unknown-scenario",
       evidenceObservation: o,
       ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
@@ -218,7 +218,7 @@ export function citesUnknownScenarioReconciliationsOf(
 export function suspenseReconciliationsOf(
   brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
+  noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
     ...brokenEvidence.map((o) =>
@@ -237,10 +237,10 @@ export function suspenseReconciliationsOf(
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       })
     ),
-    ...noEvidenceObligationStaticChecks.map((o) =>
+    ...noEvidenceObligationFitnessFunctions.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "fitness" as const,
-        staticCheck: o.staticCheck,
+        fitnessFunction: o.fitnessFunction,
         outcome: "cites-no-scenario" as const,
         evidenceObservation: o,
       })

@@ -81,7 +81,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at q
 describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit has no value for", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
-  it("omits BOTH the staticCheck and the locator key on a runtime credit from no test file", () => {
+  it("omits BOTH the fitnessFunction and the locator key on a runtime credit from no test file", () => {
     const anonymous = credit("e2e", "SCN-AAA-001");
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [anonymous], pairs);
     expect(item).toStrictEqual({
@@ -89,22 +89,22 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
       outcome: "no-evidence-obligation",
       evidenceObservation: anonymous,
     });
-    expect(item).not.toHaveProperty("staticCheck");
+    expect(item).not.toHaveProperty("fitnessFunction");
     expect(item).not.toHaveProperty("locator");
   });
 
-  it("names an untagged static check by its runnable handle, and carries no locator key", () => {
+  it("names an untagged fitness function by its runnable handle, and carries no locator key", () => {
     const untagged: FitnessEvidenceObservation = {
       qualityCheck: "fitness",
       scnId: "SCN-AAA-001",
-      staticCheck: "lint:nobody-asked",
+      fitnessFunction: "lint:nobody-asked",
       exists: true,
       enforcedOverRealSource: true,
     };
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [untagged], pairs);
     expect(item).toStrictEqual({
       qualityCheck: "fitness",
-      staticCheck: "lint:nobody-asked",
+      fitnessFunction: "lint:nobody-asked",
       outcome: "no-evidence-obligation",
       evidenceObservation: untagged,
     });
@@ -114,11 +114,11 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
 
 describe("[SCN-LDG-008] a runtime credit's item names no check, even one the credit arrived carrying", () => {
   it("withholds a check name a runtime credit arrived with rather than naming it the check that ran", () => {
-    const taggedRuntime: RuntimeEvidenceObservation & { staticCheck: string } = {
+    const taggedRuntime: RuntimeEvidenceObservation & { fitnessFunction: string } = {
       qualityCheck: "integration",
       scnId: "SCN-AAA-001",
       status: "passed",
-      staticCheck: "complexity",
+      fitnessFunction: "complexity",
     };
     const [item] = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
@@ -131,8 +131,8 @@ describe("[SCN-LDG-008] a runtime credit's item names no check, even one the cre
       outcome: "no-evidence-obligation",
       evidenceObservation: taggedRuntime,
     });
-    expect(item).not.toHaveProperty("staticCheck");
-    expect(taggedRuntime.staticCheck).toBe("complexity");
+    expect(item).not.toHaveProperty("fitnessFunction");
+    expect(taggedRuntime.fitnessFunction).toBe("complexity");
   });
 });
 
@@ -152,7 +152,7 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
 });
 
 describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit has", () => {
-  it("carries neither a locator nor a staticCheck key when the runtime credit has no locator", () => {
+  it("carries neither a locator nor a fitnessFunction key when the runtime credit has no locator", () => {
     const noLocator = credit("unit", "SCN-ZZZ-009");
     const [item] = citesUnknownScenarioReconciliationsOf([noLocator]);
     expect(item).toStrictEqual({
@@ -161,7 +161,7 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
       evidenceObservation: noLocator,
     });
     expect(item).not.toHaveProperty("locator");
-    expect(item).not.toHaveProperty("staticCheck");
+    expect(item).not.toHaveProperty("fitnessFunction");
   });
 });
 
@@ -169,7 +169,7 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
   it("drops a locator a citing fitness credit arrived with rather than stamping it on the item", () => {
     const guardWithLocator: FitnessEvidenceObservation & { locator: string } = {
       qualityCheck: "fitness",
-      staticCheck: "lint:complexity",
+      fitnessFunction: "lint:complexity",
       scnId: "SCN-ZZZ-009",
       exists: true,
       enforcedOverRealSource: true,
@@ -178,7 +178,7 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
     const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({
       qualityCheck: "fitness",
-      staticCheck: "lint:complexity",
+      fitnessFunction: "lint:complexity",
       outcome: "cites-unknown-scenario",
       evidenceObservation: guardWithLocator,
     });
@@ -200,15 +200,15 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
   });
   const guard: FitnessEvidenceObservation = {
     qualityCheck: "fitness",
-    staticCheck: "lint:nobody-asked",
+    fitnessFunction: "lint:nobody-asked",
     exists: true,
     enforcedOverRealSource: true,
   };
 
-  it("lists broken FIRST, then the uncited runtime credits, then the no-evidence-obligation static checks", () => {
+  it("lists broken FIRST, then the uncited runtime credits, then the no-evidence-obligation fitness functions", () => {
     const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
-    expect(items[2]!.staticCheck).toBe("lint:nobody-asked");
+    expect(items[2]!.fitnessFunction).toBe("lint:nobody-asked");
   });
 
   it("carries locator + message on a broken item, and no evidence observation", () => {
@@ -218,7 +218,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     expect(item!.evidenceObservation).toBeUndefined();
   });
 
-  it("carries no locator on a no-evidence-obligation static check — a guard is read from config, not a test file", () => {
+  it("carries no locator on a no-evidence-obligation fitness function — a guard is read from config, not a test file", () => {
     const [item] = suspenseReconciliationsOf([], [], [guard]);
     expect(item!.locator).toBeUndefined();
     expect(item!.evidenceObservation).toBe(guard);

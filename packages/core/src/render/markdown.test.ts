@@ -150,7 +150,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(/↳ Evidence Observation is missing \|[^\d]*3 \|/.test(md)).toBe(true);
   });
 
-  it("renders a missing static evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
+  it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
     const lintAndRuntime: Ledger = reconcile(
       [
         {
@@ -238,8 +238,8 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
       [
         { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
         { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-        { qualityCheck: "fitness", staticCheck: "lint:guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
+        { qualityCheck: "fitness", fitnessFunction: "lint:guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "lint:guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
       ]
     );
   });
@@ -250,7 +250,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
     expect(md).toContain("### Fitness evidence obligations");
     expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
     expect(md).toContain("| Scenario | Outcome |");
-    expect(md).not.toContain("| Scenario | Static check | Outcome |");
+    expect(md).not.toContain("| Scenario | Fitness function | Outcome |");
     expect(md).toContain("| SCN-A | ✓ Evidence Observation satisfies its Evidence Obligation |");
     expect(md).toContain("| SCN-B | 🍉 Evidence Observation is passing but fabricated |");
   });

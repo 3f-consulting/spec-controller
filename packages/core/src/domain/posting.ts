@@ -9,17 +9,17 @@ import { isFitnessObservation } from "./journal.js";
 export type Posting =
   | { kind: "scenario"; scnId: string }
   | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "no-evidence-obligation-static-check" };
+  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "no-evidence-obligation-fitness-function" };
 
 export type RuntimePosting =
   | { kind: "scenario"; scnId: string }
   | { kind: "phantom-scenario"; scnId: string }
   | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
 
-export type StaticCheckPosting =
+export type FitnessFunctionPosting =
   | { kind: "scenario"; scnId: string }
   | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "broken" | "no-evidence-obligation-static-check" };
+  | { kind: "suspense-scenario"; posted: "broken" | "no-evidence-obligation-fitness-function" };
 
 export function postingOf(
   observation: RuntimeEvidenceObservation,
@@ -28,7 +28,7 @@ export function postingOf(
 export function postingOf(
   observation: FitnessEvidenceObservation,
   scenarioIds: ReadonlySet<string>
-): StaticCheckPosting;
+): FitnessFunctionPosting;
 export function postingOf(
   observation: EvidenceObservation,
   scenarioIds: ReadonlySet<string>
@@ -46,7 +46,7 @@ export function postingOf(
         ? { kind: "scenario", scnId: observation.scnId }
         : { kind: "phantom-scenario", scnId: observation.scnId };
     }
-    return { kind: "suspense-scenario", posted: "no-evidence-obligation-static-check" };
+    return { kind: "suspense-scenario", posted: "no-evidence-obligation-fitness-function" };
   }
   if (observation.broken === true) return { kind: "suspense-scenario", posted: "broken" };
   if (observation.scnId === null) return { kind: "suspense-scenario", posted: "cites-nothing" };

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { recognisedRunners, runningStaticChecks } from "./runningStaticChecks.js";
+import { recognisedRunners, runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { resolveRunners } from "./targetManifest.js";
 
 describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
@@ -123,7 +123,7 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
     const manifest = { scripts: { test: "vitest run " } };
     expect(recognisedRunners([aliasCi], manifest, { unit: " " })).toEqual([]);
     expect(
-      runningStaticChecks([aliasCi], manifest, { unit: " " }).map((check) => check.staticCheck)
+      runningFitnessFunctions([aliasCi], manifest, { unit: " " }).map((check) => check.fitnessFunction)
     ).toContain("test");
   });
 });
@@ -206,7 +206,7 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
     expect(recognisedRunners([both], manifest, unit)).toEqual([
       { tier: "unit", runner: "vitest", step: "Unit tests" },
     ]);
-    expect(runningStaticChecks([both], manifest, unit).map((check) => check.staticCheck)).toEqual([
+    expect(runningFitnessFunctions([both], manifest, unit).map((check) => check.fitnessFunction)).toEqual([
       "lint:rules",
     ]);
   });
@@ -230,7 +230,7 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
   it("leaves a check piping the runner's output into another command a candidate", () => {
     const piped = [stepRunning("pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'")];
     expect(recognisedRunners(piped, noScripts, integration)).toEqual([]);
-    expect(runningStaticChecks(piped, noScripts, integration).map((check) => check.staticCheck)).toEqual([
+    expect(runningFitnessFunctions(piped, noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
       "Gate",
     ]);
   });
@@ -277,7 +277,7 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
   it("leaves a check a candidate where every line pipes, the runner's output piped on a later line", () => {
     const piped = [stepRunning("git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'")];
     expect(recognisedRunners(piped, noScripts, integration)).toEqual([]);
-    expect(runningStaticChecks(piped, noScripts, integration).map((check) => check.staticCheck)).toEqual([
+    expect(runningFitnessFunctions(piped, noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
       "Gate",
     ]);
   });

@@ -9,7 +9,7 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
   NO ROW CAN ASK FOR A SKIP, and no field remains with which to try, so the third step's
   skip is broken evidence by the only route there is.
 
-  THE FOUR ROWS ARE OTHERWISE IDENTICAL IN SHAPE — static, one command
+  THE FOUR ROWS ARE OTHERWISE IDENTICAL IN SHAPE — fitness functions, one command
   apiece, one step apiece wired the same way — so anything the four are heard to say differently
   came from what the run's record says about their steps and from nowhere else.
 

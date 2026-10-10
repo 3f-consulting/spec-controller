@@ -18,7 +18,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
   CI config carries its scenario's @SCN as the step's `id:`; the run's own record says what that
   step did; `balance` reads the citation straight off it. Nothing is matched back by name and
-  nothing is resolved through a second artefact, so there is no static-axis posting rule left to
+  nothing is resolved through a second artefact, so there is no fitness-function-axis posting rule left to
   be special.
 
   THE RETIRED PATHS RAISE NOTHING. A target that still carries `specController.checkRegistry`, or
@@ -64,7 +64,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   Rule: a `@lint=<check>` tag raises no Evidence Obligation — the retired form is inert
 
     THE RETIRED SPELLING NAMED A TECHNIQUE, NOT A CHECK. Under name-match, a scenario declared its
-    fitness check by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
+    fitness function by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
     matched back to it by name. The bare-tags Correction (canon 2026-08-07) retired that spelling
     when the bare check tag took over, and a check is now declared by a @fitness scenario and
     nothing else. What this Rule holds is only that the retired spelling stays
@@ -93,15 +93,15 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       spelling does not put a scenario ON that axis — it is not a tag the reader translates, on any
       path, and there is nowhere else left for it to be re-routed through.
 
-  Rule: a fitness check's run posts ONE Evidence Observation, citing its scenario's @SCN
+  Rule: a fitness function's run posts ONE Evidence Observation, citing its scenario's @SCN
 
     THE CREDIT SIDE OF THE ONE POSTING RULE, and the first place the citation seam is
     consumed. Name-match worked because the DEBIT cited: a scenario named a runnable script
     and the run was matched back to it by name, so nothing ever had to know which scenario a
     check belonged to. Citation-routing inverts that. The run now arrives carrying an @SCN — its
-    CI step's `id:` — and the ordinary citation route does the rest. There is no static-axis
+    CI step's `id:` — and the ordinary citation route does the rest. There is no fitness-function-axis
     posting rule left to be special: the same route that lands a unit test's credit on its
-    scenario lands a fitness check's.
+    scenario lands a fitness function's.
 
     EXACTLY ONE ROW IS THE WHOLE POINT. Under name-match one run posted to EVERY row naming
     it, which is how a whole-system property came to be smeared across behavioural
@@ -116,11 +116,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     this scenario's subject matter shared one tag line, and the row that proved the POSTING
     RULE also stood as the row the real run posted to. They are separated now: what the real
     check owes is raised by this repository's own `@fitness` scenario for it, authored in
-    features/fitness-checks.feature beside its row, and what is proven here is the rule itself,
+    features/fitness-functions.feature beside its row, and what is proven here is the rule itself,
     over fixture data.
 
     @unit @SCN-LNT-004
-    Scenario: a scenario requiring both a unit test and a fitness check reports each independently
+    Scenario: a scenario requiring both a unit test and a fitness function reports each independently
       TWO AXES ON ONE ROW, ANSWERED SEPARATELY. A scenario can owe evidence on the behavioural axis
       and on the fitness axis at once, and each obligation is discharged only by a credit of its own
       quality-check: a green unit test never answers the fitness obligation, and a fitness run never
@@ -163,7 +163,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
     @unit @SCN-LNT-009
     Scenario: a fitness credit citing an @SCN no scenario carries posts to a phantom row, named by the @SCN its step stated
-      NEWLY REACHABLE, and that is the point. While a fitness check's run cited nothing, this arm was
+      NEWLY REACHABLE, and that is the point. While a fitness function's run cited nothing, this arm was
       structurally unreachable on the fitness axis — there was no citation to be wrong. Once the
       credit cites, the fitness axis inherits every destination a runtime credit has, this one
       included, and inherits it through the SAME posting rule rather than a fitness clause that
@@ -195,7 +195,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
-    NOTHING ELSE DECLARES IT. A manifest list of fitness checks once stood between the
+    NOTHING ELSE DECLARES IT. A manifest list of fitness functions once stood between the
     tag and the obligation, and a scenario the list did not name raised nothing at all. The list is
     retired: an adopter writes the scenario and puts its @SCN on the CI step, and that is the whole
     declaration. Nothing reads more of a list entry than the scenario already carries.
@@ -308,7 +308,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     out a tree, sets up a toolchain, installs dependencies and builds, and none of those is a
     quality check; a report banking them as checks would drown the sentence it exists to say. WHAT
     DISCRIMINATES IS THE CONSUMER'S OWN LIST, and nothing else does: the tool held a
-    check heuristic — the scripts a manifest carried under a guard prefix or named as static checks
+    check heuristic — the scripts a manifest carried under a guard prefix or named as fitness functions
     — and retired it, because the set of names a check might be given belongs to the consumer and
     guessing at it is what made a pipeline named some other way invisible. So its tests' target says
     which of its steps are not checks, in one line each, and those steps are ACCOUNTED as excluded
@@ -413,7 +413,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       need a second run to catch, when the whole claim is that ONE run tells them apart.
 
     @unit @SCN-LNT-033
-    Scenario: the static-check census counts a check whose red its job survives as a check that ran, on both of its counts
+    Scenario: the fitness-function census counts a check whose red its job survives as a check that ran, on both of its counts
 
       THE SENTENCE SAYS RUN, SO THE NUMBER COUNTS WHAT RAN (change the
       count, not the word). A check behind continue-on-error runs: it is invoked, it analyses the
@@ -425,7 +425,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       the same thing twice, and the second time it said it wrongly.
 
       THE TWO COUNTS ARE STILL ONE SENTENCE, AND WHAT A READER TAKES FROM IT IS THE NUMBER NEITHER
-      OF THEM PRINTS. The census says how many static checks run and how many of those nothing
+      OF THEM PRINTS. The census says how many fitness functions run and how many of those nothing
       names; subtract and you have the checks that run AND are named. Move one count's membership
       rule and leave the other's, and that figure is wrong: a severed check nobody cites counted as
       running and not as uncited would appear as a named check nobody named. So both counts take

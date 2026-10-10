@@ -139,14 +139,14 @@ describe("[SCN-LDG-006] a credit citing a phantom scenario becomes a phantom-sce
 });
 
 describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario reconciliation, out of balance", () => {
-  it("aggregates every uncited credit AND the uncited static-checks into ONE suspense-scenario row, cites-no-scenario, out-of-balance", () => {
+  it("aggregates every uncited credit AND the uncited fitness-functions into ONE suspense-scenario row, cites-no-scenario, out-of-balance", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" },
       { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/b.feature" },
-      { qualityCheck: "fitness", staticCheck: "lint:orphan", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", fitnessFunction: "lint:orphan", exists: true, enforcedOverRealSource: true },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 
@@ -158,7 +158,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     expect(row.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" } },
       { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "features/b.feature", evidenceObservation: { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/b.feature" } },
-      { qualityCheck: "fitness", staticCheck: "lint:orphan", outcome: "cites-no-scenario", evidenceObservation: { qualityCheck: "fitness", staticCheck: "lint:orphan", exists: true, enforcedOverRealSource: true } },
+      { qualityCheck: "fitness", fitnessFunction: "lint:orphan", outcome: "cites-no-scenario", evidenceObservation: { qualityCheck: "fitness", fitnessFunction: "lint:orphan", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(row.reconcilingItems).toEqual(row.qualityCheckReconciliations);
 
@@ -166,7 +166,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     expect(scenarioRow?.kind).toBe("scenario");
   });
 
-  it("emits NO suspense row when every credit cites a scenario and no static-check is suspense", () => {
+  it("emits NO suspense row when every credit cites a scenario and no fitness-function is suspense", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];

@@ -55,7 +55,7 @@ export interface RuntimeEvidenceObservation {
 
 export interface FitnessEvidenceObservation {
   qualityCheck: "fitness";
-  staticCheck: string;
+  fitnessFunction: string;
   scnId?: string;
   exists: boolean;
   enforcedOverRealSource: boolean;

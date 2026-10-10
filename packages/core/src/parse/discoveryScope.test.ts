@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
-import { runningStaticChecks } from "./runningStaticChecks.js";
+import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
 import { RELEASE_YML } from "./releaseWorkflow.testkit.js";
 
@@ -117,7 +117,7 @@ describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones
     );
 
   const posted = (isExcluded: (step: CiWorkflowStep) => boolean): number =>
-    runningStaticChecks(sources, SCRIPTS, UNIT_RUNNER, () => null, isExcluded).length;
+    runningFitnessFunctions(sources, SCRIPTS, UNIT_RUNNER, () => null, isExcluded).length;
 
   it("counts what the observer posts when the consumer excluded a step", () => {
     expect(totalCandidates(excluding("Install"))).toBe(posted(excluding("Install")));

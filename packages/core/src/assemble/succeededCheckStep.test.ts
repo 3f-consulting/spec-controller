@@ -59,7 +59,7 @@ beforeEach(() => {
   reconcile = checkStepReconciler(corpus, manifest, ci, record);
 });
 
-describe("[SCN-LNT-021] a static check's step the run's record says succeeded credits its own row", () => {
+describe("[SCN-LNT-021] a fitness function's step the run's record says succeeded credits its own row", () => {
   it("credits each row by the step citing its OWN @SCN, and both balance", () => {
     const reconciliation = reconcile();
 
@@ -68,7 +68,7 @@ describe("[SCN-LNT-021] a static check's step the run's record says succeeded cr
         row.scnId,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
       ])
     ).toEqual([
       ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
@@ -80,14 +80,14 @@ describe("[SCN-LNT-021] a static check's step the run's record says succeeded cr
     const [first, second] = reconcile().ledger.scenarioReconciliations;
     expect(first?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
       qualityCheck: "fitness",
-      staticCheck: "SCN-CVT-001",
+      fitnessFunction: "SCN-CVT-001",
       scnId: "SCN-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",
     });
     expect(second?.qualityCheckReconciliations[0]?.evidenceObservation).toMatchObject({
-      staticCheck: "SCN-CVT-002",
+      fitnessFunction: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
     });
   });
@@ -95,9 +95,9 @@ describe("[SCN-LNT-021] a static check's step the run's record says succeeded cr
   it("says nothing at all about the step that wrote the record, and the run is sound and in balance", () => {
     const reconciliation = reconcile();
     expect(reconciliation.ledger.scenarioReconciliations).toHaveLength(2);
-    expect(reconciliation.summary.staticChecks).toEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 0,
+    expect(reconciliation.summary.fitnessFunctions).toEqual({
+      runningFitnessFunctionCount: 2,
+      uncitedFitnessFunctionCount: 0,
     });
     expect(hasBrokenEvidence(reconciliation.ledger)).toBe(false);
   });

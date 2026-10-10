@@ -35,14 +35,14 @@ export function isScenario(row: ScenarioReconciliation): boolean {
   return row.kind === "scenario";
 }
 
-export function staticCheckReconciliationsOf(
+export function fitnessFunctionReconciliationsOf(
   row: ScenarioReconciliation
 ): QualityCheckReconciliation[] {
   return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "fitness");
 }
 
-export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
-  return staticCheckReconciliationsOf(row).filter(
+export function presentFitnessFunctionCountOf(row: ScenarioReconciliation): number {
+  return fitnessFunctionReconciliationsOf(row).filter(
     (r) => r.outcome === "satisfied" || r.outcome === "watermelon"
   ).length;
 }

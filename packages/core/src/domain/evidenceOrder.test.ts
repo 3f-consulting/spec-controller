@@ -25,7 +25,7 @@ const e2e: EvidenceObservation = { qualityCheck: "e2e", scnId: SCN, status: "pas
 const performance: EvidenceObservation = { qualityCheck: "performance", scnId: SCN, status: "passed", locator: "a.feature" };
 const fitness: EvidenceObservation = {
   qualityCheck: "fitness",
-  staticCheck: "tidy",
+  fitnessFunction: "tidy",
   scnId: SCN,
   exists: true,
   enforcedOverRealSource: true,

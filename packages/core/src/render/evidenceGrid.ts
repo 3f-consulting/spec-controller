@@ -2,8 +2,8 @@ import type { ScenarioReconciliation, QualityCheck, RuntimeQualityCheck } from "
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import {
   isScenario,
-  staticCheckReconciliationsOf,
-  presentStaticCheckCountOf,
+  fitnessFunctionReconciliationsOf,
+  presentFitnessFunctionCountOf,
 } from "../domain/scenarioReconciliation.js";
 import { evidenceObligationsOf } from "../domain/journal.js";
 
@@ -30,10 +30,10 @@ export function evidenceColumns(
   const scenarioRows = scenarios.filter(
     isScenario
   );
-  const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
+  const hasFitnessFunction = scenarioRows.some((s) => fitnessFunctionReconciliationsOf(s).length > 0);
   const qualityChecksPresent = runtimeQualityChecksPresent(scenarioRows);
   const columns: EvidenceColumn[] = [];
-  if (hasStatic) columns.push({ kind: "fitness" });
+  if (hasFitnessFunction) columns.push({ kind: "fitness" });
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
     if (qualityChecksPresent.has(qualityCheck)) columns.push({ kind: "runtime", qualityCheck });
   }
@@ -66,8 +66,8 @@ function twoSided(left: string, right: string): string {
 }
 
 function fitnessCell(s: ScenarioReconciliation): string {
-  const left = staticCheckReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.fitness : "-";
-  const present = presentStaticCheckCountOf(s);
+  const left = fitnessFunctionReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.fitness : "-";
+  const present = presentFitnessFunctionCountOf(s);
   const right = present > 0 ? String(present) : "-";
   return twoSided(left, right);
 }

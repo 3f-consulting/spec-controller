@@ -18,7 +18,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
         { scnId: "SCN-B", evidenceObligations: [] },
       ],
       [
-        { qualityCheck: "fitness", staticCheck: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
+        { qualityCheck: "fitness", fitnessFunction: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
         { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
       ]
     );

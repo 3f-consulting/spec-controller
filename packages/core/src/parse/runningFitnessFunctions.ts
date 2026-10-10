@@ -58,7 +58,7 @@ export function runsNamedRunner(
   return namedRunnersAt(step, packageJson.scripts ?? {}, runners).length > 0;
 }
 
-export function runningStaticChecks(
+export function runningFitnessFunctions(
   ciSources: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
@@ -71,11 +71,11 @@ export function runningStaticChecks(
   );
   return candidates
     .map((step) => {
-      const staticCheck = handleOf(step, scripts);
-      const citation = citedScn(staticCheck, step.id);
+      const fitnessFunction = handleOf(step, scripts);
+      const citation = citedScn(fitnessFunction, step.id);
       return {
         qualityCheck: "fitness" as const,
-        staticCheck,
+        fitnessFunction,
         exists: true,
         enforcedOverRealSource: step.abortsJob,
         ...(citation !== null
@@ -83,7 +83,7 @@ export function runningStaticChecks(
           : {}),
       };
     })
-    .sort((a, b) => a.staticCheck.localeCompare(b.staticCheck));
+    .sort((a, b) => a.fitnessFunction.localeCompare(b.fitnessFunction));
 }
 
 export function recognisedRunners(

@@ -14,7 +14,7 @@ const CORPUS_LINES = [
 
 const creditFor = (scnId: string) => ({
   qualityCheck: "fitness" as const,
-  staticCheck: scnId,
+  fitnessFunction: scnId,
   scnId,
   exists: true,
   enforcedOverRealSource: true,

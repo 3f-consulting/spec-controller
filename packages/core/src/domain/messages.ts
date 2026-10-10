@@ -92,8 +92,8 @@ export enum CoreMessage {
   TestVolumeTableHeader,
   DiscoveryScopeHeading,
   DiscoveryScopeTableHeader,
-  StaticChecksHeading,
-  StaticChecksCounts,
+  FitnessFunctionsHeading,
+  FitnessFunctionsCounts,
   BehaviouralRunnersHeading,
   BehaviouralRunnersTableHeader,
   RunnerTierNamesNone,
@@ -187,7 +187,7 @@ interface CoreMessageParams {
   [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   [CoreMessage.PendingTally]: [pending: number];
   [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomScenario: number, onSuspenseScenario: number];
-  [CoreMessage.StaticChecksCounts]: [running: number, uncited: number];
+  [CoreMessage.FitnessFunctionsCounts]: [running: number, uncited: number];
   [CoreMessage.RunnerTierNamesNone]: [tier: string];
   [CoreMessage.RunnerTierUnnamed]: [tier: string];
   [CoreMessage.RunnerKeyNotATier]: [key: string];
@@ -353,9 +353,9 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.TestVolumeTableHeader]: "| Quality-check | Evidence observations |",
   [CoreMessage.DiscoveryScopeHeading]: "### Discovery scope",
   [CoreMessage.DiscoveryScopeTableHeader]: "| Workflow | Job | Steps read | Candidates |",
-  [CoreMessage.StaticChecksHeading]: "### Static checks",
-  [CoreMessage.StaticChecksCounts]: (running, uncited) =>
-    `${running} static check(s) run, ${uncited} uncited static check(s).`,
+  [CoreMessage.FitnessFunctionsHeading]: "### Fitness functions",
+  [CoreMessage.FitnessFunctionsCounts]: (running, uncited) =>
+    `${running} fitness function(s) run, ${uncited} uncited fitness function(s).`,
   [CoreMessage.BehaviouralRunnersHeading]: "### Behavioural runners",
   [CoreMessage.BehaviouralRunnersTableHeader]: "| Tier | Runner | Recognised at |",
   [CoreMessage.RunnerTierNamesNone]: (tier) => `${tier} — no runner: the target names none.`,

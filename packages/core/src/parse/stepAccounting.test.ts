@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { stepAccounting } from "./stepAccounting.js";
 import { reconcilerSteps } from "./reconcilerSteps.js";
 import { stepExclusions } from "./stepExclusions.js";
-import { runningStaticChecks } from "./runningStaticChecks.js";
+import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import { RELEASE_YML } from "./releaseWorkflow.testkit.js";
 
@@ -152,7 +152,7 @@ describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exa
     const isReconciler = reconcilerOver([CI_YML], ["ci.yml"]);
     const account = stepAccounting([CI_YML], SCRIPTS, UNIT_RUNNER, isReconciler, notChecks);
     expect(account.candidates).toBe(
-      runningStaticChecks(
+      runningFitnessFunctions(
         [CI_YML],
         SCRIPTS,
         UNIT_RUNNER,

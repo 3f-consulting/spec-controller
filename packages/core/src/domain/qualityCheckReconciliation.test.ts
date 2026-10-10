@@ -26,7 +26,7 @@ describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation 
     const obligation: EvidenceObligation = { qualityCheck: "fitness" };
     const absentGuard: EvidenceObservation = {
       qualityCheck: "fitness",
-      staticCheck: "lint:absent-guard",
+      fitnessFunction: "lint:absent-guard",
       exists: false,
       enforcedOverRealSource: false,
     };
@@ -128,12 +128,12 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
   }
 });
 
-describe("[SCN-LDG-035] a static-check credit discharges only the obligation on the row whose @SCN it cites", () => {
+describe("[SCN-LDG-035] a fitness-function credit discharges only the obligation on the row whose @SCN it cites", () => {
   it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
     const obligation: EvidenceObligation = { qualityCheck: "fitness" };
     const credit: EvidenceObservation = {
       qualityCheck: "fitness",
-      staticCheck: "lint:complexity",
+      fitnessFunction: "lint:complexity",
       scnId: "SCN-AAA-001",
       exists: true,
       enforcedOverRealSource: true,

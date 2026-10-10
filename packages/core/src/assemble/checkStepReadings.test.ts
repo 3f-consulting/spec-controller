@@ -93,7 +93,7 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
     .map((row) => [
       row.scnId,
       row.verdict,
-      row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+      row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
     ]);
 }
 
@@ -121,7 +121,7 @@ describe("[SCN-LNT-026] a check step's outcome credits its row only where it say
     );
     expect(failed?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
       qualityCheck: "fitness",
-      staticCheck: "SCN-CVT-002",
+      fitnessFunction: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
       exists: true,
       enforcedOverRealSource: true,
@@ -170,10 +170,10 @@ describe("[SCN-LNT-026] a check step's outcome credits its row only where it say
     ]);
   });
 
-  it("counts TWO running static checks over a record holding five check steps", () => {
-    expect(reconcile().summary.staticChecks).toEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 0,
+  it("counts TWO running fitness functions over a record holding five check steps", () => {
+    expect(reconcile().summary.fitnessFunctions).toEqual({
+      runningFitnessFunctionCount: 2,
+      uncitedFitnessFunctionCount: 0,
     });
   });
 });

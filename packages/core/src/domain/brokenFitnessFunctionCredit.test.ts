@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { hasBrokenEvidence, staticObservationTally } from "./ledger.js";
+import { hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
-describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obligation match whatever else it carries", () => {
+describe("[SCN-LNT-026] a BROKEN fitness-function credit is excluded from the obligation match whatever else it carries", () => {
   it("leaves the obligation missing and posts to suspense even when the credit says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
@@ -16,13 +16,13 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
     const evidenceObservations: EvidenceObservation[] = [
       {
         qualityCheck: "fitness",
-        staticCheck: "traceability",
+        fitnessFunction: "traceability",
         scnId: "SCN-LNT-026",
         exists: true,
         enforcedOverRealSource: true,
         broken: true,
         message: "the run's record says this check's step was skipped",
-        locator: "features/fitness-checks.feature",
+        locator: "features/fitness-functions.feature",
       },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
@@ -45,14 +45,14 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
       {
         qualityCheck: "fitness",
         outcome: "broken",
-        locator: "features/fitness-checks.feature",
+        locator: "features/fitness-functions.feature",
         message: "the run's record says this check's step was skipped",
       },
     ]);
     expect(hasBrokenEvidence(balance)).toBe(true);
-    expect(staticObservationTally(balance)).toEqual({
-      runningStaticCheckCount: 0,
-      uncitedStaticCheckCount: 0,
+    expect(fitnessFunctionTally(balance)).toEqual({
+      runningFitnessFunctionCount: 0,
+      uncitedFitnessFunctionCount: 0,
     });
   });
 });

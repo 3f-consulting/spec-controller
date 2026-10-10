@@ -73,7 +73,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   const suspenseObservations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-TGT-001", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
-    { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
   let balanceWithSuspense: Ledger;
   beforeEach(() => {
@@ -223,26 +223,26 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
   });
 });
 
-describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
-  let staticChecksBalance: Ledger;
+describe("[SCN-RMD-004] the fitness-function census is summary counts, no standalone section", () => {
+  let fitnessFunctionsBalance: Ledger;
   beforeEach(() => {
-    staticChecksBalance = reconcile(
+    fitnessFunctionsBalance = reconcile(
       [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] }],
       [
-        { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
       ]
     );
   });
 
-  it("carries NO standalone staticChecks (or guards) section — the census collapsed to summary counts", () => {
-    const parsed = JSON.parse(renderJson(__er(staticChecksBalance, false, true), ctx, undefined, undefined));
-    expect(parsed).not.toHaveProperty("staticChecks");
+  it("carries NO standalone fitnessFunctions (or guards) section — the census collapsed to summary counts", () => {
+    const parsed = JSON.parse(renderJson(__er(fitnessFunctionsBalance, false, true), ctx, undefined, undefined));
+    expect(parsed).not.toHaveProperty("fitnessFunctions");
     expect(parsed).not.toHaveProperty("guards");
   });
 
-  it("materialises the counts under summary.staticChecks ({ runningStaticCheckCount, uncitedStaticCheckCount })", () => {
-    const parsed = JSON.parse(renderJson(__er(staticChecksBalance, false, true), ctx, undefined, undefined));
-    expect(parsed.summary.staticChecks).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
+  it("materialises the counts under summary.fitnessFunctions ({ runningFitnessFunctionCount, uncitedFitnessFunctionCount })", () => {
+    const parsed = JSON.parse(renderJson(__er(fitnessFunctionsBalance, false, true), ctx, undefined, undefined));
+    expect(parsed.summary.fitnessFunctions).toEqual({ runningFitnessFunctionCount: 2, uncitedFitnessFunctionCount: 1 });
   });
 });

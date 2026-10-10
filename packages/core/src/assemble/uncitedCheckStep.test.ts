@@ -73,19 +73,19 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
     expect(reconcileUnannotated().ledger.scenarioReconciliations[0]?.evidenceObservations).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:alpha",
+        fitnessFunction: "lint:alpha",
         exists: true,
         enforcedOverRealSource: true,
       },
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:beta",
+        fitnessFunction: "lint:beta",
         exists: true,
         enforcedOverRealSource: true,
       },
       {
         qualityCheck: "fitness",
-        staticCheck: "typecheck",
+        fitnessFunction: "typecheck",
         exists: true,
         enforcedOverRealSource: true,
       },

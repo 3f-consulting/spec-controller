@@ -21,6 +21,6 @@ Feature: a corpus whose only fitness credit is one satisfied citation-routed che
     # runtime tier would raise a runtime obligation with no credit (there is no vitest/cucumber
     # report here) → missing → out-of-balance, and the fitness credit would no longer ALONE
     # determine the verdict. The configured row alone raises the target's whole obligation set: one
-    # fitness check, which its CI runs green.
+    # fitness function, which its CI runs green.
     @fitness @SCN-DEM-001
     Scenario: the fitness scenario for lint:obligations-only

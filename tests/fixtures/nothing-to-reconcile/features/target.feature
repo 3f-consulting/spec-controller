@@ -6,7 +6,7 @@ Feature: a fixture target that declared nothing and produced nothing
   directory and it is EMPTY OF SCENARIOS — no scenario is declared here, so no
   evidence obligation is raised — and the target supplies no evidence report, so no
   evidence observation is posted either. A GUARDLESS package.json and no --ci keep the
-  suspense row empty: no static check is running, so nothing is uncited.
+  suspense row empty: no fitness function is running, so nothing is uncited.
 
   The ledger that reconcile() emits over this target therefore carries ZERO Scenario
   Reconciliation rows, which is the one shape `isBalanced` cannot speak about:

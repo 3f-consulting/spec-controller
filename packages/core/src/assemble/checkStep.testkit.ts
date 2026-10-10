@@ -45,6 +45,6 @@ export function rowsOf(reconciliation: EvidenceReconciliation) {
     row.scnId,
     row.kind,
     row.verdict,
-    row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+    row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
   ]);
 }

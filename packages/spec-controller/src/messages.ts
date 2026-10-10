@@ -313,15 +313,15 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",
   [AppMessage.CiFlag]: () =>
     "Your CI workflows — a file, or a directory of them (default .github/workflows). " +
-    "Where a static check you have not converted is found running over the real source, " +
+    "Where a fitness function you have not converted is found running over the real source, " +
     "and where a check step's `id:` supplies the @SCN its result cites.",
   [AppMessage.PackageJsonFlag]: () =>
     "The target's package.json — its `scripts`, and its specController.runners, specController.notChecks " +
-    "and specController.deferralTags. A fitness check is declared by its @fitness scenario and the CI step " +
+    "and specController.deferralTags. A fitness function is declared by its @fitness scenario and the CI step " +
     "whose id: is that scenario's @SCN; no manifest key names one.",
   [AppMessage.CiStepsFlag]: () =>
     "The CI run's own record of what each of its steps did — your pipeline's `toJSON(steps)` dump, " +
-    "evidence for the converted fitness checks. Omit it if you have converted none.",
+    "evidence for the converted fitness functions. Omit it if you have converted none.",
   [AppMessage.TargetFlag]: () =>
     "A name recorded verbatim in the report's provenance (which project this run reconciled).",
   [AppMessage.SourceShaFlag]: () =>
@@ -344,7 +344,7 @@ export const APP_MESSAGES: AppMessages = {
     "names to a Pending Item, extending (never replacing) the built-in set.",
   [AppMessage.BuiltInDeferralTags]: (tags) => `Built-in deferral tags: ${tags}`,
   [AppMessage.MeasurementsReplacement]: () =>
-    "A fitness check is credited by the outcome of its own CI step: put the check's @SCN on that step's `id:` " +
+    "A fitness function is credited by the outcome of its own CI step: put the check's @SCN on that step's `id:` " +
     "and hand balance the run's step record with --ci-steps.",
   [AppMessage.AllocateSummary]: () =>
     "Print the next @SCN code for a feature part: one past the highest the repository has ever carried, " +

@@ -29,13 +29,13 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
-  it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet a no-evidence-obligation static-check sits in the suspense row", () => {
+  it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet a no-evidence-obligation fitness-function sits in the suspense row", () => {
     const reconciliation: Ledger = reconcile(
       [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
       [
         unitCredit("SCN-TGT-001"),
         unitCredit("SCN-TGT-002"),
-        { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
     );
     expect(isBalanced(reconciliation)).toBe(false);

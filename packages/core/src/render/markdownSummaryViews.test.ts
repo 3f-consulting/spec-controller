@@ -23,14 +23,14 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
         {
           qualityCheck: "fitness",
-          staticCheck: "lint:guard-lint",
+          fitnessFunction: "lint:guard-lint",
           scnId: "SCN-LNT-002",
           exists: true,
           enforcedOverRealSource: false,
         },
         {
           qualityCheck: "fitness",
-          staticCheck: "lint:guard-lint",
+          fitnessFunction: "lint:guard-lint",
           scnId: "SCN-LNT-009",
           exists: true,
           enforcedOverRealSource: true,
@@ -81,7 +81,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   it("slots the by-feature section after the fitness section and before the ledger (no warnings section)", () => {
     const withAll: Ledger = reconcile(
       [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
-      [{ qualityCheck: "fitness", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false }]
+      [{ qualityCheck: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll), ctx);
     const iStatic = md.indexOf("### Fitness evidence obligations");
@@ -328,7 +328,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       ],
       [
         { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-        { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
+        { qualityCheck: "fitness", fitnessFunction: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
       ]
     );
   });

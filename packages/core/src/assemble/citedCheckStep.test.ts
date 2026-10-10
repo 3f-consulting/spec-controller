@@ -67,7 +67,7 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
     expect(credited?.evidenceObservations).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:alpha",
+        fitnessFunction: "lint:alpha",
         exists: true,
         enforcedOverRealSource: true,
         scnId: "SCN-CVT-001",

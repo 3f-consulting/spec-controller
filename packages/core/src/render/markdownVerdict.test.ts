@@ -263,7 +263,7 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
       [
         { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
         { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
-        { qualityCheck: "fitness", staticCheck: "guard:static", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
     );
   });

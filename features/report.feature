@@ -72,7 +72,7 @@ Feature: The report renders the ledger as sectioned facts
     failing, and the watermelon watermelon —
     populating the out-of-balance column only, always shown (a zero cause is itself a fact).
     The missing row carries the bare-level split as its Detail (a runtime
-    evidence obligation by its bare level, a static one as "fitness" — the label-=-tag lock),
+    evidence obligation by its bare level, a fitness-function one as "fitness" — the label-=-tag lock),
     canonical order (fitness first), counting evidence obligations not scenarios. The scenario and
     evidence-obligation out-of-balance counts diverge on purpose — a scenario with two missing
     arms is one out-of-balance scenario and two out-of-balance evidence obligations — and the
@@ -109,7 +109,7 @@ Feature: The report renders the ledger as sectioned facts
     NO CHECK COLUMN. The table once printed a "Static check" column carrying the
     characteristic the obligation was keyed by — what the check was ABOUT. One @fitness scenario
     is one check and what it is about is its scenario's title, so no report rolls a check up by a
-    word (canon: quality-checks.md, "A fitness check is its scenario"); the scenario's @SCN is
+    word (canon: quality-checks.md, "A fitness function is its scenario"); the scenario's @SCN is
     the whole identity the row needs.
 
     @unit @SCN-RPT-005
@@ -199,7 +199,7 @@ Feature: The report renders the ledger as sectioned facts
     interim "# Spec reconciliation" — the report IS the reconciliation; "Ledger" names only
     the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
     "## Run provenance" first, then groups the derived cuts under "## Summary views"
-    (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Static checks →
+    (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Fitness functions →
     "## Scenario Reconciliations" table to the END with its
     summary lines on top (the verdict tally and the relocated excluded-occurrence bullet),
     "## Warnings" last. So the digestible summary leads and the 500-row ledger trails, and
@@ -248,7 +248,7 @@ Feature: The report renders the ledger as sectioned facts
     The Fitness cell reads the fitness evidence obligation outcomes (a fitness credit isn't a counted evidence observation):
     its right side is the count of guards present (balanced or the watermelon — the script exists; its
     inadequacy is the 🍉 in Reconciling-items); its left is the single `F` — one scenario is one
-    fitness check, so a row names at most one static check. No Cell/Meaning legend
+    fitness function, so a row names at most one fitness function. No Cell/Meaning legend
     precedes the table — the grid speaks for itself. Markdown-only — the observation atoms are
     already on JSON. The "count is backing, not
     quality — never rank by it" discipline is a documented rule, NOT rendered.
@@ -512,7 +512,7 @@ Feature: The report renders the ledger as sectioned facts
     must therefore skip it on the CHECK (`qualityCheck === "fitness"`), never on the absence of
     a citation. Under the retired name-match posting a fitness credit cited nothing at all,
     so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;
-    that reading is now simply wrong, and the static axis the census must not see at all
+    that reading is now simply wrong, and the fitness-function axis the census must not see at all
     would be counted into the Test volume.
 
     @unit @SCN-RPT-023

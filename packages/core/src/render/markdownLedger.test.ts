@@ -32,8 +32,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
-    { qualityCheck: "fitness", staticCheck: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", staticCheck: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-G", status: "passed" },
   ];

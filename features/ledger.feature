@@ -78,7 +78,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a credit citing no scenario is a suspense-scenario reconciliation
 
     The bidirectional reconciler also consumes credits that cite NO scenario at
-    all — a runtime result carrying no @SCN anchor, or a CI static check no scenario cites
+    all — a runtime result carrying no @SCN anchor, or a CI fitness function no scenario cites
     (ruling Q4). A credit that posts to no scenario lands on the SUSPENSE scenario
     (a suspense account holds postings that match no
     real account). ALL uncited credits aggregate into ONE suspense-scenario Scenario
@@ -192,7 +192,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Scenario: every evidence observation posts to exactly one ledger account and is findable there — behavioural and fitness credits alike
 
     @unit @SCN-LDG-035
-    Scenario: a static-check credit discharges only the obligation on the row whose @SCN it cites
+    Scenario: a fitness-function credit discharges only the obligation on the row whose @SCN it cites
 
   Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 

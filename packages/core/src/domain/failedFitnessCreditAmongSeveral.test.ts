@@ -11,16 +11,16 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
   const rowNamingCheck: Scenario[] = [
     { scnId: SCN, evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
-  const staticCredit = (staticCheck: string, status: "passed" | "failed"): EvidenceObservation => ({
+  const fitnessFunctionCredit = (fitnessFunction: string, status: "passed" | "failed"): EvidenceObservation => ({
     qualityCheck: "fitness",
-    staticCheck,
+    fitnessFunction,
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: true,
     status,
   });
-  const passing = () => staticCredit("lint:a", "passed");
-  const failed = () => staticCredit("lint:b", "failed");
+  const passing = () => fitnessFunctionCredit("lint:a", "passed");
+  const failed = () => fitnessFunctionCredit("lint:b", "failed");
 
   it("reads failing, carrying the failed credit, with the row and the run out of balance", () => {
     const ledger = reconcile(rowNamingCheck, [passing(), failed()]);
@@ -41,7 +41,7 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
   });
 
   it("still reads satisfied when every credit for the check passed", () => {
-    const ledger = reconcile(rowNamingCheck, [passing(), staticCredit("lint:b", "passed")]);
+    const ledger = reconcile(rowNamingCheck, [passing(), fitnessFunctionCredit("lint:b", "passed")]);
     expect(isBalanced(ledger)).toBe(true);
   });
 });
@@ -51,7 +51,7 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
     qualityCheck: "fitness",
-    staticCheck: "lint:alpha",
+    fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
     enforcedOverRealSource,
@@ -97,7 +97,7 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({
     qualityCheck: "fitness",
-    staticCheck: "lint:alpha",
+    fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: true,
@@ -106,7 +106,7 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
   });
   const severedRun = (locator: string): EvidenceObservation => ({
     qualityCheck: "fitness",
-    staticCheck: "lint:alpha",
+    fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: false,

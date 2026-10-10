@@ -12,6 +12,7 @@ exceptions:
   - evidenceObservations
   - excludedOccurrences
   - featureNames
+  - fitnessFunctions
   - missingByQualityCheck
   - onPhantomScenario
   - onScenario
@@ -21,21 +22,21 @@ exceptions:
   - qualityCheckReconciliations
   - rawByRuntimeQualityCheck
   - reconcilingItems
-  - runningStaticCheckCount
+  - runningFitnessFunctionCount
   - runProvenance
   - scenarioCodeErrors
   - scenarioCodePopulation
   - scenarioReconciliations
   - scnId
   - sourceSha
-  - staticChecks
   - testVolume
-  - uncitedStaticCheckCount
+  - uncitedFitnessFunctionCount
   - untaggedScenarios
-  # The keys an adopter writes in package.json; checkRegistry is the retired one the report names as not read.
+  # The keys an adopter writes in package.json; checkRegistry and staticChecks are the retired ones the report names as not read.
   - specController
   - notChecks
   - checkRegistry
+  - staticChecks
   # The published API's type, which a package consumer reads off the v1 barrel.
   - QualityCheckReconciliation
   # Names that belong to others: a company, its product, a JavaScript built-in, a TypeScript option.

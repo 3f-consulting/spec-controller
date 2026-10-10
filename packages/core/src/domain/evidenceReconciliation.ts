@@ -24,7 +24,7 @@ import {
 import {
   ledgerTally,
   runtimeObservationTally,
-  staticObservationTally,
+  fitnessFunctionTally,
 } from "./ledger.js";
 import type {
   ScenarioReconciliationTotals,
@@ -38,7 +38,7 @@ import {
   qualityCheckReconciliationsOf,
 } from "./scenarioReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
-import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posting.js";
+import { postingOf, type RuntimePosting, type FitnessFunctionPosting } from "./posting.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";
@@ -72,18 +72,18 @@ interface RoutedCredits {
   readonly citations: CitationIndex;
   readonly brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   readonly uncited: readonly RuntimeEvidenceObservation[];
-  readonly noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[];
+  readonly noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[];
 }
 
 interface SuspenseStreams {
   readonly brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   readonly uncited: RuntimeEvidenceObservation[];
-  readonly noEvidenceObligationStaticChecks: FitnessEvidenceObservation[];
+  readonly noEvidenceObligationFitnessFunctions: FitnessEvidenceObservation[];
 }
 
 function routeFitnessCredit(
   observation: FitnessEvidenceObservation,
-  posting: StaticCheckPosting,
+  posting: FitnessFunctionPosting,
   citations: CitationIndex,
   streams: SuspenseStreams
 ): void {
@@ -93,7 +93,7 @@ function routeFitnessCredit(
   }
   if (posting.posted === "broken" && isFitnessObservation(observation)) {
     streams.brokenEvidence.push(observation);
-  } else streams.noEvidenceObligationStaticChecks.push(observation);
+  } else streams.noEvidenceObligationFitnessFunctions.push(observation);
 }
 
 function routeRuntimeCredit(
@@ -123,9 +123,9 @@ function routeCredits(
   const streams: SuspenseStreams = {
     brokenEvidence: [],
     uncited: [],
-    noEvidenceObligationStaticChecks: [],
+    noEvidenceObligationFitnessFunctions: [],
   };
-  const { brokenEvidence, uncited, noEvidenceObligationStaticChecks } = streams;
+  const { brokenEvidence, uncited, noEvidenceObligationFitnessFunctions } = streams;
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "fitness") {
       routeFitnessCredit(o, postingOf(o, scenarioIds), citations, streams);
@@ -133,7 +133,7 @@ function routeCredits(
     }
     routeRuntimeCredit(o, postingOf(o, scenarioIds), citations, streams);
   }
-  return { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks };
+  return { citations, brokenEvidence, uncited, noEvidenceObligationFitnessFunctions };
 }
 
 function scenarioRow(
@@ -222,16 +222,16 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
 function suspenseScenarioRows(
   brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
+  noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
-  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationStaticChecks.length > 0) {
-    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationStaticChecks);
+  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationFitnessFunctions.length > 0) {
+    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationFitnessFunctions);
     rows.push({
       scnId: CORE_MESSAGES[CoreMessage.SuspenseScenarioId],
       kind: "suspense-scenario",
       verdict: verdictFor(items),
-      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationStaticChecks],
+      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationFitnessFunctions],
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
@@ -267,7 +267,7 @@ export function reconcile(
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   const observations = inEvidenceOrder(evidenceObservations);
-  const { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks } = routeCredits(
+  const { citations, brokenEvidence, uncited, noEvidenceObligationFitnessFunctions } = routeCredits(
     observations,
     scenarioIds
   );
@@ -279,7 +279,7 @@ export function reconcile(
           : duplicateScnCodeRow(sharers, citations)
       ),
       ...phantomScenarioRows(citations),
-      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationStaticChecks),
+      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationFitnessFunctions),
       ...untaggedScenarioRows(untaggedScenarios),
     ],
   };
@@ -292,9 +292,9 @@ export interface TestVolumeTotals {
   onSuspenseScenario: number;
 }
 
-export interface StaticCheckTotals {
-  runningStaticCheckCount: number;
-  uncitedStaticCheckCount: number;
+export interface FitnessFunctionTotals {
+  runningFitnessFunctionCount: number;
+  uncitedFitnessFunctionCount: number;
 }
 
 export interface ReconcilerStep {
@@ -336,7 +336,7 @@ export interface Summary {
   pending: number;
   testVolume?: TestVolumeTotals;
   rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
-  staticChecks?: StaticCheckTotals;
+  fitnessFunctions?: FitnessFunctionTotals;
   fitness: FitnessTally;
   behaviouralRunners?: readonly BehaviouralRunner[];
   runnerTiers?: Readonly<Record<string, string | null>>;
@@ -360,11 +360,11 @@ export interface EvidenceReconciliation {
 export function summaryOf(
   ledger: Ledger,
   withRuntimeObservations: boolean,
-  withStaticChecks: boolean
+  withFitnessFunctions: boolean
 ): Summary {
   const tally = ledgerTally(ledger);
   const observations = runtimeObservationTally(ledger);
-  const staticChecks = staticObservationTally(ledger);
+  const fitnessFunctions = fitnessFunctionTally(ledger);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
     evidenceObligations: tally.evidenceObligations,
@@ -380,7 +380,7 @@ export function summaryOf(
           rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
         }
       : {}),
-    ...(withStaticChecks ? { staticChecks } : {}),
+    ...(withFitnessFunctions ? { fitnessFunctions } : {}),
     fitness: tally.fitness,
   };
 }
@@ -390,8 +390,8 @@ export function evidenceReconciliationOf(
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[],
   withRuntimeObservations: boolean,
-  withStaticChecks: boolean
+  withFitnessFunctions: boolean
 ): EvidenceReconciliation {
   const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
-  return { summary: summaryOf(ledger, withRuntimeObservations, withStaticChecks), ledger };
+  return { summary: summaryOf(ledger, withRuntimeObservations, withFitnessFunctions), ledger };
 }

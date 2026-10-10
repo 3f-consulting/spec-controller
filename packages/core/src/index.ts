@@ -40,7 +40,7 @@ export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";
-export { runningStaticChecks } from "./parse/runningStaticChecks.js";
+export { runningFitnessFunctions } from "./parse/runningFitnessFunctions.js";
 export { commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 
@@ -54,7 +54,7 @@ export type {
   EvidenceObligationTotals,
   MissingByQualityCheck,
   TestVolumeTotals,
-  StaticCheckTotals,
+  FitnessFunctionTotals,
   FitnessTally,
   EvidenceObligationsSection,
 } from "./assemble/renderInput.js";

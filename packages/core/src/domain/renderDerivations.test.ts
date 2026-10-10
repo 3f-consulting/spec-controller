@@ -4,8 +4,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { brokenItemsOf, fitnessReconciliationsOf, fitnessTally, hasBrokenEvidence } from "./ledger.js";
 import {
   isScenario,
-  staticCheckReconciliationsOf,
-  presentStaticCheckCountOf,
+  fitnessFunctionReconciliationsOf,
+  presentFitnessFunctionCountOf,
 } from "./scenarioReconciliation.js";
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
@@ -17,9 +17,9 @@ const scenarios: Scenario[] = [
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheck: "fitness", staticCheck: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", staticCheck: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
-  { qualityCheck: "fitness", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
+  { qualityCheck: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {
     qualityCheck: "unit",
@@ -86,25 +86,25 @@ describe("[SCN-LDG-001] brokenItemsOf lists the proofs that never ran", () => {
   });
 });
 
-describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality", () => {
+describe("[SCN-LDG-001] presentFitnessFunctionCountOf counts PRESENCE, not quality", () => {
   it("counts a watermelon as present, exactly as it counts a satisfied check", () => {
     const wired = rowOf("SCN-AAA-001");
     const unwired = rowOf("SCN-AAA-004");
-    expect(staticCheckReconciliationsOf(wired).map((r) => r.outcome)).toEqual(["satisfied"]);
-    expect(staticCheckReconciliationsOf(unwired).map((r) => r.outcome)).toEqual(["watermelon"]);
-    expect(presentStaticCheckCountOf(wired)).toBe(1);
-    expect(presentStaticCheckCountOf(unwired)).toBe(1);
+    expect(fitnessFunctionReconciliationsOf(wired).map((r) => r.outcome)).toEqual(["satisfied"]);
+    expect(fitnessFunctionReconciliationsOf(unwired).map((r) => r.outcome)).toEqual(["watermelon"]);
+    expect(presentFitnessFunctionCountOf(wired)).toBe(1);
+    expect(presentFitnessFunctionCountOf(unwired)).toBe(1);
   });
 
   it("does NOT count a missing guard — no script at all is a real absence", () => {
     const row = rowOf("SCN-AAA-002");
-    expect(staticCheckReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
-    expect(presentStaticCheckCountOf(row)).toBe(0);
+    expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
+    expect(presentFitnessFunctionCountOf(row)).toBe(0);
   });
 
-  it("reads zero on a row naming no static check", () => {
-    expect(staticCheckReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
-    expect(presentStaticCheckCountOf(rowOf("SCN-AAA-003"))).toBe(0);
+  it("reads zero on a row naming no fitness function", () => {
+    expect(fitnessFunctionReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
+    expect(presentFitnessFunctionCountOf(rowOf("SCN-AAA-003"))).toBe(0);
   });
 });
 

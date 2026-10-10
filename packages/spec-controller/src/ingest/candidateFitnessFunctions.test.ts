@@ -11,8 +11,8 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners", () => {
-  it("posts lint:foo and lint:bar alone as fitness checks when the manifest names the runners test and cucumber run", () => {
+describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
+  it("posts lint:foo and lint:bar alone as fitness functions when the manifest names the runners test and cucumber run", () => {
     const balance = runReconcile({
       features: "tests/fixtures/usg/features",
       ci: "tests/fixtures/usg/ci.yml",
@@ -22,7 +22,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
     const postings = balance.ledger.scenarioReconciliations.flatMap((row) =>
       row.evidenceObservations
         .filter((o) => o.qualityCheck === "fitness")
-        .map((o) => [row.kind, o.staticCheck])
+        .map((o) => [row.kind, o.fitnessFunction])
     );
     expect(postings).toEqual([
       ["scenario", "lint:foo"],

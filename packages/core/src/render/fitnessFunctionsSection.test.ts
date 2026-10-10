@@ -49,30 +49,30 @@ function reconcile(barCitation: string): EvidenceReconciliation {
   });
 }
 
-const heading = CORE_MESSAGES[CoreMessage.StaticChecksHeading];
-const counts = CORE_MESSAGES[CoreMessage.StaticChecksCounts];
+const heading = CORE_MESSAGES[CoreMessage.FitnessFunctionsHeading];
+const counts = CORE_MESSAGES[CoreMessage.FitnessFunctionsCounts];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");
 
-describe("[SCN-USG-001] a CI check no fitness scenario cites is reported as an uncited static check", () => {
+describe("[SCN-USG-001] a CI check no fitness scenario cites is reported as an uncited fitness function", () => {
   it.each([
     ["renders the section as heading, blank, the counts line with the one uncited check, then one blank", "", 1],
     ["still renders the section, counting no uncited check, when every check is cited", "\n        id: SCN-CVT-002", 0],
   ])("%s", (_title, citation, uncited) => {
     const reconciliation = reconcile(citation);
-    expect(reconciliation.summary.staticChecks).toStrictEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: uncited,
+    expect(reconciliation.summary.fitnessFunctions).toStrictEqual({
+      runningFitnessFunctionCount: 2,
+      uncitedFitnessFunctionCount: uncited,
     });
     expect(section(linesOf(reconciliation))).toStrictEqual([heading, "", counts(2, uncited), ""]);
   });
 
-  it("renders no section, and nothing in its place, for a report that carries no static-check axis", () => {
+  it("renders no section, and nothing in its place, for a report that carries no fitness-function axis", () => {
     const reconciliation = evidenceReconciliationOf([], [], [], true, false);
-    expect(reconciliation.summary).not.toHaveProperty("staticChecks");
+    expect(reconciliation.summary).not.toHaveProperty("fitnessFunctions");
     const lines = linesOf(reconciliation);
     expect(lines).not.toContain(heading);
     const headings = lines.flatMap((line, i) => (i > 0 && line.startsWith("#") ? [i] : []));

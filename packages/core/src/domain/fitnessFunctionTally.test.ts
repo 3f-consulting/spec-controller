@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { staticObservationTally } from "./ledger.js";
+import { fitnessFunctionTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
-import { runningStaticChecks } from "../parse/runningStaticChecks.js";
+import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import type {
@@ -17,37 +17,37 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] staticObservationTally folds the posted static-check credits, filtered to what ran", () => {
+describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function credits, filtered to what ran", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "fitness" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "fitness" }] },
     { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", staticCheck: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", staticCheck: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", fitnessFunction: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", fitnessFunction: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
-  let tally: ReturnType<typeof staticObservationTally>;
+  let tally: ReturnType<typeof fitnessFunctionTally>;
   beforeEach(() => {
-    tally = staticObservationTally(reconcile(scenarios, observations));
+    tally = fitnessFunctionTally(reconcile(scenarios, observations));
   });
 
   it("counts every check that ran, the watermelon included, and not the missing one", () => {
-    expect(tally.runningStaticCheckCount).toBe(3);
+    expect(tally.runningFitnessFunctionCount).toBe(3);
   });
 
-  it("counts the fitness credits on the SUSPENSE row as the uncited static checks", () => {
-    expect(tally.uncitedStaticCheckCount).toBe(1);
+  it("counts the fitness credits on the SUSPENSE row as the uncited fitness functions", () => {
+    expect(tally.uncitedFitnessFunctionCount).toBe(1);
   });
 
-  it("keeps named implicit — runningStaticCheckCount − uncitedStaticCheckCount (the named checks that ran)", () => {
-    expect(tally.runningStaticCheckCount - tally.uncitedStaticCheckCount).toBe(2);
+  it("keeps named implicit — runningFitnessFunctionCount − uncitedFitnessFunctionCount (the named checks that ran)", () => {
+    expect(tally.runningFitnessFunctionCount - tally.uncitedFitnessFunctionCount).toBe(2);
   });
 
   it("returns EXACTLY the two-field surface (named is never materialised)", () => {
-    expect(tally).toEqual({ runningStaticCheckCount: 3, uncitedStaticCheckCount: 1 });
+    expect(tally).toEqual({ runningFitnessFunctionCount: 3, uncitedFitnessFunctionCount: 1 });
   });
 
   it("counts no runtime credit, whatever fields it arrives carrying", () => {
@@ -59,11 +59,11 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
       enforcedOverRealSource: true,
     };
     const withRuntime = reconcile(scenarios, [...observations, runtimeCarryingGuardFields]);
-    expect(staticObservationTally(withRuntime)).toEqual(tally);
+    expect(fitnessFunctionTally(withRuntime)).toEqual(tally);
   });
 });
 
-describe("[SCN-USG-001] a static check no fitness scenario cites is banked on the suspense row and counted uncited", () => {
+describe("[SCN-USG-001] a fitness function no fitness scenario cites is banked on the suspense row and counted uncited", () => {
   const rowFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
@@ -92,13 +92,13 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   const citedScn = (script: string): ScriptCitation | null =>
     script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
 
-  let citedCredits: ReturnType<typeof runningStaticChecks>;
-  let uncitedCredits: ReturnType<typeof runningStaticChecks>;
+  let citedCredits: ReturnType<typeof runningFitnessFunctions>;
+  let uncitedCredits: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    const runningCredits = runningStaticChecks([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
-    citedCredits = runningCredits.filter((o) => o.staticCheck === "lint:foo");
-    uncitedCredits = runningCredits.filter((o) => o.staticCheck !== "lint:foo");
+    const runningCredits = runningFitnessFunctions([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
+    citedCredits = runningCredits.filter((o) => o.fitnessFunction === "lint:foo");
+    uncitedCredits = runningCredits.filter((o) => o.fitnessFunction !== "lint:foo");
     ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
   });
 
@@ -106,14 +106,14 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     expect(citedCredits).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:foo",
+        fitnessFunction: "lint:foo",
         exists: true,
         enforcedOverRealSource: true,
         scnId: "SCN-TGT-001",
       },
     ]);
     expect(uncitedCredits).toEqual([
-      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -132,7 +132,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
-        staticCheck: "lint:bar",
+        fitnessFunction: "lint:bar",
         outcome: "cites-no-scenario",
         evidenceObservation: uncitedCredits[0],
       },
@@ -149,14 +149,14 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   });
 
   it("tallies both as running and exactly the uncited one as uncited", () => {
-    expect(staticObservationTally(ledger)).toEqual({
-      runningStaticCheckCount: 2,
-      uncitedStaticCheckCount: 1,
+    expect(fitnessFunctionTally(ledger)).toEqual({
+      runningFitnessFunctionCount: 2,
+      uncitedFitnessFunctionCount: 1,
     });
   });
 });
 
-describe("[SCN-USG-005] a cited static check under no convention of ours is attributed to its scenario, never an uncited static check", () => {
+describe("[SCN-USG-005] a cited fitness function under no convention of ours is attributed to its scenario, never an uncited fitness function", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
@@ -186,18 +186,18 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
       evidenceObligations: [{ qualityCheck: "fitness" }],
     },
   ];
-  let credits: ReturnType<typeof runningStaticChecks>;
+  let credits: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    credits = runningStaticChecks([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
-      (o) => o.staticCheck === "domain-purity"
+    credits = runningFitnessFunctions([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
+      (o) => o.fitnessFunction === "domain-purity"
     );
     ledger = reconcile(fitness, credits);
   });
 
   const observation = {
     qualityCheck: "fitness",
-    staticCheck: "domain-purity",
+    fitnessFunction: "domain-purity",
     exists: true,
     enforcedOverRealSource: true,
     scnId: "SCN-GRD-001",
@@ -219,14 +219,14 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
     expect(accountFor(ledger, "SCN-GRD-001")?.verdict).toBe("balanced");
   });
 
-  it("mints NO suspense row — a cited static check is never uncited, whatever it is called", () => {
+  it("mints NO suspense row — a cited fitness function is never uncited, whatever it is called", () => {
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
-  it("tallies the run as 1 running static check and 0 uncited", () => {
-    expect(staticObservationTally(ledger)).toEqual({
-      runningStaticCheckCount: 1,
-      uncitedStaticCheckCount: 0,
+  it("tallies the run as 1 running fitness function and 0 uncited", () => {
+    expect(fitnessFunctionTally(ledger)).toEqual({
+      runningFitnessFunctionCount: 1,
+      uncitedFitnessFunctionCount: 0,
     });
   });
 });

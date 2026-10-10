@@ -35,9 +35,9 @@ describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () =
 });
 
 describe("[SCN-LDG-001] postingOf routes a FITNESS credit by its citation, the same rule", () => {
-  const check = (staticCheck: string, scnId?: string): FitnessEvidenceObservation => ({
+  const check = (fitnessFunction: string, scnId?: string): FitnessEvidenceObservation => ({
     qualityCheck: "fitness",
-    staticCheck,
+    fitnessFunction,
     exists: true,
     enforcedOverRealSource: true,
     ...(scnId !== undefined ? { scnId } : {}),
@@ -53,11 +53,11 @@ describe("[SCN-LDG-001] postingOf routes a FITNESS credit by its citation, the s
   it("posts an UNCITED run to suspense — and there is no by-name fallback left to try", () => {
     expect(postingOf(check("lint:named"), namedScenarioIds)).toEqual({
       kind: "suspense-scenario",
-      posted: "no-evidence-obligation-static-check",
+      posted: "no-evidence-obligation-fitness-function",
     });
     expect(postingOf(check("lint:nobody-asked"), namedScenarioIds)).toEqual({
       kind: "suspense-scenario",
-      posted: "no-evidence-obligation-static-check",
+      posted: "no-evidence-obligation-fitness-function",
     });
   });
 });
