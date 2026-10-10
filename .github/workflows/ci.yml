@@ -299,7 +299,20 @@ jobs:
       - name: Workflow correctness
         id: SCN-FIT-020
         if: always()
-        uses: docker://rhysd/actionlint:1.7.12
+        shell: bash
+        # The version and checksum move together; the checksum is the linux_amd64 line of the
+        # release's actionlint_<version>_checksums.txt.
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          set -euo pipefail
+          tarball="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/$tarball" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$tarball"
+          echo "$ACTIONLINT_SHA256  $RUNNER_TEMP/$tarball" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
 
       - name: Workflow security
         id: SCN-FIT-021

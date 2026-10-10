@@ -245,7 +245,9 @@ under the policy in full.
 
 **The workflows' actions move by a second entry, monthly, and a person merges them.** Every action
 in `.github/workflows/` is pinned by SHA with its version in a trailing comment
-(`@<sha> # vX.Y.Z`); actionlint alone runs as a Docker image pinned by tag. A `github-actions`
+(`@<sha> # vX.Y.Z`). actionlint alone is not an action: its step downloads the official release
+binary and verifies it against a SHA-256 pinned beside its version in the step's `env:`, and
+Dependabot does not move it, so a person moves the version and checksum together. A `github-actions`
 entry in `.github/dependabot.yml` moves those pins: once a month, every action bump in one grouped
 PR, and a release only after a 7-day cooldown. Dependabot moves the SHA and rewrites the version
 comment with it. `dependabot-auto-merge.yml` refuses that PR, because it changes workflow files and
