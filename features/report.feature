@@ -254,7 +254,7 @@ Feature: The report renders the ledger as sectioned facts
     quality — never rank by it" discipline is a documented rule, NOT rendered.
 
     The no-evidence-obligation cell (`-/N`) posts from ONE production shape: the reconciler posts
-    a credit-side row ON the real scenario, outcome `no-evidence-obligation`, and that row carries the observation
+    an evidence-observation row ON the real scenario, outcome `no-evidence-obligation`, and that row carries the observation
     on its `evidenceObservations`. The cell reads its right-side count STRAIGHT off those posted
     evidence observations (multiplicity-correct) — never off `qualityCheckReconciliations`, which
     collapse to one matched row per obligation and would undercount duplicate citations. An

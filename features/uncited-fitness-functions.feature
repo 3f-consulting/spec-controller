@@ -73,7 +73,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     "### Fitness functions", because what this axis reports is a check nobody has taken
     responsibility for.
 
-    THE EVIDENCE OBSERVATION IS NEVER DROPPED, which is the clause worth saying out loud on the credit side.
+    THE EVIDENCE OBSERVATION IS NEVER DROPPED, which is the clause worth saying out loud on the Evidence Observation side.
     Every Evidence Observation posts somewhere, so a check the seam cannot place is not quietly
     left out of the count: it is banked on the suspense row carrying the handle that ran, and the
     run reds. The failure this forecloses is the comfortable one — a check nobody owns becoming a

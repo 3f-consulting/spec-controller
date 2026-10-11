@@ -8,34 +8,34 @@ export interface Ledger {
   readonly scenarioReconciliations: readonly ScenarioReconciliation[];
 }
 
-export function isBalanced(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.every(
+export function isBalanced(ledger: Ledger): boolean {
+  return ledger.scenarioReconciliations.every(
     (row) => row.reconcilingItems.length === 0
   );
 }
 
-export function hasPendingItems(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
+export function hasPendingItems(ledger: Ledger): boolean {
+  return ledger.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
 }
 
-export function hasBrokenEvidence(reconciliation: Ledger): boolean {
-  return brokenItemsOf(reconciliation).length > 0;
+export function hasBrokenEvidence(ledger: Ledger): boolean {
+  return brokenItemsOf(ledger).length > 0;
 }
 
-export function hasNothingToReconcile(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.length === 0;
+export function hasNothingToReconcile(ledger: Ledger): boolean {
+  return ledger.scenarioReconciliations.length === 0;
 }
 
-export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliation[] {
-  return reconciliation.scenarioReconciliations.flatMap((row) =>
+export function brokenItemsOf(ledger: Ledger): QualityCheckReconciliation[] {
+  return ledger.scenarioReconciliations.flatMap((row) =>
     row.reconcilingItems.filter((item) => item.outcome === "broken")
   );
 }
 
 export function fitnessReconciliationsOf(
-  reconciliation: Ledger
+  ledger: Ledger
 ): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
-  return reconciliation.scenarioReconciliations
+  return ledger.scenarioReconciliations
     .filter(isScenario)
     .flatMap((row) =>
       fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
@@ -74,17 +74,17 @@ export interface LedgerTally {
   readonly fitness: FitnessTally;
 }
 
-export function ledgerTally(balance: Ledger): LedgerTally {
-  const { scenarioReconciliations, pending } = scenarioReconciliationTally(balance);
+export function ledgerTally(ledger: Ledger): LedgerTally {
+  const { scenarioReconciliations, pending } = scenarioReconciliationTally(ledger);
   return {
     scenarioReconciliations,
-    evidenceObligations: evidenceObligationTotals(balance),
+    evidenceObligations: evidenceObligationTotals(ledger),
     pending,
-    fitness: fitnessTally(balance),
+    fitness: fitnessTally(ledger),
   };
 }
 
-function scenarioReconciliationTally(balance: Ledger): {
+function scenarioReconciliationTally(ledger: Ledger): {
   scenarioReconciliations: ScenarioReconciliationTotals;
   pending: number;
 } {
@@ -92,7 +92,7 @@ function scenarioReconciliationTally(balance: Ledger): {
   let phantom = 0;
   let suspense = 0;
   let pending = 0;
-  for (const s of balance.scenarioReconciliations) {
+  for (const s of ledger.scenarioReconciliations) {
     pending += s.pendingItems.length;
     if (s.kind === "phantom-scenario") phantom++;
     if (s.kind === "suspense-scenario") suspense++;
@@ -110,7 +110,7 @@ function scenarioReconciliationTally(balance: Ledger): {
   };
 }
 
-function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
+function evidenceObligationTotals(ledger: Ledger): EvidenceObligationTotals {
   const byOutcome: Record<Outcome, number> = {
     satisfied: 0,
     "missing": 0,
@@ -125,7 +125,7 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
     "both-missing": 0,
   };
   const missing = new Map<string, number>();
-  for (const s of balance.scenarioReconciliations) {
+  for (const s of ledger.scenarioReconciliations) {
     for (const o of s.qualityCheckReconciliations) {
       byOutcome[o.outcome]++;
       if (o.outcome === "missing" && o.qualityCheck) {
@@ -144,8 +144,8 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
   };
 }
 
-export function fitnessTally(balance: Ledger): FitnessTally {
-  const fitness = fitnessReconciliationsOf(balance);
+export function fitnessTally(ledger: Ledger): FitnessTally {
+  const fitness = fitnessReconciliationsOf(ledger);
   return {
     satisfied: fitness.filter(({ reconciliation }) => reconciliation.outcome === "satisfied").length,
     total: fitness.length,

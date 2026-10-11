@@ -95,7 +95,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a fitness function's run posts ONE Evidence Observation, citing its scenario's @SCN
 
-    THE CREDIT SIDE OF THE ONE POSTING RULE, and the first place the citation seam is
+    THE EVIDENCE OBSERVATION SIDE OF THE ONE POSTING RULE, and the first place the citation seam is
     consumed. Name-match worked because the DEBIT cited: a scenario named a runnable script
     and the run was matched back to it by name, so nothing ever had to know which scenario a
     check belonged to. Citation-routing inverts that. The run now arrives carrying an @SCN — its

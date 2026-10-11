@@ -14,8 +14,8 @@ function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;
 }
 
-function scenarioCodeErrorsVerdict(reconciliation: Ledger): Verdict {
-  const alsoOutOfBalance = isBalanced(reconciliation) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
+function scenarioCodeErrorsVerdict(ledger: Ledger): Verdict {
+  const alsoOutOfBalance = isBalanced(ledger) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
   return {
     headline: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline],
     exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
@@ -55,14 +55,14 @@ function nothingToReconcile(corpusDir: string): Verdict {
   };
 }
 
-function verdictFor(code: VerdictCode, reconciliation: Ledger, corpusDir: string, codeErrors: boolean): Verdict {
+function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: boolean): Verdict {
   switch (code) {
     case 5:
       return nothingToReconcile(corpusDir);
     case 4:
       return UNSOUND;
     case 1:
-      return codeErrors ? scenarioCodeErrorsVerdict(reconciliation) : OUT_OF_BALANCE;
+      return codeErrors ? scenarioCodeErrorsVerdict(ledger) : OUT_OF_BALANCE;
     case 3:
       return PENDING;
     case 0:

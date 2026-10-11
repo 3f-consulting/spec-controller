@@ -92,8 +92,8 @@ describe("[SCN-LDG-005] an out-of-balance scenario carries its reconciling items
   });
 });
 
-describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)", () => {
-  it("carries the citing observation on the no-evidence-obligation reconciliation, with no obligation (the pure credit case)", () => {
+describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence observation it reconciles (the evidence observation side)", () => {
+  it("carries the citing observation on the no-evidence-obligation reconciliation, with no obligation (the pure evidence observation case)", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-027", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];

@@ -95,7 +95,7 @@ Feature: Ledger over obligation-vs-observation evidence
     scenario at a quality-check that scenario NEVER raised — a runtime result attributed to
     a scenario, but at a level the scenario has no evidence obligation for. Such an evidence observation posts
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
-    it applies whether or not the scenario carries other evidence obligations). It becomes a credit-side
+    it applies whether or not the scenario carries other evidence obligations). It becomes an evidence-observation
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of runtime observations never silently counts a
@@ -208,7 +208,7 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-026
     Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation
 
-  Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
+  Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the evidence observation side)
     @unit @SCN-LDG-027
     Scenario: a no-evidence-obligation quality-check reconciliation carries its evidence observation and no obligation
 
