@@ -1,4 +1,6 @@
-export type QualityCheck = "fitness" | "unit" | "integration" | "e2e" | "performance";
+export const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"] as const;
+
+export type QualityCheck = (typeof QUALITY_CHECKS)[number];
 
 export type RuntimeQualityCheck = Exclude<QualityCheck, "fitness">;
 

@@ -2,6 +2,7 @@ import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconcil
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, FitnessEvidenceObservation } from "./journal.js";
+import { QUALITY_CHECKS } from "./journal.js";
 
 export interface Ledger {
   readonly scenarioReconciliations: readonly ScenarioReconciliation[];
@@ -73,8 +74,6 @@ export interface LedgerTally {
   readonly fitness: FitnessTally;
 }
 
-const QUALITY_CHECK_ORDER: readonly string[] = ["fitness", "unit", "integration", "e2e", "performance"];
-
 export function ledgerTally(balance: Ledger): LedgerTally {
   const { scenarioReconciliations, pending } = scenarioReconciliationTally(balance);
   return {
@@ -139,7 +138,7 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
     total,
     byOutcome,
     outOfBalance: total - byOutcome.satisfied,
-    missingByQualityCheck: QUALITY_CHECK_ORDER.filter((s) => (missing.get(s) ?? 0) > 0).map(
+    missingByQualityCheck: QUALITY_CHECKS.filter((s) => (missing.get(s) ?? 0) > 0).map(
       (subject) => ({ subject, count: missing.get(subject)! })
     ),
   };
@@ -153,7 +152,9 @@ export function fitnessTally(balance: Ledger): FitnessTally {
   };
 }
 
-export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "integration", "e2e", "performance"];
+export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = QUALITY_CHECKS.filter(
+  (qualityCheck): qualityCheck is RuntimeQualityCheck => qualityCheck !== "fitness"
+);
 
 export interface RuntimeObservationTally {
   readonly rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
