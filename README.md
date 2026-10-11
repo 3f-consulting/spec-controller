@@ -4,11 +4,11 @@
 
 `spec-controller` reconciles the behaviour your scenarios *name* against the evidence that actually *ran* — surfacing what's missing, failing, or fabricated — so correctness comes from mechanical agreement between independent representations, not from any single artefact an AI can quietly corrupt.
 
-Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest, Cucumber, your CI lint gates) and it produces one report: which scenarios are **balanced** (the required evidence exists and holds), which are **out-of-balance** (evidence missing, failing, or a green-but-fake *watermelon*), and which evidence ran that no scenario asked for.
+Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest, Cucumber, your CI lint gates) and it produces one report: which scenarios are **balanced** (the evidence answering each Evidence Obligation exists and holds), which are **out-of-balance** (evidence missing, failing, or a green-but-fake *watermelon*), and which evidence ran that no scenario asked for.
 
 ## Why
 
-Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario names the evidence it requires (the **debit** — specification); every observed test or fitness function is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
+Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario raises an Evidence Obligation naming the evidence (the **debit** — specification); every observed test or fitness function is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
 
 The failure mode it exists to prevent, from a real first experience of AI-assisted coding:
 
@@ -16,7 +16,7 @@ The failure mode it exists to prevent, from a real first experience of AI-assist
 
 That is not a bug in the AI. It optimises for the observable objective — *"tests pass"* — and *"delete the failing test"* is a valid satisfying move when nothing prevents it. Every fix that lives *inside* the AI's loop — better prompts, smarter agents, more guardrails — inherits the same loophole.
 
-`spec-controller` puts the constraint *outside* the loop. A scenario tagged `@unit` names an **evidence obligation**: a unit test must exist and pass. Delete it and the reconciliation goes out of balance — *required: unit; observed: none* — and CI rejects the change. The AI cannot edit its way out of *that*, because the obligation lives in the scenario's tags and is checked by machinery the generation loop doesn't control.
+`spec-controller` puts the constraint *outside* the loop. A scenario tagged `@unit` names an **evidence obligation**: only a unit test that exists and passes answers it. Delete it and the reconciliation goes out of balance — *Evidence Obligation: unit; Evidence Observation: none* — and CI rejects the change. The AI cannot edit its way out of *that*, because the obligation lives in the scenario's tags and is checked by machinery the generation loop doesn't control.
 
 **And here is where that stops, said plainly rather than left to be found.** The constraint holds for behaviour a scenario names. Code that arrives with *no* scenario raises no obligation, so nothing goes out of balance and the reconciliation is green — correctly, because there is no claim to check it against. Deleting a test is what an agent does when it is cornered; writing new code is what it does all day, and this closes the first direction, not the second. And a balanced scenario means its evidence exists and holds, not that the evidence tests what the scenario says: where the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — the scenario carries no Given/When/Then, and nothing reds if its title drifts from the check. Whether a test is a good test is assumed, and is yours. That narrowness is what makes the rest of the claim worth anything: what `spec-controller` guarantees, it guarantees mechanically, and it says where the guarantee stops.
 
@@ -96,7 +96,7 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a `@fit
 
 Coverage tells you a line ran; mutation testing tells you your tests would notice if that line were wrong. Both grade the tests you have against the code you have — and `spec-controller` consumes their verdicts rather than competing with them. What it adds is the question neither can ask: does every behaviour your scenarios *name* have living, attributed evidence, and is any of the green fake?
 
-Mutation testing has no notion of your specification — a requirement with no test and no code is invisible to it, and it only grades the code it can mutate, saying nothing about whether a fitness function enforces anything over the real source or whether an integration check is wired at all. `spec-controller` reconciles the whole evidence apparatus against your scenarios: strong *and* complete *and* attributed, not just strong. Keep your coverage gate and your mutation ratchet — `spec-controller` is the ledger they post into.
+Mutation testing has no notion of your specification — a scenario with no test and no code is invisible to it, and it only grades the code it can mutate, saying nothing about whether a fitness function enforces anything over the real source or whether an integration check is wired at all. `spec-controller` reconciles the whole evidence apparatus against your scenarios: strong *and* complete *and* attributed, not just strong. Keep your coverage gate and your mutation ratchet — `spec-controller` is the ledger they post into.
 
 ## Install
 
