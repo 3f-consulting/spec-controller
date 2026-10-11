@@ -25,6 +25,7 @@ import {
   ledgerTally,
   runtimeObservationTally,
   fitnessFunctionTally,
+  RUNTIME_QUALITY_CHECKS,
 } from "./ledger.js";
 import type {
   ScenarioReconciliationTotals,
@@ -285,6 +286,18 @@ export interface StepAccounting {
   readonly reconciler: number;
   readonly excluded: number;
   readonly accountedFor: number;
+}
+
+export interface TierWithoutRunner {
+  readonly tier: RuntimeQualityCheck;
+  readonly namesNone: boolean;
+}
+
+export function tiersWithoutRunnerOf(runnerTiers: Readonly<Record<string, string | null>>): TierWithoutRunner[] {
+  return RUNTIME_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) => ({
+    tier,
+    namesNone: Object.hasOwn(runnerTiers, tier),
+  }));
 }
 
 export interface Summary {

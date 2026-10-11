@@ -1,5 +1,5 @@
 import type { RenderInput } from "../assemble/renderInput.js";
-import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import { tiersWithoutRunnerOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const runnerTierAccount = (
@@ -7,8 +7,8 @@ const runnerTierAccount = (
 ): string[] =>
   runnerTiers === undefined
     ? []
-    : RUNTIME_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) =>
-        Object.hasOwn(runnerTiers, tier)
+    : tiersWithoutRunnerOf(runnerTiers).map(({ tier, namesNone }) =>
+        namesNone
           ? `- ${CORE_MESSAGES[CoreMessage.RunnerTierNamesNone](tier)}`
           : `- ${CORE_MESSAGES[CoreMessage.RunnerTierUnnamed](tier)}`
       );

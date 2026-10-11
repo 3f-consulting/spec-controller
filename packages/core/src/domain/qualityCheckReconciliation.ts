@@ -67,6 +67,11 @@ export const OUTCOME_SIDE_PROFILE: Record<
   "both-missing": { obligation: "None", observation: "None" },
 };
 
+export function isObservationOnly(outcome: Outcome): boolean {
+  const profile = OUTCOME_SIDE_PROFILE[outcome];
+  return profile.obligation === "None" && profile.observation === "Exists";
+}
+
 export function makeQualityCheckReconciliation(
   fields: QualityCheckReconciliationFields
 ): QualityCheckReconciliation {

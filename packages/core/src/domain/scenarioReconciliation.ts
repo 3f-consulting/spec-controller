@@ -2,7 +2,9 @@ import type {
   EvidenceObligation,
   EvidenceObservation,
   PendingItem,
+  RuntimeQualityCheck,
 } from "./journal.js";
+import { evidenceObligationsOf } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation } from "./qualityCheckReconciliation.js";
 
@@ -35,16 +37,48 @@ export function isScenario(row: ScenarioReconciliation): boolean {
   return row.kind === "scenario";
 }
 
+export function isPhantomScenario(row: ScenarioReconciliation): boolean {
+  return row.kind === "phantom-scenario";
+}
+
+export function isSuspenseScenario(row: ScenarioReconciliation): boolean {
+  return row.kind === "suspense-scenario";
+}
+
+export function isOutOfBalance(row: ScenarioReconciliation): boolean {
+  return row.verdict === "out-of-balance";
+}
+
+export function outOfBalanceCountOf(rows: readonly ScenarioReconciliation[]): number {
+  return rows.filter(isOutOfBalance).length;
+}
+
+export function carriesNoScnCode(row: ScenarioReconciliation): boolean {
+  return row.reconcilingItems.some((item) => item.outcome === "no-scn-code");
+}
+
 export function fitnessFunctionReconciliationsOf(
   row: ScenarioReconciliation
 ): QualityCheckReconciliation[] {
   return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "fitness");
 }
 
+export function carriesFitnessFunction(row: ScenarioReconciliation): boolean {
+  return fitnessFunctionReconciliationsOf(row).length > 0;
+}
+
 export function presentFitnessFunctionCountOf(row: ScenarioReconciliation): number {
   return fitnessFunctionReconciliationsOf(row).filter(
     (r) => r.outcome === "satisfied" || r.outcome === "watermelon"
   ).length;
+}
+
+export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): boolean {
+  return evidenceObligationsOf(row.evidenceObligations).some((o) => o.qualityCheck === qualityCheck);
+}
+
+export function observationCountOf(row: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): number {
+  return row.evidenceObservations.filter((o) => o.qualityCheck === qualityCheck).length;
 }
 
 export function qualityCheckReconciliationsOf(

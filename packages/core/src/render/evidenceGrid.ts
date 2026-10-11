@@ -2,10 +2,11 @@ import type { ScenarioReconciliation, QualityCheck, RuntimeQualityCheck } from "
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import {
   isScenario,
-  fitnessFunctionReconciliationsOf,
+  carriesFitnessFunction,
   presentFitnessFunctionCountOf,
+  namesQualityCheck,
+  observationCountOf,
 } from "../domain/scenarioReconciliation.js";
-import { evidenceObligationsOf } from "../domain/journal.js";
 
 export type EvidenceColumn = { readonly kind: "fitness" } | { readonly kind: "runtime"; readonly qualityCheck: RuntimeQualityCheck };
 
@@ -30,7 +31,7 @@ export function evidenceColumns(
   const scenarioRows = scenarios.filter(
     isScenario
   );
-  const hasFitnessFunction = scenarioRows.some((s) => fitnessFunctionReconciliationsOf(s).length > 0);
+  const hasFitnessFunction = scenarioRows.some(carriesFitnessFunction);
   const qualityChecksPresent = runtimeQualityChecksPresent(scenarioRows);
   const columns: EvidenceColumn[] = [];
   if (hasFitnessFunction) columns.push({ kind: "fitness" });
@@ -66,20 +67,15 @@ function twoSided(left: string, right: string): string {
 }
 
 function fitnessCell(s: ScenarioReconciliation): string {
-  const left = fitnessFunctionReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.fitness : "-";
+  const left = carriesFitnessFunction(s) ? QUALITY_CHECK_LETTER.fitness : "-";
   const present = presentFitnessFunctionCountOf(s);
   const right = present > 0 ? String(present) : "-";
   return twoSided(left, right);
 }
 
 function runtimeCell(s: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): string {
-  const named = evidenceObligationsOf(s.evidenceObligations).some(
-    (o) => o.qualityCheck === qualityCheck
-  );
-  const left = named ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
-  const observed = s.evidenceObservations.filter(
-    (o) => o.qualityCheck === qualityCheck
-  ).length;
+  const left = namesQualityCheck(s, qualityCheck) ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
+  const observed = observationCountOf(s, qualityCheck);
   const right = observed > 0 ? String(observed) : "-";
   return twoSided(left, right);
 }

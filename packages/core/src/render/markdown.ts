@@ -5,16 +5,25 @@ import type {
   Ledger,
   PendingItem,
 } from "../model.js";
-import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
+import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import type { RunContext } from "../provenance/provenance.js";
 import {
   untaggedScenarioId,
+  scenariosBehindAccountsOf,
   type EvidenceObligations,
   type SharedScnCode,
   type UntaggedScenario,
 } from "../census/evidenceObligations.js";
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
-import { isScenario } from "../domain/scenarioReconciliation.js";
+import {
+  isScenario,
+  isPhantomScenario,
+  isSuspenseScenario,
+  isOutOfBalance,
+  outOfBalanceCountOf,
+  carriesNoScnCode,
+} from "../domain/scenarioReconciliation.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
@@ -68,16 +77,15 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
 }
 
 function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
-  const profile = OUTCOME_SIDE_PROFILE[item.outcome];
-  const isObservationOnly = profile.obligation === "None" && profile.observation === "Exists";
+  const observationOnly = isObservationOnly(item.outcome);
   if (item.outcome === "broken") {
     const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
       .filter((part): part is string => part !== undefined && part.length > 0)
       .join(": ");
     return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
   }
-  if (isObservationOnly && item.fitnessFunction) return ` (${item.fitnessFunction})`;
-  if (isObservationOnly && item.locator !== undefined) return ` (${item.locator})`;
+  if (observationOnly && item.fitnessFunction) return ` (${item.fitnessFunction})`;
+  if (observationOnly && item.locator !== undefined) return ` (${item.locator})`;
   return undefined;
 }
 
@@ -221,10 +229,7 @@ const byFeatureSection: SectionEmitter = (report) => {
   );
   const ungrouped = ungroupedOutOfBalance(report.summary.scenarioReconciliations);
   if (groups.size === 0 && ungrouped.length === 0) return [];
-  const outOfBalance = scenarios.filter(
-    (s) => s.verdict === "out-of-balance"
-  ).length;
-  const head = CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](outOfBalance, scenarios.length);
+  const head = CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
   return [
     CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
     "",
@@ -250,17 +255,13 @@ function outOfBalanceByFeature(
   const featureOf = new Map(untagged.map((u) => [untaggedScenarioId(u), codeOfFile.get(u.feature) ?? u.feature]));
   const groups = new Map<string, FeatureGroup>();
   for (const s of scenarios) {
-    if (s.verdict !== "out-of-balance") continue;
+    if (!isOutOfBalance(s)) continue;
     const noScnCode = carriesNoScnCode(s);
     const key = (noScnCode ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
     const group = groups.get(key) ?? { ids: [], noScnCode: 0 };
     groups.set(key, noScnCode ? { ...group, noScnCode: group.noScnCode + 1 } : { ...group, ids: [...group.ids, s.scnId] });
   }
   return groups;
-}
-
-function carriesNoScnCode(row: ScenarioRows[number]): boolean {
-  return row.reconcilingItems.some((item) => item.outcome === "no-scn-code");
 }
 
 function byFeatureTableLines(
@@ -302,8 +303,8 @@ const ledgerSection: SectionEmitter = (report) => {
   const scenarioRows = report.ledger.scenarioReconciliations.filter(
     isScenario
   );
-  const phantomRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "phantom-scenario");
-  const suspenseRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
+  const phantomRows = report.ledger.scenarioReconciliations.filter(isPhantomScenario);
+  const suspenseRows = report.ledger.scenarioReconciliations.filter(isSuspenseScenario);
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
   const withObservations = report.summary.testVolume !== undefined;
   return [
@@ -348,9 +349,8 @@ function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, ac
 
 function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number): string[] {
   if (shared.length === 0) return [];
-  const scenarios = accounts + shared.reduce((extra, code) => extra + code.scenarios.length - 1, 0);
   return [
-    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenarios, accounts, shared.length)}`,
+    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenariosBehindAccountsOf(accounts, shared), accounts, shared.length)}`,
     ...shared.map(
       (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
     ),
