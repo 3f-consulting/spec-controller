@@ -1,0 +1,9 @@
+{
+  "path": ["packages/core/src", "packages/spec-controller/src"],
+  "format": ["typescript"],
+  "ignore": ["**/*.test.ts", "**/*.test-utils.ts", "**/fixtures/**"],
+  "minTokens": 50,
+  "minLines": 5,
+  "absolute": true,
+  "reporters": ["console", "json"]
+}

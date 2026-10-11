@@ -23,6 +23,17 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Seconds: the portfolio's one-minute CI ceiling for a unit suite, times its 1.25 variance margin.
+      UNIT_SUITE_TIMEOUT_S: "75"
+      # Seconds: the portfolio's two-minute CI ceiling for a behavioural suite, times its 1.25 variance margin.
+      CUCUMBER_SUITE_TIMEOUT_S: "150"
+      # A function scoring CRAP 30 or more reds; crap-typescript reds only on a score strictly above its threshold, so the bar is 30 less one float step.
+      CRAP_THRESHOLD: "29.999999999999996"
+      # A file reds when its comment lines exceed this share of its non-blank lines: the portfolio's one ceiling, 15% in every product, with no ratchet.
+      COMMENT_SHARE_MAX: "0.15"
+      # Hours: the nightly mutation sweep's 24-hour cadence plus 2 hours of margin, so one missed sweep ages its verdict out and reds the step.
+      MUTATION_VERDICT_MAX_AGE_H: "26"
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,7 +74,7 @@ jobs:
         env:
           TMPDIR: ${{ runner.temp }}/suite-tmp/vitest
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
-        run: timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled
+        run: timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled
 
       - name: Cucumber
         id: SCN-FIT-013
@@ -72,7 +83,7 @@ jobs:
           TMPDIR: ${{ runner.temp }}/suite-tmp/cucumber
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
           TSX_DISABLE_CACHE: "1"
-        run: timeout 150 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
+        run: timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
       - name: A red proof of a unit scenario runs exactly the tests whose titles carry its code
         id: SCN-FIT-034
@@ -215,19 +226,20 @@ jobs:
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
         shell: bash
         run: |
-          pnpm exec crap-typescript --format text --threshold 29.999999999999996 packages || [ $? -eq 2 ]
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r pnpm exec crap-typescript --format text --threshold 29.999999999999996
+          pnpm exec crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r pnpm exec crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
       - name: Duplication — no clone touches a changed production file
         id: SCN-FIT-032
         if: always()
         shell: bash
-        # jscpd, pinned in package.json, over production code: both packages' src, TypeScript, with tests and fixtures ignored.
-        # --min-tokens 50 --min-lines 5 is jscpd's own default definition of a clone, stated in full so a copier inherits it.
-        # --absolute names each file by its full path, so the report can be matched against the changed set.
+        # jscpd, pinned in package.json, reads its settings from .jscpd.json, which takes no comments, so their reasons are here.
+        # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
+        # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
+        # absolute names each file by its full path, so the report can be matched against the changed set.
         # The first command reports every production clone and exits 0; the second reds on a clone with a fragment in a changed file.
         run: |
-          pnpm exec jscpd --format typescript --ignore "**/*.test.ts,**/*.test-utils.ts,**/fixtures/**" --min-tokens 50 --min-lines 5 --absolute --reporters console,json --output "$RUNNER_TEMP/jscpd" packages/core/src packages/spec-controller/src
+          pnpm exec jscpd --output "$RUNNER_TEMP/jscpd"
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --arg root "$PWD/" --slurpfile report "$RUNNER_TEMP/jscpd/jscpd-report.json" '. as $changed | $report[0].duplicates[] | select([.firstFile.name, .secondFile.name] | map(ltrimstr($root)) | any(IN($changed[]))) | "\(.firstFile.name | ltrimstr($root)):\(.firstFile.start)-\(.firstFile.end) = \(.secondFile.name | ltrimstr($root)):\(.secondFile.start)-\(.secondFile.end)"' | awk '{ print } END { exit NR > 0 }'
 
       - name: Unused code — no changed file carries an unused file, export or dependency
@@ -349,15 +361,17 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$(date -u -d '26 hours ago' +%FT%TZ)" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
+        run: |
+          since="$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)"
+          test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
 
-      - name: Comment share — no file over 15% comment lines
+      - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023
         if: always()
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
         run: |
-          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > 0.15 { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
       - name: No ticket ID in a comment, description or document
         id: SCN-FIT-024
