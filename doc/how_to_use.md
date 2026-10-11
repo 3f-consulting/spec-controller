@@ -95,7 +95,7 @@ second artefact — there is no manifest list:
 **That is all it takes to turn it into an Evidence Obligation.** **One `@fitness` scenario is one check**, identified by its
 `@SCN` and described by its title: nothing else says what the check is about. **Nothing names a
 bar** either — the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by
-one push step that reads the newest nightly sweep's verdict (*Wiring into CI*, below). The check's credit is its step's `outcome`: the
+one push step that reads the newest nightly sweep's verdict (*Wiring into CI*, below). The check's Evidence Observation is its step's `outcome`: the
 tool's exit code on its own CI step is the verdict, whatever the tool measures.
 
 **Neither artefact is derived from the other, and that is deliberate** — it is what lets the two
@@ -104,11 +104,9 @@ out of balance, exactly as a `@unit` scenario with no test does; a step stating 
 scenario carries posts to a **phantom** row, and a step stating none posts to **suspense**. All
 three are faults a run says out loud.
 
-**`specController.fitnessChecks` is not read.** Until an operator ruling of 2026-09-20 (no
-backward compatibility), a run over a tree carrying the key printed one line under `### Static checks`
-naming it as retired. That account is gone: the key is now treated exactly as any other key this tool
-does not read, named under `## Configuration not read` in the same words as a misspelling, with
-nothing said about what it once did. The two artefacts above are the whole of what you author.
+**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated exactly as any
+other key this tool does not read: named under `## Configuration not read` in the same words as a
+misspelling. The two artefacts above are the whole of what you author.
 
 **One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
 `--ci-steps` is what points `balance` at it. That is wiring, not part of the Evidence Obligation, so it is under
@@ -179,7 +177,7 @@ all**: an `id:` is a key of the step mapping, the command below it is any comman
 and nothing in the resolution reads a manifest.
 
 **Your first run against an unannotated pipeline reds.** Every candidate cites nothing, so every
-credit posts to suspense and `balance` exits 1 — the ledger being right about a corpus that raises
+Evidence Observation posts to suspense and `balance` exits 1 — the ledger being right about a corpus that raises
 nothing yet. To adopt by observing rather than by redding the build, run it with `--exit-zero`. You get
 the same report, and the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
@@ -366,9 +364,9 @@ The **Evidence Reconciliation** — the whole reconciliation — in two renderin
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 
-The outcome you are watching for is the **watermelon**: a fitness function that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
+The outcome you are watching for is the **watermelon**: a fitness function that is green but enforces nothing over the real source — the fabricated Evidence Observation that makes a green CI lie.
 
-**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every credit citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict, and the report is printed.
+**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code, so a code two scenarios carry — the same id written twice, or an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath inherits — reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says, and every Evidence Observation citing the code posts to it once. The rest of the report is unaffected: every other account reconciles exactly as it would without the duplicate. The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON). The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 **A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and says what it found under `## Scenario code errors` (`scenarioCodeErrors` in the JSON), just after `## Run integrity`. There are three errors:
 

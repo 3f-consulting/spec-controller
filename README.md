@@ -38,7 +38,7 @@ That is the answer to *"why, when CI already works?"* — `spec-controller` is n
 
 ### What it costs
 
-You are already doing the ceremony. A fitness function means writing the check, adding the script, and wiring it into CI — and you have done all three. **Start by installing it and changing nothing**: every check your pipeline ran comes back listed, with the fact that nothing raised an Evidence Obligation for any of them. Put an id on a check's CI step and that credit becomes attributable. Write a scenario for it, tagged as you already tag `@unit`, and it reconciles. Three states, and you stop where the value stops for you. Nothing is translated, generated into a workflow, or moved out of your pipeline.
+You are already doing the ceremony. A fitness function means writing the check, adding the script, and wiring it into CI — and you have done all three. **Start by installing it and changing nothing**: every check your pipeline ran comes back listed, with the fact that nothing raised an Evidence Obligation for any of them. Put an id on a check's CI step and that Evidence Observation becomes attributable. Write a scenario for it, tagged as you already tag `@unit`, and it reconciles. Three states, and you stop where the value stops for you. Nothing is translated, generated into a workflow, or moved out of your pipeline.
 
 ## How it works
 
@@ -67,7 +67,7 @@ You write nothing of ours. There is no manifest list of fitness functions, and n
 
 So a stepped scenario tagged `@unit @integration` names two obligations; a `@fitness` scenario names one. Each tag asserts *"to prove this, evidence of this quality-check must exist and hold"* — for a behavioural test, that it exists and passes; for a fitness function, that its command ran, and that any number it produced is inside its bar.
 
-**Every credit posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness function cites the scenario its CI step's `id:` names. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped, and a `@fitness` scenario nothing cites reconciles **missing**, exactly as a `@unit` scenario with no test does.
+**Every Evidence Observation posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness function cites the scenario its CI step's `id:` names. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped, and a `@fitness` scenario nothing cites reconciles **missing**, exactly as a `@unit` scenario with no test does.
 
 ### Your pipeline keeps every check exactly where it already is
 

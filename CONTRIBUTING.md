@@ -83,7 +83,7 @@ pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 see *A LOCAL SELF-RECONCILIATION READS `ci.yml`, NOT A RUN* below. Measured with the pinned
 binary: every command above green, and the reconciliation out of balance on the two run-time rows
 alone. Their steps are the suites' runners,
-so nothing credits them without the run's own step record — which only CI writes. Every other
+so nothing answers them without the run's own step record — which only CI writes. Every other
 fitness row reads `satisfied` from `ci.yml`'s text, the mutation row included, and that is not a
 verdict on any check.
 
@@ -141,13 +141,13 @@ runs no sweep and asks `gh` nothing — see below.
 
 **A LOCAL SELF-RECONCILIATION READS `ci.yml`, NOT A RUN, AND THAT IS THE DESIGN RATHER THAN A
 FAULT.** A local run cannot settle a fitness row — only CI produces a step record. The fitness
-axis's credit journal is the CI run's own record of what each of its steps did, dumped by an
+axis's Evidence Observations come from the CI run's own record of what each of its steps did, dumped by an
 `if: always()` step of `ci.yml`. Your machine runs no pipeline, so the self-reconciliation is handed
 no record, and a run handed no record reconciles exactly as it did before there was one.
-What answers is the running-check observer alone, and it reads `ci.yml`'s text: a configured row whose step it reads as a check is credited `satisfied` — a credit
+What answers is the running-check observer alone, and it reads `ci.yml`'s text: a configured row whose step it reads as a check answers its obligation `satisfied` — an Evidence Observation
 that says the step is in the pipeline and its job does not survive its red, **not that the check
 ran, let alone passed**. A row whose step runs one of the named behavioural runners is not a check
-to that reader, so nothing credits it and it reconciles `missing`. So the run is out of balance at
+to that reader, so nothing answers it and it reconciles `missing`. So the run is out of balance at
 exit 1, and NOT unsound: a run handed no record of itself is a different fact from a run whose
 record carried nothing, which makes every configured row broken evidence and exits 4. **The checks
 themselves still run locally** — every one of them is a step of `ci.yml` you can type at a shell —
@@ -168,7 +168,7 @@ The discoverable set is every step of the workflows `--ci` names that is not a d
 runner, the reconciler itself, or a step the manifest lists in `notChecks`; each check step carries
 its row's `@SCN` as its `id:`, so a discovered check that cites nothing is the only thing the count
 is reporting. The number beside it is produced by a different mechanism and is not vacuous: it
-counts the credits the configured rows' steps post, each answered by its step's exit code.
+counts the Evidence Observations the configured rows' steps post, each answered by its step's exit code.
 
 **Two retirements are in play here and they are not the same one.** The `lint:`/`guard:` **script
 prefixes** carry no meaning to the reader — a widening, not a removal: a prefixed
