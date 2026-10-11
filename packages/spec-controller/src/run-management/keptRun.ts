@@ -66,12 +66,16 @@ export function earlierStoredRunDirOf(path: string, ownRunDir: string | undefine
 }
 
 function holdsRunManifest(dir: string): boolean {
+  return readsAsRunManifest(runManifestDocumentIn(dir));
+}
+
+function runManifestDocumentIn(dir: string): unknown {
   try {
-    return readsAsRunManifest(parse(readFileSync(join(dir, RUN_MANIFEST), "utf8")));
+    return parse(readFileSync(join(dir, RUN_MANIFEST), "utf8"));
   } catch {
-    // A run.yaml that is absent, unreadable or not YAML makes no stored run.
+    // A run.yaml that is absent, unreadable or not YAML reads as no document.
   }
-  return false;
+  return undefined;
 }
 
 function readsAsRunManifest(document: unknown): boolean {

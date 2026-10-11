@@ -163,6 +163,10 @@ describe("[SCN-RMG-013] a --format path beside a run.yaml that is not a run mani
     ["a run.yaml that is not YAML", "jobs: [build\n"],
     ["a run.yaml of some other tool", "name: ci\non: push\njobs: {}\n"],
     ["a run.yaml with a run id and schema version but no artefacts", "schema_version: 2\nrun_id: r0\n"],
+    ["a run.yaml with a schema version and artefacts but no run id", "schema_version: 2\nartefacts:\n  document: spec-reconciliation.md\n"],
+    ["a run.yaml with a run id and artefacts but no schema version", "run_id: r0\nartefacts:\n  document: spec-reconciliation.md\n"],
+    ["a run.yaml whose artefacts are empty", "schema_version: 2\nrun_id: r0\nartefacts:\n"],
+    ["an empty run.yaml", ""],
     ["no run.yaml", undefined],
   ];
 
