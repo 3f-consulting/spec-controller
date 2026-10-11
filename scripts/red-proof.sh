@@ -50,6 +50,13 @@ refuse_empty() {
   [ "$1" -gt 0 ] || { echo "no test selected: $code at $layer" >&2; exit 3; }
 }
 
+# The ci job's env: in ci.yml is each suite limit's one home, and red-proof.yml cannot see it, so the script reads the file.
+suite_limit() {
+  local ci
+  ci="$(git rev-parse --show-toplevel)/.github/workflows/ci.yml"
+  node --input-type=module -e "import {readFileSync} from 'node:fs'; import {parse} from 'yaml'; const v = parse(readFileSync(process.argv[2], 'utf8')).jobs.ci.env[process.argv[1]]; if (v === undefined) process.exit(2); console.log(v)" "$1" "$ci"
+}
+
 out=${RED_PROOF_DIR:-$(mktemp -d)}
 mkdir -p "$out"
 
@@ -60,8 +67,9 @@ prove_unit() {
   done < <(git grep -l -F "[$code]" -- ':(glob)packages/*/src/**/*.test.ts' || true)
   refuse_empty "${#files[@]}"
 
+  limit="$(suite_limit UNIT_SUITE_TIMEOUT_S)"
   status=0
-  timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$out/vitest.json" --coverage.enabled --coverage.reportsDirectory="$out/coverage" -t "$filter" ${files[@]+"${files[@]}"} || status=$?
+  timeout "$limit" pnpm test --reporter=default --reporter=json --outputFile.json="$out/vitest.json" --coverage.enabled --coverage.reportsDirectory="$out/coverage" -t "$filter" ${files[@]+"${files[@]}"} || status=$?
   report=$out/vitest.json
 }
 
@@ -71,8 +79,9 @@ prove_cucumber() {
   selected=$(jq '[.[].elements[]] | length' "$out/selection.json")
   refuse_empty "$selected"
 
+  limit="$(suite_limit CUCUMBER_SUITE_TIMEOUT_S)"
   status=0
-  TSX_DISABLE_CACHE=1 timeout 150 pnpm cucumber --format json:"$out/cucumber.json" --tags "@$code" || status=$?
+  TSX_DISABLE_CACHE=1 timeout "$limit" pnpm cucumber --format json:"$out/cucumber.json" --tags "@$code" || status=$?
   report=$out/cucumber.json
 }
 
