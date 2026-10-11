@@ -82,7 +82,7 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a `@fit
   run: echo '${{ toJSON(steps) }}' > ci-steps.json
 ```
 
-**Your checks are already commands in your pipeline, and a run of that pipeline is already a record of what each one did — written by your CI provider, for its own purposes.** So `spec-controller` reads that record, and runs nothing itself. What you write is an `id:` per check step — the `@SCN` of the scenario that names it, a **citation** and never a second name — and one dump step per job.
+**Your checks are already commands in your pipeline, and a run of that pipeline is already a record of what each one did — written by your CI provider, for its own purposes.** So `spec-controller` reads that record, and runs nothing itself. What you write is an `id:` per check step — the `@SCN` of the scenario that names it, a **citation**, never a definition of the check — and one dump step per job.
 
 **The `if: always()` is on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one failure and N never-rans — a worse account from a correct mechanism.
 

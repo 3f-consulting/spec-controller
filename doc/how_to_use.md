@@ -46,7 +46,7 @@ A scenario's tag line says what it needs proved: `@SCN-<FFF>-<NNN> @unit @e2e` a
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title — the most specific one wins |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
-| `@fitness` | a CI step | the step's `id:` is the code (see *Naming a fitness function*, below) |
+| `@fitness` | a CI step | the step's `id:` is the code (see *Turning a fitness function into an Evidence Obligation*, below) |
 
 ```ts
 describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
@@ -64,7 +64,7 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
 
 ---
 
-## Naming a fitness function
+## Turning a fitness function into an Evidence Obligation
 
 A **fitness function** is a whole-system property — complexity, mutation score, type
 soundness, vocabulary, suite run time. **There are two artefacts and no third**, and **neither of
@@ -92,7 +92,7 @@ second artefact — there is no manifest list:
         run: eslint
 ```
 
-**That is the whole of naming it.** **One `@fitness` scenario is one check**, identified by its
+**That is all it takes to turn it into an Evidence Obligation.** **One `@fitness` scenario is one check**, identified by its
 `@SCN` and described by its title: nothing else says what the check is about. **Nothing names a
 bar** either — the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by
 one push step that reads the newest nightly sweep's verdict (*Wiring into CI*, below). The check's credit is its step's `outcome`: the
@@ -111,7 +111,7 @@ does not read, named under `## Configuration not read` in the same words as a mi
 nothing said about what it once did. The two artefacts above are the whole of what you author.
 
 **One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
-`--ci-steps` is what points `balance` at it. That is wiring rather than naming, so it is under
+`--ci-steps` is what points `balance` at it. That is wiring, not part of the Evidence Obligation, so it is under
 *Wiring into CI* below, with the `if: always()` rule that goes with it.
 
 This page is the flags and the CLI.
