@@ -27,7 +27,7 @@ function flipped(presence: SidePresence): SidePresence {
   return presence === "Exists" ? "None" : "Exists";
 }
 
-describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what was required", () => {
+describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what canon gives it", () => {
   const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
   const sampleObservation: EvidenceObservation = {
     qualityCheck: "unit",
@@ -53,7 +53,7 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
       expect(refusal.code).toBe(QualityCheckFaultCode.ObligationSideDivergesFromCanon);
       expect(refusal.fault?.code).toBe(QualityCheckFaultCode.ObligationSideDivergesFromCanon);
       expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.required).toBe(profile.obligation);
+      expect(refusal.fault?.canonical).toBe(profile.obligation);
       expect(refusal.fault?.actual).toBe(flipped(profile.obligation));
     });
 
@@ -70,7 +70,7 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
       expect(refusal.code).toBe(QualityCheckFaultCode.ObservationSideDivergesFromCanon);
       expect(refusal.fault?.code).toBe(QualityCheckFaultCode.ObservationSideDivergesFromCanon);
       expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.required).toBe(profile.observation);
+      expect(refusal.fault?.canonical).toBe(profile.observation);
       expect(refusal.fault?.actual).toBe(flipped(profile.observation));
     });
   }

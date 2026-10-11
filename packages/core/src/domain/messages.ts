@@ -6,12 +6,12 @@ export type QualityCheckFaultMessages = {
 
 export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
   [QualityCheckFaultCode.ObligationSideDivergesFromCanon]: (fault) =>
-    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" requires the ` +
-    `evidence obligation (debit) side to be ${fault.required}, but it was ` +
+    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
+    `evidence obligation (debit) side ${fault.canonical} in canon, but it was ` +
     `${fault.actual}.`,
   [QualityCheckFaultCode.ObservationSideDivergesFromCanon]: (fault) =>
-    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" requires the ` +
-    `evidence observation (credit) side to be ${fault.required}, but it was ` +
+    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
+    `evidence observation (credit) side ${fault.canonical} in canon, but it was ` +
     `${fault.actual}.`,
 };
 

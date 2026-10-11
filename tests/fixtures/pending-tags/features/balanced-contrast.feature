@@ -17,7 +17,7 @@ Feature: a balanced-contrast fixture target
       `—` (no reconciling item, no Pending Item — nothing outstanding).
     - @SCN-PDD-002 — a BALANCED-WITH-PENDING scenario: a sole deferred `@integrationpending`
       obligation partitions to a one-sided Pending Item, so its verdict is still `balanced` but its
-      exceptions cell shows the `⏳ pending: integration` label (owed/deferred work).
+      exceptions cell shows the `⏳ pending: integration` label (a deferred Evidence Obligation).
   Both rows read `✓ balanced`, yet their exceptions cells differ — the pending row is NOT the
   clean-balanced `—`, and the Pending Item never reads as an error. That at-a-glance distinction
   is the reviewer-legibility this scenario pins.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "./scenarios.js";
 
-describe("[SCN-LNT-018] a @fitness scenario owes one fitness obligation, from its tag, keyed by its own @SCN", () => {
+describe("[SCN-LNT-018] a @fitness scenario raises one fitness obligation, from its tag, keyed by its own @SCN", () => {
 
   it("leaves the tier obligations of a @fitness scenario untouched", () => {
     const source = `@FIT

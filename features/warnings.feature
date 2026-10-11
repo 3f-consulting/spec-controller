@@ -3,7 +3,7 @@ Feature: A scenario raising no evidence obligations is both-missing
 
   A scenario with ZERO evidence-obligation tags (none of unit, integration,
   e2e, performance or fitness), cited by NO evidence observation, reconciles to zero rows on BOTH
-  sides — nothing was required and nothing was observed. The bidirectional reconciler
+  sides — no Evidence Obligation was raised and nothing was observed. The bidirectional reconciler
   posts it as ONE degenerate Quality Check Reconciliation, outcome
   `both-missing` (label: "Evidence Obligation and Evidence Observation are both missing —
   the Scenario is untagged and uncited"), verdict `out-of-balance`.

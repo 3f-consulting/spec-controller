@@ -103,7 +103,7 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
       expect(refusal.fault).toStrictEqual({
         code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
         outcome,
-        required: profile.obligation,
+        canonical: profile.obligation,
         actual: flipped(profile.obligation),
       });
     });
@@ -121,7 +121,7 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
       expect(refusal.fault).toStrictEqual({
         code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
         outcome,
-        required: profile.observation,
+        canonical: profile.observation,
         actual: flipped(profile.observation),
       });
     });

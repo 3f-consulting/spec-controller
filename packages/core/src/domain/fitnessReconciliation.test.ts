@@ -87,7 +87,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
 
 const SEVERED_SCRIPT = "lint:severed-check";
 
-describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness function reports each independently", () => {
+describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
   it("answers each obligation from a credit of its own axis — the unit credit satisfies the unit obligation, the citing fitness credit the watermelon — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);

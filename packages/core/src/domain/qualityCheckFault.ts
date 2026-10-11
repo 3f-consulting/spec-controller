@@ -7,7 +7,7 @@ export enum QualityCheckFaultCode {
 
 interface SideDivergence {
   readonly outcome: Outcome;
-  readonly required: SidePresence;
+  readonly canonical: SidePresence;
   readonly actual: SidePresence;
 }
 

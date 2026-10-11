@@ -3,7 +3,7 @@ Feature: an @e2e-via-cucumber evidence-observation fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose Cucumber
   report proves an @e2e scenario with NO vitest evidence (@SCN-RPT-017). The single named
-  scenario carries an @e2e evidence obligation, so the reconciler expects an e2e observation;
+  scenario carries an @e2e evidence obligation, so only an e2e observation answers it;
   the fixture's cucumber report supplies exactly that (tag-derived, per @SCN-LDG-011 / 3F-1434).
   The census must PROJECT that parsed e2e observation — counting it under e2e, not the
   caller-named integration fallback — so the report's evidence-observation views (Test

@@ -8,23 +8,23 @@ Feature: Ledger over obligation-vs-observation evidence
   balance. Evidence is keyed by (kind, level) per the two-axis model:
   per evidence obligation, present+pass → balanced;
   present+fail → failing; absent → missing. The scenario
-  VERDICT is binary: a scenario is balanced iff EVERY required
-  (kind, level) balances; otherwise it is out of balance, carrying the LIST of
+  VERDICT is binary: a scenario is balanced iff EVERY Evidence Obligation
+  it raises balances; otherwise it is out of balance, carrying the LIST of
   every non-balanced reconciling item — each typed, none ranked.
 
   This feature is the @LDG runtime spine. It grows scenario-by-scenario
   as LDG-002…005 are driven; LDG-001 (here) is the headline balanced path that
   carries the foundation.
 
-  Rule: a scenario whose required evidence exists and passes is balanced
+  Rule: a scenario whose Evidence Obligation is answered by evidence that exists and passes is balanced
 
     @unit @SCN-LDG-001
-    Scenario: a scenario whose required evidence exists and passes is reported as balanced
+    Scenario: a scenario whose Evidence Obligation is answered by evidence that exists and passes is reported as balanced
 
-  Rule: a scenario whose required test exists but fails is out of balance
+  Rule: a scenario whose Evidence Obligation names a test that exists but fails is out of balance
 
     @unit @SCN-LDG-002
-    Scenario: a scenario whose required test exists but fails is reported as out of balance with a failing reconciling item
+    Scenario: a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item
 
   Rule: an evidence obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
 
@@ -43,10 +43,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-038
     Scenario: whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it
 
-  Rule: a scenario that requires a level with no matching result is out of balance
+  Rule: a scenario that raises an Evidence Obligation with no matching result is out of balance
 
     @unit @SCN-LDG-003
-    Scenario: a scenario that requires a level with no matching result is reported as out of balance with a missing reconciling item
+    Scenario: a scenario that raises an Evidence Obligation with no matching result is reported as out of balance with a missing reconciling item
 
   Rule: an out-of-balance scenario carries its reconciling items as a list
 

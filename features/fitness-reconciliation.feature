@@ -81,7 +81,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
       RAISING NOTHING IS THE POINT, AND IT IS NOT THE SAME AS RAISING SOMETHING UNSETTLEABLE. A
       transitional reader that kept deriving the obligation would leave every re-grown @lint= tag
-      owing a check the citation seam can never credit — one run cites one @SCN, and this form
+      raising an Evidence Obligation for a check the citation seam can never credit — one run cites one @SCN, and this form
       supplies none — so the row would read missing for ever and the corpus would look wrong when
       only the tag was. Nothing raised is a corpus fault the tag check catches (`spec-controller
       tags` reds an unrecognised tag once its lint= clause goes), not a permanent red on the
@@ -114,14 +114,14 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     carried lint:feature-codes in the retired tag form, because that was the only way the
     corpus could name spec-controller's own check at all — so the repository's obligation and
     this scenario's subject matter shared one tag line, and the row that proved the POSTING
-    RULE also stood as the row the real run posted to. They are separated now: what the real
-    check owes is raised by this repository's own `@fitness` scenario for it, authored in
+    RULE also stood as the row the real run posted to. They are separated now: the Evidence Obligation for the real
+    check is raised by this repository's own `@fitness` scenario for it, authored in
     features/fitness-functions.feature beside its row, and what is proven here is the rule itself,
     over fixture data.
 
     @unit @SCN-LNT-004
-    Scenario: a scenario requiring both a unit test and a fitness function reports each independently
-      TWO AXES ON ONE ROW, ANSWERED SEPARATELY. A scenario can owe evidence on the behavioural axis
+    Scenario: a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently
+      TWO AXES ON ONE ROW, ANSWERED SEPARATELY. A scenario can raise an Evidence Obligation on the behavioural axis
       and on the fitness axis at once, and each obligation is discharged only by a credit of its own
       quality-check: a green unit test never answers the fitness obligation, and a fitness run never
       answers the unit one. Both readings are taken off this ONE row, independently — one may
@@ -131,7 +131,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       different routes — the unit credit cited its @SCN, the fitness credit was matched by handle —
       so keeping them apart was a property of the routes rather than a rule anyone wrote. Now BOTH
       credits cite the SAME @SCN and post to the SAME row, which is precisely the arrangement in
-      which a reconciler answering an obligation by the row it sits on, rather than by what it owes,
+      which a reconciler answering an obligation by the row it sits on, rather than by the check it names,
       would collapse the two.
 
       THE FITNESS OBLIGATION COMES FROM THE @fitness TAG, the unit obligation from the tier tag —
@@ -190,8 +190,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
 
-    ONE @fitness SCENARIO IS ONE CHECK (canon quality-checks.md, "The tag is the quality
-    check; nothing else declares it"). Its quality check is fitness, exactly as unit is for a @unit
+    ONE @fitness SCENARIO IS ONE CHECK (canon quality-checks.md, "The tag is the Evidence
+    Obligation for a quality check"). Its quality check is fitness, exactly as unit is for a @unit
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
@@ -213,12 +213,12 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     @unit @SCN-LNT-018
     Scenario: a @fitness scenario raises exactly one fitness Evidence Obligation keyed by its own @SCN, from its tag alone, and two @fitness scenarios raise two
 
-      KEYED BY THE @SCN, SO TWO CHECKS CANNOT MERGE. Each check is its own scenario and owes its own
+      KEYED BY THE @SCN, SO TWO CHECKS CANNOT MERGE. Each check is its own scenario and raises its own
       obligation, and a run's step answers only the one whose @SCN it carries. This
       repository's own checks once shared four words between twelve of them, which is what a word
       keying the obligation would have merged.
 
-      OWED ONCE, HOWEVER MANY TIMES THE AXIS TAG REACHES THE SCENARIO. A scenario's effective tags
+      RAISED ONCE, HOWEVER MANY TIMES THE AXIS TAG REACHES THE SCENARIO. A scenario's effective tags
       are its own plus its Rule's and its Feature's, so the axis tag can arrive twice; two
       obligations for one check would leave the second missing for ever, since one run is one credit
       and can cite one @SCN.
@@ -234,7 +234,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       WHAT IT REPLACES WAS AN ASYMMETRY RATHER THAN A POLICY. While a manifest entry named the
       check, a scenario no entry named raised NOTHING and the report said so in a census line,
       beside a degenerate both-missing row; an entry with no scenario raised a debit. One side of
-      the same disagreement on the books and the other in prose. Canon requires both to be rows
+      the same disagreement on the books and the other in prose. Under canon both are rows
       (quality-checks.md, "Every obligation and every observation is a reconciliation row, for
       every quality check").
 
@@ -264,7 +264,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       naming the ending its command says it examined nothing with — but a command that examines
       nothing still RUNS and still ENDS, so its step reads success or failure and is never skipped.
       A step is skipped when a condition went false, when the job was cancelled, or when somebody
-      moved it. The declaration could only be read for whether it was named, never checked against
+      moved it. The field could only be read for whether it was named, never checked against
       anything, so it forgave every skip: `if: false` beside it read satisfied for ever. The field
       is gone rather than guarded.
 

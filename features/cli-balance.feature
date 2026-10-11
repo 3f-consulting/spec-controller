@@ -439,7 +439,7 @@ Feature: spec-controller balance runs standalone
     — a green over silence, from the tool whose whole claim is that silence is not the same as nothing
     wrong. Nothing-to-reconcile is its OWN enumerated state — not balanced (no accounts to
     agree), not out-of-balance (nothing disagrees), not a usage fault (the invocation was valid
-    and the target supported), not unsound (no proof failed; none was owed). Exit 5 (taxonomy:
+    and the target supported), not unsound (no proof failed; no Evidence Obligation was raised). Exit 5 (taxonomy:
     0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound / 5 nothing to
     reconcile).
 

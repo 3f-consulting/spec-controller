@@ -76,7 +76,7 @@ export function makeQualityCheckReconciliation(
     throw new QualityCheckReconciliationFault({
       code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
       outcome: fields.outcome,
-      required: profile.obligation,
+      canonical: profile.obligation,
       actual: fields.evidenceObligation !== undefined ? "Exists" : "None",
     });
   }
@@ -84,7 +84,7 @@ export function makeQualityCheckReconciliation(
     throw new QualityCheckReconciliationFault({
       code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
       outcome: fields.outcome,
-      required: profile.observation,
+      canonical: profile.observation,
       actual: fields.evidenceObservation !== undefined ? "Exists" : "None",
     });
   }

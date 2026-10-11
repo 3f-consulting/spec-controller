@@ -17,7 +17,7 @@ Feature: a fixture target citing one of the two checks its CI runs
 
   THE @unit TAG BELOW IS LOAD-BEARING AND IS NOT THIS FEATURE FILE'S. This target is shared
   with @SCN-RMD-005 and @SCN-RMD-008 in features/report-model.feature, and RMD-008 reads the
-  missing-evidence split for the word "unit" — which only exists because this scenario owes a
+  missing-evidence split for the word "unit" — which only exists because this scenario raises an Evidence Obligation for a
   unit test no run ever supplies. Two axes on one stepless row is the shape @SCN-LNT-004
   already models, so it costs the fitness reading nothing; dropping the tag silently empties
   another scenario's assertion.

@@ -27,13 +27,13 @@ const SAMPLE_FAULTS: {
   [QualityCheckFaultCode.ObligationSideDivergesFromCanon]: {
     code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
     outcome: "watermelon",
-    required: "Exists",
+    canonical: "Exists",
     actual: "None",
   },
   [QualityCheckFaultCode.ObservationSideDivergesFromCanon]: {
     code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
     outcome: "cites-unknown-scenario",
-    required: "None",
+    canonical: "None",
     actual: "Exists",
   },
 };
@@ -262,7 +262,7 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
       const message = renderedFault(fault);
       expect(message.trim()).not.toBe("");
       expect(message).toContain(fault.outcome);
-      expect(message).toContain(fault.required);
+      expect(message).toContain(fault.canonical);
       expect(message).toContain(fault.actual);
     }
   });

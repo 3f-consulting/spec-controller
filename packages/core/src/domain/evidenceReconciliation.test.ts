@@ -5,8 +5,8 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-describe("[SCN-LDG-002] a scenario whose required test exists but fails is reported as out of balance with a failing reconciling item", () => {
-  it("returns the out-of-balance verdict listing a failing reconciling item when its required unit-level evidence is present but failing", () => {
+describe("[SCN-LDG-002] a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item", () => {
+  it("returns the out-of-balance verdict listing a failing reconciling item when the evidence answering its unit Evidence Obligation is present but failing", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
@@ -24,8 +24,8 @@ describe("[SCN-LDG-002] a scenario whose required test exists but fails is repor
   });
 });
 
-describe("[SCN-LDG-003] a scenario that requires a level with no matching result is reported as out of balance with a missing reconciling item", () => {
-  it("returns the out-of-balance verdict listing a missing reconciling item when its required integration-level evidence has no matching result", () => {
+describe("[SCN-LDG-003] a scenario that raises an Evidence Obligation with no matching result is reported as out of balance with a missing reconciling item", () => {
+  it("returns the out-of-balance verdict listing a missing reconciling item when its integration Evidence Obligation has no matching result", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "integration" }] },
     ];

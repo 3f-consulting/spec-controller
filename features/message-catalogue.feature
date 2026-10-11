@@ -2,8 +2,8 @@
 Feature: Human-facing message prose lives off the mutated surface, keyed by a code
 
   THE MUTANT NOBODY CAN KILL. Stryker mutates every string literal in the domain, so the two
-  invariant messages a Quality Check Reconciliation throws, when a side is present that its
-  outcome forbids or absent that its outcome needs, carry sixteen mutants between them —
+  invariant messages a Quality Check Reconciliation throws, when a side's presence differs from
+  what canon gives its outcome, carry sixteen mutants between them —
   the template chunks emptied, the `"Exists"` / `"None"` words emptied, and the ternaries that pick
   between them flipped. Every one survives, and the test that would kill them is a test asserting
   wording. That test must not be written: prose is the one thing in this tree allowed to be
@@ -55,7 +55,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   Rule: a domain invariant names its fault by code and carries its parameters, not its prose
 
     @unit @SCN-MSG-001
-    Scenario: a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what was required
+    Scenario: a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what canon gives it
 
   Rule: every code in a message catalogue has a message that names what it stands for
 

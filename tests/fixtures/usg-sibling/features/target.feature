@@ -19,9 +19,9 @@ Feature: a fixture target whose fitness function runs in a sibling workflow
 
   NO TIER TAG ON THE ROW, WHICH IS WHAT KEEPS THIS TARGET BALANCED. Every other @USG fixture
   is deliberately out of balance and reads exit 1; this one is asserted to exit 0, so the
-  scenario below owes nothing beyond its fitness obligation — and nightly.yml is what settles
-  that obligation. Adding a tier tag here would leave the target owing evidence no run
-  supplies and quietly turn the exit-0 read into a second assertion about balance.
+  scenario below raises nothing beyond its fitness Evidence Obligation — and nightly.yml is what settles
+  that obligation. Adding a tier tag here would leave the target with an Evidence Obligation no run
+  answers and quietly turn the exit-0 read into a second assertion about balance.
 
   The workflows live under workflows/ rather than .github/workflows/ deliberately — the
   reader takes a DIRECTORY, not GitHub's layout, and a fixture that spelled the layout

@@ -628,7 +628,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     A MANIFEST THAT HAS SAID NOTHING IS SUPPORTED, NOT INCOMPLETE. There is no error, no warning,
     and nothing anywhere asking the consumer to configure something before the tool will answer
     them. A first run that scolded its reader for the absence of a block would be the prefix rule's
-    insistence wearing a different sentence — you must tell us about your pipeline in our terms before
+    Evidence Obligation wearing a different sentence — you must tell us about your pipeline in our terms before
     we will read it — and the whole argument of the inversion is that the tool reads what is there
     and reports it.
 

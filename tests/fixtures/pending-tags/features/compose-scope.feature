@@ -12,7 +12,7 @@ Feature: a scenario-scope-and-obligation-scope composition fixture target
   reaches every obligation); the `@integration` obligation is deferred by the OBLIGATION-SCOPE
   source (`@integrationpending`), and is ALSO covered by the scenario-scope `@wip` — the two
   sources overlap on it without interference (the post-pass mark is idempotent on an
-  already-pending obligation). So BOTH obligations are pending → two Pending Items, one owed from
+  already-pending obligation). So BOTH obligations are pending → two Pending Items, one raised from
   each source, verdict balanced, no reconciling item. Where the @PDW sibling
   (community-tags.feature) proves scenario-scope alone and the @PDO sibling (obligation-scope.feature)
   proves obligation-scope alone, this pins that the two COMPOSE — neither source suppresses the other.

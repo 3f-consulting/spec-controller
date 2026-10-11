@@ -2,7 +2,7 @@
 Feature: A pending evidence obligation raises a Pending Item
 
   A `<quality-check>pending` tag (evidence-manifesto §11B) raises an evidence
-  obligation that is owed but deliberately deferred to a later slice. The parse
+  obligation that is deliberately deferred to a later slice. The parse
   recognises the tag and derives a pending obligation; on the ledger, a pending
   obligation raises the one-sided Pending Item the Rules below hold.
 
@@ -41,7 +41,7 @@ Feature: A pending evidence obligation raises a Pending Item
   Rule: The pending result of an obligation
 
     @unit @SCN-PND-004
-    Scenario Outline: <quality-check> — obligation raised pending → Pending Item (owed IOU)
+    Scenario Outline: <quality-check> — obligation raised pending → Pending Item (a raised, deferred IOU)
 
       Examples:
         | quality-check |
