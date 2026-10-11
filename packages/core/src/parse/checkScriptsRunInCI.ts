@@ -1,7 +1,7 @@
 import { parse } from "yaml";
 
 export interface PackageJsonScripts {
-  scripts?: Record<string, string>;
+  readonly scripts?: Record<string, string>;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

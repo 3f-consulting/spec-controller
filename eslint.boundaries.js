@@ -21,6 +21,13 @@ const DECLINED_IDIOM_SELECTORS = [
     message: "no dependency bag — a function names each dependency it takes as its own parameter",
   },
 ];
+const RECORD = ":matches(TSTypeAliasDeclaration, TSInterfaceDeclaration)";
+const READONLY_RECORD_MESSAGE = "a core record is read-only — a value changes by transition, never in place";
+const READONLY_RECORD_SELECTORS = [
+  { selector: `${RECORD} :matches(TSPropertySignature, TSIndexSignature)[readonly!=true]`, message: READONLY_RECORD_MESSAGE },
+  { selector: `${RECORD} :not(TSTypeOperator[operator="readonly"]) > TSArrayType`, message: READONLY_RECORD_MESSAGE },
+  { selector: `${RECORD} TSTypeReference[typeName.name=/^(Array|Map|Set)$/]`, message: READONLY_RECORD_MESSAGE },
+];
 const SEAM_MESSAGE = "a step reaches the product through a seam: spawn the CLI, touch files, run git; never import its modules";
 const SEAM_PATTERNS = [
   { regex: "^(\\.\\.?/)+packages(/|$)", message: SEAM_MESSAGE },
@@ -116,6 +123,24 @@ export default [
     },
     rules: {
       "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS, ...CLASS_SELECTORS, ...DECLINED_IDIOM_SELECTORS],
+    },
+  },
+
+  {
+    files: [`packages/core/src/**/*.${SOURCE_FILES}`],
+    ignores: ["**/*.test.ts", "**/*.test-utils.ts"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...SANDBOX_SELECTORS,
+        ...CLASS_SELECTORS,
+        ...DECLINED_IDIOM_SELECTORS,
+        ...READONLY_RECORD_SELECTORS,
+      ],
     },
   },
 

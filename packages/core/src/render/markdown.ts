@@ -102,7 +102,7 @@ function renderRowExceptions(s: ScenarioReconciliation): string {
   return groups.length === 0 ? "—" : groups.join("; ");
 }
 
-type SectionEmitter = (report: RenderInput) => string[];
+type SectionEmitter = (report: RenderInput) => readonly string[];
 
 export type FeatureNames = ReadonlyMap<string, string>;
 
@@ -235,8 +235,8 @@ const byFeatureSection: SectionEmitter = (report) => {
 };
 
 interface FeatureGroup {
-  ids: string[];
-  noScnCode: number;
+  readonly ids: readonly string[];
+  readonly noScnCode: number;
 }
 
 type ScenarioRows = RenderInput["ledger"]["scenarioReconciliations"];
@@ -254,9 +254,7 @@ function outOfBalanceByFeature(
     const noScnCode = carriesNoScnCode(s);
     const key = (noScnCode ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
     const group = groups.get(key) ?? { ids: [], noScnCode: 0 };
-    if (noScnCode) group.noScnCode += 1;
-    else group.ids.push(s.scnId);
-    groups.set(key, group);
+    groups.set(key, noScnCode ? { ...group, noScnCode: group.noScnCode + 1 } : { ...group, ids: [...group.ids, s.scnId] });
   }
   return groups;
 }

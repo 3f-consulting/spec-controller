@@ -2,7 +2,7 @@ import { ciWorkflowSteps, type CiWorkflowStep, type PackageJsonScripts } from ".
 import { isCandidateStep } from "./runningFitnessFunctions.js";
 import type { JobDiscoveryScope } from "../domain/evidenceReconciliation.js";
 
-type Tally = { source?: string; job: string; steps: number; candidates: number };
+type Tally = { readonly source?: string; readonly job: string; readonly steps: number; readonly candidates: number };
 
 const keyOf = (step: CiWorkflowStep): string => `${step.sourceIndex}:${step.jobId}`;
 
@@ -22,9 +22,8 @@ export function discoveryScope(
       steps: 0,
       candidates: 0,
     };
-    tally.steps += 1;
-    if (isCandidateStep(step, packageJson, runners, isExcludedFromDiscovery)) tally.candidates += 1;
-    tallies.set(keyOf(step), tally);
+    const candidate = isCandidateStep(step, packageJson, runners, isExcludedFromDiscovery) ? 1 : 0;
+    tallies.set(keyOf(step), { ...tally, steps: tally.steps + 1, candidates: tally.candidates + candidate });
   }
   return [...tallies.values()].sort(
     (a, b) => (a.source ?? "").localeCompare(b.source ?? "") || a.job.localeCompare(b.job)

@@ -89,20 +89,15 @@ function obligationsFromTags(
     }
   }
   evidenceObligations.push(...convertedFitnessObligationsOf(tags));
-  if (tags.some((t) => deferralTags.includes(t))) {
-    if (evidenceObligations.length === 0) {
-      evidenceObligations.push({ pending: true });
-    } else {
-      for (const obligation of evidenceObligations) obligation.pending = true;
-    }
-  }
-  return evidenceObligations;
+  if (!tags.some((t) => deferralTags.includes(t))) return evidenceObligations;
+  if (evidenceObligations.length === 0) return [{ pending: true }];
+  return evidenceObligations.map((obligation) => ({ ...obligation, pending: true }));
 }
 
 export interface TaggedScenario {
-  scnId: string;
-  tags: readonly string[];
-  name: string;
+  readonly scnId: string;
+  readonly tags: readonly string[];
+  readonly name: string;
 }
 
 function parseFeatureDocument(source: string): GherkinDocument {

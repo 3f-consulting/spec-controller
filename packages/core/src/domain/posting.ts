@@ -7,19 +7,19 @@ import type {
 import { isFitnessObservation } from "./journal.js";
 
 export type Posting =
-  | { kind: "scenario"; scnId: string }
-  | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
+  | { readonly kind: "scenario"; readonly scnId: string }
+  | { readonly kind: "phantom-scenario"; readonly scnId: string }
+  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
 
 export type RuntimePosting =
-  | { kind: "scenario"; scnId: string }
-  | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
+  | { readonly kind: "scenario"; readonly scnId: string }
+  | { readonly kind: "phantom-scenario"; readonly scnId: string }
+  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
 
 export type FitnessFunctionPosting =
-  | { kind: "scenario"; scnId: string }
-  | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
+  | { readonly kind: "scenario"; readonly scnId: string }
+  | { readonly kind: "phantom-scenario"; readonly scnId: string }
+  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
 
 export function postingOf(
   observation: RuntimeEvidenceObservation,

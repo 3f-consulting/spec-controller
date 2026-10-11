@@ -2,8 +2,8 @@ import { parseTaggedScenarios } from "../parse/scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface UntaggedScenario {
-  feature: string;
-  scenario: string;
+  readonly feature: string;
+  readonly scenario: string;
 }
 
 export function untaggedScenarioId({ feature, scenario }: UntaggedScenario): string {
@@ -11,16 +11,16 @@ export function untaggedScenarioId({ feature, scenario }: UntaggedScenario): str
 }
 
 export interface SharedScnCode {
-  scnId: string;
-  scenarios: UntaggedScenario[];
+  readonly scnId: string;
+  readonly scenarios: readonly UntaggedScenario[];
 }
 
 export interface EvidenceObligations {
-  rawScnOccurrences: number;
-  scenarioCount: number;
-  excludedOccurrences: number;
-  untaggedScenarios: UntaggedScenario[];
-  sharedScnCodes?: SharedScnCode[];
+  readonly rawScnOccurrences: number;
+  readonly scenarioCount: number;
+  readonly excludedOccurrences: number;
+  readonly untaggedScenarios: readonly UntaggedScenario[];
+  readonly sharedScnCodes?: readonly SharedScnCode[];
 }
 
 export function evidenceObligations(

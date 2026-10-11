@@ -4,14 +4,14 @@ import { parseScnCitation } from "../lib/scnCitation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface VitestJsonReport {
-  testResults?: Array<{
-    name?: string;
-    status?: string;
-    message?: string;
-    assertionResults?: Array<{
-      fullName?: string;
-      title?: string;
-      status?: string;
+  readonly testResults?: ReadonlyArray<{
+    readonly name?: string;
+    readonly status?: string;
+    readonly message?: string;
+    readonly assertionResults?: ReadonlyArray<{
+      readonly fullName?: string;
+      readonly title?: string;
+      readonly status?: string;
     }>;
   }>;
 }

@@ -8,7 +8,7 @@ import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 const DEFAULT_CORPUS_DIR = "features";
 
-type Verdict = { headline: string; exit: string; gloss: string };
+type Verdict = { readonly headline: string; readonly exit: string; readonly gloss: string };
 
 function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;

@@ -38,13 +38,13 @@ export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
 declare const qualityCheckReconciliationBrand: unique symbol;
 
 interface QualityCheckReconciliationFields {
-  qualityCheck?: QualityCheck;
-  fitnessFunction?: string;
-  outcome: Outcome;
-  evidenceObligation?: EvidenceObligation;
-  evidenceObservation?: EvidenceObservation;
-  locator?: string;
-  message?: string;
+  readonly qualityCheck?: QualityCheck;
+  readonly fitnessFunction?: string;
+  readonly outcome: Outcome;
+  readonly evidenceObligation?: EvidenceObligation;
+  readonly evidenceObservation?: EvidenceObservation;
+  readonly locator?: string;
+  readonly message?: string;
 }
 
 export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
@@ -100,8 +100,8 @@ const OBSERVATION_PRECEDENCE: readonly ObservationOutcome[] = ["failing", "water
 type ObservationOutcome = "failing" | "watermelon" | "satisfied";
 
 interface Answer<T> {
-  outcome: Outcome;
-  observation?: T;
+  readonly outcome: Outcome;
+  readonly observation?: T;
 }
 
 function answerOf<T>(matches: readonly T[], outcomeOf: (observation: T) => ObservationOutcome | undefined): Answer<T> {

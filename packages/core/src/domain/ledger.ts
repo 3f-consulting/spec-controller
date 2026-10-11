@@ -4,7 +4,7 @@ import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconcil
 import type { RuntimeQualityCheck, FitnessEvidenceObservation } from "./journal.js";
 
 export interface Ledger {
-  scenarioReconciliations: ScenarioReconciliation[];
+  readonly scenarioReconciliations: readonly ScenarioReconciliation[];
 }
 
 export function isBalanced(reconciliation: Ledger): boolean {
@@ -42,35 +42,35 @@ export function fitnessReconciliationsOf(
 }
 
 export interface ScenarioReconciliationTotals {
-  total: number;
-  balanced: number;
-  outOfBalance: number;
-  phantom: number;
-  suspense: number;
+  readonly total: number;
+  readonly balanced: number;
+  readonly outOfBalance: number;
+  readonly phantom: number;
+  readonly suspense: number;
 }
 
 export interface MissingByQualityCheck {
-  subject: string;
-  count: number;
+  readonly subject: string;
+  readonly count: number;
 }
 
 export interface EvidenceObligationTotals {
-  total: number;
-  byOutcome: Record<Outcome, number>;
-  outOfBalance: number;
-  missingByQualityCheck: MissingByQualityCheck[];
+  readonly total: number;
+  readonly byOutcome: Record<Outcome, number>;
+  readonly outOfBalance: number;
+  readonly missingByQualityCheck: readonly MissingByQualityCheck[];
 }
 
 export interface FitnessTally {
-  satisfied: number;
-  total: number;
+  readonly satisfied: number;
+  readonly total: number;
 }
 
 export interface LedgerTally {
-  scenarioReconciliations: ScenarioReconciliationTotals;
-  evidenceObligations: EvidenceObligationTotals;
-  pending: number;
-  fitness: FitnessTally;
+  readonly scenarioReconciliations: ScenarioReconciliationTotals;
+  readonly evidenceObligations: EvidenceObligationTotals;
+  readonly pending: number;
+  readonly fitness: FitnessTally;
 }
 
 const QUALITY_CHECK_ORDER: readonly string[] = ["fitness", "unit", "integration", "e2e", "performance"];
@@ -156,11 +156,11 @@ export function fitnessTally(balance: Ledger): FitnessTally {
 export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "integration", "e2e", "performance"];
 
 export interface RuntimeObservationTally {
-  rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
-  total: number;
-  onScenario: number;
-  onPhantomScenario: number;
-  onSuspenseScenario: number;
+  readonly rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
+  readonly total: number;
+  readonly onScenario: number;
+  readonly onPhantomScenario: number;
+  readonly onSuspenseScenario: number;
 }
 
 export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally {
@@ -190,8 +190,8 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 }
 
 export interface FitnessFunctionTally {
-  runningFitnessFunctionCount: number;
-  uncitedFitnessFunctionCount: number;
+  readonly runningFitnessFunctionCount: number;
+  readonly uncitedFitnessFunctionCount: number;
 }
 
 export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {

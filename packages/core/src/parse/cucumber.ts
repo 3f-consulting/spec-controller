@@ -3,16 +3,16 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
-export type CucumberJsonReport = Array<{
-  uri?: string;
-  name?: string;
-  elements?: Array<{
-    tags?: Array<{ name?: string }>;
-    steps?: Array<{
-      keyword?: string;
-      name?: string;
-      hidden?: boolean;
-      result?: { status?: string; duration?: number };
+export type CucumberJsonReport = ReadonlyArray<{
+  readonly uri?: string;
+  readonly name?: string;
+  readonly elements?: ReadonlyArray<{
+    readonly tags?: ReadonlyArray<{ readonly name?: string }>;
+    readonly steps?: ReadonlyArray<{
+      readonly keyword?: string;
+      readonly name?: string;
+      readonly hidden?: boolean;
+      readonly result?: { readonly status?: string; readonly duration?: number };
     }>;
   }>;
 }>;
@@ -22,7 +22,7 @@ const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
 const TIER_TAG = /^@?(integration|e2e|performance)$/;
 
 function deriveLevels(
-  tags: Array<{ name?: string }>,
+  tags: readonly { readonly name?: string }[],
   fallbackQualityCheck: RuntimeQualityCheck
 ): RuntimeQualityCheck[] {
   const levels: RuntimeQualityCheck[] = [];
@@ -60,7 +60,7 @@ export function parseCucumberEvidenceObservations(
 
 type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
 
-function citedScnIdOf(tags: Array<{ name?: string }>): string | null {
+function citedScnIdOf(tags: readonly { readonly name?: string }[]): string | null {
   const scnTag = tags
     .map((t) => SCN_TAG.exec(t.name ?? ""))
     .find((m): m is RegExpExecArray => m !== null);

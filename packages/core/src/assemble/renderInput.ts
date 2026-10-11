@@ -18,23 +18,23 @@ export type {
 } from "../domain/evidenceReconciliation.js";
 
 export interface EvidenceObligationsSection {
-  excludedOccurrences: number;
-  untaggedScenarios: UntaggedScenario[];
-  sharedScnCodes?: SharedScnCode[];
+  readonly excludedOccurrences: number;
+  readonly untaggedScenarios: readonly UntaggedScenario[];
+  readonly sharedScnCodes?: readonly SharedScnCode[];
 }
 
 export interface ReportMetadata {
-  featureNames?: Record<string, string>;
+  readonly featureNames?: Record<string, string>;
 }
 
 export interface RenderInput {
-  runProvenance: ProvenanceObject;
-  summary: Summary;
-  ledger: Ledger;
-  scenarioCodeErrors?: readonly ScenarioCodeError[];
-  scenarioCodePopulation?: ScenarioCodePopulation;
-  evidenceObligations?: EvidenceObligationsSection;
-  metadata?: ReportMetadata;
+  readonly runProvenance: ProvenanceObject;
+  readonly summary: Summary;
+  readonly ledger: Ledger;
+  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
+  readonly scenarioCodePopulation?: ScenarioCodePopulation;
+  readonly evidenceObligations?: EvidenceObligationsSection;
+  readonly metadata?: ReportMetadata;
 }
 
 export function assembleRenderInput(

@@ -1,7 +1,7 @@
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
 
 export type QualityCheckFaultMessages = {
-  readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { code: C }>) => string;
+  readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { readonly code: C }>) => string;
 };
 
 export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
@@ -153,26 +153,26 @@ export enum CoreMessage {
 }
 
 interface CoreMessageParams {
-  [CoreMessage.ProvenanceTargetRepo]: [target: string];
-  [CoreMessage.ProvenanceNotSupplied]: [flags: string];
-  [CoreMessage.ProvenanceRunTimestamp]: [runStartUtc: string];
-  [CoreMessage.ProvenanceSourceSha]: [sha: string];
-  [CoreMessage.ProvenanceToolSha]: [sha: string];
-  [CoreMessage.ProvenanceToolVersion]: [version: string];
-  [CoreMessage.ConfigurationWrongKind]: [entry: string, is: string, reads: string];
-  [CoreMessage.ConfigurationUnknownKey]: [key: string];
-  [CoreMessage.ProofsNeverRan]: [count: number];
-  [CoreMessage.RunUnsound]: [proofs: string];
-  [CoreMessage.BrokenEvidenceWhatBroke]: [locator: string];
-  [CoreMessage.ScenarioCodeErrorCount]: [count: number];
-  [CoreMessage.ScenarioCodeErrorsFraming]: [count: string];
-  [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
-  [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
-  [CoreMessage.CleanEachFileOwnCode]: [over: string];
-  [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
-  [CoreMessage.DuplicateFeatureCode]: [code: string, fileCount: number, files: string];
-  [CoreMessage.ForeignScnCodeOneCarrier]: [file: string, featureCode: string, scnId: string, named: string, carrier: string];
-  [CoreMessage.ForeignScnCodeManyCarriers]: [
+  readonly [CoreMessage.ProvenanceTargetRepo]: [target: string];
+  readonly [CoreMessage.ProvenanceNotSupplied]: [flags: string];
+  readonly [CoreMessage.ProvenanceRunTimestamp]: [runStartUtc: string];
+  readonly [CoreMessage.ProvenanceSourceSha]: [sha: string];
+  readonly [CoreMessage.ProvenanceToolSha]: [sha: string];
+  readonly [CoreMessage.ProvenanceToolVersion]: [version: string];
+  readonly [CoreMessage.ConfigurationWrongKind]: [entry: string, is: string, reads: string];
+  readonly [CoreMessage.ConfigurationUnknownKey]: [key: string];
+  readonly [CoreMessage.ProofsNeverRan]: [count: number];
+  readonly [CoreMessage.RunUnsound]: [proofs: string];
+  readonly [CoreMessage.BrokenEvidenceWhatBroke]: [locator: string];
+  readonly [CoreMessage.ScenarioCodeErrorCount]: [count: number];
+  readonly [CoreMessage.ScenarioCodeErrorsFraming]: [count: string];
+  readonly [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
+  readonly [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
+  readonly [CoreMessage.CleanEachFileOwnCode]: [over: string];
+  readonly [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
+  readonly [CoreMessage.DuplicateFeatureCode]: [code: string, fileCount: number, files: string];
+  readonly [CoreMessage.ForeignScnCodeOneCarrier]: [file: string, featureCode: string, scnId: string, named: string, carrier: string];
+  readonly [CoreMessage.ForeignScnCodeManyCarriers]: [
     file: string,
     featureCode: string,
     scnId: string,
@@ -180,41 +180,41 @@ interface CoreMessageParams {
     carrierCount: number,
     carriers: string,
   ];
-  [CoreMessage.ForeignScnCodeNoCarrier]: [file: string, featureCode: string, scnId: string, named: string];
-  [CoreMessage.NoFeatureCode]: [file: string];
-  [CoreMessage.VerdictExit]: [code: number];
-  [CoreMessage.ScenarioCodeErrorsGloss]: [alsoOutOfBalance: string];
-  [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
-  [CoreMessage.PendingTally]: [pending: number];
-  [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomScenario: number, onSuspenseScenario: number];
-  [CoreMessage.FitnessFunctionsCounts]: [running: number, uncited: number];
-  [CoreMessage.RunnerTierNamesNone]: [tier: string];
-  [CoreMessage.RunnerTierUnnamed]: [tier: string];
-  [CoreMessage.RunnerKeyNotATier]: [key: string];
-  [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
-  [CoreMessage.StepExcluded]: [entry: string];
-  [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
-  [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
-  [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
-  [CoreMessage.ScenarioRowsOutOfBalance]: [outOfBalance: number, rows: number];
-  [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
-  [CoreMessage.PhantomScenarioRows]: [count: number];
-  [CoreMessage.SuspenseScenarioRows]: [count: number];
-  [CoreMessage.NoScnCodeScenarios]: [count: number];
-  [CoreMessage.ScenarioReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
-  [CoreMessage.PhantomScenarioTally]: [count: number];
-  [CoreMessage.SuspenseScenarioTally]: [count: number];
-  [CoreMessage.ExcludedScnOccurrences]: [count: number];
-  [CoreMessage.UntaggedScenarios]: [count: number];
-  [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
-  [CoreMessage.PendingItemFor]: [qualityCheck: string];
-  [CoreMessage.FeatureSourceNotGherkin]: [cause: string];
-  [CoreMessage.CheckStepNoOutcome]: [scnId: string];
-  [CoreMessage.CheckStepSkipped]: [scnId: string];
-  [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
-  [CoreMessage.AmbiguousNamedStep]: [step: string];
-  [CoreMessage.ManifestKindOfType]: [type: string];
-  [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
+  readonly [CoreMessage.ForeignScnCodeNoCarrier]: [file: string, featureCode: string, scnId: string, named: string];
+  readonly [CoreMessage.NoFeatureCode]: [file: string];
+  readonly [CoreMessage.VerdictExit]: [code: number];
+  readonly [CoreMessage.ScenarioCodeErrorsGloss]: [alsoOutOfBalance: string];
+  readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
+  readonly [CoreMessage.PendingTally]: [pending: number];
+  readonly [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomScenario: number, onSuspenseScenario: number];
+  readonly [CoreMessage.FitnessFunctionsCounts]: [running: number, uncited: number];
+  readonly [CoreMessage.RunnerTierNamesNone]: [tier: string];
+  readonly [CoreMessage.RunnerTierUnnamed]: [tier: string];
+  readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
+  readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
+  readonly [CoreMessage.StepExcluded]: [entry: string];
+  readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
+  readonly [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
+  readonly [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
+  readonly [CoreMessage.ScenarioRowsOutOfBalance]: [outOfBalance: number, rows: number];
+  readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
+  readonly [CoreMessage.PhantomScenarioRows]: [count: number];
+  readonly [CoreMessage.SuspenseScenarioRows]: [count: number];
+  readonly [CoreMessage.NoScnCodeScenarios]: [count: number];
+  readonly [CoreMessage.ScenarioReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
+  readonly [CoreMessage.PhantomScenarioTally]: [count: number];
+  readonly [CoreMessage.SuspenseScenarioTally]: [count: number];
+  readonly [CoreMessage.ExcludedScnOccurrences]: [count: number];
+  readonly [CoreMessage.UntaggedScenarios]: [count: number];
+  readonly [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
+  readonly [CoreMessage.PendingItemFor]: [qualityCheck: string];
+  readonly [CoreMessage.FeatureSourceNotGherkin]: [cause: string];
+  readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
+  readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
+  readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
+  readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
+  readonly [CoreMessage.ManifestKindOfType]: [type: string];
+  readonly [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
 }
 
 export type CoreMessages = {

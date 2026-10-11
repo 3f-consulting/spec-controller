@@ -4,9 +4,9 @@ import { parseTaggedScenarios } from "./scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface CorpusFile {
-  slug: string;
-  featureCode: string | null;
-  source: string;
+  readonly slug: string;
+  readonly featureCode: string | null;
+  readonly source: string;
 }
 
 export function duplicateFeatureCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {

@@ -11,14 +11,14 @@ export type ScenarioVerdict = "balanced" | "out-of-balance";
 export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario";
 
 export interface ScenarioReconciliation {
-  scnId: string;
-  kind: ScenarioKind;
-  verdict: ScenarioVerdict;
-  evidenceObservations: EvidenceObservation[];
-  evidenceObligations: EvidenceObligation[];
-  qualityCheckReconciliations: QualityCheckReconciliation[];
-  reconcilingItems: QualityCheckReconciliation[];
-  pendingItems: PendingItem[];
+  readonly scnId: string;
+  readonly kind: ScenarioKind;
+  readonly verdict: ScenarioVerdict;
+  readonly evidenceObservations: readonly EvidenceObservation[];
+  readonly evidenceObligations: readonly EvidenceObligation[];
+  readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
+  readonly reconcilingItems: readonly QualityCheckReconciliation[];
+  readonly pendingItems: readonly PendingItem[];
 }
 
 export function verdictFor(evidenceObligations: QualityCheckReconciliation[]): ScenarioVerdict {

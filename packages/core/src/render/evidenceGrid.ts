@@ -7,7 +7,7 @@ import {
 } from "../domain/scenarioReconciliation.js";
 import { evidenceObligationsOf } from "../domain/journal.js";
 
-export type EvidenceColumn = { kind: "fitness" } | { kind: "runtime"; qualityCheck: RuntimeQualityCheck };
+export type EvidenceColumn = { readonly kind: "fitness" } | { readonly kind: "runtime"; readonly qualityCheck: RuntimeQualityCheck };
 
 function runtimeQualityChecksPresent(
   scenarioRows: readonly ScenarioReconciliation[]

@@ -3,13 +3,13 @@ export type QualityCheck = "fitness" | "unit" | "integration" | "e2e" | "perform
 export type RuntimeQualityCheck = Exclude<QualityCheck, "fitness">;
 
 export interface EvidenceObligation {
-  qualityCheck?: QualityCheck;
-  pending?: boolean;
+  readonly qualityCheck?: QualityCheck;
+  readonly pending?: boolean;
 }
 
 export interface Scenario {
-  scnId: string;
-  evidenceObligations: EvidenceObligation[];
+  readonly scnId: string;
+  readonly evidenceObligations: readonly EvidenceObligation[];
 }
 
 export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
@@ -45,24 +45,24 @@ export function pendingItemsOf(scenario: Scenario): PendingItem[] {
 export type EvidenceStatus = "passed" | "failed";
 
 export interface RuntimeEvidenceObservation {
-  qualityCheck: RuntimeQualityCheck;
-  scnId: string | null;
-  status: EvidenceStatus;
-  locator?: string;
-  broken?: true;
-  message?: string;
+  readonly qualityCheck: RuntimeQualityCheck;
+  readonly scnId: string | null;
+  readonly status: EvidenceStatus;
+  readonly locator?: string;
+  readonly broken?: true;
+  readonly message?: string;
 }
 
 export interface FitnessEvidenceObservation {
-  qualityCheck: "fitness";
-  fitnessFunction: string;
-  scnId?: string;
-  exists: boolean;
-  enforcedOverRealSource: boolean;
-  status?: EvidenceStatus;
-  broken?: true;
-  message?: string;
-  locator?: string;
+  readonly qualityCheck: "fitness";
+  readonly fitnessFunction: string;
+  readonly scnId?: string;
+  readonly exists: boolean;
+  readonly enforcedOverRealSource: boolean;
+  readonly status?: EvidenceStatus;
+  readonly broken?: true;
+  readonly message?: string;
+  readonly locator?: string;
 }
 
 export function isFitnessObservation(
@@ -74,5 +74,5 @@ export function isFitnessObservation(
 export type EvidenceObservation = RuntimeEvidenceObservation | FitnessEvidenceObservation;
 
 export interface PendingItem {
-  qualityCheck?: QualityCheck;
+  readonly qualityCheck?: QualityCheck;
 }

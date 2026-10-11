@@ -1,23 +1,23 @@
 import { relativizeToRoot } from "../lib/portablePath.js";
 
 export interface RunInputs {
-  features?: string;
-  vitest?: string;
-  cucumber?: string;
-  ci?: string;
-  packageJson?: string;
-  ciSteps?: string;
+  readonly features?: string;
+  readonly vitest?: string;
+  readonly cucumber?: string;
+  readonly ci?: string;
+  readonly packageJson?: string;
+  readonly ciSteps?: string;
 }
 
 export interface RunContext {
-  target: string;
-  inputs: RunInputs;
-  runStart: Date;
-  sourceSha: string | null;
-  toolSha?: string | null;
-  toolVersion?: string;
-  root?: string;
-  strict?: boolean;
+  readonly target: string;
+  readonly inputs: RunInputs;
+  readonly runStart: Date;
+  readonly sourceSha: string | null;
+  readonly toolSha?: string | null;
+  readonly toolVersion?: string;
+  readonly root?: string;
+  readonly strict?: boolean;
 }
 
 const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
@@ -30,18 +30,18 @@ const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
 ];
 
 export interface ProvenanceInput {
-  flag: string;
-  value: string;
+  readonly flag: string;
+  readonly value: string;
 }
 
 export interface ProvenanceFacts {
-  target: string;
-  inputs: ProvenanceInput[];
-  runStartUtc: string;
-  sourceSha: string | null;
-  toolSha: string | null;
-  toolVersion: string;
-  absentInputs: string[];
+  readonly target: string;
+  readonly inputs: readonly ProvenanceInput[];
+  readonly runStartUtc: string;
+  readonly sourceSha: string | null;
+  readonly toolSha: string | null;
+  readonly toolVersion: string;
+  readonly absentInputs: readonly string[];
 }
 
 function formatUtc(instant: Date): string {
@@ -49,24 +49,22 @@ function formatUtc(instant: Date): string {
 }
 
 function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
-  const out: RunInputs = {};
-  for (const { key } of INPUT_FLAGS) {
-    const value = inputs[key];
-    if (typeof value === "string" && value.trim() !== "") {
-      out[key] = relativizeToRoot(value, root);
-    }
-  }
-  return out;
+  return Object.fromEntries(
+    INPUT_FLAGS.flatMap(({ key }) => {
+      const value = inputs[key];
+      return typeof value === "string" && value.trim() !== "" ? [[key, relativizeToRoot(value, root)]] : [];
+    })
+  );
 }
 
 export interface ProvenanceObject {
-  target: string;
-  sourceSha: string | null;
-  toolSha: string | null;
-  toolVersion: string;
-  runTimestamp: string;
-  inputs: RunInputs;
-  strict?: boolean;
+  readonly target: string;
+  readonly sourceSha: string | null;
+  readonly toolSha: string | null;
+  readonly toolVersion: string;
+  readonly runTimestamp: string;
+  readonly inputs: RunInputs;
+  readonly strict?: boolean;
 }
 
 export function provenanceObject(ctx: RunContext): ProvenanceObject {

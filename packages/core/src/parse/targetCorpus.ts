@@ -6,8 +6,8 @@ import {
 import type { Scenario } from "../model.js";
 
 export interface TargetCorpus {
-  scenarios: Scenario[];
-  citedRow: (citedScn: string | undefined) => ScriptCitation | null;
+  readonly scenarios: readonly Scenario[];
+  readonly citedRow: (citedScn: string | undefined) => ScriptCitation | null;
 }
 
 export function readTargetCorpus(

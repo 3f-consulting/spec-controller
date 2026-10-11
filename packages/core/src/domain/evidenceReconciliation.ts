@@ -38,16 +38,16 @@ import {
   qualityCheckReconciliationsOf,
 } from "./scenarioReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
-import { postingOf, type RuntimePosting, type FitnessFunctionPosting } from "./posting.js";
+import { postingOf } from "./posting.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";
 
-type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
+type CitedPosting = { readonly kind: "scenario" | "phantom-scenario"; readonly scnId: string };
 
 interface CitationIndex {
   file(posting: CitedPosting, observation: EvidenceObservation): void;
-  observationsFor(scnId: string): EvidenceObservation[];
+  observationsFor(scnId: string): readonly EvidenceObservation[];
   readonly phantomIds: readonly string[];
 }
 
@@ -75,63 +75,20 @@ interface RoutedObservations {
   readonly uncitedFitnessFunctions: readonly FitnessEvidenceObservation[];
 }
 
-interface SuspenseStreams {
-  readonly brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
-  readonly uncited: RuntimeEvidenceObservation[];
-  readonly uncitedFitnessFunctions: FitnessEvidenceObservation[];
-}
-
-function routeFitnessObservation(
-  observation: FitnessEvidenceObservation,
-  posting: FitnessFunctionPosting,
-  citations: CitationIndex,
-  streams: SuspenseStreams
-): void {
-  if (posting.kind !== "suspense-scenario") {
-    citations.file(posting, observation);
-    return;
-  }
-  if (posting.posted === "broken" && isFitnessObservation(observation)) {
-    streams.brokenEvidence.push(observation);
-  } else streams.uncitedFitnessFunctions.push(observation);
-}
-
-function routeRuntimeObservation(
-  observation: RuntimeEvidenceObservation,
-  posting: RuntimePosting,
-  citations: CitationIndex,
-  streams: SuspenseStreams
-): void {
-  switch (posting.kind) {
-    case "scenario":
-    case "phantom-scenario": {
-      citations.file(posting, observation);
-      break;
-    }
-    case "suspense-scenario":
-      if (posting.posted === "broken") streams.brokenEvidence.push(observation);
-      else streams.uncited.push(observation);
-      break;
-  }
-}
-
 function routeObservations(
   evidenceObservations: readonly EvidenceObservation[],
   scenarioIds: ReadonlySet<string>
 ): RoutedObservations {
   const citations = citationIndex();
-  const streams: SuspenseStreams = {
-    brokenEvidence: [],
-    uncited: [],
-    uncitedFitnessFunctions: [],
-  };
-  const { brokenEvidence, uncited, uncitedFitnessFunctions } = streams;
+  const brokenEvidence: EvidenceObservation[] = [];
+  const uncited: RuntimeEvidenceObservation[] = [];
+  const uncitedFitnessFunctions: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    if (o.qualityCheck === "fitness") {
-      routeFitnessObservation(o, postingOf(o, scenarioIds), citations, streams);
-      continue;
-    }
-    routeRuntimeObservation(o, postingOf(o, scenarioIds), citations, streams);
+    const posting = postingOf(o, scenarioIds);
+    if (posting.kind !== "suspense-scenario") citations.file(posting, o);
+    else if (posting.posted === "broken") brokenEvidence.push(o);
+    else if (isFitnessObservation(o)) uncitedFitnessFunctions.push(o);
+    else uncited.push(o);
   }
   return { citations, brokenEvidence, uncited, uncitedFitnessFunctions };
 }
@@ -260,7 +217,7 @@ function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioRec
 }
 
 export function reconcile(
-  scenarios: Scenario[],
+  scenarios: readonly Scenario[],
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[] = []
 ): Ledger {
@@ -286,15 +243,15 @@ export function reconcile(
 }
 
 export interface TestVolumeTotals {
-  totalEvidenceObservations: number;
-  onScenario: number;
-  onPhantomScenario: number;
-  onSuspenseScenario: number;
+  readonly totalEvidenceObservations: number;
+  readonly onScenario: number;
+  readonly onPhantomScenario: number;
+  readonly onSuspenseScenario: number;
 }
 
 export interface FitnessFunctionTotals {
-  runningFitnessFunctionCount: number;
-  uncitedFitnessFunctionCount: number;
+  readonly runningFitnessFunctionCount: number;
+  readonly uncitedFitnessFunctionCount: number;
 }
 
 export interface ReconcilerStep {
@@ -331,30 +288,30 @@ export interface StepAccounting {
 }
 
 export interface Summary {
-  scenarioReconciliations: ScenarioReconciliationTotals;
-  evidenceObligations: EvidenceObligationTotals;
-  pending: number;
-  testVolume?: TestVolumeTotals;
-  rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
-  fitnessFunctions?: FitnessFunctionTotals;
-  fitness: FitnessTally;
-  behaviouralRunners?: readonly BehaviouralRunner[];
-  runnerTiers?: Readonly<Record<string, string | null>>;
-  unrecognisedRunnerKeys?: readonly string[];
-  wrongKindConfiguration?: readonly WrongKindEntry[];
-  unknownConfigurationKeys?: readonly string[];
-  excludedSteps?: readonly string[];
-  reconcilerSteps?: readonly ReconcilerStep[];
-  unmatchedNotChecks?: readonly string[];
-  discoveryScope?: readonly JobDiscoveryScope[];
-  stepAccounting?: StepAccounting;
+  readonly scenarioReconciliations: ScenarioReconciliationTotals;
+  readonly evidenceObligations: EvidenceObligationTotals;
+  readonly pending: number;
+  readonly testVolume?: TestVolumeTotals;
+  readonly rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
+  readonly fitnessFunctions?: FitnessFunctionTotals;
+  readonly fitness: FitnessTally;
+  readonly behaviouralRunners?: readonly BehaviouralRunner[];
+  readonly runnerTiers?: Readonly<Record<string, string | null>>;
+  readonly unrecognisedRunnerKeys?: readonly string[];
+  readonly wrongKindConfiguration?: readonly WrongKindEntry[];
+  readonly unknownConfigurationKeys?: readonly string[];
+  readonly excludedSteps?: readonly string[];
+  readonly reconcilerSteps?: readonly ReconcilerStep[];
+  readonly unmatchedNotChecks?: readonly string[];
+  readonly discoveryScope?: readonly JobDiscoveryScope[];
+  readonly stepAccounting?: StepAccounting;
 }
 
 export interface EvidenceReconciliation {
-  summary: Summary;
-  ledger: Ledger;
-  scenarioCodeErrors?: readonly ScenarioCodeError[];
-  scenarioCodePopulation?: ScenarioCodePopulation;
+  readonly summary: Summary;
+  readonly ledger: Ledger;
+  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
+  readonly scenarioCodePopulation?: ScenarioCodePopulation;
 }
 
 export function summaryOf(
@@ -386,7 +343,7 @@ export function summaryOf(
 }
 
 export function evidenceReconciliationOf(
-  scenarios: Scenario[],
+  scenarios: readonly Scenario[],
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[],
   withRuntimeObservations: boolean,

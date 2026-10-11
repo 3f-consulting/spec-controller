@@ -21,10 +21,10 @@ import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 
 type TargetManifest = PackageJsonScripts & {
-  specController?: {
-    deferralTags?: unknown;
-    runners?: unknown;
-    notChecks?: unknown;
+  readonly specController?: {
+    readonly deferralTags?: unknown;
+    readonly runners?: unknown;
+    readonly notChecks?: unknown;
   };
 };
 
@@ -55,16 +55,16 @@ function observationStreams(
 }
 
 export interface EvidenceReconciliationSources {
-  featureSources: readonly string[];
-  featureFiles?: readonly FeatureFileHeader[];
-  untaggedScenarios: readonly string[];
-  packageJson: TargetManifest;
-  ciSources: readonly string[];
-  ciSourceNames?: readonly string[];
-  reconcilerInvocation?: string;
-  runtimeObservations: readonly EvidenceObservation[];
-  deferralTags: readonly string[];
-  ciStepRecord?: CiStepRecord;
+  readonly featureSources: readonly string[];
+  readonly featureFiles?: readonly FeatureFileHeader[];
+  readonly untaggedScenarios: readonly string[];
+  readonly packageJson: TargetManifest;
+  readonly ciSources: readonly string[];
+  readonly ciSourceNames?: readonly string[];
+  readonly reconcilerInvocation?: string;
+  readonly runtimeObservations: readonly EvidenceObservation[];
+  readonly deferralTags: readonly string[];
+  readonly ciStepRecord?: CiStepRecord;
 }
 
 interface FeatureFileHeader {
