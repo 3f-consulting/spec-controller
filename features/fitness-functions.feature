@@ -183,3 +183,8 @@ Feature: The fitness functions this repository declares, one scenario per check
 
     @fitness @SCN-FIT-042
     Scenario: no unit test file runs code at collection time or in a hook that runs once for many tests
+
+  Rule: the test estate stays within the ceiling the product declares
+
+    @fitness @SCN-FIT-043
+    Scenario: test code above the declared ceiling ratio to production code reds the build

@@ -272,6 +272,12 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.collection.js packages
 
+      # The ceiling and the sets it counts live in cloc.ratio.js.
+      - name: Test code stays within the declared ceiling ratio to production code
+        id: SCN-FIT-043
+        if: always()
+        run: node scripts/test-ratio.mjs
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()
