@@ -1,4 +1,5 @@
 import checkFile from "eslint-plugin-check-file";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 const SANDBOX_NAMES = "/__stryker__|STRYKER_ACTIVE_MUTANT|stryNS_|stryCov_|stryMutAct_/";
@@ -19,6 +20,11 @@ const SEAM_PATTERNS = [
   { regex: "^@3f-consulting/spec-controller-core(/|$)", message: SEAM_MESSAGE },
 ];
 const SOURCE_FILES = "{ts,mts,cts,js,mjs,cjs}";
+const HOST_GLOBAL_MESSAGE = "the engine reaches nothing of its host — what it needs arrives as an argument";
+const HOST_GLOBALS = [
+  "globalThis",
+  ...Object.keys(globals.node).filter((name) => name !== "process" && !Object.hasOwn(globals.builtin, name)),
+].map((name) => ({ name, message: HOST_GLOBAL_MESSAGE }));
 
 export default [
   { linterOptions: { reportUnusedDisableDirectives: "error" } },
@@ -37,6 +43,7 @@ export default [
         "error",
         { name: "process", message: "the engine stays testable with data alone" },
         { name: "Date", message: "the engine reads no clock — the instant arrives as an argument" },
+        ...HOST_GLOBALS,
       ],
       "no-restricted-properties": [
         "error",

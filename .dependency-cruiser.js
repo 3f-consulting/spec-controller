@@ -33,9 +33,9 @@ export default {
     {
       name: "core-imports-io",
       severity: "error",
-      comment: "a core module must not import a node IO builtin — the engine stays testable with data alone",
+      comment: "a core module imports no node builtin but path — the engine stays testable with data alone",
       from: { path: "^packages/core/src/", pathNot: "\\.(test|test-utils)\\.ts$" },
-      to: { dependencyTypes: ["core"], path: "^(node:)?(fs|process)(/|$)" },
+      to: { dependencyTypes: ["core"], pathNot: "^(node:)?path$" },
     },
 
     {
