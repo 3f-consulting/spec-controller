@@ -156,11 +156,9 @@ const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
 
 const evidenceReconciliationSection: SectionEmitter = (report) => {
   const scenarioReconciliations = report.summary.scenarioReconciliations;
-  const evidenceObligations = report.summary.evidenceObligations;
-  const totalEvidenceObligations = evidenceObligations.total;
-  const evidenceObligationsOutOfBalance = evidenceObligations.outOfBalance;
+  const qualityCheckReconciliations = report.summary.qualityCheckReconciliations;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
-  const missingSplit = evidenceObligations.missingByQualityCheck
+  const missingSplit = qualityCheckReconciliations.missingByQualityCheck
     .map(({ subject, count }) => `${count} ${subject}`)
     .join(" + ");
   const lines = [
@@ -176,16 +174,16 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.EvidenceObligationSubject],
-      String(totalEvidenceObligations),
-      String(evidenceObligations.byOutcome.satisfied),
-      String(evidenceObligationsOutOfBalance),
+      CORE_MESSAGES[CoreMessage.QualityCheckReconciliationSubject],
+      String(qualityCheckReconciliations.total),
+      String(qualityCheckReconciliations.byOutcome.satisfied),
+      String(qualityCheckReconciliations.outOfBalance),
       "",
     ]),
   ];
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
+    lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(qualityCheckReconciliations.byOutcome[outcome]), detail]));
   }
   lines.push(...pendingTally(report.summary.pending));
   lines.push("");

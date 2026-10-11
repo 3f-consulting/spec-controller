@@ -51,7 +51,7 @@ export type {
   ReportMetadata,
   Summary,
   ScenarioReconciliationTotals,
-  EvidenceObligationTotals,
+  QualityCheckReconciliationTotals,
   MissingByQualityCheck,
   TestVolumeTotals,
   FitnessFunctionTotals,

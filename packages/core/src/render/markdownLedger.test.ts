@@ -157,7 +157,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 });
 
-describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outcomes with no group rows", () => {
+describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
@@ -202,7 +202,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outco
     );
   });
 
-  it("decomposes the evidence-obligation out-of-balance into exactly the ten leaf outcome rows", () => {
+  it("decomposes the Quality Check Reconciliation out-of-balance into exactly the ten leaf outcome rows", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     for (const leaf of LEAVES) {
       expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
@@ -226,12 +226,13 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outco
     expect(rendered).not.toContain(OUTCOME_DESCRIPTION.satisfied);
   });
 
-  it("sums the leaf counts to the evidence-obligation out-of-balance total", () => {
+  it("sums the leaf counts to the Quality Check Reconciliation out-of-balance total", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    const oblOutOfBalance = Number(
-      /\| Evidence obligation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
+    const subject = CORE_MESSAGES[CoreMessage.QualityCheckReconciliationSubject].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const qcrOutOfBalance = Number(
+      new RegExp(`\\| ${subject} \\| \\d+ \\| \\d+ \\| (\\d+) \\|`).exec(md)?.[1]
     );
-    expect(oblOutOfBalance).toBe(3);
+    expect(qcrOutOfBalance).toBe(3);
     let leafSum = 0;
     for (const leaf of LEAVES) {
       const gloss = OUTCOME_DESCRIPTION[leaf].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -239,6 +240,6 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the ten leaf outco
       expect(Number.isNaN(n)).toBe(false);
       leafSum += n;
     }
-    expect(leafSum).toBe(oblOutOfBalance);
+    expect(leafSum).toBe(qcrOutOfBalance);
   });
 });

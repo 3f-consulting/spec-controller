@@ -66,7 +66,7 @@ const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
 
 function expectedTable(
   scenarios: { total: number; balanced: number; outOfBalance: number },
-  obligations: { total: number; satisfied: number },
+  qualityCheckReconciliations: { total: number; satisfied: number },
   leafCounts: Partial<Record<Outcome, number>>,
   missingDetail: string
 ): string[] {
@@ -90,9 +90,9 @@ function expectedTable(
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.EvidenceObligationSubject],
-      String(obligations.total),
-      String(obligations.satisfied),
+      CORE_MESSAGES[CoreMessage.QualityCheckReconciliationSubject],
+      String(qualityCheckReconciliations.total),
+      String(qualityCheckReconciliations.satisfied),
       String(outOfBalance),
       "",
     ]),

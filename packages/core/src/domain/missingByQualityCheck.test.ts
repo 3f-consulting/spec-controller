@@ -15,10 +15,10 @@ describe("[SCN-RMD-008] the missing split carries every quality-check in canonic
   it("names fitness, unit, integration, e2e and performance, in that order", () => {
     const tally = ledgerTally(reconcile(parseScenarios(featureLines.join("\n")), []));
 
-    expect(tally.evidenceObligations.total).toBe(5);
-    expect(tally.evidenceObligations.byOutcome.missing).toBe(5);
+    const totals = tally.qualityCheckReconciliations;
+    expect(totals).toMatchObject({ total: 5, byOutcome: { missing: 5 } });
 
-    expect(tally.evidenceObligations.missingByQualityCheck).toEqual([
+    expect(totals.missingByQualityCheck).toEqual([
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },

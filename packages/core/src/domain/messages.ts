@@ -85,7 +85,7 @@ export enum CoreMessage {
   OutOfBalanceColumn,
   DetailColumn,
   ScenarioReconciliationSubject,
-  EvidenceObligationSubject,
+  QualityCheckReconciliationSubject,
   PendingTally,
   TestVolumeHeading,
   TestVolumeSum,
@@ -355,7 +355,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OutOfBalanceColumn]: "Out-of-balance",
   [CoreMessage.DetailColumn]: "Detail",
   [CoreMessage.ScenarioReconciliationSubject]: "Scenario Reconciliation",
-  [CoreMessage.EvidenceObligationSubject]: "Evidence obligation",
+  [CoreMessage.QualityCheckReconciliationSubject]: "Quality Check Reconciliation",
   [CoreMessage.PendingTally]: (pending) =>
     `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.TestVolumeHeading]: "### Test volume",

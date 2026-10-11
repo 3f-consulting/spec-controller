@@ -91,7 +91,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The fitness-function census carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the
     cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
     obligation cut (satisfied of total), under summary.fitness: the outcome breakdown under
-    summary.evidenceObligations is kind-agnostic and cannot give the fitness-only total, so it is
+    summary.qualityCheckReconciliations is kind-agnostic and cannot give the fitness-only total, so it is
     materialised explicitly. Its unit tests hold the summary's folds and the assembled summary
     in isolation.
 
@@ -139,7 +139,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     performance}: fitness is one quality-check value, not a second axis. So each sub-row of
     ledger.scenarioReconciliations[].qualityCheckReconciliations[] and reconcilingItems[] is keyed
     by qualityCheck alone, and the summary's missing split, missingByQualityCheck under
-    summary.evidenceObligations, is keyed by the same flat quality-check. One reconcile function
+    summary.qualityCheckReconciliations, is keyed by the same flat quality-check. One reconcile function
     serves every quality check, and the fitness value is what tells a watermelon apart. Canon
     names the quality check fitness, and lint is a rejected alias (double-entry-manifesto,
     Quality Check). The markdown labels each item by its tag word, which IS the quality-check

@@ -121,7 +121,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
           reconcilingItems: Array<Record<string, unknown>>;
         }>;
       };
-      summary: { evidenceObligations: Record<string, unknown> };
+      summary: { qualityCheckReconciliations: Record<string, unknown> };
     };
 
   it("carries a fitness sub-row's qualityCheck as 'fitness', naming no characteristic", () => {
@@ -135,9 +135,9 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
   });
 
   it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {
-    const eo = report().summary.evidenceObligations;
-    expect(eo).toHaveProperty("missingByQualityCheck");
-    const split = eo.missingByQualityCheck as Array<{ subject: string; count: number }>;
+    const summary = report().summary;
+    expect(summary).toHaveProperty("qualityCheckReconciliations.missingByQualityCheck");
+    const split = summary.qualityCheckReconciliations.missingByQualityCheck as Array<{ subject: string; count: number }>;
     expect(split).toEqual([
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },

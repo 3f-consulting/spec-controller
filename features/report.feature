@@ -64,22 +64,26 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
     The evidence reconciliation, as subjects-rows. Under "## Summary views", a
-    "### Evidence reconciliation" section renders ONE table whose SUBJECTS are rows — Scenario and
-    Evidence obligation — each with its own Total, and balanced / out-of-balance as COLUMNS
-    (both subjects report into the same binary, so the "Axis"/"Verdict"/"outcome" words
-    retire). The Evidence-evidence obligation out-of-balance is decomposed in place into its
+    "### Evidence reconciliation" section renders ONE table whose SUBJECTS are rows — Scenario
+    Reconciliation and Quality Check Reconciliation — each with its own Total, and balanced /
+    out-of-balance as COLUMNS (both subjects report into the same binary, so the
+    "Axis"/"Verdict"/"outcome" words retire). The second row counts every Quality Check
+    Reconciliation on every row — phantom and suspense included, and an Evidence Observation
+    that answers no Evidence Obligation included — so it is not a count of Evidence
+    Obligations. The Quality Check Reconciliation out-of-balance is decomposed in place into its
     reconciling-item causes: three nested ("↳") rows in canonical order — missing,
     failing, and the watermelon watermelon —
     populating the out-of-balance column only, always shown (a zero cause is itself a fact).
     The missing row carries the bare-level split as its Detail (a runtime
-    evidence obligation by its bare level, a fitness-function one as "fitness" — the label-=-tag lock),
-    canonical order (fitness first), counting evidence obligations not scenarios. The scenario and
-    evidence-obligation out-of-balance counts diverge on purpose — a scenario with two missing
-    arms is one out-of-balance scenario and two out-of-balance evidence obligations — and the
-    table presents that as a granularity fact, the nested causes reconciling to the
-    evidence-obligation out-of-balance. No bold. A pure derive over
-    balance.scenarios[].evidenceObligations[] — markdown-only (project design §3), proven in
-    isolation by Vitest.
+    quality check by its bare level, a fitness-function one as "fitness" — the label-=-tag lock),
+    canonical order (fitness first), counting missing Quality Check Reconciliations by quality
+    check, not scenarios. The Scenario Reconciliation and Quality Check Reconciliation
+    out-of-balance counts diverge on purpose — a scenario with two missing arms is one
+    out-of-balance Scenario Reconciliation and two out-of-balance Quality Check
+    Reconciliations — and the table presents that as a granularity fact, the nested causes
+    reconciling to the Quality Check Reconciliation out-of-balance. No bold. A pure derive over
+    balance.scenarioReconciliations[].qualityCheckReconciliations[] — markdown-only (project
+    design §3), proven in isolation by Vitest.
 
     The subject row is the SCENARIO RECONCILIATION — the manifesto's collection, all
     three row kinds (real, phantom, suspense) — not "Scenario", which names only the
@@ -349,20 +353,20 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
 
-  Rule: the evidence-obligation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
+  Rule: the Quality Check Reconciliation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
-    The obligation-summary decomposition. The Evidence
-    reconciliation's evidence-obligation out-of-balance row decomposes into a FLAT list of the
+    The Quality Check Reconciliation summary decomposition. The Evidence
+    reconciliation's Quality Check Reconciliation out-of-balance row decomposes into a FLAT list of the
     ten out-of-balance leaf outcomes — missing, failing, watermelon,
     no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — each a counted
-    "↳ <outcome>" row whose Out-of-balance counts SUM to the evidence-obligation out-of-balance
+    "↳ <outcome>" row whose Out-of-balance counts SUM to the Quality Check Reconciliation out-of-balance
     total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
     "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
     double-counted — each group emitted a subtotal row AND its leaf rows at the same indent, so
     a naive column-sum doubled (170 vs 85). Removing the grouping leaves the leaves reconciling
     to the total exactly once. The existing leaf-presence guard stays green (the
     leaves still render). A pure derive over the report's materialised
-    summary.evidenceObligations.byOutcome — markdown-only, proven in isolation by Vitest.
+    summary.qualityCheckReconciliations.byOutcome — markdown-only, proven in isolation by Vitest.
 
     The leaf list is HAND-MAINTAINED (a readonly Outcome[], not a type-forced Record), so it can
     fall behind the Outcome union silently — broken joined the union, tallied in
@@ -377,7 +381,7 @@ Feature: The report renders the ledger as sectioned facts
     reads after `no-scn-code`, where canon's Outcome table puts it.
 
     @unit @SCN-RPT-019
-    Scenario: the obligation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
+    Scenario: the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
 
   Rule: the markdown renders each outcome's canon description in place of the bare handle
 

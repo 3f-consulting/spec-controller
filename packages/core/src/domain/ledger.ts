@@ -55,7 +55,7 @@ export interface MissingByQualityCheck {
   readonly count: number;
 }
 
-export interface EvidenceObligationTotals {
+export interface QualityCheckReconciliationTotals {
   readonly total: number;
   readonly byOutcome: Record<Outcome, number>;
   readonly outOfBalance: number;
@@ -69,16 +69,17 @@ export interface FitnessTally {
 
 export interface LedgerTally {
   readonly scenarioReconciliations: ScenarioReconciliationTotals;
-  readonly evidenceObligations: EvidenceObligationTotals;
+  readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly fitness: FitnessTally;
 }
 
 export function ledgerTally(ledger: Ledger): LedgerTally {
   const { scenarioReconciliations, pending } = scenarioReconciliationTally(ledger);
+  const qualityCheckReconciliations = qualityCheckReconciliationTotals(ledger);
   return {
     scenarioReconciliations,
-    evidenceObligations: evidenceObligationTotals(ledger),
+    qualityCheckReconciliations,
     pending,
     fitness: fitnessTally(ledger),
   };
@@ -110,7 +111,7 @@ function scenarioReconciliationTally(ledger: Ledger): {
   };
 }
 
-function evidenceObligationTotals(ledger: Ledger): EvidenceObligationTotals {
+function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconciliationTotals {
   const byOutcome: Record<Outcome, number> = {
     satisfied: 0,
     "missing": 0,

@@ -42,7 +42,7 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
   });
 });
 
-describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by reconciliation outcome", () => {
+describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliations by reconciliation outcome", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
@@ -55,6 +55,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
         { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
         { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
         { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
+        { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
       ]
     );
   });
@@ -64,11 +65,11 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(md).toContain("### Evidence reconciliation");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
-    expect(md).toContain("| Scenario Reconciliation | 3 | 1 | 2 |");
-    expect(md).toContain("| Evidence obligation | 5 | 2 | 3 |");
+    expect(md).toContain("| Scenario Reconciliation | 3 | 0 | 3 |");
+    expect(md).toContain("| Quality Check Reconciliation | 6 | 2 | 4 |");
   });
 
-  it("decomposes the evidence-obligation out-of-balance into its nested reconciling-item causes, with the level split as Detail", () => {
+  it("decomposes the Quality Check Reconciliation out-of-balance into its nested reconciling-item causes, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("1 unit + 1 integration");

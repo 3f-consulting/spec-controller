@@ -29,7 +29,7 @@ import {
 } from "./ledger.js";
 import type {
   ScenarioReconciliationTotals,
-  EvidenceObligationTotals,
+  QualityCheckReconciliationTotals,
   MissingByQualityCheck,
   FitnessTally,
 } from "./ledger.js";
@@ -302,7 +302,7 @@ export function tiersWithoutRunnerOf(runnerTiers: Readonly<Record<string, string
 
 export interface Summary {
   readonly scenarioReconciliations: ScenarioReconciliationTotals;
-  readonly evidenceObligations: EvidenceObligationTotals;
+  readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly testVolume?: TestVolumeTotals;
   readonly rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
@@ -337,7 +337,7 @@ export function summaryOf(
   const fitnessFunctions = fitnessFunctionTally(ledger);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
-    evidenceObligations: tally.evidenceObligations,
+    qualityCheckReconciliations: tally.qualityCheckReconciliations,
     pending: tally.pending,
     ...(withRuntimeObservations
       ? {

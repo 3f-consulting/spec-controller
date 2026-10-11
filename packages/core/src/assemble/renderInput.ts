@@ -6,7 +6,7 @@ import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../ce
 
 export type {
   ScenarioReconciliationTotals,
-  EvidenceObligationTotals,
+  QualityCheckReconciliationTotals,
   MissingByQualityCheck,
   FitnessTally,
 } from "../domain/ledger.js";

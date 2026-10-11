@@ -56,14 +56,15 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   it("materialises the summary totals from the balance", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
-    expect(report.summary.evidenceObligations.total).toBe(3);
-    expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
-    expect(report.summary.evidenceObligations.byOutcome["satisfied"]).toBe(1);
-    expect(report.summary.evidenceObligations.byOutcome["missing"]).toBe(2);
-    expect(report.summary.evidenceObligations.missingByQualityCheck).toEqual([
+    expect(report.summary.qualityCheckReconciliations.total).toBe(3);
+    expect(report.summary.qualityCheckReconciliations.outOfBalance).toBe(2);
+    expect(report.summary.qualityCheckReconciliations.byOutcome["satisfied"]).toBe(1);
+    expect(report.summary.qualityCheckReconciliations.byOutcome["missing"]).toBe(2);
+    expect(report.summary.qualityCheckReconciliations.missingByQualityCheck).toEqual([
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },
     ]);
+    expect(report.summary).not.toHaveProperty("evidenceObligations");
   });
 
   const suspenseScenarios: Scenario[] = [
