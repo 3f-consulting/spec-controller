@@ -38,7 +38,7 @@ That is the answer to *"why, when CI already works?"* — `spec-controller` is n
 
 ### What it costs
 
-You are already doing the ceremony. A fitness function means writing the check, adding the script, and wiring it into CI — and you have done all three. **Start by installing it and changing nothing**: every check your pipeline ran comes back listed, with the fact that nothing demanded any of them. Put an id on a check's CI step and that credit becomes attributable. Write a scenario for it, tagged as you already tag `@unit`, and it reconciles. Three states, and you stop where the value stops for you. Nothing is translated, generated into a workflow, or moved out of your pipeline.
+You are already doing the ceremony. A fitness function means writing the check, adding the script, and wiring it into CI — and you have done all three. **Start by installing it and changing nothing**: every check your pipeline ran comes back listed, with the fact that nothing raised an Evidence Obligation for any of them. Put an id on a check's CI step and that credit becomes attributable. Write a scenario for it, tagged as you already tag `@unit`, and it reconciles. Three states, and you stop where the value stops for you. Nothing is translated, generated into a workflow, or moved out of your pipeline.
 
 ## How it works
 
@@ -65,7 +65,7 @@ You write nothing of ours. There is no manifest list of fitness functions, and n
 
 **One `@fitness` scenario is one check.** The tag says *how the claim is proved*; the scenario's **title** says what the check is about, and its `@SCN` is its identity — so several checks are several scenarios, and nothing classifies them further: no word, no roster, no roll-up. A `package.json` of yours that still carries the retired `specController.fitnessChecks` key reconciles to the same ledger and the same exit code as the same tree without it; the report names the key under `## Configuration not read`, in the words it uses for any key the `specController` block does not read, and says nothing of what it once did.
 
-So a stepped scenario tagged `@unit @integration` names two obligations; a fitness scenario names one. Each tag asserts *"to prove this, evidence of this quality-check must exist and hold"* — for a behavioural test, that it exists and passes; for a fitness function, that its command ran, and that any number it produced is inside its bar.
+So a stepped scenario tagged `@unit @integration` names two obligations; a `@fitness` scenario names one. Each tag asserts *"to prove this, evidence of this quality-check must exist and hold"* — for a behavioural test, that it exists and passes; for a fitness function, that its command ran, and that any number it produced is inside its bar.
 
 **Every credit posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness function cites the scenario its CI step's `id:` names. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped, and a `@fitness` scenario nothing cites reconciles **missing**, exactly as a `@unit` scenario with no test does.
 
@@ -82,7 +82,7 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a fitne
   run: echo '${{ toJSON(steps) }}' > ci-steps.json
 ```
 
-**Your checks are already commands in your pipeline, and a run of that pipeline is already a record of what each one did — written by your CI provider, for its own purposes.** So `spec-controller` reads that record, and runs nothing itself. What you write is an `id:` per check step — the `@SCN` of the scenario that names it, a **citation** and never a declaration — and one dump step per job.
+**Your checks are already commands in your pipeline, and a run of that pipeline is already a record of what each one did — written by your CI provider, for its own purposes.** So `spec-controller` reads that record, and runs nothing itself. What you write is an `id:` per check step — the `@SCN` of the scenario that names it, a **citation** and never a second name — and one dump step per job.
 
 **The `if: always()` is on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one failure and N never-rans — a worse account from a correct mechanism.
 

@@ -10,7 +10,7 @@ exact version and read the changelog before you move.
 
 **What the reader reads today.** Three `specController` keys — `runners`, `notChecks` and
 `deferralTags` — and the `--ci-steps` record. [`how_to_use.md`](./how_to_use.md) says what each key
-does. There is one way to declare a fitness function, and it is two artefacts: a `@fitness` scenario,
+does. There is one way to name a fitness function, and it is two artefacts: a `@fitness` scenario,
 and its `@SCN` as the `id:` of the CI step that runs the check. See
 [`how_to_use.md`](./how_to_use.md) → *Wiring into CI*.
 

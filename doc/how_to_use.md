@@ -46,7 +46,7 @@ A scenario's tag line says what it needs proved: `@SCN-<FFF>-<NNN> @unit @e2e` a
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title — the most specific one wins |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
-| `@fitness` | a CI step | the step's `id:` is the code (see *Declaring a fitness function*, below) |
+| `@fitness` | a CI step | the step's `id:` is the code (see *Naming a fitness function*, below) |
 
 ```ts
 describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
@@ -64,7 +64,7 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
 
 ---
 
-## Declaring a fitness function
+## Naming a fitness function
 
 A **fitness function** is a whole-system property — complexity, mutation score, type
 soundness, vocabulary, suite run time. **There are two artefacts and no third**, and **neither of
@@ -92,7 +92,7 @@ second artefact — there is no manifest list:
         run: eslint
 ```
 
-**That is the whole declaration.** **One `@fitness` scenario is one check**, identified by its
+**That is the whole of naming it.** **One `@fitness` scenario is one check**, identified by its
 `@SCN` and described by its title: nothing else says what the check is about. **Nothing names a
 bar** either — the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by
 one push step that reads the newest nightly sweep's verdict (*Wiring into CI*, below). The check's credit is its step's `outcome`: the
@@ -111,7 +111,7 @@ does not read, named under `## Configuration not read` in the same words as a mi
 nothing said about what it once did. The two artefacts above are the whole of what you author.
 
 **One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
-`--ci-steps` is what points `balance` at it. That is wiring rather than declaration, so it is under
+`--ci-steps` is what points `balance` at it. That is wiring rather than naming, so it is under
 *Wiring into CI* below, with the `if: always()` rule that goes with it.
 
 This page is the flags and the CLI.
@@ -179,7 +179,7 @@ all**: an `id:` is a key of the step mapping, the command below it is any comman
 and nothing in the resolution reads a manifest.
 
 **Your first run against an unannotated pipeline reds.** Every candidate cites nothing, so every
-credit posts to suspense and `balance` exits 1 — the ledger being right about a corpus that demands
+credit posts to suspense and `balance` exits 1 — the ledger being right about a corpus that raises
 nothing yet. To adopt by observing rather than by redding the build, run it with `--exit-zero`. You get
 the same report, and the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
@@ -260,7 +260,7 @@ spec-controller balance --features ./features \
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness function is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness function is named by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness functions. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |

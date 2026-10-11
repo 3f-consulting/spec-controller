@@ -90,7 +90,7 @@ verdict on any check.
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is a `@fitness` scenario and a `run:` step whose `id:` is that scenario's `@SCN` — the command in
 the pipeline, the obligation in the scenario, the observation in the run's own record of what its
-steps did. Nothing else declares it.
+steps did. Nothing else names it.
 
 **A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag
 and no word classifying a check at all, there is nothing for a check policing such words

@@ -66,7 +66,7 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 | `2` | usage — the invocation was wrong |
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |
-| `5` | nothing to reconcile — no scenario was declared and no evidence was produced, so the run had no basis for a verdict |
+| `5` | nothing to reconcile — no scenario was carried and no evidence was produced, so the run had no basis for a verdict |
 
 The whole report is written before the code is set, so a failing run still tells you why.
 
@@ -90,7 +90,7 @@ read-only, a directory, under a regular file or in a directory that does not exi
 
 **The enumeration is open at the top, and that is the one thing to design your pipeline around.** A
 state that is genuinely none of the above gets a **new** code rather than being folded into the
-nearest one — `5` is the most recent, added when a run over a target that had declared nothing and
+nearest one — `5` is the most recent, added when a run over a target that carried no scenario and
 produced nothing was found reporting `0`. So **treat an unrecognised non-zero code as a failure you
 have not seen before**, not as a synonym for `1`. Matching `1` exactly is unaffected by a code being
 added; treating *non-zero* as a red build is already correct, and only imprecise about why.

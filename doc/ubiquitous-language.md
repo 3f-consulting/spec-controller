@@ -34,10 +34,12 @@ Each definition below restates what spec-controller already says in [`how_to_use
 |---|---|
 | discovery scope | The CI workflows `--ci` names. Every step of every job in them is read. |
 | candidate | A step in the discovery scope that is not a declared runner, the reconciler or a non-check. Every candidate is a fitness function. |
-| uncited fitness function | A candidate whose step cites no fitness scenario. |
+| uncited fitness function | A candidate whose step cites no scenario. |
 | step accounting | The report's tally of the steps read, by disposition (candidates, runners, the reconciler, excluded), so every step read is accounted for. |
 | check step | The CI step that already runs a check, carrying the check's `@SCN` as its `id:`. |
 | citation | The `@SCN` on a check step's `id:`: a citation of the scenario, never a definition of the check. |
+| converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's `@SCN` as its `id:`, so `balance` credits its result to that scenario. |
+| unconverted fitness function | A fitness function that runs in CI with no scenario's `@SCN` as its step's `id:`. `balance` finds it running and reports it as an uncited fitness function. |
 | step record | The CI run's own record of what each of its steps did: the `toJSON(steps)` dump `--ci-steps` reads. |
 
 ### The run store
@@ -75,9 +77,18 @@ Each definition below restates what spec-controller already says in [`how_to_use
 | excluded `@SCN` occurrence | An `@SCN` id seen outside a tag, which is reported and excluded. |
 | Gherkin parse gate | The corpus reader's refusal of a corpus the Gherkin parser rejects. |
 
-### Terms in use that this file does not yet define
+### The corpus, the report's views and term spelling
 
-These appear in spec-controller's text, but nothing there defines them yet: **converted** and **unconverted** fitness function; **corpus** and **corpus census**; **Summary views**; **Out-of-balance by feature**; **Fitness evidence obligations** (as a report section); **harness**; and **term** and **pair** in the term-spelling feature.
+| Term | Meaning |
+|---|---|
+| corpus | The feature files under `--features`, whose scenarios one run reconciles. |
+| corpus census | The count of the corpus's scenarios, read from the Ledger summary. |
+| Summary views | The report's `## Summary views` section: the tallies by subject. It holds the by-quality-check view, *Out-of-balance by feature* and *Fitness evidence obligations*. |
+| Out-of-balance by feature | The Summary views subsection that groups out-of-balance Scenario Reconciliations by feature, opening with an *N of M* total line. |
+| Fitness evidence obligations | The Summary views subsection listing the fitness Evidence Obligations that `@fitness` scenarios raise, apart from runtime items, opening with an *N of M* total line. |
+| harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. A broken one is reported as a harness failure, and the run is stamped Unsound. |
+| term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |
+| pair | The scenario code and quality check at which an Evidence Obligation, and the Evidence Observations answering it, are booked. A term names a pair, and a credit at a named pair reconciles as a matched obligation. |
 
 ## Borrowed from the methodology
 
