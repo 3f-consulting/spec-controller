@@ -55,7 +55,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function c
   });
 });
 
-describe("[SCN-USG-001] a fitness function no fitness scenario cites is banked on the suspense row and counted uncited", () => {
+describe("[SCN-USG-001] a fitness function no scenario cites is banked on the suspense row and counted uncited", () => {
   const rowFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 

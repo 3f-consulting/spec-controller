@@ -33,7 +33,7 @@ Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
 
-Given("only lint:foo is cited by a fitness scenario", function () {
+Given("only lint:foo is cited by a scenario", function () {
 });
 
 function renderReportFor(fixture: UsgFixture, dir: string): string {
@@ -80,7 +80,7 @@ Then(
     );
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `a fitness scenario cites lint:foo; it must not surface as an uncited fitness-function credit; got:\n${activeMd}`
+      `a scenario cites lint:foo; it must not surface as an uncited fitness-function credit; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
@@ -99,7 +99,7 @@ Given(
   },
 );
 
-Given("a fitness scenario cites lint:nightly", function () {
+Given("a scenario cites lint:nightly", function () {
 });
 
 When(

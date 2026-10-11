@@ -1,5 +1,5 @@
 @USG
-Feature: Detect uncited fitness-functions — a CI check no fitness scenario cites
+Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   The fitness-function axis's UNCITED detection — the mirror of the
   runtime axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
@@ -7,8 +7,8 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
   observer below, not the checks an obligation names.
 
   The running-check observer emits every check a CI step runs into the reconcile stream, so the
-  ONE reconcile engine sees the complete fitness-function stream: a check a fitness scenario cites posts to
-  that scenario's row; one no fitness scenario cites — the citation seam reaches no @SCN for it —
+  ONE reconcile engine sees the complete fitness-function stream: a check a scenario cites posts to
+  that scenario's row; one no scenario cites — the citation seam reaches no @SCN for it —
   cites no scenario, so reconcile folds it to the suspense row (an UNCITED fitness-function). The
   report's fitness-function census is a pure count over the stream, runningFitnessFunctionCount and
   uncitedFitnessFunctionCount; the cited count is implicit, running − uncited. It is the fitness-function-axis
@@ -64,7 +64,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
   here that keep a Cucumber layer also drive the real file reads (ci.yml + package.json +
   features) over a fixture target and assert the rendered report surface.
 
-  Rule: a CI check no fitness scenario cites is reported as an uncited fitness function
+  Rule: a CI check no scenario cites is reported as an uncited fitness function
 
     A CHECK IS UNCITED WHEN ITS STEP NAMES NO SCENARIO. A check's CI step cites the scenario it
     answers by carrying that scenario's @SCN as its `id:`, and the credit carries the citation
@@ -87,9 +87,9 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     cited one and the uncited one is whether the step carries a scenario's code.
 
     @unit @SCN-USG-001
-    Scenario: a CI check no fitness scenario cites is reported as an uncited fitness function
+    Scenario: a CI check no scenario cites is reported as an uncited fitness function
 
-  Rule: a check a fitness scenario cites is attributed, not an uncited fitness function
+  Rule: a check a scenario cites is attributed, not an uncited fitness function
 
     THE POSITIVE TWIN, AND WHY THE PAIR IS NOT ONE SCENARIO SAID TWICE. The rule above is
     satisfied on its own by a reader that places NOTHING and calls every running check uncited;
@@ -98,7 +98,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     count. Between its two checks exactly one fact differs — whether the step carries a code —
     so nothing but the citation can move either verdict.
 
-    ATTRIBUTED MEANS POSTED. lint:foo's step carries the stepless fitness scenario's code as its
+    ATTRIBUTED MEANS POSTED. lint:foo's step carries the stepless scenario's code as its
     `id:`, so the run's credit cites that scenario and lands on its row. Nothing matches the
     handle that ran back to a tag, and nothing resolves the citation through a second artefact.
 
@@ -109,9 +109,9 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     distinguishable — every observation lands somewhere — so this scenario names where.
 
     @integration @SCN-USG-002
-    Scenario: a check a fitness scenario cites is attributed, not an uncited fitness function
+    Scenario: a check a scenario cites is attributed, not an uncited fitness function
       Given a target whose CI runs the lint:foo and lint:bar checks
-      And only lint:foo is cited by a fitness scenario
+      And only lint:foo is cited by a scenario
       When the reconciliation report is rendered for the target
       Then lint:foo is attributed to the scenario citing it, not reported uncited
 
@@ -192,7 +192,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     in nightly.yml earns it today for no reason but where it was written down.
 
     WHAT MAKES THE CHECK CITED IS ITS STEP; WHICH WORKFLOWS ARE READ IS THIS RULE. lint:nightly's
-    step in nightly.yml carries the stepless fitness scenario's code as its `id:`, so its run
+    step in nightly.yml carries the stepless scenario's code as its `id:`, so its run
     cites that scenario and lands on its row. The citation is settled where the step is; this
     Rule is about whether the step is read at all.
 
@@ -237,7 +237,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     @unit @integration @SCN-USG-006
     Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
       Given a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly
-      And a fitness scenario cites lint:nightly
+      And a scenario cites lint:nightly
       When the reconciliation report is rendered over the target's workflow directory
       Then lint:nightly reconciles satisfied, with no watermelon raised against it
 
@@ -266,7 +266,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
       When the reconciliation report is rendered for that target's ci.yml alone
       Then lint:sweep is not counted among the running fitness functions
 
-  Rule: a CI check whose script name matches no convention of the tool's, that a fitness scenario cites, is attributed
+  Rule: a CI check whose script name matches no convention of the tool's, that a scenario cites, is attributed
 
     THE CONTROL THAT MAKES THE RULE ABOVE MEAN SOMETHING. The rule above is satisfied on its own by
     a reader that places nothing and calls every script it finds uncited; this is what stops that.
@@ -545,7 +545,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     A CITATION ON EITHER IS UNSATISFIABLE, and that is the whole of why this is by construction
     rather than a judgement. The dump is written BEFORE the reconciliation reads it, so no record
     of this run can ever carry the balance step's own outcome, and no scenario can ever be shown
-    to have been answered by it. A demand nothing could ever satisfy is not a check a consumer has
+    to have been answered by it. An Evidence Obligation nothing could ever satisfy is not a check a consumer has
     failed to cite; it is not a check.
 
     AND A CONFIGURED ANSWER WOULD LOOK IDENTICAL, WHICH IS WHY THE FIXTURE SAYS NOTHING. A pair of
@@ -628,7 +628,7 @@ Feature: Detect uncited fitness-functions — a CI check no fitness scenario cit
     A MANIFEST THAT HAS SAID NOTHING IS SUPPORTED, NOT INCOMPLETE. There is no error, no warning,
     and nothing anywhere asking the consumer to configure something before the tool will answer
     them. A first run that scolded its reader for the absence of a block would be the prefix rule's
-    demand wearing a different sentence — you must tell us about your pipeline in our terms before
+    insistence wearing a different sentence — you must tell us about your pipeline in our terms before
     we will read it — and the whole argument of the inversion is that the tool reads what is there
     and reports it.
 

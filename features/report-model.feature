@@ -69,7 +69,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The fitness-function-axis manifesto on the JSON surface. The fitness-function census is
     summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
     with the runtime testVolume counter. There is no standalone member-list section, because
-    each check's detail lives on the rows: a cited check on its fitness scenario's own row, an
+    each check's detail lives on the rows: a cited check on its scenario's own row, an
     uncited one as a cites-no-scenario credit on the suspense row, so nothing is reported twice.
     The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited
     count is implicit, running − uncited. A pure derive over the model, held in isolation by

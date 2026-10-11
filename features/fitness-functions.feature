@@ -1,5 +1,5 @@
 @FIT
-Feature: The fitness functions this repository declares, one scenario per check
+Feature: The fitness functions this repository carries, one scenario per check
 
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
   a tag line carrying `@fitness` and a freshly minted code, and a title saying what the check
@@ -42,7 +42,7 @@ Feature: The fitness functions this repository declares, one scenario per check
   Cucumber selects none of these scenarios. A scenario Cucumber does not select carries no
   Given/When/Then and no step definition, here as for a `@unit`-only scenario: the title is the
   SPECIFICATION, saying what the check asserts of this tree, and the check's own command — run as a
-  step of the pipeline under this scenario's code — is the EVIDENCE. It is a DECLARED OBLIGATION
+  step of the pipeline under this scenario's code — is the EVIDENCE. It is an EVIDENCE OBLIGATION
   rather than a test, because nothing here runs it: the pipeline records what that step did, and
   `balance` reads the record.
 

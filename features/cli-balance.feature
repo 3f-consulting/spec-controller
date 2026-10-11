@@ -427,7 +427,7 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-018 @unit @e2e
     Scenario: an absent corpus and a corpus holding no scenario reach the same verdict by the same sentence
-      Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario
+      Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus carries no scenario
       When balance is asked to reconcile each of those targets
       Then every one of them is told the same verdict by the same sentence
       And that sentence names the corpus directory it examined
@@ -435,7 +435,7 @@ Feature: spec-controller balance runs standalone
   Rule: a run with nothing to reconcile has no verdict to give, and says so
 
     The balance verdict holds when every row balances, and so is VACUOUSLY TRUE on an empty
-    ledger: a target that declared nothing and produced nothing would be told "BALANCED … (exit 0)"
+    ledger: a target that carried no scenario and produced nothing would be told "BALANCED … (exit 0)"
     — a green over silence, from the tool whose whole claim is that silence is not the same as nothing
     wrong. Nothing-to-reconcile is its OWN enumerated state — not balanced (no accounts to
     agree), not out-of-balance (nothing disagrees), not a usage fault (the invocation was valid
@@ -450,7 +450,7 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-019 @unit @e2e
     Scenario: a run with nothing to reconcile exits 5 and its headline says so, rather than reporting balanced
-      Given a target that declared no scenario and produced no evidence
+      Given a target that carried no scenario and produced no evidence
       When balance is asked to reconcile that target
       Then the run ends on the nothing-to-reconcile verdict
       And the verdict headline says the run had nothing to reconcile, never that it balanced
@@ -498,7 +498,7 @@ Feature: spec-controller balance runs standalone
         | state                | target                                                                        | code                             | evidence                                                                           |
         | usage                | a target, and the Vitest report option pointing at a path that does not exist | a usage error                    | the rejection names the Vitest report option and the missing path                  |
         | unsound              | a target whose vitest report carries a collection-failed suite                | the unsound verdict              | it reports the Evidence Reconciliation                                             |
-        | nothing to reconcile | a target that declared no scenario and produced no evidence                   | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
+        | nothing to reconcile | a target that carried no scenario and produced no evidence                    | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
         | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code   | the unsound verdict              | the report still lists the scenario code error                                     |
 
   Rule: a corpus-shape fault never pre-empts the report

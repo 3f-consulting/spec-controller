@@ -18,7 +18,7 @@ const vitestResult: VitestJsonReport = {
       assertionResults: [
         { fullName: "[SCN-FIX-001] a fixture behaviour holds", title: "holds", status: "passed" },
         { fullName: "[SCN-FIX-001] a fixture behaviour holds again", title: "holds again", status: "passed" },
-        { fullName: "[SCN-PHX-999] a scenario no feature declares", title: "is cited", status: "passed" },
+        { fullName: "[SCN-PHX-999] a scenario no feature carries", title: "is cited", status: "passed" },
         { fullName: "a test citing no scenario", title: "a test citing no scenario", status: "passed" },
       ],
     },

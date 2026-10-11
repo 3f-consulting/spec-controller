@@ -1,9 +1,9 @@
 @NTR
-Feature: a fixture target that declared nothing and produced nothing
+Feature: a fixture target that carried no scenario and produced nothing
 
   A FIXTURE feature (NOT under features/) standing in for the modal `new-client`: a
   brownfield repository on the day it installs spec-controller. It has a corpus
-  directory and it is EMPTY OF SCENARIOS — no scenario is declared here, so no
+  directory and it is EMPTY OF SCENARIOS — the corpus carries no scenario, so no
   evidence obligation is raised — and the target supplies no evidence report, so no
   evidence observation is posted either. A GUARDLESS package.json and no --ci keep the
   suspense row empty: no fitness function is running, so nothing is uncited.
@@ -13,7 +13,7 @@ Feature: a fixture target that declared nothing and produced nothing
   `.every()` over `[]` is VACUOUSLY TRUE, so before @SCN-CLI-019 this target was told
   "BALANCED — every Scenario Reconciliation balances … (exit 0)".
 
-  The file deliberately declares NO scenario. That absence IS the fixture — adding one
+  The file deliberately carries NO scenario. That absence IS the fixture — adding one
   here would give the run a row and destroy the shape under test.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code

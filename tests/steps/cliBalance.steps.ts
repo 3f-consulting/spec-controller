@@ -591,7 +591,7 @@ const NOTHING_TO_RECONCILE = {
   packageJson: "tests/fixtures/nothing-to-reconcile/package.json",
 };
 
-Given("a target that declared no scenario and produced no evidence", function () {
+Given("a target that carried no scenario and produced no evidence", function () {
   const root = process.cwd();
   for (const path of Object.values(NOTHING_TO_RECONCILE)) {
     assert.ok(existsSync(join(root, path)), `missing fixture input: ${path}`);
@@ -727,7 +727,7 @@ function noCorpusRun(index: number): { shape: string; stdout: string } {
 }
 
 Given(
-  "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario",
+  "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus carries no scenario",
   function () {
     const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
     temporaryPaths.push(root);
@@ -736,12 +736,12 @@ Given(
       { shape: "no corpus directory", build: () => {} },
       { shape: "an empty corpus", build: (dir) => mkdirSync(join(dir, CORPUS_DIR)) },
       {
-        shape: "a corpus declaring no scenario",
+        shape: "a corpus carrying no scenario",
         build: (dir) => {
           mkdirSync(join(dir, CORPUS_DIR));
           writeFileSync(
             join(dir, CORPUS_DIR, "target.feature"),
-            "Feature: a corpus that declares nothing\n\n  Prose only. No scenario is declared in this file.\n",
+            "Feature: a corpus that carries no scenario\n\n  Prose only. This file carries no scenario.\n",
           );
         },
       },

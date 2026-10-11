@@ -332,8 +332,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.NothingToReconcileHeadline]: "**NOTHING TO RECONCILE**",
   [CoreMessage.NothingToReconcileGloss]: (corpusDir) =>
     "there were no accounts to agree. The ledger carries no Scenario Reconciliation at " +
-    `all, so this run has NO BASIS FOR A VERDICT — nothing was declared in \`${corpusDir}\` ` +
-    "and nothing was produced. Not balanced: a run that examined nothing must not certify.",
+    `all, so this run has NO BASIS FOR A VERDICT — the corpus \`${corpusDir}\` ` +
+    "carried no scenario and nothing was produced. Not balanced: a run that examined nothing must not certify.",
   [CoreMessage.PendingItemsOutstanding]:
     "⏳ Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",

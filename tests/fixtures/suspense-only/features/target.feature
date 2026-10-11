@@ -6,7 +6,7 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   satisfied by a passing observation, no observation cites a phantom scenario (no
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
-  SUSPENSE row: the target's CI runs `lint:uncited` and NO fitness scenario cites it — the
+  SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario cites it — the
   target registers no check for that handle and carries no scenario for one — so it is an
   uncited fitness function: an uncited credit, posted to the `(no scenario)` suspense reconciliation.
 

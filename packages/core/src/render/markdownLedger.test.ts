@@ -118,7 +118,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     ]);
   });
 
-  it("adds a column for a tier observed on a shared-code row, whose reconciliations name only its declared tiers", () => {
+  it("adds a column for a tier observed on a shared-code row, whose reconciliations name only the tiers its scenarios raise", () => {
     const shared = reconcile(
       [
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },

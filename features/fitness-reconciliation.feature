@@ -1,14 +1,14 @@
 @LNT
-Feature: Reconcile every fitness function as a fitness scenario citing its own @SCN
+Feature: Reconcile every fitness function as a @fitness scenario citing its own @SCN
 
   The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration / e2e /
-  performance tests, each an EXAMPLE), a fitness scenario DECLARES one Evidence
+  performance tests, each an EXAMPLE), a scenario RAISES one Evidence
   Obligation: a whole-system property held against a threshold. In this repository the scenario
   carries `@fitness` and a freshly minted code; its TITLE says what the check is about, and the
   command that settles it is the one its own CI step runs, stating that code as its `id:`. One
   such scenario is one check: nothing classifies it further.
 
-  A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. What keeps
+  A @fitness SCENARIO IS AN EVIDENCE OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. What keeps
   it off the runners is its TAG, and because Cucumber does not select it, it carries a title and
   tags and no Given/When/Then. What its title may not do is GRADE THE RUN: "the check passes"
   would have one row raise the obligation and answer it — BOTH SIDES OF THE ENTRY,
@@ -22,12 +22,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   be special.
 
   THE RETIRED PATHS RAISE NOTHING. A target that still carries `specController.checkRegistry`, or
-  tags its scenarios with a bare check word, has declared no check by it. The registry is read like
+  tags its scenarios with a bare check word, names no check by it. The registry is read like
   any key the specController block does not read: it settles nothing, and the report names it under
   `## Configuration not read` in the words it uses for any such key, saying nothing of what it once
   did. A bare check word raises no Evidence Obligation, because no set of
   registered check tags is read. A check is its `@fitness` scenario, and nothing
-  else declares it.
+  else names it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
   allocated, is stable forever: it survives a rename and is never reused — a rule this repository
@@ -57,16 +57,16 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   each. lint:feature-codes is one of those fixture handles: a name no script in this repository
   answers to, and none may, for the same reason.
 
-  WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY. A fitness scenario names its
+  WHICH TREE A SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY. A scenario names its
   subject in its own text — a PLANTED tree or THE REPOSITORY — and the evidence that answers it
   takes that subject rather than picking one for itself.
 
   Rule: a `@lint=<check>` tag raises no Evidence Obligation — the retired form is inert
 
-    THE RETIRED SPELLING NAMED A TECHNIQUE, NOT A CHECK. Under name-match, a scenario declared its
+    THE RETIRED SPELLING NAMED A TECHNIQUE, NOT A CHECK. Under name-match, a scenario named its
     fitness function by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
     matched back to it by name. The bare-tags Correction (canon 2026-08-07) retired that spelling
-    when the bare check tag took over, and a check is now declared by a @fitness scenario and
+    when the bare check tag took over, and a check is now named by a @fitness scenario and
     nothing else. What this Rule holds is only that the retired spelling stays
     dead on every path a reader might be tempted to re-route it through.
 
@@ -195,10 +195,10 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
-    NOTHING ELSE DECLARES IT. A manifest list of fitness functions once stood between the
+    NOTHING ELSE NAMES IT. A manifest list of fitness functions once stood between the
     tag and the obligation, and a scenario the list did not name raised nothing at all. The list is
     retired: an adopter writes the scenario and puts its @SCN on the CI step, and that is the whole
-    declaration. Nothing reads more of a list entry than the scenario already carries.
+    of naming it. Nothing reads more of a list entry than the scenario already carries.
 
     THE CHARACTERISTIC THAT ONCE KEYED IT IS RETIRED TOO. The tag collapsed to @fitness
     and the word it carried - complexity, mutation - moved onto the manifest entry, where it went on
@@ -231,7 +231,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       check. With no Evidence Observation citing its @SCN it reconciles missing, its row is out of
       balance, and the run fails — no new outcome is minted and none is needed.
 
-      WHAT IT REPLACES WAS AN ASYMMETRY RATHER THAN A POLICY. While a manifest entry declared the
+      WHAT IT REPLACES WAS AN ASYMMETRY RATHER THAN A POLICY. While a manifest entry named the
       check, a scenario no entry named raised NOTHING and the report said so in a census line,
       beside a degenerate both-missing row; an entry with no scenario raised a debit. One side of
       the same disagreement on the books and the other in prose. Canon requires both to be rows
@@ -293,7 +293,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no scenario
 
     THIS IS THE STATE A CONSUMER STARTS IN, AND REACHING IT COSTS THEM NOTHING. They have written
-    no fitness scenario, configured no row and touched no step; their pipeline runs the checks it
+    no @fitness scenario, configured no row and touched no step; their pipeline runs the checks it
     always ran. What can still be said about it — here is every check you run, and not one of them
     answers anything you have specified — is the first useful sentence this axis says to anybody,
     and it is a report rather than the absence of one.

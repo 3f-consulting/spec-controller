@@ -319,7 +319,7 @@ export const APP_MESSAGES: AppMessages = {
     "and where a check step's `id:` supplies the @SCN its result cites.",
   [AppMessage.PackageJsonFlag]: () =>
     "The target's package.json — its `scripts`, and its specController.runners, specController.notChecks " +
-    "and specController.deferralTags. A fitness function is declared by its @fitness scenario and the CI step " +
+    "and specController.deferralTags. A fitness function is named by its @fitness scenario and the CI step " +
     "whose id: is that scenario's @SCN; no manifest key names one.",
   [AppMessage.CiStepsFlag]: () =>
     "The CI run's own record of what each of its steps did — your pipeline's `toJSON(steps)` dump, " +

@@ -2,7 +2,7 @@
 Feature: a fixture target citing one of the two checks its CI runs
 
   A FIXTURE target (NOT under features/) standing in for a codebase whose CI runs two
-  fitness functions (lint:foo + lint:bar) and whose corpus carries a stepless fitness scenario
+  fitness functions (lint:foo + lint:bar) and whose corpus carries a stepless scenario
   for only one of them. Its lint:foo step carries that scenario's code as its
   own `id:`, so the running-check observer reads the citation directly off the step rather
   than through a registered handle. lint:bar's step carries no `id:` and no row answers it,
