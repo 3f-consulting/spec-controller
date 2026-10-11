@@ -1,4 +1,5 @@
 import { unlinkSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { FeatureNames } from "@3f-consulting/spec-controller-core";
@@ -8,6 +9,7 @@ import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
 import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { isStoredRunFile } from "../../run-management/keptRun.js";
 
 export interface OutputPayloads {
   readonly balance: EvidenceReconciliation;
@@ -27,9 +29,10 @@ export function writeOutputs(
   payloads: OutputPayloads,
   stdoutFile: () => FileIdentity | undefined,
   inputs: readonly IdentifiedInput[],
+  ownRunDir?: string,
 ): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  const refusal = vetDestinations(plan.outputs, stdoutFile, inputs);
+  const refusal = vetDestinations(plan.outputs, stdoutFile, inputs) ?? earlierStoredRunRefusal(plan.outputs, ownRunDir);
   if (refusal !== undefined) refuse(refusal);
   for (const { output, text } of emissions) emit(output, text);
 }
@@ -51,6 +54,15 @@ function vetDestinations(
   } finally {
     for (const path of created) unlinkSync(path);
   }
+}
+
+function earlierStoredRunRefusal(outputs: readonly PlannedOutput[], ownRunDir: string | undefined): string | undefined {
+  for (const { dest } of outputs) {
+    if (dest.kind === "stdout") continue;
+    if (ownRunDir !== undefined && resolve(dirname(dest.path)) === resolve(ownRunDir)) continue;
+    if (isStoredRunFile(dest.path)) return APP_MESSAGES[AppMessage.OutputOverwritesStoredRun](dest.path, dirname(dest.path));
+  }
+  return undefined;
 }
 
 function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefined, created: string[]): FileIdentity | undefined | string {

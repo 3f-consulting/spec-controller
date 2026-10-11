@@ -131,7 +131,7 @@ function restoreWritable(dir: string): void {
   }
 }
 
-After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010" }, function () {
+After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010 or @SCN-RMG-012" }, function () {
   if (scratch === undefined) return;
   const dir = scratch;
   scratch = undefined;
@@ -449,4 +449,35 @@ Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the run direc
 
 Then("no file under the run store was added, changed or removed", function () {
   assert.deepEqual(filesUnder(storeRoot), storeBefore, "the refused stored run changed the files under the store root");
+});
+
+const EARLIER_TARGET = "earlier";
+const EARLIER_RUN_ID = "r0";
+
+Given("an out-of-balance target and a run store holding an earlier stored run of a balanced target", function () {
+  assertTargetOutOfBalance();
+  scratch = mkdtempSync(join(tmpdir(), "spec-controller-store-earlier-"));
+  storeRoot = join(scratch, "store");
+  const earlier = specController(["--store", storeRoot, "--run-id", EARLIER_RUN_ID, "balance", ...BALANCED_ARGS, "--target", EARLIER_TARGET]);
+  assert.equal(earlier.status, BALANCED, `the earlier stored run did not complete:\n${earlier.stderr}`);
+  assert.ok(existsSync(join(storeRoot, EARLIER_TARGET, EARLIER_RUN_ID, "run.yaml")), "the earlier stored run left no run.yaml");
+  storeBefore = filesUnder(storeRoot);
+});
+
+function inEarlierRun(file: string): string {
+  return join(storeRoot, EARLIER_TARGET, EARLIER_RUN_ID, storedRunFile(file));
+}
+
+When(
+  new RegExp(`^the operator makes (a bare run|a run stored under another run id) of it and also asks for the (markdown|json) report at (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`),
+  function (how: string, format: string, file: string) {
+    const formatArgs = ["--format", `${FORMAT_FLAG[format]}:${inEarlierRun(file)}`];
+    const storeArgs = how === "a bare run" ? [] : ["--store", storeRoot, "--run-id", RUN_ID];
+    run = specController([...storeArgs, "balance", ...TARGET_ARGS, ...formatArgs]);
+  },
+);
+
+Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (file: string) {
+  const path = inEarlierRun(file);
+  assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
 });

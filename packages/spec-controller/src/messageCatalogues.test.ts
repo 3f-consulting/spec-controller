@@ -216,6 +216,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.MoreThanOneToStdout]: ["md, json"],
   [AppMessage.OutputsShareFile]: ["md:out.md", "json:out.md"],
   [AppMessage.OutputOverwritesInput]: ["json:vitest.json", "The --vitest report", "vitest.json"],
+  [AppMessage.OutputOverwritesStoredRun]: ["store/t/r0/run.yaml", "store/t/r0"],
   [AppMessage.ReportNotWritten]: ["json"],
   [AppMessage.HistoryBoundary]: ["not a git repository — none read", "a code above SCN-ONE-001"],
   [AppMessage.ShallowHistoryUnread]: ["abc1234"],

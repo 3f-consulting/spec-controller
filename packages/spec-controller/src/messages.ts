@@ -104,6 +104,7 @@ export enum AppMessage {
   MoreThanOneToStdout,
   OutputsShareFile,
   OutputOverwritesInput,
+  OutputOverwritesStoredRun,
   ReportNotWritten,
   HistoryBoundary,
   ShallowHistoryUnread,
@@ -185,6 +186,7 @@ interface AppMessageParams {
   [AppMessage.MoreThanOneToStdout]: [formats: string];
   [AppMessage.OutputsShareFile]: [first: string, second: string];
   [AppMessage.OutputOverwritesInput]: [output: string, subject: string, path: string];
+  [AppMessage.OutputOverwritesStoredRun]: [path: string, runDir: string];
   [AppMessage.ReportNotWritten]: [format: string];
   [AppMessage.HistoryBoundary]: [unread: string, risk: string];
   [AppMessage.ShallowHistoryUnread]: [before: string];
@@ -395,6 +397,9 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.OutputOverwritesInput]: (output, subject, path) =>
     `An output would overwrite a file this run reads: ${output} is ${subject}, ${path}. ` +
     `Give the report a file of its own.`,
+  [AppMessage.OutputOverwritesStoredRun]: (path, runDir) =>
+    `A --format output names ${path}, a file of the earlier stored run in ${runDir}. ` +
+    `Give the report a path outside that run's directory.`,
   [AppMessage.ReportNotWritten]: (format) => `The ${format} report could not be written`,
   [AppMessage.HistoryBoundary]: (unread, risk) => `history: ${unread}; ${risk} may have been used before`,
   [AppMessage.ShallowHistoryUnread]: (before) => `shallow clone — history before ${before} unread`,

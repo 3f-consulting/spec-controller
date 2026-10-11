@@ -143,6 +143,33 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | an earlier kept run under the same run-id | markdown | the saved reconciliation, in JSON     |
         | an earlier kept run under the same run-id | markdown | the run manifest                      |
 
+  Rule: a --format output never overwrites an earlier stored run's files
+
+    An earlier stored run's directory holds the run.yaml and the two reports that are its record.
+    A run, bare or stored under another run id, given a --format naming one of those files would
+    replace that record and end at its ordinary verdict. Such a run is refused as a usage error
+    before any report is written, and the earlier run keeps its files. A directory is a stored
+    run's when it holds a run.yaml that reads as a run manifest; the run needs no store to know it.
+
+    @unit @e2e @SCN-RMG-012
+    Scenario Outline: a run given a --format naming a file of an earlier stored run is refused naming the file, and that run keeps its files
+      Given an out-of-balance target and a run store holding an earlier stored run of a balanced target
+      When the operator makes <how> of it and also asks for the <format> report at <file> in the earlier run's directory
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names <file> in the earlier run's directory
+      And the refusal carries no stack trace
+      And no run directory is announced
+      And no file under the run store was added, changed or removed
+
+      Examples:
+        | how                               | format   | file                                  |
+        | a bare run                        | json     | the saved reconciliation, in JSON     |
+        | a bare run                        | markdown | the run manifest                      |
+        | a run stored under another run id | markdown | the saved reconciliation, in markdown |
+
+    @unit @SCN-RMG-013
+    Scenario: a --format path beside a run.yaml that is not a run manifest is written as before
+
   Rule: a stored run's run.yaml records only a run that wrote its report
 
     run.yaml names the two reports a stored run writes. A run that writes neither keeps no

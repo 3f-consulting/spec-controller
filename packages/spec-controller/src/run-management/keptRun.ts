@@ -1,11 +1,11 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { stringify } from "yaml";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { parse, stringify } from "yaml";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { firstSharingFile, inputAt, refuse, writeOrRefuse, type ReadInput } from "../outputLocation.js";
 
-export const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
-export const RECONCILIATION_JSON = "spec-reconciliation.json";
+const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
+const RECONCILIATION_JSON = "spec-reconciliation.json";
 
 export const RUN_MANIFEST = "run.yaml";
 
@@ -57,7 +57,27 @@ export interface KeptRunPlan {
   readonly reconciliationJsonPath: string;
 }
 
-export type RouteOutputs = (formatSpecs: readonly string[]) => boolean;
+export type RouteOutputs = (formatSpecs: readonly string[], runDir: string) => boolean;
+
+export function isStoredRunFile(path: string): boolean {
+  try {
+    return readsAsRunManifest(parse(readFileSync(join(dirname(path), RUN_MANIFEST), "utf8")));
+  } catch {
+    // A run.yaml that is absent, unreadable or not YAML makes no stored run.
+  }
+  return false;
+}
+
+function readsAsRunManifest(document: unknown): boolean {
+  if (typeof document !== "object" || document === null) return false;
+  const fields = document as Record<string, unknown>;
+  return (
+    fields["schema_version"] !== undefined &&
+    fields["run_id"] !== undefined &&
+    typeof fields["artefacts"] === "object" &&
+    fields["artefacts"] !== null
+  );
+}
 
 export function planKeptRun(spec: KeptRunSpec): KeptRunPlan {
   const runDir = join(spec.storeRoot, spec.target, spec.runId);
@@ -125,7 +145,7 @@ export function executeKeptRun(
   if (readManifest !== undefined) {
     refuse(APP_MESSAGES[AppMessage.StoredRunReadsItsManifest](manifestPath, readManifest.path, readManifest.subject));
   }
-  if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`])) return undefined;
+  if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`], plan.runDir)) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
   writeOrRefuse(APP_MESSAGES[AppMessage.StoredRunManifestNotWritten](), manifestPath, () =>
     writeFileSync(manifestPath, serialiseRunManifest(manifest)),

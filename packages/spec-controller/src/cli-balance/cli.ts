@@ -111,7 +111,7 @@ export function checkInputsParse(
   return null;
 }
 
-export function checkRenderFromJson(
+function checkRenderFromJson(
   args: Record<string, string>,
   read: (path: string) => string,
 ): string | null {
@@ -130,17 +130,17 @@ export function checkRenderFromJson(
   return null;
 }
 
-export function runBalance(argv: string[]): boolean {
-  return settlingRefusal(() => balance(argv), false);
+export function runBalance(argv: string[], ownRunDir?: string): boolean {
+  return settlingRefusal(() => balance(argv, ownRunDir), false);
 }
 
-function balance(argv: string[]): boolean {
+function balance(argv: string[], ownRunDir: string | undefined): boolean {
   const helped = asksForHelp(argv);
   if (helped) process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
-  return !helped && reconcile(argv);
+  return !helped && reconcile(argv, ownRunDir);
 }
 
-function reconcile(argv: string[]): boolean {
+function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   const runStart = new Date();
   const args = parseArgs(argv);
 
@@ -179,7 +179,7 @@ function reconcile(argv: string[]): boolean {
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
   const payloads = { balance, ctx, evidenceObligations, featureNames };
-  writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
+  writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)), ownRunDir);
 
   const verdict = verdictCode({ ...balance, strict: ctx.strict === true });
   const code = statusFor(verdict, args["exit-zero"] !== undefined);

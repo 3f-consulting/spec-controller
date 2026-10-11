@@ -25,10 +25,10 @@ import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { settlingRefusal } from "./outputLocation.js";
 
-function runCommand(command: string, argv: string[]): boolean {
+function runCommand(command: string, argv: string[], ownRunDir?: string): boolean {
   switch (command) {
     case "balance":
-      return runBalance(argv);
+      return runBalance(argv, ownRunDir);
     case "allocate":
       runAllocate(argv);
       return false;
@@ -92,7 +92,7 @@ function runKept(inv: HostInvocation, command: string, storeRoot: string): void 
   };
   const meta = manifestMeta(sourceSha);
 
-  const route: RouteOutputs = (formatSpecs) => runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs]));
+  const route: RouteOutputs = (formatSpecs, runDir) => runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs]), runDir);
   const plan = settlingRefusal(() => executeKeptRun(spec, meta, route), undefined);
 
   if (plan !== undefined) process.stdout.write(plan.runDir + "\n");
