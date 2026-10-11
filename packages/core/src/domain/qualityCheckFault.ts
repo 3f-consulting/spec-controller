@@ -11,11 +11,11 @@ interface SideDivergence {
   readonly actual: SidePresence;
 }
 
-export interface ObligationSideDivergesFromCanonFault extends SideDivergence {
+interface ObligationSideDivergesFromCanonFault extends SideDivergence {
   readonly code: QualityCheckFaultCode.ObligationSideDivergesFromCanon;
 }
 
-export interface ObservationSideDivergesFromCanonFault extends SideDivergence {
+interface ObservationSideDivergesFromCanonFault extends SideDivergence {
   readonly code: QualityCheckFaultCode.ObservationSideDivergesFromCanon;
 }
 

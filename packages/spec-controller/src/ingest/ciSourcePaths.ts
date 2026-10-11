@@ -7,7 +7,7 @@ export interface CiPathReader {
   readDir(path: string): string[];
 }
 
-export const NODE_CI_PATH_READER: CiPathReader = {
+const NODE_CI_PATH_READER: CiPathReader = {
   exists: existsSync,
   isDirectory: (path) => statSync(path).isDirectory(),
   readDir: readdirSync,
