@@ -1,9 +1,9 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnSighting } from "@3f-consulting/spec-controller-core";
+import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 
-function nextScnCode(request: AllocationRequest, sightings: readonly ScnSighting[]): Allocation {
-  const answer = answerFor(request, sightings);
+function nextScnCode(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
+  const answer = answerFor(request, occurrences);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);
   return answer;
 }
@@ -15,8 +15,8 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
   });
 
   it("names the file, line and commit when only history carries it", () => {
-    const sighting = { text: "-  @SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" };
-    expect(highestSeenLine(nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [sighting]))).toBe(
+    const occurrence = { text: "-  @SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" };
+    expect(highestSeenLine(nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [occurrence]))).toBe(
       "highest seen: SCN-ONE-005, features/one.feature:8 in abc1234",
     );
   });

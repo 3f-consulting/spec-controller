@@ -6,7 +6,7 @@ import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 
 const ctx: RunContext = {
-  target: "by-feature-uncoded",
+  target: "by-feature-no-scn-code",
   inputs: { features: "features" },
   runStart: new Date("2026-09-27T09:00:00.000Z"),
   sourceSha: null,
@@ -14,7 +14,7 @@ const ctx: RunContext = {
 
 const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 
-function uncodedCorpus(untagged: UntaggedScenario[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
+function noScnCodeCorpus(untagged: UntaggedScenario[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
   const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${u.scenario}`));
   return { reconciliation: reconciliationOf(ledger), census: evidenceObligations(0, 0, untagged) };
 }
@@ -38,16 +38,16 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
   });
 
   it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
-    const { reconciliation, census } = uncodedCorpus(checkout);
+    const { reconciliation, census } = noScnCodeCorpus(checkout);
     const rows = byFeatureRows(renderMarkdown(reconciliation, ctx, census));
     expect(rows).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
   });
 });
 
 describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row", () => {
-  it("counts a headed file's uncoded scenarios on its feature's row when none carries the code", () => {
-    const { reconciliation, census } = uncodedCorpus([
-      { feature: "one.feature", scenario: "an uncoded scenario" },
+  it("counts a headed file's no-scn-code scenarios on its feature's row when none carries the code", () => {
+    const { reconciliation, census } = noScnCodeCorpus([
+      { feature: "one.feature", scenario: "a no-scn-code scenario" },
       { feature: "one.feature", scenario: "an over-long code" },
     ]);
     const md = renderMarkdown(reconciliation, ctx, census, new Map([["ONE", "one"]]));

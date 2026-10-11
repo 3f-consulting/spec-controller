@@ -12,7 +12,7 @@ Feature: a fixture target whose fitness function runs in a sibling workflow
   workflow is read. Read ci.yml alone and they disagree, and the disagreement is scored
   against the target: lint:nightly reports as a watermelon, a real gate called fabricated.
 
-  THE STEP IS CODED DELIBERATELY. Leaving it uncoded would take the citation away for a
+  THE STEP IS CODED DELIBERATELY. Leaving it at cites-no-scenario would take the citation away for a
   second reason — a step naming no scenario reaches nothing either — and the target could
   then go on passing under a reader that never asked whether anything CITED the check.
   Coding it leaves the workflow split as the only thing this scenario turns on.

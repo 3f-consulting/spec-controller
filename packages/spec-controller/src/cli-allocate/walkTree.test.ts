@@ -33,6 +33,6 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
   });
 
   it("still reads a tree it may read", () => {
-    expect(walkTree(tree(), "ONE").map((sighting) => sighting.path)).toEqual(["docs/notes.md"]);
+    expect(walkTree(tree(), "ONE").map((occurrence) => occurrence.path)).toEqual(["docs/notes.md"]);
   });
 });

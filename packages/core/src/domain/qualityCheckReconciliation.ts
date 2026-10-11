@@ -132,7 +132,7 @@ function staticOutcomeOf(credit: FitnessEvidenceObservation): CreditOutcome | un
 
 function reconcileStaticObligation(
   scnId: string,
-  req: EvidenceObligation,
+  obligation: EvidenceObligation,
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   const { outcome, credit } = answerOf(
@@ -142,7 +142,7 @@ function reconcileStaticObligation(
   return makeQualityCheckReconciliation({
     qualityCheck: "fitness",
     outcome,
-    evidenceObligation: req,
+    evidenceObligation: obligation,
     ...(credit ? { evidenceObservation: credit } : {}),
   });
 }
@@ -153,23 +153,23 @@ function runtimeOutcomeOf(credit: RuntimeEvidenceObservation): CreditOutcome {
 
 export function reconcileEvidenceObligation(
   scnId: string,
-  req: EvidenceObligation,
+  obligation: EvidenceObligation,
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
-  if (req.qualityCheck === "fitness") {
-    return reconcileStaticObligation(scnId, req, evidenceObservations);
+  if (obligation.qualityCheck === "fitness") {
+    return reconcileStaticObligation(scnId, obligation, evidenceObservations);
   }
 
   const { outcome, credit } = answerOf(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
       o.broken !== true &&
-      o.qualityCheck === req.qualityCheck &&
+      o.qualityCheck === obligation.qualityCheck &&
       o.scnId === scnId
   ), runtimeOutcomeOf);
   return makeQualityCheckReconciliation({
-    qualityCheck: req.qualityCheck,
+    qualityCheck: obligation.qualityCheck,
     outcome,
-    evidenceObligation: req,
+    evidenceObligation: obligation,
     ...(credit ? { evidenceObservation: credit } : {}),
   });
 }

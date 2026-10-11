@@ -128,11 +128,11 @@ Feature: The report renders the ledger as sectioned facts
     so a reader sees the discrepancy CONCENTRATION by feature. The Feature cell reads
     "<full-name> (<FFF>)" — the full name is the feature file's filename slug, looked up via
     a target-derived code→slug map, read off the discovered feature files and carried on the
-    report model's metadata. An UNCODED id (an @SCN-XYZ-* whose XYZ no file carries)
+    report model's metadata. A FOREIGN-SCN-CODE id (an @SCN-XYZ-* whose XYZ no file carries)
     falls back to the bare FFF (the map misses) — as does the no-map back-compat path.
     Balanced scenarios are excluded (this is the discrepancy view). The scnId → <FFF> parse
     REUSES the one shared feature-code parse rather than a fresh regex. A pure derive over
-    the ledger rows + the feature-title lookup. Vitest proves the render (full name + uncoded fallback) in isolation.
+    the ledger rows + the feature-title lookup. Vitest proves the render (full name + foreign-scn-code fallback) in isolation.
 
     THE TOTAL LINE ACCOUNTS FOR EVERY OUT-OF-BALANCE ROW. Only scenario rows are
     grouped — a phantom-scenario or suspense-scenario row names no feature file, so it has no
@@ -151,7 +151,7 @@ Feature: The report renders the ledger as sectioned facts
     code are read from the report itself, so a re-render from the saved JSON groups them the same.
 
     @unit @SCN-RPT-006
-    Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
+    Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code for a foreign-scn-code
 
     @unit @SCN-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones

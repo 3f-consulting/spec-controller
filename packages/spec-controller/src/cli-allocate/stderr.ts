@@ -18,7 +18,7 @@ export function historyBoundaryLine(boundary: HistoryBoundary, allocation: Alloc
 export function highestSeenLine(allocation: Allocation): string {
   const highest = allocation.highest;
   if (highest === null) return APP_MESSAGES[AppMessage.HighestSeenNone]();
-  const { path, line, commit } = highest.sighting;
+  const { path, line, commit } = highest.occurrence;
   return commit === undefined
     ? APP_MESSAGES[AppMessage.HighestSeenInTree](highest.code, path, line)
     : APP_MESSAGES[AppMessage.HighestSeenInCommit](highest.code, path, line, commit);

@@ -45,7 +45,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
   });
 
   it("reads tracked and untracked files alike when it may read them all", () => {
-    const texts = readTree(repositoryWithDraft(), "ONE").map((sighting) => `${sighting.path}:${sighting.line}`);
+    const texts = readTree(repositoryWithDraft(), "ONE").map((occurrence) => `${occurrence.path}:${occurrence.line}`);
     expect(texts.sort()).toEqual(["docs/notes.md:1", "drafts/new.md:1"]);
   });
 
@@ -58,7 +58,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     mkdirSync(join(repo, "inner"));
     git(join(repo, "inner"), ["init", "-q"]);
     writeFileSync(join(repo, "inner", "x.md"), "Cites SCN-ONE-901.\n");
-    const paths = readTree(repo, "ONE").map((sighting) => sighting.path);
+    const paths = readTree(repo, "ONE").map((occurrence) => occurrence.path);
     expect(paths.sort()).toEqual(["docs/notes.md", "drafts/new.md"]);
   });
 });

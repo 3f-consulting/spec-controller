@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, it, expect } from "vitest";
 import { mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { diffLineSightings, readHistory, repositoryTop } from "./readHistory.js";
+import { diffLineOccurrences, readHistory, repositoryTop } from "./readHistory.js";
 import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.testkit.js";
 import { thrownBy } from "./answered.testkit.js";
 
@@ -29,7 +29,7 @@ describe("[SCN-ALC-015] a code that appears only in a commit message is not reti
   });
 
   it("never sights a message line, whatever it mentions", () => {
-    const texts = diffLineSightings(logWithMessage).map((sighting) => sighting.text);
+    const texts = diffLineOccurrences(logWithMessage).map((occurrence) => occurrence.text);
     expect(texts.some((text) => text.includes("SCN-ONE-900"))).toBe(false);
   });
 });

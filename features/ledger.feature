@@ -181,7 +181,7 @@ Feature: Ledger over obligation-vs-observation evidence
         | Feature  |
         | Rule     |
 
-  Rule: a scenario carrying no @SCN reconciles no-scn-code — uncoded work is never invisible
+  Rule: a scenario carrying no @SCN reconciles no-scn-code — no-scn-code work is never invisible
 
     @unit @SCN-LDG-021
     Scenario: a scenario carrying no @SCN reconciles no-scn-code on its own row, and the run is out-of-balance

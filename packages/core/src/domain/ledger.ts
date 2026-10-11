@@ -175,9 +175,9 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
   let onSuspenseScenario = 0;
 
   for (const row of ledger.scenarioReconciliations) {
-    for (const obs of row.evidenceObservations) {
-      if (obs.qualityCheck === "fitness") continue;
-      rawByRuntimeQualityCheck[obs.qualityCheck]++;
+    for (const observation of row.evidenceObservations) {
+      if (observation.qualityCheck === "fitness") continue;
+      rawByRuntimeQualityCheck[observation.qualityCheck]++;
       if (row.kind === "phantom-scenario") onPhantomScenario++;
       else if (row.kind === "suspense-scenario") onSuspenseScenario++;
       else onScenario++;
@@ -198,10 +198,10 @@ export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
   let runningFitnessFunctionCount = 0;
   let uncitedFitnessFunctionCount = 0;
   for (const row of ledger.scenarioReconciliations) {
-    for (const obs of row.evidenceObservations) {
-      if (obs.qualityCheck !== "fitness") continue;
-      if (obs.broken === true) continue;
-      if (!obs.exists) continue;
+    for (const observation of row.evidenceObservations) {
+      if (observation.qualityCheck !== "fitness") continue;
+      if (observation.broken === true) continue;
+      if (!observation.exists) continue;
       runningFitnessFunctionCount++;
       if (row.kind === "suspense-scenario") uncitedFitnessFunctionCount++;
     }

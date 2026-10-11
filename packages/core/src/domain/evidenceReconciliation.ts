@@ -144,8 +144,8 @@ function scenarioRow(
 ): ScenarioReconciliation {
   const pendingItems: PendingItem[] = pendingItemsOf(d);
 
-  const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((req) =>
-    reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
+  const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((obligation) =>
+    reconcileEvidenceObligation(d.scnId, obligation, evidenceObservations)
   );
 
   const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(

@@ -101,7 +101,7 @@ describe("[SCN-STG-010] two feature files carrying one header code are listed as
 });
 
 describe("[SCN-STG-019] a feature file with no header code whose scenarios carry codes is listed as no-feature-code", () => {
-  it("lists the uncoded file once, however many coded scenarios it holds", () => {
+  it("lists the no-feature-code file once, however many coded scenarios it holds", () => {
     const errors = scenarioCodeErrorsOf([
       file("one", "ONE", ["SCN-ONE-001"]),
       file("unc", null, ["SCN-UNC-001", "SCN-UNC-002"]),

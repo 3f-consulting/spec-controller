@@ -119,9 +119,9 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "  @unit @SCN-AB-001",
       "  Scenario: coded",
       "    Given the rule @SCN-AB-001 is cited",
-      "  Scenario: uncoded, straight after the cited step",
+      "  Scenario: no-scn-code, straight after the cited step",
       "    Given a step",
     ].join("\n");
-    expect(parseUntaggedScenarios(cited)).toEqual(["uncoded, straight after the cited step"]);
+    expect(parseUntaggedScenarios(cited)).toEqual(["no-scn-code, straight after the cited step"]);
   });
 });

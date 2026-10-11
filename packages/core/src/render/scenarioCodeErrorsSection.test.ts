@@ -82,7 +82,7 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
   const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
   const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver];
   const ownCode = CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode];
-  const othersUncoded = CORE_MESSAGES[CoreMessage.CleanOthersUncoded];
+  const othersNoFeatureCode = CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode];
   const noCoded = CORE_MESSAGES[CoreMessage.CleanNoCodedScenario];
 
   const cases = [
@@ -99,9 +99,9 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
     return [
       ownCode(over(`1 ${F}`, `1 ${C}`)),
       ownCode(over(`2 ${F}s`, `2 ${C}s`)),
-      othersUncoded(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
-      othersUncoded(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
-      othersUncoded(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+      othersNoFeatureCode(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
+      othersNoFeatureCode(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
+      othersNoFeatureCode(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
       noCoded(over(`1 ${F}`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ItPronoun]),
       noCoded(over(`2 ${F}s`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ThemPronoun]),
     ];

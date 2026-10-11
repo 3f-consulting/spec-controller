@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { nextScnCode, type Allocation, type AllocationRequest, type ScnSighting } from "./scnAllocation.js";
+import { nextScnCode, type Allocation, type AllocationRequest, type ScnOccurrence } from "./scnAllocation.js";
 
-function next(request: AllocationRequest, sightings: readonly ScnSighting[]): Allocation {
-  const answer = nextScnCode(request, sightings);
+function next(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
+  const answer = nextScnCode(request, occurrences);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);
   return answer;
 }
 
-function seen(text: string, path = "features/one.feature", line = 1): ScnSighting {
+function seen(text: string, path = "features/one.feature", line = 1): ScnOccurrence {
   return { text, path, line };
 }
 
@@ -22,8 +22,8 @@ describe("[SCN-ALC-008] the code is printed alone, zero-padded to three digits",
   });
 
   it("counts only the part asked for", () => {
-    const sightings = [seen("@SCN-ONE-002"), seen("@SCN-TWO-040"), seen("SCN-ONEX-050")];
-    expect(next(request, sightings).code).toBe("SCN-ONE-003");
+    const occurrences = [seen("@SCN-ONE-002"), seen("@SCN-TWO-040"), seen("SCN-ONEX-050")];
+    expect(next(request, occurrences).code).toBe("SCN-ONE-003");
   });
 
   it("offers the first code when the part carries none", () => {
@@ -44,15 +44,15 @@ describe("[SCN-ALC-009] a part whose highest code is 999 is offered 1000", () =>
 
 describe("[SCN-ALC-002] a code carried only on a CI step id is never offered again", () => {
   it("reads a step id as a code in use", () => {
-    const sightings = [seen("@SCN-ONE-001"), seen("        id: SCN-ONE-007", ".github/workflows/ci.yml", 8)];
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, sightings).code).toBe("SCN-ONE-008");
+    const occurrences = [seen("@SCN-ONE-001"), seen("        id: SCN-ONE-007", ".github/workflows/ci.yml", 8)];
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code).toBe("SCN-ONE-008");
   });
 });
 
 describe("[SCN-ALC-003] a code carried only in a test title is never offered again", () => {
   it("reads a bracketed test-title citation as a code in use", () => {
-    const sightings = [seen("@SCN-ONE-001"), seen('it("[SCN-ONE-007] does the thing", () => {});', "src/thing.test.ts", 3)];
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, sightings).code).toBe("SCN-ONE-008");
+    const occurrences = [seen("@SCN-ONE-001"), seen('it("[SCN-ONE-007] does the thing", () => {});', "src/thing.test.ts", 3)];
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code).toBe("SCN-ONE-008");
   });
 });
 
@@ -61,19 +61,19 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
   it("names the tree before history when both carry the highest code", () => {
     const inHistory = { ...seen("-  @SCN-ONE-005", "features/old.feature", 3), commit: "abc1234" };
     const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree]).highest?.sighting).toEqual(inTree);
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree]).highest?.occurrence).toEqual(inTree);
   });
 
-  it("keeps the first of two tree sightings of the same code", () => {
+  it("keeps the first of two tree occurrences of the same code", () => {
     const first = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
     const second = seen("[SCN-ONE-005] a test", "src/one.test.ts", 2);
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [first, second]).highest?.sighting).toEqual(first);
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [first, second]).highest?.occurrence).toEqual(first);
   });
 
-  it("keeps the first of two history sightings of the same code", () => {
+  it("keeps the first of two history occurrences of the same code", () => {
     const first = { ...seen("-  @SCN-ONE-005", "features/one.feature", 8), commit: "abc1234" };
     const second = { ...seen("+  @SCN-ONE-005", "features/one.feature", 8), commit: "def5678" };
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [first, second]).highest?.sighting).toEqual(first);
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [first, second]).highest?.occurrence).toEqual(first);
   });
 
   it("never lets a lower code in the tree displace a higher one history carried, read before it", () => {
@@ -81,7 +81,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
     expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree])).toMatchObject({
       code: "SCN-ONE-008",
-      highest: { sighting: inHistory },
+      highest: { occurrence: inHistory },
     });
   });
 });

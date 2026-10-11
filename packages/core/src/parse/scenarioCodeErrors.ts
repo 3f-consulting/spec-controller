@@ -71,7 +71,7 @@ export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioC
   return faults;
 }
 
-export function uncodedFeatureFiles(features: readonly CorpusFile[]): ScenarioCodeError[] {
+function noFeatureCodeFiles(features: readonly CorpusFile[]): ScenarioCodeError[] {
   return features
     .filter((file) => file.featureCode === null && parseTaggedScenarios(file.source).length > 0)
     .map((file) => ({
@@ -89,6 +89,6 @@ export function scenarioCodeErrorsOf(features: readonly CorpusFile[]): ScenarioC
   return [
     ...duplicateFeatureCodes(features),
     ...foreignScenarioCodes(features),
-    ...uncodedFeatureFiles(features),
+    ...noFeatureCodeFiles(features),
   ];
 }

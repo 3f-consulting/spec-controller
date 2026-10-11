@@ -51,7 +51,7 @@ export enum CoreMessage {
   ScenarioCodesCleanOver,
   CleanNoCodedScenario,
   CleanEachFileOwnCode,
-  CleanOthersUncoded,
+  CleanOthersNoFeatureCode,
   ItPronoun,
   ThemPronoun,
   HoldsVerb,
@@ -121,7 +121,7 @@ export enum CoreMessage {
   SuspenseScenarioRows,
   AndJoiner,
   ByFeatureTableHeader,
-  UncodedScenarios,
+  NoScnCodeScenarios,
   ScenarioReconciliationsHeading,
   ScenarioReconciliationTally,
   PhantomScenarioTally,
@@ -169,7 +169,7 @@ interface CoreMessageParams {
   [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
   [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
   [CoreMessage.CleanEachFileOwnCode]: [over: string];
-  [CoreMessage.CleanOthersUncoded]: [over: string, uncoded: number, hold: string];
+  [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
   [CoreMessage.DuplicateFeatureCode]: [code: string, fileCount: number, files: string];
   [CoreMessage.ForeignScnCodeOneCarrier]: [file: string, featureCode: string, scnId: string, named: string, carrier: string];
   [CoreMessage.ForeignScnCodeManyCarriers]: [
@@ -200,7 +200,7 @@ interface CoreMessageParams {
   [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   [CoreMessage.PhantomScenarioRows]: [count: number];
   [CoreMessage.SuspenseScenarioRows]: [count: number];
-  [CoreMessage.UncodedScenarios]: [count: number];
+  [CoreMessage.NoScnCodeScenarios]: [count: number];
   [CoreMessage.ScenarioReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
   [CoreMessage.PhantomScenarioTally]: [count: number];
   [CoreMessage.SuspenseScenarioTally]: [count: number];
@@ -280,8 +280,8 @@ export const CORE_MESSAGES: CoreMessages = {
     `Scenario codes are clean over ${featureFiles} carrying ${featureCodes}`,
   [CoreMessage.CleanNoCodedScenario]: (over, them) => `${over}: no scenario in ${them} carries an @SCN code to misfile.`,
   [CoreMessage.CleanEachFileOwnCode]: (over) => `${over}: each file carries a code of its own, and ${IN_ITS_FILE}.`,
-  [CoreMessage.CleanOthersUncoded]: (over, uncoded, hold) =>
-    `${over}: each code is carried by exactly one file, ${IN_ITS_FILE}, and the other ${uncoded} ` +
+  [CoreMessage.CleanOthersNoFeatureCode]: (over, noFeatureCode, hold) =>
+    `${over}: each code is carried by exactly one file, ${IN_ITS_FILE}, and the other ${noFeatureCode} ` +
     `${hold} no coded scenario.`,
   [CoreMessage.ItPronoun]: "it",
   [CoreMessage.ThemPronoun]: "them",
@@ -388,7 +388,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.SuspenseScenarioRows]: (count) => `${count} suspense-scenario row(s)`,
   [CoreMessage.AndJoiner]: " and ",
   [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
-  [CoreMessage.UncodedScenarios]: (count) => `${count} with no \`@SCN\` code`,
+  [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
   [CoreMessage.ScenarioReconciliationsHeading]: "## Scenario Reconciliations",
   [CoreMessage.ScenarioReconciliationTally]: (total, balanced, outOfBalance) =>
     `${total} Scenario Reconciliation(s): ${balanced} balanced, ${outOfBalance} out-of-balance.`,

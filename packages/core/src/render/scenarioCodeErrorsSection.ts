@@ -19,9 +19,9 @@ function cleanStatement(population: ScenarioCodePopulation | undefined): string 
     return CORE_MESSAGES[CoreMessage.CleanNoCodedScenario](over, them);
   }
   if (featureCodes === featureFiles) return CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode](over);
-  const uncoded = featureFiles - featureCodes;
-  const hold = uncoded === 1 ? CORE_MESSAGES[CoreMessage.HoldsVerb] : CORE_MESSAGES[CoreMessage.HoldVerb];
-  return CORE_MESSAGES[CoreMessage.CleanOthersUncoded](over, uncoded, hold);
+  const noFeatureCode = featureFiles - featureCodes;
+  const hold = noFeatureCode === 1 ? CORE_MESSAGES[CoreMessage.HoldsVerb] : CORE_MESSAGES[CoreMessage.HoldVerb];
+  return CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode](over, noFeatureCode, hold);
 }
 
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {

@@ -34,7 +34,7 @@ export { verdictCode } from "./domain/verdictCode.js";
 export type { VerdictCode, VerdictInputs } from "./domain/verdictCode.js";
 
 export { nextScnCode } from "./domain/scnAllocation.js";
-export type { Allocation, AllocationRequest, ScnSighting, UnknownPart } from "./domain/scnAllocation.js";
+export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart } from "./domain/scnAllocation.js";
 
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";

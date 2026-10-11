@@ -20,7 +20,7 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
       join(dir, "features", "config-vocabulary-lint.feature"),
       "@CVL\nFeature: config vocabulary lint\n\n  @unit @SCN-CVL-001\n  Scenario: coded\n"
     );
-    writeFileSync(join(dir, "features", "uncoded.feature"), "Feature: an uncoded feature\n\n  @unit @SCN-XYZ-001\n  Scenario: uncoded\n");
+    writeFileSync(join(dir, "features", "no-feature-code.feature"), "Feature: a feature file carrying no-feature-code\n\n  @unit @SCN-XYZ-001\n  Scenario: coded, in a file carrying no-feature-code\n");
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
     expect([report.metadata?.featureNames, "featureNames" in report]).toEqual([{ CVL: "config-vocabulary-lint" }, false]);

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { ScnSighting } from "@3f-consulting/spec-controller-core";
+import type { ScnOccurrence } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { firstLine, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
@@ -12,7 +12,7 @@ const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
 const COMMIT_MARKER = "\u0001";
 
-export function readHistory(cwd: string, part: string): ScnSighting[] {
+export function readHistory(cwd: string, part: string): ScnOccurrence[] {
   proveRefsReadable(cwd);
   const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `SCN-${part}-`];
   const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
@@ -20,7 +20,7 @@ export function readHistory(cwd: string, part: string): ScnSighting[] {
   if (result.status !== 0) {
     throw new UnreadableInput(AppMessage.History, cwd, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
   }
-  return diffLineSightings(result.stdout);
+  return diffLineOccurrences(result.stdout);
 }
 
 function gitAnswer(cwd: string, args: readonly string[]): string | null {
@@ -45,7 +45,7 @@ function gitEntryAtOrAbove(dir: string): string | null {
   }
 }
 
-export function isGitRepository(cwd: string): boolean {
+function isGitRepository(cwd: string): boolean {
   return gitAnswer(cwd, ["rev-parse", "--git-dir"]) !== null;
 }
 
@@ -76,22 +76,22 @@ interface PatchPosition {
   newLine: number;
 }
 
-export function diffLineSightings(logOutput: string): ScnSighting[] {
+export function diffLineOccurrences(logOutput: string): ScnOccurrence[] {
   const at: PatchPosition = { inFileHeader: false, oldPath: "", newPath: "", oldLine: 0, newLine: 0 };
-  const sightings: ScnSighting[] = [];
+  const occurrences: ScnOccurrence[] = [];
   for (const line of logOutput.split("\n")) {
-    const sighting = readLine(line, at);
-    if (sighting !== undefined) sightings.push(sighting);
+    const occurrence = readLine(line, at);
+    if (occurrence !== undefined) occurrences.push(occurrence);
   }
-  return sightings;
+  return occurrences;
 }
 
-function readLine(line: string, at: PatchPosition): ScnSighting | undefined {
+function readLine(line: string, at: PatchPosition): ScnOccurrence | undefined {
   if (line.startsWith(COMMIT_MARKER)) at.commit = line.slice(COMMIT_MARKER.length);
   else if (line.startsWith("diff --git ")) at.inFileHeader = true;
   else if (at.inFileHeader) readFileHeader(line, at);
-  else if (line.startsWith("-")) return sightingAt(line, at.oldPath, at.oldLine++, at.commit);
-  else if (line.startsWith("+")) return sightingAt(line, at.newPath, at.newLine++, at.commit);
+  else if (line.startsWith("-")) return occurrenceAt(line, at.oldPath, at.oldLine++, at.commit);
+  else if (line.startsWith("+")) return occurrenceAt(line, at.newPath, at.newLine++, at.commit);
   else if (line.startsWith("@@ ")) readHunkHeader(line, at);
   return undefined;
 }
@@ -115,6 +115,6 @@ function readHunkHeader(line: string, at: PatchPosition): void {
   at.newLine = Number(match?.[2] ?? 0);
 }
 
-function sightingAt(text: string, path: string, line: number, commit: string | undefined): ScnSighting {
+function occurrenceAt(text: string, path: string, line: number, commit: string | undefined): ScnOccurrence {
   return { text, path, line, commit };
 }

@@ -236,7 +236,7 @@ const byFeatureSection: SectionEmitter = (report) => {
 
 interface FeatureGroup {
   ids: string[];
-  uncoded: number;
+  noScnCode: number;
 }
 
 type ScenarioRows = RenderInput["ledger"]["scenarioReconciliations"];
@@ -251,10 +251,10 @@ function outOfBalanceByFeature(
   const groups = new Map<string, FeatureGroup>();
   for (const s of scenarios) {
     if (s.verdict !== "out-of-balance") continue;
-    const uncoded = carriesNoScnCode(s);
-    const key = (uncoded ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
-    const group = groups.get(key) ?? { ids: [], uncoded: 0 };
-    if (uncoded) group.uncoded += 1;
+    const noScnCode = carriesNoScnCode(s);
+    const key = (noScnCode ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
+    const group = groups.get(key) ?? { ids: [], noScnCode: 0 };
+    if (noScnCode) group.noScnCode += 1;
     else group.ids.push(s.scnId);
     groups.set(key, group);
   }
@@ -274,7 +274,7 @@ function byFeatureTableLines(
   for (const [key, group] of groups) {
     const slug = featureNames?.[key];
     const label = slug ? `${slug} (${key})` : key;
-    lines.push(`| ${label} | ${group.ids.length + group.uncoded} | ${idsCell(group)} |`);
+    lines.push(`| ${label} | ${group.ids.length + group.noScnCode} | ${idsCell(group)} |`);
   }
   lines.push("");
   return lines;
@@ -282,9 +282,9 @@ function byFeatureTableLines(
 
 function idsCell(group: FeatureGroup): string {
   const ids = group.ids.join(", ");
-  if (group.uncoded === 0) return ids;
-  const uncoded = CORE_MESSAGES[CoreMessage.UncodedScenarios](group.uncoded);
-  return ids === "" ? uncoded : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${uncoded}`;
+  if (group.noScnCode === 0) return ids;
+  const noScnCode = CORE_MESSAGES[CoreMessage.NoScnCodeScenarios](group.noScnCode);
+  return ids === "" ? noScnCode : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${noScnCode}`;
 }
 
 function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
