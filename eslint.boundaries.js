@@ -27,7 +27,7 @@ export default [
 
   {
     files: ["packages/core/src/**/*.ts"],
-    ignores: ["**/*.test.ts", "**/*.testkit.ts"],
+    ignores: ["**/*.test.ts", "**/*.test-utils.ts"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },
@@ -47,7 +47,7 @@ export default [
 
   {
     files: ["packages/*/src/**/*.ts"],
-    ignores: ["**/*.test.ts", "**/*.testkit.ts", "packages/core/src/**"],
+    ignores: ["**/*.test.ts", "**/*.test-utils.ts", "packages/core/src/**"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },

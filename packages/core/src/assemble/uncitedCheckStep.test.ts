@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-import { rowsOf } from "./checkStep.testkit.js";
+import { rowsOf } from "./checkStep.test-utils.js";
 
 const manifest = {
   scripts: {

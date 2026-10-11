@@ -26,7 +26,7 @@ function newestMtime(dir: string): number {
       newest = Math.max(newest, newestMtime(full));
       continue;
     }
-    if (entry.name.endsWith(".test.ts") || entry.name.endsWith(".testkit.ts") || entry.name.endsWith(".map")) continue;
+    if (entry.name.endsWith(".test.ts") || entry.name.endsWith(".test-utils.ts") || entry.name.endsWith(".map")) continue;
     newest = Math.max(newest, statSync(full).mtimeMs);
   }
   return newest;

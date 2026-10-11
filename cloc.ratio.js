@@ -5,7 +5,7 @@ export const testRatioCeiling = 3;
 export const test = {
   include: [
     "packages/**/*.test.ts",
-    "packages/**/*.testkit.ts",
+    "packages/**/*.test-utils.ts",
     "tests/**/*.ts",
     "tests/**/*.mts",
     "tests/**/*.mjs",
@@ -15,5 +15,5 @@ export const test = {
 
 export const production = {
   include: ["packages/*/src/**/*.ts"],
-  exclude: ["packages/**/*.test.ts", "packages/**/*.testkit.ts"],
+  exclude: ["packages/**/*.test.ts", "packages/**/*.test-utils.ts"],
 };

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { renderMarkdown } from "./markdown.js";
-import { sectionCtx as ctx } from "./runContext.testkit.js";
-import { sectionUnder, cells } from "./renderedSection.testkit.js";
-import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "../evidenceReconciliation.testkit.js";
+import { sectionCtx as ctx } from "./runContext.test-utils.js";
+import { sectionUnder, cells } from "./renderedSection.test-utils.js";
+import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "../evidenceReconciliation.test-utils.js";
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 

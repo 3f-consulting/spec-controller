@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
 import { cpSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { git, made, freshDirectory, writeInto, scenarioBlock } from "./repository.testkit.js";
-import { allocateIn } from "./answered.testkit.js";
+import { git, made, freshDirectory, writeInto, scenarioBlock } from "./repository.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 
 function repositoryWhoseHistoryOnceCarried(live: string, retired: string): string {
   const repo = freshDirectory("allocate-boundary-");

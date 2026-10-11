@@ -3,9 +3,9 @@ import { mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
-import { git, writeInto, commitAll, taken, withhold } from "./repository.testkit.js";
-import { allocateFrom } from "./answered.testkit.js";
-import type { Answered } from "./answered.testkit.js";
+import { git, writeInto, commitAll, taken, withhold } from "./repository.test-utils.js";
+import { allocateFrom } from "./answered.test-utils.js";
+import type { Answered } from "./answered.test-utils.js";
 
 const made: string[] = [];
 

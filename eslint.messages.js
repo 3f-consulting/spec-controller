@@ -8,7 +8,7 @@ export default [
       ".stryker-tmp/**",
       "**/node_modules/**",
       "**/*.test.ts",
-      "**/*.testkit.ts",
+      "**/*.test-utils.ts",
       "packages/core/src/domain/messages.ts", // the catalogues are where message prose belongs
       "packages/spec-controller/src/messages.ts",
     ],

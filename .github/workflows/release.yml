@@ -36,7 +36,7 @@ jobs:
         run: |
           tag="$(git describe --tags --match 'v*' --abbrev=0 HEAD)"
           if git diff --quiet "$tag" HEAD -- \
-            ':(glob)packages/*/src/**' ':(exclude,glob)packages/*/src/**/*.test.ts' ':(exclude,glob)packages/*/src/**/*.testkit.ts' \
+            ':(glob)packages/*/src/**' ':(exclude,glob)packages/*/src/**/*.test.ts' ':(exclude,glob)packages/*/src/**/*.test-utils.ts' \
             ':(glob)packages/*/package.json' ':(glob)packages/*/README.md' \
             ':(glob)packages/*/tsconfig.build.json' tsconfig.json; then
             echo "no published path changed since $tag"

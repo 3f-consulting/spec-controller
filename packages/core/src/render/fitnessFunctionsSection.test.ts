@@ -4,8 +4,8 @@ import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { renderMarkdown } from "./markdown.js";
-import { sectionCtxNextDay as ctx } from "./runContext.testkit.js";
-import { sectionUnder } from "./renderedSection.testkit.js";
+import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
+import { sectionUnder } from "./renderedSection.test-utils.js";
 
 const corpus = `@CVT
 Feature: fixture fitness corpus

@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { git, taken, withhold } from "./repository.testkit.js";
-import { allocateFrom, expectAnsweredWith } from "./answered.testkit.js";
-import type { Answered } from "./answered.testkit.js";
+import { git, taken, withhold } from "./repository.test-utils.js";
+import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
+import type { Answered } from "./answered.test-utils.js";
 
 function writeInto(root: string, path: string, content: string | Buffer): void {
   mkdirSync(dirname(join(root, path)), { recursive: true });

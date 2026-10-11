@@ -34,40 +34,40 @@ jobs:
       matrix:
         include:
           - scope: core-domain
-            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/**/*.testkit.ts,!packages/core/src/domain/messages.ts"
+            mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/**/*.test-utils.ts,!packages/core/src/domain/messages.ts"
             timeout: 60
           - scope: core-provenance
-            mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts,!packages/core/src/provenance/**/*.testkit.ts"
+            mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts,!packages/core/src/provenance/**/*.test-utils.ts"
             timeout: 8
           - scope: core-assemble
-            mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts,!packages/core/src/assemble/**/*.testkit.ts"
+            mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts,!packages/core/src/assemble/**/*.test-utils.ts"
             timeout: 17
           - scope: spec-controller-cli-allocate
-            mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts,!packages/spec-controller/src/cli-allocate/**/*.testkit.ts"
+            mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts,!packages/spec-controller/src/cli-allocate/**/*.test-utils.ts"
             timeout: 15
           - scope: core-render
-            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts,!packages/core/src/render/**/*.testkit.ts"
+            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts,!packages/core/src/render/**/*.test-utils.ts"
             timeout: 60
           - scope: spec-controller-run-management
-            mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts,!packages/spec-controller/src/run-management/**/*.testkit.ts"
+            mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts,!packages/spec-controller/src/run-management/**/*.test-utils.ts"
             timeout: 6
           - scope: spec-controller-shell
-            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.testkit.ts,!packages/spec-controller/src/messages.ts"
+            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.test-utils.ts,!packages/spec-controller/src/messages.ts"
             timeout: 36
           - scope: spec-controller-ingest
-            mutate: "packages/spec-controller/src/ingest/**/*.ts,!packages/spec-controller/src/ingest/**/*.test.ts,!packages/spec-controller/src/ingest/**/*.testkit.ts"
+            mutate: "packages/spec-controller/src/ingest/**/*.ts,!packages/spec-controller/src/ingest/**/*.test.ts,!packages/spec-controller/src/ingest/**/*.test-utils.ts"
             timeout: 19
           - scope: spec-controller-cli-balance
-            mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts,!packages/spec-controller/src/cli-balance/**/*.testkit.ts"
+            mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts,!packages/spec-controller/src/cli-balance/**/*.test-utils.ts"
             timeout: 21
           - scope: core-census
-            mutate: "packages/core/src/census/**/*.ts,!packages/core/src/census/**/*.test.ts,!packages/core/src/census/**/*.testkit.ts"
+            mutate: "packages/core/src/census/**/*.ts,!packages/core/src/census/**/*.test.ts,!packages/core/src/census/**/*.test-utils.ts"
             timeout: 3
           - scope: core-parse
-            mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.testkit.ts"
+            mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.test-utils.ts"
             timeout: 53
           - scope: core-lib
-            mutate: "packages/core/src/lib/**/*.ts,!packages/core/src/lib/**/*.test.ts,!packages/core/src/lib/**/*.testkit.ts"
+            mutate: "packages/core/src/lib/**/*.ts,!packages/core/src/lib/**/*.test.ts,!packages/core/src/lib/**/*.test-utils.ts"
             timeout: 6
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { git, writeInto, made, freshDirectory, taken, withhold } from "./repository.testkit.js";
-import { allocateFrom, expectAnsweredWith } from "./answered.testkit.js";
-import type { Answered } from "./answered.testkit.js";
+import { git, writeInto, made, freshDirectory, taken, withhold } from "./repository.test-utils.js";
+import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
+import type { Answered } from "./answered.test-utils.js";
 
 const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
 

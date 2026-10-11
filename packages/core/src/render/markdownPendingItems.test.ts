@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { adopterReportCtx as ctx } from "./runContext.testkit.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
   const evidenceReconciliationSection = (md: string): string => {

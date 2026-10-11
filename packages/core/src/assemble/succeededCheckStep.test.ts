@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
-import { checkStepReconciler } from "./checkStep.testkit.js";
+import { checkStepReconciler } from "./checkStep.test-utils.js";
 
 const corpus = `@CVT
 Feature: a converted target's fitness corpus

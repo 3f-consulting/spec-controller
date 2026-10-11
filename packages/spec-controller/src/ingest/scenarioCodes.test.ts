@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.testkit.js";
+import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.test-utils.js";
 import { readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
 import { extractFeatureCode } from "./ingestScenarios.js";
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { tallyOfEveryCreditKind } from "./runtimeObservationTally.testkit.js";
+import { tallyOfEveryCreditKind } from "./runtimeObservationTally.test-utils.js";
 
 describe("the runtime-observation tally reports the raw counts and the invented accounts", () => {
   let tally: ReturnType<typeof tallyOfEveryCreditKind>;

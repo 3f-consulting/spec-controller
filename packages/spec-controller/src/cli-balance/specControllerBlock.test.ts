@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { captured } from "./balanceRun.testkit.js";
+import { captured } from "./balanceRun.test-utils.js";
 
 const made: string[] = [];
 

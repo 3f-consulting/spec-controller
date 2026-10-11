@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { walkTree } from "./readTree.js";
-import { taken, withholdDirectory as withhold } from "./repository.testkit.js";
-import { thrownBy } from "./answered.testkit.js";
+import { taken, withholdDirectory as withhold } from "./repository.test-utils.js";
+import { thrownBy } from "./answered.test-utils.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();

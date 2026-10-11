@@ -25,7 +25,7 @@ export default [
   },
 
   {
-    files: ["packages/**/*.test.ts", "packages/**/*.testkit.ts"],
+    files: ["packages/**/*.test.ts", "packages/**/*.test-utils.ts"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },

@@ -9,7 +9,7 @@ import type {
   Ledger,
   ScenarioReconciliation,
 } from "../model.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one account, never to none", () => {
   const namedScenarios: Scenario[] = [

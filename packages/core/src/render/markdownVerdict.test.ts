@@ -4,8 +4,8 @@ import type { Ledger, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
-import { adopterReportCtx as ctx } from "./runContext.testkit.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 function qcr(
   fields: Parameters<typeof makeQualityCheckReconciliation>[0],

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { liveSaver, runPinned } from "./savedRun.testkit.js";
+import { liveSaver, runPinned } from "./savedRun.test-utils.js";
 
 let scratch: string;
 let saveLive: ReturnType<typeof liveSaver>;

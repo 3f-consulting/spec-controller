@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
-import { usageStatusOf } from "../usageStatus.testkit.js";
+import { usageStatusOf } from "../usageStatus.test-utils.js";
 
 const TARGET = "reads-its-own";
 const RUN_ID = "r1";

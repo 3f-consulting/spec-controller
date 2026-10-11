@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { runnersReconciler } from "./runnerTiers.testkit.js";
-import { feature } from "../evidenceReconciliation.testkit.js";
+import { runnersReconciler } from "./runnerTiers.test-utils.js";
+import { feature } from "../evidenceReconciliation.test-utils.js";
 
 const ci = `name: fixture CI
 jobs:

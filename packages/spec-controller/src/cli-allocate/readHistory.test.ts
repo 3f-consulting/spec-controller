@@ -2,8 +2,8 @@ import { afterAll, afterEach, beforeEach, describe, it, expect } from "vitest";
 import { mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { diffLineOccurrences, readHistory, repositoryTop } from "./readHistory.js";
-import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.testkit.js";
-import { thrownBy } from "./answered.testkit.js";
+import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.test-utils.js";
+import { thrownBy } from "./answered.test-utils.js";
 
 describe("[SCN-ALC-015] a code that appears only in a commit message is not retired", () => {
   let logWithMessage: string;

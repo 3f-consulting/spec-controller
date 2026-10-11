@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { balanceCommand } from "../cli-registry.js";
-import { headlineExit } from "./balanceRun.testkit.js";
-import { liveSaver, runPinned } from "./savedRun.testkit.js";
+import { headlineExit } from "./balanceRun.test-utils.js";
+import { liveSaver, runPinned } from "./savedRun.test-utils.js";
 
 let scratch: string;
 let saveLive: ReturnType<typeof liveSaver>;

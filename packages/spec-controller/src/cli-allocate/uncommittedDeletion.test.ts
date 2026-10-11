@@ -2,8 +2,8 @@ import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { git, writeInto, lines } from "./repository.testkit.js";
-import { allocateInGuarded as allocateIn } from "./answered.testkit.js";
+import { git, writeInto, lines } from "./repository.test-utils.js";
+import { allocateInGuarded as allocateIn } from "./answered.test-utils.js";
 
 const made: string[] = [];
 

@@ -2,7 +2,7 @@ import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { runAllocate } from "./cli.js";
-import { git, writeInto, commitAll, made, freshDirectory } from "./repository.testkit.js";
+import { git, writeInto, commitAll, made, freshDirectory } from "./repository.test-utils.js";
 
 function headedOneCarrying003(): string {
   const repo = freshDirectory("allocate-not-the-kind-");

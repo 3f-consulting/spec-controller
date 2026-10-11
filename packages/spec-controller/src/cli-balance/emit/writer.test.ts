@@ -6,7 +6,7 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
-import { usageStatusOf } from "../../usageStatus.testkit.js";
+import { usageStatusOf } from "../../usageStatus.test-utils.js";
 
 const ctx: RunContext = {
   target: "unwritable",

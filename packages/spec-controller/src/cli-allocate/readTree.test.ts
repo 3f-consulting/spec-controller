@@ -2,8 +2,8 @@ import { afterAll, afterEach, describe, it, expect } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
-import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.testkit.js";
-import { thrownBy } from "./answered.testkit.js";
+import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.test-utils.js";
+import { thrownBy } from "./answered.test-utils.js";
 
 describe("[SCN-ALC-004] with no history to read, a code is still offered and the boundary is stated", () => {
   it.each([

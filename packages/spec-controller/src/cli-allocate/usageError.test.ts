@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { gitInRepository as git } from "./repository.testkit.js";
-import { allocateIn } from "./answered.testkit.js";
+import { gitInRepository as git } from "./repository.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 
 const made: string[] = [];
 

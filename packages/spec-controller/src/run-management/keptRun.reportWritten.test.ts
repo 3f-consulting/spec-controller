@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST } from "./keptRun.js";
-import { meta } from "./runManifestMeta.testkit.js";
+import { meta } from "./runManifestMeta.test-utils.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const TARGET = "target";

@@ -5,8 +5,8 @@ import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { reportCtx as ctx } from "./runContext.testkit.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { reportCtx as ctx } from "./runContext.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
   const rmd005Scenarios: Scenario[] = [

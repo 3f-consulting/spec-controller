@@ -3,9 +3,9 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { git, writeInto, taken, withhold } from "./repository.testkit.js";
-import { allocateFrom } from "./answered.testkit.js";
-import type { Answered } from "./answered.testkit.js";
+import { git, writeInto, taken, withhold } from "./repository.test-utils.js";
+import { allocateFrom } from "./answered.test-utils.js";
+import type { Answered } from "./answered.test-utils.js";
 
 const made: string[] = [];
 

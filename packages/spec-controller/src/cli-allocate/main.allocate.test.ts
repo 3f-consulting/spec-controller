@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { main } from "../main.js";
-import { runGit as git } from "./repository.testkit.js";
+import { runGit as git } from "./repository.test-utils.js";
 
 function repositoryHeaded(part: string, code: string): string {
   const repo = realpathSync(mkdtempSync(join(tmpdir(), "main-allocate-")));

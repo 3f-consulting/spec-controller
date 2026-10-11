@@ -2,8 +2,8 @@ import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { git, writeInto, commitAll } from "./repository.testkit.js";
-import { allocateIn } from "./answered.testkit.js";
+import { git, writeInto, commitAll } from "./repository.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 
 function featureFile(part: string, codes: readonly string[]): string {
   const scenarios = codes.map((code, i) => `  @${code} @unit\n  Scenario: scenario ${i + 1}\n    Given a step\n`);

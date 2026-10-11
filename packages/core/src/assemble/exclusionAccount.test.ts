@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.testkit.js";
+import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 

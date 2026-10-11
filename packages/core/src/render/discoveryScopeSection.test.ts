@@ -3,9 +3,9 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { renderMarkdown } from "./markdown.js";
-import { sectionCtx as ctx } from "./runContext.testkit.js";
-import { sectionUnder, cells } from "./renderedSection.testkit.js";
-import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
+import { sectionCtx as ctx } from "./runContext.test-utils.js";
+import { sectionUnder, cells } from "./renderedSection.test-utils.js";
+import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 
 function reconcile(
   ciSources: readonly string[],

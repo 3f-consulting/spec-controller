@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeInto, commitAll, lines } from "./repository.testkit.js";
-import { allocateIn } from "./answered.testkit.js";
+import { writeInto, commitAll, lines } from "./repository.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 
 function git(cwd: string, args: readonly string[]): string {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {

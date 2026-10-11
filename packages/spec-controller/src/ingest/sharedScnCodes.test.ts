@@ -1,7 +1,7 @@
 import { afterAll, describe, it, expect } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { temporaryDirectoryIn } from "./corpusFixtures.testkit.js";
+import { temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
 import { readEvidenceObligations } from "./ingestQualityChecks.js";
 
 const made: string[] = [];

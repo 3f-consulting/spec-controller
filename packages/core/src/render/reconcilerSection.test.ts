@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { renderMarkdown } from "./markdown.js";
-import { sectionCtx as ctx } from "./runContext.testkit.js";
-import { sectionUnder } from "./renderedSection.testkit.js";
-import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.testkit.js";
+import { sectionCtx as ctx } from "./runContext.test-utils.js";
+import { sectionUnder } from "./renderedSection.test-utils.js";
+import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { discover, temporaryDirectoryIn } from "./corpusFixtures.testkit.js";
+import { discover, temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
 import {
   featureCorpusParseErrors,
   readEvidenceObligations,

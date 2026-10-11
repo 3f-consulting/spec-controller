@@ -8,7 +8,7 @@ import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { captured } from "./balanceRun.testkit.js";
+import { captured } from "./balanceRun.test-utils.js";
 
 const made: string[] = [];
 

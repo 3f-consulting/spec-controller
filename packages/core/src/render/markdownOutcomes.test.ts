@@ -3,8 +3,8 @@ import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { adopterReportCtx as ctx } from "./runContext.testkit.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-RPT-020] the markdown renders each outcome's canon description, not the bare handle", () => {
   let rich: Ledger;

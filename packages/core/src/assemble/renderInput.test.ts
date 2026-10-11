@@ -8,9 +8,9 @@ import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { reportCtx as ctx } from "./runContext.testkit.js";
-import { reportLedger } from "./renderInput.testkit.js";
-import { __er } from "../evidenceReconciliation.testkit.js";
+import { reportCtx as ctx } from "./runContext.test-utils.js";
+import { reportLedger } from "./renderInput.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,

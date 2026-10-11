@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
-import { checkStepReconciler, corpus, manifest } from "./checkStep.testkit.js";
+import { checkStepReconciler, corpus, manifest } from "./checkStep.test-utils.js";
 
 const ci = `name: fixture CI
 jobs:

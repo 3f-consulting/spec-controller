@@ -5,7 +5,7 @@ export default {
       severity: "error",
       comment:
         "a core module must not import the spec-controller app package — by workspace path, by installed path, or by a bare specifier that resolves to nothing",
-      from: { path: "^packages/core/src/", pathNot: "\\.(test|testkit)\\.ts$" },
+      from: { path: "^packages/core/src/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: {
         path: [
           "^packages/spec-controller/",
@@ -19,7 +19,7 @@ export default {
       name: "app-imports-core-internals",
       severity: "error",
       comment: "an app module must import the engine only through its published entry point",
-      from: { path: "^packages/spec-controller/src/", pathNot: "\\.(test|testkit)\\.ts$" },
+      from: { path: "^packages/spec-controller/src/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: {
         path: [
           "^packages/core/(src|dist)/",
@@ -34,7 +34,7 @@ export default {
       name: "core-imports-io",
       severity: "error",
       comment: "a core module must not import a node IO builtin — the engine stays testable with data alone",
-      from: { path: "^packages/core/src/", pathNot: "\\.(test|testkit)\\.ts$" },
+      from: { path: "^packages/core/src/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: { dependencyTypes: ["core"], path: "^(node:)?(fs|process)(/|$)" },
     },
 
@@ -50,7 +50,7 @@ export default {
       name: "domain-imports-only-domain",
       severity: "error",
       comment: "a domain module must import only other domain modules — nothing outside its package's domain/",
-      from: { path: "^packages/([^/]+)/src/domain/", pathNot: "\\.(test|testkit)\\.ts$" },
+      from: { path: "^packages/([^/]+)/src/domain/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: { pathNot: "^packages/$1/src/domain/" },
     },
 

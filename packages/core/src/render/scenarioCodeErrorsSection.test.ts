@@ -8,7 +8,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
 import { duplicateFeatureCodes, foreignScenarioCodes } from "../parse/scenarioCodeErrors.js";
 import type { CorpusFile } from "../parse/scenarioCodeErrors.js";
-import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.testkit.js";
+import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 
 function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(

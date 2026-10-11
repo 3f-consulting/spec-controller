@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
-import { git, writeInto, scenarioBlock } from "./repository.testkit.js";
-import { allocateIn } from "./answered.testkit.js";
+import { git, writeInto, scenarioBlock } from "./repository.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 
 const created: string[] = [];
 
