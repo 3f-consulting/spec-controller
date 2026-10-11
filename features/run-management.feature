@@ -170,6 +170,22 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     @unit @SCN-RMG-013
     Scenario: a --format path beside a run.yaml that is not a run manifest is written as before
 
+    @unit @e2e @SCN-RMG-014
+    Scenario Outline: a run given a --format that is a symlink to a file of an earlier stored run is refused naming the link and that run's directory, and that run keeps its files
+      Given an out-of-balance target and a run store holding an earlier stored run of a balanced target
+      And a link to <file> in the earlier run's directory
+      When the operator makes <how> of it and also asks for the <format> report at that link
+      Then the run is refused as a usage error, never reported as a verdict
+      And the refusal names the link and the earlier run's directory
+      And the refusal carries no stack trace
+      And no run directory is announced
+      And no file under the run store was added, changed or removed
+
+      Examples:
+        | how                               | format   | file                              |
+        | a bare run                        | json     | the saved reconciliation, in JSON |
+        | a run stored under another run id | markdown | the run manifest                  |
+
   Rule: a stored run's run.yaml records only a run that wrote its report
 
     run.yaml names the two reports a stored run writes. A run that writes neither keeps no

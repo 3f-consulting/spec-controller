@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
@@ -119,6 +119,42 @@ describe("[SCN-RMG-012] the stored run's own run directory is not an earlier sto
 
     expect(stderr).toEqual([]);
     expect(readFileSync(path, "utf8")).not.toBe(EARLIER_JSON);
+  });
+});
+
+describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlier stored run is refused naming the link and that run's directory", () => {
+  const files: ReadonlyArray<readonly [string, "md" | "json"]> = [
+    ["spec-reconciliation.json", "json"],
+    ["spec-reconciliation.md", "md"],
+    ["run.yaml", "md"],
+  ];
+
+  for (const [file, fmt] of files) {
+    it(`refuses the ${fmt} report at a link to the earlier run's ${file}, naming the link and the run's directory on one line`, () => {
+      const link = join(scratch, "links", "report");
+      mkdirSync(join(scratch, "links"));
+      symlinkSync(join("..", "store", "earlier", "r0", file), link);
+
+      expect(usageStatusOf(() => writeOutputs(plan(toFile(link, fmt)), payloads, processStdout, []))).toBe(2);
+
+      const refusal = stderr.join("");
+      expect(refusal).toContain(link);
+      expect(refusal).toContain(realpathSync(earlierRunDir));
+      expect(refusal.trimEnd().split("\n")).toHaveLength(1);
+      expect(refusal).not.toMatch(/^\s+at /m);
+      expectEarlierRunKept(earlierRunDir);
+    });
+  }
+
+  it("refuses a link to the earlier run's file for a stored run of its own, whose run directory is elsewhere", () => {
+    const ownRunDir = join(scratch, "store", "later", "r1");
+    mkdirSync(ownRunDir, { recursive: true });
+    const link = join(scratch, "report.json");
+    symlinkSync(join(earlierRunDir, "spec-reconciliation.json"), link);
+
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(link, "json")), payloads, processStdout, [], ownRunDir))).toBe(2);
+
+    expectEarlierRunKept(earlierRunDir);
   });
 });
 

@@ -1,9 +1,9 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { STORED_RUN_FILE_INTENT, storedRunFile } from "./support/storedRunFile.js";
 
@@ -131,7 +131,7 @@ function restoreWritable(dir: string): void {
   }
 }
 
-After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010 or @SCN-RMG-012" }, function () {
+After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010 or @SCN-RMG-012 or @SCN-RMG-014" }, function () {
   if (scratch === undefined) return;
   const dir = scratch;
   scratch = undefined;
@@ -480,4 +480,23 @@ When(
 Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (file: string) {
   const path = inEarlierRun(file);
   assert.ok(run.stderr.includes(path), `the refusal does not name ${path}:\n${run.stderr}`);
+});
+
+let earlierRunLink: string;
+
+Given(new RegExp(`^a link to (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (file: string) {
+  mkdirSync(join(scratch!, "links"));
+  earlierRunLink = join(scratch!, "links", "report");
+  symlinkSync(relative(dirname(earlierRunLink), inEarlierRun(file)), earlierRunLink);
+});
+
+When(/^the operator makes (a bare run|a run stored under another run id) of it and also asks for the (markdown|json) report at that link$/, function (how: string, format: string) {
+  const storeArgs = how === "a bare run" ? [] : ["--store", storeRoot, "--run-id", RUN_ID];
+  run = specController([...storeArgs, "balance", ...TARGET_ARGS, "--format", `${FORMAT_FLAG[format]}:${earlierRunLink}`]);
+});
+
+Then("the refusal names the link and the earlier run's directory", function () {
+  const earlierRunDir = realpathSync(join(storeRoot, EARLIER_TARGET, EARLIER_RUN_ID));
+  assert.ok(run.stderr.includes(earlierRunLink), `the refusal does not name ${earlierRunLink}:\n${run.stderr}`);
+  assert.ok(run.stderr.includes(earlierRunDir), `the refusal does not name ${earlierRunDir}:\n${run.stderr}`);
 });

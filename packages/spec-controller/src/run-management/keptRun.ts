@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parse, stringify } from "yaml";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
@@ -59,9 +59,15 @@ export interface KeptRunPlan {
 
 export type RouteOutputs = (formatSpecs: readonly string[], runDir: string) => boolean;
 
-export function isStoredRunFile(path: string): boolean {
+export function earlierStoredRunDirOf(path: string, ownRunDir: string | undefined): string | undefined {
+  const dir = existsSync(path) ? dirname(realpathSync(path)) : realpathSync(dirname(path));
+  if (ownRunDir !== undefined && dir === realpathSync(ownRunDir)) return undefined;
+  return holdsRunManifest(dir) ? dir : undefined;
+}
+
+function holdsRunManifest(dir: string): boolean {
   try {
-    return readsAsRunManifest(parse(readFileSync(join(dirname(path), RUN_MANIFEST), "utf8")));
+    return readsAsRunManifest(parse(readFileSync(join(dir, RUN_MANIFEST), "utf8")));
   } catch {
     // A run.yaml that is absent, unreadable or not YAML makes no stored run.
   }

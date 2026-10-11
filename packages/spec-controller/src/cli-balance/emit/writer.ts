@@ -1,5 +1,4 @@
 import { unlinkSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { FeatureNames } from "@3f-consulting/spec-controller-core";
@@ -9,7 +8,7 @@ import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
 import { APP_MESSAGES, AppMessage } from "../../messages.js";
-import { isStoredRunFile } from "../../run-management/keptRun.js";
+import { earlierStoredRunDirOf } from "../../run-management/keptRun.js";
 
 export interface OutputPayloads {
   readonly balance: EvidenceReconciliation;
@@ -59,8 +58,8 @@ function vetDestinations(
 function earlierStoredRunRefusal(outputs: readonly PlannedOutput[], ownRunDir: string | undefined): string | undefined {
   for (const { dest } of outputs) {
     if (dest.kind === "stdout") continue;
-    if (ownRunDir !== undefined && resolve(dirname(dest.path)) === resolve(ownRunDir)) continue;
-    if (isStoredRunFile(dest.path)) return APP_MESSAGES[AppMessage.OutputOverwritesStoredRun](dest.path, dirname(dest.path));
+    const runDir = earlierStoredRunDirOf(dest.path, ownRunDir);
+    if (runDir !== undefined) return APP_MESSAGES[AppMessage.OutputOverwritesStoredRun](dest.path, runDir);
   }
   return undefined;
 }
