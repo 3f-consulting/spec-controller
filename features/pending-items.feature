@@ -51,10 +51,10 @@ Feature: A pending evidence obligation raises a Pending Item
         | e2e           |
         | performance   |
 
-  Rule: A Pending Item is one-sided and never affects the verdict or the run
+  Rule: A Pending Item is one-sided: it never affects the verdict itself, and a credit at its deferred check is no-evidence-obligation
 
     @unit @SCN-PND-005
-    Scenario: the pending tag's existence alone raises the Pending Item — no observation is sought
+    Scenario: a passing observation at a deferred quality check is no-evidence-obligation — the Pending Item stands and the row is out of balance until the deferral tag is removed
 
     @unit @SCN-PND-006
     Scenario: a Pending Item is not a Reconciling Item (it is not an error)
@@ -106,7 +106,7 @@ Feature: A pending evidence obligation raises a Pending Item
         | skipped | missing   |
         | todo    | missing   |
 
-  Rule: A recognised deferral tag raises a Pending Item, overriding the observation-derived outcome
+  Rule: A recognised deferral tag raises a Pending Item in place of the missing outcome a skipped or pending run would give
 
     @unit @SCN-PND-016
     Scenario Outline: a recognised community tag <tag> defers every obligation on its scenario (scenario-scope)
