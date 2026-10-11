@@ -17,7 +17,7 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function credits, filtered to what ran", () => {
+describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function evidence observations, filtered to what ran", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "fitness" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -38,11 +38,11 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function c
     expect(tally.runningFitnessFunctionCount).toBe(3);
   });
 
-  it("counts the fitness credits on the SUSPENSE row as the uncited fitness functions", () => {
+  it("counts the fitness evidence observations on the SUSPENSE row as the uncited fitness functions", () => {
     expect(tally.uncitedFitnessFunctionCount).toBe(1);
   });
 
-  it("counts no runtime credit, whatever fields it arrives carrying", () => {
+  it("counts no runtime evidence observation, whatever fields it arrives carrying", () => {
     const runtimeCarryingGuardFields = {
       qualityCheck: "unit" as const,
       scnId: "SCN-A",
@@ -84,18 +84,18 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the su
   const citedScn = (script: string): ScriptCitation | null =>
     script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
 
-  let citedCredits: ReturnType<typeof runningFitnessFunctions>;
-  let uncitedCredits: ReturnType<typeof runningFitnessFunctions>;
+  let citedObservations: ReturnType<typeof runningFitnessFunctions>;
+  let uncitedObservations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    const runningCredits = runningFitnessFunctions([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
-    citedCredits = runningCredits.filter((o) => o.fitnessFunction === "lint:foo");
-    uncitedCredits = runningCredits.filter((o) => o.fitnessFunction !== "lint:foo");
-    ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
+    const runningObservations = runningFitnessFunctions([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
+    citedObservations = runningObservations.filter((o) => o.fitnessFunction === "lint:foo");
+    uncitedObservations = runningObservations.filter((o) => o.fitnessFunction !== "lint:foo");
+    ledger = reconcile(fitness, [...citedObservations, ...uncitedObservations]);
   });
 
-  it("derives one citing credit and one uncited credit from the CI source (the corpus is real, not seeded)", () => {
-    expect(citedCredits).toEqual([
+  it("derives one citing evidence observation and one uncited evidence observation from the CI source (the corpus is real, not seeded)", () => {
+    expect(citedObservations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:foo",
@@ -104,18 +104,18 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the su
         scnId: "SCN-TGT-001",
       },
     ]);
-    expect(uncitedCredits).toEqual([
+    expect(uncitedObservations).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
-  it("banks the uncited credit on the suspense row as cites-no-scenario, naming the handle that ran", () => {
+  it("banks the uncited evidence observation on the suspense row as cites-no-scenario, naming the handle that ran", () => {
     expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:bar",
         outcome: "cites-no-scenario",
-        evidenceObservation: uncitedCredits[0],
+        evidenceObservation: uncitedObservations[0],
       },
     ]);
   });
@@ -148,13 +148,13 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
       evidenceObligations: [{ qualityCheck: "fitness" }],
     },
   ];
-  let credits: ReturnType<typeof runningFitnessFunctions>;
+  let observations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    credits = runningFitnessFunctions([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
+    observations = runningFitnessFunctions([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
       (o) => o.fitnessFunction === "domain-purity"
     );
-    ledger = reconcile(fitness, credits);
+    ledger = reconcile(fitness, observations);
   });
 
   it("tallies the run as 1 running fitness function and 0 uncited", () => {

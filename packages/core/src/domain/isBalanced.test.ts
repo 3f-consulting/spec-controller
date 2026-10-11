@@ -10,14 +10,14 @@ import type {
 } from "../model.js";
 
 const unitScenario = (scnId: string): Scenario => ({ scnId, evidenceObligations: [{ qualityCheck: "unit" }] });
-const unitCredit = (scnId: string): EvidenceObservation => ({ qualityCheck: "unit", scnId, status: "passed" });
+const unitObservation = (scnId: string): EvidenceObservation => ({ qualityCheck: "unit", scnId, status: "passed" });
 
 describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanced run is not reded", () => {
 
   it("maps a balanced reconciliation to NO non-zero exit code (the gate does not over-fire)", () => {
     const reconciliation: Ledger = reconcile(
       [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
-      [unitCredit("SCN-TGT-001"), unitCredit("SCN-TGT-002")],
+      [unitObservation("SCN-TGT-001"), unitObservation("SCN-TGT-002")],
     );
     expect(verdictCode({ ledger: reconciliation, strict: false })).toBe(0);
   });
@@ -62,8 +62,8 @@ describe("[SCN-CLI-019] hasNothingToReconcile — the whole-run predicate for a 
   });
 });
 
-describe("[SCN-CLI-020] a corpus-less run carrying uncited credits — an ordinary out-of-balance report", () => {
-  const corpusLessWithCredits = () =>
+describe("[SCN-CLI-020] a corpus-less run carrying uncited evidence observations — an ordinary out-of-balance report", () => {
+  const corpusLessWithObservations = () =>
     reconcile(
       [],
       [
@@ -73,7 +73,7 @@ describe("[SCN-CLI-020] a corpus-less run carrying uncited credits — an ordina
     );
 
   it("is out of balance, so it reaches the verdict exit 5 would have replaced", () => {
-    const ledger = corpusLessWithCredits();
+    const ledger = corpusLessWithObservations();
     expect(isBalanced(ledger)).toBe(false);
     expect(hasBrokenEvidence(ledger)).toBe(false);
     expect(hasPendingItems(ledger)).toBe(false);

@@ -58,8 +58,8 @@ beforeEach(() => {
   reconcile = checkStepReconciler(corpus, manifest, ci, record);
 });
 
-describe("[SCN-LNT-021] a fitness function's step the run's record says succeeded credits its own row", () => {
-  it("credits each row by the step citing its OWN @SCN, and both balance", () => {
+describe("[SCN-LNT-021] a fitness function's step the run's record says succeeded answers its own row's obligation", () => {
+  it("answers each row's obligation by the step citing its OWN @SCN, and both balance", () => {
     const reconciliation = reconcile();
 
     expect(

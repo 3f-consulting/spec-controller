@@ -32,7 +32,7 @@ describe("[SCN-PND-002] the pending suffix is significant — @integrationpendin
     expect(scenario!.evidenceObligations.some((o) => o.pending)).toBe(false);
   });
 
-  it("a passing Cucumber scenario tagged @integrationpending is credited at the caller's fallback, never as integration", () => {
+  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the caller's fallback, never as integration", () => {
     const observations = parseCucumberEvidenceObservations(
       [
         {

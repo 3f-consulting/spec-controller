@@ -54,7 +54,7 @@ Feature: spec-controller balance runs standalone
     masquerade as the usage error (`2`). Out-of-balance is a domain
     derivation over the WHOLE reconciliation: out-of-balance iff ANY reconciling item
     exists anywhere — a scenario's out-of-balance items AND the suspense-row items
-    (a fitness-function watermelon, a no-evidence-obligation credit, a phantom scenario) — NOT a scan
+    (a fitness-function watermelon, a no-evidence-obligation evidence observation, a phantom scenario) — NOT a scan
     of scenario verdicts alone, which would let a watermelon-only run (no
     out-of-balance scenario) exit `0`, the false pass this gate must never give.
 
@@ -444,7 +444,7 @@ Feature: spec-controller balance runs standalone
     reconcile).
 
     KEYED ON THE EMPTY LEDGER, NEVER ON THE EMPTY CORPUS, and that is load-bearing rather than
-    pedantic: a target with no corpus but uncited credits HAS rows — its suspense row — and is
+    pedantic: a target with no corpus but uncited evidence observations HAS rows — its suspense row — and is
     an ordinary out-of-balance report at exit 1. Key this on "no corpus" instead and the modal
     first run's whole report disappears behind exit 5.
 
@@ -456,10 +456,10 @@ Feature: spec-controller balance runs standalone
       And the verdict headline says the run had nothing to reconcile, never that it balanced
 
     @SCN-CLI-020 @unit @e2e
-    Scenario: a corpus-less run carrying uncited credits is an ordinary out-of-balance report at exit 1
+    Scenario: a corpus-less run carrying uncited evidence observations is an ordinary out-of-balance report at exit 1
       Given a target with no Gherkin corpus whose unit evidence cites no scenario
       When balance is asked to reconcile that target
-      Then the uncited credits are posted to the suspense reconciliation
+      Then the uncited evidence observations are posted to the suspense reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
       And the run ends on the out-of-balance verdict
       And the run is never read as one with nothing to reconcile

@@ -23,7 +23,7 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
 });
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
-  it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and credits the Cucumber report's scenario at integration", () => {
+  it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and reads the Cucumber report's scenario as an integration evidence observation", () => {
     const dir = mkdtempSync(join(tmpdir(), "scn-rpt-002-unit-"));
     made.push(dir);
     cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });

@@ -84,7 +84,7 @@ function rowsOfKind(kind: string): GrammarRow[] {
   return grammarRun.report.ledger.scenarioReconciliations.filter((row) => row.kind === kind);
 }
 
-function suspenseCredits(): number {
+function suspenseObservations(): number {
   return rowsOfKind("suspense-scenario")
     .flatMap((row) => row.qualityCheckReconciliations)
     .filter((qcr) => qcr.outcome === "cites-no-scenario").length;
@@ -109,10 +109,10 @@ Then("the two- and five-character citations open phantom scenarios", function ()
 });
 
 Then(
-  "the one- and six-character titles cite no scenario, so both credits post to the suspense scenario",
+  "the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseCredits(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited credits; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
+    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
   },
 );
 
@@ -132,10 +132,10 @@ Given(
 );
 
 Then(
-  "the one- and six-character Cucumber scenarios cite no scenario, so both credits post to the suspense scenario",
+  "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseCredits(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited credits; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
+    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
   },
 );
 
@@ -151,9 +151,9 @@ Given(
   },
 );
 
-Then("the one- and six-character step ids post no credit at all", function () {
+Then("the one- and six-character step ids post no evidence observation at all", function () {
   for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-  assert.equal(suspenseCredits(), 0, `expected no uncited credit; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
+  assert.equal(suspenseObservations(), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
   const rows = grammarRun.report.ledger.scenarioReconciliations.map((row) => row.scnId);
   assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantoms; got ${JSON.stringify(rows)}`);
 });

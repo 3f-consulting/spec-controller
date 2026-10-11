@@ -4,7 +4,7 @@ Feature: a fixture target whose corpus names neither of the two fitness function
   A FIXTURE target (NOT under features/) standing in for a codebase running two fitness
   functions nobody has written a scenario for — the ordinary state of a pipeline nobody has
   annotated yet. Neither step carries an `id:` and its corpus carries no `@fitness` scenario,
-  so the citation seam reaches no scenario for either: both credits cite nothing and fold onto
+  so the citation seam reaches no scenario for either: both evidence observations cite nothing and fold onto
   the suspense row as uncited fitness functions.
 
   CITING NEITHER IS WHAT LEAVES THE SEVERANCE AS THE ONLY VARIABLE.

@@ -679,7 +679,7 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
   invocationCwd = dir;
 });
 
-Then("the uncited credits are posted to the suspense reconciliation", function () {
+Then("the uncited evidence observations are posted to the suspense reconciliation", function () {
   const volume = cliResult.stdout.match(
     /^(\d+) evidence observations = (\d+) on scenarios \+ (\d+) on phantom scenarios \+ (\d+) on the suspense scenario\.$/m,
   );
@@ -687,12 +687,12 @@ Then("the uncited credits are posted to the suspense reconciliation", function (
   assert.deepEqual(
     [volume[1], volume[2], volume[3], volume[4]].map(Number),
     [2, 0, 0, 2],
-    `expected both uncited credits on the suspense scenario and none anywhere else; got: ${volume[0]}`,
+    `expected both uncited evidence observations on the suspense scenario and none anywhere else; got: ${volume[0]}`,
   );
   assert.match(
     cliResult.stdout,
     /^\| ↳ Evidence Observation cites no Scenario \| +\| +\| 2 \|/m,
-    `expected the two credits reconciled as cites-no-scenario; got:\n${cliResult.stdout}`,
+    `expected the two evidence observations reconciled as cites-no-scenario; got:\n${cliResult.stdout}`,
   );
 });
 

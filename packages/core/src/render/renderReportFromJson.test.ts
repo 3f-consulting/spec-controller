@@ -59,7 +59,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     const regenerated = renderReportFromJson(savedJson);
     expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
     expect(regenerated).toContain("2 fitness function(s) run, 1 uncited fitness function(s).");
-    expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');
+    expect(regenerated).toContain('1 suspense-scenario(s): evidence observations citing no scenario, aggregated into "(no scenario)".');
     expect(regenerated).toContain("fitness ❓ Evidence Observation cites no Scenario (lint:bar)");
     expect(regenerated).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");
   });

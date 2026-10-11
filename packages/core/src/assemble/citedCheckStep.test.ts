@@ -52,7 +52,7 @@ function reconcileAnnotated(ciSource = annotatedCi): EvidenceReconciliation {
 }
 
 describe("[SCN-LNT-031] a check step stating its row's code supplies that row's citation", () => {
-  it("credits the row the annotated step names and leaves the unannotated check in suspense", () => {
+  it("answers the obligation on the row the annotated step names and leaves the unannotated check in suspense", () => {
     expect(rowsOf(reconcileAnnotated())).toEqual([
       ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
       ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
@@ -60,7 +60,7 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
     ]);
   });
 
-  it("credits the row a padded id: names, as if it were written unpadded", () => {
+  it("answers the obligation on the row a padded id: names, as if it were written unpadded", () => {
     const paddedCi = annotatedCi.replace(
       "        run: pnpm lint:beta",
       '        id: " SCN-CVT-002 "\n        run: pnpm lint:beta'

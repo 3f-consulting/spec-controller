@@ -2,7 +2,7 @@ import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { bareTerm } from "../lib/bareTerm.js";
 import type { EvidenceObservation } from "../model.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
-import { ciStepRecordCredits, type CiStepRecord } from "../parse/ciStepRecord.js";
+import { ciStepRecordObservations, type CiStepRecord } from "../parse/ciStepRecord.js";
 import { recognisedRunners, runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
@@ -50,7 +50,7 @@ function observationStreams(
       isExcluded,
       recordAnswersCitingSteps
     ),
-    ...ciStepRecordCredits(input.ciStepRecord),
+    ...ciStepRecordObservations(input.ciStepRecord),
   ];
 }
 

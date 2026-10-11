@@ -88,8 +88,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     });
   });
 
-  describe("an observation the obligations do not ask for names where its credit came from", () => {
-    it("a runtime credit on a scenario with no matching obligation names its locator", () => {
+  describe("an observation the obligations do not ask for names where it came from", () => {
+    it("a runtime evidence observation on a scenario with no matching obligation names its locator", () => {
       const md = render(
         [{ scnId: "SCN-RCI-003", evidenceObligations: [{ qualityCheck: "unit" }] }],
         [
@@ -103,7 +103,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a fitness-function credit on a scenario with no fitness obligation names its fitness function", () => {
+    it("a fitness-function evidence observation on a scenario with no fitness obligation names its fitness function", () => {
       const md = render(
         [{ scnId: "SCN-RCI-004", evidenceObligations: [{ qualityCheck: "unit" }] }],
         [
@@ -123,7 +123,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a runtime credit citing an unknown scenario names its locator on the phantom row", () => {
+    it("a runtime evidence observation citing an unknown scenario names its locator on the phantom row", () => {
       const md = render(
         [],
         [{ qualityCheck: "unit", scnId: "SCN-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
@@ -134,7 +134,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a runtime credit citing an unknown scenario with no locator renders no suffix", () => {
+    it("a runtime evidence observation citing an unknown scenario with no locator renders no suffix", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: "SCN-GHO-002", status: "passed" }]);
       expect(rowFor(md, "SCN-GHO-002")).toEqual({
         verdict: "✗ out-of-balance",
@@ -142,7 +142,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a runtime credit citing no scenario names its locator on the suspense row", () => {
+    it("a runtime evidence observation citing no scenario names its locator on the suspense row", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
       expect(rowFor(md, SUSPENSE_ROW)).toEqual({
         verdict: "✗ out-of-balance",

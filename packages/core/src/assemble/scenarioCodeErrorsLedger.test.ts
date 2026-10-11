@@ -12,7 +12,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     const scenarios = ids.map((id) => `  @unit @${id}\n  Scenario: ${id}\n    Given a thing\n`).join("\n");
     return `${header}Feature: ${slug}\n\n${scenarios}`;
   });
-  const credits: EvidenceObservation[] = entries
+  const observations: EvidenceObservation[] = entries
     .flatMap(([, { ids }]) => ids)
     .map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" }));
   return evidenceReconciliationFromSources({
@@ -21,7 +21,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: {},
     ciSources: [],
-    runtimeObservations: credits,
+    runtimeObservations: observations,
     deferralTags: [],
   });
 }

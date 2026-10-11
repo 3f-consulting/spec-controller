@@ -8,7 +8,7 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   never pre-empts). The one and only reconciling item in the whole run sits on the
   SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario cites it — the
   target registers no check for that handle and carries no scenario for one — so it is an
-  uncited fitness function: an uncited credit, posted to the `(no scenario)` suspense reconciliation.
+  uncited fitness function: an uncited evidence observation, posted to the `(no scenario)` suspense reconciliation.
 
   This is the fixture the anti-drift invariant (@SCN-CLI-013) needs, and the one shape no
   other fixture in the suite has: the named-only tally reads a CLEAN 2/2/0 while the run

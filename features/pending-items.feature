@@ -51,7 +51,7 @@ Feature: A pending evidence obligation raises a Pending Item
         | e2e           |
         | performance   |
 
-  Rule: A Pending Item is one-sided: it never affects the verdict itself, and a credit at its deferred check is no-evidence-obligation
+  Rule: A Pending Item is one-sided: it never affects the verdict itself, and an evidence observation at its deferred check is no-evidence-obligation
 
     @unit @SCN-PND-005
     Scenario: a passing observation at a deferred quality check is no-evidence-obligation — the Pending Item stands and the row is out of balance until the deferral tag is removed

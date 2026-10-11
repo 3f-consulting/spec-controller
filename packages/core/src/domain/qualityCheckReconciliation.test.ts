@@ -128,10 +128,10 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
   }
 });
 
-describe("[SCN-LDG-035] a fitness-function credit discharges only the obligation on the row whose @SCN it cites", () => {
+describe("[SCN-LDG-035] a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites", () => {
   it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
     const obligation: EvidenceObligation = { qualityCheck: "fitness" };
-    const credit: EvidenceObservation = {
+    const observation: EvidenceObservation = {
       qualityCheck: "fitness",
       fitnessFunction: "lint:complexity",
       scnId: "SCN-AAA-001",
@@ -139,11 +139,11 @@ describe("[SCN-LDG-035] a fitness-function credit discharges only the obligation
       enforcedOverRealSource: true,
     };
 
-    const cited = reconcileEvidenceObligation("SCN-AAA-001", obligation, [credit]);
-    const other = reconcileEvidenceObligation("SCN-AAA-002", obligation, [credit]);
+    const cited = reconcileEvidenceObligation("SCN-AAA-001", obligation, [observation]);
+    const other = reconcileEvidenceObligation("SCN-AAA-002", obligation, [observation]);
 
     expect(cited.outcome).toBe("satisfied");
-    expect(cited.evidenceObservation).toEqual(credit);
+    expect(cited.evidenceObservation).toEqual(observation);
 
     expect(other.outcome).toBe("missing");
     expect(

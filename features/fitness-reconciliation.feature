@@ -15,7 +15,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   which is the one thing double entry cannot allow. A property a scenario was written to hold is
   one it holds because the scenario says so, never because somebody gave it a runnable example.
 
-  ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
+  ONE POSTING RULE, over both axes, and the Evidence Observation's citation is ONE HOP. The check's step in the
   CI config carries its scenario's @SCN as the step's `id:`; the run's own record says what that
   step did; `balance` reads the citation straight off it. Nothing is matched back by name and
   nothing is resolved through a second artefact, so there is no fitness-function-axis posting rule left to
@@ -81,7 +81,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
       RAISING NOTHING IS THE POINT, AND IT IS NOT THE SAME AS RAISING SOMETHING UNSETTLEABLE. A
       transitional reader that kept deriving the obligation would leave every re-grown @lint= tag
-      raising an Evidence Obligation for a check the citation seam can never credit — one run cites one @SCN, and this form
+      raising an Evidence Obligation for a check the citation seam can never answer — one run cites one @SCN, and this form
       supplies none — so the row would read missing for ever and the corpus would look wrong when
       only the tag was. Nothing raised is a corpus fault the tag check catches (`spec-controller
       tags` reds an unrecognised tag once its lint= clause goes), not a permanent red on the
@@ -100,14 +100,14 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     and the run was matched back to it by name, so nothing ever had to know which scenario a
     check belonged to. Citation-routing inverts that. The run now arrives carrying an @SCN — its
     CI step's `id:` — and the ordinary citation route does the rest. There is no fitness-function-axis
-    posting rule left to be special: the same route that lands a unit test's credit on its
+    posting rule left to be special: the same route that lands a unit test's Evidence Observation on its
     scenario lands a fitness function's.
 
     EXACTLY ONE ROW IS THE WHOLE POINT. Under name-match one run posted to EVERY row naming
     it, which is how a whole-system property came to be smeared across behavioural
     examples it was never about — complexity is a property of the codebase, and a violation
     points at a file, not at the scenario that happened to spell the script's name. One run is
-    one credit and cites one scenario, so a second scenario that would have claimed the same
+    one Evidence Observation and cites one scenario, so a second scenario that would have claimed the same
     run under name-match now claims nothing.
 
     THIS SCENARIO RAISES NO CHECK OBLIGATION, AND THAT IS THE CORRECTED SHAPE. It once
@@ -122,15 +122,15 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     @unit @SCN-LNT-004
     Scenario: a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently
       TWO AXES ON ONE ROW, ANSWERED SEPARATELY. A scenario can raise an Evidence Obligation on the behavioural axis
-      and on the fitness axis at once, and each obligation is discharged only by a credit of its own
+      and on the fitness axis at once, and each obligation is discharged only by an Evidence Observation of its own
       quality-check: a green unit test never answers the fitness obligation, and a fitness run never
       answers the unit one. Both readings are taken off this ONE row, independently — one may
       reconcile while the other does not, and neither is absorbed by the other.
 
-      ONE POSTING RULE MAKES THIS SHARPER, NOT WEAKER. Under name-match the two credits arrived by
-      different routes — the unit credit cited its @SCN, the fitness credit was matched by handle —
+      ONE POSTING RULE MAKES THIS SHARPER, NOT WEAKER. Under name-match the two Evidence Observations arrived by
+      different routes — the unit Evidence Observation cited its @SCN, the fitness Evidence Observation was matched by handle —
       so keeping them apart was a property of the routes rather than a rule anyone wrote. Now BOTH
-      credits cite the SAME @SCN and post to the SAME row, which is precisely the arrangement in
+      Evidence Observations cite the SAME @SCN and post to the SAME row, which is precisely the arrangement in
       which a reconciler answering an obligation by the row it sits on, rather than by the check it names,
       would collapse the two.
 
@@ -145,27 +145,27 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       rules; the fixture below carries both because a TWO-AXIS scenario is what this reads. What is settled here is only that the reconciler
       answers each obligation a scenario raises on its own axis.
 
-  Rule: a fitness credit matching no Evidence Obligation lands in suspense or on a phantom row
+  Rule: a fitness Evidence Observation matching no Evidence Obligation lands in suspense or on a phantom row
 
-    BOTH UNMATCHED SIDES STAY VISIBLE. An obligation nothing credits reads missing above; a credit
+    BOTH UNMATCHED SIDES STAY VISIBLE. An obligation nothing answers reads missing above; an Evidence Observation
     nothing obliges is its mirror, and it must be just as loud. Under name-match the fitness axis had
     only ONE unmatched destination — a run cited nothing, so it was either matched by handle or it
     was not — and a run that named a row nobody wrote was not a shape the axis could produce.
-    Citation-routing produces it: a credit carrying an @SCN is routed by that @SCN, so it can name a
+    Citation-routing produces it: an Evidence Observation carrying an @SCN is routed by that @SCN, so it can name a
     row that is not there.
 
     THE TWO DESTINATIONS ARE DIFFERENT FACTS, and telling them apart is the whole value of the rule.
-    A credit citing NOTHING never looked, and lands in suspense — the tool's own uncited-check
-    axis, whose remedy is to give the check's step its scenario's code and write that scenario. A credit
+    An Evidence Observation citing NOTHING never looked, and lands in suspense — the tool's own uncited-check
+    axis, whose remedy is to give the check's step its scenario's code and write that scenario. An Evidence Observation
     citing an @SCN the corpus does not carry LOOKED AND MISSED, so it mints the row it named and
     lands there; its remedy is to fix the citation. Folding either into the other sends a reader to
     the wrong cure.
 
     @unit @SCN-LNT-009
-    Scenario: a fitness credit citing an @SCN no scenario carries posts to a phantom row, named by the @SCN its step stated
+    Scenario: a fitness Evidence Observation citing an @SCN no scenario carries posts to a phantom row, named by the @SCN its step stated
       NEWLY REACHABLE, and that is the point. While a fitness function's run cited nothing, this arm was
       structurally unreachable on the fitness axis — there was no citation to be wrong. Once the
-      credit cites, the fitness axis inherits every destination a runtime credit has, this one
+      Evidence Observation cites, the fitness axis inherits every destination a runtime Evidence Observation has, this one
       included, and inherits it through the SAME posting rule rather than a fitness clause that
       re-states it.
 
@@ -175,15 +175,15 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       step, mistyped on the scenario, or the scenario renumbered, retired, or living in a feature
       file this run does not reconcile. The pipeline and the corpus are two documents one consumer
       authors separately, and nothing keeps them in step. It is the same disagreement a runtime
-      credit has always been able to carry between a test file's @SCN and the corpus, reached
+      Evidence Observation has always been able to carry between a test file's @SCN and the corpus, reached
       through a CI step's own id: instead.
 
       IT IS ALSO WHERE A CODE NO SCENARIO CARRIES IS HEARD. The citation is resolved against the
       corpus, never against a manifest list, so such a step does not fall to suspense as if the
       consumer had annotated nothing; the looked-and-missed case reads as one.
 
-      THE CREDIT IS NEVER DROPPED. Dropping it is the one outcome the double entry forbids: every
-      Evidence Observation posts somewhere, never nowhere. So the row is INVENTED, the credit posts
+      THE EVIDENCE OBSERVATION IS NEVER DROPPED. Dropping it is the one outcome the double entry forbids: every
+      Evidence Observation posts somewhere, never nowhere. So the row is INVENTED, the Evidence Observation posts
       there carrying the check that ran, and the row is out-of-balance — nobody raised it, so nothing
       about it can balance. Naming the check is what makes the row actionable: without it a reader
       learns only that some run cited a scenario that is gone.
@@ -193,7 +193,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     ONE @fitness SCENARIO IS ONE CHECK (canon quality-checks.md, "The tag is the Evidence
     Obligation for a quality check"). Its quality check is fitness, exactly as unit is for a @unit
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
-    credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
+    Evidence Observation is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
     NOTHING ELSE NAMES IT. A manifest list of fitness functions once stood between the
     tag and the obligation, and a scenario the list did not name raised nothing at all. The list is
@@ -202,7 +202,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
     THE CHARACTERISTIC THAT ONCE KEYED IT IS RETIRED TOO. The tag collapsed to @fitness
     and the word it carried - complexity, mutation - moved onto the manifest entry, where it went on
-    keying the obligation and the credit. Nothing needed it: one scenario is one check, so its @SCN
+    keying the obligation and the Evidence Observation. Nothing needed it: one scenario is one check, so its @SCN
     already says everything a word could.
 
     WHY THE CORPUS IS NEEDED AT ALL, when the pipeline already runs the check. A linter reports
@@ -220,7 +220,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
       RAISED ONCE, HOWEVER MANY TIMES THE AXIS TAG REACHES THE SCENARIO. A scenario's effective tags
       are its own plus its Rule's and its Feature's, so the axis tag can arrive twice; two
-      obligations for one check would leave the second missing for ever, since one run is one credit
+      obligations for one check would leave the second missing for ever, since one run is one Evidence Observation
       and can cite one @SCN.
 
     @unit @SCN-LNT-020
@@ -254,13 +254,13 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     check rather than fix your hook.
 
     @unit @SCN-LNT-026
-    Scenario: a check step's outcome credits its scenario only where it says what the check did, and every other reading is broken evidence rather than a credit
+    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence rather than an Evidence Observation
 
-      THE READINGS THAT CREDIT ARE THE ONES THAT SAY WHAT THE CHECK DID, and there are two. A step
+      THE READINGS THAT ANSWER ARE THE ONES THAT SAY WHAT THE CHECK DID, and there are two. A step
       that succeeded ran and found nothing; a step that failed ran and found something. Each of
       those is a fact about a check, and every other reading is a fact about a pipeline.
 
-      THERE IS NO THIRD, AND A ROW CANNOT BUY ONE. A row could once ask to be credited for a skip by
+      THERE IS NO THIRD, AND A ROW CANNOT BUY ONE. A row could once ask for a skip to answer it by
       naming the ending its command says it examined nothing with — but a command that examines
       nothing still RUNS and still ENDS, so its step reads success or failure and is never skipped.
       A step is skipped when a condition went false, when the job was cancelled, or when somebody
@@ -268,16 +268,16 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       anything, so it forgave every skip: `if: false` beside it read satisfied for ever. The field
       is gone rather than guarded.
 
-      THE SECOND OF THEM STOPPED BEING A BARE CREDIT WHEN THE THIRD THING CARRYING THE VERDICT WENT.
+      THE SECOND OF THEM STOPPED BEING A BARE EVIDENCE OBSERVATION WHEN THE THIRD THING CARRYING THE VERDICT WENT.
       While a pass ran the checks, a check that found violations reddened the run through the
-      runner's exit code and its credit only had to say the check ran — so passed and failed were
+      runner's exit code and its Evidence Observation only had to say the check ran — so passed and failed were
       honestly ONE answer. A CI step's exit code reaches
-      this ledger nowhere, so the failed step's credit carries what it found and its row reds
+      this ledger nowhere, so the failed step's Evidence Observation carries what it found and its row reds
       rather than balancing beside the row whose check passed.
 
-      THE DEFAULT IS `broken`, NOT THE CREDIT, so the arms are written the other way up from the
+      THE DEFAULT IS `broken`, NOT THE EVIDENCE OBSERVATION, so the arms are written the other way up from the
       obvious one. A status this reader cannot vouch for is a check whose running it cannot vouch
-      for, so a skip no row asked for and a status nobody anticipated red rather than credit. That is
+      for, so a skip no row asked for and a status nobody anticipated red rather than answer. That is
       the safe direction on an axis whose whole subject is a green that means nothing.
 
       AND `broken` IS THE RIGHT RED RATHER THAN THE LOUDEST ONE. It carries no Evidence Observation,
@@ -286,7 +286,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       and a bare missing row would send the reader to write a check that is already written.
 
       ALL FOUR READINGS ARE TAKEN FROM ONE RECORD, WHICH IS WHY THEY ARE ONE SCENARIO. Split across
-      four, the set could agree by accident: a reader crediting everything and a reader crediting
+      four, the set could agree by accident: a reader answering every obligation and a reader answering
       nothing would each need a second run to catch, when the whole claim is that ONE record draws
       the line between them.
 
@@ -300,7 +300,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
     SO IT IS HELD AS A CLAIM RATHER THAN LEFT AS A CONSEQUENCE OF ONE. The behaviour falls out of a
     citation that reaches nothing, which is exactly why nothing was watching it: every narrowing
-    that would silence an uncited check — dropping the credit that cites no row, refusing a handle
+    that would silence an uncited check — dropping the Evidence Observation that cites no row, refusing a handle
     no row names — leaves every other reading on this axis green. The report a prospect sees before
     they have adopted anything is the one no other arm is standing over.
 
@@ -321,7 +321,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       THE LEDGER IS READ WHOLE, BECAUSE WHAT THIS WATCHES FOR IS A CARDINALITY. An arm that looked
       one uncited check up and found it in suspense would go on passing over a reader that had
       quietly stopped raising the other two, and over one that had started raising the install step
-      beside them. Every row and every item on it is asserted, so a credit that stopped being
+      beside them. Every row and every item on it is asserted, so an Evidence Observation that stopped being
       raised is as visible here as one that arrived wrong.
 
       THE HANDLE IS WHAT LANDS IN SUSPENSE, AND THAT IS WHAT MAKES THE REPORT ACTIONABLE. A check
@@ -330,8 +330,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       would replace.
 
       THE TARGET HAS NO CORPUS AT ALL, WHICH IS THE HONEST SHAPE OF THIS STATE RATHER THAN A
-      SHORTCUT. A consumer on their first run has specified nothing, so there is no scenario for a
-      credit to have landed on by accident and no row for the suspense one to be mistaken for. It
+      SHORTCUT. A consumer on their first run has specified nothing, so there is no scenario for an
+      Evidence Observation to have landed on by accident and no row for the suspense one to be mistaken for. It
       also makes the whole report one row, which is what the claim says it is.
 
   Rule: a running check's citation is the @SCN its own CI step states, and nothing resolves it
@@ -429,10 +429,10 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       names; subtract and you have the checks that run AND are named. Move one count's membership
       rule and leave the other's, and that figure is wrong: a severed check nobody cites counted as
       running and not as uncited would appear as a named check nobody named. So both counts take
-      the one rule — the check is there and its credit is not broken evidence — and a missing or
+      the one rule — the check is there and its Evidence Observation is not broken evidence — and a missing or
       broken check stays out of both, because neither of those ran.
 
-  Rule: a check step's outcome in the CI run's record is the fitness credit
+  Rule: a check step's outcome in the CI run's record is the fitness Evidence Observation
 
     THE RECORD IS A SECOND DOCUMENT AND A SECOND QUESTION, which is why it is read by a reader of
     its own rather than folded into the one above it. The workflow FILE says a check is wired in
@@ -440,7 +440,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     fact about a repository and the other a fact about an afternoon, and a reader handed only the
     first can say a check is wired and nothing at all about whether it held.
 
-    ONE OBLIGATION, ONE CREDIT. A row's credit is its own step's outcome in the record — the check
+    ONE OBLIGATION, ONE EVIDENCE OBSERVATION. A row's Evidence Observation is its own step's outcome in the record — the check
     ran, in the consumer's own checkout, and here is what it found.
 
     THE VERDICT NOW HAS TO TRAVEL, BECAUSE THE THIRD THING CARRYING IT HAS GONE. While a pass ran
@@ -451,23 +451,23 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     ran and found something, which is this axis's own headline fault arriving by the front door.
 
     @unit @SCN-LNT-021
-    Scenario: a check step the run's record says succeeded credits the scenario whose @SCN it carries
+    Scenario: a check step the run's record says succeeded answers the obligation of the scenario whose @SCN it carries
 
-      THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The step's `id:` IS
+      THE EVIDENCE OBSERVATION ARRIVES ALREADY CITING, so there is nothing left to resolve. The step's `id:` IS
       the code of the row that step answers, read off what was observed. No check registry is
       consulted and no corpus lookup stands behind it.
 
-      AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED RATHER THAN INFERRED. On the discovered
+      AND THE TWO FACTS SUCH AN EVIDENCE OBSERVATION CARRIES ARE OBSERVED RATHER THAN INFERRED. On the discovered
       route the check EXISTS because a manifest holds a script by that name, and it ran over the real
       tree because a workflow step invokes that script — a file MENTIONING a name, twice. Here the
       record says the step ran, and it ran in the consumer's own checkout over that checkout's own
       tree. Both are facts about the run itself, which is strictly stronger than a file naming a
       command.
 
-      EACH ROW IS CREDITED BY ITS OWN STEP, WHICH IS WHY TWO ROWS ARE READ FROM ONE RECORD. A reader
-      posting one entry's credit to every configured row, and a reader crossing the two, both leave
+      EACH ROW IS ANSWERED BY ITS OWN STEP, WHICH IS WHY TWO ROWS ARE READ FROM ONE RECORD. A reader
+      posting one entry's Evidence Observation to every configured row, and a reader crossing the two, both leave
       every row balanced and say so with the same verdict — so what discriminates is the @SCN
-      each row's credit cites, asserted per row rather than counted.
+      each row's Evidence Observation cites, asserted per row rather than counted.
 
       AND THE STEPS THAT ARE NOT CHECKS ARE SILENT. The record also holds the step that wrote it, and
       no configured row answers that id, so nothing anywhere on the ledger is about it. A pipeline
@@ -519,7 +519,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       THE FIXTURE IS WHAT EARNS THIS ARM, AND ITS SIBLING DECLINED IT ON PURPOSE. The failed step of
       the sibling holds its two results in agreement, so a reader taking either one passes there;
       here they disagree, and only the reader taking what the step did reds. Written against what
-      the job was told, this same arm reports the row with no credit at all — which is precisely the
+      the job was told, this same arm reports the row with no Evidence Observation at all — which is precisely the
       green a swallowed red buys.
 
       ONE FIELD IS READ AND THE OTHER IS READ NOWHERE. The laundered result is carried on the
@@ -532,22 +532,22 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       deliberately is a different party asking a different question, and what this axis owes them is
       an honest ledger rather than a refusal.
 
-  Rule: a fitness obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
+  Rule: a fitness obligation answered by several Evidence Observations reads the worst outcome any of them carries, and names an Evidence Observation carrying it
 
-    The behavioural axis's rule, on this axis too: each credit is read on its own,
+    The behavioural axis's rule, on this axis too: each Evidence Observation is read on its own,
     and the obligation reads the worst of those readings — failing over watermelon over satisfied —
-    whatever sorts first. No credit vouches for a sibling: a failed credit is
+    whatever sorts first. No Evidence Observation vouches for a sibling: a failed Evidence Observation is
     failing whatever passed beside it, and a severed run is a watermelon whatever wired run of the
-    same check sits beside it. The item names the first credit carrying that outcome
-    in evidence order. No reader in this product delivers two credits for one row and check today —
+    same check sits beside it. The item names the first Evidence Observation carrying that outcome
+    in evidence order. No reader in this product delivers two Evidence Observations for one row and check today —
     the run's record holds one entry per step code, and a row is keyed by its code — so the
     published engine is where a consumer composing their own evidence meets it.
 
     @unit @SCN-LNT-036
-    Scenario: a failed fitness credit beside a passing one for the same check reads failing, and the ledger is out of balance
+    Scenario: a failed fitness Evidence Observation beside a passing one for the same check reads failing, and the ledger is out of balance
 
     @unit @SCN-LNT-037
-    Scenario: a watermelon fitness credit beside a wired one for the same check reads watermelon, and the ledger is out of balance, whichever one's locator sorts first
+    Scenario: a watermelon fitness Evidence Observation beside a wired one for the same check reads watermelon, and the ledger is out of balance, whichever one's locator sorts first
 
     @unit @SCN-LNT-038
-    Scenario: a failed fitness credit beside a watermelon one for the same check reads failing, carrying the failed credit, whichever one's locator sorts first
+    Scenario: a failed fitness Evidence Observation beside a watermelon one for the same check reads failing, carrying the failed Evidence Observation, whichever one's locator sorts first

@@ -114,8 +114,8 @@ describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence obse
   });
 });
 
-describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation, not both-missing", () => {
-  it("emits a no-evidence-obligation row (NOT a warning, NOT both-missing) when a zero-evidence obligation scenario is cited by a stray credit", () => {
+describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing", () => {
+  it("emits a no-evidence-obligation row (NOT a warning, NOT both-missing) when a zero-evidence obligation scenario is cited by a stray evidence observation", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-010", evidenceObligations: [] },
     ];

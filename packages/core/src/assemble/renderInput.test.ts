@@ -103,17 +103,17 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
       "Feature: alpha",
       "",
       "  @unit @SCN-AAA-001",
-      "  Scenario: a satisfied credit",
+      "  Scenario: a satisfied evidence observation",
       "    Given a thing",
     ].join("\n");
-    const credit = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
-    const real = reconcile(parseScenarios(feature), [credit]);
+    const observation = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
+    const real = reconcile(parseScenarios(feature), [observation]);
     const parsed = JSON.parse(renderJson(__er(real), ctx));
     const account = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
     );
     expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
-    expect(account.evidenceObservations).toEqual([credit]);
+    expect(account.evidenceObservations).toEqual([observation]);
     expect(account.reconcilingItems).toEqual([]);
   });
 });
@@ -139,7 +139,7 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
     expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
   });
 
-  it("the phantom and suspense credits live on their ledger rows, not a section detail array", () => {
+  it("the phantom and suspense evidence observations live on their ledger rows, not a section detail array", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     const phantom = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "phantom-scenario");
     const suspense = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "suspense-scenario");

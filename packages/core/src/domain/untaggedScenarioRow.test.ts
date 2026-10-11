@@ -14,12 +14,12 @@ const observed: EvidenceObservation[] = [
   { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
 ];
 
-describe("[SCN-LDG-021] the untagged scenario's row carries no credit and no Pending Item", () => {
+describe("[SCN-LDG-021] the untagged scenario's row carries no evidence observation and no Pending Item", () => {
   const ledger = () => reconcile(namedScenarios, observed, [UNTAGGED]);
   const rowFor = (scnId: string) =>
     ledger().scenarioReconciliations.find((r) => r.scnId === scnId);
 
-  it("routes the run's one credit to the account its citation names, not to the untagged row", () => {
+  it("routes the run's one evidence observation to the account its citation names, not to the untagged row", () => {
     expect(rowFor("SCN-AAA-001")?.evidenceObservations).toStrictEqual([observed[0]]);
     expect(rowFor(UNTAGGED)?.evidenceObservations).toStrictEqual([]);
   });

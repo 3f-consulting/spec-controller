@@ -51,7 +51,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     expect(ledgers.size).toBe(1);
   });
 
-  it("reads a row's credits by quality check in tier order, fitness last, then by location", () => {
+  it("reads a row's evidence observations by quality check in tier order, fitness last, then by location", () => {
     expect(coordinates(rowOf([fitness, performance, e2e, integration, unitZ, unitA]).evidenceObservations)).toEqual([
       ["unit", "a.test.ts"],
       ["unit", "z.test.ts"],
@@ -62,7 +62,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     ]);
   });
 
-  it("reads a credit with no location before every located credit of its quality check", () => {
+  it("reads an evidence observation with no location before every located evidence observation of its quality check", () => {
     const unlocated: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "passed" };
     const capitalised: EvidenceObservation = { ...unitA, locator: "A.test.ts" };
     expect(coordinates(rowOf([unitA, capitalised, unlocated]).evidenceObservations)).toEqual([
@@ -72,7 +72,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     ]);
   });
 
-  it("orders credits at one location by the scenario they cite — the phantom rows they mint follow it", () => {
+  it("orders evidence observations at one location by the scenario they cite — the phantom rows they mint follow it", () => {
     const ghost2: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-002", status: "passed", locator: "p.test.ts" };
     const ghost1: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-001", status: "passed", locator: "p.test.ts" };
     const phantomIds = reconcile(scenarios, [ghost2, ghost1])
@@ -81,7 +81,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     expect(phantomIds).toEqual(["SCN-GHOST-001", "SCN-GHOST-002"]);
   });
 
-  it("reads a credit citing no scenario before the credits at its location that cite one", () => {
+  it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {
     const broken = { qualityCheck: "unit", status: "failed", broken: true, locator: "a.test.ts" } as const;
     const citing: EvidenceObservation = { ...broken, scnId: "SCN-CITED-001" };
     const citingNone: EvidenceObservation = { ...broken, scnId: null };
@@ -91,7 +91,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     expect(suspense.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });
 
-  it("orders credits alike in check, location and scenario by what else they say, however their objects were built", () => {
+  it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {
     const saysA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", message: "a" };
     const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", scnId: SCN, qualityCheck: "unit" };
     expect(rowOf([saysB, saysA]).evidenceObservations.map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);

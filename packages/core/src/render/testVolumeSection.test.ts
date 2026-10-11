@@ -14,7 +14,7 @@ Feature: fixture volume corpus
   Rule: observations land on scenarios
 
     @unit @integration @SCN-VOL-001
-    Scenario: a scenario the runners credit
+    Scenario: a scenario with an evidence observation
 `;
 
 const observations: EvidenceObservation[] = [

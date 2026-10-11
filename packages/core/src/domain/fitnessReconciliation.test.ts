@@ -31,8 +31,8 @@ function severedWiringFor(script: string): { ciSource: string; packageJson: Pack
   };
 }
 
-describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries posts to a phantom row", () => {
-  it("mints the phantom row for the cited @SCN, posts the run's one credit there naming the check, and holds it out-of-balance", () => {
+describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenario carries posts to a phantom row", () => {
+  it("mints the phantom row for the cited @SCN, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
     const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const citedScn = (script: string): ScriptCitation | null =>
@@ -88,7 +88,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
 const SEVERED_SCRIPT = "lint:severed-check";
 
 describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
-  it("answers each obligation from a credit of its own axis — the unit credit satisfies the unit obligation, the citing fitness credit the watermelon — and never one from the other", () => {
+  it("answers each obligation from an evidence observation of its own axis — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the watermelon — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);
 
@@ -108,18 +108,18 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     const citedScn = (script: string): ScriptCitation | null =>
       script === SEVERED_SCRIPT ? { scnId: "SCN-AAA-001" } : null;
 
-    const unitCredit: EvidenceObservation = {
+    const unitObservation: EvidenceObservation = {
       qualityCheck: "unit",
       scnId: "SCN-AAA-001",
       status: "passed",
     };
-    const fitnessCredits = runningFitnessFunctions(
+    const fitnessObservations = runningFitnessFunctions(
       [plantedCi],
       plantedPackageJson,
       NO_RUNNERS,
       citedScn
     ).filter((o) => o.fitnessFunction === SEVERED_SCRIPT);
-    expect(fitnessCredits).toEqual([
+    expect(fitnessObservations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: SEVERED_SCRIPT,
@@ -129,7 +129,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       },
     ]);
 
-    const balance = reconcile(scenarios, [unitCredit, ...fitnessCredits]);
+    const balance = reconcile(scenarios, [unitObservation, ...fitnessObservations]);
     const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     expect(scenario?.verdict).toBe("out-of-balance");
@@ -138,14 +138,14 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       qualityCheck: "fitness",
       outcome: "watermelon",
       evidenceObligation: { qualityCheck: "fitness" },
-      evidenceObservation: fitnessCredits[0],
+      evidenceObservation: fitnessObservations[0],
     };
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "unit",
         outcome: "satisfied",
         evidenceObligation: { qualityCheck: "unit" },
-        evidenceObservation: unitCredit,
+        evidenceObservation: unitObservation,
       },
       watermelonItem,
     ]);

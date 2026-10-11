@@ -3,7 +3,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   The fitness-function axis's UNCITED detection — the mirror of the
   runtime axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
-  cites is an unposted credit, and the axis sees it because its whole input is the running-check
+  cites is an unposted evidence observation, and the axis sees it because its whole input is the running-check
   observer below, not the checks an obligation names.
 
   The running-check observer emits every check a CI step runs into the reconcile stream, so the
@@ -51,7 +51,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   major version: at 0.x no compatibility commitment names one.
 
   What is NOT vacuous over this tree is the number beside it. The "fitness function(s) run" figure counts
-  the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
+  the running fitness evidence observations this pipeline's own candidate steps post, so it is answered by those steps
   and only the uncited count is answered by discovery. Reading both as products of the same mechanism
   is the misreading this paragraph forecloses.
 
@@ -67,13 +67,13 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   Rule: a CI check no scenario cites is reported as an uncited fitness function
 
     A CHECK IS UNCITED WHEN ITS STEP NAMES NO SCENARIO. A check's CI step cites the scenario it
-    answers by carrying that scenario's @SCN as its `id:`, and the credit carries the citation
+    answers by carrying that scenario's @SCN as its `id:`, and the evidence observation carries the citation
     from there; a step that carries none reaches no scenario at all, and its check is uncited.
     The reader-visible landing is cites-no-scenario on the suspense row, surfaced under
     "### Fitness functions", because what this axis reports is a check nobody has taken
     responsibility for.
 
-    THE CREDIT IS NEVER DROPPED, which is the clause worth saying out loud on the credit side.
+    THE EVIDENCE OBSERVATION IS NEVER DROPPED, which is the clause worth saying out loud on the credit side.
     Every Evidence Observation posts somewhere, so a check the seam cannot place is not quietly
     left out of the count: it is banked on the suspense row carrying the handle that ran, and the
     run reds. The failure this forecloses is the comfortable one — a check nobody owns becoming a
@@ -82,7 +82,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     UNCITED IS NOT MISCITED. A step that carries no `id:` cited nothing and lands on the suspense
     row; a step whose `id:` names a code no scenario carries looked and missed, and posts to a
     phantom row under that code. The cures differ — give the step its scenario's code, or fix the
-    code it gives — so the two are told apart by where the credit lands, never guessed at. This
+    code it gives — so the two are told apart by where the evidence observation lands, never guessed at. This
     Rule is the first: its tests' target runs two checks, and the only difference between the
     cited one and the uncited one is whether the step carries a scenario's code.
 
@@ -99,13 +99,13 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     so nothing but the citation can move either verdict.
 
     ATTRIBUTED MEANS POSTED. lint:foo's step carries the stepless scenario's code as its
-    `id:`, so the run's credit cites that scenario and lands on its row. Nothing matches the
+    `id:`, so the run's evidence observation cites that scenario and lands on its row. Nothing matches the
     handle that ran back to a tag, and nothing resolves the citation through a second artefact.
 
     WHICH IS WHY THE ASSERTION READS THE ATTRIBUTED ROW, not merely the absence of an uncited one.
-    Absence is the weaker claim and several wrong readers produce it: one that posts the credit to
+    Absence is the weaker claim and several wrong readers produce it: one that posts the evidence observation to
     a scenario the corpus never wrote reports no uncited check either, and so does one that drops
-    the credit on the floor. The reconciler's own never-dropped clause is what makes that
+    the evidence observation on the floor. The reconciler's own never-dropped clause is what makes that
     distinguishable — every observation lands somewhere — so this scenario names where.
 
     @integration @SCN-USG-002
@@ -170,7 +170,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     flips: the same check, with its step carrying a scenario's code.
 
     THE LANDING IS READ ON THE ROW, not anywhere in the report. Posting to suspense is a claim
-    about WHERE the credit went, and a whole-report search cannot tell the suspense row from any
+    about WHERE the evidence observation went, and a whole-report search cannot tell the suspense row from any
     other row that happens to mention the handle — the reading already scoped for the
     lint:-prefixed case. An unprefixed check lands exactly where a prefixed one lands, so this
     scenario asserts it in the same terms rather than settling for the absence of an attribution.
@@ -200,7 +200,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     half rather than the whole of it. Absence is the weaker claim and several wrong readers
     produce it: one that never resolves the citation leaves the obligation unsettled and
     raises no watermelon either, and one that resolves it to a scenario the corpus never
-    wrote banks the credit on a phantom row and raises none either. Naming the row the credit
+    wrote banks the evidence observation on a phantom row and raises none either. Naming the row the evidence observation
     lands on is what tells those apart from the verdict this scenario is about.
 
     TWO FACTS HOLD THIS VERDICT, AND THE SIBLING WORKFLOW IS ONLY ONE OF THEM. The step has to
@@ -222,7 +222,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     opens every workflow and attributes every check it finds settles the cited obligation and
     greens the satisfied row, and it reports nothing uncited here because it reports nothing
     uncited anywhere. The two scenarios fail apart: narrowing the workflow walk reds both, but
-    dropping an unplaceable credit reds only this one, and taking every check for an attributed
+    dropping an unplaceable evidence observation reds only this one, and taking every check for an attributed
     one reds only this one too.
 
     DISCOVERED, AND STILL UNCITED, on the terms this feature file's other uncited scenarios hold.
@@ -277,16 +277,16 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     WHICH IS WHY THE NAME CANNOT BE WHAT DECIDES, and the pair is what proves it rather than
     asserts it. The two targets run the same script, so any reader answering from the handle's
     spelling answers the same way for both — and the two verdicts differ. Whatever places this
-    credit on the scenario is reading the citation; a name is the thing these two targets share.
+    evidence observation on the scenario is reading the citation; a name is the thing these two targets share.
 
     THE ASSERTION READS THE ATTRIBUTED ROW, not the absence of an uncited one — the reading
     already given to its own cited twin. Absence is the weaker claim and several
-    wrong readers produce it: one that drops the credit on the floor reports no uncited check
+    wrong readers produce it: one that drops the evidence observation on the floor reports no uncited check
     either, and so does one that posts it to a scenario the corpus never wrote.
 
     BOTH REACH THIS AXIS THROUGH DISCOVERY, which reads every step of the pipeline that is not a
     runner the manifest names, the reconciler, or a step the consumer named a non-check. What
-    parts them is the step's citation alone: the cited one's credit carries its scenario's code,
+    parts them is the step's citation alone: the cited one's evidence observation carries its scenario's code,
     and the uncited one's carries none.
 
     SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned:

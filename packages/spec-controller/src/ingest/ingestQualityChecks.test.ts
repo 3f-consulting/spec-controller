@@ -63,7 +63,7 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with n
   );
 
   it.each(["wip", "ignore", "skip", "todo", "pending"])(
-    "@%s defers its scenario to a Pending Item when Cucumber reports it pending, while its twin is credited from the same report",
+    "@%s defers its scenario to a Pending Item when Cucumber reports it pending, while its twin's evidence observation is read from the same report",
     (tag) => {
       const root = cucumberReportingTarget(tag);
       const balance = runReconcile({

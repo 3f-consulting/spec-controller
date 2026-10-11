@@ -47,7 +47,7 @@ type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
 
 interface CitationIndex {
   file(posting: CitedPosting, observation: EvidenceObservation): void;
-  creditsFor(scnId: string): EvidenceObservation[];
+  observationsFor(scnId: string): EvidenceObservation[];
   readonly phantomIds: readonly string[];
 }
 
@@ -63,25 +63,25 @@ function citationIndex(): CitationIndex {
         phantomIds.push(posting.scnId);
       }
     },
-    creditsFor: (scnId) => byScn.get(scnId) ?? [],
+    observationsFor: (scnId) => byScn.get(scnId) ?? [],
     phantomIds,
   };
 }
 
-interface RoutedCredits {
+interface RoutedObservations {
   readonly citations: CitationIndex;
   readonly brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   readonly uncited: readonly RuntimeEvidenceObservation[];
-  readonly noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[];
+  readonly uncitedFitnessFunctions: readonly FitnessEvidenceObservation[];
 }
 
 interface SuspenseStreams {
   readonly brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   readonly uncited: RuntimeEvidenceObservation[];
-  readonly noEvidenceObligationFitnessFunctions: FitnessEvidenceObservation[];
+  readonly uncitedFitnessFunctions: FitnessEvidenceObservation[];
 }
 
-function routeFitnessCredit(
+function routeFitnessObservation(
   observation: FitnessEvidenceObservation,
   posting: FitnessFunctionPosting,
   citations: CitationIndex,
@@ -93,10 +93,10 @@ function routeFitnessCredit(
   }
   if (posting.posted === "broken" && isFitnessObservation(observation)) {
     streams.brokenEvidence.push(observation);
-  } else streams.noEvidenceObligationFitnessFunctions.push(observation);
+  } else streams.uncitedFitnessFunctions.push(observation);
 }
 
-function routeRuntimeCredit(
+function routeRuntimeObservation(
   observation: RuntimeEvidenceObservation,
   posting: RuntimePosting,
   citations: CitationIndex,
@@ -115,25 +115,25 @@ function routeRuntimeCredit(
   }
 }
 
-function routeCredits(
+function routeObservations(
   evidenceObservations: readonly EvidenceObservation[],
   scenarioIds: ReadonlySet<string>
-): RoutedCredits {
+): RoutedObservations {
   const citations = citationIndex();
   const streams: SuspenseStreams = {
     brokenEvidence: [],
     uncited: [],
-    noEvidenceObligationFitnessFunctions: [],
+    uncitedFitnessFunctions: [],
   };
-  const { brokenEvidence, uncited, noEvidenceObligationFitnessFunctions } = streams;
+  const { brokenEvidence, uncited, uncitedFitnessFunctions } = streams;
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "fitness") {
-      routeFitnessCredit(o, postingOf(o, scenarioIds), citations, streams);
+      routeFitnessObservation(o, postingOf(o, scenarioIds), citations, streams);
       continue;
     }
-    routeRuntimeCredit(o, postingOf(o, scenarioIds), citations, streams);
+    routeRuntimeObservation(o, postingOf(o, scenarioIds), citations, streams);
   }
-  return { citations, brokenEvidence, uncited, noEvidenceObligationFitnessFunctions };
+  return { citations, brokenEvidence, uncited, uncitedFitnessFunctions };
 }
 
 function scenarioRow(
@@ -150,7 +150,7 @@ function scenarioRow(
 
   const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
     d.scnId,
-    citations.creditsFor(d.scnId),
+    citations.observationsFor(d.scnId),
     evidenceObligationPairs
   );
 
@@ -163,7 +163,7 @@ function scenarioRow(
     scnId: d.scnId,
     kind: "scenario",
     verdict: verdictFor(qualityCheckReconciliations),
-    evidenceObservations: citations.creditsFor(d.scnId),
+    evidenceObservations: citations.observationsFor(d.scnId),
     evidenceObligations: [...d.evidenceObligations],
     qualityCheckReconciliations,
     reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
@@ -192,7 +192,7 @@ function duplicateScnCodeRow(
     scnId,
     kind: "scenario",
     verdict: verdictFor(items),
-    evidenceObservations: citations.creditsFor(scnId),
+    evidenceObservations: citations.observationsFor(scnId),
     evidenceObligations,
     qualityCheckReconciliations: items,
     reconcilingItems: reconcilingItemsOf(items),
@@ -203,13 +203,13 @@ function duplicateScnCodeRow(
 function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
   for (const scnId of citations.phantomIds) {
-    const credits = citations.creditsFor(scnId);
-    const items = citesUnknownScenarioReconciliationsOf(credits);
+    const observations = citations.observationsFor(scnId);
+    const items = citesUnknownScenarioReconciliationsOf(observations);
     rows.push({
       scnId,
       kind: "phantom-scenario",
       verdict: verdictFor(items),
-      evidenceObservations: [...credits],
+      evidenceObservations: [...observations],
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
@@ -222,16 +222,16 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
 function suspenseScenarioRows(
   brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[]
+  uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
-  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationFitnessFunctions.length > 0) {
-    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationFitnessFunctions);
+  if (brokenEvidence.length > 0 || uncited.length > 0 || uncitedFitnessFunctions.length > 0) {
+    const items = suspenseReconciliationsOf(brokenEvidence, uncited, uncitedFitnessFunctions);
     rows.push({
       scnId: CORE_MESSAGES[CoreMessage.SuspenseScenarioId],
       kind: "suspense-scenario",
       verdict: verdictFor(items),
-      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationFitnessFunctions],
+      evidenceObservations: [...brokenEvidence, ...uncited, ...uncitedFitnessFunctions],
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
@@ -267,7 +267,7 @@ export function reconcile(
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   const observations = inEvidenceOrder(evidenceObservations);
-  const { citations, brokenEvidence, uncited, noEvidenceObligationFitnessFunctions } = routeCredits(
+  const { citations, brokenEvidence, uncited, uncitedFitnessFunctions } = routeObservations(
     observations,
     scenarioIds
   );
@@ -279,7 +279,7 @@ export function reconcile(
           : duplicateScnCodeRow(sharers, citations)
       ),
       ...phantomScenarioRows(citations),
-      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationFitnessFunctions),
+      ...suspenseScenarioRows(brokenEvidence, uncited, uncitedFitnessFunctions),
       ...untaggedScenarioRows(untaggedScenarios),
     ],
   };

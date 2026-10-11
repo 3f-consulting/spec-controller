@@ -95,24 +95,24 @@ function locatorOf(observation: EvidenceObservation): string | undefined {
   return observation.qualityCheck === "fitness" ? undefined : observation.locator;
 }
 
-const CREDIT_PRECEDENCE: readonly CreditOutcome[] = ["failing", "watermelon", "satisfied"];
+const OBSERVATION_PRECEDENCE: readonly ObservationOutcome[] = ["failing", "watermelon", "satisfied"];
 
-type CreditOutcome = "failing" | "watermelon" | "satisfied";
+type ObservationOutcome = "failing" | "watermelon" | "satisfied";
 
 interface Answer<T> {
   outcome: Outcome;
-  credit?: T;
+  observation?: T;
 }
 
-function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutcome | undefined): Answer<T> {
-  for (const outcome of CREDIT_PRECEDENCE) {
-    const credit = matches.find((match) => outcomeOf(match) === outcome);
-    if (credit) return { outcome, credit };
+function answerOf<T>(matches: readonly T[], outcomeOf: (observation: T) => ObservationOutcome | undefined): Answer<T> {
+  for (const outcome of OBSERVATION_PRECEDENCE) {
+    const observation = matches.find((match) => outcomeOf(match) === outcome);
+    if (observation) return { outcome, observation };
   }
   return { outcome: "missing" };
 }
 
-function fitnessCreditsCiting(
+function fitnessObservationsCiting(
   scnId: string,
   evidenceObservations: readonly EvidenceObservation[]
 ): FitnessEvidenceObservation[] {
@@ -124,31 +124,31 @@ function fitnessCreditsCiting(
   );
 }
 
-function staticOutcomeOf(credit: FitnessEvidenceObservation): CreditOutcome | undefined {
-  if (credit.status === "failed") return "failing";
-  if (credit.enforcedOverRealSource) return "satisfied";
-  return credit.exists ? "watermelon" : undefined;
+function fitnessOutcomeOf(observation: FitnessEvidenceObservation): ObservationOutcome | undefined {
+  if (observation.status === "failed") return "failing";
+  if (observation.enforcedOverRealSource) return "satisfied";
+  return observation.exists ? "watermelon" : undefined;
 }
 
-function reconcileStaticObligation(
+function reconcileFitnessObligation(
   scnId: string,
   obligation: EvidenceObligation,
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
-  const { outcome, credit } = answerOf(
-    fitnessCreditsCiting(scnId, evidenceObservations),
-    staticOutcomeOf
+  const { outcome, observation } = answerOf(
+    fitnessObservationsCiting(scnId, evidenceObservations),
+    fitnessOutcomeOf
   );
   return makeQualityCheckReconciliation({
     qualityCheck: "fitness",
     outcome,
     evidenceObligation: obligation,
-    ...(credit ? { evidenceObservation: credit } : {}),
+    ...(observation ? { evidenceObservation: observation } : {}),
   });
 }
 
-function runtimeOutcomeOf(credit: RuntimeEvidenceObservation): CreditOutcome {
-  return credit.status === "passed" ? "satisfied" : "failing";
+function runtimeOutcomeOf(observation: RuntimeEvidenceObservation): ObservationOutcome {
+  return observation.status === "passed" ? "satisfied" : "failing";
 }
 
 export function reconcileEvidenceObligation(
@@ -157,10 +157,10 @@ export function reconcileEvidenceObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   if (obligation.qualityCheck === "fitness") {
-    return reconcileStaticObligation(scnId, obligation, evidenceObservations);
+    return reconcileFitnessObligation(scnId, obligation, evidenceObservations);
   }
 
-  const { outcome, credit } = answerOf(evidenceObservations.filter(
+  const { outcome, observation } = answerOf(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
       o.broken !== true &&
       o.qualityCheck === obligation.qualityCheck &&
@@ -170,7 +170,7 @@ export function reconcileEvidenceObligation(
     qualityCheck: obligation.qualityCheck,
     outcome,
     evidenceObligation: obligation,
-    ...(credit ? { evidenceObservation: credit } : {}),
+    ...(observation ? { evidenceObservation: observation } : {}),
   });
 }
 
@@ -182,10 +182,10 @@ function fitnessFunctionNameOf(observation: EvidenceObservation): string | undef
 
 export function noEvidenceObligationReconciliationsOf(
   scnId: string,
-  postedCredits: readonly EvidenceObservation[],
+  postedObservations: readonly EvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
 ): QualityCheckReconciliation[] {
-  return postedCredits
+  return postedObservations
     .filter(
       (o) =>
         !evidenceObligationPairs.has(evidenceObligationPairKey(scnId, o.qualityCheck))
@@ -202,9 +202,9 @@ export function noEvidenceObligationReconciliationsOf(
 }
 
 export function citesUnknownScenarioReconciliationsOf(
-  credits: readonly EvidenceObservation[]
+  observations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
-  return credits.map((o) =>
+  return observations.map((o) =>
     makeQualityCheckReconciliation({
       qualityCheck: o.qualityCheck,
       ...(isFitnessObservation(o) ? { fitnessFunction: o.fitnessFunction } : {}),
@@ -218,7 +218,7 @@ export function citesUnknownScenarioReconciliationsOf(
 export function suspenseReconciliationsOf(
   brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationFitnessFunctions: readonly FitnessEvidenceObservation[]
+  uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
     ...brokenEvidence.map((o) =>
@@ -237,7 +237,7 @@ export function suspenseReconciliationsOf(
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       })
     ),
-    ...noEvidenceObligationFitnessFunctions.map((o) =>
+    ...uncitedFitnessFunctions.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "fitness" as const,
         fitnessFunction: o.fitnessFunction,

@@ -136,13 +136,13 @@ Then(
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
     const suspense = (parsed.ledger?.scenarioReconciliations ?? []).find((s) => s.kind === "suspense-scenario");
-    assert.ok(suspense, `expected a suspense-scenario row carrying the uncited credits; got:\n${jsonText}`);
+    assert.ok(suspense, `expected a suspense-scenario row carrying the uncited evidence observations; got:\n${jsonText}`);
     const locators = suspense!.qualityCheckReconciliations
       .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
       .map((o) => o.locator!);
     assert.ok(
       locators.length > 0 && locators.every((l) => !l.startsWith("/")),
-      `expected the suspense-row credit locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`
+      `expected the suspense-row evidence observation locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`
     );
   }
 );

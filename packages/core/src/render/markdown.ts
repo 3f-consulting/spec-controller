@@ -63,21 +63,21 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
     return `${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}`;
   }
   const subject = item.qualityCheck;
-  const suffix = creditSuffix(item) ?? "";
+  const suffix = observationSuffix(item) ?? "";
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
 
-function creditSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
+function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
   const profile = OUTCOME_SIDE_PROFILE[item.outcome];
-  const isCredit = profile.obligation === "None" && profile.observation === "Exists";
+  const isObservationOnly = profile.obligation === "None" && profile.observation === "Exists";
   if (item.outcome === "broken") {
     const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
       .filter((part): part is string => part !== undefined && part.length > 0)
       .join(": ");
     return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
   }
-  if (isCredit && item.fitnessFunction) return ` (${item.fitnessFunction})`;
-  if (isCredit && item.locator !== undefined) return ` (${item.locator})`;
+  if (isObservationOnly && item.fitnessFunction) return ` (${item.fitnessFunction})`;
+  if (isObservationOnly && item.locator !== undefined) return ` (${item.locator})`;
   return undefined;
 }
 

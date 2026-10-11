@@ -12,7 +12,7 @@ const WORST_FIRST: readonly Outcome[] = ["failing", "watermelon", "satisfied", "
 
 interface Arm {
   obligation: EvidenceObligation;
-  credit: fc.Arbitrary<EvidenceObservation>;
+  observation: fc.Arbitrary<EvidenceObservation>;
 }
 
 function armsOf(): Record<"runtime" | "fitness", Arm> {
@@ -20,7 +20,7 @@ function armsOf(): Record<"runtime" | "fitness", Arm> {
   return {
     runtime: {
       obligation: { qualityCheck: "unit" },
-      credit: fc
+      observation: fc
         .record({
           status: fc.constantFrom("passed" as const, "failed" as const),
           locator,
@@ -36,7 +36,7 @@ function armsOf(): Record<"runtime" | "fitness", Arm> {
     },
     fitness: {
       obligation: { qualityCheck: "fitness" },
-      credit: fc
+      observation: fc
         .record({
           fitnessFunction: fc.constantFrom("lint:a", "lint:b"),
           exists: fc.boolean(),
@@ -59,17 +59,17 @@ function armsOf(): Record<"runtime" | "fitness", Arm> {
   };
 }
 
-function readsAlone(credit: EvidenceObservation): Outcome {
-  if ("broken" in credit && credit.broken) return "missing";
-  if (credit.qualityCheck !== "fitness") return credit.status === "passed" ? "satisfied" : "failing";
-  if (credit.status === "failed") return "failing";
-  if (credit.enforcedOverRealSource) return "satisfied";
-  return credit.exists ? "watermelon" : "missing";
+function readsAlone(observation: EvidenceObservation): Outcome {
+  if ("broken" in observation && observation.broken) return "missing";
+  if (observation.qualityCheck !== "fitness") return observation.status === "passed" ? "satisfied" : "failing";
+  if (observation.status === "failed") return "failing";
+  if (observation.enforcedOverRealSource) return "satisfied";
+  return observation.exists ? "watermelon" : "missing";
 }
 
-function itemOf(arm: Arm, credits: EvidenceObservation[]) {
+function itemOf(arm: Arm, observations: EvidenceObservation[]) {
   const rows: Scenario[] = [{ scnId: SCN, evidenceObligations: [arm.obligation] }];
-  const row = reconcile(rows, credits).scenarioReconciliations.find((r) => r.scnId === SCN)!;
+  const row = reconcile(rows, observations).scenarioReconciliations.find((r) => r.scnId === SCN)!;
   return row.qualityCheckReconciliations.find(
     (i) => i.qualityCheck === arm.obligation.qualityCheck
   )!;
@@ -78,31 +78,31 @@ function itemOf(arm: Arm, credits: EvidenceObservation[]) {
 const worstOf = (outcomes: readonly Outcome[]): Outcome =>
   WORST_FIRST.find((o) => outcomes.includes(o)) ?? "missing";
 
-const armAndCreditsTwoWays = (arms: Record<"runtime" | "fitness", Arm>) =>
+const armAndObservationsTwoWays = (arms: Record<"runtime" | "fitness", Arm>) =>
   fc.constantFrom("runtime" as const, "fitness" as const).chain((arm) =>
     fc
-      .array(arms[arm].credit, { maxLength: 6 })
-      .chain((credits) =>
+      .array(arms[arm].observation, { maxLength: 6 })
+      .chain((observations) =>
         fc
-          .shuffledSubarray(credits, { minLength: credits.length, maxLength: credits.length })
-          .map((reordered) => ({ arm, credits, reordered }))
+          .shuffledSubarray(observations, { minLength: observations.length, maxLength: observations.length })
+          .map((reordered) => ({ arm, observations, reordered }))
       )
   );
 
-describe("[SCN-LDG-038] whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it", () => {
-  it("reads the worst outcome any credit reads alone, names a credit reading it, and reads the same in any arrival order", () => {
+describe("[SCN-LDG-038] whatever evidence observations answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names an evidence observation carrying it", () => {
+  it("reads the worst outcome any evidence observation reads alone, names an evidence observation reading it, and reads the same in any arrival order", () => {
     const arms = armsOf();
     fc.assert(
-      fc.property(armAndCreditsTwoWays(arms), ({ arm, credits, reordered }) => {
-        for (const credit of credits) expect(itemOf(arms[arm], [credit]).outcome).toBe(readsAlone(credit));
-        const expected = worstOf(credits.map(readsAlone));
-        const item = itemOf(arms[arm], credits);
+      fc.property(armAndObservationsTwoWays(arms), ({ arm, observations, reordered }) => {
+        for (const observation of observations) expect(itemOf(arms[arm], [observation]).outcome).toBe(readsAlone(observation));
+        const expected = worstOf(observations.map(readsAlone));
+        const item = itemOf(arms[arm], observations);
         expect(item.outcome).toBe(expected);
         expect(itemOf(arms[arm], reordered).outcome).toBe(expected);
         if (expected === "missing") {
           expect(item.evidenceObservation).toBeUndefined();
         } else {
-          expect(credits).toContainEqual(item.evidenceObservation);
+          expect(observations).toContainEqual(item.evidenceObservation);
           expect(readsAlone(item.evidenceObservation!)).toBe(expected);
         }
       }),

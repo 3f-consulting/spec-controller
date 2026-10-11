@@ -7,11 +7,11 @@ Feature: a broken-attribution reconciliation fixture target
   used to count `attributed` while the reconciler posted it to suspense (@SCN-RPT-023).
 
   Two scenarios, so the assertion has teeth on BOTH sides of the move:
-    - SCN-AMB-001: its cucumber step is AMBIGUOUS. The proof never ran, so the credit posts
+    - SCN-AMB-001: its cucumber step is AMBIGUOUS. The proof never ran, so the evidence observation posts
       to SUSPENSE and attributes to NOTHING — while the observation still carries scnId
       SCN-AMB-001. Its own integration obligation reconciles `missing` BY ABSENCE.
     - SCN-AMB-002: an ordinary passing scenario at the same quality-check. It stays
-      ATTRIBUTED — proving the fold moved the broken credit specifically, and did not
+      ATTRIBUTED — proving the fold moved the broken evidence observation specifically, and did not
       simply empty the attributed tally.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code

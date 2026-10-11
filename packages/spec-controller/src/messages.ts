@@ -346,7 +346,7 @@ export const APP_MESSAGES: AppMessages = {
     "names to a Pending Item, extending (never replacing) the built-in set.",
   [AppMessage.BuiltInDeferralTags]: (tags) => `Built-in deferral tags: ${tags}`,
   [AppMessage.MeasurementsReplacement]: () =>
-    "A fitness function is credited by the outcome of its own CI step: put the check's @SCN on that step's `id:` " +
+    "A fitness function's evidence observation is the outcome of its own CI step: put the check's @SCN on that step's `id:` " +
     "and hand balance the run's step record with --ci-steps.",
   [AppMessage.AllocateSummary]: () =>
     "Print the next @SCN code for a feature part: one past the highest the repository has ever carried, " +

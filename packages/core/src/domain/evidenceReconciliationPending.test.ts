@@ -34,7 +34,7 @@ describe("[SCN-PND-004] a named-pending obligation reconciles as a one-sided Pen
 });
 
 describe("[SCN-PND-005] the pending deferral governs even when a matching observation exists — the Pending Item is raised, the observation IS no-evidence-obligation", () => {
-  it("raises the Pending Item and posts the matching observation as no-evidence-obligation (obligation never satisfied; the row reds via the credit)", () => {
+  it("raises the Pending Item and posts the matching observation as no-evidence-obligation (obligation never satisfied; the row reds via the evidence observation)", () => {
     const scenarios: Scenario[] = [
       {
         scnId: "SCN-PND-005",

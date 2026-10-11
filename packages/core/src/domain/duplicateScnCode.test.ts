@@ -39,7 +39,7 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
     ]);
   });
 
-  it("carries no Pending Item — the deferral is as unattributable as a credit", () => {
+  it("carries no Pending Item — the deferral is as unattributable as an evidence observation", () => {
     const [account] = accountsFor(ledger, "SCN-DUP-001");
     expect(account!.pendingItems).toEqual([]);
   });
@@ -105,8 +105,8 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
   });
 });
 
-describe("[SCN-STG-016] every credit citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position", () => {
-  const credits = [
+describe("[SCN-STG-016] every evidence observation citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position", () => {
+  const observations = [
     { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "passed", locator: "crd-pass.test.ts" },
     { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "failed", locator: "crd-fail.test.ts" },
     { qualityCheck: "e2e", scnId: "SCN-CRD-001", status: "passed", locator: "crd-e2e.spec.ts" },
@@ -118,7 +118,7 @@ describe("[SCN-STG-016] every credit citing a duplicated code posts to its one a
         { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
         { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       ],
-      [...credits]
+      [...observations]
     );
   });
 

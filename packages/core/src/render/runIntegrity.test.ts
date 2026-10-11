@@ -5,7 +5,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { VitestJsonReport } from "../parse/vitest.js";
-import { ciStepRecordCredits } from "../parse/ciStepRecord.js";
+import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
@@ -43,7 +43,7 @@ const SKIPPED_CHECK: CiStepRecord = { "SCN-RIN-001": { outcome: "skipped" } };
 function render(vitest: VitestJsonReport, ciSteps?: CiStepRecord): string {
   const ledger = reconcile(parseScenarios(FEATURE), [
     ...parseVitestEvidenceObservations(vitest, "unit", ROOT),
-    ...ciStepRecordCredits(ciSteps),
+    ...ciStepRecordObservations(ciSteps),
   ]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
   return renderMarkdown(reconciliation, ctx);
@@ -76,7 +76,7 @@ const brokenCell = (qualityCheck: string, where: string): string =>
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
-    checkDidNotRun = ciStepRecordCredits(SKIPPED_CHECK)[0]!.message!;
+    checkDidNotRun = ciStepRecordObservations(SKIPPED_CHECK)[0]!.message!;
   });
 
   it("one broken evidence: the stamp counts one proof, then names its file and prints its error verbatim, each block followed by a blank line", () => {

@@ -15,7 +15,7 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
 
   NONE OF THE FOUR COMMANDS IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than
   load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is
-  answered for its CONFIGURED rows by that record, so the derivation reader does not credit them
+  answered for its CONFIGURED rows by that record, so the derivation reader does not answer them
   a second time. Until the membership rule inverted, the isolation was the prefix set's
   accident — a command that is not a script matched no prefix — and an accident is not a
   guarantee.

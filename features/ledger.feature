@@ -26,22 +26,22 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-002
     Scenario: a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item
 
-  Rule: an evidence obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
+  Rule: an evidence obligation answered by several evidence observations reads the worst outcome any of them carries, and names an evidence observation carrying it
 
-    A runner emits one credit per test, so a scenario cited by several tests carries several
-    credits at one quality check. Each is read on its own, and the obligation reads the worst of
+    A runner emits one evidence observation per test, so a scenario cited by several tests carries several
+    evidence observations at one quality check. Each is read on its own, and the obligation reads the worst of
     those readings — failing over watermelon over satisfied — on every quality check. A failed one is a failing observation whatever passed beside it, and nothing about
-    where its file sorts may discharge it. The item names the first credit carrying that outcome
+    where its file sorts may discharge it. The item names the first evidence observation carrying that outcome
     in the order the books read evidence in; the rest stay posted on the row.
 
     @unit @SCN-LDG-036
     Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
 
     @unit @SCN-LDG-037
-    Scenario: a passing and a failing test in one file citing the same scenario read failing, whichever order the two credits arrive in
+    Scenario: a passing and a failing test in one file citing the same scenario read failing, whichever order the two evidence observations arrive in
 
     @unit @SCN-LDG-038
-    Scenario: whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it
+    Scenario: whatever evidence observations answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names an evidence observation carrying it
 
   Rule: a scenario that raises an Evidence Obligation with no matching result is out of balance
 
@@ -58,56 +58,56 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-004
     Scenario: a multi-evidence obligation scenario failing one level and missing another lists both reconciling items
 
-  Rule: a credit citing a scenario no feature carries is a phantom-scenario reconciliation
+  Rule: an evidence observation citing a scenario no feature carries is a phantom-scenario reconciliation
 
-    The bidirectional reconciler consumes evidence observations (credits),
-    not just evidence obligations. A credit citing an @SCN id that NO feature carries
+    The bidirectional reconciler consumes evidence observations,
+    not just evidence obligations. An evidence observation citing an @SCN id that NO feature carries
     posts to no real scenario — it lands on a PHANTOM scenario
     (posting to a non-existent account). Each
     phantom cited id becomes ONE phantom-scenario Scenario Reconciliation, its
     Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
     evidence observation's locator as the where-to-fix), verdict always out of balance. This is
-    the foundation sub-issue that lays the full credit-consuming reconciler spine.
+    the foundation sub-issue that lays the full reconciler spine that consumes evidence observations.
 
     @unit @SCN-LDG-006
-    Scenario: a credit citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance
+    Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance
 
     @unit @SCN-LDG-034
-    Scenario: a phantom row's item carries the keys its credit has a value for and omits the rest
+    Scenario: a phantom row's item carries the keys its evidence observation has a value for and omits the rest
 
-  Rule: a credit citing no scenario is a suspense-scenario reconciliation
+  Rule: an evidence observation citing no scenario is a suspense-scenario reconciliation
 
-    The bidirectional reconciler also consumes credits that cite NO scenario at
+    The bidirectional reconciler also consumes evidence observations that cite NO scenario at
     all — a runtime result carrying no @SCN anchor, or a CI fitness function no scenario cites
-    (ruling Q4). A credit that posts to no scenario lands on the SUSPENSE scenario
+    (ruling Q4). An evidence observation that posts to no scenario lands on the SUSPENSE scenario
     (a suspense account holds postings that match no
-    real account). ALL uncited credits aggregate into ONE suspense-scenario Scenario
+    real account). ALL uncited evidence observations aggregate into ONE suspense-scenario Scenario
     Reconciliation, sentinel id "(no scenario)", each Quality Check Reconciliation carrying
     the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
-    verdict always out of balance. Every uncited credit is listed on this row.
+    verdict always out of balance. Every uncited evidence observation is listed on this row.
 
     @unit @SCN-LDG-007
-    Scenario: a credit citing no scenario is reported as a suspense-scenario reconciliation, out of balance
+    Scenario: an evidence observation citing no scenario is reported as a suspense-scenario reconciliation, out of balance
 
-  Rule: a credit at a quality-check the scenario never raised is no-evidence-obligation
+  Rule: an evidence observation at a quality-check the scenario never raised is no-evidence-obligation
 
-    The bidirectional reconciler also consumes credits that cite a REAL
+    The bidirectional reconciler also consumes evidence observations that cite a REAL
     scenario at a quality-check that scenario NEVER raised — a runtime result attributed to
-    a scenario, but at a level the scenario has no evidence obligation for. Such a credit posts
+    a scenario, but at a level the scenario has no evidence obligation for. Such an evidence observation posts
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes a credit-side
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of runtime observations never silently counts a
-    stray credit at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
-    appears in summary.byOutcome, while the Test-volume attributed (credits citing a real
+    stray evidence observation at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
+    appears in summary.byOutcome, while the Test-volume attributed (evidence observations citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @SCN-LDG-008
-    Scenario: a credit at a quality-check the scenario never raised is reported as no-evidence-obligation
+    Scenario: an evidence observation at a quality-check the scenario never raised is reported as no-evidence-obligation
 
     @unit @SCN-LDG-010
-    Scenario: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation, not both-missing
+    Scenario: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing
 
   Rule: a scenario with zero rows on both sides is both-missing
 
@@ -118,7 +118,7 @@ Feature: Ledger over obligation-vs-observation evidence
     blank on both sides, outcome both-missing (label: "Evidence Obligation and
     Evidence Observation are both missing — the Scenario is untagged and uncited"), verdict out of balance. Detection keys
     on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
-    === 0 map: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation (LDG-010),
+    === 0 map: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation (LDG-010),
     not both-missing. The report has no warnings section: this row is where such a scenario
     is reported.
 
@@ -186,18 +186,18 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-021
     Scenario: a scenario carrying no @SCN reconciles no-scn-code on its own row, and the run is out-of-balance
 
-  Rule: every evidence observation posts to exactly one ledger account, never to none — the credit cites, on both axes
+  Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
     @unit @SCN-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is findable there — behavioural and fitness credits alike
+    Scenario: every evidence observation posts to exactly one ledger account and is findable there — behavioural and fitness evidence observations alike
 
     @unit @SCN-LDG-035
-    Scenario: a fitness-function credit discharges only the obligation on the row whose @SCN it cites
+    Scenario: a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites
 
   Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 
     @unit @SCN-LDG-025
-    Scenario: a corpus whose only fitness credit is one satisfied citation-routed check reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
+    Scenario: a corpus whose only fitness evidence observation is one satisfied citation-routed check reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
 
   Rule: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
 
@@ -230,7 +230,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a vitest citation is the bracketed token — an SCN-shaped token in prose is prose
 
     @unit @SCN-LDG-033
-    Scenario: an assertion whose only SCN-shaped token is prose cites no scenario — the credit posts to suspense
+    Scenario: an assertion whose only SCN-shaped token is prose cites no scenario — the evidence observation posts to suspense
 
     @unit @SCN-LDG-032
     Scenario: a leaf naming a scenario id in prose does not override its describe's bracketed citation

@@ -37,7 +37,7 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
   Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named
     Given an e2e obligation discharged by an e2e observation
     When a unit observation also cites this scenario
-    Then the unit credit reconciles no-evidence-obligation
+    Then the unit evidence observation reconciles no-evidence-obligation
 
   @SCN-TOC-006
   Scenario: both-missing — a scenario with no obligation and no citation
@@ -52,7 +52,7 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
     Then its obligation has no code for an observation to link to
 
   # duplicate-scn-code (3F-3609): two scenarios carrying one code are ONE account, and every
-  # quality check on it reads duplicate-scn-code. Nothing cites it; the outcome needs no credit.
+  # quality check on it reads duplicate-scn-code. Nothing cites it; the outcome needs no evidence observation.
   @unit @SCN-TOC-007
   Scenario: duplicate-scn-code — the first of two scenarios carrying one code
     Given a unit obligation

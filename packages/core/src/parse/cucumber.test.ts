@@ -62,7 +62,7 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
     ]);
   });
 
-  it("credits nothing for an @integration scenario that ran no steps", () => {
+  it("emits no evidence observation for an @integration scenario that ran no steps", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/integration.feature",
@@ -72,7 +72,7 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
     expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([]);
   });
 
-  it("credits integration once when the tag is inherited from the feature beside the scenario's own", () => {
+  it("emits one integration evidence observation when the tag is inherited from the feature beside the scenario's own", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/integration.feature",

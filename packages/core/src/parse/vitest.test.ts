@@ -43,7 +43,7 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
     ],
   };
 
-  it("credits the self-citing leaf to the scenario its OWN title cites, not the ancestor describe's", () => {
+  it("emits the self-citing leaf's evidence observation citing the scenario its OWN title cites, not the ancestor describe's", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
       { qualityCheck: "unit", scnId: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts" },
       { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
@@ -67,7 +67,7 @@ describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed toke
     ],
   };
 
-  it("emits an uncited credit — neither the bare id nor the @-prefixed one cites", () => {
+  it("emits an uncited evidence observation — neither the bare id nor the @-prefixed one cites", () => {
     expect(parseVitestEvidenceObservations(proseOnly, "unit")).toEqual([
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts" },
     ]);
@@ -90,7 +90,7 @@ describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's 
     ],
   };
 
-  it("credits the ancestor describe — the leaf's prose mentions are not citations", () => {
+  it("emits the evidence observation citing the ancestor describe's scenario — the leaf's prose mentions are not citations", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
       { qualityCheck: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts" },
     ]);
@@ -122,7 +122,7 @@ describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observati
     ]);
   });
 
-  it("relativises the broken observation's locator to the run root, as it does every credit", () => {
+  it("relativises the broken observation's locator to the run root, as it does every evidence observation", () => {
     const out = parseVitestEvidenceObservations(collectionFailed, "unit", "/r");
     expect(out).toHaveLength(1);
     const observation = out[0]!;

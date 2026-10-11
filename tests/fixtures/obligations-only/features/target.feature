@@ -1,12 +1,12 @@
 @DEM
-Feature: a corpus whose only fitness credit is one satisfied citation-routed check
+Feature: a corpus whose only fitness evidence observation is one satisfied citation-routed check
 
-  A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY fitness credit is a
+  A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY fitness evidence observation is a
   satisfied, CITATION-ROUTED check: one STEPLESS scenario configures one row — SCN-DEM-001,
   and its lint:obligations-only CI step carries that row's code as
   its own `id:`, so the running-check observer reads the citation directly off the step rather than
   through a registered handle; package.json defines the script. So the check EXISTS and is ENFORCED
-  over the real source → satisfied → the run is BALANCED. There is NO other credit shape — no
+  over the real source → satisfied → the run is BALANCED. There is NO other evidence observation shape — no
   broken, no uncited, no no-evidence-obligation check — so nothing else can mint the suspense row.
 
   WHAT THAT ISOLATION BUYS (@SCN-LDG-025, 3F-1851): summary.outOfBalance is 0 and AGREES with the
@@ -18,8 +18,8 @@ Feature: a corpus whose only fitness credit is one satisfied citation-routed che
   Rule: one stepless scenario carries a wired-and-green check
 
     # STEPLESS, and carrying ONLY the @fitness tag — no runtime (@unit/@integration/…) tier. A
-    # runtime tier would raise a runtime obligation with no credit (there is no vitest/cucumber
-    # report here) → missing → out-of-balance, and the fitness credit would no longer ALONE
+    # runtime tier would raise a runtime obligation with no evidence observation (there is no vitest/cucumber
+    # report here) → missing → out-of-balance, and the fitness evidence observation would no longer ALONE
     # determine the verdict. The configured row alone raises the target's whole obligation set: one
     # fitness function, which its CI runs green.
     @fitness @SCN-DEM-001

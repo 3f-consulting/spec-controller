@@ -27,8 +27,8 @@
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "no-evidence-obligation unit credit [SCN-TOC-005]",
-          "title": "[SCN-TOC-005] a unit credit at a quality-check the scenario never named",
+          "fullName": "no-evidence-obligation unit evidence observation [SCN-TOC-005]",
+          "title": "[SCN-TOC-005] a unit evidence observation at a quality-check the scenario never named",
           "status": "passed"
         }
       ]
@@ -39,7 +39,7 @@
       "assertionResults": [
         {
           "fullName": "phantom [SCN-TOC-999]",
-          "title": "[SCN-TOC-999] a credit citing a scenario no feature names",
+          "title": "[SCN-TOC-999] an evidence observation citing a scenario no feature names",
           "status": "passed"
         }
       ]

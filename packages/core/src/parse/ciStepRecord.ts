@@ -36,7 +36,7 @@ function namedOf(citedScn: string) {
   } as const;
 }
 
-function brokenCreditOf(citedScn: string, message: string): FitnessEvidenceObservation {
+function brokenObservationOf(citedScn: string, message: string): FitnessEvidenceObservation {
   return {
     ...namedOf(citedScn),
     exists: false,
@@ -46,13 +46,13 @@ function brokenCreditOf(citedScn: string, message: string): FitnessEvidenceObser
   };
 }
 
-function creditOf(
+function observationOf(
   citedScn: string,
   reading: StepReading,
   outcome: string | undefined
 ): FitnessEvidenceObservation {
   if (reading === null) {
-    return brokenCreditOf(citedScn, checkDidNotRunMessage(citedScn, outcome));
+    return brokenObservationOf(citedScn, checkDidNotRunMessage(citedScn, outcome));
   }
   return {
     ...namedOf(citedScn),
@@ -62,12 +62,12 @@ function creditOf(
   };
 }
 
-export function ciStepRecordCredits(record: CiStepRecord | undefined): FitnessEvidenceObservation[] {
+export function ciStepRecordObservations(record: CiStepRecord | undefined): FitnessEvidenceObservation[] {
   if (record === undefined) return [];
-  const credits: FitnessEvidenceObservation[] = [];
+  const observations: FitnessEvidenceObservation[] = [];
   for (const [citedScn, step] of Object.entries(record)) {
     if (!SCN_CODE.test(citedScn)) continue;
-    credits.push(creditOf(citedScn, readingOf(step.outcome), step.outcome));
+    observations.push(observationOf(citedScn, readingOf(step.outcome), step.outcome));
   }
-  return credits;
+  return observations;
 }

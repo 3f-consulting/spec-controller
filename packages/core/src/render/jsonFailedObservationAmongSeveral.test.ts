@@ -5,7 +5,7 @@ import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-LDG-036] a failing test in a file that sorts after a passing one citing the same scenario reads failing", () => {
-  it("the JSON report's unit reconciliation reads failing and carries the failed test's credit, with the row out of balance", () => {
+  it("the JSON report's unit reconciliation reads failing and carries the failed test's evidence observation, with the row out of balance", () => {
     const ledger = reconcile(
       [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [

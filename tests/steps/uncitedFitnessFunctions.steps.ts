@@ -73,14 +73,14 @@ Then(
       activeMd.includes(
         "| SCN-TGT-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"
       ),
-      `expected lint:foo's credit posted to SCN-TGT-001, satisfied — the ` +
-        `attribution the citation seam produces. Asserting only that no uncited credit names ` +
-        `lint:foo is the weaker claim, and a reader posting the credit to a scenario the corpus ` +
+      `expected lint:foo's evidence observation posted to SCN-TGT-001, satisfied — the ` +
+        `attribution the citation seam produces. Asserting only that no uncited evidence observation names ` +
+        `lint:foo is the weaker claim, and a reader posting the evidence observation to a scenario the corpus ` +
         `never wrote satisfies it too. Got:\n${activeMd}`
     );
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `a scenario cites lint:foo; it must not surface as an uncited fitness-function credit; got:\n${activeMd}`
+      `a scenario cites lint:foo; it must not surface as an uncited fitness-function evidence observation; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),

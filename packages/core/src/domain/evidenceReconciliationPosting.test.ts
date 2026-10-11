@@ -22,12 +22,12 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
   it.each([
-    ["posts a matched credit to the account it cites", "SCN-AAA-001"],
-    ["posts a credit citing an unknown @SCN to that phantom account", "SCN-ZZZ-999"],
+    ["posts a matched evidence observation to the account it cites", "SCN-AAA-001"],
+    ["posts an evidence observation citing an unknown @SCN to that phantom account", "SCN-ZZZ-999"],
   ] as const)("%s", (_title, scnId) => {
-    const credit: EvidenceObservation = { scnId, qualityCheck: "unit", status: "passed" };
-    const ledger = reconcile(namedScenarios, [credit]);
-    expect(accountFor(ledger, scnId)?.evidenceObservations).toEqual([credit]);
+    const observation: EvidenceObservation = { scnId, qualityCheck: "unit", status: "passed" };
+    const ledger = reconcile(namedScenarios, [observation]);
+    expect(accountFor(ledger, scnId)?.evidenceObservations).toEqual([observation]);
   });
 
   it("sets evidenceObservations explicitly on every account, even when nothing posts", () => {
@@ -43,14 +43,14 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
   const ctx: RunContext = { target: "obligations-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
-  it("a satisfied citation-routed check as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
+  it("a satisfied citation-routed check as the only evidence observation → balanced, no suspense, summary.outOfBalance 0", () => {
     const fitness: Scenario[] = [
       { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ];
-    const credit: EvidenceObservation = {
+    const observation: EvidenceObservation = {
       scnId: "SCN-DEM-001", qualityCheck: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(fitness, [credit]);
+    const ledger = reconcile(fitness, [observation]);
 
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "fitness", outcome: "satisfied", evidenceObligation: { qualityCheck: "fitness" }, evidenceObservation: { scnId: "SCN-DEM-001", qualityCheck: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },

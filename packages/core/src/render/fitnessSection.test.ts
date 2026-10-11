@@ -3,7 +3,7 @@ import { renderMarkdown } from "./markdown.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { ciStepRecordCredits } from "../parse/ciStepRecord.js";
+import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
@@ -39,7 +39,7 @@ const UNIT: EvidenceObservation = {
 };
 
 function render(feature: string, ciSteps: CiStepRecord): string[] {
-  const ledger = reconcile(parseScenarios(feature), [...ciStepRecordCredits(ciSteps), UNIT]);
+  const ledger = reconcile(parseScenarios(feature), [...ciStepRecordObservations(ciSteps), UNIT]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
   return renderMarkdown(reconciliation, ctx).split("\n");
 }

@@ -10,25 +10,25 @@ import type {
   FitnessEvidenceObservation,
 } from "../model.js";
 
-const credit = (
+const observation = (
   qualityCheck: RuntimeEvidenceObservation["qualityCheck"],
   scnId: string | null,
   extra: Partial<RuntimeEvidenceObservation> = {}
 ): RuntimeEvidenceObservation => ({ qualityCheck, scnId, status: "passed", ...extra });
 
-describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at quality-checks with no evidence obligation", () => {
+describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at quality-checks with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
-  it("skips a credit at a NAMED pair — that one reconciles as a matched obligation", () => {
+  it("skips an evidence observation at a NAMED pair — that one reconciles as a matched obligation", () => {
     expect(
-      noEvidenceObligationReconciliationsOf("SCN-AAA-001", [credit("unit", "SCN-AAA-001")], pairs)
+      noEvidenceObligationReconciliationsOf("SCN-AAA-001", [observation("unit", "SCN-AAA-001")], pairs)
     ).toEqual([]);
   });
 
-  it("lists a credit at a quality-check with NO evidence obligation, credit-only, carrying its locator", () => {
+  it("lists an evidence observation at a quality-check with NO evidence obligation, evidence observation only, carrying its locator", () => {
     const items = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
-      [credit("e2e", "SCN-AAA-001", { locator: "tests/a.e2e.ts" })],
+      [observation("e2e", "SCN-AAA-001", { locator: "tests/a.e2e.ts" })],
       pairs
     );
     expect(items).toHaveLength(1);
@@ -39,11 +39,11 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at q
   });
 });
 
-describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit has no value for", () => {
+describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its evidence observation has no value for", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
-  it("omits BOTH the fitnessFunction and the locator key on a runtime credit from no test file", () => {
-    const anonymous = credit("e2e", "SCN-AAA-001");
+  it("omits BOTH the fitnessFunction and the locator key on a runtime evidence observation from no test file", () => {
+    const anonymous = observation("e2e", "SCN-AAA-001");
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [anonymous], pairs);
     expect(item).toStrictEqual({
       qualityCheck: "e2e",
@@ -74,10 +74,10 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
 });
 
 describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom row's items", () => {
-  it("posts one credit-only cites-unknown-scenario item per citing credit, in citation order", () => {
+  it("posts one cites-unknown-scenario item, with an evidence observation and no obligation, per citing evidence observation, in citation order", () => {
     const items = citesUnknownScenarioReconciliationsOf([
-      credit("unit", "SCN-ZZZ-009", { locator: "tests/z1.test.ts" }),
-      credit("integration", "SCN-ZZZ-009", { locator: "features/z2.feature" }),
+      observation("unit", "SCN-ZZZ-009", { locator: "tests/z1.test.ts" }),
+      observation("integration", "SCN-ZZZ-009", { locator: "features/z2.feature" }),
     ]);
     expect(items.map((i) => i.outcome)).toEqual([
       "cites-unknown-scenario",
@@ -88,9 +88,9 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
   });
 });
 
-describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit has", () => {
-  it("carries neither a locator nor a fitnessFunction key when the runtime credit has no locator", () => {
-    const noLocator = credit("unit", "SCN-ZZZ-009");
+describe("[SCN-LDG-006] a phantom row's items carry only the fields the evidence observation has", () => {
+  it("carries neither a locator nor a fitnessFunction key when the runtime evidence observation has no locator", () => {
+    const noLocator = observation("unit", "SCN-ZZZ-009");
     const [item] = citesUnknownScenarioReconciliationsOf([noLocator]);
     expect(item).toStrictEqual({
       qualityCheck: "unit",
@@ -102,8 +102,8 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
   });
 });
 
-describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when the credit carries one", () => {
-  it("drops a locator a citing fitness credit arrived with rather than stamping it on the item", () => {
+describe("[SCN-LDG-034] a fitness evidence observation's item carries no locator, even when the evidence observation carries one", () => {
+  it("drops a locator a citing fitness evidence observation arrived with rather than stamping it on the item", () => {
     const guardWithLocator: FitnessEvidenceObservation & { locator: string } = {
       qualityCheck: "fitness",
       fitnessFunction: "lint:complexity",
@@ -125,15 +125,15 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
 });
 
 describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's items", () => {
-  let broken: ReturnType<typeof credit>;
-  let uncited: ReturnType<typeof credit>;
+  let broken: ReturnType<typeof observation>;
+  let uncited: ReturnType<typeof observation>;
   beforeEach(() => {
-    broken = credit("unit", "SCN-AAA-001", {
+    broken = observation("unit", "SCN-AAA-001", {
       broken: true,
       locator: "tests/broken.test.ts",
       message: "Failed to collect",
     });
-    uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
+    uncited = observation("unit", null, { locator: "tests/orphan.test.ts" });
   });
   const guard: FitnessEvidenceObservation = {
     qualityCheck: "fitness",
@@ -142,7 +142,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     enforcedOverRealSource: true,
   };
 
-  it("lists broken FIRST, then the uncited runtime credits, then the no-evidence-obligation fitness functions", () => {
+  it("lists broken FIRST, then the uncited runtime evidence observations, then the uncited fitness functions", () => {
     const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
     expect(items[2]!.fitnessFunction).toBe("lint:nobody-asked");
@@ -158,15 +158,15 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
 
 describe("[SCN-LDG-007] a suspense item omits the payload keys its observation has no value for", () => {
   it("omits BOTH the locator and the message key on a broken item that carries neither", () => {
-    const silent = credit("unit", null, { broken: true, status: "failed" });
+    const silent = observation("unit", null, { broken: true, status: "failed" });
     const [item] = suspenseReconciliationsOf([silent], [], []);
     expect(item).toStrictEqual({ qualityCheck: "unit", outcome: "broken" });
     expect(item).not.toHaveProperty("locator");
     expect(item).not.toHaveProperty("message");
   });
 
-  it("omits the locator key on an uncited runtime credit that came from no test file", () => {
-    const anonymous = credit("integration", null);
+  it("omits the locator key on an uncited runtime evidence observation that came from no test file", () => {
+    const anonymous = observation("integration", null);
     const [item] = suspenseReconciliationsOf([], [anonymous], []);
     expect(item).toStrictEqual({
       qualityCheck: "integration",

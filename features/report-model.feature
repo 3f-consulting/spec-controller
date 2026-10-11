@@ -54,8 +54,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The runtime evidence-observation counting is a FOLD the Ledger owns.
     The raw per-quality-check totals are materialised on summary.rawByRuntimeQualityCheck, and
-    the persisted JSON carries NO separate evidence-observations section: every credit is
-    already posted on the ledger, a phantom credit on its phantom-scenario row and an uncited one
+    the persisted JSON carries NO separate evidence-observations section: every evidence observation is
+    already posted on the ledger, a phantom evidence observation on its phantom-scenario row and an uncited one
     on the suspense-scenario row, each with its file locator. The markdown's Test volume cut and
     its identity line read the same summary folds. The balancing identity Σ
     rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
@@ -70,7 +70,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
     with the runtime testVolume counter. There is no standalone member-list section, because
     each check's detail lives on the rows: a cited check on its scenario's own row, an
-    uncited one as a cites-no-scenario credit on the suspense row, so nothing is reported twice.
+    uncited one as a cites-no-scenario evidence observation on the suspense row, so nothing is reported twice.
     The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited
     count is implicit, running − uncited. A pure derive over the model, held in isolation by
     Vitest.
@@ -154,8 +154,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     A runner decides the order its report lists files in, and vitest's changes between two runs
     over one unchanged tree. So the books read the evidence in an order the evidence itself
     fixes: quality check in tier order with fitness last, then location, then the scenario cited,
-    then everything else the credit says. A row's posted credits, and the credit a reconciliation
-    names (the first FAILED credit in evidence order or, where none failed, the first), are then
+    then everything else the evidence observation says. A row's posted evidence observations, and the evidence observation a reconciliation
+    names (the first FAILED evidence observation in evidence order or, where none failed, the first), are then
     a function of what was observed, never of the order it arrived in.
 
     @unit @SCN-RMD-009

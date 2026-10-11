@@ -239,13 +239,13 @@ Feature: The report renders the ledger as sectioned facts
     e2e, Performance; e2e/performance only when a run has them). Each cell is two-sided,
     `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (F, U, I,
     E, P) iff the scenario obligated this check, else `-`; the RIGHT is the observation count — the
-    multiplicity of posted credits at this check (backing present, pass OR fail), else `-`. So a
+    multiplicity of posted evidence observations at this check (backing present, pass OR fail), else `-`. So a
     named-and-met cell reads `letter/N`; a named-and-missing cell reads `letter/-`; a
-    NO-EVIDENCE-OBLIGATION observation (a credit at a quality-check the scenario never named) reads `-/N`;
-    a doubly-empty cell (no evidence obligation, no credit) renders BLANK.
+    NO-EVIDENCE-OBLIGATION observation (an evidence observation at a quality-check the scenario never named) reads `-/N`;
+    a doubly-empty cell (no evidence obligation, no evidence observation) renders BLANK.
     The cell counts BACKING, not quality — a failing evidence obligation shows its
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
-    The Fitness cell reads the fitness evidence obligation outcomes (a fitness credit isn't a counted evidence observation):
+    The Fitness cell reads the fitness evidence obligation outcomes (a fitness evidence observation isn't counted):
     its right side is the count of guards present (balanced or the watermelon — the script exists; its
     inadequacy is the 🍉 in Reconciling-items); its left is the single `F` — one scenario is one
     fitness function, so a row names at most one fitness function. No Cell/Meaning legend
@@ -256,12 +256,12 @@ Feature: The report renders the ledger as sectioned facts
     The no-evidence-obligation cell (`-/N`) posts from ONE production shape: the reconciler posts
     a credit-side row ON the real scenario, outcome `no-evidence-obligation`, and that row carries the observation
     on its `evidenceObservations`. The cell reads its right-side count STRAIGHT off those posted
-    credits (multiplicity-correct) — never off `qualityCheckReconciliations`, which
+    evidence observations (multiplicity-correct) — never off `qualityCheckReconciliations`, which
     collapse to one matched row per obligation and would undercount duplicate citations. An
     `no-evidence-obligation` row is NOT an evidence obligation: its left side is `-`, so the cell cannot be mistaken for a
     named-and-missing one (`letter/-`), which points at the OPPOSITE remedy — "write the test",
     when the truth is "fix the attribution". A pending obligation (@unitpending) names nothing —
-    the pending pair is folded out of the active set — so a credit citing it reconciles the same
+    the pending pair is folded out of the active set — so an evidence observation citing it reconciles the same
     NO-EVIDENCE-OBLIGATION way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
     hand-written, so a fixture cannot pin a shape the pipeline cannot emit —
@@ -325,23 +325,23 @@ Feature: The report renders the ledger as sectioned facts
     observation surfacing as `e2e: 0` in the views while the reconciler reports the e2e
     obligation satisfied.
 
-    So the counting is a FOLD OVER THE LEDGER'S POSTED CREDITS. It walks the credits on each
-    Scenario Reconciliation row, taking each credit's LEVEL off the credit the parse emitted
+    So the counting is a FOLD OVER THE LEDGER'S POSTED EVIDENCE OBSERVATIONS. It walks the evidence observations on each
+    Scenario Reconciliation row, taking each evidence observation's LEVEL off the evidence observation the parse emitted
     and its ACCOUNT off the row it posted to — the reconciler's own ruling, re-derived nowhere.
     There is no second walk to disagree with the first: the one parsed set of evidence
     observations (tag-derived, per-tier) is what reconcile posts, and the fold counts what was
     posted, so the level the parse derived IS the level the views render. The E2e cell likewise
-    reads its observation count STRAIGHT off those posted credits, never off a parallel tally.
+    reads its observation count STRAIGHT off those posted evidence observations, never off a parallel tally.
 
     The fold carries `rawByRuntimeQualityCheck` beside three per-account counts — `onScenario`
-    (both the matched and the no-evidence-obligation credits), `onPhantomScenario` and
-    `onSuspenseScenario` — and the per-credit outcome split lives on the ledger rows themselves,
+    (both the matched and the no-evidence-obligation evidence observations), `onPhantomScenario` and
+    `onSuspenseScenario` — and the outcome split per evidence observation lives on the ledger rows themselves,
     where the reconciler ruled it. The completeness identity is
     `Σ raw = onScenario + onPhantomScenario + onSuspenseScenario`, holding by construction over
     the single walk.
 
     The unit arm proves the fold: over a reconciler-built spanning corpus carrying an
-    e2e-levelled credit, `rawByRuntimeQualityCheck` counts it under e2e and not integration.
+    e2e-levelled evidence observation, `rawByRuntimeQualityCheck` counts it under e2e and not integration.
 
     @unit @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
@@ -499,18 +499,18 @@ Feature: The report renders the ledger as sectioned facts
 
     The count moves — `attributed` down, `suspense` up — and this scenario NAMES that move,
     because nothing else can. The exhaustion identity is INVARIANT under a misclassification
-    between its own terms: it catches a credit VANISHING, never a credit in the wrong bucket.
+    between its own terms: it catches an evidence observation VANISHING, never an evidence observation in the wrong bucket.
     It is a completeness check, and it has been misread as a correctness check. This is the
     correctness check.
 
-    The census is now a FOLD over the Ledger: it walks the posted credits and reads each
-    credit's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
+    The census is now a FOLD over the Ledger: it walks the posted evidence observations and reads each
+    evidence observation's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
     keeps the RUNTIME scoping, and citation-routing makes that scoping MORE obviously
-    necessary rather than less. A fitness credit now cites its OWN fitness
+    necessary rather than less. A fitness evidence observation now cites its OWN fitness
     scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
-    EXACTLY like a runtime credit, indistinguishable by the account it landed on. The fold
+    EXACTLY like a runtime evidence observation, indistinguishable by the account it landed on. The fold
     must therefore skip it on the CHECK (`qualityCheck === "fitness"`), never on the absence of
-    a citation. Under the retired name-match posting a fitness credit cited nothing at all,
+    a citation. Under the retired name-match posting a fitness evidence observation cited nothing at all,
     so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;
     that reading is now simply wrong, and the fitness-function axis the census must not see at all
     would be counted into the Test volume.
@@ -579,7 +579,7 @@ Feature: The report renders the ledger as sectioned facts
 
     What was this verdict computed from. The canonical input
     list the Inputs block renders carried five flags, and the fitness stream was not among
-    them — so a report whose every configured fitness row was credited from that stream did
+    them — so a report whose every configured fitness row was answered from that stream did
     not admit reading it. The stream is OPTIONAL by design, passed only where the file
     exists, so its absence from the block was genuinely ambiguous between "the run never got
     it" and "the run got it and the block does not say so" — the two readings the Inputs block

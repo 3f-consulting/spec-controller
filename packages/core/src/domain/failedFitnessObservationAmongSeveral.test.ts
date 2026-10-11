@@ -6,11 +6,11 @@ import type { EvidenceObservation, Scenario } from "./journal.js";
 
 const SCN = "SCN-AAA-001";
 
-describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the same check reads failing", () => {
+describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing one for the same check reads failing", () => {
   const rowNamingCheck: Scenario[] = [
     { scnId: SCN, evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
-  const fitnessFunctionCredit = (fitnessFunction: string, status: "passed" | "failed"): EvidenceObservation => ({
+  const fitnessFunctionObservation = (fitnessFunction: string, status: "passed" | "failed"): EvidenceObservation => ({
     qualityCheck: "fitness",
     fitnessFunction,
     scnId: SCN,
@@ -18,10 +18,10 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     enforcedOverRealSource: true,
     status,
   });
-  const passing = () => fitnessFunctionCredit("lint:a", "passed");
-  const failed = () => fitnessFunctionCredit("lint:b", "failed");
+  const passing = () => fitnessFunctionObservation("lint:a", "passed");
+  const failed = () => fitnessFunctionObservation("lint:b", "failed");
 
-  it("reads failing, carrying the failed credit, with the row and the run out of balance", () => {
+  it("reads failing, carrying the failed evidence observation, with the row and the run out of balance", () => {
     const ledger = reconcile(rowNamingCheck, [passing(), failed()]);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
     expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheck, i.outcome, i.evidenceObservation])).toEqual([
@@ -32,7 +32,7 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
   });
 });
 
-describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the same check reads watermelon, whichever one's locator sorts first", () => {
+describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads watermelon, whichever one's locator sorts first", () => {
   const obligation = { qualityCheck: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
@@ -43,8 +43,8 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
     enforcedOverRealSource,
     locator,
   });
-  const itemOf = (credits: EvidenceObservation[]) => {
-    const ledger = reconcile(rowNamingCheck, credits);
+  const itemOf = (observations: EvidenceObservation[]) => {
+    const ledger = reconcile(rowNamingCheck, observations);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
     const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
     return { outcome: item.outcome, carried: item.evidenceObservation, verdict: row.verdict, balanced: isBalanced(ledger) };
@@ -60,7 +60,7 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
   });
 });
 
-describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the same check reads failing, whichever one's locator sorts first", () => {
+describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads failing, whichever one's locator sorts first", () => {
   const obligation = { qualityCheck: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({
@@ -84,7 +84,7 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
   it.each([
     ["the failed run's file sorts first", "a.feature", "z.feature"],
     ["the severed run's file sorts first", "z.feature", "a.feature"],
-  ])("reads failing, carrying the failed credit, with the row and the run out of balance, when %s", (_order, failedLocator, severedLocator) => {
+  ])("reads failing, carrying the failed evidence observation, with the row and the run out of balance, when %s", (_order, failedLocator, severedLocator) => {
     const failed = failedRun(failedLocator);
     const severed = severedRun(severedLocator);
     const ledger = reconcile(rowNamingCheck, [severed, failed]);

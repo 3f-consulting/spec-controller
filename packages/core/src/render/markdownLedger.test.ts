@@ -42,7 +42,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     balance = reconcile(scenarios, observations);
   });
 
-  it("builds the fixture through the reconciler — the no-evidence-obligation credit is OUT of an evidence obligation", () => {
+  it("builds the fixture through the reconciler — the no-evidence-obligation evidence observation is OUT of an evidence obligation", () => {
     const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
       s.qualityCheckReconciliations.filter((o) => o.outcome === "no-evidence-obligation")
     );
@@ -70,7 +70,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it.each([
     ["[SCN-RPT-018] renders both cells for a scenario naming two runtime tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
-    ["renders -/N for a credit at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
+    ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
   ])("%s", (_title, row) => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     expect(md).toContain(row);
@@ -135,7 +135,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "U/1", "-/1"]]);
   });
 
-  it("takes no column from a phantom row's credits, and fills the phantom row's evidence cells with —", () => {
+  it("takes no column from a phantom row's evidence observations, and fills the phantom row's evidence cells with —", () => {
     const phantom = reconcile(
       [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [

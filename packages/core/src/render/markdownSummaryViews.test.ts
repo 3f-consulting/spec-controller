@@ -65,13 +65,13 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
       [{ qualityCheck: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll), ctx);
-    const iStatic = md.indexOf("### Fitness evidence obligations");
+    const iFitness = md.indexOf("### Fitness evidence obligations");
     const iByFeature = md.indexOf("### Out-of-balance by feature");
     const iLedger = md.indexOf("## Scenario Reconciliations");
-    expect(iStatic).toBeGreaterThanOrEqual(0);
+    expect(iFitness).toBeGreaterThanOrEqual(0);
     expect(iByFeature).toBeGreaterThanOrEqual(0);
     expect(iLedger).toBeGreaterThanOrEqual(0);
-    expect(iStatic).toBeLessThan(iByFeature);
+    expect(iFitness).toBeLessThan(iByFeature);
     expect(iByFeature).toBeLessThan(iLedger);
     expect(md).not.toContain("## Warnings");
   });
@@ -131,9 +131,9 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
 describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
   const proven = { scnId: "SCN-BFP-001", evidenceObligations: [{ qualityCheck: "unit" as const }] };
   const unproven = { scnId: "SCN-BFP-002", evidenceObligations: [{ qualityCheck: "unit" as const }] };
-  const provenCredit = { qualityCheck: "unit" as const, scnId: "SCN-BFP-001", status: "passed" as const };
-  const strandedCredit = { qualityCheck: "unit" as const, scnId: "SCN-GONE-001", status: "passed" as const };
-  const uncitedCredit = { qualityCheck: "unit" as const, scnId: null, status: "passed" as const };
+  const provenObservation = { qualityCheck: "unit" as const, scnId: "SCN-BFP-001", status: "passed" as const };
+  const strandedObservation = { qualityCheck: "unit" as const, scnId: "SCN-GONE-001", status: "passed" as const };
+  const uncitedObservation = { qualityCheck: "unit" as const, scnId: null, status: "passed" as const };
   const byFeature = (ledger: Ledger): string => {
     const md = renderMarkdown(__er(ledger), ctx);
     const at = md.indexOf("### Out-of-balance by feature");
@@ -141,7 +141,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   };
 
   it("names the out-of-balance phantom-scenario row beside the grouped scenario rows, and never groups it", () => {
-    const section = byFeature(reconcile([proven, unproven], [provenCredit, strandedCredit]));
+    const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
       "1 of 2 scenario rows out of balance, grouped by feature; 1 phantom-scenario row(s) out of balance, " +
         "not grouped by feature (no feature file names them)."
@@ -151,7 +151,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   });
 
   it("names both ungrouped kinds when a phantom-scenario and the suspense-scenario row are out of balance", () => {
-    const section = byFeature(reconcile([proven, unproven], [provenCredit, strandedCredit, uncitedCredit]));
+    const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
       "1 of 2 scenario rows out of balance, grouped by feature; 1 phantom-scenario row(s) and 1 " +
         "suspense-scenario row(s) out of balance, not grouped by feature (no feature file names them)."
@@ -159,7 +159,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   });
 
   it("renders the section with no table when the ungrouped rows are the only ones out of balance", () => {
-    const section = byFeature(reconcile([proven], [provenCredit, strandedCredit, uncitedCredit]));
+    const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
       "0 of 1 scenario rows out of balance; 1 phantom-scenario row(s) and 1 suspense-scenario row(s) " +
         "out of balance, not grouped by feature (no feature file names them)."
@@ -168,7 +168,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   });
 
   it("renders only the heading and the total line, with no table and no stray line, when the ungrouped rows are the only ones out of balance", () => {
-    const section = byFeature(reconcile([proven], [provenCredit, strandedCredit, uncitedCredit]));
+    const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     const ungrouped = [
       CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1),
       CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](1),

@@ -2,7 +2,7 @@ import { runtimeObservationTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
-export const tallyOfEveryCreditKind = () => {
+export const tallyOfEveryObservationKind = () => {
   const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },

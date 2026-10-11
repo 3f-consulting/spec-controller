@@ -104,8 +104,8 @@ function suspenseItemsOf(reconciliation: EvidenceReconciliation): unknown[] {
   return (row?.qualityCheckReconciliations ?? []).map((item) => [item.outcome, item.message]);
 }
 
-describe("[SCN-LNT-026] a check step's outcome credits its row only where it says what the check did", () => {
-  it("credits the step that succeeded and the step that failed, and none of the other three", () => {
+describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
+  it("answers the obligation for the step that succeeded and the step that failed, and for none of the other three", () => {
     expect(scenarioRows(reconcile())).toEqual([
       ["SCN-CVT-001", "balanced", [[undefined, "satisfied"]]],
       ["SCN-CVT-002", "out-of-balance", [[undefined, "failing"]]],

@@ -3,8 +3,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
-describe("[SCN-LNT-026] a BROKEN fitness-function credit is excluded from the obligation match whatever else it carries", () => {
-  it("leaves the obligation missing and posts to suspense even when the credit says the check exists and ran", () => {
+describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
+  it("leaves the obligation missing and posts to suspense even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
         scnId: "SCN-LNT-026",

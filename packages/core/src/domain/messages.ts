@@ -395,7 +395,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PhantomScenarioTally]: (count) =>
     `${count} phantom-scenario(s): cited by an evidence observation, named by no feature.`,
   [CoreMessage.SuspenseScenarioTally]: (count) =>
-    `${count} suspense-scenario(s): credits citing no scenario, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
+    `${count} suspense-scenario(s): evidence observations citing no scenario, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag:`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>

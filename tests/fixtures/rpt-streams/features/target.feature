@@ -4,7 +4,7 @@ Feature: a converted target's fitness corpus, two checks run by the pipeline who
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
   --features. Both of its scenarios carry the bare fitness axis tag and their own @SCN, and that
   repository's CI states each @SCN as the `id:` of the step that runs its check. Its run's record
-  says both checks' steps succeeded, so each scenario is credited by its own step's outcome and the
+  says both checks' steps succeeded, so each scenario is answered by its own step's outcome and the
   run balances.
 
   WHAT THIS DIRECTORY IS FOR IS THE STREAMS IT HANDS OVER, NOT THE VERDICT. The report's

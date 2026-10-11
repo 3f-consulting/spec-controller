@@ -62,7 +62,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     THE ACCOUNT IS KEYED BY THE CODE, SO TWO SCENARIOS CARRYING ONE CODE ARE ONE ACCOUNT. A phantom
     account already exists for a cited code with no scenario behind it; a code carried twice is the
-    mirror, two scenarios behind one account. No credit citing that code can be attributed to either
+    mirror, two scenarios behind one account. No evidence observation citing that code can be attributed to either
     of them, so nothing the account says can be trusted, and every quality check on it reads
     `duplicate-scn-code`. Each is a reconciling item, so the account is out of balance by the
     ordinary rule: no new verdict, no precedence. It is not `broken` — the proofs ran; what fails is
@@ -82,7 +82,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     Scenario: Scenarios sharing a code but naming disjoint quality checks still never balance
 
     @unit @SCN-STG-016
-    Scenario: Every credit citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position
+    Scenario: Every evidence observation citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position
 
     @unit @SCN-STG-018
     Scenario: A duplicated code is exit 1 with the rest of the report complete, never a refused corpus
@@ -107,7 +107,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
       Then the two- and five-character citations open phantom scenarios
-      And the one- and six-character titles cite no scenario, so both credits post to the suspense scenario
+      And the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario
       And the grammar target lists no scenario code error
 
     @unit @integration @SCN-STG-026
@@ -115,15 +115,15 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
       Then the two- and five-character citations open phantom scenarios
-      And the one- and six-character Cucumber scenarios cite no scenario, so both credits post to the suspense scenario
+      And the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario
       And the grammar target lists no scenario code error
 
     @unit @integration @SCN-STG-027
-    Scenario: A CI step whose id is a feature part outside two to five characters is no fitness credit's citation, beside step ids of two and five characters that are
+    Scenario: A CI step whose id is a feature part outside two to five characters is no fitness evidence observation's citation, beside step ids of two and five characters that are
       Given a target with one scenario of its own, and a CI step record whose successful steps are keyed by feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
       Then the two- and five-character citations open phantom scenarios
-      And the one- and six-character step ids post no credit at all
+      And the one- and six-character step ids post no evidence observation at all
       And the grammar target lists no scenario code error
 
     @unit @SCN-STG-028

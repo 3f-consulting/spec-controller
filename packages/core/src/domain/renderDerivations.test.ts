@@ -55,7 +55,7 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   it.each([
     ["is true for a real scenario row", "scenario", true],
     ["is FALSE for a phantom row — a cited-but-phantom id is not a scenario", "phantom-scenario", false],
-    ["is FALSE for the suspense row — the bucket for uncited credits is not a scenario", "suspense-scenario", false],
+    ["is FALSE for the suspense row — the bucket for uncited evidence observations is not a scenario", "suspense-scenario", false],
   ] as const)("%s", (_title, kind, expected) => {
     expect(isScenario(kindOf(kind))).toBe(expected);
   });

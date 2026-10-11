@@ -5,8 +5,8 @@ Feature: an only-Pending-Items reconciliation fixture target
   non-satisfied element is a deferred `<quality-check>pending` obligation. Every named
   scenario's sole obligation is deferred pending, so each partitions off to a one-sided
   Pending Item (run-neutral by default — the slice-2 partition) leaving ZERO reconciled
-  rows; there is no observation, no phantom, no uncited credit, and — run with a guardless
-  --package-json — no no-evidence-obligation fitness-function suspense row. So the WHOLE reconciliation is
+  rows; there is no observation, no phantom, no uncited evidence observation, and — run with a guardless
+  --package-json — no uncited fitness function's suspense row. So the WHOLE reconciliation is
   balanced-with-pending: `isBalanced` sees no reconciling item anywhere, and `balance`
   exits 0 when `--strict` is NOT given (the lenient default, planted, never a real scanned
   deferral).

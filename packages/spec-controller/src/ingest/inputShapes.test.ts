@@ -84,7 +84,7 @@ describe("[SCN-CLI-078] a CI step record is read only as a record of step outcom
     expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe(fault);
   });
 
-  it("never checks a step the reader never credits: one not keyed by a scenario code", () => {
+  it("never checks a step the reader reads no evidence observation from: one not keyed by a scenario code", () => {
     expect(shapeFaultIn({ "dump-the-step-record": "x", "SCN-A-001": null, lint: 7 }, CI_STEP_RECORD)).toBeNull();
   });
 
