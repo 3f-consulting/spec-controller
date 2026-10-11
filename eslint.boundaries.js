@@ -14,6 +14,13 @@ const CLASS_SELECTORS = [
   { selector: 'ClassDeclaration:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
   { selector: 'ClassExpression:not([superClass.type="Identifier"][superClass.name="Error"])', message: CLASS_MESSAGE },
 ];
+const DECLINED_IDIOM_SELECTORS = [
+  { selector: "Decorator", message: "a package declares no decorator — a dependency arrives as an explicit parameter" },
+  {
+    selector: ":matches(TSTypeAliasDeclaration, TSInterfaceDeclaration)[id.name=/Deps$/]",
+    message: "no dependency bag — a function names each dependency it takes as its own parameter",
+  },
+];
 const SEAM_MESSAGE = "a step reaches the product through a seam: spawn the CLI, touch files, run git; never import its modules";
 const SEAM_PATTERNS = [
   { regex: "^(\\.\\.?/)+packages(/|$)", message: SEAM_MESSAGE },
@@ -81,6 +88,9 @@ export default [
           "**/src/domain/**/{operations,service,manager}{,.test}.ts": "*.ts",
           "**/src/domain/**/*-{operations,service,manager}{,.test}.ts": "*.ts",
           "**/src/domain/**/*{Operations,Service,Manager}{,.test}.ts": "*.ts",
+          "**/src/domain/**/{operations,service,manager}/**/*.ts": "*.ts",
+          "**/src/domain/**/*-{operations,service,manager}/**/*.ts": "*.ts",
+          "**/src/domain/**/*{Operations,Service,Manager}/**/*.ts": "*.ts",
         },
       ],
     },
@@ -105,7 +115,7 @@ export default [
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     },
     rules: {
-      "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS, ...CLASS_SELECTORS],
+      "no-restricted-syntax": ["error", ...SANDBOX_SELECTORS, ...CLASS_SELECTORS, ...DECLINED_IDIOM_SELECTORS],
     },
   },
 
