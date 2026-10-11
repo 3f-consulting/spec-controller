@@ -49,6 +49,15 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # A report for review, not a check: it never reds, and package.json declares it a non-check.
+      - name: New names this change introduces
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          NEW_NAMES_BASE: origin/${{ github.base_ref }}
+        # Also into the log, which `gh run view --log` reads; the job summary has no API.
+        run: node scripts/new-names.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Test
         id: SCN-FIT-012
         env:
