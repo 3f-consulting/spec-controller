@@ -11,24 +11,23 @@ import {
 } from "./journal.js";
 import { QualityCheckFaultCode } from "./qualityCheckFault.js";
 import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { Outcome, SidePresence } from "./outcome.js";
 
 export type { Outcome, SidePresence } from "./outcome.js";
 
 export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
-  satisfied: "Evidence Observation satisfies its Evidence Obligation",
-  missing: "Evidence Observation is missing",
-  failing: "Evidence Observation is failing",
-  watermelon: "Evidence Observation is passing but fabricated",
-  "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
-  "duplicate-scn-code": "Evidence Obligation's @SCN code is carried by another Scenario",
-  "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
-  "cites-no-scenario": "Evidence Observation cites no Scenario",
-  "no-evidence-obligation": "Evidence Observation cites a Scenario with no matching Evidence Obligation",
-  broken:
-    "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
-  "both-missing":
-    "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
+  satisfied: CORE_MESSAGES[CoreMessage.OutcomeSatisfied],
+  missing: CORE_MESSAGES[CoreMessage.OutcomeMissing],
+  failing: CORE_MESSAGES[CoreMessage.OutcomeFailing],
+  watermelon: CORE_MESSAGES[CoreMessage.OutcomeWatermelon],
+  "no-scn-code": CORE_MESSAGES[CoreMessage.OutcomeNoScnCode],
+  "duplicate-scn-code": CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode],
+  "cites-unknown-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesUnknownScenario],
+  "cites-no-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario],
+  "no-evidence-obligation": CORE_MESSAGES[CoreMessage.OutcomeNoEvidenceObligation],
+  broken: CORE_MESSAGES[CoreMessage.OutcomeBroken],
+  "both-missing": CORE_MESSAGES[CoreMessage.OutcomeBothMissing],
 };
 
 export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (

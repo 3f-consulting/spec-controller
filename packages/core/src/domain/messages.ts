@@ -150,6 +150,17 @@ export enum CoreMessage {
   ManifestKindOfType,
   SuspenseScenarioId,
   UntaggedScenarioId,
+  OutcomeSatisfied,
+  OutcomeMissing,
+  OutcomeFailing,
+  OutcomeWatermelon,
+  OutcomeNoScnCode,
+  OutcomeDuplicateScnCode,
+  OutcomeCitesUnknownScenario,
+  OutcomeCitesNoScenario,
+  OutcomeNoEvidenceObligation,
+  OutcomeBroken,
+  OutcomeBothMissing,
 }
 
 interface CoreMessageParams {
@@ -428,4 +439,17 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ManifestKindOfType]: aKind,
   [CoreMessage.SuspenseScenarioId]: SUSPENSE_SCENARIO_ID,
   [CoreMessage.UntaggedScenarioId]: (feature, scenario) => `${feature} : ${scenario}`,
+  [CoreMessage.OutcomeSatisfied]: "Evidence Observation satisfies its Evidence Obligation",
+  [CoreMessage.OutcomeMissing]: "Evidence Observation is missing",
+  [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",
+  [CoreMessage.OutcomeWatermelon]: "Evidence Observation is passing but fabricated",
+  [CoreMessage.OutcomeNoScnCode]: "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
+  [CoreMessage.OutcomeDuplicateScnCode]: "Evidence Obligation's @SCN code is carried by another Scenario",
+  [CoreMessage.OutcomeCitesUnknownScenario]: "Evidence Observation cites an unknown Scenario",
+  [CoreMessage.OutcomeCitesNoScenario]: "Evidence Observation cites no Scenario",
+  [CoreMessage.OutcomeNoEvidenceObligation]: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
+  [CoreMessage.OutcomeBroken]:
+    "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
+  [CoreMessage.OutcomeBothMissing]:
+    "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
 };

@@ -41,6 +41,15 @@ export default [
           "object-properties": { exclude: [] }, // the default exempts the value of any key named in capitals
         },
       ],
+      // The plugin exempts a variable named in capitals, and no option turns that off, so these selectors cover it.
+      // Three words, not two: a two-word constant such as a CLI command is data, and prose runs longer.
+      "no-restricted-syntax": [
+        "error",
+        ...["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"].map((prose) => ({
+          selector: `VariableDeclarator[id.name=/^[A-Z][A-Z0-9_]*$/] ${prose}`,
+          message: "A constant named in capitals holds message prose. Move it into the package's catalogue.",
+        })),
+      ],
     },
   },
 ];
