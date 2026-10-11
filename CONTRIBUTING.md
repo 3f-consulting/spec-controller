@@ -102,7 +102,7 @@ itself is the check: a step you did not run locally is a step you find out about
 
 **The two run-time rows are not measured, and nothing here times a suite.** The unit suite's row
 and the behavioural suite's row are step-outcome rows: `ci.yml` runs each
-suite under `timeout 75` and `timeout 150`, the step carries the row's `@SCN` as its `id:`, and the
+suite under a `timeout` read from the job's `env:` (`UNIT_SUITE_TIMEOUT_S`, `CUCUMBER_SUITE_TIMEOUT_S`), the step carries the row's `@SCN` as its `id:`, and the
 row names no bar. A suite past its limit fails its step, and the ledger reads that outcome as it
 reads any other converted check's.
 
