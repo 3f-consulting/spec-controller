@@ -128,6 +128,17 @@ self-reconciliation runs, so the lapse shows as a red job rather than a `failing
 `.github/workflows/mutation.yml` and the push step in `.github/workflows/ci.yml` that reads its
 newest run.
 
+**A pull request measures the scopes it changes when it is marked ready.** Opening a pull
+request that is not a draft, or marking a draft ready, starts `mutation.yml` on it; a push to an
+open pull request starts nothing. Its first job lists the files the pull request changes and names
+each scope whose `mutate` patterns mark one of them, matched as Stryker matches them
+(`scripts/mutation-scopes.mjs`, with `minimatch`: each pattern in order, `!` removing). Each named
+scope then runs over its whole scope against the same 95, warm from `main`'s cache; a pull request
+that changes no gated production file starts no mutation job. The run carries the pull request's
+branch, so it never becomes `main`'s verdict, and nothing waits on it: read its result on the pull
+request before you merge. `ci.yml` holds the selection to a hand-written list of files and the
+scopes each must select.
+
 To see the score on your machine, run the sweep:
 
 ```

@@ -56,6 +56,9 @@ importers:
       knip:
         specifier: 6.39.0
         version: 6.39.0
+      minimatch:
+        specifier: 10.2.5
+        version: 10.2.5
       publint:
         specifier: 0.3.24
         version: 0.3.24

@@ -191,3 +191,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
+
+  Rule: a pull request marked ready measures the gated scopes its production changes reach
+
+    @fitness @SCN-FIT-045
+    Scenario: a pull request's mutation run selects exactly the gated scopes whose production files it changes, matched as the mutation runner matches them
