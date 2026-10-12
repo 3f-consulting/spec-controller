@@ -50,11 +50,12 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
       );
 
       expect(refusal.refused).toBe(true);
-      expect(refusal.code).toBe(QualityCheckFaultCode.ObligationSideDivergesFromCanon);
-      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.ObligationSideDivergesFromCanon);
+      expect(refusal.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
+      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
+      expect(refusal.fault?.evidence).toBe("evidence-obligation");
       expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.canonical).toBe(profile.obligation);
-      expect(refusal.fault?.actual).toBe(flipped(profile.obligation));
+      expect(refusal.fault?.presenceForOutcome).toBe(profile.obligation);
+      expect(refusal.fault?.presenceFound).toBe(flipped(profile.obligation));
     });
 
     it(`${outcome}: a divergent observation side is refused with the observation-side code, carrying the outcome and both presences`, () => {
@@ -67,11 +68,12 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
       );
 
       expect(refusal.refused).toBe(true);
-      expect(refusal.code).toBe(QualityCheckFaultCode.ObservationSideDivergesFromCanon);
-      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.ObservationSideDivergesFromCanon);
+      expect(refusal.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
+      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
+      expect(refusal.fault?.evidence).toBe("evidence-observation");
       expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.canonical).toBe(profile.observation);
-      expect(refusal.fault?.actual).toBe(flipped(profile.observation));
+      expect(refusal.fault?.presenceForOutcome).toBe(profile.observation);
+      expect(refusal.fault?.presenceFound).toBe(flipped(profile.observation));
     });
   }
 });

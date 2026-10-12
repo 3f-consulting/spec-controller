@@ -78,18 +78,20 @@ export function makeQualityCheckReconciliation(
   const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
   if ((fields.evidenceObligation !== undefined) !== (profile.obligation === "Exists")) {
     throw new QualityCheckReconciliationFault({
-      code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
+      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
+      evidence: "evidence-obligation",
       outcome: fields.outcome,
-      canonical: profile.obligation,
-      actual: fields.evidenceObligation !== undefined ? "Exists" : "None",
+      presenceForOutcome: profile.obligation,
+      presenceFound: fields.evidenceObligation !== undefined ? "Exists" : "None",
     });
   }
   if ((fields.evidenceObservation !== undefined) !== (profile.observation === "Exists")) {
     throw new QualityCheckReconciliationFault({
-      code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
+      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
+      evidence: "evidence-observation",
       outcome: fields.outcome,
-      canonical: profile.observation,
-      actual: fields.evidenceObservation !== undefined ? "Exists" : "None",
+      presenceForOutcome: profile.observation,
+      presenceFound: fields.evidenceObservation !== undefined ? "Exists" : "None",
     });
   }
   return fields as QualityCheckReconciliation;

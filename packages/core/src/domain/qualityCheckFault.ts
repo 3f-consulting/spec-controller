@@ -1,24 +1,15 @@
 import type { Outcome, SidePresence } from "./outcome.js";
 
 export enum QualityCheckFaultCode {
-  ObligationSideDivergesFromCanon,
-  ObservationSideDivergesFromCanon,
+  EvidenceDivergesFromOutcome,
 }
 
-interface SideDivergence {
+interface EvidenceDivergesFromOutcomeFault {
+  readonly code: QualityCheckFaultCode.EvidenceDivergesFromOutcome;
+  readonly evidence: "evidence-obligation" | "evidence-observation";
   readonly outcome: Outcome;
-  readonly canonical: SidePresence;
-  readonly actual: SidePresence;
+  readonly presenceForOutcome: SidePresence;
+  readonly presenceFound: SidePresence;
 }
 
-interface ObligationSideDivergesFromCanonFault extends SideDivergence {
-  readonly code: QualityCheckFaultCode.ObligationSideDivergesFromCanon;
-}
-
-interface ObservationSideDivergesFromCanonFault extends SideDivergence {
-  readonly code: QualityCheckFaultCode.ObservationSideDivergesFromCanon;
-}
-
-export type QualityCheckFault =
-  | ObligationSideDivergesFromCanonFault
-  | ObservationSideDivergesFromCanonFault;
+export type QualityCheckFault = EvidenceDivergesFromOutcomeFault;

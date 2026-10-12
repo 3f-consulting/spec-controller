@@ -5,14 +5,10 @@ export type QualityCheckFaultMessages = {
 };
 
 export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
-  [QualityCheckFaultCode.ObligationSideDivergesFromCanon]: (fault) =>
+  [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: (fault) =>
     `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
-    `evidence obligation (debit) side ${fault.canonical} in canon, but it was ` +
-    `${fault.actual}.`,
-  [QualityCheckFaultCode.ObservationSideDivergesFromCanon]: (fault) =>
-    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
-    `evidence observation side ${fault.canonical} in canon, but it was ` +
-    `${fault.actual}.`,
+    `${fault.evidence === "evidence-obligation" ? "evidence obligation (debit)" : "evidence observation"} ` +
+    `side ${fault.presenceForOutcome} in canon, but it was ${fault.presenceFound}.`,
 };
 
 export enum CoreMessage {

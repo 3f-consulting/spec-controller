@@ -22,24 +22,32 @@ function keysOf(catalogue: object): number[] {
 }
 
 const SAMPLE_FAULTS: {
-  readonly [C in QualityCheckFaultCode]: Extract<QualityCheckFault, { code: C }>;
+  readonly [C in QualityCheckFaultCode]: readonly Extract<QualityCheckFault, { code: C }>[];
 } = {
-  [QualityCheckFaultCode.ObligationSideDivergesFromCanon]: {
-    code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
-    outcome: "watermelon",
-    canonical: "Exists",
-    actual: "None",
-  },
-  [QualityCheckFaultCode.ObservationSideDivergesFromCanon]: {
-    code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
-    outcome: "cites-unknown-scenario",
-    canonical: "None",
-    actual: "Exists",
-  },
+  [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: [
+    {
+      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
+      evidence: "evidence-obligation",
+      outcome: "watermelon",
+      presenceForOutcome: "Exists",
+      presenceFound: "None",
+    },
+    {
+      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
+      evidence: "evidence-observation",
+      outcome: "cites-unknown-scenario",
+      presenceForOutcome: "None",
+      presenceFound: "Exists",
+    },
+  ],
 };
 
 function renderedFault(fault: QualityCheckFault): string {
   return (QUALITY_CHECK_FAULT_MESSAGES[fault.code] as (f: QualityCheckFault) => string)(fault);
+}
+
+function presencesOf(fault: QualityCheckFault): readonly string[] {
+  return [fault.presenceForOutcome, fault.presenceFound];
 }
 
 type CoreTemplate = {
@@ -258,12 +266,11 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
     expect(keysOf(QUALITY_CHECK_FAULT_MESSAGES)).toEqual(codes);
     expect(keysOf(SAMPLE_FAULTS)).toEqual(codes);
 
-    for (const fault of Object.values(SAMPLE_FAULTS)) {
+    for (const fault of Object.values(SAMPLE_FAULTS).flat()) {
       const message = renderedFault(fault);
       expect(message.trim()).not.toBe("");
       expect(message).toContain(fault.outcome);
-      expect(message).toContain(fault.canonical);
-      expect(message).toContain(fault.actual);
+      for (const presence of presencesOf(fault)) expect(message).toContain(presence);
     }
   });
 
