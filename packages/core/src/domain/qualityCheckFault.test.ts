@@ -1,33 +1,53 @@
 import { describe, it, expect } from "vitest";
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
+import { QUALITY_CHECK_FAULT_MESSAGES } from "./messages.js";
 import {
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
 } from "./qualityCheckReconciliation.js";
-import type { Outcome, SidePresence } from "./qualityCheckReconciliation.js";
+import type { Outcome } from "./qualityCheckReconciliation.js";
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 interface Refusal {
   refused: boolean;
   code: QualityCheckFaultCode | undefined;
   fault: QualityCheckFault | undefined;
+  message: string | undefined;
 }
 
 function attemptMint(mint: () => unknown): Refusal {
   try {
     mint();
-    return { refused: false, code: undefined, fault: undefined };
+    return { refused: false, code: undefined, fault: undefined, message: undefined };
   } catch (thrown) {
-    const refusal = thrown as { code?: QualityCheckFaultCode; fault?: QualityCheckFault };
-    return { refused: true, code: refusal.code, fault: refusal.fault };
+    const refusal = thrown as { code?: QualityCheckFaultCode; fault?: QualityCheckFault; message?: string };
+    return { refused: true, code: refusal.code, fault: refusal.fault, message: refusal.message };
   }
 }
 
-function flipped(presence: SidePresence): SidePresence {
-  return presence === "Exists" ? "None" : "Exists";
+function catalogueMessage(fault: QualityCheckFault): string {
+  return (QUALITY_CHECK_FAULT_MESSAGES[fault.code] as (f: QualityCheckFault) => string)(fault);
 }
 
-describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what canon gives it", () => {
+function expectCodedFaultWithCatalogueMessage(refusal: Refusal): void {
+  expect(refusal.refused).toBe(true);
+  const fault = refusal.fault as QualityCheckFault;
+
+  expect(Object.values(QualityCheckFaultCode)).toContain(refusal.code);
+  expect(refusal.code).toBe(fault.code);
+
+  const rendered = catalogueMessage(fault);
+  expect(Object.keys(fault)).not.toContain("message");
+  const strings = Object.values(fault).filter((value): value is string => typeof value === "string");
+  for (const value of strings) {
+    expect(value).not.toBe(rendered);
+    expect(value).not.toContain("invariant");
+  }
+
+  expect(refusal.message).toBe(rendered);
+}
+
+describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and its message is the catalogue's entry for that code", () => {
   const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
   const sampleObservation: EvidenceObservation = {
     qualityCheck: "unit",
@@ -40,7 +60,7 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
     const obligationExists = profile.obligation === "Exists";
     const observationExists = profile.observation === "Exists";
 
-    it(`${outcome}: a divergent obligation side is refused with the obligation-side code, carrying the outcome and both presences`, () => {
+    it(`${outcome}: an Evidence Obligation that diverges from the outcome is refused with a coded fault carrying its parameters, whose message is the catalogue's entry for the code`, () => {
       const refusal = attemptMint(() =>
         makeQualityCheckReconciliation({
           outcome,
@@ -49,16 +69,10 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
         }),
       );
 
-      expect(refusal.refused).toBe(true);
-      expect(refusal.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
-      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
-      expect(refusal.fault?.evidence).toBe("evidence-obligation");
-      expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.presenceForOutcome).toBe(profile.obligation);
-      expect(refusal.fault?.presenceFound).toBe(flipped(profile.obligation));
+      expectCodedFaultWithCatalogueMessage(refusal);
     });
 
-    it(`${outcome}: a divergent observation side is refused with the observation-side code, carrying the outcome and both presences`, () => {
+    it(`${outcome}: an Evidence Observation that diverges from the outcome is refused with a coded fault carrying its parameters, whose message is the catalogue's entry for the code`, () => {
       const refusal = attemptMint(() =>
         makeQualityCheckReconciliation({
           outcome,
@@ -67,13 +81,7 @@ describe("[SCN-MSG-001] a divergent (outcome, side-presence) pair throws a coded
         }),
       );
 
-      expect(refusal.refused).toBe(true);
-      expect(refusal.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
-      expect(refusal.fault?.code).toBe(QualityCheckFaultCode.EvidenceDivergesFromOutcome);
-      expect(refusal.fault?.evidence).toBe("evidence-observation");
-      expect(refusal.fault?.outcome).toBe(outcome);
-      expect(refusal.fault?.presenceForOutcome).toBe(profile.observation);
-      expect(refusal.fault?.presenceFound).toBe(flipped(profile.observation));
+      expectCodedFaultWithCatalogueMessage(refusal);
     });
   }
 });

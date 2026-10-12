@@ -55,7 +55,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   Rule: a domain invariant names its fault by code and carries its parameters, not its prose
 
     @unit @SCN-MSG-001
-    Scenario: a divergent (outcome, side-presence) pair throws a coded fault carrying which side diverged and what canon gives it
+    Scenario: an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and its message is the catalogue's entry for that code
 
   Rule: every code in a message catalogue has a message that names what it stands for
 
