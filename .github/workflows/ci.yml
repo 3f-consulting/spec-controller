@@ -401,9 +401,10 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+        # mutation.yml titles a full sweep "Mutation"; a scoped or pull-request run carries another title.
         run: |
           since="$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)"
-          test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
+          test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 50 --json conclusion,displayTitle --jq 'map(select(.displayTitle == "Mutation"))[0].conclusion')" = success
 
       - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023

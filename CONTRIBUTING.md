@@ -109,7 +109,8 @@ reads any other converted check's.
 **The mutation row is not measured either, and it reads a verdict no local run takes.**
 The mutation row — this repository's own per-scope mutation scores — is a step-outcome row with no
 bar. `ci.yml`'s `Mutation score` step carries its `@SCN` as its `id:` and asks stock `gh` whether the
-newest `mutation.yml` run on `main`, created inside the last 26 hours, concluded `success`. The bar
+newest full sweep on `main` (a `mutation.yml` run titled `Mutation`, never a scoped or
+pull-request run), created inside the last 26 hours, concluded `success`. The bar
 is the 95 `stryker.config.js` states as `thresholds.break`, and it is written nowhere else.
 
 The sweep runs one job per gated scope, each held to that 95 over the whole scope

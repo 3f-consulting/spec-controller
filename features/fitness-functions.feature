@@ -84,7 +84,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Scenario: the behavioural suite finishes inside the limit its step runs it under
 
   @fitness @SCN-FIT-002
-  Scenario: the newest nightly mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
+  Scenario: the newest full mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
 
   @fitness @SCN-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve

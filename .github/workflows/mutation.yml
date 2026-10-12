@@ -1,4 +1,6 @@
 name: Mutation
+# The title "Mutation" marks a full sweep; ci.yml's Mutation score step reads only runs titled so.
+run-name: ${{ github.event_name == 'pull_request' && format('Mutation of pull request {0}', github.event.number) || inputs.scope && format('Mutation of scope {0}', inputs.scope) || 'Mutation' }}
 
 on:
   schedule:
