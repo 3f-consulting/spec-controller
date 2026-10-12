@@ -2,9 +2,92 @@
 
 The words spec-controller's code, scenarios, report and help use, and what each means. A review checks spec-controller against this file. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from the methodology**, which are named here and defined in the 3F canon.
 
-Each definition below restates what spec-controller already says in [`how_to_use.md`](./how_to_use.md), its feature files or its report. If the two ever disagree, the behaviour wins and this file is corrected.
+Each definition below restates what spec-controller already says in [`how_to_use.md`](./how_to_use.md), its feature files or its report; the evidence model's definitions also state the reconciliation model those follow. If the two ever disagree, the behaviour wins and this file is corrected.
+
+**One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. A machine key is language you read as much as prose is; it gets no private dialect. **One term, three forms — the form follows the surface, the word never changes, and a canon term is `backticked` wherever it appears.** Prose spells it out (`static check`, `phantom scenario`); a handle hyphenates it (`static-check`, `phantom-scenario`, `quality-check`, `both-missing`); a code identifier camel-cases it (`staticCheck`). A handle is not a licence to abbreviate: `check` is not a short `static-check`, it is a different word.
+
+An evidence-model term's **Double-check** entry names the words seen standing in for it. A review or a vocabulary sweep checks each use of those words by its sense: renamed to the term where it means the term, kept where it means something else. It is never a gate and never closed; a newly found synonym is added to it.
 
 ## Domain terms
+
+### The evidence model
+
+Correctness is the agreement of two independent records: the `Evidence Obligations` written in the test specifications (the debit side) and the `Evidence Observations` seen when those tests run against the real code (the credit side). Each term carries the bookkeeping term it borrows, which explains the analogy.
+
+#### The subject
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Behaviour` | One thing the **`Application code`** should do, stated so it can be proved. A `scenario` describes a `behaviour`; its `Evidence Obligations` are the `Quality Checks` it raises; its `Evidence Observations` exercise it against the real code. `Behaviour` is what the **`Test Specification`** exists to describe — the reason a `scenario` is written at all, and the thing `broken` says was never exercised. | Transaction — the real-world event an entry records | feature; functionality |
+| `Application code` | The system under test — the reality that `evidence observations` evidence. On the credit side, but *not an entry itself*. | *(the subject the books describe)* — the real-world thing the accounts account for | |
+
+#### The `scenarios` — real and invented
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Scenario` | A single **`behaviour`** written in a feature file — a `Scenario:` with its `@`-tags and its `@SCN` id. It describes one `behaviour`; each `quality-check` it names raises one **`evidence obligation`**; its `@SCN` is the code an **`evidence observation`** cites to post against it. A `scenario` is a post in the debit journal. *`Scenario`* names **only the real thing**: a cited id with no real `scenario` is a **`phantom scenario`**, and the bucket for uncited evidence observations is the **`suspense scenario`** — neither is a `scenario`, and the collection of rows is never `scenarios`. A fitness function's scenario is a `scenario` (an `@fitness` scenario), not a fourth kind. | *(the thing an account is opened for)* — the subject an account is kept about | declared (for a real `scenario`); fitness scenario (as a kind of scenario) |
+| `Phantom scenario` | A cited `scenario` id with no real `scenario` — the `scenario` a `Scenario Reconciliation` is associated with when an `evidence observation` cites a `scenario` that does not exist (`outcome` *cites-unknown-scenario*) — one per fabricated id, always out-of-balance. | Posting to a non-existent account — a posting naming an account that does not exist | ghost (as a top-level kind); undeclared (for a fabricated scenario) |
+| `Suspense scenario` | The placeholder `scenario` a `Scenario Reconciliation` is associated with when its `evidence observations` cite *no* `scenario` (`outcome` *cites-no-scenario*) or never ran (`outcome` *broken*) — one bucket, always out-of-balance. | Suspense account — an account holding postings that match no real account | unattributed (as a top-level kind) |
+
+#### The debit side
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Test Specification` | Feature files (`@`-tags), step definitions, test code — the record of the **behaviours** to be proved, and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
+| `Evidence Obligation` | A `Scenario` raises one for each `Quality Check` it names, to be met by `Evidence Observations`. These are the `@`-tags on the `Scenario`: the behavioural checks `@unit`, `@integration`, `@e2e`, `@performance`, and `@fitness`. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
+
+#### The credit side
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| The run reports | Raw vitest / cucumber output — reality's record. | Credit journal — the book of original entry for credits | |
+| `Static Check` | A source code check run over the actual code — an ESLint rule, a type check, a custom script. It is a fitness function assessed *statically* — as opposed to one assessed by running the suite (`coverage`, `mutation`, `ci-run-time`). Its run produces one **`evidence observation`** for its `quality-check`. `Static check` names only this source-reading subset, never fitness functions in general. **How its evidence posts:** like every evidence observation, a fitness function's — static or run — **cites an `@SCN`**, and where it lands is the ordinary three-way answer, not a special case. Cites the `@SCN` of a **real `scenario`** that raises the evidence obligation → it posts there. Cites an `@SCN` **no `scenario` carries** → a **`phantom scenario`** (`outcome` *cites-unknown-scenario*). Cites **nothing** → the **`suspense scenario`** (`outcome` *cites-no-scenario*). Surfaced either way, never omitted. | *(the instrument that produces a credit)* — what the credit journal records the running of | static guard, `staticGuard`, `<static-guard>`; guard (bare noun, for a fitness function); check (bare) |
+| `Dynamic Check` | A fitness function assessed by **running** — the code, or a measurement of a run: `ci-run-time`, `coverage`, `mutation`, `crap`, `self-balance`. The other kind of fitness function besides a `static check`; neither names the class as a whole. Its evidence posts exactly as a `static check`'s does. Not Ford, Parsons and Kua's *dynamic* fitness function, which names a shifting threshold (*Building Evolutionary Architectures*, ch. 2, *Result: Static Versus Dynamic*); here *static* and *dynamic* say how the evidence is obtained, as in static and dynamic analysis. | | static check (for a fitness function assessed by running) |
+| `Evidence Observation` | An observed piece of evidence — a test or a fitness function has both run and is `attributed` to a `scenario`. | Credit — the entry for what an account is provided | observation (bare); credit, credit side (in a sentence that names no debit); supply; execution; declared (for evidence) |
+| `Freshness` | An `Evidence Observation`'s validity window. An `Evidence Observation` is valid only within a window of time relative to the run being reconciled: evidence proves the code *as it is now*, so an evidence observation from an earlier state is not evidence for this one. For every check run **in the push build** — behavioural, statically-assessed, and the per-push measured checks (`ci-run-time`) — the window is degenerate, **this build**, because the suite regenerates its reports in the same run, so `freshness` is implicit and never surfaces. A **scheduled** fitness function — one too slow for the push path, run on a cadence off it (a nightly `mutation`, a slow `@performance` or `@e2e`) — carries the same `Evidence Obligation` with a **wider, explicit** window: its cadence. An `Evidence Obligation` whose only `Evidence Observation` falls outside its window has none admitted, so it reconciles **`missing`**, exactly as if none ran — a scheduled check that silently stops running therefore reds on its own once its window lapses, and one that ran-and-failed reads `failing` on the same books. `Freshness` governs whether an `Evidence Observation` is **admitted**, not how it reconciles: it adds no `Outcome`, and it puts no clock inside the reconciliation — "now" is the run's own instant, an input, so a reconciliation stays a pure function of its records. | Cut-off — a transaction counts only in the period it belongs to | |
+
+#### Posting
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Attribution` / `attributed` (by `@SCN`) | Tying an `evidence observation` to its `scenario`. A debit self-posts by living in the `scenario`. **One rule: the evidence observation cites.** An `evidence observation` cites the `@SCN` of its `scenario` — a behavioural test cites its stepped `scenario`; a fitness function's run cites its own. One evidence observation names one `scenario` and posts to exactly one `Scenario Reconciliation`. One that posts to no real `scenario` is **phantom** (its `@SCN` names no real `scenario`) or **suspense** (it cites nothing). How it cites is set out under *How an evidence observation cites*, below. | Posting — recording a journal entry into its account | name-match, name-matched (posting) |
+| `Quality Check` | A **`quality-check`** is the key an evidence obligation is raised by and its evidence matched on. There are five, flat peers: the behavioural `unit`, `integration`, `e2e` and `performance`, and `fitness`. A scenario names its quality checks by its tags and raises one `Evidence Obligation` per tag. A **behavioural** check is an example of a `behaviour` on a stepped `scenario`. A **fitness** check is a whole-system property against a `threshold`, and **one `@fitness` scenario is one check**: it is identified by its `@SCN` and described by its title, and several fitness functions are several `scenarios` — as the CI pipeline's two timed suites are two. Nothing classifies a fitness function further: no characteristic word, no roster, no roll-up. The behavioural/fitness grouping lives in the model and the docs — **never in the tag**: no `@behavioural=unit`, no `@fitness=complexity`. Whether a fitness function is assessed by **reading** the source (a **`Static Check`** — ESLint, `tsc`) or by **running** the suite (coverage, mutation, CI run time) is a property of the check, not a difference in how its evidence posts: every evidence observation cites its `@SCN` (see `Attribution`). The CI pipeline timing its own suites is the prototype of the fitness shape — an `@fitness` scenario, the measured time citing its `@SCN` — never a harness carve-out and never named around to dodge reconciliation. | *(the sub-account coordinate)* — the key an entry is classified and matched by | runtime (for the behavioural family `@unit`, `@integration`, `@e2e`, `@performance`); kind, level, (kind, level) — the two-axis grid; `lint` (as a catch-all for fitness functions); characteristic (a word classifying a fitness function); `@fitness=<check>` or any group-prefixed check tag |
+| `Ledger` | The `evidence obligations` (debits) and `evidence observations` (credits) organised by *real or invented `scenario`*, keyed by `quality-check` — this is where reconciliation happens. The **`Evidence Reconciliation`** is the whole — all `Scenario Reconciliations`; the `ledger` is the per-scenario evidence grid *within* it. The report renders the `Evidence Reconciliation`; only its grid displays the `ledger`. This distinction is the point of the term. **Every `evidence observation` posts to exactly one `Scenario Reconciliation`, never to none.** An evidence observation that posts nowhere has vanished from the books — the fault the `ledger` exists to make impossible. Every evidence observation cites the `@SCN` of one `scenario` and posts there — behavioural or fitness alike; one citing no real `scenario` still posts, to a **`phantom scenario`** or the **`suspense scenario`**. Posting is not classifying — an entry posts here whatever it later reconciles to, including nothing. | Ledger — the accounts with their posted debit and credit entries, by account | |
+
+#### How an evidence observation cites
+
+One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<NNN> @unit @e2e`) raises the `evidence obligations`; each `evidence observation` then reaches that `scenario` by the one form its runner's report can carry:
+
+| `quality-check` | the evidence observation | the form that cites | example |
+|---|---|---|---|
+| `unit` | a Vitest assertion | a bracketed `[SCN-…]` in its `it` title, else in an enclosing `describe` title — the most specific wins | `describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code …", …)` |
+| `integration`, `e2e`, `performance` | the Cucumber report's run of the `scenario` | the `scenario`'s own `@SCN` tag, which the report carries | the same `@SCN-<FFF>-<NNN>` tag line, as Cucumber reports it |
+| `fitness` | the CI step that runs the check, read on its `outcome` | the step's `id:` | `id: SCN-FIT-<NNN>` on the step, against `@fitness @SCN-FIT-<NNN>` |
+
+**A citation form counts only when a reader is built for it.** A bare or `@`-prefixed code in a test title, a marker comment in a step-definition file, a code in any other comment, a Playwright spec or a k6 script is read by nothing, so it cites nothing: the evidence observation it was meant for posts to **suspense**. The three forms are the whole mechanism; the readers are `lib/scnCitation.ts` (through `parse/vitest.ts`), `parse/cucumber.ts` and `parse/ciStepRecord.ts`.
+
+#### Reconciling
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Balancing off` | Reconciling one `scenario` — its `evidence obligations` against its `evidence observations`, `quality-check` by `quality-check` — into its `Scenario Reconciliation`. | Balancing off — computing one account's balance | |
+| `Quality Check Reconciliation` | A sub-row — one **`quality-check`**'s evidence reconciled within a `scenario`; carries an **`outcome`**. | Sub-account — a subdivision of an account, balanced off on its own | sub-account; reconciled evidence obligation |
+| `Outcome` | The eleven-valued result of a `Quality Check Reconciliation` — one thing in two representations: the **`outcome` handle**, the short machine name the code and the JSON carry (`missing`, `no-evidence-obligation`), and the `outcome` itself, the sentence the reconciliation asserts. The sentence is the valuable half, because it is checkably true or false of a case where the handle is only a label. Settle a dispute by asking whether the sentence is true of the case, never by arguing what the handle connotes. | *(whether a sub-account balances, and how)* — the balance-status of one sub-account | state; outcome tag (a `tag` is authored in a feature file; a handle is computed); the flat triad attributed / ghost / unattributed; `undemanded` (for `no-evidence-obligation`); uncoded (for `no-scn-code`) |
+| `Scenario Reconciliation` | A row — the evidence reconciled for one `scenario`, `quality-check` by `quality-check`; carries a **`verdict`** and its **`reconciling items`**. Each is *associated with* a `scenario` of one kind: a **`scenario`** (real), a **`phantom scenario`** (cited but no feature defines it), or a **`suspense scenario`** (cited by nothing). The collection is the **`Scenario Reconciliations`** — *never* `scenarios`, since a *`scenario`* is only the real thing. | Account — the record for one thing that carries a balance | account; scenario balance; scenarios (for the collection) |
+| `Verdict` | The **two-valued** roll-up of a `Scenario Reconciliation`: *balanced* (every `quality-check` *satisfied*) or *out-of-balance* (any `reconciling item`) — never a third value. Phantom / suspense reconciliations are always out-of-balance; a `scenario` with neither `evidence obligation` nor `evidence observation` is out-of-balance via `both-missing` (one whose tests run untagged is out-of-balance via `no-evidence-obligation`), never a separate "empty" `verdict`. A **`Pending Item`** never affects the `verdict` — it is not a `reconciling item`. | Balanced / out of balance — an account whose two sides agree / don't | |
+| `Reconciling item` | A `Quality Check Reconciliation` whose `outcome` is an exception — in three shapes: a debit-side exception (missing / failing / `watermelon` / no-scn-code), a credit-side exception (cites-unknown-scenario / cites-no-scenario / no-evidence-obligation / broken), or **neither** — a real `scenario` with no `evidence obligation` and no `evidence observation` (both-missing). | Reconciling item — a line explaining a difference between two records | |
+| `Pending Item` | A **one-sided** `Quality Check Reconciliation` raised by a `<quality-check>pending` tag (the 3F canon's `evidence-manifesto.md` §11B) — deliberately deferred, so it raises **no `Evidence Obligation`**, so nothing reconciles. *Not* a `Reconciling Item` (not an error): it never flips the `verdict` and never fails the run — a disclosed IOU, surfaced so it can't sit owed forever. Because there is no `Evidence Obligation`, an `Evidence Observation` citing that `scenario` at a pending `quality-check` is `no-evidence-obligation` — exactly as when no `Evidence Obligation` was raised at all. | Memorandum entry / note — an item disclosed but not posted to an account | warnings (credit-side) |
+| `Watermelon` | A fabricated evidence observation — one that passes but was never run against real code; the *`watermelon`* `outcome` — present but not actually enforced. Green on the outside and red inside. | | |
+
+#### The whole run
+
+| Term | Meaning | Bookkeeping term | Double-check |
+|---|---|---|---|
+| `Evidence Reconciliation` | All `Scenario Reconciliations` taken together — the whole reconciliation; the key concept the domain models, which the report renders. | Trial balance — the statement of all account balances | trial balance (kept as the bookkeeping root of the metaphor); Ledger (for the whole) |
+| `Summary` | Totals: N `Scenario Reconciliations`, X balanced, Y out-of-balance. | *(the totals — no distinct classic term)* — the aggregate of the trial balance | headline tallies |
+| `Scenario code errors` | A whole-run section of the report listing faults in the scenario **codes** themselves: **`foreign-scn-code`** (a scenario's code names a feature other than the one it sits in), **`no-feature-code`** (a feature file carries no header code while its scenarios carry ids), **`duplicate-feature-code`** (two feature files claim one feature code). It is **neither a `reconciling item` nor a roll-up of `verdicts`, and it reds the run on its own** — a run can be out of balance for a reason that is not any `scenario`'s `verdict`. These faults leave every posting unambiguous: what is wrong is the codes, not a `Scenario Reconciliation`'s balance. A duplicated scenario code is deliberately **not** here — it stops its `Scenario Reconciliation` reconciling, so it sits on the rows as `duplicate-scn-code`. | *(a fault in the chart of accounts, not in any account)* — the books cannot be read until the coding is fixed | chart of accounts; coding errors; uncoded (for `foreign-scn-code` or `no-feature-code`) |
+| `Unsound` | A run carrying any `broken` item is **`unsound`** — a derived whole-run stamp (not an `outcome`): exit 4, the evidence could not be trusted to reconcile. | | |
+| `--strict` | The run mode in which a **`Pending Item`** escalates to a failure — a deliberately-deferred IOU is not tolerated (Cucumber's `--strict`, ESLint's `--max-warnings 0`): exit 3. Without it a `Pending Item` never affects the `verdict` and never fails the run. | | |
 
 ### The commands and the run
 
@@ -85,7 +168,7 @@ Each definition below restates what spec-controller already says in [`how_to_use
 | corpus census | The count of the corpus's scenarios, read from the Ledger summary. |
 | Summary views | The report's `## Summary views` section: the tallies by subject. It holds the by-quality-check view, *Out-of-balance by feature* and *Fitness evidence obligations*. |
 | Out-of-balance by feature | The Summary views subsection that groups out-of-balance Scenario Reconciliations by feature, opening with an *N of M* total line. |
-| Fitness evidence obligations | The Summary views subsection listing the fitness Evidence Obligations that `@fitness` scenarios raise, apart from runtime items, opening with an *N of M* total line. |
+| Fitness evidence obligations | The Summary views subsection listing the fitness Evidence Obligations that `@fitness` scenarios raise, apart from behavioural items, opening with an *N of M* total line. |
 | harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. A broken one is reported as a harness failure, and the run is stamped Unsound. |
 | term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |
 | pair | The scenario code and quality check at which an Evidence Obligation, and the Evidence Observations answering it, are booked. A term names a pair, and a credit at a named pair reconciles as a matched obligation. |
@@ -94,16 +177,9 @@ Each definition below restates what spec-controller already says in [`how_to_use
 
 Named here, defined in their home. The index of homes is `ubiquitous-language-index.md` in the 3F canon, and each term's home is named below.
 
-- **The evidence model** (`double-entry-manifesto.md`):
-  - Evidence Reconciliation, Ledger, Scenario Reconciliation, Quality Check Reconciliation, Summary, Balancing off;
-  - Evidence Obligation, Evidence Observation, Test Specification, Attribution;
-  - Outcome and its handles; Verdict (balanced, out-of-balance); Reconciling item; Pending Item; Watermelon;
-  - Scenario, phantom scenario, suspense scenario;
-  - scenario code errors (`no-scn-code`, `foreign-scn-code`, `no-feature-code`, `duplicate-feature-code`); Unsound; `--strict`.
 - **Quality checks** (`technical-design/quality-checks.md`):
-  - quality check;
   - the tiers `@unit`, `@integration`, `@e2e`, `@performance` and `@fitness`;
-  - fitness function; static check; dynamic check;
+  - fitness function;
   - the adoption states `new-client`, `annotated` and `conformant`;
   - runner; the reconciler; `ci-run-time`; threshold.
 - **Evidence layers and codes** (`evidence-manifesto.md`): the `@SCN-<FFF>-<NNN>` scenario ID; feature code; the `@wip` and `@<quality-check>pending` deferral scopes.
