@@ -22,7 +22,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     And its summary totals count EVERY Scenario Reconciliation. The Evidence
     Reconciliation is all Scenario Reconciliations assembled, and the summary is its
-    totals (the maintainers' private notes). Three row kinds — real, phantom,
+    totals (doc/ubiquitous-language.md, The evidence model). Three row kinds — real, phantom,
     suspense — and phantom / suspense reconciliations are ALWAYS out-of-balance, so they
     count into the total and into out-of-balance; `phantom` / `suspense` survive as
     sub-counts, a BREAKDOWN of the total rather than a bucket outside it (real =
@@ -140,9 +140,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     ledger.scenarioReconciliations[].qualityCheckReconciliations[] and reconcilingItems[] is keyed
     by qualityCheck alone, and the summary's missing split, missingByQualityCheck under
     summary.qualityCheckReconciliations, is keyed by the same flat quality-check. One reconcile function
-    serves every quality check, and the fitness value is what tells a watermelon apart. Canon
-    names the quality check fitness, and lint is a rejected alias (double-entry-manifesto,
-    Quality Check). The markdown labels each item by its tag word, which IS the quality-check
+    serves every quality check, and the fitness value is what tells a watermelon apart. The
+    glossary names the quality check fitness, and lint is on its Double-check line
+    (doc/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the quality-check
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
     isolation.
 

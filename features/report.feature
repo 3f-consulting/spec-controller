@@ -524,8 +524,9 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the reconciliation collection renders as "Scenario Reconciliation(s)", never "scenario(s)", on every surface that names it
 
-    The vocabulary rule for the reconciled OUTPUT collection (canon: Scenario Reconciliation;
-    "scenarios" is a Rejected alias — it holds Scenario Reconciliations, not scenarios). The report
+    The vocabulary rule for the reconciled OUTPUT collection (doc/ubiquitous-language.md,
+    Scenario Reconciliation: "scenarios" is on its Double-check line — it holds Scenario
+    Reconciliations, not scenarios). The report
     names the collection on two rendered surfaces and both must read the same word: the Subject
     CELL of the reconciliation-collection row, and the headline verdict tally under
     "## Scenario Reconciliations". The tally counts EVERY row — real, phantom and suspense

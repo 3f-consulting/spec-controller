@@ -109,7 +109,7 @@ const report = () => {
     [
       "## New names this change introduces",
       "",
-      `Compared with \`${base}\`. Read each against canon's Glossary, both never-write tables and this product's vocabulary.`,
+      `Compared with \`${base}\`. Read each against canon's Glossary (work-item-manifesto.md, Glossary) and this product's terms and their Double-check lines (doc/ubiquitous-language.md).`,
       "",
       ...section("Types, functions, fields and other declared names", added),
       ...section("New files", files),
