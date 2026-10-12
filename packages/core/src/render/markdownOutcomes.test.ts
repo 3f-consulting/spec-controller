@@ -70,6 +70,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
   ] as const satisfies readonly (readonly [Outcome, string])[];
   // A new outcome fails the typecheck here until its canon text has a row.
   const everyOutcomeHasARow: [Exclude<Outcome, (typeof CANON_OUTCOME_TEXT)[number][0]>] extends [never] ? true : never = true;
+  void everyOutcomeHasARow;
 
   it.each(CANON_OUTCOME_TEXT)(
     'the "%s" outcome glosses as the manifesto canon text',

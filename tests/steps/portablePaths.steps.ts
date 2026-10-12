@@ -72,7 +72,6 @@ Given(
 When(
   "balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON",
   function () {
-    const repoRoot = process.cwd();
     const mdPath = join(outDir, "spec-reconciliation.md");
     const jsonPath = join(outDir, "spec-reconciliation.json");
     const argv = [

@@ -2,7 +2,6 @@ import type {
   ScenarioReconciliation,
   Outcome,
   ScenarioVerdict,
-  Ledger,
   PendingItem,
 } from "../model.js";
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";

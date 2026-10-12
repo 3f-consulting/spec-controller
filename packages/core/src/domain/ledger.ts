@@ -1,7 +1,7 @@
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
-import type { RuntimeQualityCheck, FitnessEvidenceObservation } from "./journal.js";
+import type { RuntimeQualityCheck } from "./journal.js";
 import { QUALITY_CHECKS } from "./journal.js";
 
 export interface Ledger {

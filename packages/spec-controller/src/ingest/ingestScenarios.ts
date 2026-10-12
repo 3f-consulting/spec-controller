@@ -1,6 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { basename, dirname, join } from "node:path";
+import { basename, join } from "node:path";
 
 import {
   MissingFeatureCorpusError,

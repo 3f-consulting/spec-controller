@@ -199,7 +199,6 @@ When("balance is asked to reconcile that target under the strict option", functi
   cliResult = spawnBalance([...invocationArgs, "--strict"]);
 });
 
-let topLevelArgs: string[] = [];
 let controllerResult: SpawnSyncReturns<string>;
 
 function spawnController(args: string[]): SpawnSyncReturns<string> {
@@ -213,9 +212,7 @@ function spawnController(args: string[]): SpawnSyncReturns<string> {
   return result;
 }
 
-Given("the spec-controller host", function () {
-  topLevelArgs = ["--help"];
-});
+Given("the spec-controller host", function () {});
 
 const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string; stored: boolean }> = {
   "a typo of a command": { argv: ["blance"], command: "blance", stored: false },

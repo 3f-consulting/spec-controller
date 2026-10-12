@@ -22,10 +22,6 @@ function withBalanceFlag(flag: FlagSpec): CliRegistry {
   };
 }
 
-function namesOnOneLine(refusal: string | null, token: string, fault: RegExp): boolean {
-  return (refusal ?? "").split("\n").some((line) => line.includes(token) && fault.test(line));
-}
-
 describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a flag's value, naming it", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const notAFlag = (token: string): string =>

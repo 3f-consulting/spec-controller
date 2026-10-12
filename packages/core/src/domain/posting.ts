@@ -1,5 +1,4 @@
 import type {
-  Scenario,
   EvidenceObservation,
   RuntimeEvidenceObservation,
   FitnessEvidenceObservation,

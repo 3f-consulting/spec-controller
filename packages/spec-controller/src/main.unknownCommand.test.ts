@@ -60,7 +60,7 @@ const REQUESTS: { request: string; command: string; ask: () => Answered }[] = [
 ];
 
 describe("[SCN-CLI-056] an unknown command is a usage fault", () => {
-  describe.each(REQUESTS)("$request", ({ command, ask }) => {
+  describe.each(REQUESTS)("$request", ({ ask }) => {
     it("writes nothing to stdout", () => {
       expect(ask().stdout).toBe("");
     });

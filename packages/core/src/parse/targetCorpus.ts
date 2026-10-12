@@ -1,8 +1,5 @@
 import { citationOfCitedRow, type ScriptCitation } from "./fitnessCitations.js";
-import {
-  parseScenarios,
-  parseTaggedScenarios,
-} from "./scenarios.js";
+import { parseScenarios } from "./scenarios.js";
 import type { Scenario } from "../model.js";
 
 export interface TargetCorpus {

@@ -1,5 +1,4 @@
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
-import { bareTerm } from "../lib/bareTerm.js";
 import type { EvidenceObservation } from "../model.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import { ciStepRecordObservations, type CiStepRecord } from "../parse/ciStepRecord.js";
@@ -124,7 +123,7 @@ export function evidenceReconciliationFromSources(
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, corpus, input, packageJson, runners, exclusions, reconciler, isExcluded),
+      withReaderAccounts(reconciliation, input, packageJson, runners, exclusions, reconciler, isExcluded),
       packageJson
     ),
     input
@@ -161,7 +160,6 @@ function withScenarioCodeErrors(
 
 function withReaderAccounts(
   reconciliation: EvidenceReconciliation,
-  corpus: TargetCorpus,
   input: { ciSources: readonly string[]; ciSourceNames?: readonly string[] },
   packageJson: TargetManifest,
   runners: ResolvedRunners,

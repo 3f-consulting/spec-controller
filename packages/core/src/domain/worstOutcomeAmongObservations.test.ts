@@ -6,7 +6,6 @@ import type { EvidenceObligation, EvidenceObservation, Scenario } from "./journa
 import type { Outcome } from "./qualityCheckReconciliation.js";
 
 const SCN = "SCN-AAA-001";
-const CHECK = "complexity";
 
 const WORST_FIRST: readonly Outcome[] = ["failing", "watermelon", "satisfied", "missing"];
 

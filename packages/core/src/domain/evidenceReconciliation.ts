@@ -30,7 +30,6 @@ import {
 import type {
   ScenarioReconciliationTotals,
   QualityCheckReconciliationTotals,
-  MissingByQualityCheck,
   FitnessTally,
 } from "./ledger.js";
 import {
