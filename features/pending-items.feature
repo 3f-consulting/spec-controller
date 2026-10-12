@@ -16,8 +16,8 @@ Feature: A pending evidence obligation raises a Pending Item
   — an unknown `<x>pending`, or bare `@pending` — is ignored silently, exactly like any
   unrecognised tag. We do not police the developer's tags.
 
-  Fixture policy: exercised over planted feature-strings under tests/fixtures/ fed to the
-  pure parser — never a real `@<qc>pending` scenario in the scanned features/ corpus.
+  Fixture policy: exercised over feature strings planted inline in the unit tests and fed to
+  the pure parser — never a real `@<qc>pending` scenario in the scanned features/ corpus.
 
   Rule: A `<quality-check>pending` tag parses as a pending evidence obligation
 
