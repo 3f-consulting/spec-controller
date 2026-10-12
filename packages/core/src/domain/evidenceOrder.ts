@@ -1,7 +1,7 @@
 import type { EvidenceObservation, QualityCheck } from "./journal.js";
-import { RUNTIME_QUALITY_CHECKS } from "./ledger.js";
+import { BEHAVIOURAL_QUALITY_CHECKS } from "./ledger.js";
 
-const TIER_ORDER_FITNESS_LAST: readonly QualityCheck[] = [...RUNTIME_QUALITY_CHECKS, "fitness"];
+const TIER_ORDER_FITNESS_LAST: readonly QualityCheck[] = [...BEHAVIOURAL_QUALITY_CHECKS, "fitness"];
 
 function evidenceOrderKey(o: EvidenceObservation): string {
   const content = JSON.stringify(o, Object.keys(o).sort());

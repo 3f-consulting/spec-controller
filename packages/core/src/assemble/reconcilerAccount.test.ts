@@ -14,7 +14,7 @@ function reconcile(
     ciSources,
     ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
     reconcilerInvocation: "spec-controller balance",
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

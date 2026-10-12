@@ -1,29 +1,15 @@
-import type { ScenarioReconciliation, QualityCheck, RuntimeQualityCheck } from "../model.js";
-import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import type { ScenarioReconciliation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
+import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
 import {
   isScenario,
   carriesFitnessFunction,
+  carriesBehaviouralQualityCheck,
   presentFitnessFunctionCountOf,
   namesQualityCheck,
   observationCountOf,
 } from "../domain/scenarioReconciliation.js";
 
-export type EvidenceColumn = { readonly kind: "fitness" } | { readonly kind: "runtime"; readonly qualityCheck: RuntimeQualityCheck };
-
-function runtimeQualityChecksPresent(
-  scenarioRows: readonly ScenarioReconciliation[]
-): ReadonlySet<RuntimeQualityCheck> {
-  const present = new Set<RuntimeQualityCheck>();
-  for (const s of scenarioRows) {
-    for (const o of s.qualityCheckReconciliations) {
-      if (o.qualityCheck && o.qualityCheck !== "fitness") present.add(o.qualityCheck);
-    }
-    for (const o of s.evidenceObservations) {
-      if (o.qualityCheck !== "fitness") present.add(o.qualityCheck);
-    }
-  }
-  return present;
-}
+export type EvidenceColumn = { readonly kind: "fitness" } | { readonly kind: "behavioural"; readonly qualityCheck: BehaviouralQualityCheck };
 
 export function evidenceColumns(
   scenarios: readonly ScenarioReconciliation[]
@@ -32,11 +18,10 @@ export function evidenceColumns(
     isScenario
   );
   const hasFitnessFunction = scenarioRows.some(carriesFitnessFunction);
-  const qualityChecksPresent = runtimeQualityChecksPresent(scenarioRows);
   const columns: EvidenceColumn[] = [];
   if (hasFitnessFunction) columns.push({ kind: "fitness" });
-  for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
-    if (qualityChecksPresent.has(qualityCheck)) columns.push({ kind: "runtime", qualityCheck });
+  for (const qualityCheck of BEHAVIOURAL_QUALITY_CHECKS) {
+    if (scenarioRows.some((row) => carriesBehaviouralQualityCheck(row, qualityCheck))) columns.push({ kind: "behavioural", qualityCheck });
   }
   return columns;
 }
@@ -59,7 +44,7 @@ export function evidenceCell(
   col: EvidenceColumn
 ): string {
   if (!isScenario(s)) return "—";
-  return col.kind === "fitness" ? fitnessCell(s) : runtimeCell(s, col.qualityCheck);
+  return col.kind === "fitness" ? fitnessCell(s) : behaviouralCell(s, col.qualityCheck);
 }
 
 function twoSided(left: string, right: string): string {
@@ -73,7 +58,7 @@ function fitnessCell(s: ScenarioReconciliation): string {
   return twoSided(left, right);
 }
 
-function runtimeCell(s: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): string {
+function behaviouralCell(s: ScenarioReconciliation, qualityCheck: BehaviouralQualityCheck): string {
   const left = namesQualityCheck(s, qualityCheck) ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
   const observed = observationCountOf(s, qualityCheck);
   const right = observed > 0 ? String(observed) : "-";

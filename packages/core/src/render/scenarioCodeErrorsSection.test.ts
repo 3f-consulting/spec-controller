@@ -64,7 +64,7 @@ function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconcil
     untaggedScenarios: [],
     packageJson: {},
     ciSources: [],
-    runtimeObservations: codes.map((code) => ({ qualityCheck: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
+    behaviouralObservations: codes.map((code) => ({ qualityCheck: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
     deferralTags: [],
   });
 }
@@ -176,7 +176,7 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
       untaggedScenarios: [],
       packageJson: {},
       ciSources: [],
-      runtimeObservations: [],
+      behaviouralObservations: [],
       deferralTags: [],
     });
   }

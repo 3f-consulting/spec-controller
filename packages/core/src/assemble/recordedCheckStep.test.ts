@@ -24,7 +24,7 @@ const reconcileWith = (ciStepRecord?: Record<string, { outcome?: string }>) =>
     packageJson: { scripts: { "lint:alpha": "eslint" } },
     ciSources: [CI],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
     ...(ciStepRecord === undefined ? {} : { ciStepRecord }),
   }).ledger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001");

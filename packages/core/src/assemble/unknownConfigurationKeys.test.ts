@@ -16,7 +16,7 @@ function reconcile(specController: Record<string, unknown>): EvidenceReconciliat
     packageJson,
     ciSources: [ci],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

@@ -3,7 +3,7 @@ import type {
   EvidenceObligation,
   EvidenceObservation,
   FitnessEvidenceObservation,
-  RuntimeEvidenceObservation,
+  BehaviouralEvidenceObservation,
 } from "./journal.js";
 import {
   isFitnessObservation,
@@ -151,7 +151,7 @@ function reconcileFitnessObligation(
   });
 }
 
-function runtimeOutcomeOf(observation: RuntimeEvidenceObservation): ObservationOutcome {
+function behaviouralOutcomeOf(observation: BehaviouralEvidenceObservation): ObservationOutcome {
   return observation.status === "passed" ? "satisfied" : "failing";
 }
 
@@ -165,11 +165,11 @@ export function reconcileEvidenceObligation(
   }
 
   const { outcome, observation } = answerOf(evidenceObservations.filter(
-    (o): o is RuntimeEvidenceObservation =>
+    (o): o is BehaviouralEvidenceObservation =>
       o.broken !== true &&
       o.qualityCheck === obligation.qualityCheck &&
       o.scnId === scnId
-  ), runtimeOutcomeOf);
+  ), behaviouralOutcomeOf);
   return makeQualityCheckReconciliation({
     qualityCheck: obligation.qualityCheck,
     outcome,
@@ -220,8 +220,8 @@ export function citesUnknownScenarioReconciliationsOf(
 }
 
 export function suspenseReconciliationsOf(
-  brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
-  uncited: readonly RuntimeEvidenceObservation[],
+  brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[],
+  uncited: readonly BehaviouralEvidenceObservation[],
   uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [

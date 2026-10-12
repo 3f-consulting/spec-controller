@@ -32,7 +32,7 @@ const reconcile = (): EvidenceReconciliation =>
     untaggedScenarios: [],
     packageJson: {},
     ciSources: [],
-    runtimeObservations: observations,
+    behaviouralObservations: observations,
     deferralTags: [],
   });
 
@@ -55,7 +55,7 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
 }
 
 describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence observation identity balances by construction", () => {
-  it("renders heading, blank, the identity line, blank, the two-column table with a row per runtime quality-check, then one blank", () => {
+  it("renders heading, blank, the identity line, blank, the two-column table with a row per behavioural quality-check, then one blank", () => {
     const reconciliation = reconcile();
     expect(reconciliation.summary.testVolume).toStrictEqual({
       totalEvidenceObservations: 6,
@@ -78,7 +78,7 @@ describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence 
     ]);
   });
 
-  it("renders no section, and nothing in its place, for a report that read no runtime observations", () => {
+  it("renders no section, and nothing in its place, for a report that read no behavioural observations", () => {
     const reconciliation = evidenceReconciliationOf([], [], [], false, true);
     expect(reconciliation.summary).not.toHaveProperty("testVolume");
     expect(reconciliation.summary).not.toHaveProperty("rawByRuntimeQualityCheck");

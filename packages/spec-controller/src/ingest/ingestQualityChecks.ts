@@ -32,13 +32,13 @@ import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controlle
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
-  RuntimeQualityCheck,
+  BehaviouralQualityCheck,
   EvidenceObservation,
   EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
 
-const VITEST_QUALITY_CHECK: RuntimeQualityCheck = "unit";
-const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
+const VITEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
+const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
 
@@ -160,7 +160,7 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
   return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files));
 }
 
-function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
+function parseBehaviouralObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
   const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
@@ -200,7 +200,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     ciStepRecord: readJsonIfPresent<Record<string, { outcome?: string; conclusion?: string }>>(
       opts.ciSteps
     ),
-    runtimeObservations: parseRuntimeObservations(opts, root),
+    behaviouralObservations: parseBehaviouralObservations(opts, root),
     deferralTags: DEFAULT_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
   });

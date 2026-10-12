@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
-import type { RuntimeEvidenceObservation } from "../model.js";
+import type { BehaviouralEvidenceObservation } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
@@ -151,7 +151,7 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     );
 
     expect(observations).toHaveLength(1);
-    const [observation] = observations as RuntimeEvidenceObservation[];
+    const [observation] = observations as BehaviouralEvidenceObservation[];
     expect(observation).toMatchObject({
       qualityCheck: "integration",
       scnId: "SCN-HNS-020",

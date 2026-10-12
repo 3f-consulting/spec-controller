@@ -60,7 +60,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     });
   });
 
-  it("materialises the fitness-only tally (satisfied / total) under summary.fitness, ignoring runtime evidenceObligations", () => {
+  it("materialises the fitness-only tally (satisfied / total) under summary.fitness, ignoring behavioural evidenceObligations", () => {
     const report = assembleRenderInput(__er(lintBalance), ctx);
     expect(report.summary.fitness).toEqual({ satisfied: 1, total: 2 });
     expect(report.summary).not.toHaveProperty("lint");

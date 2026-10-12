@@ -34,7 +34,7 @@ export function checkStepReconciler(
       packageJson: manifest,
       ciSources: [ci],
       ciSourceNames: ["ci.yml"],
-      runtimeObservations: [],
+      behaviouralObservations: [],
       deferralTags: [],
       ciStepRecord: record,
     });

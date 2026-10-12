@@ -1,4 +1,4 @@
-import type { RuntimeQualityCheck, EvidenceObservation } from "../model.js";
+import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { parseScnCitation } from "../lib/scnCitation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
@@ -18,7 +18,7 @@ export interface VitestJsonReport {
 
 export function parseVitestEvidenceObservations(
   report: VitestJsonReport,
-  qualityCheck: RuntimeQualityCheck,
+  qualityCheck: BehaviouralQualityCheck,
   root?: string
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];

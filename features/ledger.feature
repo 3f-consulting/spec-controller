@@ -12,7 +12,7 @@ Feature: Ledger over obligation-vs-observation evidence
   it raises balances; otherwise it is out of balance, carrying the LIST of
   every non-balanced reconciling item — each typed, none ranked.
 
-  This feature is the @LDG runtime spine. It grows scenario-by-scenario
+  This feature is the @LDG behavioural spine. It grows scenario-by-scenario
   as LDG-002…005 are driven; LDG-001 (here) is the headline balanced path that
   carries the foundation.
 
@@ -78,7 +78,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: an evidence observation citing no scenario is a suspense-scenario reconciliation
 
     The bidirectional reconciler also consumes evidence observations that cite NO scenario at
-    all — a runtime result carrying no @SCN anchor, or a CI fitness function no scenario cites
+    all — a behavioural result carrying no @SCN anchor, or a CI fitness function no scenario cites
     (ruling Q4). An evidence observation that posts to no scenario lands on the SUSPENSE scenario
     (a suspense account holds postings that match no
     real account). ALL uncited evidence observations aggregate into ONE suspense-scenario Scenario
@@ -92,13 +92,13 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: an evidence observation at a quality-check the scenario never raised is no-evidence-obligation
 
     The bidirectional reconciler also consumes evidence observations that cite a REAL
-    scenario at a quality-check that scenario NEVER raised — a runtime result attributed to
+    scenario at a quality-check that scenario NEVER raised — a behavioural result attributed to
     a scenario, but at a level the scenario has no evidence obligation for. Such an evidence observation posts
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes an evidence-observation
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
-    the count of runtime observations never silently counts a
+    the count of behavioural observations never silently counts a
     stray evidence observation at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
     appears in summary.byOutcome, while the Test-volume attributed (evidence observations citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
@@ -125,9 +125,9 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-009
     Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
 
-  Rule: a runtime observation's level is the cited scenario's own tier tag, not the input source
+  Rule: a behavioural observation's level is the cited scenario's own tier tag, not the input source
 
-    The headline of the tag-derivation fix. A runtime observation's
+    The headline of the tag-derivation fix. A behavioural observation's
     level comes from the CITED scenario's own tier tag (integration / e2e /
     performance), NOT from the input source that produced it. Cucumber is an
     orchestrator ACROSS levels — a scenario names its tier by tag and cucumber runs

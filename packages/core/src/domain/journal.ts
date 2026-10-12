@@ -2,7 +2,7 @@ export const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "perform
 
 export type QualityCheck = (typeof QUALITY_CHECKS)[number];
 
-export type RuntimeQualityCheck = Exclude<QualityCheck, "fitness">;
+export type BehaviouralQualityCheck = Exclude<QualityCheck, "fitness">;
 
 export interface EvidenceObligation {
   readonly qualityCheck?: QualityCheck;
@@ -46,8 +46,8 @@ export function pendingItemsOf(scenario: Scenario): PendingItem[] {
 
 export type EvidenceStatus = "passed" | "failed";
 
-export interface RuntimeEvidenceObservation {
-  readonly qualityCheck: RuntimeQualityCheck;
+export interface BehaviouralEvidenceObservation {
+  readonly qualityCheck: BehaviouralQualityCheck;
   readonly scnId: string | null;
   readonly status: EvidenceStatus;
   readonly locator?: string;
@@ -73,7 +73,7 @@ export function isFitnessObservation(
   return observation.qualityCheck === "fitness";
 }
 
-export type EvidenceObservation = RuntimeEvidenceObservation | FitnessEvidenceObservation;
+export type EvidenceObservation = BehaviouralEvidenceObservation | FitnessEvidenceObservation;
 
 export interface PendingItem {
   readonly qualityCheck?: QualityCheck;

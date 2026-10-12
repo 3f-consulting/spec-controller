@@ -78,7 +78,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
-    const lintAndRuntime: Ledger = reconcile(
+    const lintAndBehavioural: Ledger = reconcile(
       [
         {
           scnId: "SCN-LNT-099",
@@ -87,7 +87,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
       ],
       []
     );
-    const md = renderMarkdown(__er(lintAndRuntime), ctx);
+    const md = renderMarkdown(__er(lintAndBehavioural), ctx);
     expect(md).toContain("1 fitness + 1 integration");
     expect(/↳ Evidence Observation is missing \|[^\d]*2 \|/.test(md)).toBe(true);
   });
@@ -156,11 +156,11 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
   });
 
   it("omits the section entirely (total line and all) when no scenario names a fitness evidenceObligation", () => {
-    const runtimeOnly: Ledger = reconcile(
+    const behaviouralOnly: Ledger = reconcile(
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
     );
-    const md = renderMarkdown(__er(runtimeOnly), ctx);
+    const md = renderMarkdown(__er(behaviouralOnly), ctx);
     expect(md).not.toContain("### Fitness evidence obligations");
     expect(md).not.toContain("fitness evidence obligations reconcile satisfied");
   });

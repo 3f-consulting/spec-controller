@@ -14,10 +14,10 @@ interface Arm {
   observation: fc.Arbitrary<EvidenceObservation>;
 }
 
-function armsOf(): Record<"runtime" | "fitness", Arm> {
+function armsOf(): Record<"behavioural" | "fitness", Arm> {
   const locator = fc.constantFrom(undefined, "a.feature", "m.feature", "z.feature");
   return {
-    runtime: {
+    behavioural: {
       obligation: { qualityCheck: "unit" },
       observation: fc
         .record({
@@ -77,8 +77,8 @@ function itemOf(arm: Arm, observations: EvidenceObservation[]) {
 const worstOf = (outcomes: readonly Outcome[]): Outcome =>
   WORST_FIRST.find((o) => outcomes.includes(o)) ?? "missing";
 
-const armAndObservationsTwoWays = (arms: Record<"runtime" | "fitness", Arm>) =>
-  fc.constantFrom("runtime" as const, "fitness" as const).chain((arm) =>
+const armAndObservationsTwoWays = (arms: Record<"behavioural" | "fitness", Arm>) =>
+  fc.constantFrom("behavioural" as const, "fitness" as const).chain((arm) =>
     fc
       .array(arms[arm].observation, { maxLength: 6 })
       .chain((observations) =>

@@ -44,7 +44,7 @@ function reconcile(barCitation: string): EvidenceReconciliation {
     packageJson,
     ciSources: [ci(barCitation)],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

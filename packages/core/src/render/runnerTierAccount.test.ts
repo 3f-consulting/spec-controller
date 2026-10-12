@@ -17,7 +17,7 @@ function reconcile(runners?: Record<string, string | null>) {
     packageJson,
     ciSources: [ci],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

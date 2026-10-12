@@ -18,7 +18,7 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
     },
     ciSources: [ci],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

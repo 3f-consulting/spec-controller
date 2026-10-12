@@ -154,7 +154,7 @@ export function reconcileStepAccounting(ciSources: readonly string[]): EvidenceR
     ciSources,
     ciSourceNames: ciSources.map(() => "ci.yml"),
     reconcilerInvocation: "spec-controller balance",
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

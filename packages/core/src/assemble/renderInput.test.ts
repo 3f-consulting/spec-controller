@@ -30,7 +30,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       untaggedScenarios: [],
       packageJson: {},
       ciSources: [],
-      runtimeObservations: [],
+      behaviouralObservations: [],
       deferralTags: [],
     });
     const report = assembleRenderInput(judged, ctx, evidenceObligations) as unknown as Record<string, unknown>;
@@ -119,7 +119,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 });
 
-describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no evidenceObservations section", () => {
+describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary; no evidenceObservations section", () => {
   const rmd003Scenarios: Scenario[] = [{ scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rmd003Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },

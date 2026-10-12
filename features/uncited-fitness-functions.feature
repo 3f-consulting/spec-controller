@@ -2,7 +2,7 @@
 Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   The fitness-function axis's UNCITED detection — the mirror of the
-  runtime axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
+  behavioural axis's cites-no-scenario evidence observations. A check that runs in CI which nothing
   cites is an unposted evidence observation, and the axis sees it because its whole input is the running-check
   observer below, not the checks an obligation names.
 
@@ -12,7 +12,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   cites no scenario, so reconcile folds it to the suspense row (an UNCITED fitness-function). The
   report's fitness-function census is a pure count over the stream, runningFitnessFunctionCount and
   uncitedFitnessFunctionCount; the cited count is implicit, running − uncited. It is the fitness-function-axis
-  mirror of the runtime count under Test volume. The report surfaces the counts under
+  mirror of the behavioural count under Test volume. The report surfaces the counts under
   "### Fitness functions", mirroring "### Test volume"; the guard member detail lives in the rows.
 
   WHICH STEPS ARE FITNESS FUNCTIONS, AND WHY IT IS NOT A NAMING QUESTION. Membership is every CI
@@ -23,7 +23,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   membership is decided by subtraction, and a run: step of the workflows --ci names is a
   candidate fitness function unless it runs a behavioural runner the manifest names, is the
   reconciler, or is a step the manifest names a non-check. install and checkout are steps like
-  any other and leave by that third door; test and cucumber are the runtime axis's observed
+  any other and leave by that third door; test and cucumber are the behavioural axis's observed
   evidence and leave by the first, which is what the manifest's runners block says.
 
   `tsc --noEmit` is static analysis on any reading, and it is not deferred: a deferral recorded

@@ -1,6 +1,6 @@
 import type {
   EvidenceObservation,
-  RuntimeEvidenceObservation,
+  BehaviouralEvidenceObservation,
   FitnessEvidenceObservation,
 } from "./journal.js";
 import { isFitnessObservation } from "./journal.js";
@@ -10,7 +10,7 @@ export type Posting =
   | { readonly kind: "phantom-scenario"; readonly scnId: string }
   | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
 
-export type RuntimePosting =
+export type BehaviouralPosting =
   | { readonly kind: "scenario"; readonly scnId: string }
   | { readonly kind: "phantom-scenario"; readonly scnId: string }
   | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
@@ -21,9 +21,9 @@ export type FitnessFunctionPosting =
   | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
 
 export function postingOf(
-  observation: RuntimeEvidenceObservation,
+  observation: BehaviouralEvidenceObservation,
   scenarioIds: ReadonlySet<string>
-): RuntimePosting;
+): BehaviouralPosting;
 export function postingOf(
   observation: FitnessEvidenceObservation,
   scenarioIds: ReadonlySet<string>

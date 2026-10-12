@@ -46,7 +46,7 @@ function reconcileAnnotated(ciSource = annotatedCi): EvidenceReconciliation {
     packageJson: manifest,
     ciSources: [ciSource],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

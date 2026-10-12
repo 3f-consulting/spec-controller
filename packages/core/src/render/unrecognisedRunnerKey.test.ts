@@ -21,7 +21,7 @@ function reportLines(runners: Record<string, string | null>): string[] {
     },
     ciSources: [ci],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
   return renderMarkdown(reconciliation, ctx).split("\n");

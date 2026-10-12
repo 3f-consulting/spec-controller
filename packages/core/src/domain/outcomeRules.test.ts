@@ -6,15 +6,15 @@ import {
   suspenseReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import type {
-  RuntimeEvidenceObservation,
+  BehaviouralEvidenceObservation,
   FitnessEvidenceObservation,
 } from "../model.js";
 
 const observation = (
-  qualityCheck: RuntimeEvidenceObservation["qualityCheck"],
+  qualityCheck: BehaviouralEvidenceObservation["qualityCheck"],
   scnId: string | null,
-  extra: Partial<RuntimeEvidenceObservation> = {}
-): RuntimeEvidenceObservation => ({ qualityCheck, scnId, status: "passed", ...extra });
+  extra: Partial<BehaviouralEvidenceObservation> = {}
+): BehaviouralEvidenceObservation => ({ qualityCheck, scnId, status: "passed", ...extra });
 
 describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at quality-checks with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
@@ -42,7 +42,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence obs
 describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its evidence observation has no value for", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
-  it("omits BOTH the fitnessFunction and the locator key on a runtime evidence observation from no test file", () => {
+  it("omits BOTH the fitnessFunction and the locator key on a behavioural evidence observation from no test file", () => {
     const anonymous = observation("e2e", "SCN-AAA-001");
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [anonymous], pairs);
     expect(item).toStrictEqual({
@@ -89,7 +89,7 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
 });
 
 describe("[SCN-LDG-006] a phantom row's items carry only the fields the evidence observation has", () => {
-  it("carries neither a locator nor a fitnessFunction key when the runtime evidence observation has no locator", () => {
+  it("carries neither a locator nor a fitnessFunction key when the behavioural evidence observation has no locator", () => {
     const noLocator = observation("unit", "SCN-ZZZ-009");
     const [item] = citesUnknownScenarioReconciliationsOf([noLocator]);
     expect(item).toStrictEqual({
@@ -142,7 +142,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     enforcedOverRealSource: true,
   };
 
-  it("lists broken FIRST, then the uncited runtime evidence observations, then the uncited fitness functions", () => {
+  it("lists broken FIRST, then the uncited behavioural evidence observations, then the uncited fitness functions", () => {
     const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
     expect(items[2]!.fitnessFunction).toBe("lint:nobody-asked");
@@ -165,7 +165,7 @@ describe("[SCN-LDG-007] a suspense item omits the payload keys its observation h
     expect(item).not.toHaveProperty("message");
   });
 
-  it("omits the locator key on an uncited runtime evidence observation that came from no test file", () => {
+  it("omits the locator key on an uncited behavioural evidence observation that came from no test file", () => {
     const anonymous = observation("integration", null);
     const [item] = suspenseReconciliationsOf([], [anonymous], []);
     expect(item).toStrictEqual({

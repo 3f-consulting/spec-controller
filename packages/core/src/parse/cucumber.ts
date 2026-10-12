@@ -1,4 +1,4 @@
-import type { RuntimeQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
+import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
@@ -23,13 +23,13 @@ const TIER_TAG = /^@?(integration|e2e|performance)$/;
 
 function deriveLevels(
   tags: readonly { readonly name?: string }[],
-  fallbackQualityCheck: RuntimeQualityCheck
-): RuntimeQualityCheck[] {
-  const levels: RuntimeQualityCheck[] = [];
+  fallbackQualityCheck: BehaviouralQualityCheck
+): BehaviouralQualityCheck[] {
+  const levels: BehaviouralQualityCheck[] = [];
   for (const t of tags) {
     const m = TIER_TAG.exec(t.name ?? "");
     if (m) {
-      const level = m[1] as RuntimeQualityCheck;
+      const level = m[1] as BehaviouralQualityCheck;
       if (!levels.includes(level)) levels.push(level);
     }
   }
@@ -45,7 +45,7 @@ function ambiguousMessage(step: { keyword?: string; name?: string }): string {
 
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
-  fallbackQualityCheck: RuntimeQualityCheck,
+  fallbackQualityCheck: BehaviouralQualityCheck,
   root?: string
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
@@ -70,7 +70,7 @@ function citedScnIdOf(tags: readonly { readonly name?: string }[]): string | nul
 function scenarioObservations(
   scenario: CucumberScenario,
   locator: string,
-  fallbackQualityCheck: RuntimeQualityCheck
+  fallbackQualityCheck: BehaviouralQualityCheck
 ): EvidenceObservation[] {
   const tags = scenario.tags ?? [];
   const scnId = citedScnIdOf(tags);

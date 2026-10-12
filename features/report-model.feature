@@ -50,9 +50,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-002
     Scenario: the ledger serialises under the top-level key ledger, beside summary, carrying each account's posted entries
 
-  Rule: the runtime evidence-observation counting folds onto the Ledger, no evidenceObservations section
+  Rule: the behavioural evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
-    The runtime evidence-observation counting is a FOLD the Ledger owns.
+    The behavioural evidence-observation counting is a FOLD the Ledger owns.
     The raw per-quality-check totals are materialised on summary.rawByRuntimeQualityCheck, and
     the persisted JSON carries NO separate evidence-observations section: every evidence observation is
     already posted on the ledger, a phantom evidence observation on its phantom-scenario row and an uncited one
@@ -62,13 +62,13 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     construction on the persisted file. Its unit tests hold the assembled totals in isolation.
 
     @unit @SCN-RMD-003
-    Scenario: the runtime-observation totals re-home onto summary and the balancing identity holds on the persisted file
+    Scenario: the behavioural-observation totals re-home onto summary and the balancing identity holds on the persisted file
 
   Rule: the fitness-function census is summary counts, no standalone section
 
     The fitness-function-axis manifesto on the JSON surface. The fitness-function census is
     summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
-    with the runtime testVolume counter. There is no standalone member-list section, because
+    with the behavioural testVolume counter. There is no standalone member-list section, because
     each check's detail lives on the rows: a cited check on its scenario's own row, an
     uncited one as a cites-no-scenario evidence observation on the suspense row, so nothing is reported twice.
     The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited

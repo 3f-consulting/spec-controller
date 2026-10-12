@@ -47,7 +47,7 @@ function reconcileUncited(): EvidenceReconciliation {
     packageJson: uncitedManifest,
     ciSources: [uncitedCi],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

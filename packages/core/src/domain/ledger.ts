@@ -1,7 +1,7 @@
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
-import type { RuntimeQualityCheck } from "./journal.js";
+import type { BehaviouralQualityCheck } from "./journal.js";
 import { QUALITY_CHECKS } from "./journal.js";
 
 export interface Ledger {
@@ -153,20 +153,20 @@ export function fitnessTally(ledger: Ledger): FitnessTally {
   };
 }
 
-export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = QUALITY_CHECKS.filter(
-  (qualityCheck): qualityCheck is RuntimeQualityCheck => qualityCheck !== "fitness"
+export const BEHAVIOURAL_QUALITY_CHECKS: readonly BehaviouralQualityCheck[] = QUALITY_CHECKS.filter(
+  (qualityCheck): qualityCheck is BehaviouralQualityCheck => qualityCheck !== "fitness"
 );
 
-export interface RuntimeObservationTally {
-  readonly rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
+export interface BehaviouralObservationTally {
+  readonly rawByRuntimeQualityCheck: Record<BehaviouralQualityCheck, number>;
   readonly total: number;
   readonly onScenario: number;
   readonly onPhantomScenario: number;
   readonly onSuspenseScenario: number;
 }
 
-export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally {
-  const rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number> = {
+export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservationTally {
+  const rawByRuntimeQualityCheck: Record<BehaviouralQualityCheck, number> = {
     unit: 0,
     integration: 0,
     e2e: 0,
@@ -186,7 +186,7 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
     }
   }
 
-  const total = RUNTIME_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
+  const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
 
   return { rawByRuntimeQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
 }

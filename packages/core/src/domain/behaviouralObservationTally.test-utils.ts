@@ -1,4 +1,4 @@
-import { runtimeObservationTally } from "./ledger.js";
+import { behaviouralObservationTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
@@ -14,5 +14,5 @@ export const tallyOfEveryObservationKind = () => {
     { qualityCheck: "fitness", fitnessFunction: "guard-x", exists: true, enforcedOverRealSource: true },
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
-  return runtimeObservationTally(ledger);
+  return behaviouralObservationTally(ledger);
 };

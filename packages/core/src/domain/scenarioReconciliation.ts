@@ -2,7 +2,7 @@ import type {
   EvidenceObligation,
   EvidenceObservation,
   PendingItem,
-  RuntimeQualityCheck,
+  BehaviouralQualityCheck,
 } from "./journal.js";
 import { evidenceObligationsOf } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
@@ -67,17 +67,27 @@ export function carriesFitnessFunction(row: ScenarioReconciliation): boolean {
   return fitnessFunctionReconciliationsOf(row).length > 0;
 }
 
+export function carriesBehaviouralQualityCheck(
+  row: ScenarioReconciliation,
+  qualityCheck: BehaviouralQualityCheck
+): boolean {
+  return (
+    row.qualityCheckReconciliations.some((r) => r.qualityCheck === qualityCheck) ||
+    row.evidenceObservations.some((o) => o.qualityCheck === qualityCheck)
+  );
+}
+
 export function presentFitnessFunctionCountOf(row: ScenarioReconciliation): number {
   return fitnessFunctionReconciliationsOf(row).filter(
     (r) => r.outcome === "satisfied" || r.outcome === "watermelon"
   ).length;
 }
 
-export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): boolean {
+export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: BehaviouralQualityCheck): boolean {
   return evidenceObligationsOf(row.evidenceObligations).some((o) => o.qualityCheck === qualityCheck);
 }
 
-export function observationCountOf(row: ScenarioReconciliation, qualityCheck: RuntimeQualityCheck): number {
+export function observationCountOf(row: ScenarioReconciliation, qualityCheck: BehaviouralQualityCheck): number {
   return row.evidenceObservations.filter((o) => o.qualityCheck === qualityCheck).length;
 }
 

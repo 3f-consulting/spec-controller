@@ -39,7 +39,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   Rule: the fixture target spans every cell case
 
     # STEPLESS, and `@fitness` with its configured row raises the fitness obligation rather than the
-    # shape (@SCN-LNT-018); the runtime tier rides alongside, making this a two-axis row
+    # shape (@SCN-LNT-018); the behavioural tier rides alongside, making this a two-axis row
     # (@SCN-LNT-004).
     @unit @fitness @SCN-CEL-001
     Scenario: a named, met obligation at unit and fitness

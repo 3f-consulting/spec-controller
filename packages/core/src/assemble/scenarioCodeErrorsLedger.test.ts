@@ -21,7 +21,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: {},
     ciSources: [],
-    runtimeObservations: observations,
+    behaviouralObservations: observations,
     deferralTags: [],
   });
 }

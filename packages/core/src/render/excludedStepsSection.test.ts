@@ -22,7 +22,7 @@ function reportLines(notChecks?: readonly string[]): string[] {
     packageJson,
     ciSources: [ci],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
   return renderMarkdown(reconciliation, ctx).split("\n");

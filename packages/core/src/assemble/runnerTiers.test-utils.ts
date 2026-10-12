@@ -17,7 +17,7 @@ export function runnersReconciler(
       packageJson,
       ciSources: [ci],
       ciSourceNames: ["ci.yml"],
-      runtimeObservations: [],
+      behaviouralObservations: [],
       deferralTags: [],
     });
   };

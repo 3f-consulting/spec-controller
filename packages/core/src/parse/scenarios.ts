@@ -3,7 +3,7 @@ import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/
 import { bareTerm } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
+import type { Scenario, EvidenceObligation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
 
 export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
 
@@ -19,7 +19,7 @@ export function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
 
-const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
+const TAG_TO_QUALITY_CHECK: Record<string, BehaviouralQualityCheck> = {
   unit: "unit",
   integration: "integration",
   e2e: "e2e",
@@ -72,7 +72,7 @@ function obligationsFromTags(
   deferralTags: readonly string[]
 ): EvidenceObligation[] {
   const evidenceObligations: EvidenceObligation[] = [];
-  const seenQualityChecks = new Set<RuntimeQualityCheck>();
+  const seenQualityChecks = new Set<BehaviouralQualityCheck>();
   const seenPending = new Set<QualityCheck>();
   for (const t of tags) {
     const pendingCheck = pendingQualityCheck(t);

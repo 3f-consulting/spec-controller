@@ -14,7 +14,7 @@ function reportLines(ciSource: string): string[] {
     ciSources: [ciSource],
     ciSourceNames: ["ci.yml"],
     reconcilerInvocation: "spec-controller balance",
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
   return renderMarkdown(reconciliation, ctx).split("\n");

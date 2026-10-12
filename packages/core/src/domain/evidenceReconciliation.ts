@@ -1,10 +1,10 @@
 import type {
-  RuntimeQualityCheck,
+  BehaviouralQualityCheck,
   Scenario,
   FitnessEvidenceObservation,
   EvidenceObservation,
   PendingItem,
-  RuntimeEvidenceObservation,
+  BehaviouralEvidenceObservation,
 } from "./journal.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 import type { Ledger } from "./ledger.js";
@@ -23,9 +23,9 @@ import {
 } from "./qualityCheckReconciliation.js";
 import {
   ledgerTally,
-  runtimeObservationTally,
+  behaviouralObservationTally,
   fitnessFunctionTally,
-  RUNTIME_QUALITY_CHECKS,
+  BEHAVIOURAL_QUALITY_CHECKS,
 } from "./ledger.js";
 import type {
   ScenarioReconciliationTotals,
@@ -70,8 +70,8 @@ function citationIndex(): CitationIndex {
 
 interface RoutedObservations {
   readonly citations: CitationIndex;
-  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
-  readonly uncited: readonly RuntimeEvidenceObservation[];
+  readonly brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[];
+  readonly uncited: readonly BehaviouralEvidenceObservation[];
   readonly uncitedFitnessFunctions: readonly FitnessEvidenceObservation[];
 }
 
@@ -81,7 +81,7 @@ function routeObservations(
 ): RoutedObservations {
   const citations = citationIndex();
   const brokenEvidence: EvidenceObservation[] = [];
-  const uncited: RuntimeEvidenceObservation[] = [];
+  const uncited: BehaviouralEvidenceObservation[] = [];
   const uncitedFitnessFunctions: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     const posting = postingOf(o, scenarioIds);
@@ -177,8 +177,8 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
 }
 
 function suspenseScenarioRows(
-  brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
-  uncited: readonly RuntimeEvidenceObservation[],
+  brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[],
+  uncited: readonly BehaviouralEvidenceObservation[],
   uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
@@ -288,12 +288,12 @@ export interface StepAccounting {
 }
 
 export interface TierWithoutRunner {
-  readonly tier: RuntimeQualityCheck;
+  readonly tier: BehaviouralQualityCheck;
   readonly namesNone: boolean;
 }
 
 export function tiersWithoutRunnerOf(runnerTiers: Readonly<Record<string, string | null>>): TierWithoutRunner[] {
-  return RUNTIME_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) => ({
+  return BEHAVIOURAL_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) => ({
     tier,
     namesNone: Object.hasOwn(runnerTiers, tier),
   }));
@@ -304,7 +304,7 @@ export interface Summary {
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly testVolume?: TestVolumeTotals;
-  readonly rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
+  readonly rawByRuntimeQualityCheck?: Record<BehaviouralQualityCheck, number>;
   readonly fitnessFunctions?: FitnessFunctionTotals;
   readonly fitness: FitnessTally;
   readonly behaviouralRunners?: readonly BehaviouralRunner[];
@@ -328,17 +328,17 @@ export interface EvidenceReconciliation {
 
 export function summaryOf(
   ledger: Ledger,
-  withRuntimeObservations: boolean,
+  withBehaviouralObservations: boolean,
   withFitnessFunctions: boolean
 ): Summary {
   const tally = ledgerTally(ledger);
-  const observations = runtimeObservationTally(ledger);
+  const observations = behaviouralObservationTally(ledger);
   const fitnessFunctions = fitnessFunctionTally(ledger);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
     qualityCheckReconciliations: tally.qualityCheckReconciliations,
     pending: tally.pending,
-    ...(withRuntimeObservations
+    ...(withBehaviouralObservations
       ? {
           testVolume: {
             totalEvidenceObservations: observations.total,
@@ -358,9 +358,9 @@ export function evidenceReconciliationOf(
   scenarios: readonly Scenario[],
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[],
-  withRuntimeObservations: boolean,
+  withBehaviouralObservations: boolean,
   withFitnessFunctions: boolean
 ): EvidenceReconciliation {
   const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
-  return { summary: summaryOf(ledger, withRuntimeObservations, withFitnessFunctions), ledger };
+  return { summary: summaryOf(ledger, withBehaviouralObservations, withFitnessFunctions), ledger };
 }

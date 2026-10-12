@@ -1,5 +1,5 @@
 import { bareTerm } from "../lib/bareTerm.js";
-import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
 import type { WrongKindEntry } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
@@ -7,7 +7,7 @@ function isBlock(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-const isTier = (key: string): boolean => (RUNTIME_QUALITY_CHECKS as readonly string[]).includes(key);
+const isTier = (key: string): boolean => (BEHAVIOURAL_QUALITY_CHECKS as readonly string[]).includes(key);
 
 const isRunner = (value: unknown): value is string | null => typeof value === "string" || value === null;
 

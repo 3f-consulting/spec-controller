@@ -98,7 +98,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n    Given a thing\n",
       "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: two\n    Given a thing\n",
     ];
-    const reconciled = (runtimeObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
+    const reconciled = (behaviouralObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
       evidenceReconciliationFromSources({
         featureSources: sources,
         featureFiles: [
@@ -108,7 +108,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         untaggedScenarios: [],
         packageJson: {},
         ciSources: [],
-        runtimeObservations,
+        behaviouralObservations,
         deferralTags: [],
       });
     const bothPassed: EvidenceObservation[] = [

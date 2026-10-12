@@ -17,7 +17,7 @@ function reconcile(
     packageJson,
     ciSources,
     ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

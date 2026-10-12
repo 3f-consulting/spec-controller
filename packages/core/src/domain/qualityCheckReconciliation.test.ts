@@ -9,7 +9,7 @@ import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFau
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
-  it("a missing runtime reconciliation carries its evidence obligation and no observation — the pure debit case", () => {
+  it("a missing behavioural reconciliation carries its evidence obligation and no observation — the pure debit case", () => {
     const obligation: EvidenceObligation = { qualityCheck: "unit" };
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-026", obligation, []);
 

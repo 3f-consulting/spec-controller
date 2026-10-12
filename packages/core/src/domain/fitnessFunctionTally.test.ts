@@ -42,16 +42,16 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
     expect(tally.uncitedFitnessFunctionCount).toBe(1);
   });
 
-  it("counts no runtime evidence observation, whatever fields it arrives carrying", () => {
-    const runtimeCarryingGuardFields = {
+  it("counts no behavioural evidence observation, whatever fields it arrives carrying", () => {
+    const behaviouralCarryingGuardFields = {
       qualityCheck: "unit" as const,
       scnId: "SCN-A",
       status: "passed" as const,
       exists: true,
       enforcedOverRealSource: true,
     };
-    const withRuntime = reconcile(scenarios, [...observations, runtimeCarryingGuardFields]);
-    expect(fitnessFunctionTally(withRuntime)).toEqual(tally);
+    const withBehavioural = reconcile(scenarios, [...observations, behaviouralCarryingGuardFields]);
+    expect(fitnessFunctionTally(withBehavioural)).toEqual(tally);
   });
 });
 

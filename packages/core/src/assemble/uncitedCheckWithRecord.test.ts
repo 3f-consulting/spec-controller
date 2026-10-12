@@ -46,7 +46,7 @@ function reconcileWithRecord(): EvidenceReconciliation {
     packageJson: manifest,
     ciSources: [partlyAnnotatedCi],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
     ciStepRecord: { "SCN-AAA-001": { outcome: "success", conclusion: "success" } },
   });

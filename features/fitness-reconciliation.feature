@@ -165,7 +165,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     Scenario: a fitness Evidence Observation citing an @SCN no scenario carries posts to a phantom row, named by the @SCN its step stated
       NEWLY REACHABLE, and that is the point. While a fitness function's run cited nothing, this arm was
       structurally unreachable on the fitness axis — there was no citation to be wrong. Once the
-      Evidence Observation cites, the fitness axis inherits every destination a runtime Evidence Observation has, this one
+      Evidence Observation cites, the fitness axis inherits every destination a behavioural Evidence Observation has, this one
       included, and inherits it through the SAME posting rule rather than a fitness clause that
       re-states it.
 
@@ -174,7 +174,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       citation, so a step can state an @SCN no scenario carries — mistyped on the
       step, mistyped on the scenario, or the scenario renumbered, retired, or living in a feature
       file this run does not reconcile. The pipeline and the corpus are two documents one consumer
-      authors separately, and nothing keeps them in step. It is the same disagreement a runtime
+      authors separately, and nothing keeps them in step. It is the same disagreement a behavioural
       Evidence Observation has always been able to carry between a test file's @SCN and the corpus, reached
       through a CI step's own id: instead.
 

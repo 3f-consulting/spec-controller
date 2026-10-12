@@ -74,7 +74,7 @@ Feature: The report renders the ledger as sectioned facts
     reconciling-item causes: three nested ("↳") rows in canonical order — missing,
     failing, and the watermelon watermelon —
     populating the out-of-balance column only, always shown (a zero cause is itself a fact).
-    The missing row carries the bare-level split as its Detail (a runtime
+    The missing row carries the bare-level split as its Detail (a behavioural
     quality check by its bare level, a fitness-function one as "fitness" — the label-=-tag lock),
     canonical order (fitness first), counting missing Quality Check Reconciliations by quality
     check, not scenarios. The Scenario Reconciliation and Quality Check Reconciliation
@@ -101,7 +101,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The by-quality-check view (under Summary views with a total
     line; labelled by the quality check, fitness, never an internal kind).
-    The fitness evidence obligations sit mixed in with runtime items in the
+    The fitness evidence obligations sit mixed in with behavioural items in the
     per-scenario ledger. This section lifts them out: under "## Summary views", a
     "### Fitness evidence obligations" section opens with a total line ("N of M fitness
     evidence obligations reconcile satisfied.") then a table listing each fitness evidence
@@ -210,7 +210,7 @@ Feature: The report renders the ledger as sectioned facts
     the cuts read as cuts OF the ledger, not a separate ledger. A pure layout reorg
     over existing data — no new derivation, the JSON surface unchanged (markdown-only).
     The RPT-004/005/006/007 scenarios are updated in the same change. Every reconciling
-    item is labelled by its TAG (the bare level for runtime — unit / integration / … —
+    item is labelled by its TAG (the bare level for behavioural — unit / integration / … —
     and "fitness" for the fitness axis), never the internal kind axis. Proven in isolation by Vitest.
 
     @unit @SCN-RPT-009
@@ -239,7 +239,7 @@ Feature: The report renders the ledger as sectioned facts
 
     Per-scenario evidence columns, consuming the evidence observation
     aggregate. The ledger row gains corpus-driven columns between Scenario and Verdict —
-    Fitness first, then the runtime levels present in evidence obligation or evidence observation (Unit, Integration,
+    Fitness first, then the behavioural levels present in evidence obligation or evidence observation (Unit, Integration,
     e2e, Performance; e2e/performance only when a run has them). Each cell is two-sided,
     `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (F, U, I,
     E, P) iff the scenario obligated this check, else `-`; the RIGHT is the observation count — the
@@ -320,9 +320,9 @@ Feature: The report renders the ledger as sectioned facts
       When balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON
       Then the saved reconciliation, in both markdown and JSON, carries none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root
 
-  Rule: the report's evidence-observation views level a runtime observation by the cited scenario's tag
+  Rule: the report's evidence-observation views level a behavioural observation by the cited scenario's tag
 
-    The RECONCILER levels a runtime observation by the cited scenario's own tier tag, so a
+    The RECONCILER levels a behavioural observation by the cited scenario's own tier tag, so a
     cucumber run of an @e2e scenario discharges an e2e obligation. The report's
     evidence-observation views — Test volume's `rawByRuntimeQualityCheck` and the per-scenario
     E2e cell — must say the same, or the report contradicts itself: an @e2e-via-cucumber
@@ -509,10 +509,10 @@ Feature: The report renders the ledger as sectioned facts
 
     The census is now a FOLD over the Ledger: it walks the posted evidence observations and reads each
     evidence observation's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
-    keeps the RUNTIME scoping, and citation-routing makes that scoping MORE obviously
+    keeps the BEHAVIOURAL scoping, and citation-routing makes that scoping MORE obviously
     necessary rather than less. A fitness evidence observation now cites its OWN fitness
     scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
-    EXACTLY like a runtime evidence observation, indistinguishable by the account it landed on. The fold
+    EXACTLY like a behavioural evidence observation, indistinguishable by the account it landed on. The fold
     must therefore skip it on the CHECK (`qualityCheck === "fitness"`), never on the absence of
     a citation. Under the retired name-match posting a fitness evidence observation cited nothing at all,
     so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;

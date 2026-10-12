@@ -52,7 +52,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
   });
 
-  it("renders corpus-driven columns — Fitness first, then the runtime levels present (e2e/performance absent)", () => {
+  it("renders corpus-driven columns — Fitness first, then the behavioural levels present (e2e/performance absent)", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     expect(md).toContain("| Scenario | Fitness | Unit | Integration | Verdict | Reconciling items |");
     expect(md).not.toContain("| Performance |");
@@ -69,7 +69,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it.each([
-    ["[SCN-RPT-018] renders both cells for a scenario naming two runtime tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
+    ["[SCN-RPT-018] renders both cells for a scenario naming two behavioural tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
     ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
   ])("%s", (_title, row) => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
@@ -99,7 +99,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   const cellsOf = (row: string, count: number): string[] =>
     row.slice(2, -2).split(" | ").slice(0, count);
 
-  it("adds a column for a runtime tier the corpus names but no run observed, lettered E for e2e and P for performance", () => {
+  it("adds a column for a behavioural tier the corpus names but no run observed, lettered E for e2e and P for performance", () => {
     const named = reconcile(
       [
         { scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] },

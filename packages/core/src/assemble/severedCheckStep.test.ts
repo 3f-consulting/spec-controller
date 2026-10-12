@@ -82,7 +82,7 @@ function reconcileSevered(): EvidenceReconciliation {
     packageJson: severedManifest,
     ciSources: [severedCi],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }

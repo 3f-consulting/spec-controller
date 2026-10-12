@@ -31,12 +31,12 @@ function assembled(): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: { scripts: {} },
     ciSources: [],
-    runtimeObservations: parseVitestEvidenceObservations(vitestResult, "unit", "/repo"),
+    behaviouralObservations: parseVitestEvidenceObservations(vitestResult, "unit", "/repo"),
     deferralTags: [],
   });
 }
 
-describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary and the balancing identity holds on the persisted file", () => {
+describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary and the balancing identity holds on the persisted file", () => {
   it("carries the raw per-quality-check totals of the observations it was handed on its summary", () => {
     expect(assembled().summary.rawByRuntimeQualityCheck).toStrictEqual({
       unit: 4,

@@ -29,7 +29,7 @@ type TargetManifest = PackageJsonScripts & {
 
 function observationStreams(
   input: {
-    runtimeObservations: readonly EvidenceObservation[];
+    behaviouralObservations: readonly EvidenceObservation[];
     ciSources: readonly string[];
     ciStepRecord?: CiStepRecord;
   },
@@ -40,7 +40,7 @@ function observationStreams(
 ): EvidenceObservation[] {
   const recordAnswersCitingSteps = input.ciStepRecord !== undefined;
   return [
-    ...input.runtimeObservations,
+    ...input.behaviouralObservations,
     ...checkObservations(
       corpus,
       input.ciSources,
@@ -61,7 +61,7 @@ export interface EvidenceReconciliationSources {
   readonly ciSources: readonly string[];
   readonly ciSourceNames?: readonly string[];
   readonly reconcilerInvocation?: string;
-  readonly runtimeObservations: readonly EvidenceObservation[];
+  readonly behaviouralObservations: readonly EvidenceObservation[];
   readonly deferralTags: readonly string[];
   readonly ciStepRecord?: CiStepRecord;
 }

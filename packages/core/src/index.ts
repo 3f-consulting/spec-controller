@@ -1,10 +1,10 @@
 export type {
   QualityCheck,
-  RuntimeQualityCheck,
+  BehaviouralQualityCheck,
   EvidenceStatus,
   EvidenceObligation,
   Scenario,
-  RuntimeEvidenceObservation,
+  BehaviouralEvidenceObservation,
   FitnessEvidenceObservation,
   EvidenceObservation,
   Outcome,

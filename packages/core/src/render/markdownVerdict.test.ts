@@ -3,7 +3,7 @@ import { renderMarkdown } from "./markdown.js";
 import type { Ledger, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
+import type { EvidenceObservation, Scenario, BehaviouralQualityCheck } from "../model.js";
 import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
@@ -47,7 +47,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     ];
     const observations: EvidenceObservation[] = [
       {
-        qualityCheck: item.qualityCheck as RuntimeQualityCheck,
+        qualityCheck: item.qualityCheck as BehaviouralQualityCheck,
         scnId: null,
         status: "passed",
         broken: true,

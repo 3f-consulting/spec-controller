@@ -48,7 +48,7 @@ function reconcileUnannotated(): EvidenceReconciliation {
     packageJson: manifest,
     ciSources: [unannotatedCi],
     ciSourceNames: ["ci.yml"],
-    runtimeObservations: [],
+    behaviouralObservations: [],
     deferralTags: [],
   });
 }
