@@ -228,7 +228,7 @@ Feature: The report renders the ledger as sectioned facts
     e2e/performance zeros shown — a fixed tally that always lists every level). The identity holds
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms
-    (rawByRuntimeQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario) persist on JSON (project design §3); the
+    (rawByBehaviouralQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario) persist on JSON (project design §3); the
     identity line stays markdown-only.
     Foundational: later scenarios consume the aggregate.
 
@@ -324,7 +324,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The RECONCILER levels a behavioural observation by the cited scenario's own tier tag, so a
     cucumber run of an @e2e scenario discharges an e2e obligation. The report's
-    evidence-observation views — Test volume's `rawByRuntimeQualityCheck` and the per-scenario
+    evidence-observation views — Test volume's `rawByBehaviouralQualityCheck` and the per-scenario
     E2e cell — must say the same, or the report contradicts itself: an @e2e-via-cucumber
     observation surfacing as `e2e: 0` in the views while the reconciler reports the e2e
     obligation satisfied.
@@ -337,7 +337,7 @@ Feature: The report renders the ledger as sectioned facts
     posted, so the level the parse derived IS the level the views render. The E2e cell likewise
     reads its observation count STRAIGHT off those posted evidence observations, never off a parallel tally.
 
-    The fold carries `rawByRuntimeQualityCheck` beside three per-account counts — `onScenario`
+    The fold carries `rawByBehaviouralQualityCheck` beside three per-account counts — `onScenario`
     (both the matched and the no-evidence-obligation evidence observations), `onPhantomScenario` and
     `onSuspenseScenario` — and the outcome split per evidence observation lives on the ledger rows themselves,
     where the reconciler ruled it. The completeness identity is
@@ -345,7 +345,7 @@ Feature: The report renders the ledger as sectioned facts
     the single walk.
 
     The unit arm proves the fold: over a reconciler-built spanning corpus carrying an
-    e2e-levelled evidence observation, `rawByRuntimeQualityCheck` counts it under e2e and not integration.
+    e2e-levelled evidence observation, `rawByBehaviouralQualityCheck` counts it under e2e and not integration.
 
     @unit @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views

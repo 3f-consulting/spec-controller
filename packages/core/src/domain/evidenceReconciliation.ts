@@ -304,7 +304,7 @@ export interface Summary {
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly testVolume?: TestVolumeTotals;
-  readonly rawByRuntimeQualityCheck?: Record<BehaviouralQualityCheck, number>;
+  readonly rawByBehaviouralQualityCheck?: Record<BehaviouralQualityCheck, number>;
   readonly fitnessFunctions?: FitnessFunctionTotals;
   readonly fitness: FitnessTally;
   readonly behaviouralRunners?: readonly BehaviouralRunner[];
@@ -346,7 +346,7 @@ export function summaryOf(
             onPhantomScenario: observations.onPhantomScenario,
             onSuspenseScenario: observations.onSuspenseScenario,
           },
-          rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
+          rawByBehaviouralQualityCheck: observations.rawByBehaviouralQualityCheck,
         }
       : {}),
     ...(withFitnessFunctions ? { fitnessFunctions } : {}),

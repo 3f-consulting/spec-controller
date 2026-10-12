@@ -158,7 +158,7 @@ export const BEHAVIOURAL_QUALITY_CHECKS: readonly BehaviouralQualityCheck[] = QU
 );
 
 export interface BehaviouralObservationTally {
-  readonly rawByRuntimeQualityCheck: Record<BehaviouralQualityCheck, number>;
+  readonly rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number>;
   readonly total: number;
   readonly onScenario: number;
   readonly onPhantomScenario: number;
@@ -166,7 +166,7 @@ export interface BehaviouralObservationTally {
 }
 
 export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservationTally {
-  const rawByRuntimeQualityCheck: Record<BehaviouralQualityCheck, number> = {
+  const rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number> = {
     unit: 0,
     integration: 0,
     e2e: 0,
@@ -179,16 +179,16 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
   for (const row of ledger.scenarioReconciliations) {
     for (const observation of row.evidenceObservations) {
       if (observation.qualityCheck === "fitness") continue;
-      rawByRuntimeQualityCheck[observation.qualityCheck]++;
+      rawByBehaviouralQualityCheck[observation.qualityCheck]++;
       if (row.kind === "phantom-scenario") onPhantomScenario++;
       else if (row.kind === "suspense-scenario") onSuspenseScenario++;
       else onScenario++;
     }
   }
 
-  const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
+  const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByBehaviouralQualityCheck[qc], 0);
 
-  return { rawByRuntimeQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
+  return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
 }
 
 export interface FitnessFunctionTally {

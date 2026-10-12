@@ -38,11 +38,12 @@ function assembled(): EvidenceReconciliation {
 
 describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary and the balancing identity holds on the persisted file", () => {
   it("carries the raw per-quality-check totals of the observations it was handed on its summary", () => {
-    expect(assembled().summary.rawByRuntimeQualityCheck).toStrictEqual({
+    expect(assembled().summary.rawByBehaviouralQualityCheck).toStrictEqual({
       unit: 4,
       integration: 0,
       e2e: 0,
       performance: 0,
     });
+    expect(Object.keys(assembled().summary).filter((key) => key.startsWith("rawBy"))).toEqual(["rawByBehaviouralQualityCheck"]);
   });
 });

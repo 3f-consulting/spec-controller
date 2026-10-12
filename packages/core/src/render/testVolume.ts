@@ -4,7 +4,7 @@ import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const testVolumeSection = (report: RenderInput): string[] => {
   const volume = report.summary.testVolume;
-  const raw = report.summary.rawByRuntimeQualityCheck;
+  const raw = report.summary.rawByBehaviouralQualityCheck;
   if (!volume || !raw) return [];
   const total = volume.totalEvidenceObservations;
   const lines = [

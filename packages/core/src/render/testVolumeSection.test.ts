@@ -81,7 +81,7 @@ describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence 
   it("renders no section, and nothing in its place, for a report that read no behavioural observations", () => {
     const reconciliation = evidenceReconciliationOf([], [], [], false, true);
     expect(reconciliation.summary).not.toHaveProperty("testVolume");
-    expect(reconciliation.summary).not.toHaveProperty("rawByRuntimeQualityCheck");
+    expect(reconciliation.summary).not.toHaveProperty("rawByBehaviouralQualityCheck");
     expectNoSectionAndNothingInItsPlace(reconciliation);
   });
 });

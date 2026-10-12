@@ -20,7 +20,7 @@ exceptions:
   - outOfBalance
   - qualityCheck
   - qualityCheckReconciliations
-  - rawByRuntimeQualityCheck
+  - rawByBehaviouralQualityCheck
   - reconcilingItems
   - runningFitnessFunctionCount
   - runProvenance

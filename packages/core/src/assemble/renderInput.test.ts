@@ -137,7 +137,8 @@ describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary;
   it("carries NO evidenceObservations section — the raw totals re-home onto summary", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     expect(parsed).not.toHaveProperty("evidenceObservations");
-    expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
+    expect(parsed.summary.rawByBehaviouralQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
+    expect(Object.keys(parsed.summary).filter((key) => key.startsWith("rawBy"))).toEqual(["rawByBehaviouralQualityCheck"]);
   });
 
   it("the phantom and suspense evidence observations live on their ledger rows, not a section detail array", () => {

@@ -53,12 +53,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: the behavioural evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
     The behavioural evidence-observation counting is a FOLD the Ledger owns.
-    The raw per-quality-check totals are materialised on summary.rawByRuntimeQualityCheck, and
+    The raw per-quality-check totals are materialised on summary.rawByBehaviouralQualityCheck, and
     the persisted JSON carries NO separate evidence-observations section: every evidence observation is
     already posted on the ledger, a phantom evidence observation on its phantom-scenario row and an uncited one
     on the suspense-scenario row, each with its file locator. The markdown's Test volume cut and
     its identity line read the same summary folds. The balancing identity Σ
-    rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
+    rawByBehaviouralQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
     construction on the persisted file. Its unit tests hold the assembled totals in isolation.
 
     @unit @SCN-RMD-003
@@ -86,7 +86,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     reads them too. The test-volume identity line is a reconciliation fact (a balance check,
     Σ = Σ) that belongs in the model, not asserted by the renderer:
 
-      Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
+      Test volume — Σ rawByBehaviouralQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
     The fitness-function census carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the
     cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
