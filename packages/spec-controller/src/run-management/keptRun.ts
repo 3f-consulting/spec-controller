@@ -11,7 +11,7 @@ export const RUN_MANIFEST = "run.yaml";
 
 const RUN_MANIFEST_SCHEMA_VERSION = 2;
 
-type RunMode = "balance" | "analyse" | "migrate";
+type RunMode = "balance";
 
 export interface RunManifestMeta {
   readonly sourceSha: string;

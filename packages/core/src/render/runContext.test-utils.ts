@@ -1,6 +1,6 @@
 import type { RunContext } from "../provenance/provenance.js";
 
-export const adopterReportCtx: RunContext = {
+export const sampleReportCtx: RunContext = {
   target: "an-adopters-repository",
   inputs: {
     features: "../an-adopters-repository/features",

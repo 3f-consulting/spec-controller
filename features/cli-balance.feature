@@ -3,8 +3,7 @@ Feature: spec-controller balance runs standalone
 
   The `spec-controller balance` command reconciles a target's scenarios
   against its observed evidence and emits the Evidence Reconciliation. It runs on
-  the public core plus the application layer alone — no private engine, no
-  `analyse` / `migrate` — so the open-source tool is complete and useful on its
+  the public core plus the application layer alone, so the open-source tool is complete and useful on its
   own: a developer installs `spec-controller`, points `balance` at their features
   and test reports, and gets the reconciliation.
 
@@ -233,8 +232,8 @@ Feature: spec-controller balance runs standalone
     tolerantly by design is a workflow's YAML: a workflow the reader cannot walk contributes no
     steps, and the run reconciles without them.
 
-    The rule reaches --render-from-json too, the one flag the guard lane never
-    reached: it returns BEFORE the input guards run, so it honoured neither — a missing path
+    The rule reaches --render-from-json too, the one flag the input guards never
+    reached: it returns BEFORE they run, so it honoured neither — a missing path
     crashed to ENOENT and a malformed file to SyntaxError, both landing on exit 1. Its
     missing-path case was a live violation of the usage-error principle, which the
     CLI enforced for the five evidence flags and not for this one. MISSING and UNPARSEABLE

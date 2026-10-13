@@ -37,12 +37,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The document IS the Evidence Reconciliation, so a root
     key named for the Evidence Reconciliation would be the layer naming itself inside itself — and the grid
-    it names is, by canon, the LEDGER. Root then reads as chain step 6 literally: "The summary
+    it names is the LEDGER. Root then reads as chain step 6 literally: "The summary
     has the totals and the ledger the detail."
 
     The key is not `scenarios` — a phantom / suspense is not a scenario — and it is `ledger`.
 
-    Code identifiers and JSON keys are ONE vocabulary (manifesto line 3), so the model's
+    Code identifiers and JSON keys are ONE vocabulary, so the model's
     `interface Ledger { scenarioReconciliations }` and the JSON `"ledger": { "scenarioReconciliations":
     [...] }` agree as objects — a Ledger that holds entries cannot serialise as a bare array
     of rows.
@@ -66,7 +66,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the fitness-function census is summary counts, no standalone section
 
-    The fitness-function-axis manifesto on the JSON surface. The fitness-function census is
+    The fitness-function census is
     summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
     with the behavioural testVolume counter. There is no standalone member-list section, because
     each check's detail lives on the rows: a cited check on its scenario's own row, an

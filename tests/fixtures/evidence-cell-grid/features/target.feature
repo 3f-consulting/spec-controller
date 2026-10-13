@@ -24,12 +24,12 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   A FIFTH SCENARIO ONCE STOOD HERE — SCN-CEL-005, two bare checks on one row, both wired and
   discharged, pinning the `L2/2` left-count path. It carried no corpus obligation of its own (it
   existed only to plant a `specController.checkRegistry` collision) and went with the rest of the
-  registry-route migration (3F-3395). Canon settles why it has no replacement: `double-entry-
-  manifesto.md`'s Quality Check definition makes the check ITSELF the scenario, and several checks
+  registry route. It has no replacement because a Quality Check is the check ITSELF as a
+  scenario, and several checks
   of one kind are several SCENARIOS, told apart by `@SCN` —
   one scenario is one fitness function BY CONSTRUCTION. A row naming two checks has no
   expression in the target model this fixture exercises, so there is nothing left to plant it
-  with. The `L2`/`L3` rendering branch this scenario was the only producer of went too (3F-3411):
+  with. The `L2`/`L3` rendering branch this scenario was the only producer of went too:
   the Fitness cell's left is the single `F`.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry

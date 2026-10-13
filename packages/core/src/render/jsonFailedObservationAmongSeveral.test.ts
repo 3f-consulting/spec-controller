@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-LDG-036] a failing test in a file that sorts after a passing one citing the same scenario reads failing", () => {

@@ -7,9 +7,7 @@ Two packages go out together: `@3f-consulting/spec-controller-core`, the pure en
 **Nobody cuts a release.** Every merge to `main` that changes a published package publishes both
 packages in that merge's own run, at the next counter version, and then tags what it published.
 There is no credential stored anywhere, no release PR, nothing to promote afterwards and nothing to
-rotate. The portfolio rule is `the maintainers' private notes` → *Continuous delivery: every
-package-changing merge publishes, and the version is a counter*; this file is what is true of *these
-two packages*.
+rotate.
 
 **Read *When a publish returns `E401`* before your first release.** The trap in it is an
 authentication error whose cause is not authentication.
@@ -214,23 +212,22 @@ re-resolves in-range transitive packages as well; the same command under this re
 reproduces the same churn, and no Dependabot key turns it off. So `dependabot-auto-merge.yml` reads
 what the PR changes before it arms anything, and refuses unless the changed files are exactly the
 root `package.json` and `pnpm-lock.yaml`, the root pin differs from the merge base's, the new pin is
-an exact version, and nothing else in the root `package.json` changes (operator ruling, 2026-09-19).
+an exact version, and nothing else in the root `package.json` changes.
 A refused PR fails that job with the reason and is left disarmed; `ci` still gates the churn on a PR
 that passes.
 
 **Dependabot checks once a day, every day, weekends included, so no human act is needed in the
-pin loop (operator, 2026-09-19).** The schedule is `interval: cron` with
+pin loop.** The schedule is `interval: cron` with
 `cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven days. `daily`, which this replaced, runs
 Monday to Friday only, so a release published on a Saturday waited for Monday or for a person. Once a
 day is as often as GitHub allows: its config check rejects any `cronjob` that fires more often than
-every 24 hours. A pin therefore lags a publish by up to 24 hours. The operator accepted that, because
+every 24 hours. A pin therefore lags a publish by up to 24 hours. That lag is accepted because
 only step 3 of an expand/contract waits on the pin, and an adopter's own Dependabot lags the same way.
 A merge to `main` that changes `.github/dependabot.yml` also starts a run at once. *Check for
 updates* under Insights → Dependency graph → Dependabot runs one early, but the loop never needs it,
 and neither is a hand move of the pin.
 
-**No day's wait — our own two packages are exempt from both age gates, by name (operator,
-2026-09-19).** `allow:` limits the bot to spec-controller, so a cooldown only delays our own
+**No day's wait — our own two packages are exempt from both age gates, by name.** `allow:` limits the bot to spec-controller, so a cooldown only delays our own
 releases, and each was judged by this repository's `ci` before `release.yml` published it. So
 `.github/dependabot.yml` exempts spec-controller from Dependabot's cooldown with `cooldown: exclude:`
 — leaving `cooldown:` out would not do it, because GitHub then applies a default of three days. And
@@ -347,10 +344,7 @@ started by hand from the branch, before it merged. It is gone, along with `relea
 manual trigger, and **nothing publishes except a merge to `main`.**
 
 A change like that lands as a **parallel change** — *expand–migrate–contract* — over two merges and
-a bot PR. Canon: `the maintainers' private notes` → *Such a repository changes
-its own model in expand/contract steps*; `the maintainers' private notes` → *Release —
-don't*, first bullet; `the maintainers' private notes` → *Nothing publishes except a merge to
-`main`*.
+a bot PR.
 
 1. **Expand.** The reader accepts both the old shape and the new one. That merge touches a package,
    so it publishes.

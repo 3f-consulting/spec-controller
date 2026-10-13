@@ -90,12 +90,12 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-017
     Scenario: The report states that the corpus holds more scenarios than accounts, and names the scenarios sharing each code
 
-  Rule: an @SCN is read by canon's one grammar in every role — a feature part of two to five characters, and a number of any width
+  Rule: an @SCN is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 
-    Evidence-manifesto §9A fixes a scenario id as SCN-<FFF>-<NNN>, the feature part two to five
+    A scenario id is SCN-<FFF>-<NNN>, the feature part two to five
     characters and the number any width. Every place the tool reads an id — a scenario's tag, a
     Vitest title's citation, a Cucumber scenario's tag, a CI step's id and a prose mention — takes
-    that one grammar, so an id canon says is not an @SCN is not one anywhere, and no account,
+    that one grammar, so an id that grammar says is not an @SCN is not one anywhere, and no account,
     citation or finding rests on it. Each scenario holds the bound from both sides in one
     target: a feature part of two and of five characters is read, one of one and of six is not.
 

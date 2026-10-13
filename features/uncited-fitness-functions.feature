@@ -32,7 +32,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   `pnpm mutation` is still absent, and that is neither an oversight nor an exemption: it is a
   self-measuring threshold check — the pipeline measuring its own test strength — which belongs
-  on an axis this tool has not built yet (the sibling of an adopter's repository's @ci-run-time). Ruling
+  on an axis this tool has not built yet (the sibling of @ci-run-time). Ruling
   it "out of scope" is the dodge that feature file was written to reject.
 
   THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS A ZERO OVER A POPULATED SET. A zero over an empty
@@ -319,7 +319,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     fitness function's enforcement is already taken through, so two readers cannot come to disagree
     about what pnpm test invokes. The script's body is then read for the runner as a whole token,
     and a script invoking another script is followed to a depth of three under a visited set: a
-    deeper chain is a shape no pipeline in the portfolio has, and an unbounded walk over a
+    deeper chain is a shape no pipeline measured has, and an unbounded walk over a
     manifest the consumer wrote is an input this tool does not control.
 
     THIS RECOGNITION IS BOTH THE READER AND THE VERDICT. A step recognised as a runner is NAMED
@@ -368,8 +368,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     WHAT TELLS THEM APART IS WHO READS THE RUNNER'S OUTPUT. A suite step's output is read by
     nobody in the step: the reconciler reads its report later. A gate's output is the next
     command's input. So a runner is recognised only in the last stage of a pipeline, in the step's
-    own command and in any manifest script it follows. Measured over every pipeline in the
-    portfolio, no suite step pipes its runner onward, and both gates of this shape do.
+    own command and in any manifest script it follows. Measured over every pipeline
+    surveyed, no suite step pipes its runner onward, and both gates of this shape do.
 
     CUTTING A COMMAND TO ITS LAST STAGE CAN ONLY REMOVE A RUNNER MATCH, NEVER ADD ONE, so every
     misreading lands on the side a consumer can see: a step reported as a check is one line of
@@ -407,7 +407,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     corpus. A pair differing in one place is what lets the difference in their reports be
     attributed to that place, and a control is only one if it is otherwise identical.
 
-    WHAT THIS DOES NOT ANSWER, kept out on purpose. A key that is not one of the four canon tiers
+    WHAT THIS DOES NOT ANSWER, kept out on purpose. A key that is not one of the four tiers
     is its own scenario. A target carrying no runner block at all is another,
     and its report is untouched here — this section speaks only for a target that
     has said something. A tier NAMED whose runner no step runs stays the open question the
@@ -416,10 +416,10 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     @unit @SCN-USG-016
     Scenario: a null runner reports the tier as having none, and an absent key reports it as unnamed
 
-  Rule: the runner block is keyed by the four canon tiers and no other
+  Rule: the runner block is keyed by the four tiers and no other
 
     A CLOSED SET WITH NOTHING FORCING ITS CLOSURE IS A HOLE. The runner block is keyed by tier
-    and the tiers are canon — unit, integration, e2e, performance — which is exactly what makes
+    and the tiers are four — unit, integration, e2e, performance — which is exactly what makes
     the inversion possible: the small thing is named because it is enumerable, and the open one
     is inferred. Every sibling scenario in this section exercises one of the four; not one of
     them can say what happens to a fifth, and a reader honouring any key at all passes all of

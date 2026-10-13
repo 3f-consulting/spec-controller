@@ -8,7 +8,7 @@ export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
   [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: (fault) =>
     `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
     `${fault.evidence === "evidence-obligation" ? "evidence obligation (debit)" : "evidence observation"} ` +
-    `side ${fault.presenceForOutcome} in canon, but it was ${fault.presenceFound}.`,
+    `side ${fault.presenceForOutcome} for that outcome, but it was ${fault.presenceFound}.`,
 };
 
 export enum CoreMessage {
@@ -368,7 +368,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.RunnerTierNamesNone]: (tier) => `${tier} — no runner: the target names none.`,
   [CoreMessage.RunnerTierUnnamed]: (tier) => `${tier} — unnamed: the target has not said.`,
   [CoreMessage.RunnerKeyNotATier]: (key) =>
-    `${key} — not a tier: the runner block is keyed by the four canon tiers, and this key excludes nothing.`,
+    `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerHeading]: "### The reconciler",
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",

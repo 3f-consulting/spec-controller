@@ -51,7 +51,7 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
     When it reconciles
     Then its obligation has no code for an observation to link to
 
-  # duplicate-scn-code (3F-3609): two scenarios carrying one code are ONE account, and every
+  # duplicate-scn-code: two scenarios carrying one code are ONE account, and every
   # quality check on it reads duplicate-scn-code. Nothing cites it; the outcome needs no evidence observation.
   @unit @SCN-TOC-007
   Scenario: duplicate-scn-code — the first of two scenarios carrying one code

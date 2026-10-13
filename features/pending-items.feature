@@ -1,7 +1,7 @@
 @PND
 Feature: A pending evidence obligation raises a Pending Item
 
-  A `<quality-check>pending` tag (evidence-manifesto §11B) raises an evidence
+  A `<quality-check>pending` tag raises an evidence
   obligation that is deliberately deferred to a later slice. The parse
   recognises the tag and derives a pending obligation; on the ledger, a pending
   obligation raises the one-sided Pending Item the Rules below hold.

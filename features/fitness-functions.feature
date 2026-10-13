@@ -61,7 +61,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   A BAR IS RAISED AS DELIBERATE PROCESS OPTIMISATION AND IS NEVER LOWERED BECAUSE A PUSH WENT RED.
   Raising one because the suite has got stronger and should be held higher is a change of its own,
   in its own commit, with its own reason. Lowering one because a PR went red is the gate certifying
-  the regression it exists to catch, and it is banned. Canon's rule is that a bar rises or holds and
+  the regression it exists to catch, and it is banned. The rule is that a bar rises or holds and
   never re-baselines down; a fixed bar obeys it by standing still, which is why it cannot go stale
   in the direction that matters.
 

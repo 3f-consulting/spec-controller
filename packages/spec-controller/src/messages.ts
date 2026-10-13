@@ -416,7 +416,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
   [AppMessage.NoFeaturePartGiven]: () =>
     "no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code.",
-  [AppMessage.NotAFeaturePart]: (part) => `'${part}' is not a feature part in canon's form: two to five characters, each A-Z or 0-9.`,
+  [AppMessage.NotAFeaturePart]: (part) => `'${part}' is not a feature part: two to five characters, each A-Z or 0-9.`,
   [AppMessage.DefaultCorpusFeatureFile]: () => "a feature file of the corpus read by default",
   [AppMessage.FlaggedCorpusFeatureFile]: () => "a feature file of the --features corpus",
   [AppMessage.DefaultCiWorkflow]: () => "a CI workflow read by default",

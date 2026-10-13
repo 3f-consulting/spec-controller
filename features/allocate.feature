@@ -81,7 +81,7 @@ Feature: Allocate the next scenario code for a feature part
       When the author asks for the next code for ONE
       Then the answer is SCN-ONE-008, and nothing else
 
-  Rule: the code is printed alone, in canon's form, and the number never runs out
+  Rule: the code is printed alone, in the scenario-code form, and the number never runs out
 
     @SCN-ALC-008 @unit @e2e
     Scenario: The code is printed alone on stdout, zero-padded to three digits
@@ -128,7 +128,7 @@ Feature: Allocate the next scenario code for a feature part
         | ONE  | SCN-ONE-004 | it notes that a feature file's header already carries ONE  |
 
     @SCN-ALC-012 @unit @e2e
-    Scenario Outline: A request not in canon's form is refused as a usage error, never as an unknown part — <request>
+    Scenario Outline: A request not in the scenario-code form is refused as a usage error, never as an unknown part — <request>
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
       When the author asks for the next code giving <request>
       Then it is refused as a usage error, never as an unknown part, and no code is given
@@ -149,12 +149,12 @@ Feature: Allocate the next scenario code for a feature part
       Then it answers with allocate's help, naming the feature part it takes and the new-part option, and gives no code
 
       Examples:
-        | request                               |
-        | alone                                 |
-        | by its short name, alone              |
-        | after a part                          |
-        | after a part not in canon's form      |
-        | beside a flag the command does not take |
+        | request                                    |
+        | alone                                      |
+        | by its short name, alone                   |
+        | after a part                               |
+        | after a part not in the scenario-code form |
+        | beside a flag the command does not take    |
 
     @SCN-ALC-014 @unit @e2e
     Scenario Outline: A host modifier before allocate is refused, and nothing is stored — <modifiers>

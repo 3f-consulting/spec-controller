@@ -80,7 +80,7 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
     const obligationExists = profile.obligation === "Exists";
     const observationExists = profile.observation === "Exists";
 
-    it(`${outcome}: canon-correct sides construct and their presence matches the canon row`, () => {
+    it(`${outcome}: the sides its definition requires construct, and their presence matches that definition`, () => {
       const reconciliation = makeQualityCheckReconciliation({
         outcome,
         ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),

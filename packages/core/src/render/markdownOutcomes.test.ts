@@ -3,10 +3,10 @@ import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
-describe("[SCN-RPT-020] the markdown renders each outcome's canon description, not the bare handle", () => {
+describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the bare handle", () => {
   let rich: Ledger;
   beforeEach(() => {
     rich = reconcile(
@@ -24,7 +24,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     );
   });
 
-  it("renders every summary ↳ decomposition row with the canon description, and no bare handle", () => {
+  it("renders every summary ↳ decomposition row with the outcome's sentence, and no bare handle", () => {
     const md = renderMarkdown(__er(rich), ctx);
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
@@ -48,14 +48,14 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     }
   });
 
-  it("renders the fitness table's Outcome column with the canon description", () => {
+  it("renders the fitness table's Outcome column with the outcome's sentence", () => {
     const md = renderMarkdown(__er(rich), ctx);
     expect(md).toContain(`| SCN-A | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 });
 
-describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome text", () => {
-  const CANON_OUTCOME_TEXT = [
+describe("[SCN-RPT-025] every outcome glosses as its sentence, verbatim", () => {
+  const OUTCOME_SENTENCES = [
     ["satisfied", "Evidence Observation satisfies its Evidence Obligation"],
     ["missing", "Evidence Observation is missing"],
     ["failing", "Evidence Observation is failing"],
@@ -68,14 +68,14 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
     ["broken", "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)"],
     ["both-missing", "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"],
   ] as const satisfies readonly (readonly [Outcome, string])[];
-  // A new outcome fails the typecheck here until its canon text has a row.
-  const everyOutcomeHasARow: [Exclude<Outcome, (typeof CANON_OUTCOME_TEXT)[number][0]>] extends [never] ? true : never = true;
+  // A new outcome fails the typecheck here until its sentence has a row.
+  const everyOutcomeHasARow: [Exclude<Outcome, (typeof OUTCOME_SENTENCES)[number][0]>] extends [never] ? true : never = true;
   void everyOutcomeHasARow;
 
-  it.each(CANON_OUTCOME_TEXT)(
-    'the "%s" outcome glosses as the manifesto canon text',
-    (handle, canon) => {
-      expect(OUTCOME_DESCRIPTION[handle]).toBe(canon);
+  it.each(OUTCOME_SENTENCES)(
+    'the "%s" outcome glosses as its sentence, verbatim',
+    (handle, sentence) => {
+      expect(OUTCOME_DESCRIPTION[handle]).toBe(sentence);
     }
   );
 });

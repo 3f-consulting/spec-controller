@@ -65,9 +65,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
     THE RETIRED SPELLING NAMED A TECHNIQUE, NOT A CHECK. Under name-match, a scenario named its
     fitness function by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
-    matched back to it by name. The bare-tags Correction (canon 2026-08-07) retired that spelling
-    when the bare check tag took over, and a check is now named by a @fitness scenario and
-    nothing else. What this Rule holds is only that the retired spelling stays
+    matched back to it by name. A check is named by a @fitness scenario and nothing else. What this Rule holds is only that the retired spelling stays
     dead on every path a reader might be tempted to re-route it through.
 
     @unit @SCN-LNT-007
@@ -190,8 +188,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
 
-    ONE @fitness SCENARIO IS ONE CHECK (canon quality-checks.md, "The tag is the Evidence
-    Obligation for a quality check"). Its quality check is fitness, exactly as unit is for a @unit
+    ONE @fitness SCENARIO IS ONE CHECK: the tag is the Evidence Obligation for a quality
+    check. Its quality check is fitness, exactly as unit is for a @unit
     scenario: the obligation is raised by THE TAG and keyed by the scenario's own @SCN, and the
     Evidence Observation is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
@@ -234,9 +232,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       WHAT IT REPLACES WAS AN ASYMMETRY RATHER THAN A POLICY. While a manifest entry named the
       check, a scenario no entry named raised NOTHING and the report said so in a census line,
       beside a degenerate both-missing row; an entry with no scenario raised a debit. One side of
-      the same disagreement on the books and the other in prose. Under canon both are rows
-      (quality-checks.md, "Every obligation and every observation is a reconciliation row, for
-      every quality check").
+      the same disagreement on the books and the other in prose. Both are rows: every
+      obligation and every observation is a reconciliation row, for every quality check.
 
       AND THE CENSUS LINE GOES WITH IT. A missing obligation says WHO on the row itself, under the
       scenario's own @SCN, which is where a reader already looks for it; a second sentence
@@ -245,7 +242,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a check that did not run is broken evidence rather than an absent one
 
-    `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It means a proof that never ran:
+    `broken` IS THE WORD FOR IT. It means a proof that never ran:
     it posts to the suspense row carrying its where-to-fix and
     its what-broke and NO Evidence Observation, so the Evidence Obligation it cites reconciles
     `missing` by absence, and it stamps the run unsound. The verdict is the point rather than a side

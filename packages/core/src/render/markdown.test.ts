@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { OUTCOME_DESCRIPTION, type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 let balance: Ledger;

@@ -4,7 +4,7 @@ import { OUTCOME_DESCRIPTION, type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {

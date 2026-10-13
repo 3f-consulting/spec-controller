@@ -9,10 +9,10 @@ Feature: a corpus whose only fitness evidence observation is one satisfied citat
   over the real source → satisfied → the run is BALANCED. There is NO other evidence observation shape — no
   broken, no uncited, no no-evidence-obligation check — so nothing else can mint the suspense row.
 
-  WHAT THAT ISOLATION BUYS (@SCN-LDG-025, 3F-1851): summary.outOfBalance is 0 and AGREES with the
+  WHAT THAT ISOLATION BUYS (@SCN-LDG-025): summary.outOfBalance is 0 and AGREES with the
   balanced verdict. Under the REJECTED post-to-suspense treatment this corpus mints a spurious
   out-of-balance suspense row — outOfBalance 1 while isBalanced stays true, a failing run whose
-  headline reads as a pass (the 3F-1703 fault). Every other fitness fixture mints a suspense row for
+  headline reads as a pass. Every other fitness fixture mints a suspense row for
   some other reason, so this is the only corpus where that disagreement is falsifiable.
 
   Rule: one stepless scenario carries a wired-and-green check

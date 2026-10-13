@@ -5,7 +5,7 @@ import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
@@ -70,7 +70,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it.each([
     ["[SCN-RPT-018] renders both cells for a scenario naming two behavioural tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
-    ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
+    ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation, no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
   ])("%s", (_title, row) => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     expect(md).toContain(row);

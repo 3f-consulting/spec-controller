@@ -3,15 +3,14 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
 
   THE MUTANT NOBODY CAN KILL. Stryker mutates every string literal in the domain, so the two
   invariant messages a Quality Check Reconciliation throws, when a side's presence differs from
-  what canon gives its outcome, carry sixteen mutants between them —
+  what its outcome requires, carry sixteen mutants between them —
   the template chunks emptied, the `"Exists"` / `"None"` words emptied, and the ternaries that pick
   between them flipped. Every one survives, and the test that would kill them is a test asserting
   wording. That test must not be written: prose is the one thing in this tree allowed to be
   rewritten without a ticket, and a suite that pins it turns every copy-edit red. So the survivors
   are not a gap in the suite — they are the suite being asked a question it must refuse to answer.
 
-  THE CURE IS TO MOVE THE QUESTION, NOT TO ANSWER IT (portfolio-endorsed 2026-08-26, and an adopter's repository
-  does the same for its state-model loader). A fault gets a CODE at the throw site and
+  THE CURE IS TO MOVE THE QUESTION, NOT TO ANSWER IT. A fault gets a CODE at the throw site and
   carries its parameters as fields; the prose that renders it moves to a catalogue held as data,
   and the catalogue is excluded from the mutate glob. What remains on the mutated surface is the
   logic — which fault, and what its parameters are — and that logic is exactly what the suite can

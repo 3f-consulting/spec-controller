@@ -1,10 +1,10 @@
 # spec-controller's ubiquitous language
 
-The words spec-controller's code, scenarios, report and help use, and what each means. A review checks spec-controller against this file. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from the methodology**, which are named here and defined in the 3F canon.
+The words spec-controller's code, scenarios, report and help use, and what each means. A review checks spec-controller against this file. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from the methodology**, which are named here and used as the methodology spec-controller implements defines them.
 
 Each definition below restates what spec-controller already says in [`how_to_use.md`](./how_to_use.md), its feature files or its report; the evidence model's definitions also state the reconciliation model those follow. If the two ever disagree, the behaviour wins and this file is corrected.
 
-**One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. A machine key is language you read as much as prose is; it gets no private dialect. **One term, three forms — the form follows the surface, the word never changes, and a canon term is `backticked` wherever it appears.** Prose spells it out (`static check`, `phantom scenario`); a handle hyphenates it (`static-check`, `phantom-scenario`, `quality-check`, `both-missing`); a code identifier camel-cases it (`staticCheck`). A handle is not a licence to abbreviate: `check` is not a short `static-check`, it is a different word.
+**One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. A machine key is language you read as much as prose is; it gets no private dialect. **One term, three forms — the form follows the surface, the word never changes, and a term from this file is `backticked` wherever it appears.** Prose spells it out (`static check`, `phantom scenario`); a handle hyphenates it (`static-check`, `phantom-scenario`, `quality-check`, `both-missing`); a code identifier camel-cases it (`staticCheck`). A handle is not a licence to abbreviate: `check` is not a short `static-check`, it is a different word.
 
 An evidence-model term's **Double-check** entry names the words seen standing in for it. A review or a vocabulary sweep checks each use of those words by its sense: renamed to the term where it means the term, kept where it means something else. It is never a gate and never closed; a newly found synonym is added to it.
 
@@ -76,7 +76,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | `Scenario Reconciliation` | A row — the evidence reconciled for one `scenario`, `quality-check` by `quality-check`; carries a **`verdict`** and its **`reconciling items`**. Each is *associated with* a `scenario` of one kind: a **`scenario`** (real), a **`phantom scenario`** (cited but no feature defines it), or a **`suspense scenario`** (cited by nothing). The collection is the **`Scenario Reconciliations`** — *never* `scenarios`, since a *`scenario`* is only the real thing. | Account — the record for one thing that carries a balance | account; scenario balance; scenarios (for the collection) |
 | `Verdict` | The **two-valued** roll-up of a `Scenario Reconciliation`: *balanced* (every `quality-check` *satisfied*) or *out-of-balance* (any `reconciling item`) — never a third value. Phantom / suspense reconciliations are always out-of-balance; a `scenario` with neither `evidence obligation` nor `evidence observation` is out-of-balance via `both-missing` (one whose tests run untagged is out-of-balance via `no-evidence-obligation`), never a separate "empty" `verdict`. A **`Pending Item`** never affects the `verdict` — it is not a `reconciling item`. | Balanced / out of balance — an account whose two sides agree / don't | |
 | `Reconciling item` | A `Quality Check Reconciliation` whose `outcome` is an exception — in three shapes: a debit-side exception (missing / failing / `watermelon` / no-scn-code), a credit-side exception (cites-unknown-scenario / cites-no-scenario / no-evidence-obligation / broken), or **neither** — a real `scenario` with no `evidence obligation` and no `evidence observation` (both-missing). | Reconciling item — a line explaining a difference between two records | |
-| `Pending Item` | A **one-sided** `Quality Check Reconciliation` raised by a `<quality-check>pending` tag (the 3F canon's `evidence-manifesto.md` §11B) — deliberately deferred, so it raises **no `Evidence Obligation`**, so nothing reconciles. *Not* a `Reconciling Item` (not an error): it never flips the `verdict` and never fails the run — a disclosed IOU, surfaced so it can't sit owed forever. Because there is no `Evidence Obligation`, an `Evidence Observation` citing that `scenario` at a pending `quality-check` is `no-evidence-obligation` — exactly as when no `Evidence Obligation` was raised at all. | Memorandum entry / note — an item disclosed but not posted to an account | warnings (credit-side) |
+| `Pending Item` | A **one-sided** `Quality Check Reconciliation` raised by a `<quality-check>pending` tag — deliberately deferred, so it raises **no `Evidence Obligation`**, so nothing reconciles. *Not* a `Reconciling Item` (not an error): it never flips the `verdict` and never fails the run — a disclosed IOU, surfaced so it can't sit owed forever. Because there is no `Evidence Obligation`, an `Evidence Observation` citing that `scenario` at a pending `quality-check` is `no-evidence-obligation` — exactly as when no `Evidence Obligation` was raised at all. | Memorandum entry / note — an item disclosed but not posted to an account | warnings (credit-side) |
 | `Watermelon` | A passing `evidence observation` from a check that could not fail its job — its step or its job carries `continue-on-error`; the *`watermelon`* `outcome`. Green on the outside, and nothing behind it holds the build. It is read from the workflow file when no step record is supplied; with one, the step's own `outcome` answers the row, so a swallowed red reads *failing*. Neither route reads what the check examined, so a check over zero files that exits 0 is *satisfied*, not a watermelon. | | fabricated; green-but-fake |
 
 #### The whole run
@@ -140,7 +140,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | Term | Meaning |
 |---|---|
 | `specController` block | The block in a target's `package.json` holding `runners`, `notChecks` and `deferralTags`. |
-| `runners` | The declared behavioural runners, keyed by the four canon tiers and nothing else. A value is a runner's name, or `null` to say the tier has none. |
+| `runners` | The declared behavioural runners, keyed by the four tiers and nothing else. A value is a runner's name, or `null` to say the tier has none. |
 | `notChecks` | The target's list of steps that are neither runners nor checks, each written `<workflow file>:<job id>:<step name>` and matched exactly. Such a step is reported as excluded. |
 | configuration not read | A `specController` entry the run could not use: one of the wrong kind, read as absent, or a key the block does not read. Each is named on the report, and neither refuses the run. |
 | deferral tag | A tag that defers every evidence obligation on its scenario to a Pending Item. The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`, and `deferralTags` extends it. |
@@ -175,11 +175,11 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 
 ## Borrowed from the methodology
 
-Named here, defined in their home. The index of homes is `ubiquitous-language-index.md` in the 3F canon, and each term's home is named below.
+Named here, and used as the methodology defines them; [`how_to_use.md`](./how_to_use.md) describes each as spec-controller reads it.
 
-- **Quality checks** (`technical-design/quality-checks.md`):
+- **Quality checks**:
   - the tiers `@unit`, `@integration`, `@e2e`, `@performance` and `@fitness`;
   - fitness function;
   - the adoption states `new-client`, `annotated` and `conformant`;
   - runner; the reconciler; `ci-run-time`; threshold.
-- **Evidence layers and codes** (`evidence-manifesto.md`): the `@SCN-<FFF>-<NNN>` scenario ID; feature code; the `@wip` and `@<quality-check>pending` deferral scopes.
+- **Evidence layers and codes**: the `@SCN-<FFF>-<NNN>` scenario ID; feature code; the `@wip` and `@<quality-check>pending` deferral scopes.

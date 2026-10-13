@@ -146,7 +146,7 @@ it invokes and whether it is a `run:` step or a `uses:` action.
 }
 ```
 
-**`runners` is keyed by the four canon tiers and by nothing else.** A value is a runner's name or
+**`runners` is keyed by the four tiers and by nothing else.** A value is a runner's name or
 `null`, and `null` is a statement rather than a blank — *we have no runner for this tier*, which the
 report distinguishes from omitting the key, which it reads back as *you have not told us*. A key
 outside the four is reported as unrecognised, excludes nothing, and does not abort the run. **No
@@ -472,7 +472,7 @@ grows past them (`999` is followed by `1000`).
   ` in <commit>` when only history carries it; `highest seen: none` for a first code; and, when
   history is short, `history: not a git repository — none read` or `history: shallow clone — history
   before <commit> unread`, each followed by what that risks.
-- **Exit codes:** `0` when it answers; `2` for a usage error (no part, a part not in canon's form,
+- **Exit codes:** `0` when it answers; `2` for a usage error (no part, a part not in the scenario-code form,
   a second part, a flag it does not take, or a host modifier such as `--store` before it) or an
   unknown part. The message says which of the two it was, and an unknown part's refusal lists the
   parts the feature files carry. It never refuses because history is short. `--help` or `-h`
@@ -516,4 +516,4 @@ packages carry codes of their own.
 
 ## What's not in this tool
 
-`spec-controller balance` is the reconciliation half of the product. The `analyse` and `migrate` capabilities — retrofitting Gherkin scenarios onto an existing test suite — are a separate, closed offering built on the same reconciliation core; they are not part of this package.
+`spec-controller balance` keeps a reconciled codebase reconciled. Getting a codebase with no scenarios to that point is not part of this package.

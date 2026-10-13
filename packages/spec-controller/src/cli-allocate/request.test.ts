@@ -9,12 +9,12 @@ function usageErrorOf(argv: readonly string[], registry: CliRegistry = cliRegist
   return read.usageError;
 }
 
-describe("[SCN-ALC-012] a request not in canon's form is refused as a usage error, never as an unknown part", () => {
+describe("[SCN-ALC-012] a request not in the scenario-code form is refused as a usage error, never as an unknown part", () => {
   it.each([
     ["no part", [], /no feature part was given/],
-    ["a lower-case part", ["fit"], /'fit' is not a feature part in canon's form/],
-    ["a part one character long", ["F"], /'F' is not a feature part in canon's form/],
-    ["a part longer than five", ["TOOLONG"], /'TOOLONG' is not a feature part in canon's form/],
+    ["a lower-case part", ["fit"], /'fit' is not a feature part: two to five characters/],
+    ["a part one character long", ["F"], /'F' is not a feature part: two to five characters/],
+    ["a part longer than five", ["TOOLONG"], /'TOOLONG' is not a feature part: two to five characters/],
     ["two parts", ["ONE", "TWO"], /'TWO'/],
     ["a flag the command does not take", ["ONE", "--bogus"], /--bogus/],
   ])("refuses %s as a usage error", (_name, argv, why) => {

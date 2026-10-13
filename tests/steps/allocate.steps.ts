@@ -284,7 +284,7 @@ const HELP_REQUEST: Record<string, readonly string[]> = {
   alone: ["--help"],
   "by its short name, alone": ["-h"],
   "after a part": ["ONE", "--help"],
-  "after a part not in canon's form": ["fit", "--help"],
+  "after a part not in the scenario-code form": ["fit", "--help"],
   "beside a flag the command does not take": ["--bogus", "--help"],
 };
 

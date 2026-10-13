@@ -25,7 +25,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
   Rule: a kept run stamps run.yaml with the decided fields
 
     The run dir carries a run.yaml manifest: schema_version (2), run_id, target, source_sha, tool_sha, tool_version,
-    mode (balance / analyse / migrate), date, purpose (a list of grouping slugs — empty by
+    mode (balance), date, purpose (a list of grouping slugs — empty by
     default, an ad-hoc run, curated by hand afterward), links, and the artefact filenames.
 
     @unit @SCN-RMG-002
@@ -50,8 +50,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     parses --store (and an optional --run-id) BEFORE dispatch; when --store is present it
     wraps the command via the kept-run scaffold — routing the command's outputs into
     <root>/<target>/<run-id>/ and stamping run.yaml — and hands the command its own clean
-    args, unchanged. Storage is orthogonal to the command (it wraps balance now, analyse /
-    migrate later with no change), so it is a cross-cutting HOST option — not a peer command,
+    args, unchanged. Storage is orthogonal to the command (it wraps any command with no change), so it is a cross-cutting HOST option — not a peer command,
     and never a flag inside balance, which stays emit-only. --store is required to store (no
     default: a default would write inside the repo, the committed-report leak); --run-id
     defaults to a timestamp. Without --store the host dispatches the command directly and its

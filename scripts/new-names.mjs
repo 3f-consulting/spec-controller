@@ -1,4 +1,4 @@
-// Lists the names a change introduces, for review to read against canon's words. It never fails.
+// Lists the names a change introduces, for review to read against the product's terms. It never fails.
 // Not @aburi/cli: Aburi models no fields, properties or parameters, and reports a renamed symbol
 // as moved rather than as a new name, so listing new fields needed this AST read regardless.
 import { execFileSync } from "node:child_process";
@@ -109,7 +109,7 @@ const report = () => {
     [
       "## New names this change introduces",
       "",
-      `Compared with \`${base}\`. Read each against canon's Glossary (work-item-manifesto.md, Glossary) and this product's terms and their Double-check lines (doc/ubiquitous-language.md).`,
+      `Compared with \`${base}\`. Read each against this product's terms and their Double-check lines (doc/ubiquitous-language.md).`,
       "",
       ...section("Types, functions, fields and other declared names", added),
       ...section("New files", files),

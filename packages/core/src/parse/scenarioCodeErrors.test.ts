@@ -23,13 +23,13 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
     expect(errors[0]!.message).not.toContain("SCN-TWO-001");
   });
 
-  it("names the one file carrying the named code, as data and in the message (3F-3666)", () => {
+  it("names the one file carrying the named code, as data and in the message", () => {
     const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
     expect(errors[0]).toMatchObject({ namedFeatureCode: "ONE", namedFeatureFiles: ["one.feature"] });
     expect(errors[0]!.message).toContain("one.feature");
   });
 
-  it("names every file carrying the named code when two carry it (3F-3666)", () => {
+  it("names every file carrying the named code when two carry it", () => {
     const errors = scenarioCodeErrorsOf([
       one,
       file("one-b", "ONE", ["SCN-ONE-003"]),

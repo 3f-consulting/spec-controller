@@ -132,9 +132,9 @@ Feature: Ledger over obligation-vs-observation evidence
     performance), NOT from the input source that produced it. Cucumber is an
     orchestrator ACROSS levels — a scenario names its tier by tag and cucumber runs
     whichever — so an e2e scenario proven via cucumber must yield an e2e observation,
-    discharging its e2e obligation and reconciling balanced. Before the fix the cucumber
-    source was hardcoded to integration, so an e2e-via-cucumber scenario false-red:
-    e2e missing PLUS integration no-evidence-obligation (an adopter's repository 12-scenario false-red). The
+    discharging its e2e obligation and reconciling balanced. Were the cucumber
+    source fixed at integration, an e2e-via-cucumber scenario would false-red:
+    e2e missing PLUS integration no-evidence-obligation. The
     source level the caller passes survives only as the fallback for an untagged scenario;
     the reconciler's existing (scnId, level) matching does the rest, untouched.
 
@@ -225,7 +225,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
 
     @unit @SCN-LDG-030
-    Scenario: every outcome's sides match canon, a divergent pair is unconstructible, and the emitted report agrees
+    Scenario: every outcome's sides match its definition, a divergent pair is unconstructible, and the emitted report agrees
 
   Rule: a vitest citation is the bracketed token — an SCN-shaped token in prose is prose
 

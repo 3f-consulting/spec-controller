@@ -1,5 +1,5 @@
 {
-  // Cucumber step files and their support are test code; canon's row covers what ships.
+  // Cucumber step files and their support are test code; knip checks what ships.
   "ignore": ["tests/**"],
   // Loaded through the requireModule string in cucumber.js, which knip's Cucumber plugin does not read.
   "ignoreDependencies": ["tsx"]

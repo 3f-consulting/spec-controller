@@ -2,7 +2,7 @@
 Feature: a fixture target whose evidence still cites a scenario whose feature file is gone
 
   A FIXTURE feature (NOT under features/) for @SCN-RPT-030 — the stranded-citation shape a
-  deletion leaves (3F-3297). The target names two unit-level scenarios: one proven, one with
+  deletion leaves. The target names two unit-level scenarios: one proven, one with
   no evidence at all, so exactly one scenario row is out of balance. Its vitest.json also
   cites @SCN-BFP-099, which no feature file names — standing in for a feature file deleted
   while its tests still cite it — so the run carries one phantom-scenario row, which is

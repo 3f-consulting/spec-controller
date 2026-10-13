@@ -85,7 +85,7 @@ Feature: The report renders the ledger as sectioned facts
     balance.scenarioReconciliations[].qualityCheckReconciliations[] — markdown-only (project
     design §3), proven in isolation by Vitest.
 
-    The subject row is the SCENARIO RECONCILIATION — the manifesto's collection, all
+    The subject row is the SCENARIO RECONCILIATION — the Evidence Reconciliation's collection, all
     three row kinds (real, phantom, suspense) — not "Scenario", which names only the
     real thing. The table is a pure presentation of summary.scenarioReconciliations, whose
     totals count EVERY row (phantom / suspense reconciliations are
@@ -113,7 +113,7 @@ Feature: The report renders the ledger as sectioned facts
     NO CHECK COLUMN. The table once printed a "Static check" column carrying the
     characteristic the obligation was keyed by — what the check was ABOUT. One @fitness scenario
     is one check and what it is about is its scenario's title, so no report rolls a check up by a
-    word (canon: quality-checks.md, "A fitness function is its scenario"); the scenario's @SCN is
+    word — a fitness function is its scenario; the scenario's @SCN is
     the whole identity the row needs.
 
     @unit @SCN-RPT-005
@@ -199,9 +199,8 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report renders summary-first, ledger-last
 
     The report layout.
-    The report opens with "# Evidence Reconciliation" (renamed from "# Ledger", via the
-    interim "# Spec reconciliation" — the report IS the reconciliation; "Ledger" names only
-    the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
+    The report opens with "# Evidence Reconciliation" (the report IS the reconciliation; "Ledger"
+    names only the INPUT, so the reconciled OUTPUT is never titled "Ledger"), keeps
     "## Run provenance" first, then groups the derived cuts under "## Summary views"
     (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Fitness functions →
     "## Scenario Reconciliations" table to the END with its
@@ -268,8 +267,7 @@ Feature: The report renders the ledger as sectioned facts
     the pending pair is folded out of the active set — so an evidence observation citing it reconciles the same
     NO-EVIDENCE-OBLIGATION way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
-    hand-written, so a fixture cannot pin a shape the pipeline cannot emit —
-    evidence-manifesto §11A).
+    hand-written, so a fixture cannot pin a shape the pipeline cannot emit).
 
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
@@ -378,17 +376,17 @@ Feature: The report renders the ledger as sectioned facts
     this decomposition acknowledging it — the compiler refused the type-forced Record until it did.
     The ninth leaf therefore reached the table in the same commit as the outcome, by construction.
     The tenth, `duplicate-scn-code`, is the same move again: a debit-side outcome, so it
-    reads after `no-scn-code`, where canon's Outcome table puts it.
+    reads after `no-scn-code`, the other debit-side outcome.
 
     @unit @SCN-RPT-019
     Scenario: the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
 
-  Rule: the markdown renders each outcome's canon description in place of the bare handle
+  Rule: the markdown renders each outcome's sentence in place of the bare handle
 
     The outcome gloss. A reconciling-item outcome handle
     (missing, cites-no-scenario, no-evidence-obligation, both-missing, …) is meaningless to a human
-    reading the report in a CI log. So the markdown renders each outcome's full CANON
-    DESCRIPTION in place of the handle, EVERYWHERE an outcome surfaces to a reader: the
+    reading the report in a CI log. So the markdown renders each outcome's full
+    SENTENCE in place of the handle, EVERYWHERE an outcome surfaces to a reader: the
     Evidence-reconciliation summary's "↳" decomposition rows (Subject cell), the per-scenario
     reconciling-items list, and the fitness-obligation table's Outcome column. "↳ missing"
     becomes "↳ Evidence Observation is missing"; "unit ∅ missing" becomes "unit ∅ Evidence
@@ -400,24 +398,23 @@ Feature: The report renders the ledger as sectioned facts
     report model, proven in isolation by Vitest.
 
     @unit @SCN-RPT-020
-    Scenario: the markdown renders each outcome's canon description, not the bare handle
+    Scenario: the markdown renders each outcome's sentence, not the bare handle
 
-  Rule: the canon gloss for every outcome is the manifesto's Outcome text, verbatim
+  Rule: the gloss for every outcome is its sentence, verbatim
 
     The single owner of the outcome gloss text. OUTCOME_DESCRIPTION is what the renderer shows
     in place of the bare handle everywhere an outcome surfaces to a reader, so its text IS the report's
-    gloss. This pins every handle to the manifesto Outcome column, verbatim, keyed by the type-forced
-    Outcome union so a new outcome cannot ship without its canon gloss — replacing the scattered
-    gloss-text landmarks that drifted from canon and each other. (The run-integrity stamp and verdict
-    line are governed by the manifesto's Unsound entry and stay reader-agnostic — RPT-021 / RPT-022 —
-    not this Rule's concern. RPT-020 holds that the markdown renders this text in place of the
-    handle; this Rule holds that the text is canon's.)
+    gloss. This pins every handle to its outcome sentence, verbatim, keyed by the type-forced
+    Outcome union so a new outcome cannot ship without its gloss. (The run-integrity stamp and
+    verdict line are governed by the Unsound entry and stay reader-agnostic, not this Rule's
+    concern. The Rule above holds that the markdown renders this text in place of the handle;
+    this Rule holds that the text is the outcome's sentence.)
 
     @unit @SCN-RPT-025
-    Scenario Outline: the <handle> outcome glosses as the manifesto's canon text
+    Scenario Outline: the <handle> outcome glosses as its sentence, verbatim
 
       Examples:
-        | handle                 | canon text                                                                                                               |
+        | handle                 | sentence                                                                                                                 |
         | satisfied              | Evidence Observation satisfies its Evidence Obligation                                                                    |
         | missing                | Evidence Observation is missing                                                                                          |
         | failing                | Evidence Observation is failing                                                                                          |
@@ -498,7 +495,7 @@ Feature: The report renders the ledger as sectioned facts
     The census's second lie, and the reason the fold is not a no-op. A `broken` observation
     can carry a REAL `scnId` — an ambiguous cucumber step cites its @SCN and
     still never runs. The census counted it `attributed`; the reconciler posts it to suspense.
-    Canon settles it: a proof that never ran cannot discharge or fail an obligation, so it
+    A proof that never ran cannot discharge or fail an obligation, so it
     attributes to nothing.
 
     The count moves — `attributed` down, `suspense` up — and this scenario NAMES that move,

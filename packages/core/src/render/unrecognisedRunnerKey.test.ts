@@ -59,7 +59,7 @@ describe("[SCN-USG-019] a runners key that is not one of the four tiers is repor
       "- integration — unnamed: the target has not said.",
       "- e2e — unnamed: the target has not said.",
       "- performance — unnamed: the target has not said.",
-      "- lint — not a tier: the runner block is keyed by the four canon tiers, and this key excludes nothing.",
+      "- lint — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.",
       "",
     ]);
   });

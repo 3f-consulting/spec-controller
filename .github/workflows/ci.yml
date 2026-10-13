@@ -24,13 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Seconds: the portfolio's one-minute CI ceiling for a unit suite, times its 1.25 variance margin.
+      # Seconds: a one-minute CI ceiling for a unit suite, times its 1.25 variance margin.
       UNIT_SUITE_TIMEOUT_S: "75"
-      # Seconds: the portfolio's two-minute CI ceiling for a behavioural suite, times its 1.25 variance margin.
+      # Seconds: a two-minute CI ceiling for a behavioural suite, times its 1.25 variance margin.
       CUCUMBER_SUITE_TIMEOUT_S: "150"
       # A function scoring CRAP 30 or more reds; crap-typescript reds only on a score strictly above its threshold, so the bar is 30 less one float step.
       CRAP_THRESHOLD: "29.999999999999996"
-      # A file reds when its comment lines exceed this share of its non-blank lines: the portfolio's one ceiling, 15% in every product, with no ratchet.
+      # A file reds when its comment lines exceed this share of its non-blank lines: a fixed 15% ceiling, with no ratchet.
       COMMENT_SHARE_MAX: "0.15"
       # Hours: the nightly mutation sweep's 24-hour cadence plus 2 hours of margin, so one missed sweep ages its verdict out and reds the step.
       MUTATION_VERDICT_MAX_AGE_H: "26"

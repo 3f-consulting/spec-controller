@@ -5,7 +5,7 @@ Feature: Emit each output format to stdout or a caller-given path
   no storage opinion: it emits each requested format to stdout or a path the caller
   gives, via a repeatable "--format <fmt>[:<path>]" flag — like vitest/cucumber. No
   auto-archive, no target resolution; the caller decides where output lands. Extensible
-  to future formats (html, sarif); applies across all modes (balance / analyse / migrate).
+  to future formats (html, sarif); applies to every command.
 
   Dispatch splits by layer (the three-layer architecture): the renderers stay pure
   (model → string); planning the output is a PURE parse+validate of the --format grammar

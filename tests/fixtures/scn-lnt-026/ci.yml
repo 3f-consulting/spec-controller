@@ -6,7 +6,7 @@
 # NO COMMAND HERE IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than load-bearing.
 # What isolates the record's reading is that a run handed its own record is answered for its
 # CONFIGURED rows by that record, so the derivation reader does not answer them a second time
-# (3F-3360). Until the membership rule inverted, the isolation was the prefix set's accident —
+# Until the membership rule inverted, the isolation was the prefix set's accident —
 # a command that is not a script matches no prefix — and an accident is not a guarantee.
 name: fixture CI
 jobs:

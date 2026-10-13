@@ -34,12 +34,12 @@ type Malformed = readonly [request: string, argv: string[], why: (version: strin
 
 const MALFORMED_REQUEST: readonly Malformed[] = [
   ["no part", [], () => "no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code."],
-  ["the part fit, in lower case", ["fit"], () => "'fit' is not a feature part in canon's form: two to five characters, each A-Z or 0-9."],
-  ["the part F, one character long", ["F"], () => "'F' is not a feature part in canon's form: two to five characters, each A-Z or 0-9."],
+  ["the part fit, in lower case", ["fit"], () => "'fit' is not a feature part: two to five characters, each A-Z or 0-9."],
+  ["the part F, one character long", ["F"], () => "'F' is not a feature part: two to five characters, each A-Z or 0-9."],
   [
     "the part TOOLONG, seven characters long",
     ["TOOLONG"],
-    () => "'TOOLONG' is not a feature part in canon's form: two to five characters, each A-Z or 0-9.",
+    () => "'TOOLONG' is not a feature part: two to five characters, each A-Z or 0-9.",
   ],
   [
     "two parts, ONE and TWO",
@@ -65,7 +65,7 @@ const MALFORMED_REQUEST: readonly Malformed[] = [
   ],
 ];
 
-describe("[SCN-ALC-012] A request not in canon's form is refused as a usage error, never as an unknown part", () => {
+describe("[SCN-ALC-012] A request not in the scenario-code form is refused as a usage error, never as an unknown part", () => {
   it.each(MALFORMED_REQUEST)("refuses %s at the usage status, giving no code", (_request, argv, why) => {
     const answered = allocateIn(headedOneCarryingThree(), argv);
 
