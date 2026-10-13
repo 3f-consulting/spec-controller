@@ -270,6 +270,11 @@ jobs:
           if [ "$EVENT" = push ]; then base=HEAD^; else base="$(git merge-base "origin/$BASE_REF" HEAD)"; fi
           node scripts/known-violations-shrink.mjs "$base"
 
+      - name: The known boundary breaks still exist
+        id: SCN-FIT-048
+        if: always()
+        run: node scripts/known-violations-live.mjs
+
       - name: Evidence layers cross a seam
         id: SCN-FIT-027
         if: always()
