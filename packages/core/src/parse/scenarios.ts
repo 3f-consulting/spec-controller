@@ -3,6 +3,7 @@ import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/
 import { bareTerm } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import type { Scenario, EvidenceObligation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
 
 export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
@@ -33,9 +34,7 @@ export function countScnOccurrences(source: string): number {
 }
 
 export function parseUntaggedScenarios(source: string): string[] {
-  return scenariosOf(source)
-    .filter(({ tags }) => !tags.some((t) => SCN_CODE.test(t)))
-    .map(({ name }) => name);
+  return scenariosByScnCodeOf(source).untaggedScenarios;
 }
 
 export const FITNESS_AXIS_TAG = "fitness";
@@ -116,11 +115,26 @@ function scenariosOf(source: string): ScenarioWithItsTags[] {
   return scenarios;
 }
 
-export function parseTaggedScenarios(source: string): TaggedScenario[] {
-  return scenariosOf(source).flatMap(({ name, tags }) => {
+function scenariosByScnCodeOf(source: string): {
+  taggedScenarios: TaggedScenario[];
+  untaggedScenarios: string[];
+} {
+  const taggedScenarios: TaggedScenario[] = [];
+  const untaggedScenarios: string[] = [];
+  for (const { name, tags } of scenariosOf(source)) {
     const scnId = tags.find((t) => SCN_CODE.test(t));
-    return scnId === undefined ? [] : [{ scnId, tags, name }];
-  });
+    if (scnId === undefined) untaggedScenarios.push(name);
+    else taggedScenarios.push({ scnId, tags, name });
+  }
+  return { taggedScenarios, untaggedScenarios };
+}
+
+export function parseTaggedScenarios(source: string): TaggedScenario[] {
+  return scenariosByScnCodeOf(source).taggedScenarios;
+}
+
+export function parseFeatureCounts(source: string): ParsedFeatureCounts {
+  return { rawScnOccurrences: countScnOccurrences(source), ...scenariosByScnCodeOf(source) };
 }
 
 export function parseScenarios(

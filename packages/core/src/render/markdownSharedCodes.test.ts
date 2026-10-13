@@ -3,10 +3,10 @@ import { renderMarkdown } from "./markdown.js";
 import { renderJson } from "./json.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { evidenceObligations, sharedScnCodesOf } from "../census/evidenceObligations.js";
-import { countScnOccurrences, parseScenarios, parseUntaggedScenarios } from "../parse/scenarios.js";
+import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
+import { countScnOccurrences, parseFeatureCounts, parseScenarios, parseUntaggedScenarios } from "../parse/scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 
@@ -85,7 +85,7 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   const md = renderMarkdown(
     er(reconcile(scenarios, [])),
     ctx,
-    evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus))
+    evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus.map(({ feature, source }) => ({ feature, ...parseFeatureCounts(source) }))))
   );
   const lines = md.split("\n");
   const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);

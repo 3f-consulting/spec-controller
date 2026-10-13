@@ -4,7 +4,7 @@ import { renderReportFromJson, renderMarkdown } from "./markdown.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [

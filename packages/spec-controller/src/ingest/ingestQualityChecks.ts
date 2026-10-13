@@ -4,10 +4,8 @@ import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { parseJunitXml } from "./junitXml.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
-  parseScenarios,
-  countScnOccurrences,
+  parseFeatureCounts,
   parseUntaggedScenarios,
-  sharedScnCodesOf,
   untaggedScenarioId,
 } from "@3f-consulting/spec-controller-core";
 import {
@@ -17,9 +15,8 @@ import {
 } from "./gherkinValidation.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
-  evidenceObligations,
+  corpusCountsOf,
   type EvidenceObligations,
-  type UntaggedScenario,
 } from "@3f-consulting/spec-controller-core";
 import {
   parseVitestEvidenceObservations,
@@ -152,24 +149,12 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
 }
 
 export function readEvidenceObligations(features?: string): EvidenceObligations {
-  const featureFiles = balanceCorpus(features);
-  let raw = 0;
-  let scenarioCount = 0;
-  const untagged: UntaggedScenario[] = [];
-  const files: { feature: string; source: string }[] = [];
-  for (const f of featureFiles) {
-    const source = readFileSync(f.path, "utf8");
-    files.push({ feature: `${f.slug}.feature`, source });
-    raw += countScnOccurrences(source);
-    scenarioCount += parseScenarios(source).length;
-    for (const scenario of parseUntaggedScenarios(source)) {
-      untagged.push({ feature: `${f.slug}.feature`, scenario });
-    }
-  }
-  untagged.sort(
-    (a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario)
+  return corpusCountsOf(
+    balanceCorpus(features).map((f) => ({
+      feature: `${f.slug}.feature`,
+      ...parseFeatureCounts(readFileSync(f.path, "utf8")),
+    }))
   );
-  return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files));
 }
 
 function parseBehaviouralObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {

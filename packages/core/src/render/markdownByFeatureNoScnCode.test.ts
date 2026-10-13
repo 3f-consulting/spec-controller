@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import { reconcile, summaryOf, type EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { evidenceObligations, type UntaggedScenario } from "../census/evidenceObligations.js";
+import { evidenceObligations, type UntaggedScenario } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 

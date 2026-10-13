@@ -2,7 +2,7 @@ import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenar
 import type { Ledger } from "../model.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../census/evidenceObligations.js";
+import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../domain/corpusCounts.js";
 
 export type {
   ScenarioReconciliationTotals,

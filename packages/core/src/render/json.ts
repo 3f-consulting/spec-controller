@@ -1,6 +1,6 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { FeatureNames } from "./markdown.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 

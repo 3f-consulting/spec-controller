@@ -14,7 +14,7 @@ import {
   type EvidenceObligations,
   type SharedScnCode,
   type UntaggedScenario,
-} from "../census/evidenceObligations.js";
+} from "../domain/corpusCounts.js";
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import {
   isScenario,

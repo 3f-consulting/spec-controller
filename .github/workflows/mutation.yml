@@ -104,9 +104,6 @@ jobs:
           - scope: spec-controller-cli-balance
             mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts,!packages/spec-controller/src/cli-balance/**/*.test-utils.ts"
             timeout: 21
-          - scope: core-census
-            mutate: "packages/core/src/census/**/*.ts,!packages/core/src/census/**/*.test.ts,!packages/core/src/census/**/*.test-utils.ts"
-            timeout: 3
           - scope: core-parse
             mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.test-utils.ts"
             timeout: 53

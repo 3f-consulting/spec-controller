@@ -15,11 +15,15 @@ export type {
   Ledger,
 } from "./model.js";
 
-export { parseScenarios, countScnOccurrences, parseUntaggedScenarios } from "./parse/scenarios.js";
+export {
+  parseScenarios,
+  countScnOccurrences,
+  parseUntaggedScenarios,
+  parseFeatureCounts,
+} from "./parse/scenarios.js";
 
-export { evidenceObligations } from "./census/evidenceObligations.js";
-export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./census/evidenceObligations.js";
-export { sharedScnCodesOf, untaggedScenarioId } from "./census/evidenceObligations.js";
+export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
+export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./domain/corpusCounts.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export { hasScenarioCodeErrors } from "./domain/scenarioCodeError.js";

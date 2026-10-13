@@ -6,7 +6,7 @@ import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
-import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { reportLedger } from "./renderInput.test-utils.js";

@@ -316,7 +316,7 @@ jobs:
           done <<'CASES'
           packages/core/src/domain/evidenceOrder.ts ["core-domain"]
           packages/core/src/domain/messages.ts []
-          packages/core/src/census/ciSourcePaths.test.ts []
+          packages/core/src/domain/ciSourcePaths.test.ts []
           packages/spec-controller/src/ingest/corpusFixtures.test-utils.ts []
           packages/spec-controller/src/run-management/keptRun.ts ["spec-controller-run-management"]
           packages/spec-controller/src/cli.ts ["spec-controller-shell"]
