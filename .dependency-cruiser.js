@@ -1,3 +1,5 @@
+import known from "./.dependency-cruiser-known.js";
+
 export default {
   forbidden: [
     {
@@ -27,6 +29,45 @@ export default {
           "^@3f-consulting/spec-controller-core/",
         ],
         pathNot: ["^packages/core/src/index\\.ts$", "^packages/core/dist/index\\.(js|d\\.ts)$"],
+      },
+    },
+
+    {
+      name: "app-test-imports-core-internals",
+      severity: "error",
+      comment:
+        "an app test reaches the engine only through its entry point or its internal seam, so a test cannot pin a core module's private shape",
+      from: { path: "^packages/spec-controller/src/.*\\.(test|test-utils)\\.ts$" },
+      to: {
+        path: "^packages/core/(src|dist)/",
+        pathNot: ["^packages/core/src/(index|internal)\\.ts$", "^packages/core/dist/(index|internal)\\.(js|d\\.ts)$"],
+      },
+    },
+
+    {
+      name: "adapter-imports-adapter",
+      severity: "error",
+      comment:
+        "a core adapter meets another adapter only through the domain, never by importing it or the composition layer's internals",
+      from: { path: "^packages/core/src/(parse|render|census|provenance)/", pathNot: "\\.(test|test-utils)\\.ts$" },
+      to: {
+        path: "^packages/core/src/(parse|render|census|provenance|assemble)/",
+        pathNot: "^packages/core/src/$1/",
+      },
+    },
+
+    {
+      name: "driven-imports-driven",
+      severity: "error",
+      comment:
+        "a driven app module is handed what it needs by the command that drives it, never reaching into another driven module",
+      from: {
+        path: "^packages/spec-controller/src/(ingest|run-management|cli-balance/emit)/",
+        pathNot: "\\.(test|test-utils)\\.ts$",
+      },
+      to: {
+        path: "^packages/spec-controller/src/(ingest|run-management|cli-balance/emit)/",
+        pathNot: "^packages/spec-controller/src/$1/",
       },
     },
 
@@ -63,6 +104,13 @@ export default {
     },
   ],
   options: {
+    knownViolations: known.map(({ from, to, rule }) => ({
+      type: "dependency",
+      from,
+      to,
+      rule: { severity: "error", name: rule },
+    })),
+
     doNotFollow: { path: "node_modules" },
 
     exclude: { path: "^packages/[^/]+/dist/" },

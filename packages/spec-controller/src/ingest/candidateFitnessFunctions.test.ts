@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { runReconcile } from "./ingestQualityChecks.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -17,7 +18,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness fun
       features: "tests/fixtures/usg/features",
       ci: "tests/fixtures/usg/ci.yml",
       packageJson: "tests/fixtures/usg/package.json",
-    });
+    }, resolveTargetRoot({ features: "tests/fixtures/usg/features" }));
 
     const postings = balance.ledger.scenarioReconciliations.flatMap((row) =>
       row.evidenceObservations
@@ -52,7 +53,7 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
       "jobs:\n  ci:\n    steps:\n      - name: Self-reconciliation balance\n        run: pnpm lint:reconcile\n"
     );
 
-    const balance = runReconcile({ features, packageJson, ci });
+    const balance = runReconcile({ features, packageJson, ci }, resolveTargetRoot({ features }));
 
     expect(balance.summary.reconcilerSteps).toStrictEqual([
       { step: "ci.yml:ci:Self-reconciliation balance", role: "reconciles" },

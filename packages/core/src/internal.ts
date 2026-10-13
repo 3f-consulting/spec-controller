@@ -17,3 +17,11 @@ export {
   resolveDeferralTags,
 } from "./parse/targetManifest.js";
 
+
+export { QualityCheckFaultCode, type QualityCheckFault } from "./domain/qualityCheckFault.js";
+export {
+  CORE_MESSAGES,
+  CoreMessage,
+  QUALITY_CHECK_FAULT_MESSAGES,
+  type CoreMessages,
+} from "./domain/messages.js";

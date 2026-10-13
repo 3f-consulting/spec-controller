@@ -10,6 +10,7 @@ import {
   readFeatureNames,
   runReconcile,
 } from "./ingestQualityChecks.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -62,7 +63,7 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
     const packageJson = join(ci, "absent-package.json");
     expect(existsSync(packageJson)).toBe(false);
 
-    const balance = runReconcile({ features, packageJson, ci });
+    const balance = runReconcile({ features, packageJson, ci }, resolveTargetRoot({ features }));
 
     expect(balance.ledger.scenarioReconciliations).toEqual([]);
   });

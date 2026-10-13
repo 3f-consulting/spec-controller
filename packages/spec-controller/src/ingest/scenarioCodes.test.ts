@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.test-utils.js";
 import { readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
 import { extractFeatureCode } from "./ingestScenarios.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -40,7 +41,7 @@ describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped",
       features: join(root, CORPUS_DIR),
       packageJson: join(root, "package.json"),
       ci: root,
-    });
+    }, resolveTargetRoot({ features: join(root, CORPUS_DIR) }));
 
     expect(balance.scenarioCodeErrors).toEqual([]);
     expect(balance.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });

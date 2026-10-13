@@ -5,6 +5,7 @@ import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-
 
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn, type Shape } from "./corpusFixtures.test-utils.js";
 import { runReconcile } from "./ingestQualityChecks.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -20,7 +21,7 @@ function verdictFor(target: Shape): string {
     features: join(root, CORPUS_DIR),
     packageJson: join(root, "package.json"),
     ci: root,
-  });
+  }, resolveTargetRoot({ features: join(root, CORPUS_DIR) }));
   const ctx: RunContext = {
     target: root,
     inputs: {},

@@ -5,6 +5,7 @@ import { afterAll, describe, it, expect } from "vitest";
 import { discover, temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
 import { readEvidenceObligations, readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
 import { discoverFeatures } from "./ingestScenarios.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
 
@@ -82,7 +83,7 @@ function flatCopyOfNested(): string {
 }
 
 function reconciled(features: string): ReturnType<typeof runReconcile> {
-  return runReconcile({ features, vitest: join(NESTED, "vitest.json"), packageJson: join(NESTED, "package.json"), ci: NESTED });
+  return runReconcile({ features, vitest: join(NESTED, "vitest.json"), packageJson: join(NESTED, "package.json"), ci: NESTED }, resolveTargetRoot({ features }));
 }
 
 describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any depth, is read and judged as at the top level", () => {
@@ -154,7 +155,7 @@ describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path un
       vitest: `${SAME_NAME}/vitest.json`,
       packageJson: `${SAME_NAME}/package.json`,
       ci: SAME_NAME,
-    });
+    }, resolveTargetRoot({ features: SAME_NAME_FEATURES }));
 
     expect(ledger.scenarioReconciliations.map(({ scnId }) => scnId)).toEqual([
       "SCN-SNA-001",

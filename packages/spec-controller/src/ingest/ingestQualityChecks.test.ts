@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { resolveDeferralTags } from "@3f-consulting/spec-controller-core/internal";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import { runReconcile } from "./ingestQualityChecks.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specController.deferralTags", () => {
   it("unions a project-configured tag with the built-in starter set — the configured tag is recognised", () => {
@@ -50,7 +51,7 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with n
         features: join(root, "features"),
         packageJson: join(root, "package.json"),
         ci: root,
-      });
+      }, resolveTargetRoot({ features: join(root, "features") }));
       const scenario = (scnId: string) => balance.ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
@@ -71,7 +72,7 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with n
         packageJson: join(root, "package.json"),
         ci: root,
         cucumber: join(root, "cucumber.json"),
-      });
+      }, resolveTargetRoot({ features: join(root, "features") }));
       const scenario = (scnId: string) => balance.ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);

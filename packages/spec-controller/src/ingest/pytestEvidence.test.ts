@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
 import { OUTCOME_DESCRIPTION } from "@3f-consulting/spec-controller-core/internal";
 import { runReconcile } from "./ingestQualityChecks.js";
+import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const TARGET = "tests/fixtures/pytest";
 
@@ -12,7 +13,7 @@ describe("[SCN-PYT-001] runReconcile reads a real pytest report as unit evidence
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.scenarioReconciliations
       .find((s) => s.scnId === "SCN-PYF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
@@ -29,7 +30,7 @@ describe("[SCN-PYT-002] runReconcile reads a failing test in a real pytest repor
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.scenarioReconciliations
       .find((s) => s.scnId === "SCN-PYF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
@@ -46,7 +47,7 @@ describe("[SCN-PYT-003] runReconcile reads a skipped test in a real pytest repor
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.scenarioReconciliations
       .find((s) => s.scnId === "SCN-PYF-003")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
@@ -63,7 +64,7 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const phantom = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-PYF-099");
 
     expect(phantom?.kind).toBe("phantom-scenario");
@@ -80,7 +81,7 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario to s
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const suspense = balance.ledger.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
 
     expect(suspense?.evidenceObservations).toContainEqual({
@@ -99,7 +100,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (scnId: string) =>
     balance()
       .ledger.scenarioReconciliations
@@ -129,7 +130,7 @@ describe("[SCN-PYT-007] runReconcile reads a real pytest run that failed to coll
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/uncollectable-report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("posts one broken item, on suspense, naming the module and carrying the collection error", () => {
     const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
@@ -154,7 +155,7 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
-    });
+    }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("leaves the scenario the test cites missing, with no observation", () => {
     const unit = balance()

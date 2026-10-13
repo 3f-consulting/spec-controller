@@ -35,7 +35,6 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
-import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
   BehaviouralQualityCheck,
   EvidenceObservation,
@@ -192,10 +191,9 @@ type TargetManifest = PackageJsonScripts & {
   };
 };
 
-export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
+export function runReconcile(opts: ReconcileOptions, root: string): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
-  const root = resolveTargetRoot({ features: opts.features });
   const ciPath = opts.ci ?? DEFAULT_CI_PATH;
   const ciPaths = ciSourcePathsOf(ciPath);
 

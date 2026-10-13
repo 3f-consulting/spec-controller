@@ -25,6 +25,7 @@ import {
   verdictCode,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
+import { earlierStoredRunDirOf } from "../run-management/keptRun.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import {
   asksForHelp,
@@ -169,18 +170,26 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 
   const inputs = reconcileInputsOf(args);
 
-  const balance = runReconcile(inputs);
+  const root = resolveTargetRoot({ features: inputs.features });
+
+  const balance = runReconcile(inputs, root);
 
   const evidenceObligations = readEvidenceObligations(args["features"]);
 
   const featureNames = readFeatureNames(args["features"]);
 
-  const ctx = runContextOf(args, inputs, runStart);
+  const ctx = runContextOf(args, inputs, runStart, root);
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
   const payloads = { balance, ctx, evidenceObligations, featureNames };
-  writeOutputs(planResult.plan, payloads, stdoutIdentity, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)), ownRunDir);
+  writeOutputs(
+    planResult.plan,
+    payloads,
+    stdoutIdentity,
+    identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)),
+    (path) => earlierStoredRunDirOf(path, ownRunDir),
+  );
 
   const verdict = verdictCode({ ...balance, strict: ctx.strict === true });
   const code = statusFor(verdict, args["exit-zero"] !== undefined);
@@ -236,6 +245,7 @@ function runContextOf(
   args: Record<string, string>,
   inputs: ReconcileOptions,
   runStart: Date,
+  root: string,
 ): RunContext {
   return {
     target: sourceTarget(args),
@@ -245,7 +255,7 @@ function runContextOf(
       sourceSha: args["source-sha"],
       targetDir: args["features"] !== undefined ? dirname(args["features"]) : undefined,
     }),
-    root: resolveTargetRoot({ features: inputs.features }),
+    root,
     ...resolveToolIdentity(),
     strict: args["strict"] !== undefined,
   };

@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 
-import { QualityCheckFaultCode, type QualityCheckFault } from "../../core/src/domain/qualityCheckFault.js";
 import {
   CORE_MESSAGES,
   CoreMessage,
   QUALITY_CHECK_FAULT_MESSAGES,
+  QualityCheckFaultCode,
   type CoreMessages,
-} from "../../core/src/domain/messages.js";
+  type QualityCheckFault,
+} from "@3f-consulting/spec-controller-core/internal";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, Unreadable, type AppMessages } from "./messages.js";
 
 function codesOf(codes: object): number[] {

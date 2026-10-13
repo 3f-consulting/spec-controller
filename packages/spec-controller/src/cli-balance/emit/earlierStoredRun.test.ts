@@ -6,7 +6,7 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
-import { planRunManifest, serialiseRunManifest } from "../../run-management/keptRun.js";
+import { earlierStoredRunDirOf, planRunManifest, serialiseRunManifest } from "../../run-management/keptRun.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 
 const ctx: RunContext = {
@@ -21,6 +21,8 @@ const EARLIER_MARKDOWN = "# an earlier run's reconciliation\n";
 
 const toFile = (path: string, fmt: "md" | "json"): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
 const plan = (...outputs: PlannedOutput[]): OutputPlan => ({ outputs });
+
+const noOwnRun = (path: string): string | undefined => earlierStoredRunDirOf(path, undefined);
 
 let payloads: OutputPayloads;
 let manifest: string;
@@ -73,7 +75,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
     it(`refuses the ${fmt} report at the earlier run's ${file}, naming it on one line with no stack trace`, () => {
       const path = join(earlierRunDir, file);
 
-      expect(usageStatusOf(() => writeOutputs(plan(toFile(path, fmt)), payloads, processStdout, []))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(plan(toFile(path, fmt)), payloads, processStdout, [], noOwnRun))).toBe(2);
 
       const refusal = stderr.join("");
       expect(refusal).toContain(path);
@@ -86,7 +88,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
   it("refuses the earlier run's file however its path is spelled", () => {
     const spelling = `${earlierRunDir}/../r0/spec-reconciliation.json`;
 
-    expect(usageStatusOf(() => writeOutputs(plan(toFile(spelling, "json")), payloads, processStdout, []))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(spelling, "json")), payloads, processStdout, [], noOwnRun))).toBe(2);
 
     expect(stderr.join("")).toContain(spelling);
     expectEarlierRunKept(earlierRunDir);
@@ -95,7 +97,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
   it("refuses a new file in the earlier run's directory, and creates nothing there", () => {
     const path = join(earlierRunDir, "extra.md");
 
-    expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, []))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, [], noOwnRun))).toBe(2);
 
     expect(stderr.join("")).toContain(path);
     expect(existsSync(path)).toBe(false);
@@ -104,7 +106,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
   it("writes no report at all when any one output names the earlier run's file", () => {
     const elsewhere = join(scratch, "report.md");
 
-    expect(usageStatusOf(() => writeOutputs(plan(toFile(elsewhere, "md"), toFile(join(earlierRunDir, "spec-reconciliation.json"), "json")), payloads, processStdout, []))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(elsewhere, "md"), toFile(join(earlierRunDir, "spec-reconciliation.json"), "json")), payloads, processStdout, [], noOwnRun))).toBe(2);
 
     expect(existsSync(elsewhere)).toBe(false);
     expectEarlierRunKept(earlierRunDir);
@@ -115,7 +117,7 @@ describe("[SCN-RMG-012] the stored run's own run directory is not an earlier sto
   it("writes into the run's own directory though an earlier run under the same run id left its run.yaml there", () => {
     const path = join(earlierRunDir, "spec-reconciliation.json");
 
-    expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "json")), payloads, processStdout, [], earlierRunDir))).toBeUndefined();
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "json")), payloads, processStdout, [], (path) => earlierStoredRunDirOf(path, earlierRunDir)))).toBeUndefined();
 
     expect(stderr).toEqual([]);
     expect(readFileSync(path, "utf8")).not.toBe(EARLIER_JSON);
@@ -135,7 +137,7 @@ describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlie
       mkdirSync(join(scratch, "links"));
       symlinkSync(join("..", "store", "earlier", "r0", file), link);
 
-      expect(usageStatusOf(() => writeOutputs(plan(toFile(link, fmt)), payloads, processStdout, []))).toBe(2);
+      expect(usageStatusOf(() => writeOutputs(plan(toFile(link, fmt)), payloads, processStdout, [], noOwnRun))).toBe(2);
 
       const refusal = stderr.join("");
       expect(refusal).toContain(link);
@@ -152,7 +154,7 @@ describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlie
     const link = join(scratch, "report.json");
     symlinkSync(join(earlierRunDir, "spec-reconciliation.json"), link);
 
-    expect(usageStatusOf(() => writeOutputs(plan(toFile(link, "json")), payloads, processStdout, [], ownRunDir))).toBe(2);
+    expect(usageStatusOf(() => writeOutputs(plan(toFile(link, "json")), payloads, processStdout, [], (path) => earlierStoredRunDirOf(path, ownRunDir)))).toBe(2);
 
     expectEarlierRunKept(earlierRunDir);
   });
@@ -180,7 +182,7 @@ describe("[SCN-RMG-013] a --format path beside a run.yaml that is not a run mani
         if (content !== undefined) writeFileSync(join(dir, "run.yaml"), content);
         const path = join(dir, file);
 
-        expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, []))).toBeUndefined();
+        expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, [], noOwnRun))).toBeUndefined();
 
         expect(stderr).toEqual([]);
         expect(readFileSync(path, "utf8")).toMatch(/^# Evidence Reconciliation/);

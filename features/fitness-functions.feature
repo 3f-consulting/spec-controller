@@ -74,6 +74,12 @@ Feature: The fitness functions this repository carries, one scenario per check
   @fitness @SCN-FIT-009
   Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
 
+    The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
+    through the domain, a driven module of the command-line app never reaches into another, and a
+    test of the app reaches the engine only through its front door or its internal seam. A break
+    the tree still holds is named on a known list beside the rules, each entry naming the work that
+    removes it. A listed break passes; any break not on the list fails the check.
+
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
 
@@ -201,3 +207,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-046
     Scenario: the README's sample report is what balance prints on its committed fixture, and the build reds when they differ
+
+  Rule: the boundary breaks the tree still holds are only ever removed, never added
+
+    @fitness @SCN-FIT-047
+    Scenario: the list of boundary violations still to remove only shrinks: an entry added reds the build

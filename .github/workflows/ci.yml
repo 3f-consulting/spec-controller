@@ -259,6 +259,17 @@ jobs:
         if: always()
         run: pnpm lint:boundaries
 
+      # A squash merge to main is one commit, so its parent is the list before the change.
+      - name: The known boundary breaks only shrink
+        id: SCN-FIT-047
+        if: always()
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: |
+          if [ "$EVENT" = push ]; then base=HEAD^; else base="$(git merge-base "origin/$BASE_REF" HEAD)"; fi
+          node scripts/known-violations-shrink.mjs "$base"
+
       - name: Evidence layers cross a seam
         id: SCN-FIT-027
         if: always()
