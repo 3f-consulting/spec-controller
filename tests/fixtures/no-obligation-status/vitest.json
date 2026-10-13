@@ -1,0 +1,16 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/no-obligation-status/broken-spawn.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-NOS-001] spawns yarn", "status": "failed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/no-obligation-status/sound.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-NOS-001] adds two numbers", "status": "passed" }
+      ]
+    }
+  ]
+}

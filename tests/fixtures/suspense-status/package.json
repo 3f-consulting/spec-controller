@@ -1,0 +1,7 @@
+{
+  "name": "suspense-status-fixture-target",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  }
+}

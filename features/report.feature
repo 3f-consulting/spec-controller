@@ -618,3 +618,31 @@ Feature: The report renders the ledger as sectioned facts
       derivable — and absence is exactly derivable, from the inputs object plus the canonical
       flag list. A second copy would agree with the first until one of them was edited.
 
+  Rule: an evidence observation that answers no evidence obligation shows its own result
+
+    A failing test is still a failing test when it cites no scenario. The report lists such an
+    observation by its outcome and where it ran; were it to drop the result the observation
+    holds, a failure would read exactly like a pass. The outcome, its glyph and its sentence
+    stay as they are, and the observation's own result is added beside them. An observation
+    that holds no result is listed as before.
+
+    @SCN-RPT-033 @unit @e2e
+    Scenario: a test that cites no scenario shows on the suspense row as failed or passed, as it ran
+      Given a target with two tests that cite no scenario, one that failed and one that passed
+      When the target's evidence is reconciled into a report
+      Then the suspense row shows the test that failed as failed
+      And it shows the test that passed as passed
+
+    @SCN-RPT-034 @unit @e2e
+    Scenario: a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran
+      Given a target with two tests that cite a scenario no feature carries, one that failed and one that passed
+      When the target's evidence is reconciled into a report
+      Then the phantom row shows the test that failed as failed
+      And the phantom row shows the test that passed as passed
+
+    @SCN-RPT-035 @unit @e2e
+    Scenario: a test observed at a check its scenario holds no obligation for shows as failed or passed, as it ran
+      Given a target with two tests that cite a scenario holding no obligation at the check they ran at, one that failed and one that passed
+      When the target's evidence is reconciled into a report
+      Then the scenario's row shows the test that failed as failed
+      And the scenario's row shows the test that passed as passed

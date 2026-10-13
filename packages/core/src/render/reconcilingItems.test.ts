@@ -51,10 +51,11 @@ function rowFor(md: string, account: string): { verdict: string; items: string }
   return { verdict: cells[1]!, items: cells[2]! };
 }
 
-function item(outcome: Outcome, glyph: string, subject?: string, suffix?: string): string {
+function item(outcome: Outcome, glyph: string, subject?: string, suffix?: string, result?: string): string {
   const head = subject === undefined ? "" : `${subject} `;
   const tail = suffix === undefined ? "" : ` (${suffix})`;
-  return `${head}${glyph} ${OUTCOME_DESCRIPTION[outcome]}${tail}`;
+  const ran = result === undefined ? "" : ` — ${result}`;
+  return `${head}${glyph} ${OUTCOME_DESCRIPTION[outcome]}${tail}${ran}`;
 }
 
 describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns", () => {
@@ -99,7 +100,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       );
       expect(rowFor(md, "SCN-RCI-003")).toEqual({
         verdict: "✗ out-of-balance",
-        items: item("no-evidence-obligation", "◇", "integration", "tests/steps/c.steps.ts"),
+        items: item("no-evidence-obligation", "◇", "integration", "tests/steps/c.steps.ts", "passed"),
       });
     });
 
@@ -130,15 +131,15 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       );
       expect(rowFor(md, "SCN-GHO-001")).toEqual({
         verdict: "✗ out-of-balance",
-        items: item("cites-unknown-scenario", "👻", "unit", "src/ghost.test.ts"),
+        items: item("cites-unknown-scenario", "👻", "unit", "src/ghost.test.ts", "passed"),
       });
     });
 
-    it("a behavioural evidence observation citing an unknown scenario with no locator renders no suffix", () => {
+    it("a behavioural evidence observation citing an unknown scenario with no locator names no locator", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: "SCN-GHO-002", status: "passed" }]);
       expect(rowFor(md, "SCN-GHO-002")).toEqual({
         verdict: "✗ out-of-balance",
-        items: item("cites-unknown-scenario", "👻", "unit"),
+        items: item("cites-unknown-scenario", "👻", "unit", undefined, "passed"),
       });
     });
 
@@ -146,7 +147,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
       expect(rowFor(md, SUSPENSE_ROW)).toEqual({
         verdict: "✗ out-of-balance",
-        items: item("cites-no-scenario", "❓", "unit", "src/uncited.test.ts"),
+        items: item("cites-no-scenario", "❓", "unit", "src/uncited.test.ts", "passed"),
       });
     });
   });

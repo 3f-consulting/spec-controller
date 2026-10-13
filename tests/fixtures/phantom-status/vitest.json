@@ -1,0 +1,22 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/phantom-status/proven.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-PST-001] the target unit scenario is proven", "status": "passed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/phantom-status/broken-spawn.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-PST-901] spawns yarn", "status": "failed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/phantom-status/sound.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-PST-901] adds two numbers", "status": "passed" }
+      ]
+    }
+  ]
+}

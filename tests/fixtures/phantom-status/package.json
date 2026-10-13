@@ -1,0 +1,7 @@
+{
+  "name": "phantom-status-fixture-target",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  }
+}

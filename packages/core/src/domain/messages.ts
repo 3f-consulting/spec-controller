@@ -157,6 +157,8 @@ export enum CoreMessage {
   OutcomeNoEvidenceObligation,
   OutcomeBroken,
   OutcomeBothMissing,
+  ObservationPassed,
+  ObservationFailed,
 }
 
 interface CoreMessageParams {
@@ -448,4 +450,6 @@ export const CORE_MESSAGES: CoreMessages = {
     "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
   [CoreMessage.OutcomeBothMissing]:
     "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
+  [CoreMessage.ObservationPassed]: "passed",
+  [CoreMessage.ObservationFailed]: "failed",
 };

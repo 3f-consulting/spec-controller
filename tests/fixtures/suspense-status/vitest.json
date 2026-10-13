@@ -1,0 +1,22 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/suspense-status/proven.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-SST-001] the target unit scenario is proven", "status": "passed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/suspense-status/broken-spawn.test.ts",
+      "assertionResults": [
+        { "fullName": "spawns yarn", "status": "failed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/suspense-status/sound.test.ts",
+      "assertionResults": [
+        { "fullName": "adds two numbers", "status": "passed" }
+      ]
+    }
+  ]
+}

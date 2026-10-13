@@ -3,6 +3,7 @@ import type {
   Outcome,
   ScenarioVerdict,
   PendingItem,
+  EvidenceStatus,
 } from "../model.js";
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
@@ -83,9 +84,19 @@ function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][numb
       .join(": ");
     return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
   }
-  if (observationOnly && item.fitnessFunction) return ` (${item.fitnessFunction})`;
-  if (observationOnly && item.locator !== undefined) return ` (${item.locator})`;
-  return undefined;
+  if (!observationOnly) return undefined;
+  const where = item.fitnessFunction || item.locator;
+  return `${where === undefined ? "" : ` (${where})`}${resultOf(item)}`;
+}
+
+const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
+  passed: CoreMessage.ObservationPassed,
+  failed: CoreMessage.ObservationFailed,
+};
+
+function resultOf(item: ScenarioReconciliation["reconcilingItems"][number]): string {
+  const status = item.evidenceObservation?.status;
+  return status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[status]]}`;
 }
 
 function headlineOf(message: string): string {
