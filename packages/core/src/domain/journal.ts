@@ -53,6 +53,7 @@ export interface BehaviouralEvidenceObservation {
   readonly locator?: string;
   readonly broken?: true;
   readonly message?: string;
+  readonly testName?: string;
 }
 
 export interface FitnessEvidenceObservation {

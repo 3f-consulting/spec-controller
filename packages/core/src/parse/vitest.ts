@@ -46,6 +46,7 @@ export function parseVitestEvidenceObservations(
         scnId,
         status,
         locator,
+        testName: assertion.fullName ?? assertion.title,
       });
     }
   }

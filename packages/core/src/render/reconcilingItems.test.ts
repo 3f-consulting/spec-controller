@@ -143,12 +143,14 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a behavioural evidence observation citing no scenario names its locator on the suspense row", () => {
+    it("a behavioural evidence observation citing no scenario names its check, outcome and file on the suspense row, and that it passed", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
-      expect(rowFor(md, SUSPENSE_ROW)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("cites-no-scenario", "❓", "unit", "src/uncited.test.ts", "passed"),
-      });
+      const { verdict, items } = rowFor(md, SUSPENSE_ROW);
+      expect(verdict).toBe("✗ out-of-balance");
+      const [named, result, ...rest] = items.split(" — ");
+      expect(rest).toEqual([]);
+      expect(named).toBe(item("cites-no-scenario", "❓", "unit", "src/uncited.test.ts"));
+      expect(result).toMatch(/^(?:passed|1 ran, 1 passed, 0 failed)$/);
     });
   });
 

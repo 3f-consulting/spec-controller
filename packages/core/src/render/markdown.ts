@@ -41,6 +41,7 @@ import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { suspenseGroupsOf, type SuspenseGroup, type SuspenseFileGroup } from "../domain/suspenseGroups.js";
 
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
@@ -114,8 +115,29 @@ function renderPendingItem(item: PendingItem): string {
     : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheck);
 }
 
+function renderFileGroup(group: SuspenseFileGroup): string {
+  const said = [...new Set(group.messages.map((message) => cellSafe(headlineOf(message))))].join(" / ");
+  const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
+  const counts = CORE_MESSAGES[CoreMessage.SuspenseGroupCounts](group.ran, group.passed, group.failed);
+  const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
+  const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.SuspenseFailedNames](names)}`;
+  return `${group.qualityCheck} ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
+}
+
+function renderSuspenseGroup(group: SuspenseGroup): string {
+  if (!("names" in group)) return renderFileGroup(group);
+  const steps = CORE_MESSAGES[CoreMessage.SuspenseCiSteps](group.names);
+  return `fitness ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
+}
+
+function renderSuspenseItems(items: ScenarioReconciliation["reconcilingItems"]): string[] {
+  const broken = items.filter((item) => item.outcome === "broken");
+  return [...broken.map(renderItem), ...suspenseGroupsOf(items).map(renderSuspenseGroup)];
+}
+
 function renderRowExceptions(s: ScenarioReconciliation): string {
-  const reconciling = s.reconcilingItems.map(renderItem).join("; ");
+  const items = isSuspenseScenario(s) ? renderSuspenseItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
+  const reconciling = items.join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
   return groups.length === 0 ? "—" : groups.join("; ");

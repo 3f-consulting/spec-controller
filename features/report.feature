@@ -620,18 +620,12 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: an evidence observation that answers no evidence obligation shows its own result
 
-    A failing test is still a failing test when it cites no scenario. The report lists such an
-    observation by its outcome and where it ran; were it to drop the result the observation
-    holds, a failure would read exactly like a pass. The outcome, its glyph and its sentence
-    stay as they are, and the observation's own result is added beside them. An observation
-    that holds no result is listed as before.
-
-    @SCN-RPT-033 @unit @e2e
-    Scenario: a test that cites no scenario shows on the suspense row as failed or passed, as it ran
-      Given a target with two tests that cite no scenario, one that failed and one that passed
-      When the target's evidence is reconciled into a report
-      Then the suspense row shows the test that failed as failed
-      And it shows the test that passed as passed
+    A failing test is still a failing test when it answers no evidence obligation. On a phantom
+    row, and on a scenario's row when the scenario holds no obligation at the check it ran at,
+    the report lists each such observation by its outcome and where it ran; were it to drop the
+    result the observation holds, a failure would read exactly like a pass. The outcome, its
+    glyph and its sentence stay as they are, and the observation's own result is added beside
+    them. The suspense row counts its results by file instead, under the Rule below.
 
     @SCN-RPT-034 @unit @e2e
     Scenario: a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran
@@ -646,3 +640,42 @@ Feature: The report renders the ledger as sectioned facts
       When the target's evidence is reconciled into a report
       Then the scenario's row shows the test that failed as failed
       And the scenario's row shows the test that passed as passed
+
+  Rule: the suspense row groups what ran by where it ran, counting what passed and naming what failed
+
+    Design note: one cell of 280 items told a stranger nothing. The suspense row's
+    cites-no-scenario observations are grouped by source, which is the file they ran in, with the
+    CI steps as one group of their own. A group counts what ran, passed and failed. It names
+    what failed, and what holds no result (a CI step). The grouping is derived on the domain side
+    from the row's reconciliations and is never stored, so the JSON gains only the observation's
+    test name. Broken items are listed as before.
+
+    @SCN-RPT-033 @unit @e2e
+    Scenario: tests that cite no scenario are grouped on the suspense row by the file they ran in, each group counting how many ran, passed and failed
+      Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
+      When the target's evidence is reconciled into a report
+      Then the suspense row lists each of the two files once
+      And each file's entry counts how many of its tests ran, how many passed and how many failed
+      And the counts of tests that ran add up to the count of evidence observations that cite no scenario
+
+    @SCN-RPT-036 @unit @e2e
+    Scenario: a failed test that cites no scenario is named on the suspense row by its test title
+      Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
+      When the target's evidence is reconciled into a report
+      Then the file's entry on the suspense row names the test that failed by its title
+      And the file's entry does not name the test that passed
+
+    @SCN-RPT-037 @unit @e2e
+    Scenario: a failed Cucumber scenario that cites no scenario is named on the suspense row by its scenario name
+      Given a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed
+      When the target's evidence is reconciled into a report
+      Then the feature file's entry on the suspense row names the Cucumber scenario that failed by its name
+      And the feature file's entry does not name the Cucumber scenario that passed
+
+    @SCN-RPT-038 @unit @e2e
+    Scenario: the CI steps that cite no scenario are grouped together on the suspense row, each named
+      Given a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario
+      When the target's evidence is reconciled into a report
+      Then the suspense row lists the CI steps together once, after the test's file
+      And the CI steps' entry names each of the two checks
+      And what the suspense row counts adds up to the count of evidence observations that cite no scenario

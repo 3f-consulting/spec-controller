@@ -179,3 +179,21 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([{ broken: true, message: messageOf() }]);
   });
 });
+
+describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's observations by the scenario's name", () => {
+  it("carries the scenario's name on each of its evidence observations, at every tier it ran at", () => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/checkout.feature",
+        elements: [
+          { name: "an expired coupon is refused", tags: [{ name: "@integration" }, { name: "@e2e" }], steps: [{ result: { status: "failed" } }] },
+          { name: "an empty basket cannot be checked out", steps: [{ result: { status: "passed" } }] },
+          { steps: [{ result: { status: "passed" } }] },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "integration").map((o) => (o as BehaviouralEvidenceObservation).testName)).toEqual([
+      "an expired coupon is refused", "an expired coupon is refused", "an empty basket cannot be checked out", undefined,
+    ]);
+  });
+});

@@ -89,6 +89,7 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with n
             scnId: "SCN-DFR-002",
             status: "passed",
             locator: "features/deferral.feature",
+            testName: "its untagged twin",
           },
         },
       ]);

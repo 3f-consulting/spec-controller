@@ -1,0 +1,30 @@
+import { describe, it, expect } from "vitest";
+import { renderJson } from "./json.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
+import { parseVitestEvidenceObservations } from "../parse/vitest.js";
+import { parseCucumberEvidenceObservations } from "../parse/cucumber.js";
+import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
+
+describe("[SCN-RMD-010] the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike", () => {
+  it("carries a Vitest test's name and a Cucumber scenario's name on their evidence observations as testName", () => {
+    const observations = [
+      ...parseVitestEvidenceObservations(
+        { testResults: [{ name: "/r/a.test.ts", assertionResults: [{ title: "spawns yarn", status: "failed" }] }] },
+        "unit",
+        "/r",
+      ),
+      ...parseCucumberEvidenceObservations(
+        [{ uri: "features/checkout.feature", elements: [{ name: "an expired coupon is refused", steps: [{ result: { status: "failed" } }] }] }],
+        "integration",
+      ),
+    ];
+    const json = JSON.parse(renderJson(__er(reconcile([], observations)), ctx));
+    const saved = json.ledger.scenarioReconciliations.flatMap((row: { evidenceObservations: unknown[] }) => row.evidenceObservations);
+
+    expect(saved.map((o: { locator: string; testName?: string }) => [o.locator, o.testName])).toEqual([
+      ["a.test.ts", "spawns yarn"],
+      ["features/checkout.feature", "an expired coupon is refused"],
+    ]);
+  });
+});

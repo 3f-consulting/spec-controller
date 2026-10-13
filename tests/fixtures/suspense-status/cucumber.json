@@ -1,0 +1,18 @@
+[
+  {
+    "uri": "tests/fixtures/suspense-status/features/checkout.feature",
+    "name": "checkout",
+    "elements": [
+      {
+        "name": "a basket with an expired coupon is refused",
+        "tags": [{ "name": "@integration" }],
+        "steps": [{ "keyword": "Given ", "name": "a basket", "result": { "status": "failed" } }]
+      },
+      {
+        "name": "an empty basket cannot be checked out",
+        "tags": [{ "name": "@integration" }],
+        "steps": [{ "keyword": "Given ", "name": "an empty basket", "result": { "status": "passed" } }]
+      }
+    ]
+  }
+]

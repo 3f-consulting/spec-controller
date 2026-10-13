@@ -11,40 +11,6 @@ function rowOf(md: string, rowName: string): string {
   return row;
 }
 
-function suspenseRowOf(md: string): string {
-  return rowOf(md, "(no scenario)");
-}
-
-describe("[SCN-RPT-033] a test that cites no scenario shows on the suspense row as failed or passed, as it ran", () => {
-  let ledger: Ledger;
-  beforeEach(() => {
-    ledger = reconcile(
-      [{ scnId: "SCN-SST-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [
-        { qualityCheck: "unit", scnId: "SCN-SST-001", status: "passed", locator: "src/proven.test.ts" },
-        { qualityCheck: "unit", scnId: null, status: "failed", locator: "src/broken-spawn.test.ts" },
-        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/sound.test.ts" },
-        { qualityCheck: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-      ]
-    );
-  });
-
-  it("shows the test that failed as failed", () => {
-    const row = suspenseRowOf(renderMarkdown(__er(ledger), ctx));
-    expect(row).toContain("unit ❓ Evidence Observation cites no Scenario (src/broken-spawn.test.ts) — failed");
-  });
-
-  it("shows the test that passed as passed", () => {
-    const row = suspenseRowOf(renderMarkdown(__er(ledger), ctx));
-    expect(row).toContain("unit ❓ Evidence Observation cites no Scenario (src/sound.test.ts) — passed");
-  });
-
-  it("lists an observation that holds no result as before, with no result beside it", () => {
-    const row = suspenseRowOf(renderMarkdown(__er(ledger), ctx));
-    expect(row).toMatch(/fitness ❓ Evidence Observation cites no Scenario \(lint:uncited\)(;| \|)/);
-  });
-});
-
 describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran", () => {
   let ledger: Ledger;
   beforeEach(() => {

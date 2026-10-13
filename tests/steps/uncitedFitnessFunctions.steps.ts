@@ -78,9 +78,10 @@ Then(
         `lint:foo is the weaker claim, and a reader posting the evidence observation to a scenario the corpus ` +
         `never wrote satisfies it too. Got:\n${activeMd}`
     );
+    const suspenseRow = activeMd.split("\n").find((line) => line.startsWith("| (no scenario) |"));
     assert.ok(
-      !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `a scenario cites lint:foo; it must not surface as an uncited fitness-function evidence observation; got:\n${activeMd}`
+      !suspenseRow?.includes("lint:foo"),
+      `a scenario cites lint:foo; the suspense row must not name it at all; got:\n${suspenseRow}`
     );
     assert.ok(
       activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),

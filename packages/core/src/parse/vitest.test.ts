@@ -16,8 +16,8 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named 
 
   it("attributes results at the named level (unit — the JS-ecosystem default named by the CLI)", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "/r/a.test.ts" },
-      { qualityCheck: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "/r/a.test.ts", testName: "[SCN-FOO-001] does a thing" },
+      { qualityCheck: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-002] does another" },
     ]);
   });
 });
@@ -45,8 +45,8 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
 
   it("emits the self-citing leaf's evidence observation citing the scenario its OWN title cites, not the ancestor describe's", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts" },
-      { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
+      { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![1]!.fullName },
     ]);
   });
 });
@@ -69,7 +69,7 @@ describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed toke
 
   it("emits an uncited evidence observation — neither the bare id nor the @-prefixed one cites", () => {
     expect(parseVitestEvidenceObservations(proseOnly, "unit")).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts" },
+      { qualityCheck: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts", testName: proseOnly.testResults![0]!.assertionResults![0]!.fullName },
     ]);
   });
 });
@@ -92,7 +92,7 @@ describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's 
 
   it("emits the evidence observation citing the ancestor describe's scenario — the leaf's prose mentions are not citations", () => {
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
     ]);
   });
 });
@@ -143,7 +143,7 @@ describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observati
       ],
     };
     expect(parseVitestEvidenceObservations(failedButCollected, "unit")).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-FOO-003", status: "failed", locator: "/r/a.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-FOO-003", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-003] throws at runtime" },
     ]);
   });
 
@@ -154,5 +154,20 @@ describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observati
         "unit"
       )
     ).toEqual([]);
+  });
+});
+
+describe("[SCN-RPT-036] parseVitestEvidenceObservations names each test by its full name, or its title when it has none", () => {
+  it("carries the runner's name for the test on its evidence observation", () => {
+    const report: VitestJsonReport = {
+      testResults: [{ name: "/r/n.test.ts", assertionResults: [
+        { fullName: "suite > spawns yarn", title: "spawns yarn", status: "failed" },
+        { title: "reads the lockfile", status: "passed" },
+        { status: "passed" },
+      ] }],
+    };
+    expect(parseVitestEvidenceObservations(report, "unit").map((o) => (o as { testName?: string }).testName)).toEqual([
+      "suite > spawns yarn", "reads the lockfile", undefined,
+    ]);
   });
 });

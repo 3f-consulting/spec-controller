@@ -27,7 +27,7 @@ Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest,
 | SCN-CHK-002 | U/1 | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
 | SCN-CHK-003 | U/- | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
 | SCN-CHK-004 | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (no scenario) | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — passed |
+| (no scenario) | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>

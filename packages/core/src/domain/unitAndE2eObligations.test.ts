@@ -52,7 +52,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     expect(scenario?.reconcilingItems).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts" } },
+        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit tier" } },
         { qualityCheck: "e2e", outcome: "satisfied", evidenceObligation: { qualityCheck: "e2e" }, evidenceObservation: { qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" } },
       ])
     );

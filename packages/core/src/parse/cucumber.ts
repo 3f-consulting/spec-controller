@@ -7,6 +7,7 @@ export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
   readonly name?: string;
   readonly elements?: ReadonlyArray<{
+    readonly name?: string;
     readonly tags?: ReadonlyArray<{ readonly name?: string }>;
     readonly steps?: ReadonlyArray<{
       readonly keyword?: string;
@@ -95,5 +96,6 @@ function scenarioObservations(
     scnId,
     status,
     locator,
+    testName: scenario.name,
   }));
 }

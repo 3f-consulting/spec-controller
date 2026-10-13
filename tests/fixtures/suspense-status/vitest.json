@@ -9,7 +9,8 @@
     {
       "name": "tests/fixtures/suspense-status/broken-spawn.test.ts",
       "assertionResults": [
-        { "fullName": "spawns yarn", "status": "failed" }
+        { "fullName": "spawns yarn", "status": "failed" },
+        { "fullName": "reads the lockfile", "status": "passed" }
       ]
     },
     {

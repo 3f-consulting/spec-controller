@@ -160,3 +160,21 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-009
     Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location
+
+  Rule: a behavioural evidence observation carries the name its runner gave the test
+
+    The suspense row names what failed, and it regenerates from the saved JSON alone, so the name
+    travels on the evidence observation itself. Each parser translates its runner's name for the
+    test into one neutral field at the edge: a Vitest test's full name, or its title where it has
+    none, and a Cucumber scenario's name. No runner's shape reaches the domain. The JSON serialises
+    the report model as it is, so the name reaches spec-reconciliation.json with no JSON-side code.
+    Its unit tests parse a Vitest report and a Cucumber report, reconcile them and read each
+    observation's name back off the JSON; the CLI, run over a target that ran both, saves the JSON
+    with each observation named.
+
+    @SCN-RMD-010 @unit @e2e
+    Scenario: the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike
+      Given a target whose tests that cite no scenario ran under Vitest and under Cucumber
+      When the target's evidence is reconciled and saved as the JSON report
+      Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
+      And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
