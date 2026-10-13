@@ -35,6 +35,7 @@ The inputs:
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
+- A pytest JUnit XML report, written by `pytest --junitxml` (runtime test evidence).
 - Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness function (see *Wiring into CI*).
 - Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are read to check that an UNCONVERTED fitness function is wired into CI over the real source.
 
