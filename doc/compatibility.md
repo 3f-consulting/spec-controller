@@ -6,7 +6,7 @@ This package is published at a `0.x` version. Under semantic versioning that
 carries no compatibility guarantee, and we are not making one on top of it: any
 mechanism this tool reads today — a manifest key, a tag form, a flag, an exit
 code — may change in any release until `1.0`. If you build on it now, pin an
-exact version and read the changelog before you move.
+exact version and read its [release notes](https://github.com/3f-consulting/spec-controller/releases) before you move.
 
 **What the reader reads today.** Three `specController` keys — `runners`, `notChecks` and
 `deferralTags` — and the `--ci-steps` record. [`how_to_use.md`](./how_to_use.md) says what each key
@@ -31,7 +31,7 @@ refusal names what replaced it rather than a pin that would bring it back.
 step is observed, and the declared behavioural runners are the only steps it names.
 
 **At `0.x` none of this is a promise.** Any of it may change in any release until
-`1.0`; pin an exact version and read the changelog.
+`1.0`; pin an exact version and read its [release notes](https://github.com/3f-consulting/spec-controller/releases).
 
 **Where to read what the tool does today:**
 

@@ -222,15 +222,13 @@ Item from each. `balance --help` prints the key and the built-in set.
 ## Install
 
 ```sh
-npm install -g spec-controller@alpha
+npm install -g spec-controller
 ```
-
-`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has no `--ci-steps` and no scenario code errors.
 
 Or run without installing:
 
 ```sh
-npx spec-controller@alpha balance --features ./features …
+npx spec-controller balance --features ./features …
 ```
 
 ---

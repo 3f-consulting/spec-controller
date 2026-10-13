@@ -33,7 +33,7 @@ by-hand pin move.
 ### The version is a counter
 
 The run takes the **line** from the committed CLI manifest — everything before its last `.N`, so
-`0.1.0-alpha.5` is the line `0.1.0-alpha.` — and finds the highest number already on that line across
+`0.1.0` is the line `0.1.` — and finds the highest number already on that line across
 **both packages on the registry and the repository's `v*` tags**. It stamps the next number into both
 manifests **in the run's working copy only**. Nothing is committed back: `main` is protected, and the
 committed manifest is not the published version. It stays where a human last put it while the
@@ -71,9 +71,12 @@ The `release` job:
    this repository, outside the workspace, and starts the command there.
 6. **Publishes core, then the CLI**, with `npm publish` over the packed tarballs.
 
-Then the `tag` job creates `v<version>` on the commit that was built. It is its own job so the only
-token that can write to the repository never shares a runner with the build, and it starts no other
-workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
+Then two jobs run on what was published. The `latest` job runs `scripts/latest-is.sh` for each
+package and reds unless the `latest` dist-tag is the version just published, waiting up to
+`LATEST_WAIT_S` for the registry to serve it. The `tag` job creates `v<version>` on the commit that
+was built, and a GitHub release for that tag with notes generated from the merged pull requests.
+The `tag` job is its own job so the only token that can write to the repository never shares a
+runner with the build, and it starts no other workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
 
 ### Two merges close together
 
@@ -163,6 +166,10 @@ the registry, so a re-run always picks a number nobody has used.
 - **After core published and the CLI did not** — core's number is spent. The re-run's counter sees it
   on the registry and takes the **next** number for both, so the two packages go out in lockstep one
   number higher and the spent core version is simply never named by a CLI.
+- **After both published and the `latest` job failed** — re-run that job alone (*Re-run failed
+  jobs*). Re-running the whole workflow would publish the next number. If it fails again with time to
+  spare, read `npm view <pkg> dist-tags`: a `latest` that is not the published version is the fault
+  the job exists to catch.
 - **After both published and the `tag` job failed** — the release happened; only its record is
   missing. Nothing needs re-running. Create the tag by hand on the commit the run built, if you want
   the record: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
@@ -286,18 +293,9 @@ dist-tag, a stable version becomes `latest`:
 A hard-coded `--tag alpha` would publish the first stable release under `alpha`, which is a silent
 fault with no guard.
 
-**`latest` is never MOVED onto a prerelease — but it carries one today.** npm points `latest` at a
-package's first-ever publish whatever its version, so both packages have `latest` at
-`0.1.0-alpha.1`, the reader from before the fitness-axis rework: no `tags` command and no
-`--ci-steps` flag. A bare `npm i spec-controller` installs it. While these packages have no stable
-release the documented install line is therefore:
-
-```
-npm i spec-controller@alpha
-```
-
-Do not hand-move `latest` onto a prerelease to make the bare install work; it moves on its own when
-`0.1.0` publishes.
+**`latest` is never moved onto a prerelease.** The committed manifests are on the stable line
+`0.1.N`, so every release is a plain version and moves `latest` itself, and a bare
+`npm i spec-controller` installs the current build. The `latest` job checks that it did.
 
 ---
 

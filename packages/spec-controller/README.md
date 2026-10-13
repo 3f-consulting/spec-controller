@@ -11,16 +11,14 @@ Requires Node ≥ 22. ESM only.
 ## Install
 
 ```
-npm install -g spec-controller@alpha
+npm install -g spec-controller
 ```
 
 Or without installing anything:
 
 ```
-npx spec-controller@alpha balance --help
+npx spec-controller balance --help
 ```
-
-`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has no `--ci-steps` and no scenario code errors.
 
 ## Your first run
 

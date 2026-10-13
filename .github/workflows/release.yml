@@ -134,6 +134,28 @@ jobs:
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"
 
+  latest:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    env:
+      # npm can take 20 to 40 minutes to serve a publish it has acknowledged.
+      LATEST_WAIT_S: 2400
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: A bare install resolves the version just published
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          scripts/latest-is.sh @3f-consulting/spec-controller-core "$VERSION"
+          scripts/latest-is.sh spec-controller "$VERSION"
+
   tag:
     needs: release
     runs-on: ubuntu-latest
@@ -147,3 +169,9 @@ jobs:
           VERSION: ${{ needs.release.outputs.version }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/v$VERSION" -f sha="$HEAD_SHA"
+
+      - name: Publish the release notes for the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "v$VERSION"
