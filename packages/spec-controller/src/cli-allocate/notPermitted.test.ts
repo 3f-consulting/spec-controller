@@ -11,6 +11,7 @@ function repository(): string {
   const repo = freshDirectory("allocate-not-permitted-");
   git(repo, ["init", "-q", "-b", "main"]);
   writeInto(repo, "features/one.feature", HEADED_ONE_CARRYING_003);
+  writeInto(repo, "features/nested/two.feature", "@TWO\nFeature: part TWO\n");
   writeInto(repo, "docs/deep/notes.md", "Cites SCN-ONE-002.\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "the corpus"]);
@@ -50,6 +51,7 @@ interface Withheld {
 const EXAMPLES: readonly Withheld[] = [
   { copy: "repository", path: "features/one.feature", subject: "a feature file" },
   { copy: "repository", path: "features", subject: "the feature corpus" },
+  { copy: "repository", path: "features/nested", subject: "the feature corpus" },
   { copy: "copy without git", path: "docs/notes.md", subject: "a file in the tree" },
   { copy: "copy without git", path: "docs", subject: "a directory in the tree" },
 ];

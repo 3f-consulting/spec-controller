@@ -60,6 +60,15 @@ Given("a repository whose feature file headed {word} carries the scenario code {
   commitAll(repository, "the corpus");
 });
 
+Given(
+  "a repository whose only feature file headed {word} lies two subdirectories down in its features directory and carries the scenario code {word}",
+  function (part: string, code: string) {
+    repository = newRepository();
+    writeInto(repository, `features/outer/inner/${part.toLowerCase()}.feature`, featureFile(part, [code]));
+    commitAll(repository, "the corpus");
+  },
+);
+
 When("the author asks for the next code for {word}", function (part: string) {
   answer = allocate(repository, [part]);
 });
@@ -439,6 +448,7 @@ Given(
     if (copy === "repository") {
       repository = newRepository();
       writeInto(repository, "features/one.feature", featureFile("ONE", [code]));
+      writeInto(repository, "features/nested/two.feature", featureFile("TWO", ["SCN-TWO-001"]));
       commitAll(repository, "the corpus");
     } else {
       assert.equal(copy, "copy without git", `no fixture for: ${copy}`);

@@ -97,7 +97,8 @@ Feature: Allocate the next scenario code for a feature part
 
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
 
-    A part is a feature of the corpus when a feature file in its features directory is headed with it.
+    A part is a feature of the corpus when a feature file in its features directory, at any depth, is
+    headed with it.
     History and test fixtures say which numbers a part has used, never whether the part exists.
     A host modifier before allocate is refused, because allocate keeps no run; a request for
     allocate's help is answered first, whatever stands before it.
@@ -126,6 +127,12 @@ Feature: Allocate the next scenario code for a feature part
         | part | answer      | note                                                       |
         | ZZ   | SCN-ZZ-001  | it says nothing of the part being carried already          |
         | ONE  | SCN-ONE-004 | it notes that a feature file's header already carries ONE  |
+
+    @SCN-ALC-023 @unit @e2e
+    Scenario: A part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code
+      Given a repository whose only feature file headed NEST lies two subdirectories down in its features directory and carries the scenario code SCN-NEST-004
+      When the author asks for the next code for NEST
+      Then the answer is SCN-NEST-005, and nothing else
 
     @SCN-ALC-012 @unit @e2e
     Scenario Outline: A request not in the scenario-code form is refused as a usage error, never as an unknown part — <request>
@@ -222,6 +229,7 @@ Feature: Allocate the next scenario code for a feature part
         | copy             | path                 |
         | repository       | features/one.feature |
         | repository       | features             |
+        | repository       | features/nested      |
         | copy without git | docs/notes.md        |
         | copy without git | docs                 |
         | copy without git | working directory    |

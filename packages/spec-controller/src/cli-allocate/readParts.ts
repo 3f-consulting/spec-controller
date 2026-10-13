@@ -1,22 +1,21 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { extractFeatureCode } from "../ingest/ingestScenarios.js";
+import { readFileSync } from "node:fs";
+import { MissingFeatureCorpusError } from "../ingest/gherkinValidation.js";
+import { corpusFeatureFiles, extractFeatureCode, type CorpusFeatureFile } from "../ingest/ingestScenarios.js";
 import { AppMessage } from "../messages.js";
 import { readOrRefuse, refuse } from "./unreadable.js";
 
 export function readHeaderCodes(featuresDir: string): string[] {
-  return featureFilesIn(featuresDir).flatMap((name) => {
-    const path = join(featuresDir, name);
+  return featureFilesIn(featuresDir).flatMap(({ path }) => {
     const code = extractFeatureCode(readOrRefuse(AppMessage.FeatureFile, path, () => readFileSync(path, "utf8")));
     return code === null ? [] : [code];
   });
 }
 
-function featureFilesIn(dir: string): string[] {
+function featureFilesIn(dir: string): CorpusFeatureFile[] {
   try {
-    return readdirSync(dir).filter((name) => name.endsWith(".feature"));
+    return corpusFeatureFiles(dir);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    if (err instanceof MissingFeatureCorpusError) return [];
     return refuse(AppMessage.FeatureCorpus, dir, err);
   }
 }
