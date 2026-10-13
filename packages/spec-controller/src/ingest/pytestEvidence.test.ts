@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
+import { OUTCOME_DESCRIPTION } from "@3f-consulting/spec-controller-core/internal";
 import { runReconcile } from "./ingestQualityChecks.js";
 
 const TARGET = "tests/fixtures/pytest";
@@ -173,5 +174,15 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
     expect(broken[0]?.kind).toBe("suspense-scenario");
     expect(broken[0]?.item.locator).toBe("test_cases::test_setup_error");
     expect(broken[0]?.item.message).toContain("RuntimeError: the resource could not be set up");
+  });
+
+  it("renders the broken item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {
+    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
+    const suspenseRow = renderMarkdown(balance(), ctx)
+      .split("\n")
+      .find((line) => line.startsWith("| (no scenario) | ") && line.includes("test_cases::test_setup_error"));
+
+    expect(suspenseRow ?? "").toContain(`${OUTCOME_DESCRIPTION.broken} (test_cases::test_setup_error`);
+    expect(suspenseRow ?? "").not.toContain("failed to collect");
   });
 });

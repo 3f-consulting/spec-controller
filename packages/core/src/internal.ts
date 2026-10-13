@@ -2,6 +2,8 @@ export { SCN_ID_SOURCE } from "./domain/featureCode.js";
 
 export { bareTerm } from "./lib/bareTerm.js";
 
+export { OUTCOME_DESCRIPTION } from "./domain/qualityCheckReconciliation.js";
+
 export type { ScriptCitation } from "./parse/fitnessCitations.js";
 
 export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";

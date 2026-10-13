@@ -449,7 +449,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OutcomeCitesNoScenario]: "Evidence Observation cites no Scenario",
   [CoreMessage.OutcomeNoEvidenceObligation]: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
   [CoreMessage.OutcomeBroken]:
-    "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
+    "Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)",
   [CoreMessage.OutcomeBothMissing]:
     "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
   [CoreMessage.ObservationPassed]: "passed",

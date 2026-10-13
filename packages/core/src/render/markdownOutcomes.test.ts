@@ -65,7 +65,7 @@ describe("[SCN-RPT-025] every outcome glosses as its sentence, verbatim", () => 
     ["cites-unknown-scenario", "Evidence Observation cites an unknown Scenario"],
     ["cites-no-scenario", "Evidence Observation cites no Scenario"],
     ["no-evidence-obligation", "Evidence Observation cites a Scenario with no matching Evidence Obligation"],
-    ["broken", "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)"],
+    ["broken", "Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)"],
     ["both-missing", "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"],
   ] as const satisfies readonly (readonly [Outcome, string])[];
   // A new outcome fails the typecheck here until its sentence has a row.

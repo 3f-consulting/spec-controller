@@ -424,7 +424,7 @@ Feature: The report renders the ledger as sectioned facts
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
         | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
         | no-evidence-obligation             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
-        | broken                 | Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised) |
+        | broken                 | Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)                                     |
         | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
 
   Rule: the report surfaces broken evidence as a harness failure, and stamps the run unsound
