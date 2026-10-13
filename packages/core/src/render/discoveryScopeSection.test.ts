@@ -49,7 +49,7 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
     expect(cells(lines[2]!)).toHaveLength(4);
     expect(lines[3]).toBe("| --- | --- | --- | --- |");
     expect(lines.slice(4, 7)).toStrictEqual([
-      "| ci.yml | quality | 3 | 2 |",
+      "| ci.yml | quality | 3 | 1 |",
       "| nightly.yml | audit | 1 | 1 |",
       "| nightly.yml | sweep | 2 | 2 |",
     ]);
@@ -65,7 +65,7 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
     expect(lines).toHaveLength(8);
     expect(lines.slice(4, 7)).toStrictEqual([
       "| — | audit | 1 | 1 |",
-      "| — | quality | 3 | 2 |",
+      "| — | quality | 3 | 1 |",
       "| — | sweep | 2 | 2 |",
     ]);
     expect(lines.at(-1)).toBe("");

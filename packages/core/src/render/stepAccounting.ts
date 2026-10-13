@@ -10,13 +10,13 @@ const verdictOf = ({ stepsRead, accountedFor }: StepAccounting): string =>
 export const stepAccountingSection = (report: RenderInput): string[] => {
   const accounting = report.summary.stepAccounting;
   if (accounting === undefined) return [];
-  const { stepsRead, candidates, runners, reconciler, excluded, accountedFor } = accounting;
+  const { stepsRead, candidates, runners, reconciler, excluded, plumbing = 0, accountedFor } = accounting;
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingHeading],
     "",
     CORE_MESSAGES[CoreMessage.StepAccountingTableHeader],
-    "| --- | --- | --- | --- | --- | --- |",
-    `| ${stepsRead} | ${candidates} | ${runners} | ${reconciler} | ${excluded} | ${accountedFor} |`,
+    "| --- | --- | --- | --- | --- | --- | --- |",
+    `| ${stepsRead} | ${candidates} | ${runners} | ${reconciler} | ${excluded} | ${plumbing} | ${accountedFor} |`,
     "",
     verdictOf(accounting),
     "",

@@ -188,8 +188,8 @@ it invokes and whether it is a `run:` step or a `uses:` action.
     "performance": null           // we have no performance runner
   },
   "notChecks": [
-    "ci.yml:build:actions/checkout@v5",
-    "ci.yml:build:Install dependencies"
+    "ci.yml:build:Install dependencies",
+    "ci.yml:build:Publish the package"
   ]
 }
 ```
@@ -211,6 +211,13 @@ command is a check that uses the runner, and is reported as one.
 **To take a whole workflow out, narrow `--ci`** rather than listing its steps. An excluded step is
 named on the report rather than dropped, and an entry matching no step is reported as stale.
 `balance` itself and its `toJSON(steps)` dump are excluded **by construction** — never write them.
+So is a step whose only work is one of GitHub's own plumbing actions — `actions/checkout`,
+`actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`, matched
+on owner and repository whatever ref or sub-path follows. It moves code, tools and files and judges
+nothing, so it is counted under *GitHub plumbing* in the report's **Step accounting** rather than
+listed as a check. The list is closed: every other action stays a candidate, including
+`actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks`
+is excluded as you named it.
 
 **Configuration the run cannot use is named, never dropped.** A `specController` entry of a kind its
 reader does not take (a `notChecks` written as one string, a runner written as a number) is read as
@@ -551,7 +558,7 @@ packages carry codes of their own.
 
 **A fitness function shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
-**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
+**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them — GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, one buried in a quoted argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`), is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
 

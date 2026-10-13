@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { stepAccounting } from "./stepAccounting.js";
 import { reconcilerSteps } from "./reconcilerSteps.js";
 import { stepExclusions } from "./stepExclusions.js";
+import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
 let CI_YML: string;
@@ -11,6 +12,8 @@ beforeEach(() => {
     "  ci:",
     "    steps:",
     "      - uses: actions/checkout@v4",
+    "      - uses: actions/setup-node@v4",
+    "      - uses: actions/cache@v4",
     "      - name: Install",
     "        run: pnpm install --frozen-lockfile",
     "      - name: Unit tests",
@@ -18,6 +21,7 @@ beforeEach(() => {
     "      - name: Sweep check",
     "        run: pnpm lint:sweep",
     "      - uses: github/codeql-action/analyze@v3",
+    "      - uses: actions/upload-artifact@v4",
     "      - name: Dump this run's step record",
     "        env:",
     "          STEPS_JSON: ${{ toJSON(steps) }}",
@@ -55,26 +59,38 @@ const notChecksOver = (
   entries: readonly string[]
 ): ((step: CiWorkflowStep) => boolean) => stepExclusions(sources, names, entries).isExcluded;
 
-describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exactly one thing", () => {
+const excludedFromDiscoveryBy =
+  (
+    isReconciler: (step: CiWorkflowStep) => boolean,
+    isNamedANonCheck: (step: CiWorkflowStep) => boolean
+  ): ((step: CiWorkflowStep) => boolean) =>
+  (step) =>
+    isReconciler(step) || isNamedANonCheck(step) || isGitHubPlumbingStep(step);
+
+describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
   it("counts each disposition and adds them back up to the steps it read", () => {
+    const isReconciler = reconcilerOver([CI_YML], ["ci.yml"]);
+    const isNamedANonCheck = notChecksOver([CI_YML], ["ci.yml"], [
+      "ci.yml:ci:actions/checkout@v4",
+      "ci.yml:ci:Install",
+    ]);
     expect(
       stepAccounting(
         [CI_YML],
         SCRIPTS,
         UNIT_RUNNER,
-        reconcilerOver([CI_YML], ["ci.yml"]),
-        notChecksOver([CI_YML], ["ci.yml"], [
-          "ci.yml:ci:actions/checkout@v4",
-          "ci.yml:ci:Install",
-        ])
+        isReconciler,
+        isNamedANonCheck,
+        excludedFromDiscoveryBy(isReconciler, isNamedANonCheck)
       )
     ).toEqual({
-      stepsRead: 7,
+      stepsRead: 10,
       candidates: 2,
       runners: 1,
       reconciler: 2,
       excluded: 2,
-      accountedFor: 7,
+      plumbing: 3,
+      accountedFor: 10,
     });
   });
 
@@ -91,13 +107,16 @@ describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exa
         "        run: pnpm lint:depth",
       ].join("\n"),
     ];
+    const isReconciler = reconcilerOver(sources, ["nightly.yml"]);
+    const isNamedANonCheck = notChecksOver(sources, ["nightly.yml"], []);
     expect(
       stepAccounting(
         sources,
         SCRIPTS,
         NO_RUNNERS,
-        reconcilerOver(sources, ["nightly.yml"]),
-        notChecksOver(sources, ["nightly.yml"], [])
+        isReconciler,
+        isNamedANonCheck,
+        excludedFromDiscoveryBy(isReconciler, isNamedANonCheck)
       )
     ).toEqual({
       stepsRead: 1,
@@ -105,6 +124,7 @@ describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exa
       runners: 0,
       reconciler: 0,
       excluded: 0,
+      plumbing: 0,
       accountedFor: 1,
     });
   });

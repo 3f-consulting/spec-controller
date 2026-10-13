@@ -23,7 +23,7 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
   it("names every workflow and every job it read, with its steps and candidates, in one settled order", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
     expect(summary.discoveryScope).toStrictEqual([
-      { source: "ci.yml", job: "quality", steps: 3, candidates: 2 },
+      { source: "ci.yml", job: "quality", steps: 3, candidates: 1 },
       { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
       { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
     ]);
@@ -35,7 +35,7 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
       specController: { runners: { unit: "vitest" }, notChecks: ["ci.yml:quality:Install"] },
     });
     expect(summary.discoveryScope).toStrictEqual([
-      { source: "ci.yml", job: "quality", steps: 3, candidates: 1 },
+      { source: "ci.yml", job: "quality", steps: 3, candidates: 0 },
       { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
       { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
     ]);
@@ -45,7 +45,7 @@ describe("[SCN-USG-020] the report names the workflows, the jobs and the step co
     const { summary } = reconcile([nightly, ci]);
     expect(summary.discoveryScope).toStrictEqual([
       { job: "audit", steps: 1, candidates: 1 },
-      { job: "quality", steps: 3, candidates: 2 },
+      { job: "quality", steps: 3, candidates: 1 },
       { job: "sweep", steps: 2, candidates: 2 },
     ]);
   });

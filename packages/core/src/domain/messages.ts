@@ -381,10 +381,10 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepExcluded]: (entry) => `${entry} — excluded: the target names this step a non-check.`,
   [CoreMessage.NotChecksEntryMatchesNoStep]: (entry) => `${entry} — matches no step: the entry names nothing this run read.`,
   [CoreMessage.StepAccountingHeading]: "### Step accounting",
-  [CoreMessage.StepAccountingTableHeader]: "| Steps read | Candidates | Runners | Reconciler | Excluded | Accounted for |",
+  [CoreMessage.StepAccountingTableHeader]: "| Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
   [CoreMessage.EveryStepAccountedFor]: "every step this run read is accounted for.",
   [CoreMessage.StepsNotAccountedFor]: (stepsRead, accountedFor) =>
-    `${stepsRead} step(s) read, ${accountedFor} accounted for — the four dispositions do not ` +
+    `${stepsRead} step(s) read, ${accountedFor} accounted for — the five dispositions do not ` +
     `add up to the steps this run read.`,
   [CoreMessage.FitnessHeading]: "### Fitness evidence obligations",
   [CoreMessage.FitnessSatisfiedOf]: (satisfied, total) =>

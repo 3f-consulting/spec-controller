@@ -83,10 +83,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Checkout tools
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Cache store
+        uses: actions/cache/restore@v4
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
+      - name: Download build
+        uses: actions/download-artifact@v4
       - name: Unit tests
         run: pnpm test
       - name: Sweep check
@@ -97,6 +105,8 @@ jobs:
         run: pnpm lint:depth
       - name: Code scanning
         uses: github/codeql-action/analyze@v3
+      - name: Upload report
+        uses: actions/upload-artifact@v4
       - name: Dump this run's step record
         env:
           STEPS_JSON: \${{ toJSON(steps) }}

@@ -67,7 +67,7 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
         excluding("Install")
       )
     ).toEqual([
-      { source: "ci.yml", job: "ci", steps: 4, candidates: 2 },
+      { source: "ci.yml", job: "ci", steps: 4, candidates: 1 },
       { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
       { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
     ]);
@@ -81,7 +81,7 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
       "  empty:",
     ].join("\n");
     expect(discoveryScope([withStepless], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([
-      { source: "ci.yml", job: "ci", steps: 4, candidates: 4 },
+      { source: "ci.yml", job: "ci", steps: 4, candidates: 3 },
     ]);
   });
 

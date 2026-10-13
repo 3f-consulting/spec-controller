@@ -114,7 +114,7 @@ describe("[SCN-USG-028] a key the specController block does not read, a retired 
   });
 });
 
-describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
+describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
     const dir = mkdtempSync(join(tmpdir(), "scn-usg-017-unit-"));
     made.push(dir);

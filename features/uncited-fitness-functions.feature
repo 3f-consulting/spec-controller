@@ -16,15 +16,16 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   "### Fitness functions", mirroring "### Test volume"; the guard member detail lives in the rows.
 
   WHICH STEPS ARE FITNESS FUNCTIONS, AND WHY IT IS NOT A NAMING QUESTION. Membership is every CI
-  step left once declared runners, the reconciler and declared non-checks are taken out — never a property of its name, and never whether it reads
+  step left once declared runners, the reconciler, GitHub's own plumbing actions and declared non-checks are taken out — never a property of its name, and never whether it reads
   source or executes code: a step that runs a mutation verdict or a temp-directory check is a
   fitness function as much as a lint is. No naming heuristic decides it,
   neither a lint:/guard: prefix nor the target's own specController.staticChecks:
   membership is decided by subtraction, and a run: step of the workflows --ci names is a
   candidate fitness function unless it runs a behavioural runner the manifest names, is the
-  reconciler, or is a step the manifest names a non-check. install and checkout are steps like
-  any other and leave by that third door; test and cucumber are the behavioural axis's observed
-  evidence and leave by the first, which is what the manifest's runners block says.
+  reconciler, only uses one of GitHub's own plumbing actions, or is a step the manifest names a
+  non-check. checkout is GitHub's plumbing and leaves by construction; install is a step like
+  any other and leaves by the manifest's own list; test and cucumber are the behavioural axis's
+  observed evidence and leave by the first door, which is what the manifest's runners block says.
 
   `tsc --noEmit` is static analysis on any reading, and it is not deferred: a deferral recorded
   only in a feature preamble is one nobody reads again. A public-api scenario names typecheck, so
@@ -584,13 +585,15 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     dependency review are actions rather than commands, so a reader discarding every uses: step
     drops real checks — and drops them without a word, which is the exact fault the inverted
     membership rule exists to end. The discard cost nothing while nothing downstream wanted an
-    action; under the inversion it is a fifth outcome smuggled in at the walk.
+    action; under the inversion it is an outcome no disposition names, smuggled in at the walk.
 
     EXCLUDING ACTIONS WHOLESALE WOULD BE THE PREFIX RULE AGAIN, ONE LAYER ALONG. A structural rule
     about where a check may LIVE is the same guess as a rule about what one may be CALLED, and it
     is a guess this tool has already been wrong about once. Nothing about a step's form says
     whether it is a check. What says so is what the target named a runner, what the reconciler is,
-    and what the consumer said is not one — the same three facts, asked of the same steps.
+    what the consumer said is not one, and the closed list of GitHub's own plumbing actions the
+    Rule below names — the same four facts, asked of the same steps. The last is a list of
+    actions that move things, never a rule about where a check may live.
 
     AND IT IS THE SHAPE A NON-NODE CONSUMER ARRIVES IN. A pipeline whose static analysis is CodeQL
     and whose dependency review is an action has no package.json script for either, so a run:-only
@@ -614,6 +617,56 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     @unit @SCN-USG-013
     Scenario: a `uses:` step is a candidate fitness function, reported by the action it uses
+
+  Rule: a step whose only work is one of GitHub's own plumbing actions is not a check
+
+    THE FOURTH EXCLUSION, AND THE ONLY ONE THIS TOOL KEEPS A LIST FOR. Checking out the code,
+    setting up a language, caching and moving artifacts between jobs are in nearly every workflow
+    GitHub runs, and none of them judges anything: they move code, tools and files so that a check
+    can run. Reported as fitness functions, they fill an unannotated pipeline's first report with
+    steps nobody would call a check, and the consumer's own list is the wrong place to fix a fact
+    that holds for every pipeline.
+
+    IT IS A CLOSED LIST OF PLUMBING, NEVER A LIST OF CHECKS. The operator ruled it on 2026-10-13
+    (quality-checks.md, How a check is discovered; the decision log's "GitHub's own plumbing
+    actions, by a closed list, are not checks"): actions/checkout, actions/setup-*, actions/cache,
+    actions/upload-artifact and actions/download-artifact. A list of what is not a check grows
+    only by the operator's word.
+
+    THE MATCH IS ON THE ACTION, NEVER ON THE LINE THAT PINS IT. A step is read as an owner and a
+    repository off its uses: value. The ref after the at sign, whether a tag, a branch or a pinned
+    SHA, names a version of the same action, and a sub-path such as actions/cache/restore is a part
+    of it, so none of them changes the answer. A rule matching the whole uses: line would let the
+    first consumer who pins a SHA, as hardening guides tell them to, put their checkout back on
+    the books.
+
+    THE COMMAND CHECK BESIDE THEM IS THE CONTROL. A reader that discovered nothing satisfies
+    "every plumbing step is absent" by being blind, so an ordinary run: check in the same job has
+    to stay on the books.
+
+    @unit @SCN-USG-030
+    Scenario: a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it
+
+    NOTHING OUTSIDE THE LIST LEAVES WITH IT. The list names repositories, never the owner they
+    sit under: actions/dependency-review-action is GitHub's own and is a check, so a rule over the
+    actions owner would take a check off the books. Another owner's checkout, a repository whose
+    name only begins with checkout, a local action and a docker:// image are each a step the
+    consumer chose to run, and each stays a candidate. The checkout beside them is the control:
+    a reader that put everything back on the books satisfies "the near-misses stay" by never
+    excluding anything.
+
+    @unit @SCN-USG-031
+    Scenario: an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action
+
+    THE CONSUMER'S WORD COMES FIRST. A manifest written before this list existed names its
+    checkout a non-check, and that entry still does what it says: the step is excluded and named,
+    and the entry is not stale, because it matched a step. Were plumbing to take the step first,
+    every annotated manifest's report would change under it and its entries would read as stale
+    for naming steps that are still there. A second checkout no entry names is the control: it is
+    counted as plumbing beside the excluded one, so the precedence is seen to choose, not to blind.
+
+    @unit @SCN-USG-032
+    Scenario: a plumbing step the manifest names a non-check is excluded as the manifest says, and its entry is not stale
 
   Rule: a manifest naming no runners makes every step a candidate
 
@@ -640,11 +693,14 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     ours — which is the drift the whole inversion exists to remove, reinstated at the one step where
     it would look most reasonable.
 
-    EVERY STEP THAT IS NOT THE RECONCILER, strictly. The reconciler and its step-record dump come
-    out by construction and hold over a manifest saying nothing, so "every step" is
-    never literally every step of every pipeline. This target's pipeline runs no reconciler at all,
-    which is what keeps the claim here to exactly one thing: the steps that reach the books are the
-    steps that are there, and the other exclusion has nothing to be confused with.
+    EVERY STEP THAT IS NOT THE RECONCILER OR GITHUB'S PLUMBING, strictly. The reconciler and its
+    step-record dump come out by construction and hold over a manifest saying nothing, and so does a
+    step whose only work is one of GitHub's own plumbing actions — checking out, setting up a
+    language, caching, moving artifacts — so "every step" is never literally every step of every
+    pipeline. This target's pipeline runs no reconciler at all, and its one plumbing step is its
+    checkout, which is what keeps the claim here to exactly one thing: the steps that reach the books
+    are the steps that are there less the checkout every workflow carries, and the other exclusions
+    have nothing to be confused with.
 
     THE FIRST RUN STILL REDS, AND THAT IS NOT SOFTENED HERE. A candidate citing nothing posts to
     suspense, so a consumer who has configured nothing is out of balance on their first run. That is
@@ -657,7 +713,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     than on a total that could be reached two ways.
 
     @unit @SCN-USG-017
-    Scenario: a target with no runners block reports every step of its pipeline as a candidate
+    Scenario: a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate
 
   Rule: the report names the scope it read
 
@@ -711,11 +767,17 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     THIS AXIS'S FIRST NON-NEGOTIABLE IS A CLAIM ABOUT CODE, AND PROSE CANNOT HOLD IT. Nothing seen
     is dropped: a step that reaches this reader leaves it as a candidate fitness function, as one of
-    the runners the target named, as the reconciler, or as a step the consumer called a non-check.
-    There is no fifth outcome. Four exhaustive dispositions is not a sentence any reader can check
-    by reading, and the fault it forecloses is the exact one this whole axis exists to end — a step
-    seen and quietly discarded. So the exhaustiveness is asserted as an identity over the report's
-    own numbers: candidates plus runners plus the reconciler plus the excluded equals the steps read.
+    the runners the target named, as the reconciler, as a step the consumer called a non-check, or
+    as one of GitHub's own plumbing actions. There is no sixth outcome. Five exhaustive
+    dispositions is not a sentence any reader can check by reading, and the fault it forecloses is
+    the exact one this whole axis exists to end — a step seen and quietly discarded. So the
+    exhaustiveness is asserted as an identity over the report's own numbers: candidates plus
+    runners plus the reconciler plus the excluded plus GitHub's plumbing equals the steps read.
+
+    PLUMBING IS COUNTED, NOT NAMED. Every workflow carries several checkouts and setups, so a list
+    of them would bury the report in steps nobody needs to read. But a plumbing step leaves
+    discovery by a rule the tool applies rather than one the consumer wrote, and a door nobody
+    watches is where a step goes missing; the count is what keeps that door inside the identity.
 
     IT ASKS WHAT WOULD STOP BEING COUNTED, NOT WHAT WOULD FAIL, and that is why it is here rather
     than left to the scenarios beside it. Every other scenario on this axis watches a step arrive
@@ -725,21 +787,27 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     thing it did was to not happen. Only a cardinality instrument sees an absence like that, and a
     cardinality instrument is what this is.
 
-    THE SUM IS THE CODE'S, NOT THE TEST'S. A scenario that read the four figures off the report and
+    THE SUM IS THE CODE'S, NOT THE TEST'S. A scenario that read the five figures off the report and
     added them up itself would be measuring its own arithmetic — it would agree with itself over any
-    four numbers the report happened to print, including four printed by a reader that had lost a
+    five numbers the report happened to print, including five printed by a reader that had lost a
     step. So the report states BOTH totals: how many steps this run read, and how many of them it
     accounted for. The scenario reads the pair.
 
-    FOUR FIGURES NOBODY CAN SWAP, which is the fixture's job. Its pipeline is built so that the four
-    dispositions carry four different counts — four candidates, one runner, two reconciler steps,
-    three the manifest calls non-checks — so a reader that attributed a step to the wrong
-    disposition reds on the figures even where the total would have survived the mistake. A pipeline
-    where two dispositions read alike would let that error through in silence.
+    FIVE FIGURES NOBODY CAN SWAP, which is the fixture's job. Its pipeline is built so that the five
+    dispositions carry five different counts — four candidates, one runner, two reconciler steps,
+    three the manifest calls non-checks, five of GitHub's plumbing actions no entry names — so a
+    reader that attributed a step to the wrong disposition reds on the figures even where the total
+    would have survived the mistake. A pipeline where two dispositions read alike would let that
+    error through in silence. One plumbing step the manifest does name stays among the non-checks,
+    because the consumer's word comes first.
+
+    A REPORT SAVED BEFORE PLUMBING WAS COUNTED STILL RENDERS. Its accounting has no plumbing
+    figure, and it re-renders that cell as nought, which is true of the run that wrote it: that run
+    counted every plumbing step among the other four.
 
     AND BOTH FORMS OF STEP ARE AMONG THEM. One of the candidates is an action rather than a command,
     because a `run:`-only reading is the historical shape of exactly this fault and
     the identity is what would have caught it as a shortfall rather than as nothing at all.
 
     @unit @SCN-USG-018
-    Scenario: candidates, runners, the reconciler and the excluded sum to the steps read
+    Scenario: candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read

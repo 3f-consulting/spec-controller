@@ -284,6 +284,7 @@ export interface StepAccounting {
   readonly runners: number;
   readonly reconciler: number;
   readonly excluded: number;
+  readonly plumbing?: number;
   readonly accountedFor: number;
 }
 

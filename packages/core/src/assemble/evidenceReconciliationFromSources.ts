@@ -9,6 +9,7 @@ import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
+import { isGitHubPlumbingStep } from "../parse/gitHubPlumbing.js";
 import {
   configurationNotRead,
   resolveDeferralTags,
@@ -99,7 +100,8 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
     runners,
     exclusions,
     reconciler,
-    isExcluded: (step) => reconciler.isReconciler(step) || exclusions.isExcluded(step),
+    isExcluded: (step) =>
+      reconciler.isReconciler(step) || exclusions.isExcluded(step) || isGitHubPlumbingStep(step),
   };
 }
 
@@ -185,7 +187,8 @@ function withReaderAccounts(
     packageJson,
     runners.tiers,
     reconciler,
-    exclusions
+    exclusions,
+    isExcluded
   );
 }
 
@@ -195,14 +198,16 @@ function withStepAccounting(
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
   reconciler: ReconcilerSteps,
-  exclusions: StepExclusions
+  exclusions: StepExclusions,
+  isExcluded: (step: CiWorkflowStep) => boolean
 ): EvidenceReconciliation {
   const accounting = stepAccounting(
     ciSources,
     packageJson,
     runnerTiers,
     reconciler.isReconciler,
-    exclusions.isExcluded
+    exclusions.isExcluded,
+    isExcluded
   );
   if (accounting.stepsRead === 0) return reconciliation;
   return {

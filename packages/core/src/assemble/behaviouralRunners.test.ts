@@ -24,20 +24,19 @@ beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline as a candidate", () => {
-  it("posts every step of the pipeline to the suspense row, each counted run and uncited, and carries no runner account", () => {
+describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
+  it("posts every step of the pipeline but its checkout to the suspense row, each counted run and uncited, and carries no runner account", () => {
     const { summary, ledger } = reconcile();
     const suspense = ledger.scenarioReconciliations
       .filter((row) => row.kind === "suspense-scenario")
       .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]));
     expect(suspense).toStrictEqual([
-      ["Checkout", "cites-no-scenario"],
       ["Install", "cites-no-scenario"],
       ["github/codeql-action/analyze@v3", "cites-no-scenario"],
       ["lint", "cites-no-scenario"],
       ["test", "cites-no-scenario"],
     ]);
-    expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 5, uncitedFitnessFunctionCount: 5 });
+    expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 4, uncitedFitnessFunctionCount: 4 });
     expect(summary).not.toHaveProperty("behaviouralRunners");
     expect(summary).not.toHaveProperty("runnerTiers");
     expect(summary).not.toHaveProperty("unrecognisedRunnerKeys");
