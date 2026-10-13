@@ -1,0 +1,10 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/inherited-scenario-code/rule/widget.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-INR-001] the one scenario is proven", "status": "passed" }
+      ]
+    }
+  ]
+}

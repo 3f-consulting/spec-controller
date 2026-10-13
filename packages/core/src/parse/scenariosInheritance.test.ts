@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseScenarios,
+  parseUntaggedScenarios,
 } from "./scenarios.js";
 
 describe("[SCN-LDG-020] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
@@ -95,5 +96,41 @@ Feature: alpha
 
   it("THROWS on unparseable source — an empty corpus balances against anything, so it never returns one", () => {
     expect(() => parseScenarios("not gherkin at all {{{")).toThrow(/not valid Gherkin/);
+  });
+});
+
+describe("[SCN-LDG-039] a scenario whose @SCN it inherits from its Feature or Rule is not listed as untagged", () => {
+  it.each([
+    [
+      "Feature",
+      `@AAA @unit @SCN-AAA-001
+Feature: alpha
+
+  Scenario: the one scenario beneath it
+    Given a thing
+`,
+      [],
+    ],
+    [
+      "Rule",
+      `@AAA
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Rule: alpha behaves
+
+    Scenario: the one scenario beneath it
+      Given a thing
+
+  Rule: beta has no code
+
+    Scenario: a scenario no code reaches
+      Given a thing
+`,
+      ["a scenario no code reaches"],
+    ],
+  ] as const)("inherited from its %s", (_ancestor, source, untagged) => {
+    expect(parseScenarios(source).map(({ scnId }) => scnId)).toEqual(["SCN-AAA-001"]);
+    expect(parseUntaggedScenarios(source)).toEqual(untagged);
   });
 });

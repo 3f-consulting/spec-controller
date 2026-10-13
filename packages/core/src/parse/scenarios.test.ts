@@ -4,8 +4,6 @@ import {
   parseUntaggedScenarios,
 } from "./scenarios.js";
 
-const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
-
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
   let source: string;
   beforeEach(() => {
@@ -61,7 +59,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 
   it("returns the untagged scenario + outline names, excluding the @SCN-tagged ones", () => {
-    expect(parseUntaggedScenarios(asFeature(source))).toEqual([
+    expect(parseUntaggedScenarios(source)).toEqual([
       "an untagged scenario",
       "an untagged outline",
     ]);

@@ -26,38 +26,16 @@ const TAG_TO_QUALITY_CHECK: Record<string, BehaviouralQualityCheck> = {
   performance: "performance",
 };
 
-function tagLineTags(line: string): string[] | null {
-  const tokens = line.split(/\s+/);
-  if (!tokens.every((t) => t.startsWith("@"))) return null;
-  return tokens.map((t) => t.slice(1));
-}
-
 const SCN_OCCURRENCE = new RegExp(`@${SCN_ID_SOURCE}`, "g");
 
 export function countScnOccurrences(source: string): number {
   return (source.match(SCN_OCCURRENCE) ?? []).length;
 }
 
-const SCENARIO_HEADER =
-  /^(?:Scenario Outline|Scenario Template|Scenario|Example):\s*(.*)$/;
-
 export function parseUntaggedScenarios(source: string): string[] {
-  const untagged: string[] = [];
-  let blockTags: string[] = [];
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    const tags = tagLineTags(line);
-    if (tags) {
-      blockTags.push(...tags);
-      continue;
-    }
-    const header = SCENARIO_HEADER.exec(line);
-    if (header && !blockTags.some((t) => SCN_CODE.test(t))) {
-      untagged.push(header[1]!);
-    }
-    blockTags = [];
-  }
-  return untagged;
+  return scenariosOf(source)
+    .filter(({ tags }) => !tags.some((t) => SCN_CODE.test(t)))
+    .map(({ name }) => name);
 }
 
 export const FITNESS_AXIS_TAG = "fitness";
@@ -110,14 +88,17 @@ function parseFeatureDocument(source: string): GherkinDocument {
   }
 }
 
-export function parseTaggedScenarios(source: string): TaggedScenario[] {
+interface ScenarioWithItsTags {
+  readonly name: string;
+  readonly tags: readonly string[];
+}
+
+function scenariosOf(source: string): ScenarioWithItsTags[] {
   const { feature } = parseFeatureDocument(source);
   if (feature === undefined) return [];
 
-  const tagged: TaggedScenario[] = [];
+  const scenarios: ScenarioWithItsTags[] = [];
   const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
-
-  const featureTags = bare(feature.tags);
 
   const collect = (children: readonly FeatureChild[], inherited: string[]): void => {
     for (const child of children) {
@@ -126,18 +107,20 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
         continue;
       }
       if (!child.scenario) continue;
-
-      const effective = [...bare(child.scenario.tags), ...inherited];
-      const scnTag = effective.find((t) => SCN_CODE.test(t));
-      if (scnTag === undefined) continue;
-
-      tagged.push({ scnId: scnTag, tags: effective, name: child.scenario.name });
+      scenarios.push({ name: child.scenario.name, tags: [...bare(child.scenario.tags), ...inherited] });
     }
   };
 
-  collect(feature.children as FeatureChild[], featureTags);
+  collect(feature.children as FeatureChild[], bare(feature.tags));
 
-  return tagged;
+  return scenarios;
+}
+
+export function parseTaggedScenarios(source: string): TaggedScenario[] {
+  return scenariosOf(source).flatMap(({ name, tags }) => {
+    const scnId = tags.find((t) => SCN_CODE.test(t));
+    return scnId === undefined ? [] : [{ scnId, tags, name }];
+  });
 }
 
 export function parseScenarios(
