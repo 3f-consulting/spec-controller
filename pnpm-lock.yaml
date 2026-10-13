@@ -63,8 +63,8 @@ importers:
         specifier: 0.3.24
         version: 0.3.24
       spec-controller:
-        specifier: 0.1.0-alpha.71
-        version: 0.1.0-alpha.71
+        specifier: 0.1.0-alpha.86
+        version: 0.1.0-alpha.86
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -114,8 +114,8 @@ importers:
 
 packages:
 
-  '@3f-consulting/spec-controller-core@0.1.0-alpha.71':
-    resolution: {integrity: sha512-3kth5uvLQBMl20vtl6aKThYlMsFfQx5qsKdNpPWXz00tDIqqQTOsuIT4JfSGbyKRTZqnWfC6hVe7i0bKT5EG2A==}
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.86':
+    resolution: {integrity: sha512-NCW99TYji2QDoz/kCvYLiiXP5lQpK/rX7uBWgDI2wxZIs+5NNXA8LSY/gPccZwb8Unnkso8zkBrcu0HeVjPUiQ==}
     engines: {node: '>=22'}
 
   '@andrewbranch/untar.js@1.0.4':
@@ -2579,8 +2579,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.0-alpha.71:
-    resolution: {integrity: sha512-eDWgFdoJJ4hpT94Bc9FQkwRYdANbKynhvbjAjZSqYOztNc5DNIPKor145icPBW781u8Q+vu+cfIOYiRu22U+uw==}
+  spec-controller@0.1.0-alpha.86:
+    resolution: {integrity: sha512-yo1wJqJ9GU+lhCvJb/w68UWZ8SymZPTy9gJVf/S+hWB5BfpD7YSFyJESG0DyOboxkwJAjh2JMoLO47kvIoKZiw==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -2971,7 +2971,7 @@ packages:
 
 snapshots:
 
-  '@3f-consulting/spec-controller-core@0.1.0-alpha.71':
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.86':
     dependencies:
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
@@ -5380,9 +5380,9 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.0-alpha.71:
+  spec-controller@0.1.0-alpha.86:
     dependencies:
-      '@3f-consulting/spec-controller-core': 0.1.0-alpha.71
+      '@3f-consulting/spec-controller-core': 0.1.0-alpha.86
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
       yaml: 2.9.1
