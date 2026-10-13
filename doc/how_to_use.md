@@ -45,6 +45,7 @@ A scenario's tag line says what it needs proved: `@SCN-<FFF>-<NNN> @unit @e2e` a
 | the scenario asks for | the evidence | how it names the scenario |
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title — the most specific one wins |
+| `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see *Citing a scenario from pytest*, below) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
 | `@fitness` | a CI step | the step's `id:` is the code (see *Turning a fitness function into an Evidence Obligation*, below) |
 
@@ -60,7 +61,54 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
         run: pnpm test
 ```
 
-**Only these three forms are read.** `SCN-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>` in a test title without the square brackets, a code in a comment — including a `// @SCN-…` line in a step-definition file — or a code anywhere else names nothing. A test that names nothing still runs and is still reported: it lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. When a `@unit` scenario reads `missing` while its test passes, check the brackets first.
+### Citing a scenario from pytest
+
+A pytest test's name is a Python function name, which cannot hold `[SCN-…]`, so a pytest test cites its scenario with a marker that a one-time hook copies into the report. Pass the report with `--pytest`:
+
+```sh
+pytest --junitxml=reports/pytest.xml
+spec-controller balance --pytest reports/pytest.xml
+```
+
+Once, in `conftest.py` beside your tests:
+
+```python
+def pytest_collection_modifyitems(items):
+    for item in items:
+        for marker in item.iter_markers("scn"):
+            for code in marker.args:
+                item.user_properties.append(("scn", code))
+```
+
+Once, in `pytest.ini` (unregistered, the marker warns, and under `--strict-markers` it errors):
+
+```ini
+[pytest]
+markers =
+    scn(code): the scenario this test proves
+```
+
+Then each test names the one scenario it proves:
+
+```python
+import pytest
+
+@pytest.mark.scn("SCN-<FFF>-<NNN>")
+def test_offers_the_next_code():
+    ...
+```
+
+`pytest --junitxml` then writes the code as a property of that test, which is what `balance` reads:
+
+```xml
+<testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="SCN-<FFF>-<NNN>" /></properties></testcase>
+```
+
+**No hook?** Calling `record_property("scn", "SCN-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family` each such test then raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
+
+**What a pytest report posts.** A test with exactly one `scn` property answers that scenario: passing, or failing when it carries a `<failure>`. A skipped test posts nothing, as a skipped Vitest test posts nothing. A code no feature file carries lands on a phantom scenario. A test with no `scn` property, or a value that is not a scenario code, lands on suspense. **A test with two or more `scn` properties credits none of them**, and the suspense row names every code, because one test proves exactly one scenario. A module that fails to collect, or a test whose setup or teardown errors, never ran its proof: it posts a broken item and the run is unsound (exit `4`), and the scenario such a test cites reads `missing`.
+
+**Only these four forms are read.** `SCN-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>` in a test title without the square brackets, a code in a comment — including a `// @SCN-…` line in a step-definition file — or a code anywhere else names nothing. A test that names nothing still runs and is still reported: it lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. When a `@unit` scenario reads `missing` while its test passes, check the brackets first.
 
 ---
 
@@ -145,6 +193,8 @@ it invokes and whether it is a `run:` step or a `uses:` action.
   ]
 }
 ```
+
+A Python suite names its runner the same way: `"unit": "pytest"` recognises a step that runs `pytest …` or `python -m pytest …`, because a runner is matched as a whole shell token.
 
 **`runners` is keyed by the four tiers and by nothing else.** A value is a runner's name or
 `null`, and `null` is a statement rather than a blank — *we have no runner for this tier*, which the
@@ -254,6 +304,7 @@ spec-controller balance --features ./features \
 |---|---|
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. Every `.feature` file under it is read, at any depth, and named in the report by its path under the directory. A symbolically linked directory is not entered. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
+| `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`) — runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See *Citing a scenario from pytest*. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see *Naming your runners* and *Deferring a scenario*). A fitness function is named by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |

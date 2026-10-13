@@ -241,6 +241,7 @@ export function suspenseReconciliationsOf(
         outcome: "cites-no-scenario" as const,
         evidenceObservation: o,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        ...(o.message !== undefined ? { message: o.message } : {}),
       })
     ),
     ...uncitedFitnessFunctions.map((o) =>

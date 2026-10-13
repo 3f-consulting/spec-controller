@@ -108,6 +108,9 @@ importers:
       '@cucumber/messages':
         specifier: ^34.0.1
         version: 34.0.1
+      fast-xml-parser:
+        specifier: ^5.11.2
+        version: 5.11.2
       yaml:
         specifier: ^2.9.0
         version: 2.9.0

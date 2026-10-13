@@ -30,7 +30,7 @@ const notSuppliedLine = (md: string): string | null =>
 describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run did not receive", () => {
   it("names the flags with no value on a line of their own, beneath the Inputs list", () => {
     const md = renderMarkdown(er(balance), handed({ features: "features", ciSteps: "ci-steps.json" }));
-    expect(notSuppliedLine(md)).toBe("- Not supplied: `--vitest`, `--cucumber`, `--ci`, `--package-json`");
+    expect(notSuppliedLine(md)).toBe("- Not supplied: `--vitest`, `--pytest`, `--cucumber`, `--ci`, `--package-json`");
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeGreaterThan(-1);
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeLessThan(md.indexOf("- Not supplied:"));
     expect(md.indexOf("- Not supplied:")).toBeLessThan(md.indexOf("- Run timestamp (UTC):"));
@@ -42,6 +42,7 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
       handed({
         features: "features",
         vitest: "vitest.json",
+        pytest: "report.xml",
         cucumber: "cucumber.json",
         ci: ".github/workflows",
         packageJson: "package.json",
@@ -55,7 +56,7 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
     const md = renderMarkdown(er(balance), handed({}));
     expect(md.split("\n")).toContain("- Inputs: none specified");
     expect(notSuppliedLine(md)).toBe(
-      "- Not supplied: `--features`, `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"
+      "- Not supplied: `--features`, `--vitest`, `--pytest`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"
     );
   });
 });

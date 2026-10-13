@@ -17,7 +17,7 @@ afterAll(() => {
 });
 
 describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
-  const flags = ["vitest", "cucumber", "features", "ci", "package-json"] as const;
+  const flags = ["vitest", "pytest", "cucumber", "features", "ci", "package-json"] as const;
 
   it.each(flags)(
     "returns a typed error naming --%s and the missing path when that flag's path is absent",

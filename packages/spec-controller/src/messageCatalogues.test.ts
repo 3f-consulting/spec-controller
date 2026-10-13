@@ -110,6 +110,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
   [CoreMessage.ManifestKindOfType]: ["number"],
   [CoreMessage.UntaggedScenarioId]: ["one.feature", "an untagged scenario"],
+  [CoreMessage.SeveralScnProperties]: [["SCN-ABC-001", "SCN-ABC-002"]],
 };
 
 function renderedCore(code: CoreMessage): string {
@@ -179,6 +180,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.BalanceSummary]: [],
   [AppMessage.FeaturesFlag]: [],
   [AppMessage.VitestFlag]: [],
+  [AppMessage.PytestFlag]: [],
   [AppMessage.CucumberFlag]: [],
   [AppMessage.CiFlag]: [],
   [AppMessage.PackageJsonFlag]: [],
@@ -211,10 +213,13 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.DefaultFeatureCorpus]: [],
   [AppMessage.DefaultCiWorkflows]: [],
   [AppMessage.VitestReportShape]: [],
+  [AppMessage.JunitReportShape]: [],
   [AppMessage.CucumberReportShape]: [],
   [AppMessage.CiStepRecordShape]: [],
   [AppMessage.PackageManifestShape]: [],
   [AppMessage.NotValidJson]: ["The --vitest report", "vitest.json", "Unexpected end of JSON input"],
+  [AppMessage.XmlFaultAtLine]: ["char '{' is not expected", 1],
+  [AppMessage.NotValidXml]: ["The --pytest report", "of the JUnit XML report pytest --junitxml writes", "report.xml", "char '{' is not expected at line 1"],
   [AppMessage.NotInShape]: ["The --vitest report", "the Vitest JSON reporter writes", "vitest.json", "testResults is missing"],
   [AppMessage.NotASavedReconciliation]: ["The --render-from-json file", "saved.json", "ledger is missing"],
   [AppMessage.NotRenderableAsSaved]: ["The --render-from-json file", "saved.json", "cannot read properties of undefined"],

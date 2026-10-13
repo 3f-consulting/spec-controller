@@ -28,6 +28,17 @@ export const VITEST_REPORT: Shape = {
   required: ["testResults"],
 };
 
+export const JUNIT_REPORT: Shape = {
+  fields: {
+    testsuites: {
+      fields: {
+        testsuite: { list: { fields: { testcase: { list: { fields: { classname: "string", name: "string" } } } } } },
+      },
+    },
+  },
+  required: ["testsuites"],
+};
+
 export const CUCUMBER_REPORT: Shape = {
   list: {
     fields: {

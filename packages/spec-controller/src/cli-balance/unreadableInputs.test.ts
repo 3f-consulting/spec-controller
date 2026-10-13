@@ -77,6 +77,42 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
   });
 });
 
+describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
+  const PYTEST_SHAPE = "the JUnit XML report pytest --junitxml writes";
+  const refusalOf = (content: string): string | null =>
+    checkInputShapes(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content));
+
+  it.each([
+    ["text that is not XML", "collected 3 items\n3 passed\n", "is not valid XML"],
+    ["a JSON report", '{"testResults":[]}', "is not valid XML"],
+    ["XML that holds no test suites", "<html><body/></html>", "testsuites is missing"],
+    ["test suites that are not a list of elements", '<testsuites name="t">x<testsuite>y</testsuite></testsuites>', "testsuites.testsuite[0] is a string, not an object"],
+  ])("refuses %s, naming the flag, the file, the shape pytest writes and what is wrong", (_, content, fault) => {
+    const error = refusalOf(content) ?? "";
+
+    expect(error).toContain("--pytest");
+    expect(error).toContain("reports/report.xml");
+    expect(error).toContain(PYTEST_SHAPE);
+    expect(error).toContain(fault);
+  });
+
+  it("passes the report a real pytest run wrote, so the run goes on to reconcile", () => {
+    const real = readFileSync("tests/fixtures/pytest/report.xml", "utf8");
+    expect(checkInputShapes(jsonInputsOf({ pytest: "report.xml" }, nothingByDefault), reading(real))).toBeNull();
+  });
+
+  it("runBalance refuses a --pytest file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    const report = join(features, "..", "report.xml");
+    writeFileSync(report, "not xml\n");
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--pytest", report]);
+
+    expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
+    expect(stderr).toContain(report);
+    expect(stderr).toContain(PYTEST_SHAPE);
+  });
+});
+
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
@@ -88,6 +124,10 @@ describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifes
 describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () => {
   it.each([
     ["vitest", '{"testResults":[]}'],
+    [
+      "pytest",
+      '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>',
+    ],
     ["cucumber", "[]"],
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
@@ -208,6 +248,22 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path])).toEqual({
       report: "",
       stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedFile]("--vitest"), path, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("runBalance refuses a given --pytest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "pytest-not-permitted-"));
+    made.push(dir);
+    const path = join(dir, "report.xml");
+    writeFileSync(path, '<testsuites><testsuite name="pytest" tests="0" /></testsuites>');
+    lock(path);
+    const reason = osReasonFor(() => readFileSync(path, "utf8"));
+
+    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--pytest", path])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--pytest"), path, reason) + "\n",
       exitCode: 2,
     });
   });

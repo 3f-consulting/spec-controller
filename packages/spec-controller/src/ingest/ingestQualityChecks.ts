@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
+import { parseJunitXml } from "./junitXml.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
   parseScenarios,
@@ -25,6 +26,10 @@ import {
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
 import {
+  parsePytestEvidenceObservations,
+  type JunitXmlReport,
+} from "@3f-consulting/spec-controller-core";
+import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
@@ -38,6 +43,7 @@ import type {
 } from "@3f-consulting/spec-controller-core";
 
 const VITEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
+const PYTEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
@@ -45,6 +51,7 @@ const RECONCILER_INVOCATION = "spec-controller balance";
 export interface ReconcileOptions {
   features?: string;
   vitest?: string;
+  pytest?: string;
   cucumber?: string;
   ci?: string;
   packageJson?: string;
@@ -59,6 +66,12 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
   if (!path || !existsSync(path)) return undefined;
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
+
+function readJunitXmlIfPresent(path: string | undefined): JunitXmlReport | undefined {
+  if (!path || !existsSync(path)) return undefined;
+  return parseJunitXml(readFileSync(path, "utf8"));
+}
+
 function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
   try {
     return discoverFeatures(featuresDir);
@@ -164,6 +177,8 @@ function parseBehaviouralObservations(opts: ReconcileOptions, root: string | und
   const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
+  const pytestReport = readJunitXmlIfPresent(opts.pytest);
+  if (pytestReport) out.push(...parsePytestEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
   const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
   if (cucumberReport) out.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
   return out;

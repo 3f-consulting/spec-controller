@@ -101,6 +101,11 @@ Then("the reconciliation reports the target's scenarios", function () {
 
 Then("the run is rejected for the missing path", function () {
   assert.notEqual(cliResult.status, 0, `expected a non-zero exit; got ${cliResult.status}\n${cliResult.stdout}`);
+  assert.match(
+    cliResult.stderr,
+    /path does not exist/,
+    `expected the refusal to say the path does not exist, not that the input could not be read; got:\n${cliResult.stderr}`,
+  );
 });
 
 Then("the rejection names the {} and the missing path", function (option: string) {

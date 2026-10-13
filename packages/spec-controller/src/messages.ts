@@ -59,6 +59,7 @@ export enum AppMessage {
   BalanceSummary,
   FeaturesFlag,
   VitestFlag,
+  PytestFlag,
   CucumberFlag,
   CiFlag,
   PackageJsonFlag,
@@ -91,10 +92,13 @@ export enum AppMessage {
   DefaultFeatureCorpus,
   DefaultCiWorkflows,
   VitestReportShape,
+  JunitReportShape,
   CucumberReportShape,
   CiStepRecordShape,
   PackageManifestShape,
   NotValidJson,
+  NotValidXml,
+  XmlFaultAtLine,
   NotInShape,
   NotASavedReconciliation,
   NotRenderableAsSaved,
@@ -177,6 +181,8 @@ interface AppMessageParams {
   [AppMessage.FlaggedCorpus]: [flag: string];
   [AppMessage.FlaggedWorkflows]: [flag: string];
   [AppMessage.NotValidJson]: [subject: string, path: string, reason: string];
+  [AppMessage.NotValidXml]: [subject: string, shape: string, path: string, reason: string];
+  [AppMessage.XmlFaultAtLine]: [fault: string, line: number];
   [AppMessage.NotInShape]: [subject: string, shape: string, path: string, fault: string];
   [AppMessage.NotASavedReconciliation]: [subject: string, path: string, fault: string];
   [AppMessage.NotRenderableAsSaved]: [subject: string, path: string, reason: string];
@@ -312,6 +318,7 @@ export const APP_MESSAGES: AppMessages = {
     "Directory of Gherkin .feature files — the scenarios, and the `@`-tags naming what each must prove " +
     "(@unit, @integration, @fitness, …).",
   [AppMessage.VitestFlag]: () => "A Vitest JSON report — runtime test evidence.",
+  [AppMessage.PytestFlag]: () => "A pytest JUnit XML report (pytest --junitxml) — runtime unit test evidence.",
   [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",
   [AppMessage.CiFlag]: () =>
     "Your CI workflows — a file, or a directory of them (default .github/workflows). " +
@@ -371,10 +378,14 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.DefaultFeatureCorpus]: () => "The feature corpus read by default",
   [AppMessage.DefaultCiWorkflows]: () => "The CI workflows read by default",
   [AppMessage.VitestReportShape]: () => "the Vitest JSON reporter writes",
+  [AppMessage.JunitReportShape]: () => "of the JUnit XML report pytest --junitxml writes",
   [AppMessage.CucumberReportShape]: () => "the Cucumber JSON formatter writes",
   [AppMessage.CiStepRecordShape]: () => "of a CI run's record of its steps",
   [AppMessage.PackageManifestShape]: () => "of a package.json manifest",
   [AppMessage.NotValidJson]: (subject, path, reason) => `${subject} is not valid JSON: ${path} (${reason})`,
+  [AppMessage.NotValidXml]: (subject, shape, path, reason) =>
+    `${subject} is not valid XML, so not in the shape ${shape}: ${path} (${reason})`,
+  [AppMessage.XmlFaultAtLine]: (fault, line) => `${fault} at line ${line}`,
   [AppMessage.NotInShape]: (subject, shape, path, fault) => `${subject} is not in the shape ${shape}: ${path} (${fault})`,
   [AppMessage.NotASavedReconciliation]: (subject, path, fault) =>
     `${subject} is not a saved reconciliation: ${path} (${fault})`,

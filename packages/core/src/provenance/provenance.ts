@@ -3,6 +3,7 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 export interface RunInputs {
   readonly features?: string;
   readonly vitest?: string;
+  readonly pytest?: string;
   readonly cucumber?: string;
   readonly ci?: string;
   readonly packageJson?: string;
@@ -23,6 +24,7 @@ export interface RunContext {
 const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
   { key: "features", flag: "--features" },
   { key: "vitest", flag: "--vitest" },
+  { key: "pytest", flag: "--pytest" },
   { key: "cucumber", flag: "--cucumber" },
   { key: "ci", flag: "--ci" },
   { key: "packageJson", flag: "--package-json" },

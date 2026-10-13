@@ -34,6 +34,7 @@ Feature: spec-controller balance runs standalone
       Examples:
         | flag                   |
         | Vitest report option   |
+        | pytest report option   |
         | Cucumber report option |
         | feature corpus option  |
         | CI workflows option    |
@@ -202,6 +203,7 @@ Feature: spec-controller balance runs standalone
         | flag                   | value                     |
         | feature corpus option  | /nonexistent              |
         | Vitest report option   | /nonexistent              |
+        | pytest report option   | /nonexistent              |
         | Cucumber report option | /nonexistent              |
         | CI workflows option    | /nonexistent              |
         | manifest option        | /nonexistent              |
@@ -344,6 +346,7 @@ Feature: spec-controller balance runs standalone
       Examples:
         | input           |
         | Vitest report   |
+        | pytest report   |
         | Cucumber report |
         | CI step record  |
 
@@ -377,6 +380,7 @@ Feature: spec-controller balance runs standalone
         | the CI workflows directory   |
         | the manifest read by default |
         | the Vitest report            |
+        | the pytest report            |
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
@@ -568,6 +572,7 @@ Feature: spec-controller balance runs standalone
         | the format option         | followed by the report-only option                          |
         | the target-name option    | followed by the report-only option                          |
         | the Vitest report option  | at the end, with a file named true in the working directory |
+        | the pytest report option  | at the end, with a file named true in the working directory |
         | the re-render option      | at the end of the arguments                                 |
         | the feature corpus option | with an empty value                                         |
 

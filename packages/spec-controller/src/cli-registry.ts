@@ -47,6 +47,11 @@ const balanceFlags: FlagSpec[] = [
     description: APP_MESSAGES[AppMessage.VitestFlag](),
   },
   {
+    name: "--pytest",
+    arg: "<report.xml>",
+    description: APP_MESSAGES[AppMessage.PytestFlag](),
+  },
+  {
     name: "--cucumber",
     arg: "<report.json>",
     description: APP_MESSAGES[AppMessage.CucumberFlag](),

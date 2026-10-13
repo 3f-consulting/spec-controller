@@ -56,6 +56,21 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     expect(stdout).toBe("");
   });
 
+  it("runBalance refuses --pytest at the end over an out-of-balance target at exit 2, naming it and its value alone, before it reconciles", () => {
+    const pytest = valueFlags.find((flag) => flag.name === "--pytest");
+    expect(pytest).toBeDefined();
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/broken/features",
+      "--package-json", "tests/fixtures/broken/package.json",
+      "--ci", "tests/fixtures/broken",
+      "--pytest",
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(refusalFor("--pytest", pytest as FlagSpec) + "\n");
+    expect(stdout).toBe("");
+  });
+
   it("refuses no value flag for a command the registry does not know", () => {
     for (const flag of valueFlags) {
       expect(checkMissingValues([flag.name], cliRegistry, "blance")).toBeNull();

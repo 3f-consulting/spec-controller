@@ -159,6 +159,7 @@ export enum CoreMessage {
   OutcomeBothMissing,
   ObservationPassed,
   ObservationFailed,
+  SeveralScnProperties,
 }
 
 interface CoreMessageParams {
@@ -224,6 +225,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
   readonly [CoreMessage.ManifestKindOfType]: [type: string];
   readonly [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
+  readonly [CoreMessage.SeveralScnProperties]: [codes: readonly string[]];
 }
 
 export type CoreMessages = {
@@ -452,4 +454,6 @@ export const CORE_MESSAGES: CoreMessages = {
     "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
   [CoreMessage.ObservationPassed]: "passed",
   [CoreMessage.ObservationFailed]: "failed",
+  [CoreMessage.SeveralScnProperties]: (codes) =>
+    `${codes.length} scn properties cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
 };

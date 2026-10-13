@@ -88,6 +88,18 @@ Given("a target whose CI step record parses but holds {}", function (defect: str
   target = reportTarget("ci-steps", "ci-steps.json", document, where);
 });
 
+const NOT_JUNIT_XML: Record<string, string> = {
+  "not XML at all": "collected 3 items\n3 passed in 0.01s\n",
+  "a JSON report rather than XML": '{"testResults":[]}',
+  "XML that holds no test suites": "<html><body/></html>",
+};
+
+Given(/^a target whose pytest report is (?!well formed and holds nothing$)(.+)$/, function (defect: string) {
+  const dir = targetDir();
+  writeFileSync(join(dir, "report.xml"), rowOf(NOT_JUNIT_XML, defect));
+  target = { dir, args: ["--features", "features", "--pytest", "report.xml"], named: "report.xml", where: "--pytest" };
+});
+
 const MANIFEST: Record<string, readonly [string, string]> = {
   "a list where the manifest belongs": ["[]", "the top level is a list, not an object"],
   "scripts that are not a map": ['{"scripts":"x"}', "scripts is a string, not an object"],
@@ -103,15 +115,21 @@ Given("a target whose manifest, {}, holds {}", function (how: string, defect: st
   target = { dir, args: ["--features", "features", ...named], named: "package.json", where };
 });
 
-const EMPTY: Record<string, readonly [string, string, unknown]> = {
-  "Vitest report": ["vitest", "vitest.json", { testResults: [] }],
-  "Cucumber report": ["cucumber", "cucumber.json", []],
-  "CI step record": ["ci-steps", "ci-steps.json", {}],
+const EMPTY_PYTEST_REPORT =
+  '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>';
+
+const EMPTY: Record<string, readonly [string, string, string]> = {
+  "Vitest report": ["vitest", "vitest.json", JSON.stringify({ testResults: [] })],
+  "pytest report": ["pytest", "report.xml", EMPTY_PYTEST_REPORT],
+  "Cucumber report": ["cucumber", "cucumber.json", "[]"],
+  "CI step record": ["ci-steps", "ci-steps.json", "{}"],
 };
 
 Given("a target whose {} is well formed and holds nothing", function (input: string) {
-  const [flag, file, document] = rowOf(EMPTY, input);
-  target = reportTarget(flag, file, document, "");
+  const [flag, file, text] = rowOf(EMPTY, input);
+  const dir = targetDir();
+  writeFileSync(join(dir, file), text);
+  target = { dir, args: ["--features", "features", `--${flag}`, file], named: file, where: "" };
 });
 
 const PATH_KINDS: Record<string, (dir: string) => readonly [readonly string[], string]> = {
@@ -170,6 +188,11 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     writeFileSync(join(dir, "vitest.json"), '{"testResults":[]}');
     chmodSync(join(dir, "vitest.json"), 0o000);
     return [["--features", "features", "--vitest", "vitest.json"], "vitest.json", "--vitest"];
+  },
+  "the pytest report": (dir) => {
+    writeFileSync(join(dir, "report.xml"), EMPTY_PYTEST_REPORT);
+    chmodSync(join(dir, "report.xml"), 0o000);
+    return [["--features", "features", "--pytest", "report.xml"], "report.xml", "--pytest"];
   },
 };
 
@@ -256,6 +279,15 @@ Then("the input is refused as one the tool cannot read, never read as a verdict"
 Then("the refusal names the input and where its shape is wrong", function () {
   assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
   assert.ok(result.stderr.includes(target.where), `expected stderr to say "${target.where}"; got:\n${result.stderr}`);
+});
+
+Then("the refusal names the pytest report and the shape pytest writes", function () {
+  assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+  assert.ok(
+    result.stderr.includes("the JUnit XML report pytest --junitxml writes"),
+    `expected stderr to name the shape pytest writes; got:\n${result.stderr}`,
+  );
 });
 
 Then("the run reads it and reaches its verdict", function () {

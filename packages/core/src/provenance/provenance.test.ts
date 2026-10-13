@@ -89,6 +89,15 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
 
   it("names the canonical flags with no value, in canonical order", () => {
     const facts = projectProvenance(handed({ features: "features", ciSteps: "ci-steps.json" }));
-    expect(facts.absentInputs).toEqual(["--vitest", "--cucumber", "--ci", "--package-json"]);
+    expect(facts.absentInputs).toEqual(["--vitest", "--pytest", "--cucumber", "--ci", "--package-json"]);
+  });
+
+  it("lists a pytest report the run received among its inputs, beside --vitest, and never as absent", () => {
+    const facts = projectProvenance(
+      handed({ features: "features", vitest: "vitest.json", pytest: "report.xml", cucumber: "cucumber.json" })
+    );
+    expect(facts.inputs.map((i) => i.flag)).toEqual(["--features", "--vitest", "--pytest", "--cucumber"]);
+    expect(facts.inputs).toContainEqual({ flag: "--pytest", value: "report.xml" });
+    expect(facts.absentInputs).not.toContain("--pytest");
   });
 });

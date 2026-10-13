@@ -86,7 +86,8 @@ function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][numb
   }
   if (!observationOnly) return undefined;
   const where = item.fitnessFunction || item.locator;
-  return `${where === undefined ? "" : ` (${where})`}${resultOf(item)}`;
+  const said = item.fitnessFunction || item.message === undefined ? "" : `: ${cellSafe(headlineOf(item.message))}`;
+  return `${where === undefined ? "" : ` (${where}${said})`}${resultOf(item)}`;
 }
 
 const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {

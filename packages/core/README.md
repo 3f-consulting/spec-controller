@@ -36,7 +36,7 @@ isBalanced(ledger); // false while any scenario names evidence that did not arri
 
 ## What is on the barrel
 
-- **Parse** — `parseScenarios`, `parseUntaggedScenarios` and `countScnOccurrences`; `parseVitestEvidenceObservations`, `parseCucumberEvidenceObservations`; the readers for fitness functions and for what a pipeline's steps actually ran.
+- **Parse** — `parseScenarios`, `parseUntaggedScenarios` and `countScnOccurrences`; `parseVitestEvidenceObservations`, `parsePytestEvidenceObservations` (over a pytest JUnit XML report you have already parsed into objects), `parseCucumberEvidenceObservations`; the readers for fitness functions and for what a pipeline's steps actually ran.
 - **Reconcile** — `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over sources you have already read.
 - **Ask the ledger** — `isBalanced`, `hasPendingItems`, `hasBrokenEvidence`, `hasNothingToReconcile`. These are the four questions a caller decides on: the CLI's own balanced / out-of-balance / unsound / pending-under-strict / nothing-to-reconcile verdicts are built out of these four and nothing else.
 - **Render** — `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string.
