@@ -1,7 +1,7 @@
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH } from "../ingest/ingestQualityChecks.js";
+import { corpusFeatureFiles } from "../ingest/ingestScenarios.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { regularFileIdentity, type ReadInput } from "../outputLocation.js";
 import type { IdentifiedInput } from "./emit/format.js";
@@ -19,10 +19,7 @@ export const NODE_INPUT_READER: InputReader = {
   exists: existsSync,
   featureFiles: (dir) => {
     try {
-      return readdirSync(dir)
-        .filter((name) => name.endsWith(".feature"))
-        .sort()
-        .map((name) => join(dir, name));
+      return corpusFeatureFiles(dir).map(({ path }) => path);
     } catch {
       return [];
     }

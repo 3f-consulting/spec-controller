@@ -232,6 +232,53 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
   });
 });
 
+describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is refused, naming it, never skipped", () => {
+  const runsAsRoot = (): boolean => process.getuid?.() === 0;
+  const locked: string[] = [];
+
+  afterEach(() => {
+    for (const path of locked.splice(0)) chmodSync(path, 0o755);
+  });
+
+  function corpusWithLockedSubdirectory(): { features: string; subdirectory: string; reason: string } {
+    const { features } = targetOnDisk();
+    const subdirectory = join(features, "area");
+    mkdirSync(subdirectory);
+    writeFileSync(join(subdirectory, "b.feature"), "Feature: b\n");
+    chmodSync(subdirectory, 0o000);
+    locked.push(subdirectory);
+    let reason = "";
+    try {
+      readdirSync(subdirectory);
+    } catch (err) {
+      reason = (err as Error).message;
+    }
+    expect(reason).not.toBe("");
+    return { features, subdirectory, reason };
+  }
+
+  it("runBalance refuses the --features corpus at exit 2, naming the subdirectory it may not read and the refusal to read it, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const { features, subdirectory, reason } = corpusWithLockedSubdirectory();
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features]);
+
+    expect({ report: stdout, stderr, exitCode }).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("checkInputPaths names the subdirectory, not the corpus, as the path it could not read", ({ skip }) => {
+    skip(runsAsRoot());
+    const { features, subdirectory, reason } = corpusWithLockedSubdirectory();
+
+    expect(checkInputPaths({ features })).toBe(
+      APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason),
+    );
+  });
+});
+
 const SAVED = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 
 describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, and nothing is rendered", () => {

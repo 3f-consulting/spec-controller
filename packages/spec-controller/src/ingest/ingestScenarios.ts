@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync } from "node:fs";
-import { basename, join } from "node:path";
+import { readFileSync, readdirSync, type Dirent } from "node:fs";
+import { join } from "node:path";
 
 import {
   MissingFeatureCorpusError,
@@ -36,13 +36,39 @@ function featuresDir(): string {
   return join(process.cwd(), "features");
 }
 
-function corpusFileNames(dir: string): string[] {
+export interface CorpusFeatureFile {
+  path: string;
+  relativePath: string;
+}
+
+function entriesOf(dir: string): Dirent[] {
+  return readdirSync(dir, { withFileTypes: true });
+}
+
+function corpusEntries(dir: string): Dirent[] {
   try {
-    return readdirSync(dir);
+    return entriesOf(dir);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") throw new MissingFeatureCorpusError(dir);
     throw err;
   }
+}
+
+// Dirent.isDirectory() is false for a symlink, so a symlinked directory is never entered.
+function featureFilesUnder(dir: string, prefix: string, entries: Dirent[]): string[] {
+  return entries.flatMap((entry) => {
+    const relativePath = `${prefix}${entry.name}`;
+    if (entry.name.endsWith(".feature")) return [relativePath];
+    if (!entry.isDirectory()) return [];
+    const subdirectory = join(dir, entry.name);
+    return featureFilesUnder(subdirectory, `${relativePath}/`, entriesOf(subdirectory));
+  });
+}
+
+export function corpusFeatureFiles(dir: string): CorpusFeatureFile[] {
+  return featureFilesUnder(dir, "", corpusEntries(dir))
+    .sort()
+    .map((relativePath) => ({ path: join(dir, relativePath), relativePath }));
 }
 
 function readFeatureSource(path: string): string {
@@ -56,19 +82,17 @@ function readFeatureSource(path: string): string {
 }
 
 export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature[] {
-  const files = corpusFileNames(dir)
-    .filter((name) => name.endsWith(".feature"))
-    .sort()
-    .map((name) => {
-      const path = join(dir, name);
-      return { name, path, source: readFeatureSource(path) };
-    });
+  const files = corpusFeatureFiles(dir).map(({ path, relativePath }) => ({
+    relativePath,
+    path,
+    source: readFeatureSource(path),
+  }));
 
   const parseErrors = files.flatMap(({ path, source }) => parseErrorsIn(path, source));
   if (parseErrors.length > 0) throw new UnreadableFeatureCorpusError(parseErrors);
 
-  return files.map(({ name, path, source }) => ({
-    slug: basename(name, ".feature"),
+  return files.map(({ relativePath, path, source }) => ({
+    slug: relativePath.slice(0, -".feature".length),
     path,
     featureCode: extractFeatureCode(source),
   }));

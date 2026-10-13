@@ -252,7 +252,7 @@ spec-controller balance --features ./features \
 
 | Flag | Purpose |
 |---|---|
-| `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
+| `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. Every `.feature` file under it is read, at any depth, and named in the report by its path under the directory. A symbolically linked directory is not entered. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |

@@ -145,6 +145,12 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     chmodSync(join(dir, "features"), 0o000);
     return [["--features", "features"], "features", "--features"];
   },
+  "a subdirectory of the feature corpus, holding a feature file,": (dir) => {
+    mkdirSync(join(dir, "features", "area"));
+    writeFileSync(join(dir, "features", "area", "nested.feature"), FEATURE.replace(/UIN/g, "UIA"));
+    chmodSync(join(dir, "features", "area"), 0o000);
+    return [["--features", "features"], join("features", "area"), "--features"];
+  },
   "the CI workflow file": (dir) => {
     writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");
     chmodSync(join(dir, "ci.yml"), 0o000);
@@ -272,7 +278,7 @@ Then("the refusal says the tool was not permitted to read it", function () {
 
 After(function () {
   for (const directory of temporaryDirectories.splice(0)) {
-    for (const entry of ["features", "workflows"]) {
+    for (const entry of ["features", join("features", "area"), "workflows"]) {
       const path = join(directory, entry);
       if (existsSync(path)) chmodSync(path, 0o755);
     }

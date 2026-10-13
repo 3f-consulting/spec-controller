@@ -851,3 +851,32 @@ Feature: spec-controller balance runs standalone
       And the refusal names the flag as retired, with the version that retired it
       And the refusal names what replaced it
       And the refusal advises no pin toward a version that still accepts the flag
+
+  Rule: the corpus is every .feature file under the corpus directory, at any depth
+
+    A project that keeps its feature files in subdirectories had none of them read: the corpus
+    was the directory's top level alone, and the report said no feature file was judged. Where
+    a feature file sits under the corpus changes nothing about how it is judged.
+
+    @SCN-CLI-085 @unit @e2e
+    Scenario: a feature file in a subdirectory of the corpus, at any depth, is read and judged as it would be at the top level
+      Given a target whose feature files sit in its corpus at the top level and in subdirectories at several depths
+      And the same target with every one of those feature files at the top level of its corpus
+      When balance is asked to reconcile both of those targets
+      Then the nested target's reconciliation reports the scenarios of every one of its feature files
+      And both targets reach the same verdict over the same Scenario Reconciliations
+
+    @SCN-CLI-086 @unit @e2e
+    Scenario: a feature file in a subdirectory is named by its path under the corpus, so two files of one name in different subdirectories are told apart
+      Given a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no scenario code
+      When balance is asked to reconcile that corpus
+      Then the reconciliation names each of those scenarios by its feature file's path under the corpus
+      And each of those scenarios is counted against its own feature, not against the other
+
+    @SCN-CLI-087 @unit @e2e
+    Scenario: a subdirectory of the corpus the tool is not permitted to read is refused as unreadable, naming it, never skipped
+      Given a target in which a subdirectory of the feature corpus, holding a feature file, is not permitted to be read
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the input it could not read and the path
+      And the refusal says the tool was not permitted to read it
