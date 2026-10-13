@@ -6,6 +6,33 @@
 
 Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest, Cucumber, your CI lint gates) and it produces one report: which scenarios are **balanced** (the evidence answering each Evidence Obligation exists and holds), which are **out-of-balance** (evidence missing, failing, or a *watermelon*: green from a check whose red its job would have survived), and which evidence ran that no scenario asked for.
 
+<!-- sample-report:start -->
+<div class="sample-report">
+
+```markdown
+### Run verdict
+
+**OUT-OF-BALANCE** — the accounts do not agree. At least one Scenario Reconciliation carries a reconciling item. This run FAILED. (exit 1)
+
+## Scenario Reconciliations
+
+- 5 Scenario Reconciliation(s): 1 balanced, 4 out-of-balance.
+- 1 phantom-scenario(s): cited by an evidence observation, named by no feature.
+- 1 suspense-scenario(s): evidence observations citing no scenario, aggregated into "(no scenario)".
+- 0 @SCN ids seen in non-tag context, excluded
+
+| Scenario | Unit | Verdict | Reconciling items |
+| --- | --- | --- | --- |
+| SCN-CHK-001 | U/1 | ✓ balanced | — |
+| SCN-CHK-002 | U/1 | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
+| SCN-CHK-003 | U/- | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
+| SCN-CHK-004 | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) |
+| (no scenario) | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) |
+```
+
+</div>
+<!-- sample-report:end -->
+
 ## Why
 
 Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario raises an Evidence Obligation naming the evidence (the **debit** — specification); every observed test or fitness function is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.

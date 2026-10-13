@@ -1,0 +1,13 @@
+{
+  "testResults": [
+    {
+      "name": "src/checkout.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-CHK-001] the order total is the sum of its line prices", "status": "passed" },
+        { "fullName": "[SCN-CHK-002] a discount code takes its percentage off the total", "status": "failed" },
+        { "fullName": "[SCN-CHK-004] a gift card pays part of the total", "status": "passed" },
+        { "fullName": "rounds a price to two decimal places", "status": "passed" }
+      ]
+    }
+  ]
+}

@@ -332,6 +332,12 @@ jobs:
         if: always()
         run: node scripts/test-ratio.mjs
 
+      # The fixture, the two sections and the markers live in the script.
+      - name: The README's sample report is what balance prints on its fixture
+        id: SCN-FIT-046
+        if: always()
+        run: node scripts/readme-sample.mjs
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()
