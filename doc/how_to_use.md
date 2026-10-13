@@ -28,7 +28,9 @@ node --version   # must be v22.x or higher
 
 **Your evidence, as reports**
 
-`spec-controller` does not run your tests — it reconciles the *reports* your tools already produce. Before running `balance`, generate whichever of these apply to your project:
+`spec-controller` does not run your tests — it reconciles the *reports* your tools already produce. Before running `balance`, generate whichever of these apply to your project. The commands that write each report are step 1 of *Run against a target — a worked example*, below. If your project uses pnpm, note that Node 25 and later do not bundle corepack, so install pnpm yourself (`npm install -g pnpm`).
+
+The inputs:
 
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
@@ -375,41 +377,42 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 
 ## Run against a target — a worked example
 
-Three locations, named once at the top and used throughout: the repository being reconciled, this checkout, and the store. Set them to your own and the rest of the block runs unchanged.
-
-`STORE` sits outside both checkouts deliberately, for the reason given above — a kept run enumerates a codebase's gaps, dangling anchors and watermelons, so it belongs in a store you chose rather than under version control alongside the thing it is about.
+Run it from the repository being reconciled, with the published CLI. `STORE` is optional and sits outside the repository on purpose: a kept run lists a codebase's gaps, so it belongs in a store you chose, not under version control beside the thing it is about.
 
 ```
-TARGET=~/code/your-project           # the repository being reconciled
-CONTROLLER=~/code/spec-controller    # this checkout
-STORE=~/spec-controller-runs         # kept runs, OUTSIDE both
+cd ~/code/your-project
+STORE=~/spec-controller-runs        # optional: kept runs, outside the repository
 
-# 1. Produce the target's evidence.
-cd "$TARGET"
-git switch main
-git pull --ff-only
-pnpm install --frozen-lockfile
-npx cucumber-js --format summary --format json:reports/cucumber.json
+# 1. Produce the evidence your tools already write.
 npx vitest run --reporter=json --outputFile=reports/vitest.json
+npx cucumber-js --format summary --format json:reports/cucumber.json
+python -m pytest --junitxml=reports/pytest.xml      # if you use pytest
 
-# 2. Reconcile it. The controller checkout is refreshed too — the verdict is only
-#    as trustworthy as the binary that produced it.
-cd "$CONTROLLER"
-git switch main
-git pull --ff-only
-pnpm install --frozen-lockfile
-node_modules/.bin/tsx packages/spec-controller/src/cli.ts \
-  --store "$STORE" \
-  balance \
+# 2. Reconcile it.
+npx spec-controller --store "$STORE" balance \
   --target your-project \
-  --features "$TARGET/features" \
-  --vitest "$TARGET/reports/vitest.json" \
-  --cucumber "$TARGET/reports/cucumber.json" \
-  --ci "$TARGET/.github/workflows/ci.yml" \
-  --package-json "$TARGET/package.json"
+  --features features \
+  --vitest reports/vitest.json \
+  --cucumber reports/cucumber.json \
+  --pytest reports/pytest.xml \
+  --ci .github/workflows/ci.yml \
+  --package-json package.json
 ```
 
----
+Leave out any input you don't have. `--target` names the project in the report; without it the report reads `unknown-target`. On a first run, add `--exit-zero` to read the report without failing the build.
+
+**Your first `notChecks`.** Every CI step that is neither a declared runner nor one of GitHub's own checkout, setup, cache and artifact actions is listed as a check. Steps that do work but check nothing, such as publishing or bumping a version, are named once, by the step's own name:
+
+```jsonc
+"specController": {
+  "notChecks": [
+    "ci.yml:ci:Publish to npm",
+    "release.yml:release:Bump version"
+  ]
+}
+```
+
+**When a row reads `no-evidence-obligation`**, a test cites a scenario that asks for no evidence of its kind. Move the test's citation to the scenario it really proves, or split off a new scenario for it. Never re-point a citation just to turn a row green.
 
 ## What you get
 

@@ -28,18 +28,7 @@ A doc-only push to `main` therefore meets none of CI's gates, including the thre
 read Markdown. Run Vale locally before that push. The next CI run on any branch reads the whole
 tree, so anything a doc-only push lets through reds the next PR.
 
-**CI is the gate, and it is the only green.** No single local command reproduces it, and
-deliberately so: this repository once *derived* a local ladder from `ci.yml` so that a
-hand-assembled green-check could not silently narrow — and that derivation was 1,400 lines of
-check code of our own, in an exemplar whose whole claim is that a consumer writes none. It was
-deleted. A consumer's pipeline is their gate, and ours is ours.
-
-The history is kept because it is why this document still lists no gates. It once listed five
-and said CI ran the same steps — CI ran thirteen, so an implementer who followed it *correctly*
-skipped `lint:complexity` and a red build was reported green. A later change moved the list
-into a script, which drifted the same way within four commits. **A hand-maintained list drifts
-wherever it is kept**, so there is none here either: read `.github/workflows/ci.yml`, which is
-the pipeline and the list at once.
+**CI is the gate, and it is the only green.** No single local command reproduces it, by design. A hand-kept list of local checks drifts from the pipeline wherever it is kept, so there is none here: read `.github/workflows/ci.yml`, which is the pipeline and the list at once.
 
 Before opening a PR, install with a frozen lockfile and run what your change touches:
 
@@ -194,11 +183,9 @@ any key the `specController` block does not read.
 Reconciliation reports are never committed. Nothing in the pipeline writes one into
 the tree: `ci.yml` resolves the evidence root to a temp directory
 (`SPEC_CONTROLLER_EVIDENCE_DIR`, `$RUNNER_TEMP` on a runner, whatever you export locally),
-so a report appearing under version control is now a deliberate act rather than an
-accident a guard has to catch. Kept reports belong in an external store.
+so a report appearing under version control is a deliberate act, not an accident a
+guard has to catch. Kept reports belong in an external store.
 
 ## Publishing
 
-Publishing is gated on a green CI run existing on `origin` — never publish from a
-local-only green. Making the repo public and `npm publish` are deliberate operator
-actions taken after CI is proven green on origin.
+Nothing publishes except a merge to `main`. Each merge that changes a package publishes the next version from CI, with npm trusted publishing and no stored credential, and the release workflow checks that npm's `latest` is the version it just published. [`doc/releasing.md`](./doc/releasing.md) is the detail. Never publish from a local machine.
