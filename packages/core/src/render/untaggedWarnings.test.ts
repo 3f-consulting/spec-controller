@@ -32,7 +32,7 @@ const alpha = `Feature: alpha
     Given nothing cites it
 `;
 
-function censusBlock(corpus: readonly { feature: string; source: string }[]): string[] {
+function renderCorpus(corpus: readonly { feature: string; source: string }[]): string {
   const untagged = corpus.flatMap(({ feature, source }) =>
     parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
   );
@@ -43,11 +43,14 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
     [],
     untagged.map(({ feature, scenario }) => `${feature} : ${scenario}`)
   );
-  const md = renderMarkdown(
+  return renderMarkdown(
     { summary: summaryOf(ledger, false, false), ledger },
     ctx,
     evidenceObligations(raw, scenarios.length, untagged)
   );
+}
+
+function censusBlock(md: string): string[] {
   const lines = md.split("\n");
   const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);
   expect(start).toBeGreaterThan(0);
@@ -55,19 +58,29 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   return block.slice(0, block.indexOf(""));
 }
 
-describe("[SCN-RPT-014] Warnings lists the untagged scenarios with their feature locators", () => {
-  it("lists the untagged scenarios sorted by feature, then scenario, whatever order the corpus gives them in", () => {
-    expect(
-      censusBlock([
-        { feature: "zeta.feature", source: zeta },
-        { feature: "alpha.feature", source: alpha },
-      ])
-    ).toEqual([
+const corpus = [
+  { feature: "zeta.feature", source: zeta },
+  { feature: "alpha.feature", source: alpha },
+];
+
+const untaggedLocators = [
+  "alpha.feature : untagged scenario c",
+  "zeta.feature : untagged scenario a",
+  "zeta.feature : untagged scenario b",
+];
+
+describe("[SCN-RPT-014] the ledger summary counts the untagged scenarios, and each is named once, on its own ledger row", () => {
+  it("states the untagged count in the ledger summary, naming none of them there", () => {
+    expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](3)}`,
-      "  - alpha.feature : untagged scenario c",
-      "  - zeta.feature : untagged scenario a",
-      "  - zeta.feature : untagged scenario b",
+      "- 3 scenario(s) carry no @SCN tag",
     ]);
+  });
+
+  it.each(untaggedLocators)("names %s exactly once, on its own ledger row", (locator) => {
+    const lines = renderCorpus(corpus).split("\n");
+    const naming = lines.filter((line) => line.includes(locator));
+    expect(naming).toHaveLength(1);
+    expect(naming[0]?.startsWith(`| ${locator} |`)).toBe(true);
   });
 });

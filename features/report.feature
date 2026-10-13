@@ -272,21 +272,21 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
 
-  Rule: Warnings flags the untagged scenarios with their feature locators
+  Rule: the ledger summary counts the untagged scenarios, and each is listed once, on its own ledger row
 
     Anchor audit — untagged scenarios, the obligation-side
     counterpart to the evidence observation anomalies. The scenario parse emits only
     scenarios WITH an @SCN; the untagged count takes the Gherkin scenario
     headers (Scenario / Scenario Outline / Scenario Template / Example — NOT the
     Examples: data table) and subtracts those whose preceding tag block carries an @SCN.
-    The ledger-summary bullets list the untagged-scenario count + `feature-file : scenario`
-    locators (sorted). The datum lives on the evidence-obligations census's untaggedScenarios
-    (obligation-side, like excludedOccurrences) and — a non-derivable datum — persists on the
-    JSON evidenceObligations object beside excludedOccurrences (project design §3). Facts-only
-    — count + locator.
+    The ledger summary states the untagged-scenario count; each untagged scenario is named
+    once, by its `feature-file : scenario` locator, on its own ledger row. The datum lives on
+    the evidence-obligations census's untaggedScenarios (obligation-side, like
+    excludedOccurrences) and — a non-derivable datum — persists on the JSON
+    evidenceObligations object beside excludedOccurrences (project design §3).
 
     @unit @SCN-RPT-014
-    Scenario: Warnings lists the untagged scenarios with their feature locators
+    Scenario: the ledger summary counts the untagged scenarios, and each is named once, on its own ledger row
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 

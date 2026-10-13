@@ -364,16 +364,8 @@ function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliation
 
 function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, accounts: number): string[] {
   const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](census.excludedOccurrences)}`];
-  const untagged = census.untaggedScenarios;
-  if (untagged.length > 0) {
-    const sorted = [...untagged].sort(
-      (a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario)
-    );
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged.length)}`);
-    for (const { feature, scenario } of sorted) {
-      lines.push(`  - ${feature} : ${scenario}`);
-    }
-  }
+  const untagged = census.untaggedScenarios.length;
+  if (untagged > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged)}`);
   lines.push(...sharedScnCodeLines(census.sharedScnCodes ?? [], accounts));
   return lines;
 }

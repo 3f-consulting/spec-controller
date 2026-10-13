@@ -414,7 +414,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.SuspenseScenarioTally]: (count) =>
     `${count} suspense-scenario(s): evidence observations citing no scenario, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
-  [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag:`,
+  [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
     `The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${codes} @SCN code(s) carried by more than one scenario:`,
   [CoreMessage.LedgerTableHeader]: "| Scenario | Verdict | Reconciling items |",
