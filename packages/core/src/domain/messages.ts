@@ -438,7 +438,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OutcomeSatisfied]: "Evidence Observation satisfies its Evidence Obligation",
   [CoreMessage.OutcomeMissing]: "Evidence Observation is missing",
   [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",
-  [CoreMessage.OutcomeWatermelon]: "Evidence Observation is passing but fabricated",
+  [CoreMessage.OutcomeWatermelon]: "Evidence Observation is passing but its check could not fail its job",
   [CoreMessage.OutcomeNoScnCode]: "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
   [CoreMessage.OutcomeDuplicateScnCode]: "Evidence Obligation's @SCN code is carried by another Scenario",
   [CoreMessage.OutcomeCitesUnknownScenario]: "Evidence Observation cites an unknown Scenario",

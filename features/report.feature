@@ -393,7 +393,7 @@ Feature: The report renders the ledger as sectioned facts
     reconciling-items list, and the fitness-obligation table's Outcome column. "↳ missing"
     becomes "↳ Evidence Observation is missing"; "unit ∅ missing" becomes "unit ∅ Evidence
     Observation is missing"; "🍉 watermelon" becomes "🍉 Evidence Observation is passing but
-    fabricated". The handle is GONE from the markdown; the glyph is retained. The descriptions
+    its check could not fail its job". The handle is GONE from the markdown; the glyph is retained. The descriptions
     are SINGLE-SOURCED from the one table of outcome descriptions, next to the outcome type, so
     the render cannot drift from the outcome it names. Markdown ONLY: the JSON keeps the bare handle (the machine axis; a
     programmatic consumer uses it). The Detail column is unchanged. A pure derive over the
@@ -421,7 +421,7 @@ Feature: The report renders the ledger as sectioned facts
         | satisfied              | Evidence Observation satisfies its Evidence Obligation                                                                    |
         | missing                | Evidence Observation is missing                                                                                          |
         | failing                | Evidence Observation is failing                                                                                          |
-        | watermelon             | Evidence Observation is passing but fabricated                                                                            |
+        | watermelon             | Evidence Observation is passing but its check could not fail its job                                                      |
         | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
         | duplicate-scn-code     | Evidence Obligation's @SCN code is carried by another Scenario                                                            |
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |

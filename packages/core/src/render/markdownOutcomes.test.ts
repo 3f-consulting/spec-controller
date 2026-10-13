@@ -28,7 +28,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     const md = renderMarkdown(__er(rich), ctx);
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
-    expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
+    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.watermelon} |`);
     expect(md).toContain("| ↳ Evidence Observation cites an unknown Scenario |");
     expect(md).toContain("| ↳ Evidence Observation cites no Scenario |");
     expect(md).toContain("| ↳ Evidence Observation cites a Scenario with no matching Evidence Obligation |");
@@ -50,7 +50,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
 
   it("renders the fitness table's Outcome column with the canon description", () => {
     const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain("| SCN-A | 🍉 Evidence Observation is passing but fabricated |");
+    expect(md).toContain(`| SCN-A | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 });
 
@@ -59,7 +59,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
     ["satisfied", "Evidence Observation satisfies its Evidence Obligation"],
     ["missing", "Evidence Observation is missing"],
     ["failing", "Evidence Observation is failing"],
-    ["watermelon", "Evidence Observation is passing but fabricated"],
+    ["watermelon", "Evidence Observation is passing but its check could not fail its job"],
     ["no-scn-code", "Evidence Obligation has no @SCN code for an Evidence Observation to link to"],
     ["duplicate-scn-code", "Evidence Obligation's @SCN code is carried by another Scenario"],
     ["cites-unknown-scenario", "Evidence Observation cites an unknown Scenario"],

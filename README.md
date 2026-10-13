@@ -2,9 +2,9 @@
 
 **Reconciliation-driven development for the age of AI-generated code.**
 
-`spec-controller` reconciles the behaviour your scenarios *name* against the evidence that actually *ran* — surfacing what's missing, failing, or fabricated — so correctness comes from mechanical agreement between independent representations, not from any single artefact an AI can quietly corrupt.
+`spec-controller` reconciles the behaviour your scenarios *name* against the evidence that actually *ran* — surfacing what's missing, failing, or green over a check whose job could not fail — so correctness comes from mechanical agreement between independent representations, not from any single artefact an AI can quietly corrupt.
 
-Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest, Cucumber, your CI lint gates) and it produces one report: which scenarios are **balanced** (the evidence answering each Evidence Obligation exists and holds), which are **out-of-balance** (evidence missing, failing, or a green-but-fake *watermelon*), and which evidence ran that no scenario asked for.
+Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest, Cucumber, your CI lint gates) and it produces one report: which scenarios are **balanced** (the evidence answering each Evidence Obligation exists and holds), which are **out-of-balance** (evidence missing, failing, or a *watermelon*: green from a check whose red its job would have survived), and which evidence ran that no scenario asked for.
 
 ## Why
 
@@ -16,7 +16,7 @@ The failure mode it exists to prevent, from a real first experience of AI-assist
 
 That is not a bug in the AI. It optimises for the observable objective — *"tests pass"* — and *"delete the failing test"* is a valid satisfying move when nothing prevents it. Every fix that lives *inside* the AI's loop — better prompts, smarter agents, more guardrails — inherits the same loophole.
 
-`spec-controller` puts the constraint *outside* the loop. A scenario tagged `@unit` names an **evidence obligation**: only a unit test that exists and passes answers it. Delete it and the reconciliation goes out of balance — *Evidence Obligation: unit; Evidence Observation: none* — and CI rejects the change. The AI cannot edit its way out of *that*, because the obligation lives in the scenario's tags and is checked by machinery the generation loop doesn't control.
+`spec-controller` puts the constraint *outside* the loop. A scenario tagged `@unit` names an **evidence obligation**: only a unit test that exists and passes answers it. Delete it and the reconciliation goes out of balance — *Evidence Obligation: unit; Evidence Observation: none* — and CI rejects the change. Deleting the test does not get past *that*, because the obligation lives in the scenario's tags and is checked by machinery the generation loop doesn't control. Deleting the scenario as well does: with no obligation left, the reconciliation balances, and only the diff and its review show what went.
 
 **And here is where that stops, said plainly rather than left to be found.** The constraint holds for behaviour a scenario names. Code that arrives with *no* scenario raises no obligation, so nothing goes out of balance and the reconciliation is green — correctly, because there is no claim to check it against. Deleting a test is what an agent does when it is cornered; writing new code is what it does all day, and this closes the first direction, not the second. And a balanced scenario means its evidence exists and holds, not that the evidence tests what the scenario says: where the runner is not Cucumber — usually `@unit`, `@performance` and `@fitness` — the scenario carries no Given/When/Then, and nothing reds if its title drifts from the check. Whether a test is a good test is assumed, and is yours. That narrowness is what makes the rest of the claim worth anything: what `spec-controller` guarantees, it guarantees mechanically, and it says where the guarantee stops.
 
@@ -32,7 +32,9 @@ Every analyser in the JavaScript quality stack reports what it **found**. None r
 
 So a green step cannot distinguish *this check ran and passed* from *this check ran over nothing*. Silence is the success signal, and silence is also what a renamed script, a retargeted glob, or a job that quietly stopped triggering produces. Nobody finds out from CI. They find out from the bug, months later.
 
-`spec-controller` cannot emit that silence. It does not start from what a tool found — it starts from the scenarios you wrote, and **every one is a row in the report whether or not any evidence exists for it**. A check that examined nothing comes back `missing`: a named, out-of-balance row. There is no input for which the correct output is nothing.
+`spec-controller` cannot emit that silence. It does not start from what a tool found — it starts from the scenarios you wrote, and **every one is a row in the report whether or not any evidence exists for it**. A scenario no step runs a check for comes back `missing`: a named, out-of-balance row. There is no input for which the correct output is nothing.
+
+What a row checks is that the check **ran** and what it **reported**, read from the step's outcome in your CI run's record — so a red that `continue-on-error` swallowed still reds its row. Read from the workflow file alone, without that record, a check whose job would survive its red comes back `watermelon`. Neither checks what the check examined. A step that lints zero files and exits 0 reads `satisfied`: what a tool examined is in the tool's own output, and `spec-controller` reads none of it.
 
 That is the answer to *"why, when CI already works?"* — `spec-controller` is not asking you to care about something other than a red build. **It makes the build red when it should be.**
 
@@ -90,7 +92,7 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a `@fit
 
 **Nothing moves out of your pipeline.** Your steps keep their names, their order, their matrix, their caching, and their language — the citation is an attribute, and it works over `ruff` as well as over `eslint`.
 
-`spec-controller` reconciles those obligations against the evidence that actually ran, and catches the **watermelon**: a check that is green but enforces nothing.
+`spec-controller` reconciles those obligations against the evidence that actually ran, and a red your pipeline swallowed still reds its scenario, because the record carries the step's own outcome.
 
 ## How this relates to coverage and mutation testing
 

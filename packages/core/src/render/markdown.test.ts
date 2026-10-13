@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
-import type { Ledger } from "../model.js";
+import { OUTCOME_DESCRIPTION, type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { adopterReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -74,7 +74,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("1 unit + 1 integration");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
-    expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
+    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
@@ -152,7 +152,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
     expect(md).toContain("| Scenario | Outcome |");
     expect(md).not.toContain("| Scenario | Fitness function | Outcome |");
     expect(md).toContain("| SCN-A | ✓ Evidence Observation satisfies its Evidence Obligation |");
-    expect(md).toContain("| SCN-B | 🍉 Evidence Observation is passing but fabricated |");
+    expect(md).toContain(`| SCN-B | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
   it("omits the section entirely (total line and all) when no scenario names a fitness evidenceObligation", () => {

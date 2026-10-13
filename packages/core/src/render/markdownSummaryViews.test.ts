@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "./markdown.js";
-import type { Ledger } from "../model.js";
+import { OUTCOME_DESCRIPTION, type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
@@ -271,7 +271,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     const md = renderMarkdown(__er(reformatted), ctx);
     expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ Evidence Observation is missing |");
     expect(md).toContain(
-      "| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 Evidence Observation is passing but fabricated |"
+      `| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`
     );
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static 🍉");
