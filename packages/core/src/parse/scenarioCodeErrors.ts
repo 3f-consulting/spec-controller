@@ -1,6 +1,6 @@
 import { featureCodeOf } from "../domain/featureCode.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
-import { parseTaggedScenarios } from "./scenarios.js";
+import { parseSeveralCodedScenarios, parseTaggedScenarios } from "./scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface CorpusFile {
@@ -81,6 +81,16 @@ function noFeatureCodeFiles(features: readonly CorpusFile[]): ScenarioCodeError[
     }));
 }
 
+function severalScnCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
+  return features.flatMap((file) =>
+    parseSeveralCodedScenarios(file.source).map(({ name, codes }) => ({
+      kind: "several-scn-codes" as const,
+      files: [`${file.slug}.feature`],
+      message: CORE_MESSAGES[CoreMessage.ScenarioSeveralScnCodes](`${file.slug}.feature`, name, codes),
+    }))
+  );
+}
+
 export function scenarioCodePopulationOf(features: readonly CorpusFile[]): ScenarioCodePopulation {
   return { featureFiles: features.length, featureCodes: headerFilesByCode(features).size };
 }
@@ -90,5 +100,6 @@ export function scenarioCodeErrorsOf(features: readonly CorpusFile[]): ScenarioC
     ...duplicateFeatureCodes(features),
     ...foreignScenarioCodes(features),
     ...noFeatureCodeFiles(features),
+    ...severalScnCodes(features),
   ];
 }

@@ -82,3 +82,79 @@ describe("[SCN-STG-028] a prose mention of a feature part outside two to five ch
     expect(report.scenarioCodeErrors ?? []).toEqual([]);
   });
 });
+
+describe("[SCN-STG-029] a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both", () => {
+  function target(ids: string): string {
+    const dir = mkdtempSync(join(tmpdir(), "scn-stg-029-unit-"));
+    made.push(dir);
+    mkdirSync(join(dir, "features"));
+    writeFileSync(
+      join(dir, "features", "two.feature"),
+      "@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n" +
+        `  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`
+    );
+    writeFileSync(
+      join(dir, "vitest.json"),
+      JSON.stringify({
+        testResults: [
+          {
+            name: "two.test.ts",
+            assertionResults: [
+              { fullName: "[SCN-TWO-001] proven", status: "passed" },
+              { fullName: "[SCN-TWO-002] proven", status: "passed" },
+            ],
+          },
+        ],
+      })
+    );
+    writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");
+    writeFileSync(join(dir, "package.json"), "{}\n");
+    return dir;
+  }
+
+  function balance(dir: string, format: "json" | "md") {
+    return runBalanceCaptured([
+      "--features", join(dir, "features"),
+      "--vitest", join(dir, "vitest.json"),
+      "--ci", join(dir, "ci.yml"),
+      "--package-json", join(dir, "package.json"),
+      "--format", format,
+    ]);
+  }
+
+  type Row = { scnId: string; kind: string; verdict: string };
+
+  it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", () => {
+    const report = JSON.parse(balance(target("@SCN-TWO-002 @SCN-TWO-003"), "json").stdout);
+    const rows = report.ledger.scenarioReconciliations as Row[];
+    expect(rows.filter((r) => r.kind === "scenario").map((r) => r.scnId)).toEqual(["SCN-TWO-001"]);
+    expect(rows.find((r) => r.scnId === "SCN-TWO-002")?.kind).toBe("phantom-scenario");
+    expect(rows.find((r) => r.scnId === "SCN-TWO-003")).toBeUndefined();
+    expect(report.evidenceObligations.untaggedScenarios).toEqual([]);
+  });
+
+  it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", () => {
+    const dir = target("@SCN-TWO-002 @SCN-TWO-003");
+    const json = balance(dir, "json");
+    const errors = JSON.parse(json.stdout).scenarioCodeErrors as { kind: string; files: string[]; message: string }[];
+    expect(errors).toEqual([expect.objectContaining({ kind: "several-scn-codes", files: ["two.feature"] })]);
+    for (const named of ["two.feature", "carries codes", "SCN-TWO-002", "SCN-TWO-003"]) {
+      expect(errors[0]!.message).toContain(named);
+    }
+    expect(json.exitCode).toBe(1);
+
+    const md = balance(dir, "md");
+    const section = md.stdout.split("## Scenario code errors")[1]?.split("\n## ")[0] ?? "";
+    expect(section).toContain(`- \`several-scn-codes\` — ${errors[0]!.message}`);
+    expect(md.exitCode).toBe(1);
+  });
+
+  it("reconciles a scenario with one code as today, listing no scenario code error", () => {
+    const json = balance(target("@SCN-TWO-002"), "json");
+    const report = JSON.parse(json.stdout);
+    const row = (report.ledger.scenarioReconciliations as Row[]).find((r) => r.scnId === "SCN-TWO-002");
+    expect(row).toMatchObject({ kind: "scenario", verdict: "balanced" });
+    expect(report.scenarioCodeErrors).toEqual([]);
+    expect(json.exitCode).toBe(0);
+  });
+});

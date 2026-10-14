@@ -2,7 +2,7 @@ import type { RenderInput } from "../domain/report.js";
 import type { Ledger } from "../model.js";
 import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
-import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
+import { scenarioCodeErrorsGloss, type ScenarioCodeError } from "../domain/scenarioCodeError.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
@@ -14,12 +14,12 @@ function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;
 }
 
-function scenarioCodeErrorsVerdict(ledger: Ledger): Verdict {
+function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): Verdict {
   const alsoOutOfBalance = isBalanced(ledger) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
   return {
     headline: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline],
     exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
-    gloss: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](alsoOutOfBalance),
+    gloss: scenarioCodeErrorsGloss(errors, alsoOutOfBalance),
   };
 }
 
@@ -55,14 +55,14 @@ function nothingToReconcile(corpusDir: string): Verdict {
   };
 }
 
-function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: boolean): Verdict {
+function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: readonly ScenarioCodeError[]): Verdict {
   switch (code) {
     case 5:
       return nothingToReconcile(corpusDir);
     case 4:
       return UNSOUND;
     case 1:
-      return codeErrors ? scenarioCodeErrorsVerdict(ledger) : OUT_OF_BALANCE;
+      return codeErrors.length > 0 ? scenarioCodeErrorsVerdict(ledger, codeErrors) : OUT_OF_BALANCE;
     case 3:
       return PENDING;
     case 0:
@@ -72,13 +72,12 @@ function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeEr
 
 export const runVerdictSection = (report: RenderInput): string[] => {
   const reconciliation = { scenarioReconciliations: report.ledger.scenarioReconciliations };
-  const codeErrors = hasScenarioCodeErrors(report);
   const code = verdictCode({
     ledger: reconciliation,
     scenarioCodeErrors: report.scenarioCodeErrors,
     strict: report.runProvenance.strict === true,
   });
-  const verdict = verdictFor(code, reconciliation, corpusExamined(report.runProvenance), codeErrors);
+  const verdict = verdictFor(code, reconciliation, corpusExamined(report.runProvenance), report.scenarioCodeErrors ?? []);
   const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`];
   if (code === 0 && hasPendingItems(reconciliation)) {
     lines.push("");

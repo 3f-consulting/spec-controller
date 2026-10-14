@@ -120,3 +120,59 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
   });
 });
+
+describe("[SCN-STG-029] a scenario tagged with two scenario codes is listed as a scenario code error naming both", () => {
+  const twoCodes = (ids: string): CorpusFile => ({
+    slug: "two",
+    featureCode: "TWO",
+    source: `@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`,
+  });
+
+  it("lists one several-scn-codes error naming the file, the scenario and both codes", () => {
+    const errors = scenarioCodeErrorsOf([twoCodes("@SCN-TWO-002 @SCN-TWO-003")]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({ kind: "several-scn-codes", files: ["two.feature"] });
+    expect(errors[0]!.message).toContain("two.feature");
+    expect(errors[0]!.message).toContain("carries codes");
+    expect(errors[0]!.message).toContain("SCN-TWO-002");
+    expect(errors[0]!.message).toContain("SCN-TWO-003");
+    expect(errors[0]!.message).not.toContain("SCN-TWO-001");
+  });
+
+  it("lists nothing for one code, or the same code repeated", () => {
+    expect(scenarioCodeErrorsOf([twoCodes("@SCN-TWO-002")])).toEqual([]);
+    expect(scenarioCodeErrorsOf([twoCodes("@SCN-TWO-002 @SCN-TWO-002")])).toEqual([]);
+  });
+});
+
+describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
+  const underAncestor = {
+    Rule: (own: string): CorpusFile => ({
+      slug: "alpha",
+      featureCode: "AAA",
+      source: `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
+    }),
+    Feature: (own: string): CorpusFile => ({
+      slug: "alpha",
+      featureCode: "AAA",
+      source: `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
+    }),
+  } as const;
+
+  it.each(["Rule", "Feature"] as const)(
+    "a different code of its own under a %s code is one several-scn-codes error naming the file, the scenario and both codes",
+    (ancestor) => {
+      const errors = scenarioCodeErrorsOf([underAncestor[ancestor]("@SCN-AAA-002")]);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatchObject({ kind: "several-scn-codes", files: ["alpha.feature"] });
+      expect(errors[0]!.message).toContain("alpha.feature");
+      expect(errors[0]!.message).toContain("carries codes");
+      expect(errors[0]!.message).toContain("SCN-AAA-001");
+      expect(errors[0]!.message).toContain("SCN-AAA-002");
+    },
+  );
+
+  it.each(["Rule", "Feature"] as const)("the same code of its own as its %s's lists nothing", (ancestor) => {
+    expect(scenarioCodeErrorsOf([underAncestor[ancestor]("@SCN-AAA-001")])).toEqual([]);
+  });
+});

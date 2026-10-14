@@ -1,5 +1,5 @@
 import type { RenderInput } from "../domain/report.js";
-import type { ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
+import { scenarioCodeErrorsFraming, type ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 function counted(n: number, noun: string): string {
@@ -39,7 +39,7 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
   return [
     heading,
     "",
-    CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming](count),
+    scenarioCodeErrorsFraming(errors, count),
     "",
     ...errors.map((error) => `- \`${error.kind}\` — ${error.message}`),
     "",

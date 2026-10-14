@@ -134,3 +134,32 @@ Feature: alpha
     expect(parseUntaggedScenarios(source)).toEqual(untagged);
   });
 });
+
+describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
+  const underAncestor = {
+    Rule: (own: string): string =>
+      `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
+    Feature: (own: string): string =>
+      `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
+  } as const;
+
+  it.each(["Rule", "Feature"] as const)(
+    "a different code of its own under a %s code raises no obligation under either and is not untagged",
+    (ancestor) => {
+      const source = underAncestor[ancestor]("@SCN-AAA-002");
+      expect(parseScenarios(source)).toEqual([]);
+      expect(parseUntaggedScenarios(source)).toEqual([]);
+    },
+  );
+
+  it.each(["Rule", "Feature"] as const)(
+    "the same code of its own as its %s's raises its obligation under that one code, as today",
+    (ancestor) => {
+      const source = underAncestor[ancestor]("@SCN-AAA-001");
+      expect(parseScenarios(source)).toEqual([
+        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ]);
+      expect(parseUntaggedScenarios(source)).toEqual([]);
+    },
+  );
+});

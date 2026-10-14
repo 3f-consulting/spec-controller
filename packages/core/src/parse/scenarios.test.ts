@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   countScnOccurrences,
+  parseScenarios,
   parseUntaggedScenarios,
 } from "./scenarios.js";
 
@@ -121,5 +122,27 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "    Given a step",
     ].join("\n");
     expect(parseUntaggedScenarios(cited)).toEqual(["no-scn-code, straight after the cited step"]);
+  });
+});
+
+describe("[SCN-STG-029] a scenario tagged with two scenario codes raises no evidence obligation under either", () => {
+  const source = (ids: string): string =>
+    `@AAA\nFeature: a\n\n  @unit @SCN-AAA-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`;
+
+  it("raises obligations under neither code, and does not count the scenario as untagged", () => {
+    const two = source("@SCN-AAA-002 @SCN-AAA-003");
+    expect(parseScenarios(two).map((s) => s.scnId)).toEqual(["SCN-AAA-001"]);
+    expect(parseUntaggedScenarios(two)).toEqual([]);
+  });
+
+  it("raises its obligation under one code, or the same code repeated, as today", () => {
+    expect(parseScenarios(source("@SCN-AAA-002"))).toEqual([
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ]);
+    expect(parseScenarios(source("@SCN-AAA-002 @SCN-AAA-002")).map((s) => s.scnId)).toEqual([
+      "SCN-AAA-001",
+      "SCN-AAA-002",
+    ]);
   });
 });

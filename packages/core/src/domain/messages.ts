@@ -40,6 +40,8 @@ export enum CoreMessage {
   OneScenarioCodeError,
   ScenarioCodeErrorCount,
   ScenarioCodeErrorsFraming,
+  SeveralScnCodesFraming,
+  MisfiledAndSeveralScnCodesFraming,
   DuplicateScnCodeNotListed,
   FeatureFileNoun,
   FeatureCodeNoun,
@@ -58,11 +60,14 @@ export enum CoreMessage {
   ForeignScnCodeManyCarriers,
   ForeignScnCodeNoCarrier,
   NoFeatureCode,
+  ScenarioSeveralScnCodes,
   SummaryViewsHeading,
   RunVerdictHeading,
   VerdictExit,
   ScenarioCodeErrorsHeadline,
   ScenarioCodeErrorsGloss,
+  SeveralScnCodesGloss,
+  MisfiledAndSeveralScnCodesGloss,
   AlsoOutOfBalance,
   OutOfBalanceHeadline,
   OutOfBalanceGloss,
@@ -181,6 +186,8 @@ interface CoreMessageParams {
   readonly [CoreMessage.BrokenEvidenceWhatBroke]: [locator: string];
   readonly [CoreMessage.ScenarioCodeErrorCount]: [count: number];
   readonly [CoreMessage.ScenarioCodeErrorsFraming]: [count: string];
+  readonly [CoreMessage.SeveralScnCodesFraming]: [count: string];
+  readonly [CoreMessage.MisfiledAndSeveralScnCodesFraming]: [count: string];
   readonly [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
   readonly [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
   readonly [CoreMessage.CleanEachFileOwnCode]: [over: string];
@@ -197,8 +204,11 @@ interface CoreMessageParams {
   ];
   readonly [CoreMessage.ForeignScnCodeNoCarrier]: [file: string, featureCode: string, scnId: string, named: string];
   readonly [CoreMessage.NoFeatureCode]: [file: string];
+  readonly [CoreMessage.ScenarioSeveralScnCodes]: [file: string, scenario: string, codes: readonly string[]];
   readonly [CoreMessage.VerdictExit]: [code: number];
   readonly [CoreMessage.ScenarioCodeErrorsGloss]: [alsoOutOfBalance: string];
+  readonly [CoreMessage.SeveralScnCodesGloss]: [alsoOutOfBalance: string];
+  readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: [alsoOutOfBalance: string];
   readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomScenario: number, onSuspenseScenario: number];
@@ -290,6 +300,13 @@ export const CORE_MESSAGES: CoreMessages = {
     `${count} — each misfiles a scenario code, so the by-feature cut below cannot be trusted, and ` +
     "the run fails (exit 1). Every account still reconciles as it would if the code were filed " +
     "correctly.",
+  [CoreMessage.SeveralScnCodesFraming]: (count) =>
+    `${count} — each is a scenario carrying more than one scenario code, so no account was raised for it ` +
+    "under any of them, and the run fails (exit 1).",
+  [CoreMessage.MisfiledAndSeveralScnCodesFraming]: (count) =>
+    `${count} — each either misfiles a scenario code, so the by-feature cut below cannot be trusted, or ` +
+    "is a scenario carrying more than one scenario code, so no account was raised for it under any of " +
+    "them. The run fails (exit 1).",
   [CoreMessage.DuplicateScnCodeNotListed]:
     "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.",
   [CoreMessage.FeatureFileNoun]: "feature file",
@@ -326,6 +343,10 @@ export const CORE_MESSAGES: CoreMessages = {
     `${file} carries no feature code, but its scenarios carry @SCN codes. A feature ` +
     `file is the class its scenarios' codes are filed under: give it a header code of its own, ` +
     `and code its scenarios for it.`,
+  [CoreMessage.ScenarioSeveralScnCodes]: (file, scenario, codes) =>
+    `${file}'s scenario "${scenario}" carries ${codes.length} @SCN codes — ${codes.join(", ")}. A scenario ` +
+    `is one account, so it raises its evidence obligations under none of them, and a test citing any ` +
+    `of them cites a code no scenario carries. Give it one code.`,
   [CoreMessage.SummaryViewsHeading]: "## Summary views",
   [CoreMessage.RunVerdictHeading]: "### Run verdict",
   [CoreMessage.VerdictExit]: (code) => `exit ${code}`,
@@ -333,6 +354,13 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ScenarioCodeErrorsGloss]: (alsoOutOfBalance) =>
     "the corpus files a scenario code under the wrong feature, so the by-feature grouping " +
     `cannot be trusted. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+  [CoreMessage.SeveralScnCodesGloss]: (alsoOutOfBalance) =>
+    "a scenario in the corpus carries more than one scenario code, so no account was raised for it " +
+    `under any of them. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+  [CoreMessage.MisfiledAndSeveralScnCodesGloss]: (alsoOutOfBalance) =>
+    "the corpus files a scenario code under the wrong feature, so the by-feature grouping cannot be " +
+    "trusted, and a scenario in it carries more than one scenario code, so no account was raised for it " +
+    `under any of them. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
   [CoreMessage.AlsoOutOfBalance]:
     " The accounts do not agree either: at least one Scenario Reconciliation carries a reconciling item.",
   [CoreMessage.OutOfBalanceHeadline]: "**OUT-OF-BALANCE**",

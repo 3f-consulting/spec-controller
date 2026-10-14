@@ -2,6 +2,7 @@ import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherki
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { attributionOf } from "../domain/attribution.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import type { Scenario, EvidenceObligation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
@@ -115,26 +116,39 @@ function scenariosOf(source: string): ScenarioWithItsTags[] {
   return scenarios;
 }
 
+export interface SeveralCodedScenario {
+  readonly name: string;
+  readonly codes: readonly string[];
+}
+
 function scenariosByScnCodeOf(source: string): {
   taggedScenarios: TaggedScenario[];
   untaggedScenarios: string[];
+  severalCodedScenarios: SeveralCodedScenario[];
 } {
   const taggedScenarios: TaggedScenario[] = [];
   const untaggedScenarios: string[] = [];
+  const severalCodedScenarios: SeveralCodedScenario[] = [];
   for (const { name, tags } of scenariosOf(source)) {
-    const scnId = tags.find((t) => SCN_CODE.test(t));
-    if (scnId === undefined) untaggedScenarios.push(name);
+    const { scnId, severalCodes } = attributionOf(tags.filter((t) => SCN_CODE.test(t)));
+    if (severalCodes !== undefined) severalCodedScenarios.push({ name, codes: severalCodes });
+    else if (scnId === null) untaggedScenarios.push(name);
     else taggedScenarios.push({ scnId, tags, name });
   }
-  return { taggedScenarios, untaggedScenarios };
+  return { taggedScenarios, untaggedScenarios, severalCodedScenarios };
 }
 
 export function parseTaggedScenarios(source: string): TaggedScenario[] {
   return scenariosByScnCodeOf(source).taggedScenarios;
 }
 
+export function parseSeveralCodedScenarios(source: string): SeveralCodedScenario[] {
+  return scenariosByScnCodeOf(source).severalCodedScenarios;
+}
+
 export function parseFeatureCounts(source: string): ParsedFeatureCounts {
-  return { rawScnOccurrences: countScnOccurrences(source), ...scenariosByScnCodeOf(source) };
+  const { taggedScenarios, untaggedScenarios } = scenariosByScnCodeOf(source);
+  return { rawScnOccurrences: countScnOccurrences(source), taggedScenarios, untaggedScenarios };
 }
 
 export function parseScenarios(

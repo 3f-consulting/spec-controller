@@ -128,3 +128,29 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     @unit @SCN-STG-028
     Scenario: A prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context, beside mentions of two and five characters that are
+
+  Rule: a scenario carrying more than one @SCN raises its obligations under none of them, and is a scenario code error naming each
+
+    ONE SCENARIO, ONE ACCOUNT NUMBER, ON THE DEBIT SIDE AS ON THE CREDIT SIDE. An evidence
+    observation that cites more than one scenario credits none of them, naming each code, so no
+    reader picks one (`doc/ubiquitous-language.md` → *Attribution*). A scenario carrying more than
+    one @SCN is the same fault from the other side: no reader picks one either, so it raises no
+    evidence obligation under any of its codes and opens no account under any of them. It is not
+    untagged, since it carries codes, so `balance` lists it under `## Scenario code errors`
+    (`scenarioCodeErrors` in the JSON) as several-scn-codes, naming the file, the scenario and every
+    code it carries, and the run reds. A test citing one of those codes cites a code no scenario
+    carries, as any such citation does.
+
+    @unit @SCN-STG-029
+    Scenario: a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both
+
+    @unit @SCN-STG-030
+    Scenario Outline: a code a scenario inherits from its <ancestor> is one of its codes, so a different code of its own makes two, and the same code makes one
+
+      Examples:
+        | ancestor |
+        | Rule     |
+        | Feature  |
+
+    @unit @SCN-STG-031
+    Scenario: a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile
