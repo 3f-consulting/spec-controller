@@ -1,0 +1,18 @@
+rules:
+  - id: no-regexp-from-an-argument
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      This regular expression is built from a value the function receives, so a crafted input can
+      make matching take exponential time. Build it once, at module level, from constants.
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              function $F(..., $P, ...) { ... }
+          - pattern-inside: |
+              (..., $P, ...) => { ... }
+          - pattern-inside: |
+              (..., $P, ...) => $E
+      - pattern-either:
+          - pattern: new RegExp(<... $P ...>, ...)
+          - pattern: RegExp(<... $P ...>, ...)

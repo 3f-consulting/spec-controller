@@ -60,6 +60,14 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # From a hash-checked lock, never an image: a registry pull can fail the job before any check runs.
+      - name: Install Semgrep
+        if: always()
+        run: |
+          python3 -m venv "$RUNNER_TEMP/semgrep"
+          "$RUNNER_TEMP/semgrep/bin/pip" install --quiet --require-hashes --no-deps -r .semgrep/requirements.txt
+          echo "$RUNNER_TEMP/semgrep/bin" >> "$GITHUB_PATH"
+
       # A report for review, not a check: it never reds, and package.json declares it a non-check.
       - name: New names this change introduces
         if: github.event_name == 'pull_request'
@@ -411,6 +419,26 @@ jobs:
           inputs: .github/workflows/
           advanced-security: false
           online-audits: false
+
+      - name: No child process runs through a shell
+        id: SCN-FIT-051
+        if: always()
+        run: semgrep scan --config .semgrep/no-shell-child-process.yml --error --metrics=off --disable-version-check packages
+
+      - name: No code is built from a string while the program runs
+        id: SCN-FIT-052
+        if: always()
+        run: semgrep scan --config .semgrep/no-code-from-strings.yml --error --metrics=off --disable-version-check packages
+
+      - name: No regular expression is built from a value the program receives
+        id: SCN-FIT-053
+        if: always()
+        run: semgrep scan --config .semgrep/no-regexp-from-an-argument.yml --error --metrics=off --disable-version-check packages
+
+      - name: A file is written only where its location has been checked
+        id: SCN-FIT-054
+        if: always()
+        run: semgrep scan --config .semgrep/writes-only-where-the-location-is-checked.yml --error --metrics=off --disable-version-check packages
 
       - name: Mutation score
         id: SCN-FIT-002

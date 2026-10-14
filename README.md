@@ -123,6 +123,7 @@ This repository was built with Claude Code, by an author who doesn't write TypeS
 - dependency boundaries;
 - published-package checks (publint, attw);
 - workflow linting and security (actionlint, zizmor);
+- code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code.
 
 **Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Each gate automates a kind of feedback a technical lead gives in code review, so a reviewer's attention goes to design and intent.

@@ -1,0 +1,21 @@
+rules:
+  - id: no-code-from-strings
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      This builds code from a string while the program runs, so a value it reads could run as code.
+      Write the behaviour as ordinary code instead.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+      - pattern: Function(...)
+      - pattern: runInThisContext(...)
+      - pattern: runInNewContext(...)
+      - pattern: runInContext(...)
+      - pattern: compileFunction(...)
+      - pattern: $VM.runInThisContext(...)
+      - pattern: $VM.runInNewContext(...)
+      - pattern: $VM.runInContext(...)
+      - pattern: $VM.compileFunction(...)
+      - pattern: new $VM.Script(...)
+      - pattern: new Script(...)

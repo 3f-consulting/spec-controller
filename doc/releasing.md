@@ -285,6 +285,13 @@ actionlint is not an action. Its step downloads the official release binary and 
 a SHA-256 pinned beside its version in the step's `env:`. Dependabot does not move it, so a person
 moves the version and checksum together.
 
+Semgrep is not an action either. `Install Semgrep` installs it with `pip --require-hashes --no-deps`
+from `.semgrep/requirements.txt`, a lock of `semgrep==<version>` and every dependency, each with its
+hashes. Its first line is the `pip-compile` command that wrote it. Dependabot does not move it, so a
+person regenerates the lock with that command, under the runner's `python3`, to move the version.
+Each rule is its own file in `.semgrep/`, run by its own step with no registry ruleset and metrics
+off.
+
 ---
 
 ## A model change the pinned reader cannot read

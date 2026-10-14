@@ -1,0 +1,29 @@
+rules:
+  - id: no-shell-child-process
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      This child process runs through a shell, so a path or argument it is given can be read as
+      shell syntax. Run the program directly, with its arguments as an array.
+    pattern-either:
+      - pattern: exec(...)
+      - pattern: execSync(...)
+      - patterns:
+          - pattern-inside: |
+              import * as $CP from "$M";
+              ...
+          - metavariable-regex:
+              metavariable: $M
+              regex: ^(node:)?child_process$
+          - pattern-either:
+              - pattern: $CP.exec(...)
+              - pattern: $CP.execSync(...)
+      - patterns:
+          - pattern-either:
+              - pattern: '$F(..., {..., shell: $S, ...}, ...)'
+              - pattern: '$O.$F(..., {..., shell: $S, ...}, ...)'
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(spawn|spawnSync|execFile|execFileSync|fork)$
+          - pattern-not: '$F(..., {..., shell: false, ...}, ...)'
+          - pattern-not: '$O.$F(..., {..., shell: false, ...}, ...)'

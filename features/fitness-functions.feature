@@ -217,3 +217,23 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-050
     Scenario: a sentence for a reader written in core's domain reds the build
+
+  Rule: no child process runs through a shell
+
+    @fitness @SCN-FIT-051
+    Scenario: a child process started through a shell reds the build
+
+  Rule: no code is built from a string while the program runs
+
+    @fitness @SCN-FIT-052
+    Scenario: code evaluated from a string reds the build
+
+  Rule: no regular expression is built from a value the program receives
+
+    @fitness @SCN-FIT-053
+    Scenario: a regular expression built from a function's argument reds the build
+
+  Rule: a file is written only where its location has been checked
+
+    @fitness @SCN-FIT-054
+    Scenario: a file written outside the modules that check the output location reds the build

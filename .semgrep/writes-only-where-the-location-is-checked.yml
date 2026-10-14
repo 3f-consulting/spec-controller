@@ -1,0 +1,26 @@
+rules:
+  - id: writes-only-where-the-location-is-checked
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      This writes to the file system outside the modules that check an output location before
+      writing, so it can overwrite a stored run or follow a link to a file it should not touch.
+      Write through the output location instead.
+    # Product source only: test code never runs against a user's stored run, which is what this
+    # rule protects, and its temporary directories are set up and removed in place.
+    paths:
+      include:
+        - "packages/*/src/**"
+      exclude:
+        - "*.test.ts"
+        - "*.test-utils.ts"
+        - "packages/spec-controller/src/outputLocation.ts"
+        - "packages/spec-controller/src/cli-balance/emit/writer.ts"
+        - "packages/spec-controller/src/run-management/keptRun.ts"
+    patterns:
+      - pattern-either:
+          - pattern: $F(...)
+          - pattern: $O.$F(...)
+      - metavariable-regex:
+          metavariable: $F
+          regex: ^(writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|mkdir|mkdirSync|mkdtemp|mkdtempSync|rename|renameSync|rm|rmSync|rmdir|rmdirSync|unlink|unlinkSync|copyFile|copyFileSync|cp|cpSync|symlink|symlinkSync|link|linkSync|truncate|truncateSync|open|openSync)$
