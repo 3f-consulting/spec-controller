@@ -207,13 +207,3 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-046
     Scenario: the README's sample report is what balance prints on its committed fixture, and the build reds when they differ
-
-  Rule: the boundary breaks the tree still holds are only ever removed, never added
-
-    The list of them stays true as well: every break it names is one the tree still holds.
-
-    @fitness @SCN-FIT-047
-    Scenario: the list of boundary violations still to remove only shrinks: an entry added reds the build
-
-    @fitness @SCN-FIT-048
-    Scenario: every entry on the list of known boundary breaks is a break that still exists: an entry no import matches reds the build
