@@ -120,6 +120,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
 
     expect(suspenseRow ?? "").toContain("SCN-PYF-004");
     expect(suspenseRow ?? "").toContain("SCN-PYF-005");
+    expect(suspenseRow ?? "").toContain("2 scenario codes cite SCN-PYF-004, SCN-PYF-005");
   });
 });
 

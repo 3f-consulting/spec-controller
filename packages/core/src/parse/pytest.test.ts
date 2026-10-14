@@ -134,6 +134,39 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     expect(observation?.message).toContain("SCN-FOO-004");
     expect(observation?.message).toContain("SCN-FOO-005");
   });
+
+  it("words its note as every reader words it, in scenario codes rather than scn properties", () => {
+    const [observation] = parsePytestEvidenceObservations(report, "unit");
+
+    expect(observation?.message).toContain("2 scenario codes cite SCN-FOO-004, SCN-FOO-005");
+  });
+
+  it("credits the scenario when the one code is carried twice", () => {
+    const repeated: JunitXmlReport = {
+      testsuites: {
+        testsuite: [
+          {
+            testcase: [
+              {
+                classname: "tests.test_widget",
+                name: "test_the_widget_spins",
+                properties: {
+                  property: [
+                    { name: "scn", value: "SCN-FOO-004" },
+                    { name: "scn", value: "SCN-FOO-004" },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(parsePytestEvidenceObservations(repeated, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+    ]);
+  });
 });
 
 describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failure as broken evidence citing no scenario", () => {

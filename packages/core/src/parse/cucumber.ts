@@ -2,6 +2,7 @@ import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus } fro
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { attributionOf } from "../domain/attribution.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -61,11 +62,11 @@ export function parseCucumberEvidenceObservations(
 
 type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
 
-function citedScnIdOf(tags: readonly { readonly name?: string }[]): string | null {
-  const scnTag = tags
+function citedCodesOf(tags: readonly { readonly name?: string }[]): string[] {
+  return tags
     .map((t) => SCN_TAG.exec(t.name ?? ""))
-    .find((m): m is RegExpExecArray => m !== null);
-  return scnTag ? scnTag[1]! : null;
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => m[1]!);
 }
 
 function scenarioObservations(
@@ -74,7 +75,8 @@ function scenarioObservations(
   fallbackQualityCheck: BehaviouralQualityCheck
 ): EvidenceObservation[] {
   const tags = scenario.tags ?? [];
-  const scnId = citedScnIdOf(tags);
+  const { scnId, severalCodes } = attributionOf(citedCodesOf(tags));
+  const severalNote = severalCodes ? CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) : undefined;
   const steps = scenario.steps ?? [];
   const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
   if (ambiguous) {
@@ -84,7 +86,7 @@ function scenarioObservations(
       status: "failed",
       locator,
       broken: true,
-      message: ambiguousMessage(ambiguous),
+      message: severalNote ? `${ambiguousMessage(ambiguous)} ${severalNote}` : ambiguousMessage(ambiguous),
     }];
   }
   const anyFailed = steps.some((s) => s.result?.status === "failed");
@@ -97,5 +99,6 @@ function scenarioObservations(
     status,
     locator,
     testName: scenario.name,
+    ...(severalNote ? { message: severalNote } : {}),
   }));
 }

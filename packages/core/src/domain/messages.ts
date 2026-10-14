@@ -159,10 +159,10 @@ export enum CoreMessage {
   OutcomeBothMissing,
   ObservationPassed,
   ObservationFailed,
-  SeveralScnProperties,
   SuspenseGroupCounts,
   SuspenseCiSteps,
   SuspenseFailedNames,
+  SeveralScnCodes,
 }
 
 interface CoreMessageParams {
@@ -228,10 +228,10 @@ interface CoreMessageParams {
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
   readonly [CoreMessage.ManifestKindOfType]: [type: string];
   readonly [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
-  readonly [CoreMessage.SeveralScnProperties]: [codes: readonly string[]];
   readonly [CoreMessage.SuspenseGroupCounts]: [ran: number, passed: number, failed: number];
   readonly [CoreMessage.SuspenseCiSteps]: [names: readonly string[]];
   readonly [CoreMessage.SuspenseFailedNames]: [names: readonly string[]];
+  readonly [CoreMessage.SeveralScnCodes]: [codes: readonly string[]];
 }
 
 export type CoreMessages = {
@@ -463,6 +463,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.SuspenseGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
   [CoreMessage.SuspenseCiSteps]: (names) => `${names.length} CI step${names.length === 1 ? "" : "s"}: ${names.join(", ")}`,
   [CoreMessage.SuspenseFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
-  [CoreMessage.SeveralScnProperties]: (codes) =>
-    `${codes.length} scn properties cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
+  [CoreMessage.SeveralScnCodes]: (codes) =>
+    `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
 };

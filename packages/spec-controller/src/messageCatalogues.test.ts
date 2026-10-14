@@ -111,10 +111,10 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
   [CoreMessage.ManifestKindOfType]: ["number"],
   [CoreMessage.UntaggedScenarioId]: ["one.feature", "an untagged scenario"],
-  [CoreMessage.SeveralScnProperties]: [["SCN-ABC-001", "SCN-ABC-002"]],
   [CoreMessage.SuspenseGroupCounts]: [3, 2, 1],
   [CoreMessage.SuspenseCiSteps]: [["lint:bar", "lint:foo"]],
   [CoreMessage.SuspenseFailedNames]: [["spawns yarn", "reads the lockfile"]],
+  [CoreMessage.SeveralScnCodes]: [["SCN-ABC-001", "SCN-ABC-002"]],
 };
 
 function renderedCore(code: CoreMessage): string {

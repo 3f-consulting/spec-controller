@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest.js";
+import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
+import { renderMarkdown } from "../assemble/composers.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
   const report: VitestJsonReport = {
@@ -169,5 +172,86 @@ describe("[SCN-RPT-036] parseVitestEvidenceObservations names each test by its f
     expect(parseVitestEvidenceObservations(report, "unit").map((o) => (o as { testName?: string }).testName)).toEqual([
       "suite > spawns yarn", "reads the lockfile", undefined,
     ]);
+  });
+});
+
+describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits neither, and suspense names both codes", () => {
+  const reportOf = (...assertions: Array<{ title: string; fullName?: string }>): VitestJsonReport => ({
+    testResults: [
+      {
+        name: "/r/several.test.ts",
+        assertionResults: assertions.map((a) => ({ fullName: a.fullName ?? a.title, title: a.title, status: "passed" })),
+      },
+    ],
+  });
+  const several = () => reportOf({ title: "[SCN-AAA-001] [SCN-AAA-002] two" });
+
+  it("emits one evidence observation citing no scenario, whose message names both codes", () => {
+    expect(parseVitestEvidenceObservations(several(), "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: null,
+        status: "passed",
+        locator: "/r/several.test.ts",
+        testName: "[SCN-AAA-001] [SCN-AAA-002] two",
+        message: "2 scenario codes cite SCN-AAA-001, SCN-AAA-002 — a test cites exactly one scenario, so this one credits none of them.",
+      },
+    ]);
+  });
+
+  it("reads the ancestors' codes by the same rule when the leaf cites none", () => {
+    const [observation] = parseVitestEvidenceObservations(
+      reportOf({ title: "the bare leaf", fullName: "[SCN-AAA-001] [SCN-AAA-002] the describe > the bare leaf" }),
+      "unit"
+    );
+    expect(observation).toMatchObject({ scnId: null, message: expect.stringContaining("SCN-AAA-002") });
+  });
+
+  it.each([
+    ["one code", "[SCN-AAA-001] one"],
+    ["one code repeated", "[SCN-AAA-001] once [SCN-AAA-001] again"],
+  ])("CONTROL: a title with %s credits it, with no message", (_, title) => {
+    expect(parseVitestEvidenceObservations(reportOf({ title }), "unit")).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "/r/several.test.ts", testName: title },
+    ]);
+  });
+
+  it("CONTROL: a leaf citing one code inside a describe citing another still credits the leaf's code", () => {
+    const [observation] = parseVitestEvidenceObservations(
+      reportOf({ title: "[SCN-AAA-002] leaf", fullName: "[SCN-AAA-001] describe > [SCN-AAA-002] leaf" }),
+      "unit"
+    );
+    expect(observation).toMatchObject({ scnId: "SCN-AAA-002" });
+    expect(observation).not.toHaveProperty("message");
+  });
+
+  describe("assembled into the ledger", () => {
+    const ledger = () => reconcile(
+      [
+        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      parseVitestEvidenceObservations(several(), "unit"),
+      []
+    );
+    const unitOutcomeOf = (scnId: string) =>
+      ledger().scenarioReconciliations
+        .find((row) => row.scnId === scnId)
+        ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
+
+    it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (scnId) => {
+      expect(unitOutcomeOf(scnId)).toBe("missing");
+    });
+
+    it("names both codes on the suspense row", () => {
+      const ctx: RunContext = { target: "several", inputs: {}, runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+      const reconciled = ledger();
+      const suspenseRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
+        .split("\n")
+        .find((line) => line.startsWith("| (no scenario) | "));
+
+      expect(suspenseRow ?? "").toContain("SCN-AAA-001");
+      expect(suspenseRow ?? "").toContain("SCN-AAA-002");
+    });
   });
 });

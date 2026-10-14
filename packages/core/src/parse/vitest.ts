@@ -1,6 +1,7 @@
 import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { parseScnCitation } from "../lib/scnCitation.js";
+import { scnCitationsOf } from "../lib/scnCitation.js";
+import { attributionOf } from "../domain/attribution.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface VitestJsonReport {
@@ -39,16 +40,21 @@ export function parseVitestEvidenceObservations(
     for (const assertion of assertions) {
       const status = assertion.status;
       if (status !== "passed" && status !== "failed") continue;
-      const scnId =
-        parseScnCitation(assertion.title ?? "") ?? parseScnCitation(assertion.fullName ?? "");
+      const { scnId, severalCodes } = attributionOf(citingCodesOf(assertion));
       results.push({
         qualityCheck,
         scnId,
         status,
         locator,
         testName: assertion.fullName ?? assertion.title,
+        ...(severalCodes ? { message: CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) } : {}),
       });
     }
   }
   return results;
+}
+
+function citingCodesOf(assertion: { readonly title?: string; readonly fullName?: string }): string[] {
+  const leafCodes = scnCitationsOf(assertion.title ?? "");
+  return leafCodes.length > 0 ? leafCodes : scnCitationsOf(assertion.fullName ?? "");
 }

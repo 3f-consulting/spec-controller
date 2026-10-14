@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 import type { BehaviouralEvidenceObservation } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
+import { renderMarkdown } from "../assemble/composers.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
@@ -194,6 +197,87 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
     ];
     expect(parseCucumberEvidenceObservations(report, "integration").map((o) => (o as BehaviouralEvidenceObservation).testName)).toEqual([
       "an expired coupon is refused", "an expired coupon is refused", "an empty basket cannot be checked out", undefined,
+    ]);
+  });
+});
+
+describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes", () => {
+  const severalNote =
+    "2 scenario codes cite SCN-AAA-001, SCN-AAA-002 — a test cites exactly one scenario, so this one credits none of them.";
+  const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
+    {
+      uri: "features/several.feature",
+      elements: [
+        {
+          name: "two codes",
+          tags: tagNames.map((name) => ({ name })),
+          steps: [{ keyword: "Given ", name: "a step", result: { status } }],
+        },
+      ],
+    },
+  ];
+
+  it("emits every tier's evidence observation citing no scenario, each with a message naming both codes", () => {
+    const report = reportOf(["@integration", "@e2e", "@SCN-AAA-001", "@SCN-AAA-002"], "passed");
+
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual(
+      ["integration", "e2e"].map((qualityCheck) => ({
+        qualityCheck,
+        scnId: null,
+        status: "passed",
+        locator: "features/several.feature",
+        testName: "two codes",
+        message: severalNote,
+      }))
+    );
+  });
+
+  it("keeps the ambiguous-step diagnosis on the broken observation and adds the note naming both codes", () => {
+    const report = reportOf(["@integration", "@SCN-AAA-001", "@SCN-AAA-002"], "ambiguous");
+
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
+      {
+        qualityCheck: "integration",
+        scnId: null,
+        status: "failed",
+        locator: "features/several.feature",
+        broken: true,
+        message: `${CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step")} ${severalNote}`,
+      },
+    ]);
+  });
+
+  it("leaves both scenarios missing, and the suspense row names both codes", () => {
+    const ledger = reconcile(
+      [
+        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+        { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "integration" }] },
+      ],
+      parseCucumberEvidenceObservations(reportOf(["@integration", "@SCN-AAA-001", "@SCN-AAA-002"], "passed"), "integration"),
+      []
+    );
+    const outcomes = ["SCN-AAA-001", "SCN-AAA-002"].map(
+      (scnId) =>
+        ledger.scenarioReconciliations
+          .find((row) => row.scnId === scnId)
+          ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "integration")?.outcome
+    );
+    const ctx: RunContext = { target: "several", inputs: {}, runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+    const suspenseRow = renderMarkdown({ summary: summaryOf(ledger, false, false), ledger }, ctx)
+      .split("\n")
+      .find((line) => line.startsWith("| (no scenario) | "));
+
+    expect(outcomes).toEqual(["missing", "missing"]);
+    expect(suspenseRow ?? "").toContain("SCN-AAA-001");
+    expect(suspenseRow ?? "").toContain("SCN-AAA-002");
+  });
+
+  it.each([
+    ["one code", ["@integration", "@SCN-AAA-001"]],
+    ["one code repeated", ["@integration", "@SCN-AAA-001", "@SCN-AAA-001"]],
+  ])("CONTROL: a scenario tagged with %s credits it, with no message", (_, tagNames) => {
+    expect(parseCucumberEvidenceObservations(reportOf(tagNames, "passed"), "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-AAA-001", status: "passed", locator: "features/several.feature", testName: "two codes" },
     ]);
   });
 });

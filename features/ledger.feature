@@ -247,3 +247,14 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-032
     Scenario: a leaf naming a scenario id in prose does not override its describe's bracketed citation
+
+  Rule: an evidence observation that cites more than one scenario credits none of them, whatever the runner
+
+    A test cites exactly one scenario. One that cites several credits none of them and posts to suspense,
+    naming every code, so no reader picks one (quality-checks.md; doc/ubiquitous-language.md, Attribution).
+
+    @unit @SCN-LDG-040
+    Scenario: a Vitest test whose title cites two scenarios credits neither, and suspense names both codes
+
+    @unit @SCN-LDG-041
+    Scenario: a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes

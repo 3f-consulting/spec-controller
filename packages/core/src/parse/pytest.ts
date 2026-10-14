@@ -1,6 +1,7 @@
 import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { SCN_CODE } from "./scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { attributionOf } from "../domain/attribution.js";
 
 export interface JunitXmlReport {
   readonly testsuites?: {
@@ -32,8 +33,8 @@ export function parsePytestEvidenceObservations(
       .filter((testcase) => testcase.skipped === undefined)
       .map((testcase): EvidenceObservation => {
         if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, qualityCheck);
-        const codes = scnPropertyValues(testcase);
-        const scnId = codes.length === 1 ? citedCode(codes[0]!) : null;
+        const { scnId: soleCode, severalCodes } = attributionOf(scnPropertyValues(testcase));
+        const scnId = soleCode === null ? null : citedCode(soleCode);
         const locator = `${testcase.classname}::${testcase.name}`;
         if (testcase.error !== undefined) {
           return { qualityCheck, scnId, status: "failed", locator, broken: true, message: errorTextOf(testcase) };
@@ -43,7 +44,7 @@ export function parsePytestEvidenceObservations(
           scnId,
           status: testcase.failure === undefined ? "passed" : "failed",
           locator,
-          ...(codes.length > 1 ? { message: CORE_MESSAGES[CoreMessage.SeveralScnProperties](codes) } : {}),
+          ...(severalCodes ? { message: CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) } : {}),
         };
       })
   );
