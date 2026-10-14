@@ -116,7 +116,7 @@ At `0.x` nothing is promised between versions ([`doc/compatibility.md`](./doc/co
 
 ## Built with Claude Code, and how it's kept honest
 
-This repository was built with Claude Code, by an author who doesn't write TypeScript. It is held by the same discipline it sells. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
+This repository was built with Claude Code, by an author who doesn't write TypeScript. The commit history is the agent's working log: each title follows the issue-key convention, `[KEY-123] summary`, and the ID refers to a private tracker. It is held by the same discipline it sells. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
 - mutation testing at 95% per scope;
 - cognitive complexity, function length and CRAP;
 - duplication and unused code;
