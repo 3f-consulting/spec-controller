@@ -104,7 +104,7 @@ spec-controller balance \
   --cucumber ./cucumber-report.json
 ```
 
-Give it whichever reports you have. [`doc/how_to_use.md`](./doc/how_to_use.md) → *Prerequisites* says how to produce each one.
+Give it whichever reports you have. [`doc/how_to_use.md`](./doc/how_to_use.md) → *What you need* says how to produce each one.
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`: the same report, exiting `0` on an out-of-balance verdict. Remove the flag when you're ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
