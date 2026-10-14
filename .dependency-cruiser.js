@@ -1,3 +1,5 @@
+// The boundary breaks the tree still holds, each naming the work that removes it. dependency-cruiser's own
+// known-violations entries refuse any extra field, so the list lives in its own file and is mapped in below.
 import known from "./.dependency-cruiser-known.js";
 
 export default {

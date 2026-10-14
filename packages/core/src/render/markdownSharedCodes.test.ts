@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown } from "./markdown.js";
-import { renderJson } from "./json.js";
+import { renderMarkdown } from "../assemble/composers.js";
+import { renderJson } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
@@ -8,7 +8,7 @@ import { countScnOccurrences, parseFeatureCounts, parseScenarios, parseUntaggedS
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 const er = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 

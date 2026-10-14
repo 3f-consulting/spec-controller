@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
-import { renderJson } from "../render/json.js";
+import { renderJson } from "./composers.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";

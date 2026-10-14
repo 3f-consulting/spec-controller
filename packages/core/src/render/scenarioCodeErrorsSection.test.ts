@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown, renderReportFromJson } from "./markdown.js";
-import { renderJson } from "./json.js";
+import { renderMarkdown } from "../assemble/composers.js";
+import { renderReportFromJson } from "./markdown.js";
+import { renderJson } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";

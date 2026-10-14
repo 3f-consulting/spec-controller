@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import type { EvidenceObservation } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 const ctx: RunContext = {
   target: "pending-item-row-target",

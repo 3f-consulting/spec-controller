@@ -249,7 +249,7 @@ function runContextOf(
 ): RunContext {
   return {
     target: sourceTarget(args),
-    inputs,
+    inputs: { ...inputs },
     runStart,
     sourceSha: resolveSourceSha({
       sourceSha: args["source-sha"],

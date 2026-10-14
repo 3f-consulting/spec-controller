@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
-import {
-  provenanceObject,
-  projectProvenance,
-  type RunContext,
-  type RunInputs,
-} from "./provenance.js";
+import { provenanceObject } from "./provenance.js";
+import { projectProvenance } from "../assemble/composers.js";
+import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 
 describe("[SCN-RPT-001] provenance records input paths portably (relative to the run root)", () => {
   const mk = (inputs: RunInputs, root?: string): RunContext => ({

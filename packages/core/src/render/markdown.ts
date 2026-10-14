@@ -7,11 +7,9 @@ import type {
 } from "../model.js";
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
-import type { RunContext } from "../provenance/provenance.js";
 import {
   untaggedScenarioId,
   scenariosBehindAccountsOf,
-  type EvidenceObligations,
   type SharedScnCode,
   type UntaggedScenario,
 } from "../domain/corpusCounts.js";
@@ -24,8 +22,7 @@ import {
   outOfBalanceCountOf,
   carriesNoScnCode,
 } from "../domain/scenarioReconciliation.js";
-import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import type { RenderInput } from "../domain/report.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
@@ -144,8 +141,6 @@ function renderRowExceptions(s: ScenarioReconciliation): string {
 }
 
 type SectionEmitter = (report: RenderInput) => readonly string[];
-
-export type FeatureNames = ReadonlyMap<string, string>;
 
 const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
@@ -429,13 +424,4 @@ export function renderReport(report: RenderInput): string {
 
 export function renderReportFromJson(json: string): string {
   return renderReport(JSON.parse(json) as RenderInput);
-}
-
-export function renderMarkdown(
-  evidenceReconciliation: EvidenceReconciliation,
-  ctx: RunContext,
-  evidenceObligations?: EvidenceObligations,
-  featureNames?: FeatureNames
-): string {
-  return renderReport(assembleRenderInput(evidenceReconciliation, ctx, evidenceObligations, featureNames));
 }

@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderJson } from "./json.js";
-import { renderReportFromJson, renderMarkdown } from "./markdown.js";
+import { renderJson } from "../assemble/composers.js";
+import { renderMarkdown } from "../assemble/composers.js";
+import { renderReportFromJson } from "./markdown.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";

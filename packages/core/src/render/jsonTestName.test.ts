@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderJson } from "./json.js";
+import { renderJson } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations } from "../parse/cucumber.js";

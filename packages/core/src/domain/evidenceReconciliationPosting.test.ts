@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "./runProvenance.js";
 import type {
   Scenario,
   EvidenceObservation,

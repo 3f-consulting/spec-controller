@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderJson } from "./json.js";
+import { renderJson } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";

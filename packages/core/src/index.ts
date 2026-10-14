@@ -51,10 +51,9 @@ export { commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 
 export { assembleRenderInput } from "./assemble/renderInput.js";
+export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames } from "./domain/report.js";
 export type {
   EvidenceReconciliation,
-  RenderInput,
-  ReportMetadata,
   Summary,
   ScenarioReconciliationTotals,
   QualityCheckReconciliationTotals,
@@ -62,17 +61,17 @@ export type {
   TestVolumeTotals,
   FitnessFunctionTotals,
   FitnessTally,
-  EvidenceObligationsSection,
 } from "./assemble/renderInput.js";
 
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
 
-export { renderJson } from "./render/json.js";
-export { renderMarkdown, renderReport, renderReportFromJson } from "./render/markdown.js";
-export type { FeatureNames } from "./render/markdown.js";
+export { renderJson, renderMarkdown, projectProvenance } from "./assemble/composers.js";
+export { renderReport, renderReportFromJson } from "./render/markdown.js";
 
-export { provenanceObject, projectProvenance, projectProvenanceObject } from "./provenance/provenance.js";
-export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, ProvenanceInput } from "./provenance/provenance.js";
+export { provenanceObject } from "./provenance/provenance.js";
+export { projectProvenanceObject } from "./render/provenanceFacts.js";
+export type { ProvenanceFacts, ProvenanceInput } from "./render/provenanceFacts.js";
+export type { RunContext, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";
 
 export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";

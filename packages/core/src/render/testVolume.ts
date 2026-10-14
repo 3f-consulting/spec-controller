@@ -1,5 +1,5 @@
 import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
-import type { RenderInput } from "../assemble/renderInput.js";
+import type { RenderInput } from "../domain/report.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const testVolumeSection = (report: RenderInput): string[] => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";

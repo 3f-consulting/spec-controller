@@ -1,5 +1,5 @@
-import type { RenderInput } from "../assemble/renderInput.js";
-import { projectProvenanceObject } from "../provenance/provenance.js";
+import type { RenderInput } from "../domain/report.js";
+import { projectProvenanceObject } from "./provenanceFacts.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const provenanceSection = (report: RenderInput): string[] => {

@@ -1,5 +1,5 @@
 import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 export const codeErrorsCtx: RunContext = {
   target: "scenario-code-errors-target",

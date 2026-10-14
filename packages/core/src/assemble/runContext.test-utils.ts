@@ -1,4 +1,4 @@
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 export const reportCtx: RunContext = {
   target: "an-adopters-repository",

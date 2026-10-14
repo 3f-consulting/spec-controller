@@ -1,4 +1,4 @@
-import type { RenderInput } from "../assemble/renderInput.js";
+import type { RenderInput } from "../domain/report.js";
 import type { ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 

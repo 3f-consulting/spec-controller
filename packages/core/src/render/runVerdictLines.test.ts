@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 const ctx: RunContext = {
   target: "run-verdict-target",

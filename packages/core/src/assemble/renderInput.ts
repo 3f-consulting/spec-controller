@@ -1,8 +1,8 @@
-import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
-import type { Ledger } from "../model.js";
-import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
-import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
-import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "../domain/corpusCounts.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { provenanceObject } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
+import type { RenderInput } from "../domain/report.js";
+import type { EvidenceObligations } from "../domain/corpusCounts.js";
 
 export type {
   ScenarioReconciliationTotals,
@@ -16,26 +16,6 @@ export type {
   FitnessFunctionTotals,
   EvidenceReconciliation,
 } from "../domain/evidenceReconciliation.js";
-
-export interface EvidenceObligationsSection {
-  readonly excludedOccurrences: number;
-  readonly untaggedScenarios: readonly UntaggedScenario[];
-  readonly sharedScnCodes?: readonly SharedScnCode[];
-}
-
-export interface ReportMetadata {
-  readonly featureNames?: Record<string, string>;
-}
-
-export interface RenderInput {
-  readonly runProvenance: ProvenanceObject;
-  readonly summary: Summary;
-  readonly ledger: Ledger;
-  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
-  readonly scenarioCodePopulation?: ScenarioCodePopulation;
-  readonly evidenceObligations?: EvidenceObligationsSection;
-  readonly metadata?: ReportMetadata;
-}
 
 export function assembleRenderInput(
   evidenceReconciliation: EvidenceReconciliation,

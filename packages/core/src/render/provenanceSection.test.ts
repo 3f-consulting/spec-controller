@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger } from "../model.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import type { RunContext } from "../provenance/provenance.js";
+import type { RunContext } from "../domain/runProvenance.js";
 
 const er = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 

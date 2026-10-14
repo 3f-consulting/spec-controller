@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";

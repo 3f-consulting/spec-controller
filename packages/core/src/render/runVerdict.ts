@@ -1,6 +1,6 @@
-import type { RenderInput } from "../assemble/renderInput.js";
+import type { RenderInput } from "../domain/report.js";
 import type { Ledger } from "../model.js";
-import type { ProvenanceObject } from "../provenance/provenance.js";
+import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { hasScenarioCodeErrors } from "../domain/scenarioCodeError.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
