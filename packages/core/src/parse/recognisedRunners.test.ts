@@ -97,6 +97,38 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
       "lint:rules",
     ]);
   });
+
+  const runners = { unit: "vitest", integration: "cucumber-js" };
+  const stepRunning = (line: string): string =>
+    ["jobs:", "  ci:", "    steps:", "      - name: Check", "        run: |", `          ${line}`].join("\n");
+
+  const namings = [
+    ["as what echo prints", "echo vitest run"],
+    ["as what grep searches for", "grep -q vitest package.json"],
+    ["as an argument to a script", "./scripts/check-coverage.sh vitest"],
+    ["as what pnpm why explains", "pnpm why vitest"],
+    ["as what npm ls lists", "npm ls cucumber-js"],
+    ["as what pnpm add installs", "pnpm add -D vitest"],
+    ["in a sentence echo prints", "echo cucumber-js is wired"],
+    ["after a command whose name holds an =", "./set-FOO=1 vitest run"],
+  ] as const;
+
+  it.each(namings)("leaves a step naming the runner %s in its own command a candidate", (_naming, line) => {
+    const ci = [stepRunning(line)];
+    expect(recognisedRunners(ci, { scripts: {} }, runners)).toEqual([]);
+    expect(runningFitnessFunctions(ci, { scripts: {} }, runners).map((check) => check.fitnessFunction)).toEqual([
+      "Check",
+    ]);
+  });
+
+  it.each(namings)("leaves a step naming the runner %s in a manifest script it follows a candidate", (_naming, check) => {
+    const ci = [stepRunning("pnpm check")];
+    const manifest = { scripts: { check } };
+    expect(recognisedRunners(ci, manifest, runners)).toEqual([]);
+    expect(runningFitnessFunctions(ci, manifest, runners).map((found) => found.fitnessFunction)).toEqual([
+      "check",
+    ]);
+  });
 });
 
 describe("[SCN-USG-029] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
@@ -151,5 +183,45 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
     expect(runningFitnessFunctions(piped, noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
       "Gate",
     ]);
+  });
+});
+
+describe("[SCN-USG-033] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
+  const stepRunning = (line: string): string =>
+    ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
+      "\n"
+    );
+
+  const unit = { unit: "vitest" };
+  const asTheRunner = [{ tier: "unit", runner: "vitest", step: "Unit tests" }];
+
+  const forms = [
+    ["directly", "vitest run"],
+    ["after an environment assignment", "CI=true vitest run"],
+    ["after several environment assignments", "CI=true NODE_OPTIONS=--max-old-space-size=4096 vitest run"],
+    ["through timeout with a duration", "timeout 600 vitest run"],
+    ["through timeout with a quoted variable for its duration", 'timeout "$BUDGET" vitest run'],
+    ["through npx", "npx vitest run"],
+    ["through npm exec", "npm exec vitest run"],
+    ["through pnpm exec", "pnpm exec vitest run"],
+    ["through pnpm dlx", "pnpm dlx vitest run"],
+    ["through pnpm", "pnpm vitest run"],
+    ["through yarn", "yarn vitest run"],
+    ["through bunx", "bunx vitest run"],
+    ["through launchers in combination", "timeout 60 pnpm exec vitest run"],
+    ["through launchers after an environment assignment", "CI=true timeout 60 pnpm exec vitest run"],
+    ["as the later command of an && list", "pnpm build && vitest run"],
+    ["as the later command of an || list", "false || vitest run"],
+    ["as the later command of a ; list", "pnpm build; vitest run"],
+    ["as the first command of an && list", "vitest run && echo done"],
+    ["through a launcher in a list", "pnpm build && timeout 60 npx vitest run"],
+  ] as const;
+
+  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
+    expect(recognisedRunners([stepRunning(line)], { scripts: {} }, unit)).toEqual(asTheRunner);
+  });
+
+  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
+    expect(recognisedRunners([stepRunning("pnpm test")], { scripts: { test } }, unit)).toEqual(asTheRunner);
   });
 });

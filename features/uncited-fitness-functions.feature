@@ -85,21 +85,28 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
 
-    A step that runs a manifest script is read through that script. The script's body is searched
-    for the runner as a whole shell token, and a script that runs another script is followed up to
-    three levels deep, never revisiting a script. A step recognised as a runner is named on the
-    report.
+    A step that runs a manifest script is read through that script. The script's body is read for
+    the runner as a step's own command is, as the command a line runs, and a script that runs
+    another script is followed up to three levels deep, never revisiting a script. A step
+    recognised as a runner is named on the report.
 
     @unit @SCN-USG-011
     Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest
 
-  Rule: a runner's name occurring anywhere but the command position leaves the step a candidate
+  Rule: a runner is recognised only as the command a step runs, and named anywhere else it leaves the step a candidate
 
-    A runner is recognised only as a whole shell token. A runner's name inside a path, a flag, an
-    output filename or an `=`-joined argument is not that token, and leaves the step a candidate.
+    A runner is recognised only as the command word of a simple command in the last stage of a
+    pipeline: the first word after any leading NAME=value assignments, or the word a launcher
+    hands on to, the launchers being timeout with its duration, npx, npm exec, pnpm exec,
+    pnpm dlx, pnpm, yarn and bunx. Each command of an &&, || or ; list is read the same way, in
+    the step's own command and in any manifest script it follows. A runner named anywhere
+    else, as an argument, inside a path, a flag or an =-joined value, leaves the step a candidate.
 
     @unit @SCN-USG-012
     Scenario: a check step naming a runner in a path or an argument is a candidate, never excluded as the runner
+
+    @unit @SCN-USG-033
+    Scenario: a runner started through a launcher, after an environment assignment or later in a command list is recognised
 
   Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
 

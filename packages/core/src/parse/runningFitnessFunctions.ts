@@ -1,5 +1,5 @@
 import type { FitnessEvidenceObservation } from "../model.js";
-import { commandRuns } from "./commandRuns.js";
+import { commandRunsAsCommand } from "./commandRuns.js";
 import {
   ciWorkflowSteps,
   commandInvokesScript,
@@ -31,7 +31,7 @@ function namedRunnersAt(
   );
   return Object.entries(runners).filter(
     (entry): entry is [string, string] =>
-      entry[1] !== null && commandRuns(command, entry[1], unpiped)
+      entry[1] !== null && commandRunsAsCommand(command, entry[1], unpiped)
   );
 }
 
