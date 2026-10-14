@@ -64,7 +64,7 @@ STORE=~/spec-controller-runs        # optional: kept runs, outside the repositor
 # 1. Produce the evidence your tools already write.
 npx vitest run --reporter=json --outputFile=reports/vitest.json
 npx cucumber-js --format summary --format json:reports/cucumber.json
-python -m pytest --junitxml=reports/pytest.xml      # if you use pytest
+pytest --junitxml=reports/pytest.xml               # if you use pytest
 
 # 2. Reconcile it.
 npx spec-controller --store "$STORE" balance \
@@ -286,9 +286,9 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this tier*. The report distinguishes it from an omitted key, which it reads as *you have not told us*.
 - **A key outside the four** is reported as unrecognised, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
-- **A runner is matched as a whole shell token**, never as a substring. The token can be in the step's own command, or in the `package.json` script the step invokes, following aliases three deep.
+- **A runner is recognised only as the command a step runs**: the first word of each command in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
-- **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …` or `python -m pytest …`, because the runner is matched as a whole shell token.
+- **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`. A step that runs `python -m pytest …`, `poetry run pytest …` or `uv run pytest …` is reported as a check, because its command is `python`, `poetry` or `uv`: run `pytest` directly, or add the step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`
 
@@ -658,7 +658,7 @@ The code is one past the highest the repository has **ever** carried for that fe
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
 3. To keep the report while you work it down without redding the build, add `--exit-zero`. Delete it when you are ready to gate.
 
-**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It matches a whole shell token of the step's command, or of the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one buried in a quoted argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
+**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`python -m`, `poetry run`, `uv run`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
 **The verdict reads SCENARIO CODE ERRORS.** The corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one scenario code. `## Scenario code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
 
