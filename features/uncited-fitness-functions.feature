@@ -627,11 +627,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     steps nobody would call a check, and the consumer's own list is the wrong place to fix a fact
     that holds for every pipeline.
 
-    IT IS A CLOSED LIST OF PLUMBING, NEVER A LIST OF CHECKS. The operator ruled it on 2026-10-13
-    (quality-checks.md, How a check is discovered; the decision log's "GitHub's own plumbing
-    actions, by a closed list, are not checks"): actions/checkout, actions/setup-*, actions/cache,
-    actions/upload-artifact and actions/download-artifact. A list of what is not a check grows
-    only by the operator's word.
+    IT IS A CLOSED LIST OF PLUMBING, NEVER A LIST OF CHECKS: actions/checkout, actions/setup-*,
+    actions/cache, actions/upload-artifact and actions/download-artifact. A list of what is not a
+    check grows only by a decision recorded with its reason, never by inference.
 
     THE MATCH IS ON THE ACTION, NEVER ON THE LINE THAT PINS IT. A step is read as an owner and a
     repository off its uses: value. The ref after the at sign, whether a tag, a branch or a pinned
