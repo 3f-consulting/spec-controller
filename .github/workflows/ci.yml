@@ -82,7 +82,14 @@ jobs:
         env:
           TMPDIR: ${{ runner.temp }}/suite-tmp/vitest
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
-        run: timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled
+        # One worker per core: vitest's default leaves one core idle, which on a 2-core runner is half of it.
+        # The suite's time is printed against its limit on every run, a killed run included, so headroom is read before it runs out.
+        run: |
+          start=$SECONDS
+          status=0
+          timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --maxWorkers="$(nproc)" --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled || status=$?
+          echo "the unit suite took $((SECONDS - start)) s of its $UNIT_SUITE_TIMEOUT_S s limit"
+          exit "$status"
 
       - name: Cucumber
         id: SCN-FIT-013
@@ -91,7 +98,12 @@ jobs:
           TMPDIR: ${{ runner.temp }}/suite-tmp/cucumber
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
           TSX_DISABLE_CACHE: "1"
-        run: timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
+        run: |
+          start=$SECONDS
+          status=0
+          timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" || status=$?
+          echo "the behavioural suite took $((SECONDS - start)) s of its $CUCUMBER_SUITE_TIMEOUT_S s limit"
+          exit "$status"
 
       - name: A red proof of a unit scenario runs exactly the tests whose titles carry its code
         id: SCN-FIT-034
