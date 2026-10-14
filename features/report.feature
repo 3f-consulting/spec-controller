@@ -27,10 +27,11 @@ Feature: The report renders the ledger as sectioned facts
     (Fork A; the facts artefact is self-describing, run.yaml optional in
     CI). The prior basename(dirname(--features)) resolution — and its degenerate "."
     — are gone: the target is now the operator's --target value or the explicit
-    default, never a guess.
+    default, never a guess. With no --target, the line also names the target's
+    git origin, shown beside the target and never in place of it.
 
     @unit @SCN-RPT-001
-    Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target
+    Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target and naming the git origin beside it
 
   Rule: the JSON report carries a provenance object
 

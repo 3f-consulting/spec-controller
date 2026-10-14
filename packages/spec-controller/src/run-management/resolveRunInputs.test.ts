@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/ingestQualityChecks.js";
 import { runBalance } from "../cli-balance/cli.js";
+import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
@@ -438,5 +439,55 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       rmSync(target, { recursive: true, force: true });
       rmSync(foreign, { recursive: true, force: true });
     }
+  });
+});
+
+describe("[SCN-RPT-001] a run with no --target names the target's git origin beside unknown-target", () => {
+  function targetRepo(md: string): string | undefined {
+    return md.split("\n").find((line) => line.startsWith("- Target repo:"));
+  }
+
+  function withCheckout(origin: string | null, use: (dir: string) => void): void {
+    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-unit-"));
+    try {
+      mkdirSync(join(dir, "features"));
+      writeFileSync(join(dir, "features", "widget.feature"), "Feature: widget\n\n  Scenario: a widget\n    Given a widget\n");
+      execFileSync("git", ["init", "-q", dir]);
+      if (origin !== null) execFileSync("git", ["-C", dir, "remote", "add", "origin", origin]);
+      use(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  function report(dir: string, extra: readonly string[] = []): { md: string; json: Record<string, unknown>; saved: string } {
+    const saved = join(dir, "report.json");
+    const md = runBalanceCaptured(["--features", join(dir, "features"), ...extra, "--format", "md", "--format", `json:${saved}`]).stdout;
+    return { md, json: JSON.parse(readFileSync(saved, "utf8")).runProvenance, saved };
+  }
+
+  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same", () => {
+    withCheckout("https://github.com/ekino/veggies.git", (dir) => {
+      const { md, json, saved } = report(dir);
+      expect(targetRepo(md)).toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
+      expect({ target: json["target"], targetOrigin: json["targetOrigin"] }).toEqual({ target: "unknown-target", targetOrigin: "ekino/veggies" });
+      expect(targetRepo(runBalanceCaptured(["--render-from-json", saved]).stdout)).toBe(targetRepo(md));
+    });
+  });
+
+  it("reads unknown-target alone, with no origin in the JSON, when the target has no origin remote", () => {
+    withCheckout(null, (dir) => {
+      const { md, json } = report(dir);
+      expect(targetRepo(md)).toBe("- Target repo: unknown-target");
+      expect("targetOrigin" in json).toBe(false);
+    });
+  });
+
+  it("reads the --target value alone, with no origin in the JSON, when --target is given", () => {
+    withCheckout("git@github.com:ekino/veggies.git", (dir) => {
+      const { md, json } = report(dir, ["--target", "veggies"]);
+      expect(targetRepo(md)).toBe("- Target repo: veggies");
+      expect("targetOrigin" in json).toBe(false);
+    });
   });
 });

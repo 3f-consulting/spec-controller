@@ -400,7 +400,7 @@ npx spec-controller --store "$STORE" balance \
   --package-json package.json
 ```
 
-Leave out any input you don't have. `--target` names the project in the report; without it the report reads `unknown-target`. On a first run, add `--exit-zero` to read the report without failing the build.
+Leave out any input you don't have. `--target` names the project in the report; without it the report reads `unknown-target`, and when the project is a git checkout with an `origin` remote it adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`. On a first run, add `--exit-zero` to read the report without failing the build.
 
 **Your first `notChecks`.** Every CI step that is neither a declared runner nor one of GitHub's own checkout, setup, cache and artifact actions is listed as a check. Steps that do work but check nothing, such as publishing or bumping a version, are named once, by the step's own name:
 

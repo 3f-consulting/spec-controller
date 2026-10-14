@@ -28,6 +28,26 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
     expect(obj.inputs.features).toBe(features);
   });
 
+  it.each([
+    ["https://github.com/ekino/veggies.git", "ekino/veggies"],
+    ["https://github.com/ekino/veggies", "ekino/veggies"],
+    ["ssh://git@github.com/ekino/veggies.git", "ekino/veggies"],
+    ["ssh://git@github.com:22/ekino/veggies", "ekino/veggies"],
+    ["git@github.com:ekino/veggies.git", "ekino/veggies"],
+    ["git@github.com:ekino/veggies", "ekino/veggies"],
+    ["/srv/git/veggies.git", "/srv/git/veggies.git"],
+    ["file:///srv/git/veggies.git", "file:///srv/git/veggies.git"],
+    ["https://github.com/veggies.git", "https://github.com/veggies.git"],
+    ["http://deploy:s3cret@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies"],
+    ["https://x-token:s3cret@github.com/veggies.git", "https://github.com/veggies.git"],
+  ])("names the target's origin %s as %s", (origin, shown) => {
+    expect(provenanceObject({ ...mk({}), targetOrigin: origin }).targetOrigin).toBe(shown);
+  });
+
+  it.each([undefined, ""])("carries no origin when the run read none (%j)", (targetOrigin) => {
+    expect("targetOrigin" in provenanceObject({ ...mk({}), targetOrigin })).toBe(false);
+  });
+
   it("the markdown provenance projection carries the relativized value too (single projection)", () => {
     const facts = projectProvenance(mk({ features: "/repo/features" }, "/repo"));
     expect(facts.inputs).toContainEqual({ flag: "--features", value: "features" });

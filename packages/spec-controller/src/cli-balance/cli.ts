@@ -24,7 +24,7 @@ import { statusFor } from "./exitStatus.js";
 import {
   verdictCode,
 } from "@3f-consulting/spec-controller-core";
-import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
+import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { earlierStoredRunDirOf } from "../run-management/keptRun.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
 import {
@@ -247,14 +247,14 @@ function runContextOf(
   runStart: Date,
   root: string,
 ): RunContext {
+  const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
+  const targetOrigin = args["target"] === undefined ? resolveTargetOrigin(targetDir) : null;
   return {
     target: sourceTarget(args),
+    ...(targetOrigin !== null ? { targetOrigin } : {}),
     inputs: { ...inputs },
     runStart,
-    sourceSha: resolveSourceSha({
-      sourceSha: args["source-sha"],
-      targetDir: args["features"] !== undefined ? dirname(args["features"]) : undefined,
-    }),
+    sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),
     root,
     ...resolveToolIdentity(),
     strict: args["strict"] !== undefined,

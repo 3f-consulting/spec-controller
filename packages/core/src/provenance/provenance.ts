@@ -1,5 +1,5 @@
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { INPUT_FLAGS, type ProvenanceObject, type RunContext, type RunInputs } from "../domain/runProvenance.js";
+import { INPUT_FLAGS, targetOriginName, type ProvenanceObject, type RunContext, type RunInputs } from "../domain/runProvenance.js";
 
 function formatUtc(instant: Date): string {
   return instant.toISOString().replace(/\.\d+Z/, "Z");
@@ -17,6 +17,7 @@ function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
 export function provenanceObject(ctx: RunContext): ProvenanceObject {
   return {
     target: ctx.target,
+    ...(ctx.targetOrigin ? { targetOrigin: targetOriginName(ctx.targetOrigin) } : {}),
     sourceSha: ctx.sourceSha,
     toolSha: ctx.toolSha ?? null,
     toolVersion: ctx.toolVersion ?? "unknown",

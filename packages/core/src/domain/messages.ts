@@ -15,6 +15,7 @@ export enum CoreMessage {
   ReportTitle,
   RunProvenanceHeading,
   ProvenanceTargetRepo,
+  ProvenanceTargetRepoUntargeted,
   ProvenanceNoInputs,
   ProvenanceInputs,
   ProvenanceNotSupplied,
@@ -167,6 +168,7 @@ export enum CoreMessage {
 
 interface CoreMessageParams {
   readonly [CoreMessage.ProvenanceTargetRepo]: [target: string];
+  readonly [CoreMessage.ProvenanceTargetRepoUntargeted]: [target: string, origin: string];
   readonly [CoreMessage.ProvenanceNotSupplied]: [flags: string];
   readonly [CoreMessage.ProvenanceRunTimestamp]: [runStartUtc: string];
   readonly [CoreMessage.ProvenanceSourceSha]: [sha: string];
@@ -254,6 +256,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReportTitle]: "# Evidence Reconciliation",
   [CoreMessage.RunProvenanceHeading]: "## Run provenance",
   [CoreMessage.ProvenanceTargetRepo]: (target) => `Target repo: ${target}`,
+  [CoreMessage.ProvenanceTargetRepoUntargeted]: (target, origin) => `Target repo: ${target} (no --target given; origin is ${origin})`,
   [CoreMessage.ProvenanceNoInputs]: "Inputs: none specified",
   [CoreMessage.ProvenanceInputs]: "Inputs:",
   [CoreMessage.ProvenanceNotSupplied]: (flags) => `Not supplied: ${flags}`,

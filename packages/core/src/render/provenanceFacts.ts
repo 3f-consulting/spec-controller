@@ -7,6 +7,7 @@ export interface ProvenanceInput {
 
 export interface ProvenanceFacts {
   readonly target: string;
+  readonly targetOrigin?: string;
   readonly inputs: readonly ProvenanceInput[];
   readonly runStartUtc: string;
   readonly sourceSha: string | null;
@@ -28,6 +29,7 @@ export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts 
   }
   return {
     target: obj.target,
+    ...(obj.targetOrigin !== undefined ? { targetOrigin: obj.targetOrigin } : {}),
     inputs,
     absentInputs,
     runStartUtc: obj.runTimestamp,

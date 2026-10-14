@@ -28,6 +28,14 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     expect(md).toContain("- Tool version: 0.1.0");
   });
 
+  it("names the target's git origin beside unknown-target when the run read one, and the bare target when it read none", () => {
+    const targetRepo = (md: string) => md.split("\n").find((line) => line.startsWith("- Target repo:"));
+    const untargeted = { ...ctx, target: "unknown-target" };
+    expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "git@github.com:ekino/veggies.git" })))
+      .toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
+    expect(targetRepo(renderMarkdown(__er(balance), untargeted))).toBe("- Target repo: unknown-target");
+  });
+
   it("positions the provenance header above the per-scenario table (sectioned-renderer order)", () => {
     const md = renderMarkdown(__er(balance), ctx);
     expect(md.indexOf("# Evidence Reconciliation")).toBeLessThan(md.indexOf("## Run provenance"));

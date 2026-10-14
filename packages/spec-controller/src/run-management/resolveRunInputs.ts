@@ -7,10 +7,15 @@ export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string 
   if (opts.sourceSha !== undefined && opts.sourceSha.trim() !== "") {
     return opts.sourceSha.trim();
   }
-  const dir = opts.targetDir !== undefined && opts.targetDir.trim() !== ""
-    ? opts.targetDir
-    : undefined;
-  return readGit(dir, ["rev-parse", "HEAD"]);
+  return readGit(targetDirOf(opts.targetDir), ["rev-parse", "HEAD"]);
+}
+
+export function resolveTargetOrigin(targetDir: string | undefined): string | null {
+  return readGit(targetDirOf(targetDir), ["remote", "get-url", "origin"]);
+}
+
+function targetDirOf(targetDir: string | undefined): string | undefined {
+  return targetDir !== undefined && targetDir.trim() !== "" ? targetDir : undefined;
 }
 
 export interface ToolIdentity {

@@ -5,7 +5,10 @@ import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 export const provenanceSection = (report: RenderInput): string[] => {
   const p = projectProvenanceObject(report.runProvenance);
   const lines = [CORE_MESSAGES[CoreMessage.RunProvenanceHeading], ""];
-  lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceTargetRepo](p.target)}`);
+  const targetRepo = p.targetOrigin === undefined
+    ? CORE_MESSAGES[CoreMessage.ProvenanceTargetRepo](p.target)
+    : CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted](p.target, p.targetOrigin);
+  lines.push(`- ${targetRepo}`);
   if (p.inputs.length === 0) {
     lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceNoInputs]}`);
   } else {

@@ -57,6 +57,7 @@ type CoreTemplate = {
 
 const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessages[C]> } = {
   [CoreMessage.ProvenanceTargetRepo]: ["/repo"],
+  [CoreMessage.ProvenanceTargetRepoUntargeted]: ["unknown-target", "owner/repo"],
   [CoreMessage.ProvenanceNotSupplied]: ["--results"],
   [CoreMessage.ProvenanceRunTimestamp]: ["2026-10-04T00:00:00Z"],
   [CoreMessage.ProvenanceSourceSha]: ["abc1234"],
