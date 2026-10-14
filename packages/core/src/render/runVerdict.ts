@@ -1,4 +1,4 @@
-import type { RenderInput } from "../domain/report.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";

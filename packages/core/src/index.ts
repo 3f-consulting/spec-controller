@@ -51,7 +51,7 @@ export { commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 
 export { assembleRenderInput } from "./assemble/renderInput.js";
-export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames } from "./domain/report.js";
+export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames } from "./domain/renderInput.js";
 export type {
   EvidenceReconciliation,
   Summary,

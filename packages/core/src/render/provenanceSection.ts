@@ -1,4 +1,4 @@
-import type { RenderInput } from "../domain/report.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import { projectProvenanceObject } from "./provenanceFacts.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 

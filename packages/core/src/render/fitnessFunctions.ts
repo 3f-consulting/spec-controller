@@ -1,4 +1,4 @@
-import type { RenderInput } from "../domain/report.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 export const fitnessFunctionsSection = (report: RenderInput): string[] => {

@@ -23,7 +23,7 @@ import {
   outOfBalanceCountOf,
   carriesNoScnCode,
 } from "../domain/scenarioReconciliation.js";
-import type { RenderInput } from "../domain/report.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";

@@ -1,7 +1,7 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { provenanceObject } from "../provenance/provenance.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import type { RenderInput } from "../domain/report.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 
 export type {
