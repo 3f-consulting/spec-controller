@@ -12,10 +12,6 @@ Feature: Ledger over obligation-vs-observation evidence
   it raises balances; otherwise it is out of balance, carrying the LIST of
   every non-balanced reconciling item — each typed, none ranked.
 
-  This feature is the @LDG behavioural spine. It grows scenario-by-scenario
-  as LDG-002…005 are driven; LDG-001 (here) is the headline balanced path that
-  carries the foundation.
-
   Rule: a scenario whose Evidence Obligation is answered by evidence that exists and passes is balanced
 
     @unit @SCN-LDG-001

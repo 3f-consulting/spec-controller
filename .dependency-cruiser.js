@@ -47,9 +47,9 @@ export default {
       severity: "error",
       comment:
         "a core adapter meets another adapter only through the domain, never by importing it or the composition layer's internals",
-      from: { path: "^packages/core/src/(parse|render|census|provenance)/", pathNot: "\\.(test|test-utils)\\.ts$" },
+      from: { path: "^packages/core/src/(parse|render|provenance)/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: {
-        path: "^packages/core/src/(parse|render|census|provenance|assemble)/",
+        path: "^packages/core/src/(parse|render|provenance|assemble)/",
         pathNot: "^packages/core/src/$1/",
       },
     },

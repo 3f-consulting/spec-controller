@@ -88,8 +88,8 @@ Feature: Emit each output format to stdout or a caller-given path
 
   Rule: the legacy --json flag is rejected with a migration hint
 
-    The earlier --json <path> flag is gone. Supplying it fails fast with a hint to use
-    --format json:<path>, so the removed flag never silently no-ops and drops output.
+    --json <path> is not a flag. Supplying it fails fast with a hint to use
+    --format json:<path>, so it never silently no-ops and drops output.
 
     @unit @integration @SCN-FMT-006
     Scenario: the legacy --json flag is rejected with a hint to use --format json:<path>

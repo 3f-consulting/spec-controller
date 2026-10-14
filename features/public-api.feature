@@ -10,7 +10,7 @@ Feature: The public core exposes its reconciliation for reading, not for constru
   added to the barrel, or quietly dropped from it, reds nothing — which is what
   `0.x` already says out loud in `doc/compatibility.md`.
 
-  What is still held here is narrower, and was never about the surface's SHAPE.
+  What is held here is narrower, and is not about the surface's SHAPE.
   One symbol the barrel exports is exported for READING and cannot be
   CONSTRUCTED from outside it, and the evidence is the type-checker refusing the
   assignment rather than a list anyone maintains.

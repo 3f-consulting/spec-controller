@@ -17,11 +17,11 @@ Feature: spec-controller balance runs standalone
 
   Rule: A supplied input path that does not exist is a hard error, not silent empty evidence.
 
-    A supplied `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
-    whose path does not exist halts `balance` BEFORE reconciling — non-zero exit,
-    stderr naming the flag and the missing path — never the silent zero-evidence
-    all-red report a mistyped path would otherwise produce. The five flags are
-    Examples of one boundary behaviour; scope is existence only.
+    A supplied `--vitest` / `--pytest` / `--cucumber` / `--features` / `--ci` /
+    `--package-json` / `--ci-steps` whose path does not exist halts `balance` BEFORE
+    reconciling — non-zero exit, stderr naming the flag and the missing path — never the
+    silent zero-evidence all-red report a mistyped path would otherwise produce. The six
+    flags in the Examples are examples of one boundary behaviour; scope is existence only.
 
     @SCN-CLI-002 @unit @e2e
     Scenario Outline: a supplied-but-missing <flag> exits non-zero and names the path
@@ -234,12 +234,10 @@ Feature: spec-controller balance runs standalone
     tolerantly by design is a workflow's YAML: a workflow the reader cannot walk contributes no
     steps, and the run reconciles without them.
 
-    The rule reaches --render-from-json too, the one flag the input guards never
-    reached: it returns BEFORE they run, so it honoured neither — a missing path
-    crashed to ENOENT and a malformed file to SyntaxError, both landing on exit 1. Its
-    missing-path case was a live violation of the usage-error principle, which the
-    CLI enforced for the five evidence flags and not for this one. MISSING and UNPARSEABLE
-    are two Examples of the one boundary rule.
+    The rule reaches --render-from-json too. It returns BEFORE the input guards run, so it
+    answers for its own file: a missing path and a malformed file are each a usage error,
+    never a crash to ENOENT or SyntaxError on exit 1. MISSING and UNPARSEABLE are two
+    Examples of the one boundary rule.
 
     @unit @e2e @SCN-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
@@ -812,12 +810,10 @@ Feature: spec-controller balance runs standalone
     anyway. The registry is the single source: a flag exists ⇒ a registry entry ⇒ it
     appears in help, by construction.
 
-    The scope is per-command because the REGISTRY has always been two-scope — a global
-    host-modifier scope and a set of per-command scopes. The per-command renderer was
-    nonetheless written against the one command that existed and found `balance` BY NAME,
-    so a second command had no help surface at all: not an empty one, no way to ask for
-    it. The command is a parameter, so what the renderer covers is the registry's shape
-    rather than the command set's size on the day it was written.
+    The scope is per-command because the REGISTRY is two-scope — a global host-modifier
+    scope and a set of per-command scopes. The command is a parameter of the renderer, never
+    found BY NAME, so every command has a help surface and what the renderer covers is the
+    registry's shape rather than the size of the command set.
 
     @SCN-CLI-006 @unit
     Scenario: <command> --help lists that command's flags and exits 0
@@ -859,9 +855,8 @@ Feature: spec-controller balance runs standalone
 
   Rule: the corpus is every .feature file under the corpus directory, at any depth
 
-    A project that keeps its feature files in subdirectories had none of them read: the corpus
-    was the directory's top level alone, and the report said no feature file was judged. Where
-    a feature file sits under the corpus changes nothing about how it is judged.
+    A project may keep its feature files in subdirectories. Where a feature file sits under the
+    corpus changes nothing about how it is judged.
 
     @SCN-CLI-085 @unit @e2e
     Scenario: a feature file in a subdirectory of the corpus, at any depth, is read and judged as it would be at the top level

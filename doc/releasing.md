@@ -150,9 +150,8 @@ discovered here.
 you unpublish inside the window, **that version number and that package name are burned** — npm
 will not let anyone republish them, you included.
 
-There is no half-way house. The previous shape had one — a version could sit on the registry
-unreachable and simply never be approved — and it is gone with everything else that went with it.
-**The merge is now the point of no return.** That is why the clean-room smoke runs before the
+There is no half-way house: no version sits on the registry unreachable, waiting to be approved.
+**The merge is the point of no return.** That is why the clean-room smoke runs before the
 publish, and why a pull request touching a package is reviewed as a release: the question is not
 *"can I fix this later"* but *"is this the artefact"*.
 
@@ -337,9 +336,9 @@ already passed all of them, because **every release run is a merge**. `release.y
 
 The reader that judges this tree is the **pinned published** spec-controller, so a change to the
 model it reads cannot land in one merge: on the branch that makes the change, the pinned reader is
-still the old one and `Self-reconciliation balance` reds. There was once a hatch here — a release
-started by hand from the branch, before it merged. It is gone, along with `release.yml`'s
-manual trigger, and **nothing publishes except a merge to `main`.**
+still the old one and `Self-reconciliation balance` reds. There is no hatch — no release started
+by hand from the branch before it merges, and no manual trigger on `release.yml` — so **nothing
+publishes except a merge to `main`.**
 
 A change like that lands as a **parallel change** — *expand–migrate–contract* — over two merges and
 a bot PR.

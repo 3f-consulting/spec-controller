@@ -2,19 +2,18 @@
 Feature: The Gherkin parse gate — no check reports on a corpus the parser rejects
 
   A check that reads .feature files line by line answers "is there an offending line?", and a
-  reader hears "this is a feature file". Twice now the two have come apart: once with scenario
-  prose between a scenario's last step and the next tag line, and once with a Rule preamble
-  line opening with a scenario's id, which Gherkin reads as a tag line. Both files were syntactically
-  invalid; every line-scanning lint reported green; only pnpm cucumber saw it. Both faults were in
-  Rule/scenario PROSE — the practice that makes these files good is the practice that makes them
-  fragile.
+  reader hears "this is a feature file". The two come apart: scenario prose between a
+  scenario's last step and the next tag line, or a Rule preamble line opening with a scenario's
+  id, which Gherkin reads as a tag line, leaves a file syntactically invalid while every
+  line-scanning lint reports green. Both faults sit in Rule/scenario PROSE — the practice that
+  makes these files good is the practice that makes them fragile.
 
-  The parser is not new here. The balance CLI already refuses an unreadable corpus
-  (exit 2, the parser's own words), because the corpus is the ledger's debit side and a corpus
-  that is a fiction cannot be reconciled. What this feature adds is REACH, not a second parser:
-  the checkpoint moves into the shared feature-file discovery every corpus reader already goes
-  through, so a reader INHERITS the refusal instead of restating it. One answer to "what is a
-  feature file", as the adopted-vocabulary gate already has one answer to "what is the project".
+  The balance CLI refuses an unreadable corpus (exit 2, the parser's own words), because the
+  corpus is the ledger's debit side and a corpus that is a fiction cannot be reconciled. The
+  checkpoint sits in the shared feature-file discovery every corpus reader goes through, so a
+  reader INHERITS the refusal instead of restating it, and no reader holds a second parser. One
+  answer to "what is a feature file", as the adopted-vocabulary gate has one answer to "what is
+  the project".
 
   Rule: a reader of the feature corpus refuses a corpus the Gherkin parser rejects
 

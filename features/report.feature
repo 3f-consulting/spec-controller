@@ -9,25 +9,21 @@ Feature: The report renders the ledger as sectioned facts
   ordered list of section emitters — title, provenance, the summary views, the run verdict,
   the ledger and the rest — each over the one assembled report model.
 
-  Facts only — no interpretation, editorial, or cross-run comparison (project
-  design §5).
+  Facts only — no interpretation, editorial, or cross-run comparison.
 
   Rule: the markdown report opens with a run-provenance header
 
-    The headline behaviour (foundation-bearing). The markdown report no
-    longer opens straight into the per-scenario table: it opens with a "## Run
-    provenance" section stating the target repo, the input paths/flags actually
+    The markdown report opens with a "## Run provenance" section, ahead of the
+    per-scenario table, stating the target repo, the input paths/flags actually
     used, the run-start timestamp in UTC, the target's source SHA (a null SHA
     rendered as an explicit "unknown (non-git target)"), and the TOOL's own SHA and
     version — which spec-controller produced the run, a null tool SHA
     rendered "unknown (not a git checkout)" with the version still shown.
 
     The "Target repo:" fact is sourced from --target VERBATIM — no resolution,
-    defaulting to "unknown-target" on omit, parallel to sourceSha's "unknown"
-    (Fork A; the facts artefact is self-describing, run.yaml optional in
-    CI). The prior basename(dirname(--features)) resolution — and its degenerate "."
-    — are gone: the target is now the operator's --target value or the explicit
-    default, never a guess. With no --target, the line also names the target's
+    defaulting to "unknown-target" on omit, parallel to sourceSha's "unknown", so the
+    facts artefact is self-describing and run.yaml is optional in CI. The target is the
+    operator's --target value or the explicit default, never a guess from a path. With no --target, the line also names the target's
     git origin, shown beside the target and never in place of it.
 
     @unit @SCN-RPT-001
@@ -35,15 +31,15 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the JSON report carries a provenance object
 
-    The machine-readable surface. The JSON report grows a
+    The machine-readable surface. The JSON report carries a
     top-level `provenance` object carrying the same non-derivable run facts as the
     markdown header — target, source SHA, the TOOL's own SHA and version (which
     spec-controller produced the run), the UTC run timestamp, and the input
-    paths/flags actually used — while the reconciliation body (scenarios, warnings)
-    is unchanged: the serialised shape becomes { provenance, scenarios, warnings }.
+    paths/flags actually used — beside the reconciliation body (scenarios, warnings):
+    the serialised shape is { provenance, scenarios, warnings }.
     Provenance is not derivable from the Ledger, so it is persisted on the
-    JSON surface (project design §1, §3 — persist a fact on JSON iff it is not
-    derivable from the balance; the derived human views stay off JSON).
+    JSON surface: a fact persists on JSON iff it is not derivable from the balance,
+    and the derived human views stay off JSON.
 
     @unit @SCN-RPT-002
     Scenario: the JSON report carries a provenance object stating target, source SHA, tool SHA, tool version, UTC timestamp, and inputs, with the reconciliation body intact
@@ -56,8 +52,7 @@ Feature: The report renders the ledger as sectioned facts
     read, so an auditor reconciling a zip export, a detached-HEAD checkout, or a tree
     with no .git can still outcome a complete provenance. When no override is given and
     the target is not a git repository, the git read cannot answer and the source SHA
-    resolves to a recorded null ("unknown") rather than crashing the run (project
-    design §4). A pure resolution rule, so it is proven in isolation by Vitest, over a controlled non-git temp directory.
+    resolves to a recorded null ("unknown") rather than crashing the run. A pure resolution rule, so it is proven in isolation by Vitest, over a controlled non-git temp directory.
 
     @unit @SCN-RPT-003
     Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
@@ -83,8 +78,8 @@ Feature: The report renders the ledger as sectioned facts
     out-of-balance Scenario Reconciliation and two out-of-balance Quality Check
     Reconciliations — and the table presents that as a granularity fact, the nested causes
     reconciling to the Quality Check Reconciliation out-of-balance. No bold. A pure derive over
-    balance.scenarioReconciliations[].qualityCheckReconciliations[] — markdown-only (project
-    design §3), proven in isolation by Vitest.
+    balance.scenarioReconciliations[].qualityCheckReconciliations[] — markdown-only,
+    proven in isolation by Vitest.
 
     The subject row is the SCENARIO RECONCILIATION — the Evidence Reconciliation's collection, all
     three row kinds (real, phantom, suspense) — not "Scenario", which names only the
@@ -109,10 +104,9 @@ Feature: The report renders the ledger as sectioned facts
     obligation by its scenario and its reconciliation outcome — so the fitness axis (incl. any
     🍉 watermelon) reads on its own. Omitted entirely (total line and all) when no scenario
     raises a fitness evidence obligation. A pure derive over the ledger's fitness sub-rows —
-    markdown-only (project design §3), proven in isolation by Vitest.
+    markdown-only, proven in isolation by Vitest.
 
-    NO CHECK COLUMN. The table once printed a "Static check" column carrying the
-    characteristic the obligation was keyed by — what the check was ABOUT. One @fitness scenario
+    NO CHECK COLUMN. One @fitness scenario
     is one check and what it is about is its scenario's title, so no report rolls a check up by a
     word — a fitness function is its scenario; the scenario's @SCN is
     the whole identity the row needs.
@@ -172,12 +166,10 @@ Feature: The report renders the ledger as sectioned facts
     The corpus census (no standalone census section). The count is NOT lost: EVERY scenario is a ledger row — a
     zero-obligation scenario is a both-missing row, not a second axis — so the census
     is recoverable as the ledger scenario-count ("- N Scenario Reconciliation(s): …")
-    alone. The dissolution is guarded POSITIVELY, over the report's whole set of
-    top-level sections: a census section that came back under ANY name reds
-    by being unexpected, where naming one retired heading guarded only that spelling.
-    A pure markdown-only derive over the balance (project design §3), proven in
-    isolation by Vitest. RPT-008's excluded-occurrence bullet relocates into the
-    ledger summary.
+    alone. The absence of a census section is guarded POSITIVELY, over the report's
+    whole set of top-level sections: a census section under ANY name reds by being
+    unexpected. A pure markdown-only derive over the balance, proven in isolation by
+    Vitest. The excluded-occurrence bullet sits in the ledger summary.
 
     @unit @SCN-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
@@ -188,8 +180,8 @@ Feature: The report renders the ledger as sectioned facts
     delta between raw @SCN-FFF-NNN occurrences in the source (prose, comments, step
     text) and the ids actually read as scenarios — on BOTH surfaces (the
     markdown ledger-summary bullet + a JSON evidenceObligations object). Corpus metadata NOT
-    derivable from the Ledger, so it lands on both surfaces (project design §1, §3 — the same
-    non-derivable rule that put provenance on both surfaces). The scenario parse counts the
+    derivable from the Ledger, so it lands on both surfaces (the same non-derivable rule that
+    puts provenance on both surfaces). The scenario parse counts the
     raw occurrences beside the scenarios it reads; the datum is a field of the
     evidence-obligations census, threaded from the CLI to the renderers like the run's
     provenance.
@@ -228,7 +220,7 @@ Feature: The report renders the ledger as sectioned facts
     e2e/performance zeros shown — a fixed tally that always lists every level). The identity holds
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms
-    (rawByBehaviouralQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario) persist on JSON (project design §3); the
+    (rawByBehaviouralQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario) persist on JSON; the
     identity line stays markdown-only.
     Foundational: later scenarios consume the aggregate.
 
@@ -284,7 +276,7 @@ Feature: The report renders the ledger as sectioned facts
     once, by its `feature-file : scenario` locator, on its own ledger row. The datum lives on
     the evidence-obligations census's untaggedScenarios (obligation-side, like
     excludedOccurrences) and — a non-derivable datum — persists on the JSON
-    evidenceObligations object beside excludedOccurrences (project design §3).
+    evidenceObligations object beside excludedOccurrences.
 
     @unit @SCN-RPT-014
     Scenario: the ledger summary counts the untagged scenarios, and each is named once, on its own ledger row
@@ -359,18 +351,14 @@ Feature: The report renders the ledger as sectioned facts
     ten out-of-balance leaf outcomes — missing, failing, watermelon,
     no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — each a counted
     "↳ <outcome>" row whose Out-of-balance counts SUM to the Quality Check Reconciliation out-of-balance
-    total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
-    "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
-    double-counted — each group emitted a subtotal row AND its leaf rows at the same indent, so
-    a naive column-sum doubled (170 vs 85). Removing the grouping leaves the leaves reconciling
-    to the total exactly once. The existing leaf-presence guard stays green (the
-    leaves still render). A pure derive over the report's materialised
+    total. No "↳ debit-side", "↳ credit-side", or "↳ neither-side" subtotal row is
+    rendered: a subtotal row beside its own leaf rows at the same indent would double a naive
+    column-sum, and the leaves alone reconcile to the total exactly once. A pure derive over the report's materialised
     summary.qualityCheckReconciliations.byOutcome — markdown-only, proven in isolation by Vitest.
 
     The leaf list is HAND-MAINTAINED (a readonly Outcome[], not a type-forced Record), so it can
-    fall behind the Outcome union silently — broken joined the union, tallied in
-    the JSON via byOutcome.broken, and would have been omitted from this table with a clean
-    compile. So the decomposition also carries an EXHAUSTIVENESS guard: every Outcome member
+    fall behind the Outcome union silently — a new member, tallied in the JSON via
+    byOutcome, would be omitted from this table with a clean compile. So the decomposition also carries an EXHAUSTIVENESS guard: every Outcome member
     except satisfied (the balanced outcome) renders a leaf row — derived from the union itself,
     never a hand-transcribed list, so a future member cannot join the union without reaching the
     table. It WORKED: `no-scn-code` could not be added to the union without
@@ -493,29 +481,23 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: a proof that never ran is attributed to no scenario, even when it cites one
 
-    The census's second lie, and the reason the fold is not a no-op. A `broken` observation
-    can carry a REAL `scnId` — an ambiguous cucumber step cites its @SCN and
-    still never runs. The census counted it `attributed`; the reconciler posts it to suspense.
-    A proof that never ran cannot discharge or fail an obligation, so it
-    attributes to nothing.
+    A `broken` observation can carry a REAL `scnId` — an ambiguous cucumber step cites
+    its @SCN and still never runs. A proof that never ran cannot discharge or fail an obligation,
+    so it attributes to nothing: the reconciler posts it to suspense, and the count reads it
+    there, out of `attributed` and into `suspense`.
 
-    The count moves — `attributed` down, `suspense` up — and this scenario NAMES that move,
-    because nothing else can. The exhaustion identity is INVARIANT under a misclassification
-    between its own terms: it catches an evidence observation VANISHING, never an evidence observation in the wrong bucket.
-    It is a completeness check, and it has been misread as a correctness check. This is the
-    correctness check.
+    This scenario NAMES that placement, because nothing else can. The exhaustion identity is
+    INVARIANT under a misclassification between its own terms: it catches an evidence observation
+    VANISHING, never an evidence observation in the wrong bucket. It is a completeness check;
+    this is the correctness check.
 
-    The census is now a FOLD over the Ledger: it walks the posted evidence observations and reads each
-    evidence observation's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
-    keeps the BEHAVIOURAL scoping, and citation-routing makes that scoping MORE obviously
-    necessary rather than less. A fitness evidence observation now cites its OWN fitness
+    The count is a FOLD over the Ledger: it walks the posted evidence observations and reads each
+    evidence observation's kind off the ROW it posted to, so the reconciler is the ONE classifier.
+    The fold keeps the BEHAVIOURAL scoping. A fitness evidence observation cites its OWN fitness
     scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
     EXACTLY like a behavioural evidence observation, indistinguishable by the account it landed on. The fold
     must therefore skip it on the CHECK (`qualityCheck === "fitness"`), never on the absence of
-    a citation. Under the retired name-match posting a fitness evidence observation cited nothing at all,
-    so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;
-    that reading is now simply wrong, and the fitness-function axis the census must not see at all
-    would be counted into the Test volume.
+    a citation, or the fitness-function axis would be counted into the Test volume.
 
     @unit @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
@@ -529,8 +511,8 @@ Feature: The report renders the ledger as sectioned facts
     CELL of the reconciliation-collection row, and the headline verdict tally under
     "## Scenario Reconciliations". The tally counts EVERY row — real, phantom and suspense
     — so it names Scenario Reconciliations, not scenarios. A term owned on
-    one surface but not the other is exactly how the tally drifted to "scenario(s)" while the
-    Subject cell and the field names stayed right. Asserts the rendered CELL VALUE and
+    one surface but not the other lets the tally drift to "scenario(s)" while the Subject
+    cell and the field names stay right. Asserts the rendered CELL VALUE and
     the tally STRING, never their section headings — the heading is a separate concern.
 
     @unit @SCN-RPT-024
@@ -545,14 +527,14 @@ Feature: The report renders the ledger as sectioned facts
     null — while the version, read from the tool's own package.json, is STILL present, so a run
     stays attributable by version even with no SHA.
 
-    TWO TRAPS, AND THE SECOND IS WHY THIS RULE GAINED A SCENARIO. The first is cwd: at
+    TWO TRAPS. The first is cwd: at
     run time cwd is the TARGET repo, so a bare `git rev-parse HEAD` would re-record the target's
     SHA, and reading `git -C <the tool's own dir>` (derived from import.meta.url) is what closes
     it. The second is that the tool's own dir is ITSELF inside the target — the ordinary installed
     case, <consumer>/node_modules/…, and the only one a consumer ever sees. `git -C` walks up to
     the consumer's .git and answers with the consumer's HEAD; being .gitignored makes no
     difference, git does not stop at ignored directories, and nothing on the rendered report
-    distinguishes that answer from a genuine tool SHA. The `-C` guard could not see it, which is
+    distinguishes that answer from a genuine tool SHA. The `-C` guard cannot see it, which is
     why the node_modules segment is answered BEFORE git is asked at all.
 
     THE TRADE THE SECOND GUARD MUST NOT MAKE. A tool reached through a node_modules symlink to a
@@ -561,8 +543,8 @@ Feature: The report renders the ledger as sectioned facts
     would trade one wrong SHA for another and nothing on the report would say which, so that arm
     is asserted positively rather than left to follow.
 
-    RPT-026 is a pure resolution rule proven in isolation by Vitest. RPT-029 is NOT, and that is the whole of its reason: this fault was invisible to
-    every projection over a hand-built run context, so its integration arm stands where a consumer
+    The resolution rule is proven in isolation by Vitest. The installed case is NOT: it is
+    invisible to every projection over a hand-built run context, so its integration arm stands where a consumer
     stands — the packed tarballs really installed, inside a real git repository, the real command
     run there, the rendered line read back.
 
@@ -580,18 +562,16 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the Run provenance names every stream the run was handed, and every one it was not
 
-    What was this verdict computed from. The canonical input
-    list the Inputs block renders carried five flags, and the fitness stream was not among
-    them — so a report whose every configured fitness row was answered from that stream did
-    not admit reading it. The stream is OPTIONAL by design, passed only where the file
-    exists, so its absence from the block was genuinely ambiguous between "the run never got
-    it" and "the run got it and the block does not say so" — the two readings the Inputs block
-    exists to keep apart.
+    What was this verdict computed from. The canonical input list the Inputs block renders
+    includes the fitness stream, so a report whose fitness rows were answered from that stream
+    admits reading it. The stream is OPTIONAL by design, passed only where the file exists, so
+    leaving it out of the block would be ambiguous between "the run never got it" and "the run
+    got it and the block does not say so" — the two readings the Inputs block exists to keep
+    apart.
 
-    THE CANONICAL LIST GAINS THE STREAM AND NOTHING ELSE MOVES. It is appended after
-    --package-json, so no line that was already rendered changes position; the presence
-    filter is untouched, so a run not handed it still renders exactly the flags it was
-    handed and its JSON provenance.inputs object serialises byte-identically. Both surfaces
+    THE STREAM COMES LAST IN THE CANONICAL LIST, after --package-json, and the presence filter
+    applies to it as to every flag: a run not handed it renders exactly the flags it was
+    handed. Both surfaces
     project the SAME ctx.inputs — the object the reconcile itself consumed — so the block is
     never a second opinion about what was read.
 
@@ -600,21 +580,20 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-028
     Scenario: a canonical input the run did not receive is named as absent rather than omitted, so silence is never the answer
-      Silence is never the answer. Naming every stream a run received removed the "the run
-      got it and the block does not say so" reading. It
-      did NOT answer "was the fitness stream consulted?" for a reader who does not already hold
+      Silence is never the answer. Naming every stream a run received rules out "the run
+      got it and the block does not say so", but does NOT answer "was the fitness stream
+      consulted?" for a reader who does not already hold
       the canonical list in their head — absence from a list is only informative to someone
       who knows what the list could have contained. So the block names the canonical inputs
       with no value too, on a line of their own.
 
-      A SEPARATE LINE, NOT AN INTERLEAVED MARKER, AND THE REASON IS A BRANCH IT WOULD HAVE
-      KILLED. Threading absent entries through the Inputs list makes the "none specified"
-      branch unreachable and silently rewrites a rendering that already exists. A separate
-      line leaves the list, its order and its empty branch byte-identical, and costs one line.
+      A SEPARATE LINE, NOT AN INTERLEAVED MARKER. Threading absent entries through the Inputs
+      list would make the "none specified" branch unreachable. A separate line leaves the list,
+      its order and its empty branch intact, and costs one line.
       It renders only when something IS absent: a "none supplied" line on the healthy path
       would be noise in a block whose whole discipline is facts only.
 
-      THE FACT IS DERIVED, NOT PERSISTED. The JSON provenance object gains nothing here.
+      THE FACT IS DERIVED, NOT PERSISTED. The JSON provenance object carries nothing for it.
       The provenance follows the project's rule — persist a fact on JSON iff it is not
       derivable — and absence is exactly derivable, from the inputs object plus the canonical
       flag list. A second copy would agree with the first until one of them was edited.

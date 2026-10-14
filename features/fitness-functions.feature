@@ -4,8 +4,8 @@ Feature: The fitness functions this repository carries, one scenario per check
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
   a tag line carrying `@fitness` and a freshly minted code, and a title saying what the check
   asserts. It has no Given/When/Then, because nothing here runs it. The
-  CI step that already runs the check takes that same code as its `id:`, in the pipeline this
-  repository was running anyway. Neither half is derived from the
+  CI step that runs the check takes that same code as its `id:`, in the pipeline this
+  repository runs anyway. Neither half is derived from the
   other, which is what makes them two books rather than one read twice: a scenario derived from the
   step it is reconciled against could never disagree with it.
 

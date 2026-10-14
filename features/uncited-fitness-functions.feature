@@ -31,25 +31,20 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   only in a feature preamble is one nobody reads again. A public-api scenario names typecheck, so
   it is on the books rather than in a sentence.
 
-  `pnpm mutation` is still absent, and that is neither an oversight nor an exemption: it is a
-  self-measuring threshold check — the pipeline measuring its own test strength — which belongs
-  on an axis this tool has not built yet (the sibling of @ci-run-time). Ruling
-  it "out of scope" is the dodge that feature file was written to reject.
+  `pnpm mutation` is a self-measuring threshold check — the pipeline measuring its own test
+  strength — whose verdict belongs on an axis this tool has not built, a sibling of the one
+  that @ci-run-time names.
 
   THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS A ZERO OVER A POPULATED SET. A zero over an empty
   set would say the discoverable set was EMPTY rather than that a populated set had been checked
   and come back clean. Those two readings are the fault this product exists to separate: collapsed
   onto one number, they are a capability exercised by nothing, reporting green.
 
-  IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
-  ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
-  runs is discovered, each carrying the code of the scenario it answers on its own step, and nought
-  uncited. (The count that stood here is gone for the reason the paragraph below gives.)
-  The residual that stood here is gone: specController.staticChecks settles nothing,
-  and no account names it on the report as a retired key. A
-  manifest carrying the key now settles nothing, and the report names it as it names any key the
-  specController block does not read, with no word of what it once did. That engages no
-  major version: at 0.x no compatibility commitment names one.
+  EVERY run: STEP OF ci.yml IS A CANDIDATE, so the denominator is this repository's whole
+  pipeline: every check it runs is discovered, each carrying the code of the scenario it answers
+  on its own step, and nought uncited. specController.staticChecks settles nothing: a manifest
+  carrying the key has it named on the report as any key the specController block does not read
+  is named.
 
   What is NOT vacuous over this tree is the number beside it. The "fitness function(s) run" figure counts
   the running fitness evidence observations this pipeline's own candidate steps post, so it is answered by those steps
@@ -118,7 +113,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a step invoking a runner the manifest names is not a candidate fitness function
 
-    THE EXCLUSION SURVIVES THE RULE CHANGE; WHAT DRAWS IT HAS MOVED. What takes a pipeline step
+    THE MANIFEST DRAWS THE EXCLUSION. What takes a pipeline step
     out of this axis is the target saying which commands run its behavioural suites: its
     manifest names one runner per tier, and a step invoking that runner — reached through the
     manifest script the step runs — is that tier's runner rather than a gate.
@@ -144,21 +139,17 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited fitness function
 
-    NO PREFIX FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET TO FIND WITH. Discovery
-    once read a target's scripts through an observed prefix set — lint: and guard: —
-    and this scenario's script carried guard: so that it would be found. The set of names a quality
-    check might be given belongs to the consumer and is unbounded; a list of two was a sample of it,
-    and a longer list would have been a bigger sample. So the membership rule is inverted: a step of
-    the pipeline is a candidate fitness function UNLESS it invokes a runner the manifest names, is the
-    reconciler, or is a step the consumer named a non-check. The script below is called
-    domain-purity, which matches no convention this tool has ever recognised, and it is found
-    because nothing takes it out.
+    NO PREFIX FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET TO FIND WITH. The set of names a
+    quality check might be given belongs to the consumer and is unbounded, and any list of prefixes
+    is a sample of it. So membership is decided by subtraction: a step of the pipeline is a
+    candidate fitness function UNLESS it invokes a runner the manifest names, is the reconciler, or
+    is a step the consumer named a non-check. The script below is called domain-purity, which
+    matches no convention this tool recognises, and it is found because nothing takes it out.
 
-    WHICH IS THE HEADLINE OF THE INVERSION AND NOT A REFINEMENT OF THE OLD RULE. Under the prefix
-    set this exact target was silent: its check ran, cited nothing, and produced no row, no count
-    and no red — the consumer read a clean board over a gate nobody owned. The uncited verdict is
-    what this scenario is about, and the reason it is now reachable is that the check is discovered
-    at all.
+    THE UNCITED VERDICT IS WHAT THIS SCENARIO IS ABOUT, and it is reachable because the check is
+    discovered at all. A prefix rule would leave this exact target silent: its check running,
+    citing nothing, and producing no row, no count and no red — a clean board over a gate nobody
+    owned.
 
     THE CITED HALF IS WHAT MAKES IT MEAN SOMETHING, and it is the twin one Rule along.
     A reader that reported every step as uncited would satisfy this scenario while
@@ -181,16 +172,16 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a fitness function is observed wherever in the workflows it runs
 
-    BOTH observers read a target's CI from ONE source. A check enforced from a sibling
-    workflow — a nightly sweep, a security scan, an ordinary split of a pipeline — is
-    therefore read as not enforced, and the two axes then fail it in OPPOSITE directions:
-    a CITED one is accused of being a watermelon it is not, an UNCITED one leaves the
-    books entirely.
+    BOTH observers read a target's CI from ONE source, so that source is every workflow. Read
+    from one file, a check enforced from a sibling workflow — a nightly sweep, a security scan,
+    an ordinary split of a pipeline — would read as not enforced, and the two axes would fail it
+    in OPPOSITE directions: a CITED one accused of being a watermelon it is not, an UNCITED one
+    leaving the books entirely.
 
     THE FIRST IS A FALSE ACCUSATION, which is why it leads. An omission under-reports;
     an invention tells a consultant their client's real, running gate is fabricated. The
     reconciler's word for a cited-but-unenforced check is watermelon, and a check running
-    in nightly.yml earns it today for no reason but where it was written down.
+    in nightly.yml would earn it for no reason but where it was written down.
 
     WHAT MAKES THE CHECK CITED IS ITS STEP; WHICH WORKFLOWS ARE READ IS THIS RULE. lint:nightly's
     step in nightly.yml carries the stepless scenario's code as its `id:`, so its run
@@ -209,7 +200,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     invoked in a workflow the reader actually opens for a run to exist against the obligation.
     Reading ci.yml alone leaves the citation untouched and takes the run away, and the target is
     then scored a watermelon — a real, running gate called fabricated.
-    That is the fault this Rule refuses, and it is untouched by what cited now means.
+    That is the fault this Rule refuses.
 
     THE OTHER DIRECTION IS THE OMISSION, AND ITS COST IS QUIETER. A check nothing cites is
     already a check nobody has taken responsibility for; running it from a sibling workflow
@@ -247,10 +238,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: an explicitly supplied CI file narrows observation to that file
 
-    THE ANSWER TO WIDENING THE DEFAULT. Reading the whole workflow directory by default
-    changes what an existing target's report says without its author asking for it, and
-    the answer given was that the narrowing survives: name one file and you observe one
-    file. An answer nobody tests is a promise.
+    NAMING ONE FILE OBSERVES ONE FILE. The whole workflow directory is read by default, and a
+    caller who names one file has narrowed that scope deliberately. A narrowing nobody tests is
+    a promise.
 
     Every other scenario here asserts what IS found, so a change making an explicit
     input sweep its parent directory too would leave all of them green while silently
@@ -290,11 +280,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     parts them is the step's citation alone: the cited one's evidence observation carries its scenario's code,
     and the uncited one's carries none.
 
-    SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned:
-    name this target's own step a non-check and the twin's verdict is what goes, while
-    this one is attributed exactly as before. The conclusion is STRONGER than the argument it
-    lost — the old plant showed the seam blind to WHICH prefix a handle carried, and this handle
-    now carries none at all and is attributed anyway.
+    SO NARROWING DISCOVERY IS THE PLANT: name this target's own step a non-check and the twin's
+    verdict is what goes, while this one is attributed exactly as before. The handle carries no
+    prefix at all and is attributed anyway.
 
     @unit @SCN-USG-005
     Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited fitness function
@@ -346,10 +334,6 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     asymmetry is built rather than asserted, and the whole of what builds it is that the
     comparison is over whole shell tokens: a path, a --flag, an output filename and an =-joined
     argument all carry the runner's name without being it.
-
-    THE PLANT IS RECORDED, NOT ASSUMED. Swapping the token comparison for a substring one reds
-    this scenario's unit tests; the swap was made, its red was read, and it was reverted. A guard
-    whose teeth were reasoned about rather than watched is not a guard.
 
     THE CHECK STEP HERE IS AN ORDINARY ONE, deliberately. The reconciler's own step is excluded
     too, but BY CONSTRUCTION and not by this rule — sharing one fixture would leave
@@ -421,7 +405,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     A CLOSED SET WITH NOTHING FORCING ITS CLOSURE IS A HOLE. The runner block is keyed by tier
     and the tiers are four — unit, integration, e2e, performance — which is exactly what makes
-    the inversion possible: the small thing is named because it is enumerable, and the open one
+    membership by subtraction possible: the small thing is named because it is enumerable, and the open one
     is inferred. Every sibling scenario in this section exercises one of the four; not one of
     them can say what happens to a fifth, and a reader honouring any key at all passes all of
     them. So the closure is the claim here, and it is the only claim no sibling can reach.
@@ -436,8 +420,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     SILENTLY IGNORING IT IS THE OTHER WRONG ANSWER, and it is the same class of fault as
     dropped-and-silent. The consumer wrote something. They believe it took effect. A reader that
     partitions the key out and says nothing leaves them holding a manifest that does not do what
-    they think, with no line anywhere to correct it from — which is the fault of the prefix rule
-    reached from the configuration side rather than the pipeline side.
+    they think, with no line anywhere to correct it from — a check vanishing silently, reached
+    from the configuration side rather than the pipeline side.
 
     SO THE RUN IS NOT ABORTED OVER IT, AND THAT IS THE SAME FAIL-SAFE DIRECTION AS THE REST. An
     unrecognised key is a fact about the manifest, surfaced on the report where the consumer can
@@ -498,13 +482,13 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     install, a deploy — and a rule calling those checks fills a consumer's first report with
     noise. So the consumer gets to say which steps are not checks, about their own pipeline,
     once. It is a list of THEIR steps, never a list of check names of ours, and that is what
-    keeps it from being the prefix rule wearing a new hat.
+    keeps it from being a naming rule wearing a new hat.
 
     AN ENTRY IS FULLY QUALIFIED AND MATCHED EXACTLY — the workflow file, the job it is written
     under, and the step's own name, which is the string GitHub itself shows in a run log. Typecheck
     is a check in this repository's ci.yml and plumbing in its release.yml, so a bare-name entry
     would take out both, and the second of those is a check deleted from the report with nothing
-    said. Job identity is what the widened walk was widened to carry, and this is what it is for.
+    said. The walk carries job identity for exactly this.
 
     THERE IS NO WILDCARD FORM, ARGUED RATHER THAN OMITTED. A consumer wanting a whole workflow out
     narrows the CI input at the command line — a supported narrowing this file already pins one
@@ -527,9 +511,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     THE SIBLING CHECK IS THE CONTROL, and without it the claim is unfalsifiable. A reader that
     discovered no checks at all would satisfy "the excluded step's check is off the books" while
     being blind; only a second check still standing beside it, one no entry names, tells the
-    exclusion from the blindness. Both checks carried a prefix the rule of the day already
-    discovered, so the exclusion was readable before the membership filter inverted rather than
-    only after it; under the inverted rule both are discovered because they are steps, and the
+    exclusion from the blindness. Both checks are discovered because they are steps, and the
     fixture's plumbing is named a non-check beside them for the same reason.
 
     @unit @SCN-USG-015
@@ -565,10 +547,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     is a list: one is our own invocation, one is GitHub's own grammar.
 
     BOTH STEPS ARE DISCOVERED BEFORE THIS RULE TAKES THEM OUT, which is what gives the scenario its
-    teeth. Each invoked its command through a lint:-prefixed script, so both were found under the
-    prefix rule of the day and both posted to the suspense row — wrong, and red; under the inverted
-    rule they are found because they are steps, which is the same fact reached by a
-    wider route. A fixture whose reconciler the reader could not see at all would leave this
+    teeth: they are found because they are steps. A fixture whose reconciler the reader could not see at all would leave this
     scenario green on its first run over a reader that had never looked at the step, which asserts
     nothing.
 
@@ -583,13 +562,11 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     AN ACTION CAN BE A QUALITY CHECK, AND THE COMMON ONES ARE. CodeQL's analyse step and a
     dependency review are actions rather than commands, so a reader discarding every uses: step
-    drops real checks — and drops them without a word, which is the exact fault the inverted
-    membership rule exists to end. The discard cost nothing while nothing downstream wanted an
-    action; under the inversion it is an outcome no disposition names, smuggled in at the walk.
+    drops real checks — and drops them without a word, which is the exact fault membership by
+    subtraction exists to end: a discard at the walk is an outcome no disposition names.
 
-    EXCLUDING ACTIONS WHOLESALE WOULD BE THE PREFIX RULE AGAIN, ONE LAYER ALONG. A structural rule
-    about where a check may LIVE is the same guess as a rule about what one may be CALLED, and it
-    is a guess this tool has already been wrong about once. Nothing about a step's form says
+    EXCLUDING ACTIONS WHOLESALE WOULD BE A NAMING RULE AGAIN, ONE LAYER ALONG. A structural rule
+    about where a check may LIVE is the same guess as a rule about what one may be CALLED. Nothing about a step's form says
     whether it is a check. What says so is what the target named a runner, what the reconciler is,
     what the consumer said is not one, and the closed list of GitHub's own plumbing actions the
     Rule below names — the same four facts, asked of the same steps. The last is a list of
@@ -668,27 +645,22 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a manifest naming no runners makes every step a candidate
 
-    THIS IS THE STATE THE PRODUCT EXISTS FOR. The product promises the consumer who installs it
-    and does nothing else a report of every check their pipeline ran, listed — and under the prefix
-    rule that promise was conditional on a naming convention they had never heard of. Measured over
-    the planted consumer at the head of this axis's analysis, a manifest carrying an empty
-    specController block reported ONE fitness function run over a pipeline of eleven steps, and said
-    nothing whatever about the other ten. This scenario is that promise made true, and the shape
-    that makes it true is subtraction: nothing was named, so nothing is taken out.
+    THIS IS THE STATE THE PRODUCT IS FOR. A consumer who installs it and does nothing else gets a
+    report of every check their pipeline ran, listed, with no naming convention to learn first.
+    The shape that makes it true is subtraction: nothing was named, so nothing is taken out.
 
     A MANIFEST THAT HAS SAID NOTHING IS SUPPORTED, NOT INCOMPLETE. There is no error, no warning,
     and nothing anywhere asking the consumer to configure something before the tool will answer
-    them. A first run that scolded its reader for the absence of a block would be the prefix rule's
-    Evidence Obligation wearing a different sentence — you must tell us about your pipeline in our terms before
-    we will read it — and the whole argument of the inversion is that the tool reads what is there
-    and reports it.
+    them. A first run that scolded its reader for the absence of a block would be a naming rule
+    wearing a different sentence — you must tell us about your pipeline in our terms before we
+    will read it — when the tool reads what is there and reports it.
 
     THE TARGET'S OWN TEST SUITE IS A CANDIDATE, AND ASSERTING THAT IS THE POINT. With no runner
     named, pnpm test is a step like every other step and lands on the books as one. It is a false
     POSITIVE, it is the direction this axis chose deliberately, it is visible in the report, and it
     is one line of the consumer's own configuration to correct. Quietly exempting it
     would take a rule about what a test step is CALLED or what it LOOKS like — a runner list of
-    ours — which is the drift the whole inversion exists to remove, reinstated at the one step where
+    ours — which is the drift membership by subtraction exists to remove, reinstated at the one step where
     it would look most reasonable.
 
     EVERY STEP THAT IS NOT THE RECONCILER OR GITHUB'S PLUMBING, strictly. The reconciler and its
@@ -715,14 +687,13 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: the report names the scope it read
 
-    THE AXIS'S OWN ANALYSIS ASKED WHAT THE TOOL SAYS WHEN IT IS POINTED SOMEWHERE THAT YIELDS AN
-    IMPLAUSIBLE ANSWER — pointed at a release workflow it would post that pipeline's publish step
+    WHAT THE TOOL SAYS WHEN IT IS POINTED SOMEWHERE THAT YIELDS AN IMPLAUSIBLE ANSWER — pointed at a release workflow it would post that pipeline's publish step
     as a quality check, and pointed at one job of several it would miss the checks in the others
     without a word. The answer is that the tool makes NO judgement about plausibility and states
     its scope instead. A trigger-based or name-based rule for "this looks like a release workflow"
     is exactly the judgement this axis puts out of scope — any judgement about whether a discovered
-    step ought to be a check — and it would be a list of ours, which is the drift the whole
-    inversion exists to remove.
+    step ought to be a check — and it would be a list of ours, which is the drift membership by
+    subtraction exists to remove.
 
     STATING THE SCOPE IS THE ANSWER, not a consolation for not having a better one. A consumer
     pointed at the wrong thing reads the file and the job and the counts, knows on sight, and
