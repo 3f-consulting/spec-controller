@@ -85,7 +85,7 @@ describe("[SCN-USG-032] a plumbing step the manifest names a non-check is exclud
       deferralTags: [],
     });
     expect(summary.excludedSteps).toStrictEqual(["ci.yml:quality:Checkout"]);
-    expect(summary).not.toHaveProperty("unmatchedNotChecks");
+    expect(summary).not.toHaveProperty("nonChecksMatchingNoStep");
     expect(summary.stepAccounting).toMatchObject({ stepsRead: 3, excluded: 1, plumbing: 1, candidates: 1 });
   });
 });

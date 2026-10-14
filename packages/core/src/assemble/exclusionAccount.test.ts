@@ -28,12 +28,12 @@ describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is r
   it("names the excluded step and the entry that matched no step", () => {
     const { summary } = reconcile([excludedStep, strayEntry]);
     expect(summary.excludedSteps).toEqual([excludedStep]);
-    expect(summary.unmatchedNotChecks).toEqual([strayEntry]);
+    expect(summary.nonChecksMatchingNoStep).toEqual([strayEntry]);
   });
 
   it("carries neither account for a target that names no step a non-check", () => {
     const { summary } = reconcile();
     expect(summary).not.toHaveProperty("excludedSteps");
-    expect(summary).not.toHaveProperty("unmatchedNotChecks");
+    expect(summary).not.toHaveProperty("nonChecksMatchingNoStep");
   });
 });

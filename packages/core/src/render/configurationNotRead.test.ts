@@ -38,7 +38,7 @@ const section = (md: string): string[] => {
 describe("[SCN-USG-025] the report names a specController entry of a kind its reader does not take", () => {
   it("renders one line per entry, after the run provenance and before any cut of the reconciliation", () => {
     const md = render({
-      wrongKindConfiguration: [
+      configurationOfWrongKind: [
         { entry: "specController.notChecks", is: "a string", reads: "a list" },
         { entry: "specController.runners.unit", is: "a number", reads: "a string or null" },
       ],
@@ -61,8 +61,8 @@ describe("[SCN-USG-025] the report names a specController entry of a kind its re
 describe("[SCN-USG-028] the report names a key the specController block does not read, in one sentence for every key", () => {
   it("names each unread key after the entries of the wrong kind", () => {
     const md = render({
-      wrongKindConfiguration: [{ entry: "specController.notChecks", is: "a string", reads: "a list" }],
-      unknownConfigurationKeys: ["fitnessChecks", "zzz"],
+      configurationOfWrongKind: [{ entry: "specController.notChecks", is: "a string", reads: "a list" }],
+      configurationKeysNotRead: ["fitnessChecks", "zzz"],
     });
     expect(section(md).filter((l) => l.startsWith("- "))).toEqual([
       "- `specController.notChecks` is a string where a list is read, so this run read it as absent.",

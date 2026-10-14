@@ -25,7 +25,6 @@ import {
   ledgerTally,
   behaviouralObservationTally,
   fitnessFunctionTally,
-  BEHAVIOURAL_QUALITY_CHECKS,
 } from "./ledger.js";
 import type {
   ScenarioReconciliationTotals,
@@ -293,13 +292,6 @@ export interface TierWithoutRunner {
   readonly namesNone: boolean;
 }
 
-export function tiersWithoutRunnerOf(runnerTiers: Readonly<Record<string, string | null>>): TierWithoutRunner[] {
-  return BEHAVIOURAL_QUALITY_CHECKS.filter((tier) => typeof runnerTiers[tier] !== "string").map((tier) => ({
-    tier,
-    namesNone: Object.hasOwn(runnerTiers, tier),
-  }));
-}
-
 export interface Summary {
   readonly scenarioReconciliations: ScenarioReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
@@ -309,13 +301,13 @@ export interface Summary {
   readonly fitnessFunctions?: FitnessFunctionTotals;
   readonly fitness: FitnessTally;
   readonly behaviouralRunners?: readonly BehaviouralRunner[];
-  readonly runnerTiers?: Readonly<Record<string, string | null>>;
-  readonly unrecognisedRunnerKeys?: readonly string[];
-  readonly wrongKindConfiguration?: readonly WrongKindEntry[];
-  readonly unknownConfigurationKeys?: readonly string[];
+  readonly tiersWithoutRunner?: readonly TierWithoutRunner[];
+  readonly runnerKeysNotATier?: readonly string[];
+  readonly configurationOfWrongKind?: readonly WrongKindEntry[];
+  readonly configurationKeysNotRead?: readonly string[];
   readonly excludedSteps?: readonly string[];
   readonly reconcilerSteps?: readonly ReconcilerStep[];
-  readonly unmatchedNotChecks?: readonly string[];
+  readonly nonChecksMatchingNoStep?: readonly string[];
   readonly discoveryScope?: readonly JobDiscoveryScope[];
   readonly stepAccounting?: StepAccounting;
 }

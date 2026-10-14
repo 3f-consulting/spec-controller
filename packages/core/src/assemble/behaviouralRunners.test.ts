@@ -38,8 +38,8 @@ describe("[SCN-USG-017] a target with no runners block reports every step of its
     ]);
     expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 4, uncitedFitnessFunctionCount: 4 });
     expect(summary).not.toHaveProperty("behaviouralRunners");
-    expect(summary).not.toHaveProperty("runnerTiers");
-    expect(summary).not.toHaveProperty("unrecognisedRunnerKeys");
+    expect(summary).not.toHaveProperty("tiersWithoutRunner");
+    expect(summary).not.toHaveProperty("runnerKeysNotATier");
   });
 
   it("carries the step that runs the unit runner for the same pipeline once its runners block names it", () => {

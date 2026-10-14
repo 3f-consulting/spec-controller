@@ -1,4 +1,4 @@
-import { INPUT_FLAGS, type ProvenanceObject } from "../domain/runProvenance.js";
+import { INPUT_KEYS, type ProvenanceObject } from "../domain/runProvenance.js";
 
 export interface ProvenanceInput {
   readonly flag: string;
@@ -16,10 +16,15 @@ export interface ProvenanceFacts {
   readonly absentInputs: readonly string[];
 }
 
+function flagOf(key: string): string {
+  return `--${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+}
+
 export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts {
   const inputs: ProvenanceInput[] = [];
   const absentInputs: string[] = [];
-  for (const { key, flag } of INPUT_FLAGS) {
+  for (const key of INPUT_KEYS) {
+    const flag = flagOf(key);
     const value = obj.inputs[key];
     if (typeof value === "string") {
       inputs.push({ flag, value });

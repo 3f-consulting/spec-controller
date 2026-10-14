@@ -22,7 +22,7 @@ function reconcile(specController: unknown): EvidenceReconciliation {
 }
 
 function withoutWrongKinds(reconciliation: EvidenceReconciliation): EvidenceReconciliation {
-  const { wrongKindConfiguration: _named, ...summary } = reconciliation.summary;
+  const { configurationOfWrongKind: _named, ...summary } = reconciliation.summary;
   return { ...reconciliation, summary };
 }
 
@@ -68,11 +68,11 @@ const examples: ReadonlyArray<readonly [string, unknown, unknown, { entry: strin
 
 describe("[SCN-USG-025] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
   it.each(examples)("names %s on the report with the kind it is and the kind read", (_, written, _without, named) => {
-    expect(reconcile(written).summary.wrongKindConfiguration).toEqual([named]);
+    expect(reconcile(written).summary.configurationOfWrongKind).toEqual([named]);
   });
 
   it.each(examples)("carries no wrong-kind account for the same target without %s", (_, _written, without) => {
-    expect(reconcile(without).summary).not.toHaveProperty("wrongKindConfiguration");
+    expect(reconcile(without).summary).not.toHaveProperty("configurationOfWrongKind");
   });
 
   it.each(examples)("gives otherwise the report the same target gives without %s", (_, written, without) => {

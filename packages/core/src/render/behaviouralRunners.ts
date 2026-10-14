@@ -1,17 +1,13 @@
 import type { RenderInput } from "../domain/report.js";
-import { tiersWithoutRunnerOf } from "../domain/evidenceReconciliation.js";
+import type { TierWithoutRunner } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
-const runnerTierAccount = (
-  runnerTiers: Readonly<Record<string, string | null>> | undefined
-): string[] =>
-  runnerTiers === undefined
-    ? []
-    : tiersWithoutRunnerOf(runnerTiers).map(({ tier, namesNone }) =>
-        namesNone
-          ? `- ${CORE_MESSAGES[CoreMessage.RunnerTierNamesNone](tier)}`
-          : `- ${CORE_MESSAGES[CoreMessage.RunnerTierUnnamed](tier)}`
-      );
+const runnerTierAccount = (tiers: readonly TierWithoutRunner[] | undefined): string[] =>
+  (tiers ?? []).map(({ tier, namesNone }) =>
+    namesNone
+      ? `- ${CORE_MESSAGES[CoreMessage.RunnerTierNamesNone](tier)}`
+      : `- ${CORE_MESSAGES[CoreMessage.RunnerTierUnnamed](tier)}`
+  );
 
 const unrecognisedKeyAccount = (keys: readonly string[] | undefined): string[] =>
   (keys ?? []).map(
@@ -20,8 +16,8 @@ const unrecognisedKeyAccount = (keys: readonly string[] | undefined): string[] =
 export const behaviouralRunnersSection = (report: RenderInput): string[] => {
   const runners = report.summary.behaviouralRunners ?? [];
   const account = [
-    ...runnerTierAccount(report.summary.runnerTiers),
-    ...unrecognisedKeyAccount(report.summary.unrecognisedRunnerKeys),
+    ...runnerTierAccount(report.summary.tiersWithoutRunner),
+    ...unrecognisedKeyAccount(report.summary.runnerKeysNotATier),
   ];
   if (runners.length === 0 && account.length === 0) return [];
   return [

@@ -1,14 +1,14 @@
 /** Each input path the run read, keyed by the name of the flag that supplied it, in camelCase. */
 export type RunInputs = Readonly<Partial<Record<string, string>>>;
 
-export const INPUT_FLAGS: readonly { key: string; flag: string }[] = [
-  { key: "features", flag: "--features" },
-  { key: "vitest", flag: "--vitest" },
-  { key: "pytest", flag: "--pytest" },
-  { key: "cucumber", flag: "--cucumber" },
-  { key: "ci", flag: "--ci" },
-  { key: "packageJson", flag: "--package-json" },
-  { key: "ciSteps", flag: "--ci-steps" },
+export const INPUT_KEYS: readonly string[] = [
+  "features",
+  "vitest",
+  "pytest",
+  "cucumber",
+  "ci",
+  "packageJson",
+  "ciSteps",
 ];
 
 const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/(.+)$/;

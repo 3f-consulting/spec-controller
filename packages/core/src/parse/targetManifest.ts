@@ -1,6 +1,6 @@
 import { bareTerm } from "../lib/bareTerm.js";
 import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
-import type { WrongKindEntry } from "../domain/evidenceReconciliation.js";
+import type { TierWithoutRunner, WrongKindEntry } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 function isBlock(value: unknown): value is Record<string, unknown> {
@@ -39,20 +39,31 @@ export function resolveDeferralTags(
 
 export interface ResolvedRunners {
   readonly tiers: Readonly<Record<string, string | null>>;
+  readonly tiersWithoutRunner: readonly TierWithoutRunner[];
   readonly unrecognisedKeys: readonly string[];
+}
+
+function tiersWithoutRunnerOf(tiers: Readonly<Record<string, string | null>>): TierWithoutRunner[] {
+  if (Object.keys(tiers).length === 0) return [];
+  return BEHAVIOURAL_QUALITY_CHECKS.filter((tier) => typeof tiers[tier] !== "string").map((tier) => ({
+    tier,
+    namesNone: Object.hasOwn(tiers, tier),
+  }));
 }
 
 export function resolveRunners(packageJson: {
   specController?: { runners?: unknown };
 }): ResolvedRunners {
   const configured = packageJson.specController?.runners;
-  if (!isBlock(configured)) return { tiers: {}, unrecognisedKeys: [] };
+  if (!isBlock(configured)) return { tiers: {}, tiersWithoutRunner: [], unrecognisedKeys: [] };
+  const tiers: Readonly<Record<string, string | null>> = Object.fromEntries(
+    Object.entries(configured).filter(
+      (entry): entry is [string, string | null] => isTier(entry[0]) && isRunner(entry[1])
+    )
+  );
   return {
-    tiers: Object.fromEntries(
-      Object.entries(configured).filter(
-        (entry): entry is [string, string | null] => isTier(entry[0]) && isRunner(entry[1])
-      )
-    ),
+    tiers,
+    tiersWithoutRunner: tiersWithoutRunnerOf(tiers),
     unrecognisedKeys: Object.keys(configured).filter((key) => !isTier(key)),
   };
 }

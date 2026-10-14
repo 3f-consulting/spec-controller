@@ -326,6 +326,11 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.collection.js packages
 
+      - name: No type or field in core's domain is named for an external tool or format
+        id: SCN-FIT-049
+        if: always()
+        run: pnpm exec eslint --config eslint.domain.js packages/core/src/domain
+
       # The ceiling and the sets it counts live in cloc.ratio.js.
       - name: Test code stays within the declared ceiling ratio to production code
         id: SCN-FIT-043

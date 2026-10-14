@@ -141,8 +141,8 @@ function withConfigurationAccount(
     ...reconciliation,
     summary: {
       ...reconciliation.summary,
-      ...(wrongKinds.length > 0 ? { wrongKindConfiguration: wrongKinds } : {}),
-      ...(unknownKeys.length > 0 ? { unknownConfigurationKeys: unknownKeys } : {}),
+      ...(wrongKinds.length > 0 ? { configurationOfWrongKind: wrongKinds } : {}),
+      ...(unknownKeys.length > 0 ? { configurationKeysNotRead: unknownKeys } : {}),
     },
   };
 }
@@ -255,7 +255,7 @@ function withExclusionAccount(
     summary: {
       ...reconciliation.summary,
       ...(excluded.length > 0 ? { excludedSteps: excluded } : {}),
-      ...(unmatchedEntries.length > 0 ? { unmatchedNotChecks: unmatchedEntries } : {}),
+      ...(unmatchedEntries.length > 0 ? { nonChecksMatchingNoStep: unmatchedEntries } : {}),
     },
   };
 }
@@ -264,21 +264,20 @@ function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   ciSources: readonly string[],
   packageJson: TargetManifest,
-  { tiers: runnerTiers, unrecognisedKeys }: ResolvedRunners
+  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
     ciSources,
     packageJson,
     runnerTiers
   );
-  const named = Object.keys(runnerTiers).length > 0;
   return {
     ...reconciliation,
     summary: {
       ...reconciliation.summary,
       ...(behaviouralRunners.length > 0 ? { behaviouralRunners } : {}),
-      ...(named ? { runnerTiers } : {}),
-      ...(unrecognisedKeys.length > 0 ? { unrecognisedRunnerKeys: unrecognisedKeys } : {}),
+      ...(tiersWithoutRunner.length > 0 ? { tiersWithoutRunner } : {}),
+      ...(unrecognisedKeys.length > 0 ? { runnerKeysNotATier: unrecognisedKeys } : {}),
     },
   };
 }

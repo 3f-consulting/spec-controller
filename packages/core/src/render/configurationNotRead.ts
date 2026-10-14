@@ -2,8 +2,8 @@ import type { RenderInput } from "../domain/report.js";
 import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export const configurationNotReadSection = (report: RenderInput): string[] => {
-  const wrongKinds = report.summary.wrongKindConfiguration ?? [];
-  const unknownKeys = report.summary.unknownConfigurationKeys ?? [];
+  const wrongKinds = report.summary.configurationOfWrongKind ?? [];
+  const unknownKeys = report.summary.configurationKeysNotRead ?? [];
   if (wrongKinds.length === 0 && unknownKeys.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],

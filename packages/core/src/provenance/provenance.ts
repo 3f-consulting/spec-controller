@@ -1,5 +1,5 @@
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { INPUT_FLAGS, targetOriginName, type ProvenanceObject, type RunContext, type RunInputs } from "../domain/runProvenance.js";
+import { INPUT_KEYS, targetOriginName, type ProvenanceObject, type RunContext, type RunInputs } from "../domain/runProvenance.js";
 
 function formatUtc(instant: Date): string {
   return instant.toISOString().replace(/\.\d+Z/, "Z");
@@ -7,7 +7,7 @@ function formatUtc(instant: Date): string {
 
 function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
   return Object.fromEntries(
-    INPUT_FLAGS.flatMap(({ key }) => {
+    INPUT_KEYS.flatMap((key) => {
       const value = inputs[key];
       return typeof value === "string" && value.trim() !== "" ? [[key, relativizeToRoot(value, root)]] : [];
     })
