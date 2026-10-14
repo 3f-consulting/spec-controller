@@ -71,6 +71,21 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     expect(stdout).toBe("");
   });
 
+  it("runBalance refuses --jest at the end over an out-of-balance target at exit 2, naming it and its value alone, before it reconciles", () => {
+    const jest = valueFlags.find((flag) => flag.name === "--jest");
+    expect(jest).toBeDefined();
+    const { stdout, stderr, exitCode } = runBalanceCaptured([
+      "--features", "tests/fixtures/broken/features",
+      "--package-json", "tests/fixtures/broken/package.json",
+      "--ci", "tests/fixtures/broken",
+      "--jest",
+    ]);
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toBe(refusalFor("--jest", jest as FlagSpec) + "\n");
+    expect(stdout).toBe("");
+  });
+
   it("refuses no value flag for a command the registry does not know", () => {
     for (const flag of valueFlags) {
       expect(checkMissingValues([flag.name], cliRegistry, "blance")).toBeNull();

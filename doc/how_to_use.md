@@ -33,6 +33,7 @@ If your project uses pnpm: Node 25 and later do not bundle corepack, so install 
 | A Vitest JSON report | runtime test evidence | `--vitest` |
 | A Cucumber JSON report | runtime test evidence | `--cucumber` |
 | A pytest JUnit XML report, written by `pytest --junitxml` | runtime test evidence | `--pytest` |
+| A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--jest` |
 | Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every converted fitness function (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | read with the CI config to check that an UNCONVERTED fitness function is wired into CI over the real source; also holds your configuration | `--package-json` |
@@ -65,6 +66,7 @@ STORE=~/spec-controller-runs        # optional: kept runs, outside the repositor
 npx vitest run --reporter=json --outputFile=reports/vitest.json
 npx cucumber-js --format summary --format json:reports/cucumber.json
 python -m pytest --junitxml=reports/pytest.xml     # if you use pytest
+npx jest --json --outputFile=reports/jest.json     # if you use Jest
 
 # 2. Reconcile it.
 npx spec-controller --store "$STORE" balance \
@@ -73,6 +75,7 @@ npx spec-controller --store "$STORE" balance \
   --vitest reports/vitest.json \
   --cucumber reports/cucumber.json \
   --pytest reports/pytest.xml \
+  --jest reports/jest.json \
   --ci .github/workflows/ci.yml \
   --package-json package.json
 ```
@@ -119,6 +122,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 | The scenario asks for | The evidence | How it names the scenario |
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title. The most specific one wins. |
+| `@unit` | a Jest test | `[SCN-…]` in square brackets in the test's title, or in an enclosing `describe` title, as for Vitest (see [Citing a scenario from Jest](#citing-a-scenario-from-jest)) |
 | `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
@@ -205,6 +209,50 @@ def test_offers_the_next_code():
 | two or more `scn` properties | **credits none of them**; the suspense row names every code, because one test proves exactly one scenario |
 | a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
+### Citing a scenario from Jest
+
+A Jest test cites its scenario exactly as a Vitest test does: the code in square brackets in its title. Jest's own JSON report keeps each test's title, so nothing else is needed: no reporter package, no setup file. Pass the report with `--jest`:
+
+```sh
+npx jest --json --outputFile=reports/jest.json
+spec-controller balance --jest reports/jest.json
+```
+
+A complete test file:
+
+```js
+describe("allocating the next number", () => {
+  test("[SCN-<FFF>-<NNN>] offers one past the highest number already used", () => {
+    expect(nextNumber([1, 3])).toBe(4);
+  });
+});
+```
+
+`jest --json` writes that test into the report with its title and its outcome. This is what `balance` reads:
+
+```json
+{
+  "ancestorTitles": ["allocating the next number"],
+  "title": "[SCN-<FFF>-<NNN>] offers one past the highest number already used",
+  "fullName": "allocating the next number [SCN-<FFF>-<NNN>] offers one past the highest number already used",
+  "status": "passed"
+}
+```
+
+The code in the test's own title is read first. Only when the title carries none is a code in an enclosing `describe` title read. Name your runner in the `specController` block as `"unit": "jest"` (see [Naming your runners](#naming-your-runners--runners)).
+
+**A todo test never proves a scenario.** `test.todo` names a test that has not been written, so there is nothing that could pass. Jest's JSON report marks it `todo`, and `balance` reads it as no evidence at all, as it does a skipped test. A scenario whose only test is a todo reads `missing`. This is why `balance` reads Jest's JSON report and not a JUnit XML one: `jest-junit` writes a todo test exactly as it writes a passing one, so a todo would read as proof.
+
+**What a Jest report posts:**
+
+| The test | What it posts |
+|---|---|
+| passing, citing one scenario | answers that scenario |
+| failing, including a test under a `beforeAll` that threw | answers that scenario as failing |
+| todo or skipped | nothing, so the scenario it cites reads `missing` |
+| two or more codes in its title | **credits none of them**; the suspense row names every code |
+| a test file that failed to run | never ran its proof: it posts a broken item and the run is unsound (exit `4`) |
+
 ---
 
 ## Fitness functions
@@ -288,6 +336,7 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
 - **A runner is recognised only as the command a step runs**: the first word of each command in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
+- **Jest works the same way.** `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
 - **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`
@@ -514,6 +563,7 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 | `--features <dir>` | Directory of Gherkin `.feature` files: the scenarios. Every `.feature` file under it is read, at any depth, and named in the report by its path under the directory. A symbolically linked directory is not entered. |
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
 | `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
+| `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** Every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. It is also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |

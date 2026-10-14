@@ -100,6 +100,18 @@ Given(/^a target whose pytest report is (?!well formed and holds nothing$)(.+)$/
   target = { dir, args: ["--features", "features", "--pytest", "report.xml"], named: "report.xml", where: "--pytest" };
 });
 
+const NOT_JEST_JSON: Record<string, string> = {
+  "not JSON at all": "PASS src/a.test.ts\nTests: 3 passed, 3 total\n",
+  "a JUnit XML report rather than JSON": '<?xml version="1.0" encoding="UTF-8"?><testsuites name="jest tests"></testsuites>',
+  "JSON that holds no test results": '{"numTotalTests":0}',
+};
+
+Given(/^a target whose Jest report is (?!well formed and holds nothing$)(.+)$/, function (defect: string) {
+  const dir = targetDir();
+  writeFileSync(join(dir, "jest.json"), rowOf(NOT_JEST_JSON, defect));
+  target = { dir, args: ["--features", "features", "--jest", "jest.json"], named: "jest.json", where: "--jest" };
+});
+
 const MANIFEST: Record<string, readonly [string, string]> = {
   "a list where the manifest belongs": ["[]", "the top level is a list, not an object"],
   "scripts that are not a map": ['{"scripts":"x"}', "scripts is a string, not an object"],
@@ -121,6 +133,7 @@ const EMPTY_PYTEST_REPORT =
 const EMPTY: Record<string, readonly [string, string, string]> = {
   "Vitest report": ["vitest", "vitest.json", JSON.stringify({ testResults: [] })],
   "pytest report": ["pytest", "report.xml", EMPTY_PYTEST_REPORT],
+  "Jest report": ["jest", "jest.json", JSON.stringify({ numTotalTests: 0, success: true, testResults: [] })],
   "Cucumber report": ["cucumber", "cucumber.json", "[]"],
   "CI step record": ["ci-steps", "ci-steps.json", "{}"],
 };
@@ -193,6 +206,11 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     writeFileSync(join(dir, "report.xml"), EMPTY_PYTEST_REPORT);
     chmodSync(join(dir, "report.xml"), 0o000);
     return [["--features", "features", "--pytest", "report.xml"], "report.xml", "--pytest"];
+  },
+  "the Jest report": (dir) => {
+    writeFileSync(join(dir, "jest.json"), '{"numTotalTests":0,"success":true,"testResults":[]}');
+    chmodSync(join(dir, "jest.json"), 0o000);
+    return [["--features", "features", "--jest", "jest.json"], "jest.json", "--jest"];
   },
 };
 
@@ -287,6 +305,15 @@ Then("the refusal names the pytest report and the shape pytest writes", function
   assert.ok(
     result.stderr.includes("the JUnit XML report pytest --junitxml writes"),
     `expected stderr to name the shape pytest writes; got:\n${result.stderr}`,
+  );
+});
+
+Then("the refusal names the Jest report and the shape Jest writes", function () {
+  assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+  assert.ok(
+    result.stderr.includes("the JSON report jest --json writes"),
+    `expected stderr to name the shape Jest writes; got:\n${result.stderr}`,
   );
 });
 

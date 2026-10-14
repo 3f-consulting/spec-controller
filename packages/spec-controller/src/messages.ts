@@ -60,6 +60,7 @@ export enum AppMessage {
   FeaturesFlag,
   VitestFlag,
   PytestFlag,
+  JestFlag,
   CucumberFlag,
   CiFlag,
   PackageJsonFlag,
@@ -93,10 +94,12 @@ export enum AppMessage {
   DefaultCiWorkflows,
   VitestReportShape,
   JunitReportShape,
+  JestReportShape,
   CucumberReportShape,
   CiStepRecordShape,
   PackageManifestShape,
   NotValidJson,
+  NotValidJsonInShape,
   NotValidXml,
   XmlFaultAtLine,
   NotInShape,
@@ -181,6 +184,7 @@ interface AppMessageParams {
   [AppMessage.FlaggedCorpus]: [flag: string];
   [AppMessage.FlaggedWorkflows]: [flag: string];
   [AppMessage.NotValidJson]: [subject: string, path: string, reason: string];
+  [AppMessage.NotValidJsonInShape]: [subject: string, shape: string, path: string, reason: string];
   [AppMessage.NotValidXml]: [subject: string, shape: string, path: string, reason: string];
   [AppMessage.XmlFaultAtLine]: [fault: string, line: number];
   [AppMessage.NotInShape]: [subject: string, shape: string, path: string, fault: string];
@@ -319,6 +323,7 @@ export const APP_MESSAGES: AppMessages = {
     "(@unit, @integration, @fitness, …).",
   [AppMessage.VitestFlag]: () => "A Vitest JSON report — runtime test evidence.",
   [AppMessage.PytestFlag]: () => "A pytest JUnit XML report (pytest --junitxml) — runtime unit test evidence.",
+  [AppMessage.JestFlag]: () => "A Jest JSON report (jest --json --outputFile) — runtime unit test evidence.",
   [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",
   [AppMessage.CiFlag]: () =>
     "Your CI workflows — a file, or a directory of them (default .github/workflows). " +
@@ -379,10 +384,13 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.DefaultCiWorkflows]: () => "The CI workflows read by default",
   [AppMessage.VitestReportShape]: () => "the Vitest JSON reporter writes",
   [AppMessage.JunitReportShape]: () => "of the JUnit XML report pytest --junitxml writes",
+  [AppMessage.JestReportShape]: () => "of the JSON report jest --json writes",
   [AppMessage.CucumberReportShape]: () => "the Cucumber JSON formatter writes",
   [AppMessage.CiStepRecordShape]: () => "of a CI run's record of its steps",
   [AppMessage.PackageManifestShape]: () => "of a package.json manifest",
   [AppMessage.NotValidJson]: (subject, path, reason) => `${subject} is not valid JSON: ${path} (${reason})`,
+  [AppMessage.NotValidJsonInShape]: (subject, shape, path, reason) =>
+    `${subject} is not valid JSON, so not in the shape ${shape}: ${path} (${reason})`,
   [AppMessage.NotValidXml]: (subject, shape, path, reason) =>
     `${subject} is not valid XML, so not in the shape ${shape}: ${path} (${reason})`,
   [AppMessage.XmlFaultAtLine]: (fault, line) => `${fault} at line ${line}`,

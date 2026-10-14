@@ -28,6 +28,11 @@ const JSON_SYNTAX: Syntax = {
   notValid: (subject, _writer, path, reason) => APP_MESSAGES[AppMessage.NotValidJson](subject, path, reason),
 };
 
+const JSON_SYNTAX_NAMING_SHAPE: Syntax = {
+  parse: (text) => JSON.parse(text),
+  notValid: APP_MESSAGES[AppMessage.NotValidJsonInShape],
+};
+
 const XML_SYNTAX: Syntax = {
   parse: parseJunitXml,
   notValid: APP_MESSAGES[AppMessage.NotValidXml],
@@ -60,6 +65,12 @@ const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
     writer: APP_MESSAGES[AppMessage.JunitReportShape](),
     shape: JUNIT_REPORT,
     syntax: XML_SYNTAX,
+  },
+  jest: {
+    subject: APP_MESSAGES[AppMessage.FlaggedReport],
+    writer: APP_MESSAGES[AppMessage.JestReportShape](),
+    shape: VITEST_REPORT,
+    syntax: JSON_SYNTAX_NAMING_SHAPE,
   },
   cucumber: {
     subject: APP_MESSAGES[AppMessage.FlaggedReport],

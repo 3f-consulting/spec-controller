@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 const OPTION_FLAG: Readonly<Record<string, string>> = {
   "Vitest report option": "--vitest",
   "pytest report option": "--pytest",
+  "Jest report option": "--jest",
   "Cucumber report option": "--cucumber",
   "feature corpus option": "--features",
   "CI workflows option": "--ci",

@@ -1,0 +1,9 @@
+{
+  "name": "jest-fixture-target",
+  "private": true,
+  "specController": {
+    "runners": {
+      "unit": "jest"
+    }
+  }
+}

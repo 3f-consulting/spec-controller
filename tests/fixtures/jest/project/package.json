@@ -1,0 +1,7 @@
+{
+  "name": "jest-fixture-project",
+  "private": true,
+  "devDependencies": {
+    "jest": "30.5.2"
+  }
+}

@@ -63,6 +63,7 @@ function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
     features: args["features"],
     vitest: args["vitest"],
     pytest: args["pytest"],
+    jest: args["jest"],
     cucumber: args["cucumber"],
     ci: args["ci"],
     packageJson: args["package-json"],
@@ -75,7 +76,7 @@ export function checkInputsExist(
   exists: (path: string) => boolean,
 ): string | null {
   const flags = [
-    "vitest", "pytest", "cucumber", "features", "ci", "package-json", "ci-steps",
+    "vitest", "pytest", "jest", "cucumber", "features", "ci", "package-json", "ci-steps",
   ] as const;
   for (const flag of flags) {
     const path = args[flag];

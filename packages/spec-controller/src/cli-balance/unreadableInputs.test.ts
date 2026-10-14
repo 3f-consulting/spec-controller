@@ -113,6 +113,41 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
   });
 });
 
+describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
+  const JEST_SHAPE = "the JSON report jest --json writes";
+  const refusalOf = (content: string): string | null =>
+    checkInputShapes(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content));
+
+  it.each([
+    ["text that is not JSON", "PASS src/a.test.ts\nTests: 3 passed, 3 total\n", "is not valid JSON"],
+    ["a JUnit XML report", '<?xml version="1.0" encoding="UTF-8"?><testsuites name="jest tests"></testsuites>', "is not valid JSON"],
+    ["JSON that holds no test results", '{"numTotalTests":0}', "testResults is missing"],
+  ])("refuses %s, naming the flag, the file, the shape Jest writes and what is wrong", (_, content, fault) => {
+    const error = refusalOf(content) ?? "";
+
+    expect(error).toContain("--jest");
+    expect(error).toContain("reports/jest.json");
+    expect(error).toContain(JEST_SHAPE);
+    expect(error).toContain(fault);
+  });
+
+  it("passes the report a real Jest run wrote, so the run goes on to reconcile", () => {
+    const real = readFileSync("tests/fixtures/jest/report.json", "utf8");
+    expect(checkInputShapes(jsonInputsOf({ jest: "report.json" }, nothingByDefault), reading(real))).toBeNull();
+  });
+
+  it("runBalance refuses a --jest file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    const report = join(features, "..", "jest.json");
+    writeFileSync(report, "not json\n");
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--jest", report]);
+
+    expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
+    expect(stderr).toContain(report);
+    expect(stderr).toContain(JEST_SHAPE);
+  });
+});
+
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
@@ -128,6 +163,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
       "pytest",
       '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>',
     ],
+    ["jest", '{"numTotalTests":0,"success":true,"testResults":[]}'],
     ["cucumber", "[]"],
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
@@ -264,6 +300,22 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--pytest", path])).toEqual({
       report: "",
       stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--pytest"), path, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("runBalance refuses a given --jest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "jest-not-permitted-"));
+    made.push(dir);
+    const path = join(dir, "jest.json");
+    writeFileSync(path, '{"numTotalTests":0,"success":true,"testResults":[]}');
+    lock(path);
+    const reason = osReasonFor(() => readFileSync(path, "utf8"));
+
+    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--jest", path])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--jest"), path, reason) + "\n",
       exitCode: 2,
     });
   });

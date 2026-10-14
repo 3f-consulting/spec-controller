@@ -52,6 +52,11 @@ const balanceFlags: FlagSpec[] = [
     description: APP_MESSAGES[AppMessage.PytestFlag](),
   },
   {
+    name: "--jest",
+    arg: "<report.json>",
+    description: APP_MESSAGES[AppMessage.JestFlag](),
+  },
+  {
     name: "--cucumber",
     arg: "<report.json>",
     description: APP_MESSAGES[AppMessage.CucumberFlag](),

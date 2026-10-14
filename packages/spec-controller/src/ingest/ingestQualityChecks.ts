@@ -40,6 +40,7 @@ import type {
 
 const VITEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const PYTEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
+const JEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
@@ -48,6 +49,7 @@ export interface ReconcileOptions {
   features?: string;
   vitest?: string;
   pytest?: string;
+  jest?: string;
   cucumber?: string;
   ci?: string;
   packageJson?: string;
@@ -163,6 +165,8 @@ function parseBehaviouralObservations(opts: ReconcileOptions, root: string | und
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
   const pytestReport = readJunitXmlIfPresent(opts.pytest);
   if (pytestReport) out.push(...parsePytestEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
+  const jestReport = readJsonIfPresent<VitestJsonReport>(opts.jest);
+  if (jestReport) out.push(...parseVitestEvidenceObservations(jestReport, JEST_QUALITY_CHECK, root));
   const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
   if (cucumberReport) out.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
   return out;
