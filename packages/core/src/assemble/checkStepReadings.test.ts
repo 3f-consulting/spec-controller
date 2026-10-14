@@ -3,6 +3,7 @@ import type { CiStepRecord } from "../parse/ciStepRecord.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { checkStepReconciler } from "./checkStep.test-utils.js";
+import { remarkWordsOf } from "../render/remarkWords.js";
 
 const corpus = `@CVT
 Feature: a converted target's fitness corpus
@@ -97,11 +98,11 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
     ]);
 }
 
-function suspenseItemsOf(reconciliation: EvidenceReconciliation): unknown[] {
+function suspenseItemsOf(reconciliation: EvidenceReconciliation) {
   const row = reconciliation.ledger.scenarioReconciliations.find(
     (r) => r.kind === "suspense-scenario"
   );
-  return (row?.qualityCheckReconciliations ?? []).map((item) => [item.outcome, item.message]);
+  return row?.qualityCheckReconciliations ?? [];
 }
 
 describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
@@ -129,26 +130,32 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
     });
   });
 
-  it("stamps the run unsound, naming each step it has no reading for and what the record said", () => {
+  it("stamps the run unsound, carrying for each step it has no reading for a note with the cited code and what the record said", () => {
     const reconciliation = reconcile();
     expect(
       hasBrokenEvidence({ scenarioReconciliations: reconciliation.ledger.scenarioReconciliations })
     ).toBe(true);
-    expect(suspenseItemsOf(reconciliation)).toEqual([
-      [
-        "broken",
-        "SCN-CVT-003: the CI run's record says this check's step was skipped — so the check did not run.",
-      ],
-      [
-        "broken",
-        "SCN-CVT-004: the CI run's record says this check's step ended `neutral` — so the check " +
-          "did not run.",
-      ],
-      [
-        "broken",
-        "SCN-CVT-005: the CI run's record carries no outcome for this check's step — so the check " +
-          "did not run.",
-      ],
+    const items = suspenseItemsOf(reconciliation);
+    expect(items.map((item) => [item.outcome, item.notes])).toEqual([
+      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" }]],
+      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" }]],
+      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-005" }]],
+    ]);
+    expect(items.map((item) => item.notes?.[0])).toStrictEqual([
+      { kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" },
+      { kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" },
+      { kind: "check-step-did-not-run", code: "SCN-CVT-005" },
+    ]);
+    expect(items.filter((item) => "message" in item)).toEqual([]);
+  });
+
+  it("words each step it has no reading for, prefixed by the code it cites", () => {
+    expect(suspenseItemsOf(reconcile()).map(remarkWordsOf)).toEqual([
+      "SCN-CVT-003: the CI run's record says this check's step was skipped — so the check did not run.",
+      "SCN-CVT-004: the CI run's record says this check's step ended `neutral` — so the check " +
+        "did not run.",
+      "SCN-CVT-005: the CI run's record carries no outcome for this check's step — so the check " +
+        "did not run.",
     ]);
   });
 

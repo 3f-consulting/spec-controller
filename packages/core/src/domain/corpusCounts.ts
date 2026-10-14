@@ -1,12 +1,10 @@
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-
 export interface UntaggedScenario {
   readonly feature: string;
   readonly scenario: string;
 }
 
 export function untaggedScenarioId({ feature, scenario }: UntaggedScenario): string {
-  return CORE_MESSAGES[CoreMessage.UntaggedScenarioId](feature, scenario);
+  return `${feature} : ${scenario}`;
 }
 
 export interface SharedScnCode {

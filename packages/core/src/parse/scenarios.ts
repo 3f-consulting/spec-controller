@@ -3,7 +3,7 @@ import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/
 import { bareTerm } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import type { Scenario, EvidenceObligation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
 
@@ -83,8 +83,7 @@ function parseFeatureDocument(source: string): GherkinDocument {
   try {
     return parser.parse(source);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(CORE_MESSAGES[CoreMessage.FeatureSourceNotGherkin](message));
+    throw new FeatureSourceNotGherkin(err as Error);
   }
 }
 

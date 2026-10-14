@@ -1,4 +1,5 @@
-import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
+import { QualityCheckFaultCode, type QualityCheckFault } from "../domain/qualityCheckFault.js";
+import { SUSPENSE_SCENARIO_ID } from "../domain/scenarioReconciliation.js";
 
 export type QualityCheckFaultMessages = {
   readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { readonly code: C }>) => string;
@@ -137,21 +138,16 @@ export enum CoreMessage {
   ReconcilingItemsColumn,
   PendingItem,
   PendingItemFor,
-  FeatureSourceNotGherkin,
   CheckStepNoOutcome,
   CheckStepSkipped,
   CheckStepEnded,
   AmbiguousNamedStep,
   AmbiguousUnnamedStep,
-  UnknownFeature,
-  UnknownVitestFile,
   ManifestKindList,
   ManifestKindObject,
   ManifestKindString,
   ManifestKindStringOrNull,
   ManifestKindOfType,
-  SuspenseScenarioId,
-  UntaggedScenarioId,
   OutcomeSatisfied,
   OutcomeMissing,
   OutcomeFailing,
@@ -233,13 +229,11 @@ interface CoreMessageParams {
   readonly [CoreMessage.UntaggedScenarios]: [count: number];
   readonly [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
   readonly [CoreMessage.PendingItemFor]: [qualityCheck: string];
-  readonly [CoreMessage.FeatureSourceNotGherkin]: [cause: string];
   readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
   readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
   readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
   readonly [CoreMessage.ManifestKindOfType]: [type: string];
-  readonly [CoreMessage.UntaggedScenarioId]: [feature: string, scenario: string];
   readonly [CoreMessage.SuspenseGroupCounts]: [ran: number, passed: number, failed: number];
   readonly [CoreMessage.SuspenseCiSteps]: [names: readonly string[]];
   readonly [CoreMessage.SuspenseFailedNames]: [names: readonly string[]];
@@ -249,8 +243,6 @@ interface CoreMessageParams {
 export type CoreMessages = {
   readonly [C in CoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
 };
-
-const SUSPENSE_SCENARIO_ID = "(no scenario)";
 
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
@@ -454,10 +446,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
   [CoreMessage.PendingItem]: "⏳ pending",
   [CoreMessage.PendingItemFor]: (qualityCheck) => `⏳ pending: ${qualityCheck}`,
-  [CoreMessage.FeatureSourceNotGherkin]: (cause) =>
-    `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
-    `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
-    `rather than silently. Cause: ${cause}`,
   [CoreMessage.CheckStepNoOutcome]: (scnId) =>
     `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`,
   [CoreMessage.CheckStepSkipped]: (scnId) =>
@@ -467,15 +455,11 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.AmbiguousNamedStep]: (step) =>
     `The step "${step}" is ambiguous — two or more step definitions match it, so the step never ran.`,
   [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
-  [CoreMessage.UnknownFeature]: "(unknown feature)",
-  [CoreMessage.UnknownVitestFile]: "(unknown vitest file)",
   [CoreMessage.ManifestKindList]: "a list",
   [CoreMessage.ManifestKindObject]: "an object",
   [CoreMessage.ManifestKindString]: aKind("string"),
   [CoreMessage.ManifestKindStringOrNull]: "a string or null",
   [CoreMessage.ManifestKindOfType]: aKind,
-  [CoreMessage.SuspenseScenarioId]: SUSPENSE_SCENARIO_ID,
-  [CoreMessage.UntaggedScenarioId]: (feature, scenario) => `${feature} : ${scenario}`,
   [CoreMessage.OutcomeSatisfied]: "Evidence Observation satisfies its Evidence Obligation",
   [CoreMessage.OutcomeMissing]: "Evidence Observation is missing",
   [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",

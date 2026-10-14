@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parsePytestEvidenceObservations, type JunitXmlReport } from "./pytest.js";
+import { remarkWordsOf } from "../render/remarkWords.js";
 
 describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {
   const report: JunitXmlReport = {
@@ -121,24 +122,22 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     },
   };
 
-  it("emits one unit observation citing no scenario, whose message names both codes", () => {
-    const [observation, ...rest] = parsePytestEvidenceObservations(report, "unit");
-
-    expect(rest).toEqual([]);
-    expect(observation).toMatchObject({
-      qualityCheck: "unit",
-      scnId: null,
-      status: "passed",
-      locator: "tests.test_widget::test_the_widget_spins_and_turns",
-    });
-    expect(observation?.message).toContain("SCN-FOO-004");
-    expect(observation?.message).toContain("SCN-FOO-005");
+  it("emits one unit observation citing no scenario, with a note of both codes and no message", () => {
+    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: null,
+        status: "passed",
+        locator: "tests.test_widget::test_the_widget_spins_and_turns",
+        notes: [{ kind: "several-scn-codes", codes: ["SCN-FOO-004", "SCN-FOO-005"] }],
+      },
+    ]);
   });
 
   it("words its note as every reader words it, in scenario codes rather than scn properties", () => {
     const [observation] = parsePytestEvidenceObservations(report, "unit");
 
-    expect(observation?.message).toContain("2 scenario codes cite SCN-FOO-004, SCN-FOO-005");
+    expect(remarkWordsOf(observation ?? {})).toContain("2 scenario codes cite SCN-FOO-004, SCN-FOO-005");
   });
 
   it("credits the scenario when the one code is carried twice", () => {

@@ -1,6 +1,6 @@
 import type { RenderInput } from "../domain/report.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
   reconciles: CORE_MESSAGES[CoreMessage.ReconcilerReconciles],

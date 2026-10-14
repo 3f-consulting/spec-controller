@@ -2,9 +2,9 @@ import type { RenderInput } from "../domain/report.js";
 import type { Ledger } from "../model.js";
 import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
-import { scenarioCodeErrorsGloss, type ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scenarioCodeError.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const DEFAULT_CORPUS_DIR = "features";
 
@@ -12,6 +12,17 @@ type Verdict = { readonly headline: string; readonly exit: string; readonly glos
 
 function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;
+}
+
+function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
+  switch (scenarioCodeErrorsAre(errors)) {
+    case "misfilings":
+      return CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](alsoOutOfBalance);
+    case "several-codes":
+      return CORE_MESSAGES[CoreMessage.SeveralScnCodesGloss](alsoOutOfBalance);
+    case "both":
+      return CORE_MESSAGES[CoreMessage.MisfiledAndSeveralScnCodesGloss](alsoOutOfBalance);
+  }
 }
 
 function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): Verdict {

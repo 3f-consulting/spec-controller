@@ -3,6 +3,7 @@ import {
   parseScenarios,
   parseUntaggedScenarios,
 } from "./scenarios.js";
+import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 
 describe("[SCN-LDG-020] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
@@ -94,8 +95,21 @@ Feature: alpha
     expect(parseScenarios(source)).toEqual([]);
   });
 
-  it("THROWS on unparseable source — an empty corpus balances against anything, so it never returns one", () => {
-    expect(() => parseScenarios("not gherkin at all {{{")).toThrow(/not valid Gherkin/);
+  it("THROWS on unparseable source a typed error in the parser's own words — an empty corpus balances against anything, so it never returns one", () => {
+    let thrown: unknown;
+    try {
+      parseScenarios("not gherkin at all {{{");
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(FeatureSourceNotGherkin);
+    const error = thrown as FeatureSourceNotGherkin;
+    expect(error.message).toBe(
+      "Parser errors:\n(1:1): expected: #EOF, #Language, #TagLine, #FeatureLine, #Comment, #Empty, got 'not gherkin at all {{{'"
+    );
+    expect(error.cause).toBeInstanceOf(Error);
+    expect((error.cause as Error).message).toBe(error.message);
   });
 });
 

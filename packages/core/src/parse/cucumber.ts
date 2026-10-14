@@ -1,7 +1,6 @@
-import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
+import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus, ObservationNote } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { attributionOf } from "../domain/attribution.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
@@ -38,11 +37,9 @@ function deriveLevels(
   return levels.length > 0 ? levels : [fallbackQualityCheck];
 }
 
-function ambiguousMessage(step: { keyword?: string; name?: string }): string {
+function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNote {
   const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
-  return text.length > 0
-    ? CORE_MESSAGES[CoreMessage.AmbiguousNamedStep](text)
-    : CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep];
+  return text.length > 0 ? { kind: "ambiguous-step", step: text } : { kind: "ambiguous-step" };
 }
 
 export function parseCucumberEvidenceObservations(
@@ -52,7 +49,8 @@ export function parseCucumberEvidenceObservations(
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
   for (const feature of report) {
-    const locator = relativizeToRoot(feature.uri ?? feature.name ?? CORE_MESSAGES[CoreMessage.UnknownFeature], root);
+    const named = feature.uri ?? feature.name;
+    const locator = named && relativizeToRoot(named, root);
     for (const scenario of feature.elements ?? []) {
       results.push(...scenarioObservations(scenario, locator, fallbackQualityCheck));
     }
@@ -71,12 +69,12 @@ function citedCodesOf(tags: readonly { readonly name?: string }[]): string[] {
 
 function scenarioObservations(
   scenario: CucumberScenario,
-  locator: string,
+  locator: string | undefined,
   fallbackQualityCheck: BehaviouralQualityCheck
 ): EvidenceObservation[] {
   const tags = scenario.tags ?? [];
   const { scnId, severalCodes } = attributionOf(citedCodesOf(tags));
-  const severalNote = severalCodes ? CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) : undefined;
+  const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
   const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
   if (ambiguous) {
@@ -86,7 +84,7 @@ function scenarioObservations(
       status: "failed",
       locator,
       broken: true,
-      message: severalNote ? `${ambiguousMessage(ambiguous)} ${severalNote}` : ambiguousMessage(ambiguous),
+      notes: [ambiguousNote(ambiguous), ...severalNotes],
     }];
   }
   const anyFailed = steps.some((s) => s.result?.status === "failed");
@@ -99,6 +97,6 @@ function scenarioObservations(
     status,
     locator,
     testName: scenario.name,
-    ...(severalNote ? { message: severalNote } : {}),
+    ...(severalNotes.length > 0 ? { notes: severalNotes } : {}),
   }));
 }

@@ -1,7 +1,6 @@
 import { featureCodeOf } from "../domain/featureCode.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "../domain/scenarioCodeError.js";
 import { parseSeveralCodedScenarios, parseTaggedScenarios } from "./scenarios.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface CorpusFile {
   readonly slug: string;
@@ -15,8 +14,8 @@ export function duplicateFeatureCodes(features: readonly CorpusFile[]): Scenario
     if (files.length < 2) continue;
     faults.push({
       kind: "duplicate-feature-code",
+      featureCode: code,
       files,
-      message: CORE_MESSAGES[CoreMessage.DuplicateFeatureCode](code, files.length, files.join(", ")),
     });
   }
   return faults;
@@ -31,30 +30,11 @@ function headerFilesByCode(features: readonly CorpusFile[]): Map<string, string[
   return filesByCode;
 }
 
-function foreignMessage(file: CorpusFile & { featureCode: string }, scnId: string, named: string, carriers: readonly string[]): string {
-  const fileName = `${file.slug}.feature`;
-  if (carriers.length === 1) {
-    return CORE_MESSAGES[CoreMessage.ForeignScnCodeOneCarrier](fileName, file.featureCode, scnId, named, carriers[0]!);
-  }
-  if (carriers.length > 1) {
-    return CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers](
-      fileName,
-      file.featureCode,
-      scnId,
-      named,
-      carriers.length,
-      carriers.join(", ")
-    );
-  }
-  return CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier](fileName, file.featureCode, scnId, named);
-}
-
 export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
   const carriersByCode = headerFilesByCode(features);
   const faults: ScenarioCodeError[] = [];
   for (const file of features) {
     if (file.featureCode === null) continue;
-    const coded = { ...file, featureCode: file.featureCode };
     for (const scenario of parseTaggedScenarios(file.source)) {
       const named = featureCodeOf(scenario.scnId);
       if (named === null || named === file.featureCode) continue;
@@ -62,9 +42,10 @@ export function foreignScenarioCodes(features: readonly CorpusFile[]): ScenarioC
       faults.push({
         kind: "foreign-scn-code",
         files: [`${file.slug}.feature`],
+        featureCode: file.featureCode,
+        scnId: scenario.scnId,
         namedFeatureCode: named,
         namedFeatureFiles: carriers,
-        message: foreignMessage(coded, scenario.scnId, named, carriers),
       });
     }
   }
@@ -77,7 +58,6 @@ function noFeatureCodeFiles(features: readonly CorpusFile[]): ScenarioCodeError[
     .map((file) => ({
       kind: "no-feature-code" as const,
       files: [`${file.slug}.feature`],
-      message: CORE_MESSAGES[CoreMessage.NoFeatureCode](`${file.slug}.feature`),
     }));
 }
 
@@ -86,7 +66,8 @@ function severalScnCodes(features: readonly CorpusFile[]): ScenarioCodeError[] {
     parseSeveralCodedScenarios(file.source).map(({ name, codes }) => ({
       kind: "several-scn-codes" as const,
       files: [`${file.slug}.feature`],
-      message: CORE_MESSAGES[CoreMessage.ScenarioSeveralScnCodes](`${file.slug}.feature`, name, codes),
+      scenario: name,
+      codes,
     }))
   );
 }

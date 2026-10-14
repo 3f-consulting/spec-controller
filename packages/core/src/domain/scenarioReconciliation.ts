@@ -12,6 +12,8 @@ export type ScenarioVerdict = "balanced" | "out-of-balance";
 
 export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario";
 
+export const SUSPENSE_SCENARIO_ID = "(no scenario)";
+
 export interface ScenarioReconciliation {
   readonly scnId: string;
   readonly kind: ScenarioKind;

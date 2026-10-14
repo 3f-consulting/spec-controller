@@ -46,6 +46,24 @@ export function pendingItemsOf(scenario: Scenario): PendingItem[] {
 
 export type EvidenceStatus = "passed" | "failed";
 
+interface SeveralScnCodesNote {
+  readonly kind: "several-scn-codes";
+  readonly codes: readonly string[];
+}
+
+interface AmbiguousStepNote {
+  readonly kind: "ambiguous-step";
+  readonly step?: string;
+}
+
+interface CheckStepDidNotRunNote {
+  readonly kind: "check-step-did-not-run";
+  readonly code: string;
+  readonly outcome?: string;
+}
+
+export type ObservationNote = SeveralScnCodesNote | AmbiguousStepNote | CheckStepDidNotRunNote;
+
 export interface BehaviouralEvidenceObservation {
   readonly qualityCheck: BehaviouralQualityCheck;
   readonly scnId: string | null;
@@ -53,6 +71,7 @@ export interface BehaviouralEvidenceObservation {
   readonly locator?: string;
   readonly broken?: true;
   readonly message?: string;
+  readonly notes?: readonly ObservationNote[];
   readonly testName?: string;
 }
 
@@ -65,6 +84,7 @@ export interface FitnessEvidenceObservation {
   readonly status?: EvidenceStatus;
   readonly broken?: true;
   readonly message?: string;
+  readonly notes?: readonly ObservationNote[];
   readonly locator?: string;
 }
 

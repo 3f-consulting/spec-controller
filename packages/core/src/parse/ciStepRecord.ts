@@ -1,6 +1,5 @@
 import { SCN_CODE } from "./scenarios.js";
-import type { EvidenceStatus } from "../domain/journal.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { EvidenceStatus, ObservationNote } from "../domain/journal.js";
 import type { FitnessEvidenceObservation } from "../model.js";
 
 interface CiStepRecordEntry {
@@ -12,7 +11,6 @@ export type CiStepRecord = Readonly<Record<string, CiStepRecordEntry>>;
 
 const SUCCESS = "success";
 const FAILURE = "failure";
-const SKIPPED = "skipped";
 
 type StepReading = { readonly status?: EvidenceStatus } | null;
 
@@ -22,10 +20,8 @@ function readingOf(outcome: string | undefined): StepReading {
   return null;
 }
 
-function checkDidNotRunMessage(scnId: string, outcome: string | undefined): string {
-  if (outcome === undefined) return CORE_MESSAGES[CoreMessage.CheckStepNoOutcome](scnId);
-  if (outcome === SKIPPED) return CORE_MESSAGES[CoreMessage.CheckStepSkipped](scnId);
-  return CORE_MESSAGES[CoreMessage.CheckStepEnded](scnId, outcome);
+function checkDidNotRunNote(code: string, outcome: string | undefined): ObservationNote {
+  return { kind: "check-step-did-not-run", code, ...(outcome === undefined ? {} : { outcome }) };
 }
 
 function namedOf(citedScn: string) {
@@ -36,13 +32,13 @@ function namedOf(citedScn: string) {
   } as const;
 }
 
-function brokenObservationOf(citedScn: string, message: string): FitnessEvidenceObservation {
+function brokenObservationOf(citedScn: string, note: ObservationNote): FitnessEvidenceObservation {
   return {
     ...namedOf(citedScn),
     exists: false,
     enforcedOverRealSource: false,
     broken: true,
-    message,
+    notes: [note],
   };
 }
 
@@ -52,7 +48,7 @@ function observationOf(
   outcome: string | undefined
 ): FitnessEvidenceObservation {
   if (reading === null) {
-    return brokenObservationOf(citedScn, checkDidNotRunMessage(citedScn, outcome));
+    return brokenObservationOf(citedScn, checkDidNotRunNote(citedScn, outcome));
   }
   return {
     ...namedOf(citedScn),

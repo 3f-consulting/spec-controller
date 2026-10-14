@@ -1,6 +1,6 @@
 import type { RenderInput } from "../domain/report.js";
 import { projectProvenanceObject } from "./provenanceFacts.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 export const provenanceSection = (report: RenderInput): string[] => {
   const p = projectProvenanceObject(report.runProvenance);

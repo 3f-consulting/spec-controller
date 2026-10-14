@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { ForeignScnCodeError } from "../domain/scenarioCodeError.js";
 
 function file(slug: string, code: string | null, ids: readonly string[]): CorpusFile {
   const header = code === null ? "" : `@${code}\n`;
@@ -14,19 +14,16 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
     one = file("one", "ONE", ["SCN-ONE-001"]);
   });
 
-  it("lists the foreign id, naming the file, the id and the code the file carries", () => {
+  it("lists the foreign id with the file that holds it and the code that file carries", () => {
     const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
-    expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatchObject({ kind: "foreign-scn-code", files: ["two.feature"] });
-    expect(errors[0]!.message).toContain("SCN-ONE-002");
-    expect(errors[0]!.message).toContain("@TWO");
-    expect(errors[0]!.message).not.toContain("SCN-TWO-001");
+    expect(errors).toEqual([
+      expect.objectContaining({ kind: "foreign-scn-code", files: ["two.feature"], featureCode: "TWO", scnId: "SCN-ONE-002" }),
+    ]);
   });
 
-  it("names the one file carrying the named code, as data and in the message", () => {
+  it("names the code the id's feature part names, and the one file carrying it", () => {
     const errors = scenarioCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
-    expect(errors[0]).toMatchObject({ namedFeatureCode: "ONE", namedFeatureFiles: ["one.feature"] });
-    expect(errors[0]!.message).toContain("one.feature");
+    expect(errors).toEqual([expect.objectContaining({ namedFeatureCode: "ONE", namedFeatureFiles: ["one.feature"] })]);
   });
 
   it("names every file carrying the named code when two carry it", () => {
@@ -35,55 +32,43 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
       file("one-b", "ONE", ["SCN-ONE-003"]),
       file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"]),
     ]);
-    const foreign = errors.find((e) => e.kind === "foreign-scn-code");
-    expect(foreign?.namedFeatureFiles).toEqual(["one.feature", "one-b.feature"]);
-    expect(foreign?.message).toContain("one.feature");
-    expect(foreign?.message).toContain("one-b.feature");
-    expect(foreign?.message).toBe(
-      CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers](
-        "two.feature",
-        "TWO",
-        "SCN-ONE-002",
-        "ONE",
-        2,
-        "one.feature, one-b.feature"
-      )
-    );
+    expect(errors.filter((e) => e.kind === "foreign-scn-code")).toEqual([
+      expect.objectContaining({
+        files: ["two.feature"],
+        featureCode: "TWO",
+        scnId: "SCN-ONE-002",
+        namedFeatureCode: "ONE",
+        namedFeatureFiles: ["one.feature", "one-b.feature"],
+      }),
+    ]);
   });
 });
 
 describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
-  function foreignOf(files: readonly CorpusFile[]) {
-    const foreign = scenarioCodeErrorsOf(files).find((e) => e.kind === "foreign-scn-code")!;
-    return { foreign, namedFiles: [...new Set(foreign.message.match(/[\w-]+\.feature/g))] };
+  function foreignOf(files: readonly CorpusFile[]): ForeignScnCodeError {
+    return scenarioCodeErrorsOf(files).find((e): e is ForeignScnCodeError => e.kind === "foreign-scn-code")!;
   }
 
-  it("carries no file for the named code, and names no header tag or file the corpus lacks", () => {
-    const { foreign, namedFiles } = foreignOf([
+  it("carries no file for the named code, beside the file holding the scenario, its code and the misfiled code", () => {
+    const foreign = foreignOf([
       file("one", "ONE", ["SCN-ONE-001"]),
       file("two", "TWO", ["SCN-TWO-001", "SCN-THR-002"]),
     ]);
-    expect(foreign).toMatchObject({ namedFeatureCode: "THR", namedFeatureFiles: [] });
-    expect(foreign.message).toContain("SCN-THR-002");
-    expect(foreign.message).toContain("@TWO");
-    expect(foreign.message).not.toMatch(/@THR\b/);
-    expect(namedFiles).toEqual(["two.feature"]);
-    expect(foreign.message).toBe(
-      CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier]("two.feature", "TWO", "SCN-THR-002", "THR")
-    );
+    expect(foreign).toMatchObject({
+      files: ["two.feature"],
+      featureCode: "TWO",
+      scnId: "SCN-THR-002",
+      namedFeatureCode: "THR",
+      namedFeatureFiles: [],
+    });
   });
 
-  it("says the same when the only other file using the code carries no header", () => {
-    const { foreign, namedFiles } = foreignOf([
+  it("carries no file for the named code when the only other file using the code carries no header", () => {
+    const foreign = foreignOf([
       file("thr", null, ["SCN-THR-001"]),
       file("two", "TWO", ["SCN-THR-002"]),
     ]);
-    expect(foreign.namedFeatureFiles).toEqual([]);
-    expect(foreign.message).not.toMatch(/@THR\b/);
-    expect(namedFiles).toEqual(["two.feature"]);
-    expect(foreign.message).toBe(
-      CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier]("two.feature", "TWO", "SCN-THR-002", "THR")
-    );
+    expect(foreign).toMatchObject({ files: ["two.feature"], namedFeatureCode: "THR", namedFeatureFiles: [] });
   });
 });
 
@@ -93,10 +78,9 @@ describe("[SCN-STG-010] two feature files carrying one header code are listed as
       file("one", "ONE", ["SCN-ONE-001"]),
       file("one-b", "ONE", ["SCN-ONE-002"]),
     ]);
-    expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatchObject({ kind: "duplicate-feature-code", files: ["one.feature", "one-b.feature"] });
-    expect(errors[0]!.message).toContain("@ONE");
-    expect(errors[0]!.message).toContain("one.feature, one-b.feature");
+    expect(errors).toEqual([
+      expect.objectContaining({ kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "one-b.feature"] }),
+    ]);
   });
 });
 
@@ -107,7 +91,6 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
       file("unc", null, ["SCN-UNC-001", "SCN-UNC-002"]),
     ]);
     expect(errors).toEqual([expect.objectContaining({ kind: "no-feature-code", files: ["unc.feature"] })]);
-    expect(errors[0]!.message).toBe(CORE_MESSAGES[CoreMessage.NoFeatureCode]("unc.feature"));
   });
 
   it("lists nothing for a file whose header and scenario codes are both too long to be codes, and lists the same file once its scenario's feature part is five characters", () => {
@@ -128,15 +111,15 @@ describe("[SCN-STG-029] a scenario tagged with two scenario codes is listed as a
     source: `@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`,
   });
 
-  it("lists one several-scn-codes error naming the file, the scenario and both codes", () => {
+  it("lists one several-scn-codes error carrying the file, the scenario and both codes", () => {
     const errors = scenarioCodeErrorsOf([twoCodes("@SCN-TWO-002 @SCN-TWO-003")]);
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatchObject({ kind: "several-scn-codes", files: ["two.feature"] });
-    expect(errors[0]!.message).toContain("two.feature");
-    expect(errors[0]!.message).toContain("carries codes");
-    expect(errors[0]!.message).toContain("SCN-TWO-002");
-    expect(errors[0]!.message).toContain("SCN-TWO-003");
-    expect(errors[0]!.message).not.toContain("SCN-TWO-001");
+    expect(errors[0]).toMatchObject({
+      kind: "several-scn-codes",
+      files: ["two.feature"],
+      scenario: "carries codes",
+      codes: ["SCN-TWO-002", "SCN-TWO-003"],
+    });
   });
 
   it("lists nothing for one code, or the same code repeated", () => {
@@ -163,12 +146,14 @@ describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is o
     "a different code of its own under a %s code is one several-scn-codes error naming the file, the scenario and both codes",
     (ancestor) => {
       const errors = scenarioCodeErrorsOf([underAncestor[ancestor]("@SCN-AAA-002")]);
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toMatchObject({ kind: "several-scn-codes", files: ["alpha.feature"] });
-      expect(errors[0]!.message).toContain("alpha.feature");
-      expect(errors[0]!.message).toContain("carries codes");
-      expect(errors[0]!.message).toContain("SCN-AAA-001");
-      expect(errors[0]!.message).toContain("SCN-AAA-002");
+      expect(errors).toEqual([
+        {
+          kind: "several-scn-codes",
+          files: ["alpha.feature"],
+          scenario: "carries codes",
+          codes: ["SCN-AAA-002", "SCN-AAA-001"],
+        },
+      ]);
     },
   );
 

@@ -7,7 +7,6 @@ export default {
     "packages/core/src/domain/**/*.ts",
     "!packages/core/src/domain/**/*.test.ts",
     "!packages/core/src/domain/**/*.test-utils.ts",
-    "!packages/core/src/domain/messages.ts",
   ],
   reporters: ["progress", "clear-text", "html", "json"],
   htmlReporter: { fileName: "reports/mutation/index.html" },

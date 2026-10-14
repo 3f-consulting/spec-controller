@@ -1,6 +1,5 @@
 import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { SCN_CODE } from "./scenarios.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 import { attributionOf } from "../domain/attribution.js";
 
 export interface JunitXmlReport {
@@ -44,7 +43,7 @@ export function parsePytestEvidenceObservations(
           scnId,
           status: testcase.failure === undefined ? "passed" : "failed",
           locator,
-          ...(severalCodes ? { message: CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) } : {}),
+          ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
         };
       })
   );

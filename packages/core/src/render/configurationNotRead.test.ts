@@ -39,8 +39,8 @@ describe("[SCN-USG-025] the report names a specController entry of a kind its re
   it("renders one line per entry, after the run provenance and before any cut of the reconciliation", () => {
     const md = render({
       configurationOfWrongKind: [
-        { entry: "specController.notChecks", is: "a string", reads: "a list" },
-        { entry: "specController.runners.unit", is: "a number", reads: "a string or null" },
+        { entry: "specController.notChecks", is: "string", reads: "list" },
+        { entry: "specController.runners.unit", is: "number", reads: "string-or-null" },
       ],
     });
     expect(section(md)).toEqual([
@@ -61,7 +61,7 @@ describe("[SCN-USG-025] the report names a specController entry of a kind its re
 describe("[SCN-USG-028] the report names a key the specController block does not read, in one sentence for every key", () => {
   it("names each unread key after the entries of the wrong kind", () => {
     const md = render({
-      configurationOfWrongKind: [{ entry: "specController.notChecks", is: "a string", reads: "a list" }],
+      configurationOfWrongKind: [{ entry: "specController.notChecks", is: "string", reads: "list" }],
       configurationKeysNotRead: ["fitnessChecks", "zzz"],
     });
     expect(section(md).filter((l) => l.startsWith("- "))).toEqual([

@@ -1,5 +1,5 @@
 import type { RenderInput } from "../domain/report.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 export const discoveryScopeSection = (report: RenderInput): string[] => {
   const scope = report.summary.discoveryScope ?? [];

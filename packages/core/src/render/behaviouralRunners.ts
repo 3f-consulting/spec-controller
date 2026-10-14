@@ -1,6 +1,6 @@
 import type { RenderInput } from "../domain/report.js";
 import type { TierWithoutRunner } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const runnerTierAccount = (tiers: readonly TierWithoutRunner[] | undefined): string[] =>
   (tiers ?? []).map(({ tier, namesNone }) =>

@@ -2,7 +2,6 @@ import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { attributionOf } from "../domain/attribution.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
 
 export interface VitestJsonReport {
   readonly testResults?: ReadonlyArray<{
@@ -24,7 +23,7 @@ export function parseVitestEvidenceObservations(
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
   for (const file of report.testResults ?? []) {
-    const locator = relativizeToRoot(file.name ?? CORE_MESSAGES[CoreMessage.UnknownVitestFile], root);
+    const locator = file.name && relativizeToRoot(file.name, root);
     const assertions = file.assertionResults ?? [];
     if (file.status === "failed" && assertions.length === 0) {
       results.push({
@@ -47,7 +46,7 @@ export function parseVitestEvidenceObservations(
         status,
         locator,
         testName: assertion.fullName ?? assertion.title,
-        ...(severalCodes ? { message: CORE_MESSAGES[CoreMessage.SeveralScnCodes](severalCodes) } : {}),
+        ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
       });
     }
   }

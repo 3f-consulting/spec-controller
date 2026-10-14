@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, ScenarioReconciliation } from "../model.js";
-import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
+import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario, BehaviouralQualityCheck } from "../model.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";

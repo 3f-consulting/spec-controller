@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { tallyBlockOf } from "./tallyBlock.test-utils.js";
 
 const scenarios: Scenario[] = [{ scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "unit" }] }];

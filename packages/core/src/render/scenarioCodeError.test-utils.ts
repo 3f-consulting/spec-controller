@@ -13,5 +13,8 @@ export const codeErrorsCtx: RunContext = {
 export const FOREIGN: ScenarioCodeError = {
   kind: "foreign-scn-code",
   files: ["two.feature"],
-  message: "two.feature carries the feature code @TWO, but holds the scenario @SCN-ONE-002, whose feature part names ONE.",
+  featureCode: "TWO",
+  scnId: "SCN-ONE-002",
+  namedFeatureCode: "ONE",
+  namedFeatureFiles: ["one.feature"],
 };

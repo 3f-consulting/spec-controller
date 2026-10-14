@@ -4,6 +4,7 @@ import type {
   EvidenceObservation,
   FitnessEvidenceObservation,
   BehaviouralEvidenceObservation,
+  ObservationNote,
 } from "./journal.js";
 import {
   isFitnessObservation,
@@ -11,28 +12,9 @@ import {
 } from "./journal.js";
 import { QualityCheckFaultCode } from "./qualityCheckFault.js";
 import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { Outcome, SidePresence } from "./outcome.js";
 
 export type { Outcome, SidePresence } from "./outcome.js";
-
-export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
-  satisfied: CORE_MESSAGES[CoreMessage.OutcomeSatisfied],
-  missing: CORE_MESSAGES[CoreMessage.OutcomeMissing],
-  failing: CORE_MESSAGES[CoreMessage.OutcomeFailing],
-  watermelon: CORE_MESSAGES[CoreMessage.OutcomeWatermelon],
-  "no-scn-code": CORE_MESSAGES[CoreMessage.OutcomeNoScnCode],
-  "duplicate-scn-code": CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode],
-  "cites-unknown-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesUnknownScenario],
-  "cites-no-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario],
-  "no-evidence-obligation": CORE_MESSAGES[CoreMessage.OutcomeNoEvidenceObligation],
-  broken: CORE_MESSAGES[CoreMessage.OutcomeBroken],
-  "both-missing": CORE_MESSAGES[CoreMessage.OutcomeBothMissing],
-};
-
-export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
-  Object.keys(OUTCOME_DESCRIPTION) as Outcome[]
-).filter((outcome) => outcome !== "satisfied");
 
 declare const qualityCheckReconciliationBrand: unique symbol;
 
@@ -44,6 +26,7 @@ interface QualityCheckReconciliationFields {
   readonly evidenceObservation?: EvidenceObservation;
   readonly locator?: string;
   readonly message?: string;
+  readonly notes?: readonly ObservationNote[];
 }
 
 export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
@@ -66,6 +49,10 @@ export const OUTCOME_SIDE_PROFILE: Record<
   broken: { obligation: "None", observation: "None" },
   "both-missing": { obligation: "None", observation: "None" },
 };
+
+export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
+  Object.keys(OUTCOME_SIDE_PROFILE) as Outcome[]
+).filter((outcome) => outcome !== "satisfied");
 
 export function isObservationOnly(outcome: Outcome): boolean {
   const profile = OUTCOME_SIDE_PROFILE[outcome];
@@ -233,6 +220,7 @@ export function suspenseReconciliationsOf(
         outcome: "broken" as const,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
         ...(o.message !== undefined ? { message: o.message } : {}),
+        ...("notes" in o && o.notes !== undefined ? { notes: o.notes } : {}),
       })
     ),
     ...uncited.map((o) =>
@@ -242,6 +230,7 @@ export function suspenseReconciliationsOf(
         evidenceObservation: o,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
         ...(o.message !== undefined ? { message: o.message } : {}),
+        ...(o.notes !== undefined ? { notes: o.notes } : {}),
       })
     ),
     ...uncitedFitnessFunctions.map((o) =>

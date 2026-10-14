@@ -2,7 +2,7 @@ export { SCN_ID_SOURCE } from "./domain/featureCode.js";
 
 export { bareTerm } from "./lib/bareTerm.js";
 
-export { OUTCOME_DESCRIPTION } from "./domain/qualityCheckReconciliation.js";
+export { OUTCOME_DESCRIPTION } from "./render/outcomeDescription.js";
 
 export type { ScriptCitation } from "./parse/fitnessCitations.js";
 
@@ -24,4 +24,4 @@ export {
   CoreMessage,
   QUALITY_CHECK_FAULT_MESSAGES,
   type CoreMessages,
-} from "./domain/messages.js";
+} from "./render/messages.js";

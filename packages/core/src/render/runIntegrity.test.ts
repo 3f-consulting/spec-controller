@@ -7,8 +7,8 @@ import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { VitestJsonReport } from "../parse/vitest.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
 import type { CiStepRecord } from "../parse/ciStepRecord.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import { OUTCOME_DESCRIPTION } from "../model.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 
 const ctx: RunContext = {
@@ -76,7 +76,7 @@ const brokenCell = (qualityCheck: string, where: string): string =>
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
-    checkDidNotRun = ciStepRecordObservations(SKIPPED_CHECK)[0]!.message!;
+    checkDidNotRun = CORE_MESSAGES[CoreMessage.CheckStepSkipped]("SCN-RIN-001");
   });
 
   it("one broken evidence: the stamp counts one proof, then names its file and prints its error verbatim, each block followed by a blank line", () => {

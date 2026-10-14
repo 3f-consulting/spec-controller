@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 import type { BehaviouralEvidenceObservation } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
+import { remarkWordsOf } from "../render/remarkWords.js";
 import type { RunContext } from "../domain/runProvenance.js";
 
 describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
@@ -147,39 +148,41 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     },
   ];
 
-  it("emits ONE broken observation carrying the scenario's scnId, the feature-file locator, and a synthesised message naming the ambiguous step", () => {
+  it("emits ONE broken observation carrying the scenario's scnId, the feature-file locator, and a note naming the ambiguous step", () => {
     const observations = parseCucumberEvidenceObservations(
       ambiguousReport([{ name: "@integration" }, { name: "@SCN-HNS-020" }]),
       "integration"
     );
 
-    expect(observations).toHaveLength(1);
-    const [observation] = observations as BehaviouralEvidenceObservation[];
-    expect(observation).toMatchObject({
-      qualityCheck: "integration",
-      scnId: "SCN-HNS-020",
-      status: "failed",
-      locator: "features/ldg019.feature",
-      broken: true,
-    });
-    expect(observation!.message).toContain("Given a step two definitions both match");
-    expect(observation!.message).toMatch(/step definitions match/i);
-    expect(observation!.message).toMatch(/never ran/i);
+    expect(observations).toEqual([
+      {
+        qualityCheck: "integration",
+        scnId: "SCN-HNS-020",
+        status: "failed",
+        locator: "features/ldg019.feature",
+        broken: true,
+        notes: [{ kind: "ambiguous-step", step: "Given a step two definitions both match" }],
+      },
+    ]);
   });
 
-  it.each<[string, { keyword?: string; name?: string }, () => string]>([
-    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
-    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
-    ["as a step, when it has neither keyword nor text", {}, () => CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
-  ])("names the ambiguous step %s", (_case, step, messageOf) => {
+  it.each<[string, { keyword?: string; name?: string }, object, () => string]>([
+    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, { kind: "ambiguous-step", step: "Given a step two definitions both match" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
+    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, { kind: "ambiguous-step", step: "Given" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
+    ["as a step, when it has neither keyword nor text", {}, { kind: "ambiguous-step" }, () => CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
+  ])("names the ambiguous step %s, and the report words the note", (_case, step, note, wordsOf) => {
     const report: CucumberJsonReport = [
       {
         uri: "features/ldg019.feature",
         elements: [{ tags: [{ name: "@integration" }], steps: [{ ...step, result: { status: "ambiguous" } }] }],
       },
     ];
+    const [observation] = parseCucumberEvidenceObservations(report, "integration") as BehaviouralEvidenceObservation[];
 
-    expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([{ broken: true, message: messageOf() }]);
+    expect(observation).toMatchObject({ broken: true, notes: [note] });
+    expect(observation).not.toHaveProperty("message");
+    expect(observation?.notes?.[0]).toStrictEqual(note);
+    expect(remarkWordsOf(observation ?? {})).toBe(wordsOf());
   });
 });
 
@@ -202,8 +205,7 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
 });
 
 describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes", () => {
-  const severalNote =
-    "2 scenario codes cite SCN-AAA-001, SCN-AAA-002 — a test cites exactly one scenario, so this one credits none of them.";
+  const severalNote = { kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] };
   const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
     {
       uri: "features/several.feature",
@@ -217,7 +219,7 @@ describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credi
     },
   ];
 
-  it("emits every tier's evidence observation citing no scenario, each with a message naming both codes", () => {
+  it("emits every tier's evidence observation citing no scenario, each with a note of both codes and no message", () => {
     const report = reportOf(["@integration", "@e2e", "@SCN-AAA-001", "@SCN-AAA-002"], "passed");
 
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual(
@@ -227,12 +229,12 @@ describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credi
         status: "passed",
         locator: "features/several.feature",
         testName: "two codes",
-        message: severalNote,
+        notes: [severalNote],
       }))
     );
   });
 
-  it("keeps the ambiguous-step diagnosis on the broken observation and adds the note naming both codes", () => {
+  it("carries the ambiguous step as a note on the broken observation, then the note naming both codes", () => {
     const report = reportOf(["@integration", "@SCN-AAA-001", "@SCN-AAA-002"], "ambiguous");
 
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
@@ -242,7 +244,7 @@ describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credi
         status: "failed",
         locator: "features/several.feature",
         broken: true,
-        message: `${CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step")} ${severalNote}`,
+        notes: [{ kind: "ambiguous-step", step: "Given a step" }, severalNote],
       },
     ]);
   });
@@ -275,7 +277,7 @@ describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credi
   it.each([
     ["one code", ["@integration", "@SCN-AAA-001"]],
     ["one code repeated", ["@integration", "@SCN-AAA-001", "@SCN-AAA-001"]],
-  ])("CONTROL: a scenario tagged with %s credits it, with no message", (_, tagNames) => {
+  ])("CONTROL: a scenario tagged with %s credits it, with no note and no message", (_, tagNames) => {
     expect(parseCucumberEvidenceObservations(reportOf(tagNames, "passed"), "integration")).toEqual([
       { qualityCheck: "integration", scnId: "SCN-AAA-001", status: "passed", locator: "features/several.feature", testName: "two codes" },
     ]);

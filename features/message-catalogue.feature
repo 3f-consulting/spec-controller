@@ -21,10 +21,9 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   prose in this tree: every human-facing message is reached by a code, through a catalogue held as
   data and excluded by name from the mutate glob of the scope that contains it. There is one
   catalogue per package, because the import rules let core import nothing of the app and let the
-  app reach core only through its published entry point, so no single catalogue can serve both. Core's lives in `domain`, keyed by the fault
-  codes, and `render` and `parse` extend it rather than starting their own. The app's lives in the
-  app package's own messages module, keyed by an app-wide code, and every app scope
-  extends it. Whichever catalogue a code belongs to, the same rule holds: every code has an entry,
+  app reach core only through its published entry point, so no single catalogue can serve both. Core's lives in `render`, keyed by the
+  values the domain reports. The app's lives in the app package's own messages module, keyed by an
+  app-wide code, and every app scope extends it. Whichever catalogue a code belongs to, the same rule holds: every code has an entry,
   nothing else does, and no entry renders blank.
 
   THE EXCLUSION IS THE PART THAT COULD BE A HOLE. "Do not mutate this file" is one edit away from
@@ -38,13 +37,11 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   cannot do is make a catalogue lie. An accepted residual, not an oversight, and the same trade
   the Stryker configuration already carries in writing for the lost kill its own threshold cannot see.
 
-  WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
-  mutate is a folder outside the domain — and the boundary gate's domain-imports-only-domain rule says
-  a domain module imports only the domain layer. So core's catalogue stays INSIDE
-  the domain and leaves the mutated surface by CONFIG, which is the axis the problem is actually
-  on: the mutate glob is a statement about what mutation testing can usefully ask, not about what
-  the domain may depend on. Purity and mutability are two different questions and are answered in
-  two different files.
+  WHERE IT LIVES. The domain says what happened as a typed value — a fault's code and its
+  parameters, an outcome, a kind — and holds no sentence for a reader. The words are presentation,
+  so core's catalogue lives in `render`, the adapter that writes the report, and holds an entry only
+  for what the report reads. It leaves the mutated surface by config: the mutate glob is a statement
+  about what mutation testing can usefully ask, not about where the words may live.
 
   TWO THINGS STAY OUT OF THE CATALOGUE. A runner's own words are passed through verbatim, never
   rewritten into a catalogue entry, and a message with parameters keeps its
@@ -54,7 +51,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   Rule: a domain invariant names its fault by code and carries its parameters, not its prose
 
     @unit @SCN-MSG-001
-    Scenario: an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and its message is the catalogue's entry for that code
+    Scenario: an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone
 
   Rule: every code in a message catalogue has a message that names what it stands for
 

@@ -12,9 +12,9 @@ const wrongKindsOf = (specController: unknown) =>
 
 describe("[SCN-USG-025] a specController entry of a kind its reader does not take is named, with the kind it is and the kind read", () => {
   it.each([
-    ["the block", "x", { entry: "specController", is: "a string", reads: "an object" }],
-    ["the block", null, { entry: "specController", is: "null", reads: "an object" }],
-    ["the block", [base], { entry: "specController", is: "a list", reads: "an object" }],
+    ["the block", "x", { entry: "specController", is: "string", reads: "object" }],
+    ["the block", null, { entry: "specController", is: "null", reads: "object" }],
+    ["the block", [base], { entry: "specController", is: "list", reads: "object" }],
   ])("names %s given %j", (_, block, named) => {
     expect(wrongKindsOf(block)).toEqual([named]);
   });

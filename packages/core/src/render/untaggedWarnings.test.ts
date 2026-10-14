@@ -4,7 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { countScnOccurrences, parseScenarios, parseUntaggedScenarios } from "../parse/scenarios.js";
 import { evidenceObligations } from "../domain/corpusCounts.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const ctx: RunContext = {
   target: "fixture",

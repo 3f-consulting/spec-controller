@@ -35,10 +35,10 @@ import {
   verdictFor,
   reconcilingItemsOf,
   qualityCheckReconciliationsOf,
+  SUSPENSE_SCENARIO_ID,
 } from "./scenarioReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
 import { postingOf } from "./posting.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";
 
@@ -184,7 +184,7 @@ function suspenseScenarioRows(
   if (brokenEvidence.length > 0 || uncited.length > 0 || uncitedFitnessFunctions.length > 0) {
     const items = suspenseReconciliationsOf(brokenEvidence, uncited, uncitedFitnessFunctions);
     rows.push({
-      scnId: CORE_MESSAGES[CoreMessage.SuspenseScenarioId],
+      scnId: SUSPENSE_SCENARIO_ID,
       kind: "suspense-scenario",
       verdict: verdictFor(items),
       evidenceObservations: [...brokenEvidence, ...uncited, ...uncitedFitnessFunctions],
@@ -264,10 +264,23 @@ export interface BehaviouralRunner {
   readonly step: string;
 }
 
+export type ConfigurationKind =
+  | "list"
+  | "object"
+  | "string-or-null"
+  | "null"
+  | "string"
+  | "number"
+  | "bigint"
+  | "boolean"
+  | "symbol"
+  | "undefined"
+  | "function";
+
 export interface WrongKindEntry {
   readonly entry: string;
-  readonly is: string;
-  readonly reads: string;
+  readonly is: ConfigurationKind;
+  readonly reads: ConfigurationKind;
 }
 
 export interface JobDiscoveryScope {

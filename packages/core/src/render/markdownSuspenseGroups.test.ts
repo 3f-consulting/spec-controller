@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { EvidenceObservation, BehaviouralEvidenceObservation, FitnessEvidenceObservation } from "../domain/journal.js";
-import { OUTCOME_DESCRIPTION } from "../model.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";

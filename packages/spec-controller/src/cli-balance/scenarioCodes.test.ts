@@ -136,16 +136,23 @@ describe("[SCN-STG-029] a scenario tagged with two scenario codes raises no evid
   it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", () => {
     const dir = target("@SCN-TWO-002 @SCN-TWO-003");
     const json = balance(dir, "json");
-    const errors = JSON.parse(json.stdout).scenarioCodeErrors as { kind: string; files: string[]; message: string }[];
-    expect(errors).toEqual([expect.objectContaining({ kind: "several-scn-codes", files: ["two.feature"] })]);
-    for (const named of ["two.feature", "carries codes", "SCN-TWO-002", "SCN-TWO-003"]) {
-      expect(errors[0]!.message).toContain(named);
-    }
+    expect(JSON.parse(json.stdout).scenarioCodeErrors).toEqual([
+      expect.objectContaining({
+        kind: "several-scn-codes",
+        files: ["two.feature"],
+        scenario: "carries codes",
+        codes: ["SCN-TWO-002", "SCN-TWO-003"],
+      }),
+    ]);
     expect(json.exitCode).toBe(1);
 
     const md = balance(dir, "md");
     const section = md.stdout.split("## Scenario code errors")[1]?.split("\n## ")[0] ?? "";
-    expect(section).toContain(`- \`several-scn-codes\` — ${errors[0]!.message}`);
+    const lines = section.split("\n").filter((line) => line.startsWith("- `several-scn-codes` — "));
+    expect(lines).toHaveLength(1);
+    for (const named of ["two.feature", "carries codes", "SCN-TWO-002", "SCN-TWO-003"]) {
+      expect(lines[0]).toContain(named);
+    }
     expect(md.exitCode).toBe(1);
   });
 

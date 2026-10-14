@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObservation } from "../model.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";

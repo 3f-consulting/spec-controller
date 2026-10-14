@@ -212,3 +212,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-049
     Scenario: a type or field in core's domain named for an external tool or format reds the build
+
+  Rule: core's domain says what happened as a typed value, and holds no sentence for a reader
+
+    @fitness @SCN-FIT-050
+    Scenario: a sentence for a reader written in core's domain reds the build

@@ -3,6 +3,7 @@ import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
 
 describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
   const report: VitestJsonReport = {
@@ -186,7 +187,7 @@ describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits ne
   });
   const several = () => reportOf({ title: "[SCN-AAA-001] [SCN-AAA-002] two" });
 
-  it("emits one evidence observation citing no scenario, whose message names both codes", () => {
+  it("emits one evidence observation citing no scenario, with a note of both codes and no message", () => {
     expect(parseVitestEvidenceObservations(several(), "unit")).toEqual([
       {
         qualityCheck: "unit",
@@ -194,7 +195,7 @@ describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits ne
         status: "passed",
         locator: "/r/several.test.ts",
         testName: "[SCN-AAA-001] [SCN-AAA-002] two",
-        message: "2 scenario codes cite SCN-AAA-001, SCN-AAA-002 — a test cites exactly one scenario, so this one credits none of them.",
+        notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
       },
     ]);
   });
@@ -204,13 +205,14 @@ describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits ne
       reportOf({ title: "the bare leaf", fullName: "[SCN-AAA-001] [SCN-AAA-002] the describe > the bare leaf" }),
       "unit"
     );
-    expect(observation).toMatchObject({ scnId: null, message: expect.stringContaining("SCN-AAA-002") });
+    expect(observation).toMatchObject({ scnId: null, notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }] });
+    expect(observation).not.toHaveProperty("message");
   });
 
   it.each([
     ["one code", "[SCN-AAA-001] one"],
     ["one code repeated", "[SCN-AAA-001] once [SCN-AAA-001] again"],
-  ])("CONTROL: a title with %s credits it, with no message", (_, title) => {
+  ])("CONTROL: a title with %s credits it, with no note and no message", (_, title) => {
     expect(parseVitestEvidenceObservations(reportOf({ title }), "unit")).toEqual([
       { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "/r/several.test.ts", testName: title },
     ]);
@@ -222,6 +224,7 @@ describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits ne
       "unit"
     );
     expect(observation).toMatchObject({ scnId: "SCN-AAA-002" });
+    expect(observation).not.toHaveProperty("notes");
     expect(observation).not.toHaveProperty("message");
   });
 
@@ -243,15 +246,16 @@ describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits ne
       expect(unitOutcomeOf(scnId)).toBe("missing");
     });
 
-    it("names both codes on the suspense row", () => {
+    it("words both codes on the suspense row in the catalogue's words", () => {
       const ctx: RunContext = { target: "several", inputs: {}, runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
       const reconciled = ledger();
       const suspenseRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
         .split("\n")
         .find((line) => line.startsWith("| (no scenario) | "));
 
-      expect(suspenseRow ?? "").toContain("SCN-AAA-001");
-      expect(suspenseRow ?? "").toContain("SCN-AAA-002");
+      expect(suspenseRow ?? "").toContain(
+        `(/r/several.test.ts: ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](["SCN-AAA-001", "SCN-AAA-002"])})`
+      );
     });
   });
 });

@@ -1,7 +1,6 @@
 import { bareTerm } from "../lib/bareTerm.js";
 import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
-import type { TierWithoutRunner, WrongKindEntry } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import type { ConfigurationKind, TierWithoutRunner, WrongKindEntry } from "../domain/evidenceReconciliation.js";
 
 function isBlock(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -73,29 +72,28 @@ export interface ConfigurationNotRead {
   readonly unknownKeys: readonly string[];
 }
 
-function kindOf(value: unknown): string {
+function kindOf(value: unknown): ConfigurationKind {
   if (value === null) return "null";
-  if (Array.isArray(value)) return CORE_MESSAGES[CoreMessage.ManifestKindList];
-  if (typeof value === "object") return CORE_MESSAGES[CoreMessage.ManifestKindObject];
-  return CORE_MESSAGES[CoreMessage.ManifestKindOfType](typeof value);
+  if (Array.isArray(value)) return "list";
+  return typeof value;
 }
 
-const wrongKind = (entry: string, value: unknown, reads: string): WrongKindEntry => ({
+const wrongKind = (entry: string, value: unknown, reads: ConfigurationKind): WrongKindEntry => ({
   entry,
   is: kindOf(value),
   reads,
 });
 
 function wrongKindsInList(value: unknown, at: string): WrongKindEntry[] {
-  if (!Array.isArray(value)) return [wrongKind(at, value, CORE_MESSAGES[CoreMessage.ManifestKindList])];
-  return value.flatMap((entry, i) => (isListEntry(entry) ? [] : [wrongKind(`${at}[${i}]`, entry, CORE_MESSAGES[CoreMessage.ManifestKindString])]));
+  if (!Array.isArray(value)) return [wrongKind(at, value, "list")];
+  return value.flatMap((entry, i) => (isListEntry(entry) ? [] : [wrongKind(`${at}[${i}]`, entry, "string")]));
 }
 
 function wrongKindsInRunners(value: unknown, at: string): WrongKindEntry[] {
-  if (!isBlock(value)) return [wrongKind(at, value, CORE_MESSAGES[CoreMessage.ManifestKindObject])];
+  if (!isBlock(value)) return [wrongKind(at, value, "object")];
   return Object.entries(value)
     .filter(([key, runner]) => isTier(key) && !isRunner(runner))
-    .map(([key, runner]) => wrongKind(`${at}.${key}`, runner, CORE_MESSAGES[CoreMessage.ManifestKindStringOrNull]));
+    .map(([key, runner]) => wrongKind(`${at}.${key}`, runner, "string-or-null"));
 }
 
 const BLOCK_READS: Readonly<Record<string, (value: unknown, at: string) => WrongKindEntry[]>> = {
@@ -107,7 +105,7 @@ const BLOCK_READS: Readonly<Record<string, (value: unknown, at: string) => Wrong
 export function configurationNotRead(packageJson: { specController?: unknown }): ConfigurationNotRead {
   const block = packageJson.specController;
   if (block === undefined) return { wrongKinds: [], unknownKeys: [] };
-  if (!isBlock(block)) return { wrongKinds: [wrongKind("specController", block, CORE_MESSAGES[CoreMessage.ManifestKindObject])], unknownKeys: [] };
+  if (!isBlock(block)) return { wrongKinds: [wrongKind("specController", block, "object")], unknownKeys: [] };
   return {
     unknownKeys: Object.keys(block).filter((key) => !Object.hasOwn(BLOCK_READS, key)),
     wrongKinds: Object.entries(block).flatMap(([key, value]) =>

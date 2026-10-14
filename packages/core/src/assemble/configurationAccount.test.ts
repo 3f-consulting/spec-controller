@@ -27,42 +27,42 @@ function withoutWrongKinds(reconciliation: EvidenceReconciliation): EvidenceReco
 }
 
 const examples: ReadonlyArray<readonly [string, unknown, unknown, { entry: string; is: string; reads: string }]> = [
-  ["specController", "x", undefined, { entry: "specController", is: "a string", reads: "an object" }],
+  ["specController", "x", undefined, { entry: "specController", is: "string", reads: "object" }],
   [
     "specController.runners",
     { ...block, runners: ["vitest"] },
     { notChecks: block.notChecks, deferralTags: block.deferralTags },
-    { entry: "specController.runners", is: "a list", reads: "an object" },
+    { entry: "specController.runners", is: "list", reads: "object" },
   ],
   [
     "specController.runners.unit",
     { ...block, runners: { unit: 5, performance: null } },
     { ...block, runners: { performance: null } },
-    { entry: "specController.runners.unit", is: "a number", reads: "a string or null" },
+    { entry: "specController.runners.unit", is: "number", reads: "string-or-null" },
   ],
   [
     "specController.notChecks",
     { ...block, notChecks: "ci.yml:quality:Checkout" },
     { runners: block.runners, deferralTags: block.deferralTags },
-    { entry: "specController.notChecks", is: "a string", reads: "a list" },
+    { entry: "specController.notChecks", is: "string", reads: "list" },
   ],
   [
     "specController.notChecks[1]",
     { ...block, notChecks: ["ci.yml:quality:Checkout", { a: 1 }] },
     { ...block, notChecks: ["ci.yml:quality:Checkout"] },
-    { entry: "specController.notChecks[1]", is: "an object", reads: "a string" },
+    { entry: "specController.notChecks[1]", is: "object", reads: "string" },
   ],
   [
     "specController.deferralTags",
     { ...block, deferralTags: { a: 1 } },
     { runners: block.runners, notChecks: block.notChecks },
-    { entry: "specController.deferralTags", is: "an object", reads: "a list" },
+    { entry: "specController.deferralTags", is: "object", reads: "list" },
   ],
   [
     "specController.deferralTags[0]",
     { ...block, deferralTags: [null] },
     { ...block, deferralTags: [] },
-    { entry: "specController.deferralTags[0]", is: "null", reads: "a string" },
+    { entry: "specController.deferralTags[0]", is: "null", reads: "string" },
   ],
 ];
 

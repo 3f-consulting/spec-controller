@@ -3,8 +3,9 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
-import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 

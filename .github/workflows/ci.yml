@@ -304,7 +304,7 @@ jobs:
             fi
           done <<'CASES'
           packages/core/src/domain/evidenceOrder.ts ["core-domain"]
-          packages/core/src/domain/messages.ts []
+          packages/core/src/render/messages.ts []
           packages/core/src/domain/ciSourcePaths.test.ts []
           packages/spec-controller/src/ingest/corpusFixtures.test-utils.ts []
           packages/spec-controller/src/run-management/keptRun.ts ["spec-controller-run-management"]
@@ -330,6 +330,11 @@ jobs:
         id: SCN-FIT-049
         if: always()
         run: pnpm exec eslint --config eslint.domain.js packages/core/src/domain
+
+      - name: No sentence for a reader is written in core's domain
+        id: SCN-FIT-050
+        if: always()
+        run: pnpm exec eslint --config eslint.domainProse.js packages/core/src/domain
 
       # The ceiling and the sets it counts live in cloc.ratio.js.
       - name: Test code stays within the declared ceiling ratio to production code

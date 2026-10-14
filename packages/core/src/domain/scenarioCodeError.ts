@@ -1,18 +1,33 @@
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-
-export type ScenarioCodeErrorKind =
-  | "foreign-scn-code"
-  | "no-feature-code"
-  | "duplicate-feature-code"
-  | "several-scn-codes";
-
-export interface ScenarioCodeError {
-  readonly kind: ScenarioCodeErrorKind;
+interface DuplicateFeatureCodeError {
+  readonly kind: "duplicate-feature-code";
+  readonly featureCode: string;
   readonly files: readonly string[];
-  readonly namedFeatureCode?: string;
-  readonly namedFeatureFiles?: readonly string[];
-  readonly message: string;
 }
+
+export interface ForeignScnCodeError {
+  readonly kind: "foreign-scn-code";
+  readonly files: readonly string[];
+  readonly featureCode: string;
+  readonly scnId: string;
+  readonly namedFeatureCode: string;
+  readonly namedFeatureFiles: readonly string[];
+}
+
+interface NoFeatureCodeError {
+  readonly kind: "no-feature-code";
+  readonly files: readonly string[];
+}
+
+interface SeveralScnCodesError {
+  readonly kind: "several-scn-codes";
+  readonly files: readonly string[];
+  readonly scenario: string;
+  readonly codes: readonly string[];
+}
+
+export type ScenarioCodeError = DuplicateFeatureCodeError | ForeignScnCodeError | NoFeatureCodeError | SeveralScnCodesError;
+
+export type ScenarioCodeErrorKind = ScenarioCodeError["kind"];
 
 export interface ScenarioCodePopulation {
   readonly featureFiles: number;
@@ -25,32 +40,10 @@ export function hasScenarioCodeErrors(reconciliation: {
   return (reconciliation.scenarioCodeErrors ?? []).length > 0;
 }
 
-type ErrorsAre = "misfilings" | "several-codes" | "both";
+type ScenarioCodeErrorsAre = "misfilings" | "several-codes" | "both";
 
-function errorsAre(errors: readonly ScenarioCodeError[]): ErrorsAre {
+export function scenarioCodeErrorsAre(errors: readonly ScenarioCodeError[]): ScenarioCodeErrorsAre {
   const several = errors.filter((error) => error.kind === "several-scn-codes").length;
   if (several === 0) return "misfilings";
   return several === errors.length ? "several-codes" : "both";
-}
-
-export function scenarioCodeErrorsFraming(errors: readonly ScenarioCodeError[], count: string): string {
-  switch (errorsAre(errors)) {
-    case "misfilings":
-      return CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming](count);
-    case "several-codes":
-      return CORE_MESSAGES[CoreMessage.SeveralScnCodesFraming](count);
-    case "both":
-      return CORE_MESSAGES[CoreMessage.MisfiledAndSeveralScnCodesFraming](count);
-  }
-}
-
-export function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
-  switch (errorsAre(errors)) {
-    case "misfilings":
-      return CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](alsoOutOfBalance);
-    case "several-codes":
-      return CORE_MESSAGES[CoreMessage.SeveralScnCodesGloss](alsoOutOfBalance);
-    case "both":
-      return CORE_MESSAGES[CoreMessage.MisfiledAndSeveralScnCodesGloss](alsoOutOfBalance);
-  }
 }

@@ -5,7 +5,8 @@ import type {
   PendingItem,
   EvidenceStatus,
 } from "../model.js";
-import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import {
   untaggedScenarioId,
@@ -37,7 +38,8 @@ import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { remarkWordsOf } from "./remarkWords.js";
 import { suspenseGroupsOf, type SuspenseGroup, type SuspenseFileGroup } from "../domain/suspenseGroups.js";
 
 const ITEM_GLYPH: Record<Outcome, string> = {
@@ -76,15 +78,16 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
 
 function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
   const observationOnly = isObservationOnly(item.outcome);
+  const remark = remarkWordsOf(item);
   if (item.outcome === "broken") {
-    const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
+    const where = [item.locator, remark === undefined ? undefined : headlineOf(remark)]
       .filter((part): part is string => part !== undefined && part.length > 0)
       .join(": ");
     return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
   }
   if (!observationOnly) return undefined;
   const where = item.fitnessFunction || item.locator;
-  const said = item.fitnessFunction || item.message === undefined ? "" : `: ${cellSafe(headlineOf(item.message))}`;
+  const said = item.fitnessFunction || remark === undefined ? "" : `: ${cellSafe(headlineOf(remark))}`;
   return `${where === undefined ? "" : ` (${where}${said})`}${resultOf(item)}`;
 }
 
@@ -113,7 +116,8 @@ function renderPendingItem(item: PendingItem): string {
 }
 
 function renderFileGroup(group: SuspenseFileGroup): string {
-  const said = [...new Set(group.messages.map((message) => cellSafe(headlineOf(message))))].join(" / ");
+  const remarks = group.remarks.flatMap((remark) => remarkWordsOf(remark) ?? []);
+  const said = [...new Set(remarks.map((remark) => cellSafe(headlineOf(remark))))].join(" / ");
   const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
   const counts = CORE_MESSAGES[CoreMessage.SuspenseGroupCounts](group.ran, group.passed, group.failed);
   const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
@@ -165,7 +169,7 @@ const runIntegritySection: SectionEmitter = (report) => {
     lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
     lines.push("");
     lines.push("```text");
-    lines.push(...(item.message ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]).split("\n"));
+    lines.push(...(remarkWordsOf(item) ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]).split("\n"));
     lines.push("```");
     lines.push("");
   }

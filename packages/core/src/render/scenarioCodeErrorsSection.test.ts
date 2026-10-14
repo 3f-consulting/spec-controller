@@ -3,11 +3,11 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { renderReportFromJson } from "./markdown.js";
 import { renderJson } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
-import { duplicateFeatureCodes, foreignScenarioCodes } from "../parse/scenarioCodeErrors.js";
+import { duplicateFeatureCodes, foreignScenarioCodes, scenarioCodeErrorsOf } from "../parse/scenarioCodeErrors.js";
 import type { CorpusFile } from "../parse/scenarioCodeErrors.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 
@@ -34,14 +34,100 @@ describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors,
     md = renderMarkdown(balancedWith([FOREIGN]), ctx);
   });
 
-  it("lists the error by its handle and message, in a section of its own", () => {
+  it("lists the error by its handle, in a section of its own", () => {
     expect(md).toContain("## Scenario code errors");
-    expect(md).toContain(`- \`foreign-scn-code\` — ${FOREIGN.message}`);
+    expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
+  });
+
+  function foreignLines(files: readonly CorpusFile[]): string[] {
+    return renderMarkdown(balancedWith(foreignScenarioCodes(files)), ctx)
+      .split("\n")
+      .filter((line) => line.startsWith("- `foreign-scn-code` — "));
+  }
+
+  it("words the error from its values, naming the one file that carries the named code", () => {
+    expect(
+      foreignLines([
+        { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
+        { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: s\n    Given a thing\n" },
+      ])
+    ).toEqual([
+      `- \`foreign-scn-code\` — ${CORE_MESSAGES[CoreMessage.ForeignScnCodeOneCarrier]("two.feature", "TWO", "SCN-ONE-002", "ONE", "one.feature")}`,
+    ]);
+  });
+
+  it("words the error from its values, naming every file that carries the named code when several do", () => {
+    expect(
+      foreignLines([
+        { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
+        { slug: "one-b", featureCode: "ONE", source: "@ONE\nFeature: one-b\n" },
+        { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: s\n    Given a thing\n" },
+      ])
+    ).toEqual([
+      `- \`foreign-scn-code\` — ${CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers]("two.feature", "TWO", "SCN-ONE-002", "ONE", 2, "one.feature, one-b.feature")}`,
+    ]);
   });
 
   it("sits before the summary views, as a caveat on every cut beneath it", () => {
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections.indexOf("## Scenario code errors")).toBe(sections.indexOf("## Summary views") - 1);
+  });
+});
+
+describe("[SCN-STG-010] a duplicate-feature-code is worded from the shared code and the files that carry it", () => {
+  it("lists the error by its handle and the catalogue's words for its code and files", () => {
+    const [duplicate] = duplicateFeatureCodes([
+      { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
+      { slug: "one-b", featureCode: "ONE", source: "@ONE\nFeature: one-b\n" },
+    ]);
+    const md = renderMarkdown(balancedWith([duplicate!]), ctx);
+    expect(md.split("\n").filter((line) => line.startsWith("- `duplicate-feature-code` — "))).toEqual([
+      `- \`duplicate-feature-code\` — ${CORE_MESSAGES[CoreMessage.DuplicateFeatureCode]("ONE", 2, "one.feature, one-b.feature")}`,
+    ]);
+  });
+});
+
+describe("[SCN-STG-019] a no-feature-code is worded from the file that carries no feature code", () => {
+  it("lists the error by its handle and the catalogue's words for its file", () => {
+    const md = renderMarkdown(balancedWith([{ kind: "no-feature-code", files: ["unc.feature"] }]), ctx);
+    expect(md.split("\n").filter((line) => line.startsWith("- `no-feature-code` — "))).toEqual([
+      `- \`no-feature-code\` — ${CORE_MESSAGES[CoreMessage.NoFeatureCode]("unc.feature")}`,
+    ]);
+  });
+});
+
+describe("[SCN-STG-022] a foreign-scn-code whose named code no file carries is worded with no file to move to", () => {
+  it("lists the error by its handle and the catalogue's words for no carrier, naming no header tag or file the corpus lacks", () => {
+    const errors = foreignScenarioCodes([
+      { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
+      { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-THR-002\n  Scenario: s\n    Given a thing\n" },
+    ]);
+    const lines = renderMarkdown(balancedWith(errors), ctx)
+      .split("\n")
+      .filter((line) => line.startsWith("- `foreign-scn-code` — "));
+    expect(lines).toEqual([
+      `- \`foreign-scn-code\` — ${CORE_MESSAGES[CoreMessage.ForeignScnCodeNoCarrier]("two.feature", "TWO", "SCN-THR-002", "THR")}`,
+    ]);
+    expect(lines[0]).toContain("SCN-THR-002");
+    expect(lines[0]).toContain("@TWO");
+    expect(lines[0]).not.toMatch(/@THR\b/);
+    expect([...new Set(lines[0]!.match(/[\w-]+\.feature/g))]).toEqual(["two.feature"]);
+  });
+});
+
+describe("[SCN-STG-029] a several-scn-codes error is worded from its file, its scenario and its codes", () => {
+  it("lists the error by its handle and the catalogue's words for its file, scenario and codes", () => {
+    const errors = scenarioCodeErrorsOf([
+      {
+        slug: "two",
+        featureCode: "TWO",
+        source: "@TWO\nFeature: two\n\n  @unit @SCN-TWO-002 @SCN-TWO-003\n  Scenario: carries codes\n    Given a thing\n",
+      },
+    ]);
+    const md = renderMarkdown(balancedWith(errors), ctx);
+    expect(md.split("\n").filter((line) => line.startsWith("- `several-scn-codes` — "))).toEqual([
+      `- \`several-scn-codes\` — ${CORE_MESSAGES[CoreMessage.ScenarioSeveralScnCodes]("two.feature", "carries codes", ["SCN-TWO-002", "SCN-TWO-003"])}`,
+    ]);
   });
 });
 
@@ -182,34 +268,36 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
     });
   }
 
-  function errorLine(error: ScenarioCodeError): string {
-    return `- \`${error.kind}\` — ${error.message}`;
+  function errorLine(kind: ScenarioCodeError["kind"], words: string): string {
+    return `- \`${kind}\` — ${words}`;
+  }
+
+  function foreignOneCarrier(): string {
+    return CORE_MESSAGES[CoreMessage.ForeignScnCodeOneCarrier]("two.feature", "TWO", "SCN-ONE-002", "ONE", "one.feature");
   }
 
   const framing = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming];
 
   describe("a file headed @TWO holding a scenario coded @SCN-ONE-002, beside a file headed @ONE", () => {
-    let files: CorpusFile[];
-    let parsed: ScenarioCodeError[];
     let md: string;
     beforeEach(() => {
-      files = [featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])];
-      parsed = foreignScenarioCodes(files);
-      md = renderMarkdown(reconciled(files), ctx);
+      md = renderMarkdown(reconciled([featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])]), ctx);
     });
 
-    it("counts one error in the singular, then lists it on one line by its kind and its parse message", () => {
+    it("counts one error in the singular, then lists it on one line by its kind and the catalogue's words for it", () => {
       expect(cleanSectionOf(md)).toEqual([
         HEADING,
         "",
         framing(CORE_MESSAGES[CoreMessage.OneScenarioCodeError]),
         "",
-        errorLine(parsed[0]!),
+        errorLine("foreign-scn-code", foreignOneCarrier()),
         "",
         DUPLICATE_LINE,
         "",
       ]);
-      expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toEqual([errorLine(parsed[0]!)]);
+      expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toEqual([
+        errorLine("foreign-scn-code", foreignOneCarrier()),
+      ]);
     });
   });
 
@@ -238,8 +326,11 @@ describe("[SCN-STG-011] the scenario code errors section counts the errors the c
         "",
         framing(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorCount](2)),
         "",
-        errorLine(parsed[0]!),
-        errorLine(parsed[1]!),
+        errorLine("duplicate-feature-code", CORE_MESSAGES[CoreMessage.DuplicateFeatureCode]("ONE", 2, "one.feature, uno.feature")),
+        errorLine(
+          "foreign-scn-code",
+          CORE_MESSAGES[CoreMessage.ForeignScnCodeManyCarriers]("two.feature", "TWO", "SCN-ONE-002", "ONE", 2, "one.feature, uno.feature")
+        ),
         "",
         DUPLICATE_LINE,
         "",

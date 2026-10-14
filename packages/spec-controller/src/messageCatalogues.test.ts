@@ -110,13 +110,11 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.UntaggedScenarios]: [1],
   [CoreMessage.SharedScnCodes]: [4, 3, 1],
   [CoreMessage.PendingItemFor]: ["unit"],
-  [CoreMessage.FeatureSourceNotGherkin]: ["(1:1): expected: #EOF, got 'x'"],
   [CoreMessage.CheckStepNoOutcome]: ["SCN-ABC-001"],
   [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
   [CoreMessage.CheckStepEnded]: ["SCN-ABC-001", "cancelled"],
   [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
   [CoreMessage.ManifestKindOfType]: ["number"],
-  [CoreMessage.UntaggedScenarioId]: ["one.feature", "an untagged scenario"],
   [CoreMessage.SuspenseGroupCounts]: [3, 2, 1],
   [CoreMessage.SuspenseCiSteps]: [["lint:bar", "lint:foo"]],
   [CoreMessage.SuspenseFailedNames]: [["spawns yarn", "reads the lockfile"]],
@@ -293,6 +291,8 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
     expect(keysOf(CORE_MESSAGES)).toEqual(codes);
+    const templates = (codes as CoreMessage[]).filter((code) => typeof CORE_MESSAGES[code] !== "string");
+    expect(keysOf(SAMPLE_CORE_PARAMS).map((code) => CoreMessage[code])).toEqual(templates.map((code) => CoreMessage[code]));
 
     for (const code of codes as CoreMessage[]) expect(renderedCore(code).trim()).not.toBe("");
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage } from "../domain/messages.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { renderReportFromJson } from "./markdown.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";

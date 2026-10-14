@@ -96,4 +96,14 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", scnId: SCN, qualityCheck: "unit" };
     expect(rowOf([saysB, saysA]).evidenceObservations.map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);
   });
+
+  it("orders evidence observations alike but for their notes by what the notes say, however the notes were built", () => {
+    const notesA = [{ kind: "several-scn-codes" as const, codes: ["SCN-AAA-001", "SCN-BBB-001"] }];
+    const notesB = [{ codes: ["SCN-AAA-002", "SCN-BBB-001"], kind: "several-scn-codes" as const }];
+    const saysA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", notes: notesA };
+    const saysB: EvidenceObservation = { ...saysA, notes: notesB };
+    for (const order of [[saysA, saysB], [saysB, saysA]]) {
+      expect(rowOf(order).evidenceObservations.map((o) => ("notes" in o ? o.notes : undefined))).toEqual([notesA, notesB]);
+    }
+  });
 });
