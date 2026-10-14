@@ -125,7 +125,7 @@ This repository was built with Claude Code, by an author who doesn't write TypeS
 - workflow linting and security (actionlint, zizmor);
 - a ceiling on test code against production code.
 
-**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why.
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Each gate automates a kind of feedback a technical lead gives in code review, so a reviewer's attention goes to design and intent.
 
 It has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the limit above in practice: a two-place change balances, and review is what judges it.
 
