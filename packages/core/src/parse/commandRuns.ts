@@ -4,7 +4,23 @@ const SCRIPT_CHAIN_DEPTH = 3;
 
 const LIST_SEPARATOR = /&&|\|\||;/;
 const ASSIGNMENT = /^[A-Za-z_]\w*=/;
-const LAUNCHERS = ["npm exec", "pnpm exec", "pnpm dlx", "npx", "pnpm", "yarn", "bunx"];
+const LAUNCHERS: readonly (readonly string[])[] = [
+  ["npm", "exec"],
+  ["pnpm", "exec"],
+  ["pnpm", "dlx"],
+  ["npx"],
+  ["pnpm"],
+  ["yarn"],
+  ["bunx"],
+  ["python", "-m"],
+  ["python3", "-m"],
+  ["poetry", "run"],
+  ["uv", "run"],
+  ["pipenv", "run"],
+  ["hatch", "run"],
+  ["pdm", "run"],
+  ["coverage", "run", "-m"],
+];
 
 type LineTest = (line: string, invocation: string) => boolean;
 
@@ -23,8 +39,8 @@ const anywhere: LineTest = (line, invocation) => {
 
 function launched(words: readonly string[]): readonly string[] {
   if (words[0] === "timeout") return launched(words.slice(2));
-  const launcher = LAUNCHERS.find((phrase) => opensWith(words, phrase));
-  return launcher === undefined ? words : launched(words.slice(wordsOf(launcher).length));
+  const launcher = LAUNCHERS.find((phrase) => opensWith(words, phrase.join(" ")));
+  return launcher === undefined ? words : launched(words.slice(launcher.length));
 }
 
 const asCommand: LineTest = (line, invocation) =>

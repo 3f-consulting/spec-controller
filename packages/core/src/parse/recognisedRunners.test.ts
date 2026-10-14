@@ -225,3 +225,48 @@ describe("[SCN-USG-033] recognisedRunners — a runner started through a launche
     expect(recognisedRunners([stepRunning("pnpm test")], { scripts: { test } }, unit)).toEqual(asTheRunner);
   });
 });
+
+describe("[SCN-USG-034] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner", () => {
+  const stepRunning = (line: string): string =>
+    ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
+      "\n"
+    );
+
+  const unit = { unit: "pytest" };
+  const asTheRunner = [{ tier: "unit", runner: "pytest", step: "Unit tests" }];
+
+  const forms = [
+    ["through python -m", "python -m pytest --junitxml=reports/pytest.xml"],
+    ["through python3 -m", "python3 -m pytest"],
+    ["through poetry run", "poetry run pytest"],
+    ["through uv run", "uv run pytest"],
+    ["through pipenv run", "pipenv run pytest"],
+    ["through hatch run", "hatch run pytest"],
+    ["through pdm run", "pdm run pytest"],
+    ["through coverage run -m", "coverage run -m pytest"],
+    ["through a chain of Python launchers", "uv run python -m pytest"],
+    ["through timeout and a Python launcher", "timeout 600 poetry run pytest"],
+    ["through python -m and coverage run -m", "python -m coverage run -m pytest"],
+  ] as const;
+
+  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
+    expect(recognisedRunners([stepRunning(line)], { scripts: {} }, unit)).toEqual(asTheRunner);
+  });
+
+  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
+    expect(recognisedRunners([stepRunning("pnpm test")], { scripts: { test } }, unit)).toEqual(asTheRunner);
+  });
+
+  it.each([
+    ["an option between the launcher and the runner", "uv run --frozen pytest"],
+    ["a project script", "hatch run test"],
+    ["a suite tox starts", "tox -e py312"],
+    ["a suite nox starts", "nox -s tests"],
+  ] as const)("leaves the step a candidate for %s", (_form, line) => {
+    const step = [stepRunning(line)];
+    expect(recognisedRunners(step, { scripts: {} }, unit)).toEqual([]);
+    expect(runningFitnessFunctions(step, { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual([
+      "Unit tests",
+    ]);
+  });
+});

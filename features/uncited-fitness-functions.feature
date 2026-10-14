@@ -98,15 +98,21 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     A runner is recognised only as the command word of a simple command in the last stage of a
     pipeline: the first word after any leading NAME=value assignments, or the word a launcher
     hands on to, the launchers being timeout with its duration, npx, npm exec, pnpm exec,
-    pnpm dlx, pnpm, yarn and bunx. Each command of an &&, || or ; list is read the same way, in
-    the step's own command and in any manifest script it follows. A runner named anywhere
-    else, as an argument, inside a path, a flag or an =-joined value, leaves the step a candidate.
+    pnpm dlx, pnpm, yarn, bunx, python -m, python3 -m, poetry run, uv run, pipenv run,
+    hatch run, pdm run and coverage run -m. A launcher hands on to the word right after it, so
+    an option between a launcher and the runner leaves the step a candidate. Each command of an
+    &&, || or ; list is read the same way, in the step's own command and in any manifest script
+    it follows. A runner named anywhere else, as an argument, inside a path, a flag or an
+    =-joined value, leaves the step a candidate.
 
     @unit @SCN-USG-012
     Scenario: a check step naming a runner in a path or an argument is a candidate, never excluded as the runner
 
     @unit @SCN-USG-033
     Scenario: a runner started through a launcher, after an environment assignment or later in a command list is recognised
+
+    @unit @SCN-USG-034
+    Scenario: a pytest suite started through a Python launcher is recognised as the unit runner
 
   Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
 
