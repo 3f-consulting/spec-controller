@@ -48,8 +48,11 @@ Read it as a ledger. Each scenario is an account. Its tags are what it is owed, 
 Every behaviour is recorded twice, once as a scenario and once as the test that proves it, and the two must agree. So **changes to your quality checks become deliberate, not accidental.**
 
 - **Delete a test** and its scenario reads `missing`. The build goes red.
+- **Skip a test** and its scenario reads `missing`. A skipped test proves nothing.
 - **Re-point a test** at another scenario and the original reads `missing`.
-- **Delete a scenario** and its test reads as citing a scenario that doesn't exist.
+- **Delete a CI check step** and its fitness function's scenario reads `missing`.
+- **Delete a scenario and keep its unit tests**: they still run and pass, and their evidence posts to a scenario that doesn't exist.
+- **Delete a scenario and keep its CI check**: the check still runs and passes, and its evidence posts to a scenario that doesn't exist.
 
 To remove a behaviour cleanly, you change both places, the scenario and its evidence. That change shows in the diff, and review judges it.
 
@@ -59,6 +62,7 @@ This matters most where code is written by an agent. Asked to make failing tests
 
 - **Deliberate is not right.** A two-place change balances; whether it should have been made is for review.
 - **A change inside one check is one entry, and is not seen.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row checks that the step ran and what it reported, read from your CI run's own record, so a red that `continue-on-error` swallowed still reds its row. It does not read what the tool examined.
+- **Delete a scenario and keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` can't see it. An unused-step-definition check catches it; this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario raises nothing to reconcile.
 - **Whether a test is a good test is assumed.** A balanced row means the evidence exists and holds, not that it tests what the title says.
 
