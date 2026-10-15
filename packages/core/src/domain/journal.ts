@@ -4,6 +4,24 @@ export type QualityCheck = (typeof QUALITY_CHECKS)[number];
 
 export type BehaviouralQualityCheck = Exclude<QualityCheck, "fitness">;
 
+const TIERS: ReadonlySet<string> = new Set(
+  QUALITY_CHECKS.filter((qualityCheck) => qualityCheck !== "fitness" && qualityCheck !== "unit")
+);
+
+export function qualityChecksPostedAt(
+  tagNames: readonly string[],
+  fallbackQualityCheck: BehaviouralQualityCheck
+): BehaviouralQualityCheck[] {
+  const qualityChecks: BehaviouralQualityCheck[] = [];
+  for (const tagName of tagNames) {
+    const name = tagName.startsWith("@") ? tagName.slice(1) : tagName;
+    if (TIERS.has(name) && !qualityChecks.includes(name as BehaviouralQualityCheck)) {
+      qualityChecks.push(name as BehaviouralQualityCheck);
+    }
+  }
+  return qualityChecks.length > 0 ? qualityChecks : [fallbackQualityCheck];
+}
+
 export interface EvidenceObligation {
   readonly qualityCheck?: QualityCheck;
   readonly pending?: boolean;

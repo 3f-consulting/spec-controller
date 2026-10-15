@@ -123,31 +123,25 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a behavioural observation's level is the cited scenario's own tier tag, not the input source
 
-    The headline of the tag-derivation fix. A behavioural observation's
-    level comes from the CITED scenario's own tier tag (integration / e2e /
-    performance), NOT from the input source that produced it. Cucumber is an
-    orchestrator ACROSS levels — a scenario names its tier by tag and cucumber runs
-    whichever — so an e2e scenario proven via cucumber must yield an e2e observation,
-    discharging its e2e obligation and reconciling balanced. Were the cucumber
-    source fixed at integration, an e2e-via-cucumber scenario would false-red:
-    e2e missing PLUS integration no-evidence-obligation. The
-    source level the caller passes survives only as the fallback for an untagged scenario;
-    the reconciler's existing (scnId, level) matching does the rest, untouched.
+    An observation is posted at each tier its cited scenario is tagged with, integration, e2e
+    or performance, in tag order and once each. A scenario tagged with no tier beyond @unit has
+    its observation posted at the quality check its source names as the fallback. The source
+    that produced an observation never overrides the scenario's own tier.
 
     @unit @SCN-LDG-011
-    Scenario: an @e2e scenario proven via cucumber reconciles balanced
+    Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its source's fallback
 
     @unit @SCN-LDG-012
-    Scenario: an @integration scenario proven via cucumber satisfies its integration obligation
+    Scenario: an observation of a scenario tagged @integration is posted at integration
 
     @unit @SCN-LDG-013
     Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both tiers
 
     @unit @SCN-LDG-014
-    Scenario: an @integration @e2e scenario with one cucumber observation satisfies both non-unit tiers
+    Scenario: an observation of a scenario tagged @integration and @e2e is posted at both
 
     @unit @SCN-LDG-015
-    Scenario: a cucumber observation for a @unit-only scenario discharges nothing and is no-evidence-obligation
+    Scenario: an observation of a scenario carrying no tier tag beyond @unit is posted at its source's fallback
 
   Rule: a vitest assertion is attributed to the @SCN its own leaf cites, not its ancestor's
 

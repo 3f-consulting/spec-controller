@@ -2,6 +2,7 @@ import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus, Obse
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
+import { qualityChecksPostedAt } from "../domain/journal.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -19,23 +20,6 @@ export type CucumberJsonReport = ReadonlyArray<{
 }>;
 
 const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
-
-const TIER_TAG = /^@?(integration|e2e|performance)$/;
-
-function deriveLevels(
-  tags: readonly { readonly name?: string }[],
-  fallbackQualityCheck: BehaviouralQualityCheck
-): BehaviouralQualityCheck[] {
-  const levels: BehaviouralQualityCheck[] = [];
-  for (const t of tags) {
-    const m = TIER_TAG.exec(t.name ?? "");
-    if (m) {
-      const level = m[1] as BehaviouralQualityCheck;
-      if (!levels.includes(level)) levels.push(level);
-    }
-  }
-  return levels.length > 0 ? levels : [fallbackQualityCheck];
-}
 
 function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNote {
   const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
@@ -73,13 +57,14 @@ function scenarioObservations(
   fallbackQualityCheck: BehaviouralQualityCheck
 ): EvidenceObservation[] {
   const tags = scenario.tags ?? [];
+  const tagNames = tags.map((t) => t.name ?? "");
   const { scnId, severalCodes } = attributionOf(citedCodesOf(tags));
   const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
   const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
   if (ambiguous) {
     return [{
-      qualityCheck: deriveLevels(tags, fallbackQualityCheck)[0]!,
+      qualityCheck: qualityChecksPostedAt(tagNames, fallbackQualityCheck)[0]!,
       scnId,
       status: "failed",
       locator,
@@ -91,7 +76,7 @@ function scenarioObservations(
   const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
   if (!anyFailed && !allPassed) return [];
   const status: EvidenceStatus = anyFailed ? "failed" : "passed";
-  return deriveLevels(tags, fallbackQualityCheck).map((level) => ({
+  return qualityChecksPostedAt(tagNames, fallbackQualityCheck).map((level) => ({
     qualityCheck: level,
     scnId,
     status,
