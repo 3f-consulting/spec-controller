@@ -143,11 +143,6 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-015
     Scenario: an observation of a scenario carrying no tier tag beyond @unit is posted at its source's fallback
 
-  Rule: evidence that never materialised is broken, not absent
-
-    @unit @SCN-LDG-019
-    Scenario: an ambiguous cucumber step posts a broken suspense item naming the step, while the scenario it would have proven still reads missing
-
   Rule: a run carrying broken evidence is unsound
 
     @unit @SCN-LDG-018
@@ -226,9 +221,6 @@ Feature: Ledger over obligation-vs-observation evidence
 
     A test cites exactly one scenario. One that cites several credits none of them and posts to suspense,
     naming every code, so no reader picks one (doc/ubiquitous-language.md, Attribution).
-
-    @unit @SCN-LDG-041
-    Scenario: a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes
 
     @unit @SCN-LDG-042
     Scenario: an evidence observation citing two scenarios credits neither, and suspense names both codes

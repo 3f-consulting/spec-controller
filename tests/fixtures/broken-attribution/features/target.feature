@@ -2,7 +2,7 @@
 Feature: a broken-attribution reconciliation fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose cucumber run
-  hit an AMBIGUOUS STEP (@SCN-LDG-019) on a scenario that DID cite its @SCN. This is the
+  hit an AMBIGUOUS STEP (@SCN-CUC-003) on a scenario that DID cite its @SCN. This is the
   corpus that produces the `broken` + REAL-`scnId` observation shape — the one the census
   used to count `attributed` while the reconciler posted it to suspense (@SCN-RPT-023).
 

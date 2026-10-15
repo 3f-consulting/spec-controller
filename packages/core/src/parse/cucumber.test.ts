@@ -7,7 +7,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 import type { RunContext } from "../domain/runProvenance.js";
 
-describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",
@@ -24,7 +24,7 @@ describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-name
   });
 });
 
-describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from the scenario's named tier tag", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives the level from the scenario's named tier tag", () => {
   it("stamps an @e2e-tagged scenario's observation e2e — the tag, not the fallback source level", () => {
     const report: CucumberJsonReport = [
       {
@@ -43,7 +43,7 @@ describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from
   });
 });
 
-describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration from the @integration tag, not the source fallback", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives integration from the @integration tag, not the source fallback", () => {
 
   it("reads an @integration scenario failed when one step failed, whatever its other steps did", () => {
     const report: CucumberJsonReport = [
@@ -94,7 +94,7 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
   });
 });
 
-describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation per named non-unit tier", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations emits one observation per named non-unit tier", () => {
   it("emits BOTH an integration and an e2e observation from ONE cucumber pass of an @integration @e2e scenario", () => {
     const report: CucumberJsonReport = [
       {
@@ -114,7 +114,7 @@ describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation 
   });
 });
 
-describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
   it("falls back to the single caller-named level for a @unit-only scenario — never a unit observation (unit is vitest's substrate, not cucumber-derivable)", () => {
     const report: CucumberJsonReport = [
       {
@@ -133,7 +133,7 @@ describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit le
   });
 });
 
-describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
+describe("[SCN-CUC-003] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
   const ambiguousReport = (tags: Array<{ name?: string }>): CucumberJsonReport => [
     {
       uri: "features/ldg019.feature",
@@ -204,7 +204,7 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
   });
 });
 
-describe("[SCN-LDG-041] a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes", () => {
+describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes", () => {
   const severalNote = { kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] };
   const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
     {
