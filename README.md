@@ -126,7 +126,7 @@ This repository was built with Claude Code, by an author who doesn't write TypeS
 - code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code.
 
-**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Each gate automates a kind of feedback a technical lead gives in code review, so a reviewer's attention goes to design and intent.
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Most gates automate a kind of feedback a technical lead gives in code review, so a reviewer's attention goes to design and intent; the rest guard the method itself. [`doc/fitness-functions.md`](./doc/fitness-functions.md) names the review comment each one automates and how many real problems it caught last quarter.
 
 It has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the limit above in practice: a two-place change balances, and review is what judges it.
 
