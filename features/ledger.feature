@@ -248,3 +248,6 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-041
     Scenario: a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes
+
+    @unit @SCN-LDG-042
+    Scenario: an evidence observation citing two scenarios credits neither, and suspense names both codes
