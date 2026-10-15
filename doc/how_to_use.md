@@ -584,16 +584,18 @@ Both carry a **provenance** header recording what was reconciled (target, source
 
 ### Report rows to know
 
-| Row or outcome | Meaning |
-|---|---|
-| **suspense** | an evidence observation that cites no scenario, or evidence that never ran (`broken`) |
-| **phantom** | evidence citing a code that no scenario carries |
-| `missing` | an obligation with no evidence |
-| `failing` | the evidence failed (a swallowed red also reads `failing`, given `--ci-steps`) |
-| `watermelon` | see below |
-| `no-evidence-obligation` | a test cites a scenario that asks for no evidence of its kind (see [the quick start](#when-a-row-reads-no-evidence-obligation)) |
-| `duplicate-scn-code` | two scenarios carry one `@SCN` code (see below) |
-| `no-scn-code` | a scenario that carries no valid `@SCN` code |
+The JSON names each outcome by its handle, and the Markdown prints the outcome's sentence in its place. This guide names outcomes by handle.
+
+| Row or outcome | The Markdown prints | Note |
+|---|---|---|
+| suspense | Scenario Reconciliation for evidence observations citing no scenario | it also holds evidence that never ran (`broken`) |
+| phantom | Scenario Reconciliation for cited scenario ids with no real scenario | |
+| `missing` | Evidence Observation is missing | |
+| `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
+| `watermelon` | Evidence Observation is passing but its check could not fail its job | see below |
+| `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [the quick start](#when-a-row-reads-no-evidence-obligation) |
+| `duplicate-scn-code` | Evidence Obligation's @SCN code is carried by another Scenario | see below |
+| `no-scn-code` | Evidence Obligation has no @SCN code for an Evidence Observation to link to | |
 
 ### Watermelons
 
