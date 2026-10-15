@@ -23,7 +23,7 @@ import {
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
 import {
-  parsePytestEvidenceObservations,
+  parseJunitEvidenceObservations,
   type JunitXmlReport,
 } from "@3f-consulting/spec-controller-core";
 import {
@@ -41,6 +41,7 @@ import type {
 const VITEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const PYTEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const JEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
+const JUNIT_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
@@ -50,6 +51,7 @@ export interface ReconcileOptions {
   vitest?: string;
   pytest?: string;
   jest?: string;
+  junit?: string;
   cucumber?: string;
   ci?: string;
   packageJson?: string;
@@ -164,9 +166,11 @@ function parseBehaviouralObservations(opts: ReconcileOptions, root: string | und
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
   const pytestReport = readJunitXmlIfPresent(opts.pytest);
-  if (pytestReport) out.push(...parsePytestEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
+  if (pytestReport) out.push(...parseJunitEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
   const jestReport = readJsonIfPresent<VitestJsonReport>(opts.jest);
   if (jestReport) out.push(...parseVitestEvidenceObservations(jestReport, JEST_QUALITY_CHECK, root));
+  const junitReport = readJunitXmlIfPresent(opts.junit);
+  if (junitReport) out.push(...parseJunitEvidenceObservations(junitReport, JUNIT_QUALITY_CHECK));
   const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
   if (cucumberReport) out.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
   return out;

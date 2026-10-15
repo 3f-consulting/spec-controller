@@ -6,6 +6,7 @@ export const INPUT_KEYS: readonly string[] = [
   "vitest",
   "pytest",
   "jest",
+  "junit",
   "cucumber",
   "ci",
   "packageJson",

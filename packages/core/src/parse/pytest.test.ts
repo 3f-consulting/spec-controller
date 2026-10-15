@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsePytestEvidenceObservations, type JunitXmlReport } from "./pytest.js";
+import { parseJunitEvidenceObservations, parsePytestEvidenceObservations, type JunitXmlReport } from "./pytest.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 
 describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {
@@ -234,5 +234,36 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
         message: "E       RuntimeError: no resource",
       },
     ]);
+  });
+});
+
+describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as broken evidence naming the package", () => {
+  type Testcase = NonNullable<NonNullable<NonNullable<JunitXmlReport["testsuites"]>["testsuite"]>[number]["testcase"]>[number];
+  const observationsOf = (testcase: Testcase) =>
+    parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.com/m/broken", testcase: [testcase] }] } }, "unit");
+
+  it.each([
+    ["with its failure's text read from the element", { "#text": "FAIL\texample.com/m/broken [build failed]" }],
+    ["with its failure written as bare text", "FAIL\texample.com/m/broken [build failed]"],
+  ])("reads gotestsum's build-failure row as broken, %s", (_how, failure) => {
+    expect(observationsOf({ classname: "", name: "TestMain", failure })).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: null,
+        status: "failed",
+        locator: "example.com/m/broken",
+        broken: true,
+        message: "FAIL\texample.com/m/broken [build failed]",
+      },
+    ]);
+  });
+
+  it.each([
+    ["a TestMain row in a package", { classname: "example.com/m/broken", name: "TestMain", failure: { "#text": "[build failed]" } }],
+    ["a row with no package that is not TestMain", { classname: "", name: "TestOther", failure: { "#text": "[build failed]" } }],
+    ["a failing TestMain row with no package whose build did not fail", { classname: "", name: "TestMain", failure: { "#text": "FAIL\texample.com/m/broken" } }],
+    ["a passing TestMain row with no package", { classname: "", name: "TestMain" }],
+  ])("reads %s as a test that ran, not as a build failure", (_what, testcase) => {
+    expect(observationsOf(testcase)[0]?.broken).toBeUndefined();
   });
 });

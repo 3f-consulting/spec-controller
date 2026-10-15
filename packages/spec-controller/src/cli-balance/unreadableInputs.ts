@@ -72,6 +72,12 @@ const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
     shape: VITEST_REPORT,
     syntax: JSON_SYNTAX_NAMING_SHAPE,
   },
+  junit: {
+    subject: APP_MESSAGES[AppMessage.FlaggedReport],
+    writer: APP_MESSAGES[AppMessage.JunitXmlReportShape](),
+    shape: JUNIT_REPORT,
+    syntax: XML_SYNTAX,
+  },
   cucumber: {
     subject: APP_MESSAGES[AppMessage.FlaggedReport],
     writer: APP_MESSAGES[AppMessage.CucumberReportShape](),

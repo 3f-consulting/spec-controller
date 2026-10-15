@@ -42,7 +42,7 @@ export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart } from "
 
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
-export { parsePytestEvidenceObservations } from "./parse/pytest.js";
+export { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "./parse/pytest.js";
 export type { JunitXmlReport } from "./parse/pytest.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";

@@ -34,6 +34,7 @@ If your project uses pnpm: Node 25 and later do not bundle corepack, so install 
 | A Cucumber JSON report | runtime test evidence | `--cucumber` |
 | A pytest JUnit XML report, written by `pytest --junitxml` | runtime test evidence | `--pytest` |
 | A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--jest` |
+| A JUnit XML report from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--junit` |
 | Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every converted fitness function (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | read with the CI config to check that an UNCONVERTED fitness function is wired into CI over the real source; also holds your configuration | `--package-json` |
@@ -67,6 +68,7 @@ npx vitest run --reporter=json --outputFile=reports/vitest.json
 npx cucumber-js --format summary --format json:reports/cucumber.json
 python -m pytest --junitxml=reports/pytest.xml     # if you use pytest
 npx jest --json --outputFile=reports/jest.json     # if you use Jest
+gotestsum --junitfile reports/go.xml ./...         # if you use Go
 
 # 2. Reconcile it.
 npx spec-controller --store "$STORE" balance \
@@ -76,6 +78,7 @@ npx spec-controller --store "$STORE" balance \
   --cucumber reports/cucumber.json \
   --pytest reports/pytest.xml \
   --jest reports/jest.json \
+  --junit reports/go.xml \
   --ci .github/workflows/ci.yml \
   --package-json package.json
 ```
@@ -123,6 +126,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 |---|---|---|
 | `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title. The most specific one wins. |
 | `@unit` | a Jest test | `[SCN-…]` in square brackets in the test's title, or in an enclosing `describe` title, as for Vitest (see [Citing a scenario from Jest](#citing-a-scenario-from-jest)) |
+| `@unit` | a Go test | `[SCN-…]` in square brackets in a subtest's name, given to `t.Run` (see [Citing a scenario from Go](#citing-a-scenario-from-go)) |
 | `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
@@ -253,6 +257,53 @@ The code in the test's own title is read first. Only when the title carries none
 | two or more codes in its title | **credits none of them**; the suspense row names every code |
 | a test file that failed to run | never ran its proof: it posts a broken item and the run is unsound (exit `4`) |
 
+### Citing a scenario from Go
+
+A Go test cites its scenario through a **subtest**: the code in square brackets in the name given to `t.Run`. A Go function name cannot hold brackets, so the test function itself cannot carry the code. Run the suite through [gotestsum](https://github.com/gotestyourself/gotestsum), which writes a JUnit XML report, and pass the report with `--junit`:
+
+```sh
+go install gotest.tools/gotestsum@v1.13.0
+gotestsum --junitfile reports/go.xml ./...
+spec-controller balance --junit reports/go.xml
+```
+
+A complete test file:
+
+```go
+package allocate
+
+import "testing"
+
+func TestNextNumber(t *testing.T) {
+	t.Run("[SCN-<FFF>-<NNN>] offers one past the highest number already used", func(t *testing.T) {
+		if got := NextNumber([]int{1, 3}); got != 4 {
+			t.Fatalf("NextNumber([1 3]) = %d, want 4", got)
+		}
+	})
+}
+```
+
+gotestsum writes that subtest into the report under its full name, the test function's name and the subtest's joined by `/`, with every space turned into `_`. The code survives in its brackets. This is what `balance` reads:
+
+```xml
+<testcase classname="example.com/allocate" name="TestNextNumber/[SCN-&lt;FFF&gt;-&lt;NNN&gt;]_offers_one_past_the_highest_number_already_used" time="0.000000"></testcase>
+```
+
+A nested subtest's name carries every enclosing subtest's name too, so the code in the subtest's own segment, after the last `/`, is read first. Only when that segment carries none is a code in an enclosing subtest's segment read, nearest first. Name your runner in the `specController` block as `"unit": "gotestsum"` (see [Naming your runners](#naming-your-runners--runners)).
+
+**A panic stops the tests after it.** A panicking subtest posts a failing observation. The panic ends that package's test binary, so the tests it had not yet reached never appear in the report, and the scenarios they cite read `missing` until the panic is fixed.
+
+**What a gotestsum report posts:**
+
+| The subtest | What it posts |
+|---|---|
+| passing, citing one scenario | answers that scenario |
+| failing, or panicking | answers that scenario as failing |
+| skipped | nothing, so the scenario it cites reads `missing` |
+| never started, because its enclosing test failed first, or a panic stopped its package | nothing, so the scenario it cites reads `missing` |
+| two or more codes in its own name | **credits none of them**; the suspense row names every code |
+| in a package that failed to compile | never ran its proof: the package posts a broken item and the run is unsound (exit `4`) |
+
 ---
 
 ## Fitness functions
@@ -337,6 +388,7 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **A runner is recognised only as the command a step runs**: the first word of each command in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
 - **Jest works the same way.** `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
+- **Go works the same way.** `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
 - **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`
@@ -564,6 +616,7 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
 | `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
 | `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
+| `--junit <report.xml>` | A JUnit XML report from any runner that writes one, such as Go's through `gotestsum --junitfile <path>`: runtime unit test evidence. A test cites its scenario with the code in square brackets in its name. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** Every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. It is also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |

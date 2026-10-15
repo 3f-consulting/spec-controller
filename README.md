@@ -84,10 +84,10 @@ On its first run over another product of ours, `balance` balanced 228 of 229 sce
 ## Who it fits
 
 - **CI:** GitHub Actions. The run's own step record is how a CI check becomes evidence, so this is the real requirement.
-- **Unit evidence:** Vitest's JSON report, Jest's JSON report (`--jest`), or pytest's JUnit XML (`--pytest`).
+- **Unit evidence:** Vitest's JSON report, Jest's JSON report (`--jest`), pytest's JUnit XML (`--pytest`), or Go's JUnit XML from gotestsum (`--junit`).
 - **Integration and end-to-end evidence:** any Cucumber implementation's JSON report, in any language.
 - **Fitness evidence:** any check your pipeline runs, in any language.
-- **The spec:** a list of named behaviours in `.feature` files. Unit-level scenarios need no step definitions: a title and its tags are the whole scenario. A Vitest or Jest test cites it in brackets in its title, `[SCN-<FFF>-<NNN>]`, and a pytest test with `@pytest.mark.scn`.
+- **The spec:** a list of named behaviours in `.feature` files. Unit-level scenarios need no step definitions: a title and its tags are the whole scenario. A Vitest or Jest test cites it in brackets in its title, `[SCN-<FFF>-<NNN>]`, a Go test in brackets in a subtest's name, and a pytest test with `@pytest.mark.scn`.
 
 ## Try it
 

@@ -100,6 +100,12 @@ Given(/^a target whose pytest report is (?!well formed and holds nothing$)(.+)$/
   target = { dir, args: ["--features", "features", "--pytest", "report.xml"], named: "report.xml", where: "--pytest" };
 });
 
+Given(/^a target whose JUnit report is (?!well formed and holds nothing$)(.+)$/, function (defect: string) {
+  const dir = targetDir();
+  writeFileSync(join(dir, "report.xml"), rowOf(NOT_JUNIT_XML, defect));
+  target = { dir, args: ["--features", "features", "--junit", "report.xml"], named: "report.xml", where: "--junit" };
+});
+
 const NOT_JEST_JSON: Record<string, string> = {
   "not JSON at all": "PASS src/a.test.ts\nTests: 3 passed, 3 total\n",
   "a JUnit XML report rather than JSON": '<?xml version="1.0" encoding="UTF-8"?><testsuites name="jest tests"></testsuites>',
@@ -130,10 +136,22 @@ Given("a target whose manifest, {}, holds {}", function (how: string, defect: st
 const EMPTY_PYTEST_REPORT =
   '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>';
 
+const EMPTY_GOTESTSUM_REPORT = [
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<testsuites tests="0" failures="0" errors="0" time="0.001000">',
+  '\t<testsuite tests="0" failures="0" time="0.000000" name="example.com/empty" timestamp="2026-10-14T22:35:27Z">',
+  '\t\t<properties>',
+  '\t\t\t<property name="go.version" value="go1.27.2 linux/amd64"></property>',
+  "\t\t</properties>",
+  "\t</testsuite>",
+  "</testsuites>",
+].join("\n");
+
 const EMPTY: Record<string, readonly [string, string, string]> = {
   "Vitest report": ["vitest", "vitest.json", JSON.stringify({ testResults: [] })],
   "pytest report": ["pytest", "report.xml", EMPTY_PYTEST_REPORT],
   "Jest report": ["jest", "jest.json", JSON.stringify({ numTotalTests: 0, success: true, testResults: [] })],
+  "JUnit report": ["junit", "report.xml", EMPTY_GOTESTSUM_REPORT],
   "Cucumber report": ["cucumber", "cucumber.json", "[]"],
   "CI step record": ["ci-steps", "ci-steps.json", "{}"],
 };
@@ -211,6 +229,11 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     writeFileSync(join(dir, "jest.json"), '{"numTotalTests":0,"success":true,"testResults":[]}');
     chmodSync(join(dir, "jest.json"), 0o000);
     return [["--features", "features", "--jest", "jest.json"], "jest.json", "--jest"];
+  },
+  "the JUnit report": (dir) => {
+    writeFileSync(join(dir, "report.xml"), EMPTY_GOTESTSUM_REPORT);
+    chmodSync(join(dir, "report.xml"), 0o000);
+    return [["--features", "features", "--junit", "report.xml"], "report.xml", "--junit"];
   },
 };
 
@@ -315,6 +338,16 @@ Then("the refusal names the Jest report and the shape Jest writes", function () 
     result.stderr.includes("the JSON report jest --json writes"),
     `expected stderr to name the shape Jest writes; got:\n${result.stderr}`,
   );
+});
+
+Then("the refusal names the JUnit report and the shape a JUnit XML report takes", function () {
+  assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+  assert.ok(
+    result.stderr.includes("in the shape of a JUnit XML report"),
+    `expected stderr to name the shape a JUnit XML report takes; got:\n${result.stderr}`,
+  );
+  assert.doesNotMatch(result.stderr, /pytest/, `a --junit refusal names no single runner; got:\n${result.stderr}`);
 });
 
 Then("the run reads it and reaches its verdict", function () {

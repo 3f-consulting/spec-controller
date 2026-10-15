@@ -15,8 +15,8 @@ Feature: spec-controller balance runs standalone
 
   Rule: A supplied input path that does not exist is a hard error, not silent empty evidence.
 
-    A supplied --vitest, --pytest, --jest, --cucumber, --features, --ci, --package-json or
-    --ci-steps whose path does not exist halts balance before reconciling. The run exits 2, the
+    A supplied --vitest, --pytest, --jest, --junit, --cucumber, --features, --ci, --package-json
+    or --ci-steps whose path does not exist halts balance before reconciling. The run exits 2, the
     usage status, and names the flag and the missing path on stderr. This rule checks existence
     only.
 
@@ -33,6 +33,7 @@ Feature: spec-controller balance runs standalone
         | Vitest report option   |
         | pytest report option   |
         | Jest report option     |
+        | JUnit report option    |
         | Cucumber report option |
         | feature corpus option  |
         | CI workflows option    |
@@ -188,6 +189,7 @@ Feature: spec-controller balance runs standalone
         | Vitest report option   | /nonexistent              |
         | pytest report option   | /nonexistent              |
         | Jest report option     | /nonexistent              |
+        | JUnit report option    | /nonexistent              |
         | Cucumber report option | /nonexistent              |
         | CI workflows option    | /nonexistent              |
         | manifest option        | /nonexistent              |
@@ -318,6 +320,7 @@ Feature: spec-controller balance runs standalone
         | Vitest report   |
         | pytest report   |
         | Jest report     |
+        | JUnit report    |
         | Cucumber report |
         | CI step record  |
 
@@ -353,6 +356,7 @@ Feature: spec-controller balance runs standalone
         | the Vitest report            |
         | the pytest report            |
         | the Jest report              |
+        | the JUnit report             |
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
@@ -522,6 +526,7 @@ Feature: spec-controller balance runs standalone
         | the Vitest report option  | at the end, with a file named true in the working directory |
         | the pytest report option  | at the end, with a file named true in the working directory |
         | the Jest report option    | at the end, with a file named true in the working directory |
+        | the JUnit report option   | at the end, with a file named true in the working directory |
         | the re-render option      | at the end of the arguments                                 |
         | the feature corpus option | with an empty value                                         |
 

@@ -148,6 +148,42 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
   });
 });
 
+describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
+  const JUNIT_SHAPE = "in the shape of a JUnit XML report";
+  const refusalOf = (content: string): string | null =>
+    checkInputShapes(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content));
+
+  it.each([
+    ["text that is not XML", "=== RUN   TestCited\n--- PASS: TestCited (0.00s)\nok\n", "is not valid XML"],
+    ["a JSON report", '{"testResults":[]}', "is not valid XML"],
+    ["XML that holds no test suites", "<html><body/></html>", "testsuites is missing"],
+  ])("refuses %s, naming the flag, the file, the shape of a JUnit XML report and what is wrong, and no single runner", (_, content, fault) => {
+    const error = refusalOf(content) ?? "";
+
+    expect(error).toContain("--junit");
+    expect(error).toContain("reports/report.xml");
+    expect(error).toContain(JUNIT_SHAPE);
+    expect(error).toContain(fault);
+    expect(error).not.toContain("pytest");
+  });
+
+  it("passes the report a real gotestsum run wrote, so the run goes on to reconcile", () => {
+    const real = readFileSync("tests/fixtures/go/report.xml", "utf8");
+    expect(checkInputShapes(jsonInputsOf({ junit: "report.xml" }, nothingByDefault), reading(real))).toBeNull();
+  });
+
+  it("runBalance refuses a --junit file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    const report = join(features, "..", "report.xml");
+    writeFileSync(report, "not xml\n");
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--junit", report]);
+
+    expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
+    expect(stderr).toContain(report);
+    expect(stderr).toContain(JUNIT_SHAPE);
+  });
+});
+
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
@@ -164,6 +200,10 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
       '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>',
     ],
     ["jest", '{"numTotalTests":0,"success":true,"testResults":[]}'],
+    [
+      "junit",
+      '<?xml version="1.0" encoding="UTF-8"?><testsuites tests="0" failures="0" errors="0" time="0.001000"><testsuite tests="0" failures="0" time="0.000000" name="example.com/empty" timestamp="2026-10-14T22:35:27Z"><properties><property name="go.version" value="go1.27.2 linux/amd64"></property></properties></testsuite></testsuites>',
+    ],
     ["cucumber", "[]"],
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
@@ -316,6 +356,22 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--jest", path])).toEqual({
       report: "",
       stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--jest"), path, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("runBalance refuses a given --junit report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "junit-not-permitted-"));
+    made.push(dir);
+    const path = join(dir, "report.xml");
+    writeFileSync(path, '<testsuites tests="0"><testsuite name="example.com/empty" tests="0" /></testsuites>');
+    lock(path);
+    const reason = osReasonFor(() => readFileSync(path, "utf8"));
+
+    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--junit", path])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), path, reason) + "\n",
       exitCode: 2,
     });
   });
