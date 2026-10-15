@@ -143,15 +143,7 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-015
     Scenario: an observation of a scenario carrying no tier tag beyond @unit is posted at its source's fallback
 
-  Rule: a vitest assertion is attributed to the @SCN its own leaf cites, not its ancestor's
-
-    @unit @SCN-LDG-016
-    Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
-
   Rule: evidence that never materialised is broken, not absent
-
-    @unit @SCN-LDG-017
-    Scenario: a collection-failed vitest file posts a broken suspense item naming the file and its error, while the scenario it would have proven still reads missing
 
     @unit @SCN-LDG-019
     Scenario: an ambiguous cucumber step posts a broken suspense item naming the step, while the scenario it would have proven still reads missing
@@ -230,21 +222,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-030
     Scenario: every outcome's sides match its definition, a divergent pair is unconstructible, and the emitted report agrees
 
-  Rule: a vitest citation is the bracketed token — an SCN-shaped token in prose is prose
-
-    @unit @SCN-LDG-033
-    Scenario: an assertion whose only SCN-shaped token is prose cites no scenario — the evidence observation posts to suspense
-
-    @unit @SCN-LDG-032
-    Scenario: a leaf naming a scenario id in prose does not override its describe's bracketed citation
-
   Rule: an evidence observation that cites more than one scenario credits none of them, whatever the runner
 
     A test cites exactly one scenario. One that cites several credits none of them and posts to suspense,
     naming every code, so no reader picks one (doc/ubiquitous-language.md, Attribution).
-
-    @unit @SCN-LDG-040
-    Scenario: a Vitest test whose title cites two scenarios credits neither, and suspense names both codes
 
     @unit @SCN-LDG-041
     Scenario: a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes

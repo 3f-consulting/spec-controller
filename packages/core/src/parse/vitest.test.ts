@@ -5,7 +5,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
 
-describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
+describe("[SCN-VIT-006] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
@@ -26,7 +26,7 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named 
   });
 });
 
-describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion by its own leaf title", () => {
+describe("[SCN-VIT-001] parseVitestEvidenceObservations attributes an assertion by its own leaf title", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
@@ -55,7 +55,7 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
   });
 });
 
-describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed token — an id in prose is prose", () => {
+describe("[SCN-VIT-002] parseVitestEvidenceObservations reads the bracketed token — an id in prose is prose", () => {
   const proseOnly: VitestJsonReport = {
     testResults: [
       {
@@ -78,7 +78,7 @@ describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed toke
   });
 });
 
-describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's bracketed citation", () => {
+describe("[SCN-VIT-003] a leaf's prose mention does not override its describe's bracketed citation", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
@@ -101,7 +101,7 @@ describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's 
   });
 });
 
-describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observation naming the file and its error", () => {
+describe("[SCN-VIT-005] a collection-failed vitest file emits a broken observation naming the file and its error", () => {
   const collectionFailed: VitestJsonReport = {
     testResults: [
       {
@@ -176,7 +176,7 @@ describe("[SCN-RPT-036] parseVitestEvidenceObservations names each test by its f
   });
 });
 
-describe("[SCN-LDG-040] a Vitest test whose title cites two scenarios credits neither, and suspense names both codes", () => {
+describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits neither, and suspense names both codes", () => {
   const reportOf = (...assertions: Array<{ title: string; fullName?: string }>): VitestJsonReport => ({
     testResults: [
       {
