@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   runReconcile,
-  readEvidenceObligations,
+  readFeatureCorpus,
   readFeatureNames,
   featureCorpusParseErrors,
   type ReconcileOptions,
@@ -22,6 +22,7 @@ import {
 } from "./unreadableInputs.js";
 import { statusFor } from "./exitStatus.js";
 import {
+  corpusCountsOf,
   verdictCode,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
@@ -175,9 +176,8 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const balance = runReconcile(inputs, root);
-
-  const evidenceObligations = readEvidenceObligations(args["features"]);
+  const corpus = readFeatureCorpus(inputs.features);
+  const balance = runReconcile(inputs, root, corpus);
 
   const featureNames = readFeatureNames(args["features"]);
 
@@ -185,7 +185,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations, featureNames };
+  const payloads = { balance, ctx, evidenceObligations: corpusCountsOf(corpus), featureNames };
   writeOutputs(
     planResult.plan,
     payloads,

@@ -13,6 +13,7 @@ export interface DiscoveredFeature {
   slug: string;
   path: string;
   featureCode: string | null;
+  source: string;
 }
 
 export function extractFeatureCode(source: string): string | null {
@@ -95,5 +96,6 @@ export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature
     slug: relativePath.slice(0, -".feature".length),
     path,
     featureCode: extractFeatureCode(source),
+    source,
   }));
 }

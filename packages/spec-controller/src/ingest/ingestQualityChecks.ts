@@ -6,7 +6,6 @@ import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
   parseFeatureCounts,
-  parseUntaggedScenarios,
   untaggedScenarioId,
 } from "@3f-consulting/spec-controller-core";
 import {
@@ -98,12 +97,22 @@ function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
   }
 }
 
-function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
-  return balanceCorpus(featuresDir).flatMap((f) =>
-    parseUntaggedScenarios(readFileSync(f.path, "utf8")).map(
-      (scenario) => untaggedScenarioId({ feature: `${f.slug}.feature`, scenario })
-    )
-  );
+type ParsedFeature = Parameters<typeof corpusCountsOf>[0][number];
+
+export interface CorpusFile extends ParsedFeature {
+  readonly slug: string;
+  readonly featureCode: string | null;
+  readonly source: string;
+}
+
+export function readFeatureCorpus(featuresDir: string | undefined): CorpusFile[] {
+  return balanceCorpus(featuresDir).map(({ slug, featureCode, source }) => ({
+    slug,
+    featureCode,
+    source,
+    feature: `${slug}.feature`,
+    ...parseFeatureCounts(source),
+  }));
 }
 
 export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
@@ -170,12 +179,7 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
 }
 
 export function readEvidenceObligations(features?: string): EvidenceObligations {
-  return corpusCountsOf(
-    balanceCorpus(features).map((f) => ({
-      feature: `${f.slug}.feature`,
-      ...parseFeatureCounts(readFileSync(f.path, "utf8")),
-    }))
-  );
+  return corpusCountsOf(readFeatureCorpus(features));
 }
 
 function parseBehaviouralObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
@@ -203,22 +207,24 @@ type TargetManifest = PackageJsonScripts & {
   };
 };
 
-export function runReconcile(opts: ReconcileOptions, root: string): EvidenceReconciliation {
+export function runReconcile(
+  opts: ReconcileOptions,
+  root: string,
+  corpus?: readonly CorpusFile[],
+): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
   const ciPath = opts.ci ?? DEFAULT_CI_PATH;
   const ciPaths = ciSourcePathsOf(ciPath);
 
-  const corpusFiles = balanceCorpus(opts.features).map((f) => ({
-    slug: f.slug,
-    featureCode: f.featureCode,
-    source: readFileSync(f.path, "utf8"),
-  }));
+  const corpusFiles = corpus ?? readFeatureCorpus(opts.features);
 
   return evidenceReconciliationFromSources({
     featureSources: corpusFiles.map((f) => f.source),
     featureFiles: corpusFiles.map(({ slug, featureCode }) => ({ slug, featureCode })),
-    untaggedScenarios: untaggedScenariosFromFeatures(opts.features),
+    untaggedScenarios: corpusFiles.flatMap(({ feature, untaggedScenarios }) =>
+      untaggedScenarios.map((scenario) => untaggedScenarioId({ feature, scenario }))
+    ),
     packageJson,
     ciSources: ciPaths.map((path) => readFileSync(path, "utf8")),
     ciSourceNames: ciPaths.map((path) => basename(path)),
