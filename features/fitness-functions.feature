@@ -237,3 +237,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-054
     Scenario: a file written outside the modules that check the output location reds the build
+
+  Rule: a unit test citing a domain concept's scenario lives in core's domain, never in an adapter, and a feature is a domain concept when core's domain has a module named for it
+
+    @fitness @SCN-FIT-055
+    Scenario: a unit test citing a domain concept's scenario placed outside core's domain reds the build

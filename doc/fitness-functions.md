@@ -24,6 +24,7 @@ Twenty-four of these checks first ran on `main` between 30 September and 14 Octo
 | Import boundaries | 4 |
 | No type or field in core's domain is named for an external tool or format | 0 |
 | No sentence for a reader is written in core's domain | 0 |
+| A unit test citing a domain concept's scenario lives in core's domain | 0 |
 | No production source file writes message prose outside its package's catalogue | 1 |
 
 ## Tests missing or weak

@@ -356,6 +356,11 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.domainProse.js packages/core/src/domain
 
+      - name: A unit test citing a domain concept's scenario lives in core's domain
+        id: SCN-FIT-055
+        if: always()
+        run: node scripts/domain-tests-in-domain.mjs "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
+
       # The ceiling and the sets it counts live in cloc.ratio.js.
       - name: Test code stays within the declared ceiling ratio to production code
         id: SCN-FIT-043
