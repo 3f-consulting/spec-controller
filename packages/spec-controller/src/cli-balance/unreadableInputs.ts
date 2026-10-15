@@ -1,3 +1,4 @@
+import { statSync } from "node:fs";
 import {
   ciReadFault,
   corpusReadFault,
@@ -15,7 +16,8 @@ import {
   VITEST_REPORT,
   type Shape,
 } from "../ingest/inputShapes.js";
-import { parseJunitXml } from "../ingest/junitXml.js";
+import { junitReportPathsOf } from "../ingest/junitReportPaths.js";
+import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "../ingest/junitXml.js";
 import { reRender, type ReRendered } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
@@ -39,6 +41,11 @@ const XML_SYNTAX: Syntax = {
   notValid: APP_MESSAGES[AppMessage.NotValidXml],
 };
 
+const XML_SYNTAX_LIFTING_BARE_SUITE: Syntax = {
+  parse: parseJunitXmlLiftingBareSuite,
+  notValid: APP_MESSAGES[AppMessage.NotValidXml],
+};
+
 export interface JsonInput {
   readonly subject: string;
   readonly path: string;
@@ -52,6 +59,7 @@ interface ReadShape {
   readonly writer: string;
   readonly shape: Shape;
   readonly syntax: Syntax;
+  readonly readsADirectoryOfReports?: true;
 }
 
 const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
@@ -83,7 +91,8 @@ const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
     subject: APP_MESSAGES[AppMessage.FlaggedReport],
     writer: APP_MESSAGES[AppMessage.JunitXmlReportShape](),
     shape: JUNIT_REPORT,
-    syntax: XML_SYNTAX,
+    syntax: XML_SYNTAX_LIFTING_BARE_SUITE,
+    readsADirectoryOfReports: true,
   },
   cucumber: {
     subject: APP_MESSAGES[AppMessage.FlaggedReport],
@@ -109,11 +118,31 @@ export function jsonInputsOf(args: Record<string, string>, exists: (path: string
   const given = Object.entries(READ_SHAPES).flatMap(([flag, read]) => {
     const path = args[flag];
     if (path === undefined) return [];
-    return [{ subject: read.subject(`--${flag}`), path, shape: read.shape, writer: read.writer, syntax: read.syntax }];
+    const paths = read.readsADirectoryOfReports === true && isDirectory(path) ? reportFilesIn(path) : [path];
+    const subject = read.subject(`--${flag}`);
+    return paths.map((file) => ({ subject, path: file, shape: read.shape, writer: read.writer, syntax: read.syntax }));
   });
   if (args["package-json"] !== undefined || !exists(DEFAULT_PACKAGE_JSON)) return given;
   const { shape, writer, syntax } = READ_SHAPES["package-json"]!;
   return [...given, { subject: APP_MESSAGES[AppMessage.DefaultPackageJson](), path: DEFAULT_PACKAGE_JSON, shape, writer, syntax }];
+}
+
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    // A path that cannot be stat'd is left to the read, which names why it failed.
+    return false;
+  }
+}
+
+function reportFilesIn(directory: string): string[] {
+  try {
+    return junitReportPathsOf(directory);
+  } catch {
+    // A directory that cannot be listed is left to the read, which names why it failed.
+    return [directory];
+  }
 }
 
 export function reasonOf(err: unknown): string {

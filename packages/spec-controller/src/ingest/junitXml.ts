@@ -15,3 +15,14 @@ export function parseJunitXml(text: string): JunitXmlReport {
   if (valid !== true) throw new Error(APP_MESSAGES[AppMessage.XmlFaultAtLine](valid.err.msg.replace(/\.$/, ""), valid.err.line));
   return JUNIT_XML.parse(text) as JunitXmlReport;
 }
+
+interface BareSuiteDocument {
+  readonly testsuite?: unknown;
+}
+
+// Maven Surefire writes each report file with one <testsuite> as its root, which JUnit XML allows.
+export function parseJunitXmlLiftingBareSuite(text: string): JunitXmlReport {
+  const document = parseJunitXml(text) as BareSuiteDocument;
+  if (document.testsuite === undefined) return document as JunitXmlReport;
+  return { testsuites: { testsuite: document.testsuite } } as JunitXmlReport;
+}

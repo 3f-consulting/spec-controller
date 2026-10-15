@@ -318,14 +318,15 @@ Feature: spec-controller balance runs standalone
       Then the run reads it and reaches its verdict
 
       Examples:
-        | input           |
-        | Vitest report   |
-        | pytest report   |
-        | Jest report     |
-        | RSpec report    |
-        | JUnit report    |
-        | Cucumber report |
-        | CI step record  |
+        | input                  |
+        | Vitest report          |
+        | pytest report          |
+        | Jest report            |
+        | RSpec report           |
+        | JUnit report           |
+        | JUnit report directory |
+        | Cucumber report        |
+        | CI step record         |
 
     @unit @e2e @SCN-CLI-075
     Scenario Outline: an input path that is not the kind of path its flag reads is refused as unreadable, naming the flag and the path
@@ -340,6 +341,7 @@ Feature: spec-controller balance runs standalone
         | feature corpus | a single feature file                                    |
         | feature corpus | a directory holding a directory named as a feature file  |
         | CI workflows   | a directory holding a directory named as a workflow file |
+        | JUnit reports  | a directory holding a directory named as a JUnit report  |
 
     @unit @e2e @SCN-CLI-082
     Scenario Outline: an input the tool is not permitted to read is refused as unreadable, naming the flag and the path
@@ -361,6 +363,7 @@ Feature: spec-controller balance runs standalone
         | the Jest report              |
         | the RSpec report             |
         | the JUnit report             |
+        | the JUnit report directory   |
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered

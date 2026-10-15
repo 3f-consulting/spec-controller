@@ -1,0 +1,9 @@
+{
+  "name": "surefire-single-report-fixture-target",
+  "private": true,
+  "specController": {
+    "runners": {
+      "unit": "mvn"
+    }
+  }
+}

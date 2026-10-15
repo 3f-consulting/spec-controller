@@ -267,3 +267,127 @@ describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that f
     expect(observationsOf(testcase)[0]?.broken).toBeUndefined();
   });
 });
+
+describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5 test's own display name before a code in its class's display name", () => {
+  const classname = "[SCN-JVF-013] an outer class that cites a scenario";
+  const report: JunitXmlReport = {
+    testsuites: {
+      testsuite: [
+        {
+          testcase: [
+            { classname, name: "[SCN-JVF-003] a test whose own display name cites a scenario" },
+            { classname, name: "a test in the outer class whose own display name cites nothing" },
+          ],
+        },
+      ],
+    },
+  };
+
+  it("credits a test that cites a code of its own to that code, and a test that cites none to its class's code", () => {
+    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: "SCN-JVF-003",
+        status: "passed",
+        locator: `${classname}::[SCN-JVF-003] a test whose own display name cites a scenario`,
+      },
+      {
+        qualityCheck: "unit",
+        scnId: "SCN-JVF-013",
+        status: "passed",
+        locator: `${classname}::a test in the outer class whose own display name cites nothing`,
+      },
+    ]);
+  });
+});
+
+describe("[SCN-JAV-004] parseJunitEvidenceObservations credits a JUnit 5 test with no code of its own to the innermost class around it that cites one", () => {
+  const observationOf = (classname: string) =>
+    parseJunitEvidenceObservations(
+      { testsuites: { testsuite: [{ testcase: [{ classname, name: "a test whose own display name cites nothing" }] }] } },
+      "unit"
+    )[0];
+
+  it("credits a test in an inner class that cites a scenario to the inner class's code, not the outer class's", () => {
+    const observation = observationOf(
+      "[SCN-JVF-013] an outer class that cites a scenario [SCN-JVF-004] an inner class that cites a scenario"
+    );
+    expect(observation?.scnId).toBe("SCN-JVF-004");
+    expect(observation?.notes).toBeUndefined();
+  });
+
+  it("credits a test in an inner class that cites nothing to the outer class's code", () => {
+    const observation = observationOf("[SCN-JVF-013] an outer class that cites a scenario an inner class that cites nothing");
+    expect(observation?.scnId).toBe("SCN-JVF-013");
+  });
+});
+
+describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that throws as a failing observation citing its scenario", () => {
+  const report: JunitXmlReport = {
+    testsuites: {
+      testsuite: [
+        {
+          testcase: [
+            {
+              classname: "example.CitedTest",
+              name: "[SCN-JVF-010] a test that throws cites its scenario",
+              error: {
+                message: "the resource could not be reached",
+                "#text": "java.lang.IllegalStateException: the resource could not be reached",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  it("emits one failing unit observation citing that code, located at the test, never broken", () => {
+    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: "SCN-JVF-010",
+        status: "failed",
+        locator: "example.CitedTest::[SCN-JVF-010] a test that throws cites its scenario",
+      },
+    ]);
+  });
+
+  it("keeps the same testcase broken when it is read as a pytest report", () => {
+    expect(parsePytestEvidenceObservations(report, "unit")[0]?.broken).toBe(true);
+  });
+});
+
+describe("[SCN-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class whose setup before all its tests failed as broken evidence citing no scenario", () => {
+  const report: JunitXmlReport = {
+    testsuites: {
+      testsuite: [
+        {
+          testcase: [
+            {
+              classname: "[SCN-JVF-014] a class that cites a scenario",
+              name: "",
+              error: {
+                message: "the shared resource could not be set up",
+                "#text": "java.lang.IllegalStateException: the shared resource could not be set up",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  it("emits one broken observation located at the class, carrying the error that stopped it", () => {
+    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: null,
+        status: "failed",
+        locator: "[SCN-JVF-014] a class that cites a scenario",
+        broken: true,
+        message: "java.lang.IllegalStateException: the shared resource could not be set up",
+      },
+    ]);
+  });
+});

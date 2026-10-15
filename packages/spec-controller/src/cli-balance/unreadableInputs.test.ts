@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkInputPaths, checkInputShapes, checkSavedReconciliation, jsonInputsOf, reRenderOrRefusal } from "./unreadableInputs.js";
@@ -236,6 +236,75 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
   });
 });
 
+describe("[SCN-JAV-010] checkInputShapes passes a single Surefire report file whose root is one test suite under --junit", () => {
+  const shapeFaultUnder = (flag: string): string | null =>
+    checkInputShapes(
+      jsonInputsOf({ [flag]: "TEST-measure.CitedTest.xml" }, nothingByDefault),
+      reading(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8")),
+    );
+
+  it("passes the report a real Surefire run wrote, so the run goes on to reconcile", () => {
+    expect(shapeFaultUnder("junit")).toBeNull();
+  });
+
+  it("keeps refusing the same report under --pytest, whose reports hold their suites in testsuites", () => {
+    expect(shapeFaultUnder("pytest")).toContain("testsuites is missing");
+  });
+});
+
+describe("[SCN-JAV-001] checkInputShapes passes the directory of reports Maven Surefire wrote under --junit", () => {
+  it("passes the directory, so the run goes on to read the reports in it", () => {
+    const fault = checkInputShapes(
+      jsonInputsOf({ junit: "tests/fixtures/java/surefire-reports" }, existsSync),
+      (path) => readFileSync(path, "utf8"),
+    );
+
+    expect(fault).toBeNull();
+  });
+});
+
+describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit directory that is not a JUnit XML report, naming that file", () => {
+  const JUNIT_SHAPE = "in the shape of a JUnit XML report";
+
+  function surefireReportsBeside(name: string, content: string): { reports: string; notAReport: string } {
+    const reports = mkdtempSync(join(tmpdir(), "surefire-reports-"));
+    made.push(reports);
+    cpSync("tests/fixtures/java/surefire-reports", reports, { recursive: true });
+    const notAReport = join(reports, name);
+    writeFileSync(notAReport, content);
+    return { reports, notAReport };
+  }
+
+  it.each([
+    ["text that is not XML", "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n", "is not valid XML"],
+    ["XML that holds no test suites", "<html><body/></html>", "testsuites is missing"],
+  ])("refuses a report file holding %s, naming the flag, that file, the shape of a JUnit XML report and what is wrong", (_, content, fault) => {
+    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", content);
+    const error = checkInputShapes(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8")) ?? "";
+
+    expect(error).toContain("--junit");
+    expect(error).toContain(notAReport);
+    expect(error).toContain(JUNIT_SHAPE);
+    expect(error).toContain(fault);
+  });
+
+  it("leaves a file in the directory that is not named as a Surefire report unread", () => {
+    const { reports } = surefireReportsBeside("example.NotAReport.txt", "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n");
+
+    expect(checkInputShapes(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))).toBeNull();
+  });
+
+  it("runBalance refuses the directory at exit 2, naming that file and the shape, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", "not xml\n");
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--junit", reports]);
+
+    expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
+    expect(stderr).toContain(notAReport);
+    expect(stderr).toContain(JUNIT_SHAPE);
+  });
+});
+
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
@@ -264,6 +333,31 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
     expect(checkInputShapes(jsonInputsOf({ [flag]: "empty.json" }, nothingByDefault), reading(content))).toBeNull();
+  });
+
+  function directoryHoldingNoReport(): string {
+    const reports = mkdtempSync(join(tmpdir(), "surefire-reports-"));
+    made.push(reports);
+    return reports;
+  }
+
+  it("passes a --junit directory holding no report, reading no file in it", () => {
+    const reports = directoryHoldingNoReport();
+    const inputs = jsonInputsOf({ junit: reports }, nothingByDefault);
+
+    expect(inputs).toEqual([]);
+    expect(checkInputShapes(inputs, (path) => readFileSync(path, "utf8"))).toBeNull();
+  });
+
+  it("runBalance reads a --junit directory holding no report as an empty report, reaching the verdict of the same run given no report", () => {
+    const { features, ci } = targetOnDisk();
+    const reports = directoryHoldingNoReport();
+    const withEmptyDirectory = runBalanceCaptured(["--features", features, "--ci", ci, "--junit", reports, "--format", "json"]);
+    const withNoReport = runBalanceCaptured(["--features", features, "--ci", ci, "--format", "json"]);
+
+    expect(withEmptyDirectory.stderr).toBe("");
+    expect(withEmptyDirectory.exitCode).toBe(withNoReport.exitCode);
+    expect(JSON.parse(withEmptyDirectory.stdout).ledger).toEqual(JSON.parse(withNoReport.stdout).ledger);
   });
 });
 
@@ -324,6 +418,30 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
     expect(error).toContain("--ci");
     expect(error).toContain(join(ci, "x.yml"));
     expect(error).toContain("EISDIR");
+  });
+
+  it("names the entry when the directory given to --junit holds a directory named as a JUnit report, never passing it as holding no report", () => {
+    const dir = mkdtempSync(join(tmpdir(), "junit-directory-named-as-report-"));
+    made.push(dir);
+    mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
+    const error = checkInputShapes(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8"));
+
+    expect(error).toContain("--junit");
+    expect(error).toContain(join(dir, "TEST-example.NestedTest.xml"));
+    expect(error).toContain("EISDIR");
+  });
+
+  it("runBalance refuses a --junit directory holding a directory named as a JUnit report at exit 2, naming the flag and the entry, reconciling nothing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "junit-directory-named-as-report-"));
+    made.push(dir);
+    mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", "tests/fixtures/evidence-observation/features", "--junit", dir]);
+
+    expect(exitCode).toBe(2);
+    expect(stdout).toBe("");
+    expect(stderr).toContain("--junit");
+    expect(stderr).toContain(join(dir, "TEST-example.NestedTest.xml"));
+    expect(stderr).toContain("EISDIR");
   });
 });
 
@@ -446,6 +564,35 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
       stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), path, reason) + "\n",
       exitCode: 2,
     });
+  });
+
+  it("runBalance refuses a given --junit directory it may not list at exit 2, naming the flag, the directory and the refusal to read it, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "junit-directory-not-permitted-"));
+    made.push(dir);
+    const reports = join(dir, "surefire-reports");
+    mkdirSync(reports);
+    writeFileSync(join(reports, "TEST-example.ExampleTest.xml"), '<testsuite name="example.ExampleTest" tests="0" />');
+    lock(reports);
+    const reason = osReasonFor(() => readFileSync(reports, "utf8"));
+
+    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--junit", reports])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), reports, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("checkInputShapes refuses a --junit directory it may not list, naming the directory, never passing it as holding no report", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "junit-directory-not-permitted-"));
+    made.push(dir);
+    const reports = lock(dir);
+    const reason = osReasonFor(() => readFileSync(reports, "utf8"));
+
+    expect(checkInputShapes(jsonInputsOf({ junit: reports }, () => false), (path) => readFileSync(path, "utf8"))).toBe(
+      APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), reports, reason),
+    );
   });
 
   it("names the feature corpus read by default, and its path, when no --features is given and the working directory's corpus may not be read", ({ skip }) => {

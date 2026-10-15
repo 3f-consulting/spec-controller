@@ -1,7 +1,8 @@
 import { readFileSync, existsSync } from "node:fs";
 import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
-import { parseJunitXml } from "./junitXml.js";
+import { junitReportPathsOf } from "./junitReportPaths.js";
+import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
   parseFeatureCounts,
@@ -24,6 +25,7 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import {
   parseJunitEvidenceObservations,
+  parsePytestEvidenceObservations,
   type JunitXmlReport,
 } from "@3f-consulting/spec-controller-core";
 import {
@@ -73,9 +75,18 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 
-function readJunitXmlIfPresent(path: string | undefined): JunitXmlReport | undefined {
+function readJunitXmlIfPresent(
+  path: string | undefined,
+  parse: (text: string) => JunitXmlReport,
+): JunitXmlReport | undefined {
   if (!path || !existsSync(path)) return undefined;
-  return parseJunitXml(readFileSync(path, "utf8"));
+  return parse(readFileSync(path, "utf8"));
+}
+
+function readJunitReportsIfPresent(path: string | undefined): JunitXmlReport | undefined {
+  if (!path) return undefined;
+  const reports = junitReportPathsOf(path).map((report) => parseJunitXmlLiftingBareSuite(readFileSync(report, "utf8")));
+  return { testsuites: { testsuite: reports.flatMap((report) => report.testsuites?.testsuite ?? []) } };
 }
 
 function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
@@ -171,11 +182,11 @@ function parseBehaviouralObservations(opts: ReconcileOptions, root: string | und
   const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
-  const pytestReport = readJunitXmlIfPresent(opts.pytest);
-  if (pytestReport) out.push(...parseJunitEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
+  const pytestReport = readJunitXmlIfPresent(opts.pytest, parseJunitXml);
+  if (pytestReport) out.push(...parsePytestEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
   const jestReport = readJsonIfPresent<VitestJsonReport>(opts.jest);
   if (jestReport) out.push(...parseVitestEvidenceObservations(jestReport, JEST_QUALITY_CHECK, root));
-  const junitReport = readJunitXmlIfPresent(opts.junit);
+  const junitReport = readJunitReportsIfPresent(opts.junit);
   if (junitReport) out.push(...parseJunitEvidenceObservations(junitReport, JUNIT_QUALITY_CHECK));
   const rspecReport = readJsonIfPresent<RspecJsonReport>(opts.rspec);
   if (rspecReport) out.push(...parseRspecEvidenceObservations(rspecReport, RSPEC_QUALITY_CHECK, root));

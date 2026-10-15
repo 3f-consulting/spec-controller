@@ -167,12 +167,13 @@ const EMPTY_RSPEC_REPORT = JSON.stringify({
   summary_line: "0 examples, 0 failures",
 });
 
-const EMPTY: Record<string, readonly [string, string, string]> = {
+const EMPTY: Record<string, readonly [string, string, string | null]> = {
   "Vitest report": ["vitest", "vitest.json", JSON.stringify({ testResults: [] })],
   "pytest report": ["pytest", "report.xml", EMPTY_PYTEST_REPORT],
   "Jest report": ["jest", "jest.json", JSON.stringify({ numTotalTests: 0, success: true, testResults: [] })],
   "RSpec report": ["rspec", "rspec.json", EMPTY_RSPEC_REPORT],
   "JUnit report": ["junit", "report.xml", EMPTY_GOTESTSUM_REPORT],
+  "JUnit report directory": ["junit", "surefire-reports", null],
   "Cucumber report": ["cucumber", "cucumber.json", "[]"],
   "CI step record": ["ci-steps", "ci-steps.json", "{}"],
 };
@@ -180,7 +181,8 @@ const EMPTY: Record<string, readonly [string, string, string]> = {
 Given("a target whose {} is well formed and holds nothing", function (input: string) {
   const [flag, file, text] = rowOf(EMPTY, input);
   const dir = targetDir();
-  writeFileSync(join(dir, file), text);
+  if (text === null) mkdirSync(join(dir, file));
+  else writeFileSync(join(dir, file), text);
   target = { dir, args: ["--features", "features", `--${flag}`, file], named: file, where: "" };
 });
 
@@ -197,6 +199,10 @@ const PATH_KINDS: Record<string, (dir: string) => readonly [readonly string[], s
   "CI workflows a directory holding a directory named as a workflow file": (dir) => {
     mkdirSync(join(dir, "workflows", "nested.yml"), { recursive: true });
     return [["--features", "features", "--ci", "workflows"], join("workflows", "nested.yml")];
+  },
+  "JUnit reports a directory holding a directory named as a JUnit report": (dir) => {
+    mkdirSync(join(dir, "surefire-reports", "TEST-example.NestedTest.xml"), { recursive: true });
+    return [["--features", "features", "--junit", "surefire-reports"], join("surefire-reports", "TEST-example.NestedTest.xml")];
   },
 };
 
@@ -260,6 +266,12 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     writeFileSync(join(dir, "report.xml"), EMPTY_GOTESTSUM_REPORT);
     chmodSync(join(dir, "report.xml"), 0o000);
     return [["--features", "features", "--junit", "report.xml"], "report.xml", "--junit"];
+  },
+  "the JUnit report directory": (dir) => {
+    mkdirSync(join(dir, "surefire-reports"));
+    writeFileSync(join(dir, "surefire-reports", "TEST-example.ExampleTest.xml"), EMPTY_GOTESTSUM_REPORT);
+    chmodSync(join(dir, "surefire-reports"), 0o000);
+    return [["--features", "features", "--junit", "surefire-reports"], "surefire-reports", "--junit"];
   },
 };
 
@@ -405,7 +417,7 @@ Then("the refusal says the tool was not permitted to read it", function () {
 
 After(function () {
   for (const directory of temporaryDirectories.splice(0)) {
-    for (const entry of ["features", join("features", "area"), "workflows"]) {
+    for (const entry of ["features", join("features", "area"), "workflows", "surefire-reports"]) {
       const path = join(directory, entry);
       if (existsSync(path)) chmodSync(path, 0o755);
     }

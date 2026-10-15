@@ -29,9 +29,26 @@ const SCN_PROPERTY = "scn";
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
+type ErrorReading = "failing" | "broken";
+
 export function parseJunitEvidenceObservations(
   report: JunitXmlReport,
   qualityCheck: BehaviouralQualityCheck
+): EvidenceObservation[] {
+  return observationsOf(report, qualityCheck, "failing");
+}
+
+export function parsePytestEvidenceObservations(
+  report: JunitXmlReport,
+  qualityCheck: BehaviouralQualityCheck
+): EvidenceObservation[] {
+  return observationsOf(report, qualityCheck, "broken");
+}
+
+function observationsOf(
+  report: JunitXmlReport,
+  qualityCheck: BehaviouralQualityCheck,
+  errorReading: ErrorReading
 ): EvidenceObservation[] {
   return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
     (suite.testcase ?? [])
@@ -39,16 +56,17 @@ export function parseJunitEvidenceObservations(
       .map((testcase): EvidenceObservation => {
         if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, qualityCheck);
         if (isBuildFailure(testcase)) return buildFailureOf(suite, testcase, qualityCheck);
+        if (isClassSetupFailure(testcase)) return classSetupFailureOf(testcase, qualityCheck);
         const { scnId: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
         const scnId = soleCode === null ? null : citedCode(soleCode);
         const locator = `${testcase.classname}::${testcase.name}`;
-        if (testcase.error !== undefined) {
+        if (testcase.error !== undefined && errorReading === "broken") {
           return { qualityCheck, scnId, status: "failed", locator, broken: true, message: errorTextOf(testcase) };
         }
         return {
           qualityCheck,
           scnId,
-          status: testcase.failure === undefined ? "passed" : "failed",
+          status: testcase.failure === undefined && testcase.error === undefined ? "passed" : "failed",
           locator,
           ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
         };
@@ -56,10 +74,9 @@ export function parseJunitEvidenceObservations(
   );
 }
 
-export const parsePytestEvidenceObservations = parseJunitEvidenceObservations;
-
 function citingCodesOf(testcase: JunitTestcase): string[] {
-  return [...scnPropertyValues(testcase), ...nameCitationsOf(testcase.name ?? "")];
+  const ownCodes = [...scnPropertyValues(testcase), ...nameCitationsOf(testcase.name ?? "")];
+  return ownCodes.length > 0 ? ownCodes : scnCitationsOf(testcase.classname ?? "").slice(-1);
 }
 
 function nameCitationsOf(name: string): string[] {
@@ -87,6 +104,21 @@ function collectionFailureOf(testcase: JunitTestcase, qualityCheck: BehaviouralQ
     scnId: null,
     status: "failed",
     locator: testcase.name ?? "",
+    broken: true,
+    message: errorTextOf(testcase),
+  };
+}
+
+function isClassSetupFailure(testcase: JunitTestcase): boolean {
+  return testcase.error !== undefined && !testcase.name;
+}
+
+function classSetupFailureOf(testcase: JunitTestcase, qualityCheck: BehaviouralQualityCheck): EvidenceObservation {
+  return {
+    qualityCheck,
+    scnId: null,
+    status: "failed",
+    locator: testcase.classname,
     broken: true,
     message: errorTextOf(testcase),
   };

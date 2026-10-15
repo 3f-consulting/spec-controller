@@ -329,7 +329,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.PytestFlag]: () => "A pytest JUnit XML report (pytest --junitxml) — runtime unit test evidence.",
   [AppMessage.JestFlag]: () => "A Jest JSON report (jest --json --outputFile) — runtime unit test evidence.",
   [AppMessage.JunitFlag]: () =>
-    "A JUnit XML report from any test runner that writes one, such as gotestsum --junitfile — runtime unit test evidence.",
+    "A JUnit XML report from any test runner that writes one, such as gotestsum --junitfile, or a directory of them, such as Maven Surefire's — runtime unit test evidence.",
   [AppMessage.RspecFlag]: () =>
     "An RSpec JSON report (rspec --format json --out) — runtime unit test evidence.",
   [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",

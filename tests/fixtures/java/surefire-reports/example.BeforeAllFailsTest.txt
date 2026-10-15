@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: example.BeforeAllFailsTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.042 s <<< FAILURE! -- in example.BeforeAllFailsTest
+example.BeforeAllFailsTest -- Time elapsed: 0.042 s <<< ERROR!
+java.lang.IllegalStateException: the shared resource could not be set up
+	at example.BeforeAllFailsTest.setUpAll(BeforeAllFailsTest.java:13)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
