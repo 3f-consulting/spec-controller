@@ -154,3 +154,26 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     @unit @SCN-STG-031
     Scenario: a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile
+
+  Rule: a scenario's tags include the ones it inherits from its Feature and Rule
+
+    @unit @SCN-STG-032
+    Scenario Outline: an evidence tier tagged on the <ancestor> is named of the scenarios beneath it
+
+      Examples:
+        | ancestor |
+        | Feature  |
+        | Rule     |
+
+    @unit @e2e @SCN-STG-033
+    Scenario Outline: a scenario whose @SCN it inherits from its <ancestor> is reconciled once, on that code's row, and never also as no-scn-code
+      Given a target whose one scenario carries no scenario code of its own, inherits one from its <ancestor>, and has passing evidence citing that code
+      When balance reconciles that target
+      Then the scenario is reconciled once, balanced, on its scenario code's row
+      And no reconciliation names it as a scenario with no scenario code
+      And the run balances
+
+      Examples:
+        | ancestor |
+        | Feature  |
+        | Rule     |

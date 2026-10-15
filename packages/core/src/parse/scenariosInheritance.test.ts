@@ -5,7 +5,7 @@ import {
 } from "./scenarios.js";
 import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 
-describe("[SCN-LDG-020] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
+describe("[SCN-STG-032] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
     const source = `@AAA @integration
 Feature: alpha
@@ -113,7 +113,7 @@ Feature: alpha
   });
 });
 
-describe("[SCN-LDG-039] a scenario whose @SCN it inherits from its Feature or Rule is not listed as untagged", () => {
+describe("[SCN-STG-033] a scenario whose @SCN it inherits from its Feature or Rule is not listed as untagged", () => {
   it.each([
     [
       "Feature",

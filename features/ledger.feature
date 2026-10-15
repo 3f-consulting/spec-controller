@@ -148,33 +148,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-018
     Scenario: a reconciliation carrying a broken item is unsound, and one carrying none is sound
 
-  Rule: a scenario's tags include the ones it inherits from its Feature and Rule
-
-    @unit @SCN-LDG-020
-    Scenario Outline: an evidence tier tagged on the <ancestor> is named of the scenarios beneath it
-
-      Examples:
-        | ancestor |
-        | Feature  |
-        | Rule     |
-
   Rule: a scenario carrying no @SCN reconciles no-scn-code — no-scn-code work is never invisible
 
     @unit @SCN-LDG-021
     Scenario: a scenario carrying no @SCN reconciles no-scn-code on its own row, and the run is out-of-balance
-
-    @SCN-LDG-039 @unit @e2e
-    Scenario Outline: a scenario whose @SCN it inherits from its <ancestor> is reconciled once, on that code's row, and never also as no-scn-code
-      Given a target whose one scenario carries no scenario code of its own, inherits one from its <ancestor>, and has passing evidence citing that code
-      When balance reconciles that target
-      Then the scenario is reconciled once, balanced, on its scenario code's row
-      And no reconciliation names it as a scenario with no scenario code
-      And the run balances
-
-      Examples:
-        | ancestor |
-        | Feature  |
-        | Rule     |
 
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
