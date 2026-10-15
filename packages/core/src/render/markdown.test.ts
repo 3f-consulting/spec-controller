@@ -80,9 +80,9 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
 
   it("decomposes the Quality Check Reconciliation out-of-balance into its nested reconciling-item causes, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    expect(md).toContain("| ↳ Evidence Observation is missing |");
+    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain("1 unit + 1 integration");
-    expect(md).toContain("| ↳ Evidence Observation is failing |");
+    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.failing} |`);
     expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
@@ -98,7 +98,10 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     );
     const md = renderMarkdown(__er(lintAndBehavioural), ctx);
     expect(md).toContain("1 fitness + 1 integration");
-    expect(/↳ Evidence Observation is missing \|[^\d]*2 \|/.test(md)).toBe(true);
+    const missingCause = `↳ ${OUTCOME_DESCRIPTION.missing} |`;
+    const afterMissingCause = md.slice(md.indexOf(missingCause) + missingCause.length);
+    expect(md).toContain(missingCause);
+    expect(afterMissingCause).toMatch(/^[^\d]*2 \|/);
   });
 
   let threeNamedPlusSuspense: Ledger;
@@ -160,7 +163,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
     expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
     expect(md).toContain("| Scenario | Outcome |");
     expect(md).not.toContain("| Scenario | Fitness function | Outcome |");
-    expect(md).toContain("| SCN-A | ✓ Evidence Observation satisfies its Evidence Obligation |");
+    expect(md).toContain(`| SCN-A | ✓ ${OUTCOME_DESCRIPTION.satisfied} |`);
     expect(md).toContain(`| SCN-B | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 

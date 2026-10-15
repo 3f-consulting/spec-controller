@@ -670,6 +670,8 @@ Then("the run ends on the exit its verdict headline names, rather than on a stac
 
 const NEW_CLIENT_UNCITED = "tests/fixtures/new-client-uncited";
 
+let uncitedJsonPath = "";
+
 Given("a target with no Gherkin corpus whose unit evidence cites no scenario", function () {
   const dir = join(process.cwd(), NEW_CLIENT_UNCITED);
   assert.ok(
@@ -677,24 +679,25 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
     `fixture invariant: ${join(dir, "features")} must NOT exist — an EMPTY corpus directory is a
      different shape and would sit green through the very shortcut this scenario guards`,
   );
-  invocationArgs = ["--vitest", "vitest.json"];
+  const outDir = mkdtempSync(join(tmpdir(), "spec-controller-uncited-"));
+  temporaryPaths.push(outDir);
+  uncitedJsonPath = join(outDir, "spec-reconciliation.json");
+  invocationArgs = ["--vitest", "vitest.json", "--format", "md", "--format", `json:${uncitedJsonPath}`];
   invocationCwd = dir;
 });
 
 Then("the uncited evidence observations are posted to the suspense reconciliation", function () {
-  const volume = cliResult.stdout.match(
-    /^(\d+) evidence observations = (\d+) on scenarios \+ (\d+) on phantom scenarios \+ (\d+) on the suspense scenario\.$/m,
-  );
-  assert.ok(volume, `expected the test-volume sentence in stdout; got:\n${cliResult.stdout}`);
+  const { summary } = JSON.parse(readFileSync(uncitedJsonPath, "utf8"));
+  const { testVolume } = summary;
   assert.deepEqual(
-    [volume[1], volume[2], volume[3], volume[4]].map(Number),
+    [testVolume.totalEvidenceObservations, testVolume.onScenario, testVolume.onPhantomScenario, testVolume.onSuspenseScenario],
     [2, 0, 0, 2],
-    `expected both uncited evidence observations on the suspense scenario and none anywhere else; got: ${volume[0]}`,
+    `expected both uncited evidence observations on the suspense scenario and none anywhere else; got: ${JSON.stringify(testVolume)}`,
   );
-  assert.match(
-    cliResult.stdout,
-    /^\| ↳ Evidence Observation cites no Scenario \| +\| +\| 2 \|/m,
-    `expected the two evidence observations reconciled as cites-no-scenario; got:\n${cliResult.stdout}`,
+  assert.equal(
+    summary.qualityCheckReconciliations.byOutcome["cites-no-scenario"],
+    2,
+    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(summary.qualityCheckReconciliations)}`,
   );
 });
 

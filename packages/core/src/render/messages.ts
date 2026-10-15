@@ -244,6 +244,12 @@ export type CoreMessages = {
   readonly [C in CoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
 };
 
+const SATISFIED = "Evidence Observation satisfies its Evidence Obligation";
+const MISSING = "Evidence Observation is missing";
+const DUPLICATE_SCN_CODE = "Evidence Obligation's @SCN code is carried by another Scenario";
+const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
+const CITING_NO_SCENARIO = "evidence observations citing no scenario";
+
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
 const foreignOpening = (file: string, featureCode: string, scnId: string, named: string): string =>
@@ -279,7 +285,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OneProofNeverRan]: "1 proof never ran, so the behaviour it proves was never exercised.",
   [CoreMessage.ProofsNeverRan]: (count) => `${count} proofs never ran, so the behaviours they prove were never exercised.`,
   [CoreMessage.RunUnsound]: (proofs) =>
-    `⚠ **This run is unsound.** ${proofs} A \`missing\` outcome ` +
+    `⚠ **This run is unsound.** ${proofs} A row reading "${MISSING}" ` +
     "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
     `"write the test", because the test may already be there. Fix the harness and regenerate.`,
   [CoreMessage.BrokenEvidenceNotNamed]: "(evidence not named by the runner)",
@@ -299,8 +305,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `${count} — each either misfiles a scenario code, so the by-feature cut below cannot be trusted, or ` +
     "is a scenario carrying more than one scenario code, so no account was raised for it under any of " +
     "them. The run fails (exit 1).",
-  [CoreMessage.DuplicateScnCodeNotListed]:
-    "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.",
+  [CoreMessage.DuplicateScnCodeNotListed]: `A duplicated @SCN code is not listed here: it is reported on its account's rows, as "${DUPLICATE_SCN_CODE}".`,
   [CoreMessage.FeatureFileNoun]: "feature file",
   [CoreMessage.FeatureCodeNoun]: "feature code",
   [CoreMessage.ScenarioCodesClean]: `Scenario codes are clean, and ${IN_ITS_FILE}.`,
@@ -368,7 +373,7 @@ export const CORE_MESSAGES: CoreMessages = {
     "every Scenario Reconciliation balances, but Pending Items are outstanding and this run " +
     "treats a deferral as a failure (`--strict`). This run FAILED.",
   [CoreMessage.BalancedHeadline]: "**BALANCED**",
-  [CoreMessage.BalancedGloss]: "every Scenario Reconciliation balances: scenario, phantom and suspense alike.",
+  [CoreMessage.BalancedGloss]: `every Scenario Reconciliation balances: every ${SATISFIED}.`,
   [CoreMessage.NothingToReconcileHeadline]: "**NOTHING TO RECONCILE**",
   [CoreMessage.NothingToReconcileGloss]: (corpusDir) =>
     "there were no accounts to agree. The ledger carries no Scenario Reconciliation at " +
@@ -389,7 +394,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.TestVolumeHeading]: "### Test volume",
   [CoreMessage.TestVolumeSum]: (total, onScenario, onPhantomScenario, onSuspenseScenario) =>
-    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomScenario} on phantom scenarios + ${onSuspenseScenario} on the suspense scenario.`,
+    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomScenario} on ${CITED_WITH_NO_SCENARIO} + ${onSuspenseScenario} citing no scenario.`,
   [CoreMessage.TestVolumeTableHeader]: "| Quality-check | Evidence observations |",
   [CoreMessage.DiscoveryScopeHeading]: "### Discovery scope",
   [CoreMessage.DiscoveryScopeTableHeader]: "| Workflow | Job | Steps read | Candidates |",
@@ -424,8 +429,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.GroupedByFeature]: ", grouped by feature",
   [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
     `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,
-  [CoreMessage.PhantomScenarioRows]: (count) => `${count} phantom-scenario row(s)`,
-  [CoreMessage.SuspenseScenarioRows]: (count) => `${count} suspense-scenario row(s)`,
+  [CoreMessage.PhantomScenarioRows]: (count) => `${count} Scenario Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
+  [CoreMessage.SuspenseScenarioRows]: (count) => `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}`,
   [CoreMessage.AndJoiner]: " and ",
   [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
   [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
@@ -433,9 +438,9 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ScenarioReconciliationTally]: (total, balanced, outOfBalance) =>
     `${total} Scenario Reconciliation(s): ${balanced} balanced, ${outOfBalance} out-of-balance.`,
   [CoreMessage.PhantomScenarioTally]: (count) =>
-    `${count} phantom-scenario(s): cited by an evidence observation, named by no feature.`,
+    `${count} Scenario Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
   [CoreMessage.SuspenseScenarioTally]: (count) =>
-    `${count} suspense-scenario(s): evidence observations citing no scenario, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
+    `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
@@ -460,12 +465,12 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ManifestKindString]: aKind("string"),
   [CoreMessage.ManifestKindStringOrNull]: "a string or null",
   [CoreMessage.ManifestKindOfType]: aKind,
-  [CoreMessage.OutcomeSatisfied]: "Evidence Observation satisfies its Evidence Obligation",
-  [CoreMessage.OutcomeMissing]: "Evidence Observation is missing",
+  [CoreMessage.OutcomeSatisfied]: SATISFIED,
+  [CoreMessage.OutcomeMissing]: MISSING,
   [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",
   [CoreMessage.OutcomeWatermelon]: "Evidence Observation is passing but its check could not fail its job",
   [CoreMessage.OutcomeNoScnCode]: "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
-  [CoreMessage.OutcomeDuplicateScnCode]: "Evidence Obligation's @SCN code is carried by another Scenario",
+  [CoreMessage.OutcomeDuplicateScnCode]: DUPLICATE_SCN_CODE,
   [CoreMessage.OutcomeCitesUnknownScenario]: "Evidence Observation cites an unknown Scenario",
   [CoreMessage.OutcomeCitesNoScenario]: "Evidence Observation cites no Scenario",
   [CoreMessage.OutcomeNoEvidenceObligation]: "Evidence Observation cites a Scenario with no matching Evidence Obligation",

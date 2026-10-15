@@ -99,7 +99,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.StepsNotAccountedFor]: [5, 4],
   [CoreMessage.FitnessSatisfiedOf]: [1, 2],
   [CoreMessage.ScenarioRowsOutOfBalance]: [1, 3],
-  [CoreMessage.NotGroupedByFeature]: ["1 phantom-scenario row(s)"],
+  [CoreMessage.NotGroupedByFeature]: ["1 Scenario Reconciliation(s) for cited scenario ids with no real scenario"],
   [CoreMessage.PhantomScenarioRows]: [1],
   [CoreMessage.SuspenseScenarioRows]: [1],
   [CoreMessage.NoScnCodeScenarios]: [1],

@@ -153,10 +153,10 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "## Summary views", the "### Test volume" cut counts the observed test evidence
     observations. It opens with the identity "N evidence observations = a on scenarios + b
-    on phantom scenarios + c on the suspense scenario", which always balances. A phantom
-    scenario is an @SCN code no scenario carries; the suspense scenario holds observations
-    with no @SCN code. A table by level follows, always listing all four levels, with e2e
-    and performance shown at zero when empty. The raw per-level totals and the three
+    on cited scenario ids with no real scenario + c citing no scenario", which always
+    balances. A phantom scenario is an @SCN code no scenario carries; the suspense scenario
+    holds observations with no @SCN code. A table by level follows, always listing all four
+    levels, with e2e and performance shown at zero when empty. The raw per-level totals and the three
     per-account counts are also on the JSON; the identity line is markdown only.
 
     @unit @SCN-RPT-010
@@ -424,3 +424,17 @@ Feature: The report renders the ledger as sectioned facts
       Then the suspense row lists the CI steps together once, after the test's file
       And the CI steps' entry names each of the two checks
       And what the suspense row counts adds up to the count of evidence observations that cite no scenario
+
+  Rule: the markdown names each reconciling item in canon's words, and the JSON keeps the evidence model's terms
+
+    The Markdown names phantom-scenario rows as cited scenario ids with no real scenario, and
+    the suspense-scenario row as evidence observations citing no scenario. A balanced run's
+    gloss quotes the satisfied outcome's sentence. Where the Markdown's prose refers to an
+    outcome, it quotes the outcome's sentence, never its handle. The JSON keeps the terms
+    `phantom-scenario` and `suspense-scenario` as the rows' kinds.
+
+    @unit @SCN-RPT-039
+    Scenario: the markdown counts phantom-scenario and suspense-scenario rows by the reconciliation model's definitions of them, while the JSON keeps the terms
+
+    @unit @SCN-RPT-040
+    Scenario: the markdown's prose refers to an outcome by its sentence, never by its handle

@@ -7,6 +7,8 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -58,12 +60,14 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   it("carries the whole document — the three-way test-volume line and the materialised summary totals", () => {
     const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
-    expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
+    const citesNoScenario = OUTCOME_DESCRIPTION["cites-no-scenario"];
+    expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.TestVolumeSum](3, 1, 1, 1));
     expect(regenerated).toContain("2 fitness function(s) run, 1 uncited fitness function(s).");
-    expect(regenerated).toContain('1 suspense-scenario(s): evidence observations citing no scenario, aggregated into "(no scenario)".');
+    expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.SuspenseScenarioTally](1));
     const suspenseRow = regenerated.split("\n").find((line) => line.startsWith("| (no scenario) |"));
-    expect(suspenseRow).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");
-    expect(suspenseRow).toMatch(/fitness ❓ Evidence Observation cites no Scenario[^;|]*\blint:bar\b/);
+    expect(suspenseRow).toContain(`unit ❓ ${citesNoScenario} (src/b.test.ts)`);
+    expect(suspenseRow).toContain(`fitness ❓ ${citesNoScenario}`);
+    expect(suspenseRow).toMatch(/fitness ❓ [^;|]*\blint:bar\b/);
   });
 
   it("needs no RunContext — the JSON string alone reconstructs the report", () => {

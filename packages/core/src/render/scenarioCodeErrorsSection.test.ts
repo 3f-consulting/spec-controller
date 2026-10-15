@@ -131,8 +131,7 @@ describe("[SCN-STG-029] a several-scn-codes error is worded from its file, its s
   });
 });
 
-const DUPLICATE_LINE =
-  "A duplicated @SCN code is not listed here: it is reported on its account's rows, as `duplicate-scn-code`.";
+const DUPLICATE_LINE = CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed];
 
 const HEADING = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
 

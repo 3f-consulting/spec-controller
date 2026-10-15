@@ -140,12 +140,16 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     const at = md.indexOf("### Out-of-balance by feature");
     return at < 0 ? "" : md.slice(at, md.indexOf("\n## ", at));
   };
+  const phantomAndSuspense = (): string =>
+    [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1), CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](1)].join(
+      CORE_MESSAGES[CoreMessage.AndJoiner]
+    );
 
   it("names the out-of-balance phantom-scenario row beside the grouped scenario rows, and never groups it", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
-      "1 of 2 scenario rows out of balance, grouped by feature; 1 phantom-scenario row(s) out of balance, " +
-        "not grouped by feature (no feature file names them)."
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
+        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1))}.`
     );
     expect(section).toContain("| BFP | 1 | SCN-BFP-002 |");
     expect(section).not.toContain("SCN-GONE-001");
@@ -154,30 +158,25 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("names both ungrouped kinds when a phantom-scenario and the suspense-scenario row are out of balance", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      "1 of 2 scenario rows out of balance, grouped by feature; 1 phantom-scenario row(s) and 1 " +
-        "suspense-scenario row(s) out of balance, not grouped by feature (no feature file names them)."
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
+        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`
     );
   });
 
   it("renders the section with no table when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      "0 of 1 scenario rows out of balance; 1 phantom-scenario row(s) and 1 suspense-scenario row(s) " +
-        "out of balance, not grouped by feature (no feature file names them)."
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`
     );
     expect(section).not.toContain("| Feature | Count |");
   });
 
   it("renders only the heading and the total line, with no table and no stray line, when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
-    const ungrouped = [
-      CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1),
-      CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](1),
-    ].join(CORE_MESSAGES[CoreMessage.AndJoiner]);
     expect(section.split("\n")).toEqual([
       CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](ungrouped)}.`,
+      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`,
       "",
     ]);
   });
@@ -211,7 +210,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
     expect(md).toContain("SCN-C");
-    expect(md).toContain("⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited");
+    expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
   });
 });
 
@@ -270,7 +269,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
-    expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ Evidence Observation is missing |");
+    expect(md).toContain(`| SCN-LDG-002 | ✗ out-of-balance | unit ∅ ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain(
       `| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`
     );
@@ -337,6 +336,6 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
   it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     expect(md).toContain("### Test volume");
-    expect(md).toContain("8 evidence observations = 4 on scenarios + 1 on phantom scenarios + 3 on the suspense scenario.");
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.TestVolumeSum](8, 4, 1, 3));
   });
 });
