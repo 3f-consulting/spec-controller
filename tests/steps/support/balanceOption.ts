@@ -5,6 +5,7 @@ const OPTION_FLAG: Readonly<Record<string, string>> = {
   "pytest report option": "--pytest",
   "Jest report option": "--jest",
   "JUnit report option": "--junit",
+  "RSpec report option": "--rspec",
   "Cucumber report option": "--cucumber",
   "feature corpus option": "--features",
   "CI workflows option": "--ci",

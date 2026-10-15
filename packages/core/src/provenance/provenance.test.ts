@@ -106,7 +106,7 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
 
   it("names the canonical flags with no value, in canonical order", () => {
     const facts = projectProvenance(handed({ features: "features", ciSteps: "ci-steps.json" }));
-    expect(facts.absentInputs).toEqual(["--vitest", "--pytest", "--jest", "--junit", "--cucumber", "--ci", "--package-json"]);
+    expect(facts.absentInputs).toEqual(["--vitest", "--pytest", "--jest", "--junit", "--rspec", "--cucumber", "--ci", "--package-json"]);
   });
 
   it("lists a pytest report the run received among its inputs, beside --vitest, and never as absent", () => {
@@ -130,5 +130,12 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
     expect(facts.inputs.map((i) => i.flag)).toEqual(["--features", "--jest", "--junit", "--cucumber"]);
     expect(facts.inputs).toContainEqual({ flag: "--junit", value: "junit.xml" });
     expect(facts.absentInputs).not.toContain("--junit");
+  });
+
+  it("lists an RSpec report the run received among its inputs, after --junit, and never as absent", () => {
+    const facts = projectProvenance(handed({ features: "features", junit: "junit.xml", rspec: "rspec.json", cucumber: "cucumber.json" }));
+    expect(facts.inputs.map((i) => i.flag)).toEqual(["--features", "--junit", "--rspec", "--cucumber"]);
+    expect(facts.inputs).toContainEqual({ flag: "--rspec", value: "rspec.json" });
+    expect(facts.absentInputs).not.toContain("--rspec");
   });
 });

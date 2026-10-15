@@ -44,6 +44,8 @@ export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
 export { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "./parse/pytest.js";
 export type { JunitXmlReport } from "./parse/pytest.js";
+export { parseRspecEvidenceObservations } from "./parse/rspec.js";
+export type { RspecJsonReport } from "./parse/rspec.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";
 export { runningFitnessFunctions } from "./parse/runningFitnessFunctions.js";

@@ -270,3 +270,42 @@ describe("[SCN-USG-034] recognisedRunners — a pytest suite started through a P
     ]);
   });
 });
+
+describe("[SCN-USG-035] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner", () => {
+  const stepRunning = (line: string): string =>
+    ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
+      "\n"
+    );
+
+  const unit = { unit: "rspec" };
+  const asTheRunner = [{ tier: "unit", runner: "rspec", step: "Unit tests" }];
+
+  const forms = [
+    ["directly", "rspec"],
+    ["through bundle exec", "bundle exec rspec"],
+    ["through bundle exec with the JSON formatter", "bundle exec rspec --format progress --format json --out reports/rspec.json"],
+    ["through timeout and bundle exec", "timeout 600 bundle exec rspec"],
+    ["through bundle exec after an environment assignment", "RAILS_ENV=test bundle exec rspec"],
+    ["through bundle exec later in a command list", "bundle install && bundle exec rspec"],
+  ] as const;
+
+  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
+    expect(recognisedRunners([stepRunning(line)], { scripts: {} }, unit)).toEqual(asTheRunner);
+  });
+
+  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
+    expect(recognisedRunners([stepRunning("pnpm test")], { scripts: { test } }, unit)).toEqual(asTheRunner);
+  });
+
+  it.each([
+    ["an option between the launcher and the runner", "bundle exec --keep-file-descriptors rspec"],
+    ["a rake task", "bundle exec rake spec"],
+    ["bundle without exec", "bundle rspec"],
+  ] as const)("leaves the step a candidate for %s", (_form, line) => {
+    const step = [stepRunning(line)];
+    expect(recognisedRunners(step, { scripts: {} }, unit)).toEqual([]);
+    expect(runningFitnessFunctions(step, { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual([
+      "Unit tests",
+    ]);
+  });
+});

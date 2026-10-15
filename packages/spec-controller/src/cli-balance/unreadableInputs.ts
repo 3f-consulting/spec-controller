@@ -9,6 +9,7 @@ import {
   CUCUMBER_REPORT,
   JUNIT_REPORT,
   PACKAGE_MANIFEST,
+  RSPEC_REPORT,
   SAVED_RECONCILIATION,
   shapeFaultIn,
   VITEST_REPORT,
@@ -70,6 +71,12 @@ const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
     subject: APP_MESSAGES[AppMessage.FlaggedReport],
     writer: APP_MESSAGES[AppMessage.JestReportShape](),
     shape: VITEST_REPORT,
+    syntax: JSON_SYNTAX_NAMING_SHAPE,
+  },
+  rspec: {
+    subject: APP_MESSAGES[AppMessage.FlaggedReport],
+    writer: APP_MESSAGES[AppMessage.RspecReportShape](),
+    shape: RSPEC_REPORT,
     syntax: JSON_SYNTAX_NAMING_SHAPE,
   },
   junit: {

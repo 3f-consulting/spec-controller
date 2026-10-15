@@ -20,6 +20,7 @@ const LAUNCHERS: readonly (readonly string[])[] = [
   ["hatch", "run"],
   ["pdm", "run"],
   ["coverage", "run", "-m"],
+  ["bundle", "exec"],
 ];
 
 type LineTest = (line: string, invocation: string) => boolean;

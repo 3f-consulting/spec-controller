@@ -62,6 +62,11 @@ const balanceFlags: FlagSpec[] = [
     description: APP_MESSAGES[AppMessage.JunitFlag](),
   },
   {
+    name: "--rspec",
+    arg: "<report.json>",
+    description: APP_MESSAGES[AppMessage.RspecFlag](),
+  },
+  {
     name: "--cucumber",
     arg: "<report.json>",
     description: APP_MESSAGES[AppMessage.CucumberFlag](),

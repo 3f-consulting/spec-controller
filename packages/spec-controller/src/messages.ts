@@ -62,6 +62,7 @@ export enum AppMessage {
   PytestFlag,
   JestFlag,
   JunitFlag,
+  RspecFlag,
   CucumberFlag,
   CiFlag,
   PackageJsonFlag,
@@ -97,6 +98,7 @@ export enum AppMessage {
   JunitReportShape,
   JestReportShape,
   JunitXmlReportShape,
+  RspecReportShape,
   CucumberReportShape,
   CiStepRecordShape,
   PackageManifestShape,
@@ -328,6 +330,8 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.JestFlag]: () => "A Jest JSON report (jest --json --outputFile) — runtime unit test evidence.",
   [AppMessage.JunitFlag]: () =>
     "A JUnit XML report from any test runner that writes one, such as gotestsum --junitfile — runtime unit test evidence.",
+  [AppMessage.RspecFlag]: () =>
+    "An RSpec JSON report (rspec --format json --out) — runtime unit test evidence.",
   [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",
   [AppMessage.CiFlag]: () =>
     "Your CI workflows — a file, or a directory of them (default .github/workflows). " +
@@ -390,6 +394,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.JunitReportShape]: () => "of the JUnit XML report pytest --junitxml writes",
   [AppMessage.JestReportShape]: () => "of the JSON report jest --json writes",
   [AppMessage.JunitXmlReportShape]: () => "of a JUnit XML report",
+  [AppMessage.RspecReportShape]: () => "of the JSON report rspec --format json writes",
   [AppMessage.CucumberReportShape]: () => "the Cucumber JSON formatter writes",
   [AppMessage.CiStepRecordShape]: () => "of a CI run's record of its steps",
   [AppMessage.PackageManifestShape]: () => "of a package.json manifest",

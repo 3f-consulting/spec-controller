@@ -39,6 +39,17 @@ export const JUNIT_REPORT: Shape = {
   required: ["testsuites"],
 };
 
+export const RSPEC_REPORT: Shape = {
+  fields: {
+    examples: {
+      list: { fields: { description: "string", full_description: "string", status: "string", file_path: "string" } },
+    },
+    summary: { fields: { errors_outside_of_examples_count: "number" } },
+    messages: { list: "string" },
+  },
+  required: ["examples", "summary"],
+};
+
 export const CUCUMBER_REPORT: Shape = {
   list: {
     fields: {

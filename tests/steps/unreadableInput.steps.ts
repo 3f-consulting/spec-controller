@@ -118,6 +118,18 @@ Given(/^a target whose Jest report is (?!well formed and holds nothing$)(.+)$/, 
   target = { dir, args: ["--features", "features", "--jest", "jest.json"], named: "jest.json", where: "--jest" };
 });
 
+const NOT_RSPEC_JSON: Record<string, string> = {
+  "not JSON at all": "Finished in 0.01 seconds\n3 examples, 0 failures\n",
+  "a JUnit XML report rather than JSON": '<?xml version="1.0" encoding="UTF-8"?><testsuite name="rspec" tests="0"></testsuite>',
+  "JSON that holds no examples": '{"numTotalTests":0,"testResults":[]}',
+};
+
+Given(/^a target whose RSpec report is (?!well formed and holds nothing$)(.+)$/, function (defect: string) {
+  const dir = targetDir();
+  writeFileSync(join(dir, "rspec.json"), rowOf(NOT_RSPEC_JSON, defect));
+  target = { dir, args: ["--features", "features", "--rspec", "rspec.json"], named: "rspec.json", where: "--rspec" };
+});
+
 const MANIFEST: Record<string, readonly [string, string]> = {
   "a list where the manifest belongs": ["[]", "the top level is a list, not an object"],
   "scripts that are not a map": ['{"scripts":"x"}', "scripts is a string, not an object"],
@@ -147,10 +159,19 @@ const EMPTY_GOTESTSUM_REPORT = [
   "</testsuites>",
 ].join("\n");
 
+const EMPTY_RSPEC_REPORT = JSON.stringify({
+  version: "3.13.6",
+  messages: ["No examples found."],
+  examples: [],
+  summary: { duration: 0.000021, example_count: 0, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: 0 },
+  summary_line: "0 examples, 0 failures",
+});
+
 const EMPTY: Record<string, readonly [string, string, string]> = {
   "Vitest report": ["vitest", "vitest.json", JSON.stringify({ testResults: [] })],
   "pytest report": ["pytest", "report.xml", EMPTY_PYTEST_REPORT],
   "Jest report": ["jest", "jest.json", JSON.stringify({ numTotalTests: 0, success: true, testResults: [] })],
+  "RSpec report": ["rspec", "rspec.json", EMPTY_RSPEC_REPORT],
   "JUnit report": ["junit", "report.xml", EMPTY_GOTESTSUM_REPORT],
   "Cucumber report": ["cucumber", "cucumber.json", "[]"],
   "CI step record": ["ci-steps", "ci-steps.json", "{}"],
@@ -229,6 +250,11 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
     writeFileSync(join(dir, "jest.json"), '{"numTotalTests":0,"success":true,"testResults":[]}');
     chmodSync(join(dir, "jest.json"), 0o000);
     return [["--features", "features", "--jest", "jest.json"], "jest.json", "--jest"];
+  },
+  "the RSpec report": (dir) => {
+    writeFileSync(join(dir, "rspec.json"), EMPTY_RSPEC_REPORT);
+    chmodSync(join(dir, "rspec.json"), 0o000);
+    return [["--features", "features", "--rspec", "rspec.json"], "rspec.json", "--rspec"];
   },
   "the JUnit report": (dir) => {
     writeFileSync(join(dir, "report.xml"), EMPTY_GOTESTSUM_REPORT);
@@ -337,6 +363,15 @@ Then("the refusal names the Jest report and the shape Jest writes", function () 
   assert.ok(
     result.stderr.includes("the JSON report jest --json writes"),
     `expected stderr to name the shape Jest writes; got:\n${result.stderr}`,
+  );
+});
+
+Then("the refusal names the RSpec report and the shape RSpec writes", function () {
+  assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+  assert.ok(
+    result.stderr.includes("the JSON report rspec --format json writes"),
+    `expected stderr to name the shape RSpec writes; got:\n${result.stderr}`,
   );
 });
 

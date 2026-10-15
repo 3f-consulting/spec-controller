@@ -148,6 +148,58 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
   });
 });
 
+describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
+  const RSPEC_SHAPE = "the JSON report rspec --format json writes";
+  const refusalOf = (content: string): string | null =>
+    checkInputShapes(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content));
+
+  it.each([
+    ["text that is not JSON", "Finished in 0.01 seconds\n3 examples, 0 failures\n", "is not valid JSON"],
+    [
+      "a JUnit XML report",
+      '<?xml version="1.0" encoding="UTF-8"?><testsuite name="rspec" tests="0"></testsuite>',
+      "is not valid JSON",
+    ],
+    ["JSON that holds no examples, as a Jest report", '{"numTotalTests":0,"testResults":[]}', "examples is missing"],
+    ["examples with no summary", '{"examples":[]}', "summary is missing"],
+    ["examples that are not a list", '{"examples":{},"summary":{}}', "examples is an object, not a list"],
+    [
+      "an example whose description is not a string",
+      '{"examples":[{"description":1}],"summary":{}}',
+      "examples[0].description is a number, not a string",
+    ],
+    [
+      "an error count that is not a number",
+      '{"examples":[],"summary":{"errors_outside_of_examples_count":"1"}}',
+      "summary.errors_outside_of_examples_count is a string, not a number",
+    ],
+    ["messages that are not a list", '{"examples":[],"summary":{},"messages":"x"}', "messages is a string, not a list"],
+  ])("refuses %s, naming the flag, the file, the shape RSpec writes and what is wrong", (_, content, fault) => {
+    const error = refusalOf(content) ?? "";
+
+    expect(error).toContain("--rspec");
+    expect(error).toContain("reports/rspec.json");
+    expect(error).toContain(RSPEC_SHAPE);
+    expect(error).toContain(fault);
+  });
+
+  it("passes the report a real RSpec run wrote, so the run goes on to reconcile", () => {
+    const real = readFileSync("tests/fixtures/rspec/report.json", "utf8");
+    expect(checkInputShapes(jsonInputsOf({ rspec: "report.json" }, nothingByDefault), reading(real))).toBeNull();
+  });
+
+  it("runBalance refuses an --rspec file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    const report = join(features, "..", "rspec.json");
+    writeFileSync(report, "not json\n");
+    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--rspec", report]);
+
+    expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
+    expect(stderr).toContain(report);
+    expect(stderr).toContain(RSPEC_SHAPE);
+  });
+});
+
 describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
   const JUNIT_SHAPE = "in the shape of a JUnit XML report";
   const refusalOf = (content: string): string | null =>
@@ -200,6 +252,10 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
       '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.004" /></testsuites>',
     ],
     ["jest", '{"numTotalTests":0,"success":true,"testResults":[]}'],
+    [
+      "rspec",
+      '{"version":"3.13.6","messages":["No examples found."],"examples":[],"summary":{"duration":0.000021,"example_count":0,"failure_count":0,"pending_count":0,"errors_outside_of_examples_count":0},"summary_line":"0 examples, 0 failures"}',
+    ],
     [
       "junit",
       '<?xml version="1.0" encoding="UTF-8"?><testsuites tests="0" failures="0" errors="0" time="0.001000"><testsuite tests="0" failures="0" time="0.000000" name="example.com/empty" timestamp="2026-10-14T22:35:27Z"><properties><property name="go.version" value="go1.27.2 linux/amd64"></property></properties></testsuite></testsuites>',
@@ -356,6 +412,22 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--jest", path])).toEqual({
       report: "",
       stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--jest"), path, reason) + "\n",
+      exitCode: 2,
+    });
+  });
+
+  it("runBalance refuses a given --rspec report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+    skip(runsAsRoot());
+    const dir = mkdtempSync(join(tmpdir(), "rspec-not-permitted-"));
+    made.push(dir);
+    const path = join(dir, "rspec.json");
+    writeFileSync(path, '{"version":"3.13.6","messages":["No examples found."],"examples":[],"summary":{"example_count":0,"errors_outside_of_examples_count":0}}');
+    lock(path);
+    const reason = osReasonFor(() => readFileSync(path, "utf8"));
+
+    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--rspec", path])).toEqual({
+      report: "",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--rspec"), path, reason) + "\n",
       exitCode: 2,
     });
   });

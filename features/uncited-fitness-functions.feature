@@ -99,7 +99,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     pipeline: the first word after any leading NAME=value assignments, or the word a launcher
     hands on to, the launchers being timeout with its duration, npx, npm exec, pnpm exec,
     pnpm dlx, pnpm, yarn, bunx, python -m, python3 -m, poetry run, uv run, pipenv run,
-    hatch run, pdm run and coverage run -m. A launcher hands on to the word right after it, so
+    hatch run, pdm run, coverage run -m and bundle exec. A launcher hands on to the word right after it, so
     an option between a launcher and the runner leaves the step a candidate. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
     it follows. A runner named anywhere else, as an argument, inside a path, a flag or an
@@ -113,6 +113,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     @unit @SCN-USG-034
     Scenario: a pytest suite started through a Python launcher is recognised as the unit runner
+
+    @unit @SCN-USG-035
+    Scenario: an RSpec suite started through bundle exec is recognised as the unit runner
 
   Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
 
