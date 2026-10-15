@@ -309,3 +309,63 @@ describe("[SCN-USG-035] recognisedRunners — an RSpec suite started through bun
     ]);
   });
 });
+
+describe("[SCN-USG-036] recognisedRunners — a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate", () => {
+  const ciRunning = (...steps: readonly (readonly [string, string])[]): string =>
+    [
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      ...steps.flatMap(([name, line]) => [`      - name: ${name}`, `        run: ${line}`]),
+    ].join("\n");
+
+  it.each([
+    [
+      "Gradle",
+      "./gradlew test",
+      [
+        ["Unit tests", "./gradlew test"],
+        ["Verbose unit tests", "./gradlew test --info"],
+        ["Static analysis", "./gradlew detekt"],
+        ["Lint", "./gradlew ktlintCheck"],
+      ],
+      ["Unit tests", "Verbose unit tests"],
+      ["Lint", "Static analysis"],
+    ],
+    [
+      "Maven",
+      "mvn test",
+      [
+        ["Unit tests", "mvn test"],
+        ["Unit tests with a profile", "mvn test -Pci"],
+        ["Style", "mvn checkstyle:check"],
+        ["Batch-mode unit tests", "mvn -B test"],
+        ["Clean unit tests", "mvn clean test"],
+      ],
+      ["Unit tests", "Unit tests with a profile"],
+      ["Batch-mode unit tests", "Clean unit tests", "Style"],
+    ],
+  ] as const)(
+    "recognises %s's declared test task only where the step opens with it, and reports every other task as a fitness function",
+    (_tool, runner, steps, recognised, candidates) => {
+      const ci = [ciRunning(...steps)];
+      const unit = { unit: runner };
+      expect(recognisedRunners(ci, { scripts: {} }, unit)).toEqual(
+        recognised.map((step) => ({ tier: "unit", runner, step }))
+      );
+      expect(runningFitnessFunctions(ci, { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual(
+        candidates
+      );
+    }
+  );
+
+  it("recognises the declared test task in a manifest script the step follows, and leaves another task a candidate", () => {
+    const ci = [ciRunning(["Unit tests", "pnpm test"], ["Static analysis", "pnpm analyse"])];
+    const manifest = { scripts: { test: "./gradlew test --info", analyse: "./gradlew detekt" } };
+    const unit = { unit: "./gradlew test" };
+    expect(recognisedRunners(ci, manifest, unit)).toEqual([
+      { tier: "unit", runner: "./gradlew test", step: "Unit tests" },
+    ]);
+    expect(runningFitnessFunctions(ci, manifest, unit).map((check) => check.fitnessFunction)).toEqual(["analyse"]);
+  });
+});

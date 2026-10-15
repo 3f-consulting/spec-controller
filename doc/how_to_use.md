@@ -366,7 +366,7 @@ Surefire writes that test into `TEST-example.allocate.NextNumberTest.xml` under 
 <testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
-Name your runner in the `specController` block as `"unit": "mvn"`, or `"unit": "./mvnw"` if your pipeline runs the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)).
+Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn test"`, `"unit": "mvn clean test"` if the step runs `mvn clean test`, or `"unit": "./mvnw test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, so a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
 
 **Old reports are read as well.** Surefire does not clear the directory before a run, so a report left in an uncleaned `target/` by an earlier run is read beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before any report is written, so when the directory is missing, `balance` refuses `--junit` as a path that does not exist.
 
@@ -411,7 +411,7 @@ Gradle's report differs from Surefire's in two ways:
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
 - **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. The failing item lands on the suspense row, the scenarios those tests cite read `missing`, and the run is not marked unsound.
 
-Name your runner in the `specController` block as `"unit": "./gradlew"`, or `"unit": "gradle"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)).
+Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "./gradlew test"`, or `"unit": "gradle test"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)). Declared as `"./gradlew"` alone, the runner would be recognised in every step that runs the wrapper, so a `./gradlew detekt` step would be taken for the test suite instead of being reported as a check.
 
 ### Citing a scenario from RSpec
 
@@ -546,8 +546,9 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **Jest works the same way.** `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
 - **RSpec works the same way.** `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
 - **Go works the same way.** `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
-- **Java works the same way.** `"unit": "mvn"` recognises a step that runs `mvn …`, and `"unit": "./mvnw"` one that runs the Maven wrapper.
-- **Kotlin works the same way.** `"unit": "./gradlew"` recognises a step that runs the Gradle wrapper, `./gradlew …`, and `"unit": "gradle"` one that runs `gradle …`.
+- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check.
+- **Java works this way.** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, or it is reported as a check.
+- **Kotlin works this way.** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check.
 - **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`

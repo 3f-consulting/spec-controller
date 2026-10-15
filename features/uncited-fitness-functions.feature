@@ -100,7 +100,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     hands on to, the launchers being timeout with its duration, npx, npm exec, pnpm exec,
     pnpm dlx, pnpm, yarn, bunx, python -m, python3 -m, poetry run, uv run, pipenv run,
     hatch run, pdm run, coverage run -m and bundle exec. A launcher hands on to the word right after it, so
-    an option between a launcher and the runner leaves the step a candidate. Each command of an
+    an option between a launcher and the runner leaves the step a candidate. A runner declared as
+    several words, such as a build tool and its test task, is recognised where a command, after any
+    launchers, opens with all of those words. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
     it follows. A runner named anywhere else, as an argument, inside a path, a flag or an
     =-joined value, leaves the step a candidate.
@@ -116,6 +118,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     @unit @SCN-USG-035
     Scenario: an RSpec suite started through bundle exec is recognised as the unit runner
+
+    @unit @SCN-USG-036
+    Scenario: a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate
 
   Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
 
