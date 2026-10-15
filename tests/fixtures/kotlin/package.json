@@ -1,0 +1,9 @@
+{
+  "name": "kotlin-fixture-target",
+  "private": true,
+  "specController": {
+    "runners": {
+      "unit": "./gradlew"
+    }
+  }
+}

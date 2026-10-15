@@ -131,6 +131,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 | `@unit` | a Jest test | `[SCN-…]` in square brackets in the test's title, or in an enclosing `describe` title, as for Vitest (see [Citing a scenario from Jest](#citing-a-scenario-from-jest)) |
 | `@unit` | a Go test | `[SCN-…]` in square brackets in a subtest's name, given to `t.Run` (see [Citing a scenario from Go](#citing-a-scenario-from-go)) |
 | `@unit` | a JUnit 5 test in Java | `[SCN-…]` in square brackets in the test's `@DisplayName`, carried into the report by Surefire's phrased reporter (see [Citing a scenario from Java](#citing-a-scenario-from-java)) |
+| `@unit` | a JUnit 5 test in Kotlin | `[SCN-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[SCN-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
 | `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
@@ -369,6 +370,49 @@ Name your runner in the `specController` block as `"unit": "mvn"`, or `"unit": "
 
 **Old reports are read as well.** Surefire does not clear the directory before a run, so a report left in an uncleaned `target/` by an earlier run is read beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before any report is written, so when the directory is missing, `balance` refuses `--junit` as a path that does not exist.
 
+### Citing a scenario from Kotlin
+
+A JUnit 5 test in Kotlin cites its scenario as a Java one does: the code in square brackets in `@DisplayName`. A backticked function name cannot carry it, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and pass the directory its test task writes its reports into with `--junit`:
+
+```sh
+./gradlew test
+spec-controller balance --junit build/test-results/test
+```
+
+Gradle writes the display name into the report with no configuration. `balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `binary/` directory beside them.
+
+A complete test file:
+
+```kotlin
+package example.allocate
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+
+class NextNumberTest {
+
+    @Test
+    @DisplayName("[SCN-<FFF>-<NNN>] offers one past the highest number already used")
+    fun offersOnePastTheHighest() {
+        assertEquals(4, NextNumber.of(listOf(1, 3)))
+    }
+}
+```
+
+Gradle writes that test into `TEST-example.allocate.NextNumberTest.xml` under its display name. This is what `balance` reads:
+
+```xml
+<testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
+```
+
+Gradle's report differs from Surefire's in two ways:
+
+- **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
+- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. The failing item lands on the suspense row, the scenarios those tests cite read `missing`, and the run is not marked unsound.
+
+Name your runner in the `specController` block as `"unit": "./gradlew"`, or `"unit": "gradle"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)).
+
 ### Citing a scenario from RSpec
 
 An RSpec example cites its scenario by the code in square brackets in its description, the string given to `it`. RSpec's own JSON formatter keeps each example's description apart from its groups', so nothing else is needed: no extra gem, no `spec_helper` change. Pass the report with `--rspec`:
@@ -503,6 +547,7 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **RSpec works the same way.** `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
 - **Go works the same way.** `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
 - **Java works the same way.** `"unit": "mvn"` recognises a step that runs `mvn …`, and `"unit": "./mvnw"` one that runs the Maven wrapper.
+- **Kotlin works the same way.** `"unit": "./gradlew"` recognises a step that runs the Gradle wrapper, `./gradlew …`, and `"unit": "gradle"` one that runs `gradle …`.
 - **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`
@@ -732,7 +777,7 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
 | `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
 | `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
-| `--junit <report.xml>` | A JUnit XML report from any runner that writes one, such as Go's through `gotestsum --junitfile <path>`, or a directory of them, such as the `target/surefire-reports` Maven Surefire writes for a Java suite: runtime unit test evidence. A test cites its scenario with the code in square brackets in its name. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go) and [Citing a scenario from Java](#citing-a-scenario-from-java). |
+| `--junit <report.xml>` | A JUnit XML report from any runner that writes one, such as Go's through `gotestsum --junitfile <path>`, or a directory of them, such as the `target/surefire-reports` Maven Surefire writes for a Java suite or the `build/test-results/test` Gradle writes for a Kotlin one: runtime unit test evidence. A test cites its scenario with the code in square brackets in its name. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
 | `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** Every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. It is also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |

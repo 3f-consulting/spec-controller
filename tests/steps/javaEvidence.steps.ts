@@ -24,9 +24,34 @@ const JAVA_TARGET = {
   reports: "tests/fixtures/java/surefire-reports",
 };
 
-const JAVA_CITED = "SCN-JVF-001";
-const JAVA_CITING_CLASS = "example.CitedTest";
-const JAVA_CITING_TEST = `[${JAVA_CITED}] a passing test cites its scenario`;
+interface ReportedRun {
+  readonly features: string;
+  readonly packageJson: string;
+  readonly ci: string;
+  readonly reports: string;
+  readonly cited: string;
+  readonly citingClass: string;
+  readonly citingTest: string;
+}
+
+const JAVA_RUN: ReportedRun = {
+  ...JAVA_TARGET,
+  cited: "SCN-JVF-001",
+  citingClass: "example.CitedTest",
+  citingTest: "[SCN-JVF-001] a passing test cites its scenario",
+};
+
+const KOTLIN_RUN: ReportedRun = {
+  features: "tests/fixtures/kotlin/features",
+  packageJson: "tests/fixtures/kotlin/package.json",
+  ci: "tests/fixtures/kotlin",
+  reports: "tests/fixtures/kotlin/test-results",
+  cited: "SCN-KOF-001",
+  citingClass: "example.CitedTest",
+  citingTest: "[SCN-KOF-001] a passing test cites its scenario",
+};
+
+let reportedRun: ReportedRun = JAVA_RUN;
 
 let cited = "";
 let citingLocator = "";
@@ -58,29 +83,42 @@ Given("a target whose unit tests are a Java suite and whose scenario raises a un
   ];
 });
 
+function aTargetWhoseRunWroteAReportDirectory(run: ReportedRun, writer: string): void {
+  assert.ok(existsSync(run.reports), `missing the real ${writer} report directory: ${run.reports}`);
+  const reportFiles = readdirSync(run.reports).filter((name) => /^TEST-.*\.xml$/.test(name));
+  assert.ok(reportFiles.length > 1, `fixture invariant: ${writer} wrote one report file per test class; got ${reportFiles.join(", ")}`);
+  reportedRun = run;
+  targetArgs = ["--features", run.features, "--package-json", run.packageJson, "--ci", run.ci];
+  reportArgs = ["--junit", run.reports];
+}
+
 Given(
   "a target whose unit tests are a Java suite that Maven Surefire has run, writing its reports into a directory",
   function () {
-    assert.ok(existsSync(JAVA_TARGET.reports), `missing the real Surefire report directory: ${JAVA_TARGET.reports}`);
-    const reportFiles = readdirSync(JAVA_TARGET.reports).filter((name) => /^TEST-.*\.xml$/.test(name));
-    assert.ok(reportFiles.length > 1, `fixture invariant: Surefire wrote one report file per test class; got ${reportFiles.join(", ")}`);
-    targetArgs = ["--features", JAVA_TARGET.features, "--package-json", JAVA_TARGET.packageJson, "--ci", JAVA_TARGET.ci];
-    reportArgs = ["--junit", JAVA_TARGET.reports];
+    aTargetWhoseRunWroteAReportDirectory(JAVA_RUN, "Surefire");
+  },
+);
+
+Given(
+  "a target whose unit tests are a Kotlin suite that Gradle has run, writing its reports into a directory",
+  function () {
+    aTargetWhoseRunWroteAReportDirectory(KOTLIN_RUN, "Gradle");
   },
 );
 
 Given("in that run a passing test cites one of the target's unit scenarios in its display name", function () {
-  const feature = readFileSync(`${JAVA_TARGET.features}/target.feature`, "utf8");
-  assert.match(feature, new RegExp(`@unit @${JAVA_CITED}\\b`), `fixture invariant: ${JAVA_CITED} raises a unit obligation`);
+  const run = reportedRun;
+  const feature = readFileSync(`${run.features}/target.feature`, "utf8");
+  assert.match(feature, new RegExp(`@unit @${run.cited}\\b`), `fixture invariant: ${run.cited} raises a unit obligation`);
   const passingTestcase = new RegExp(
-    `<testcase name="${escaped(JAVA_CITING_TEST)}" classname="${escaped(JAVA_CITING_CLASS)}" time="[^"]*"/>`,
+    `<testcase name="${escaped(run.citingTest)}" classname="${escaped(run.citingClass)}" time="[^"]*"/>`,
   );
-  const citingFiles = readdirSync(JAVA_TARGET.reports)
+  const citingFiles = readdirSync(run.reports)
     .filter((name) => name.endsWith(".xml"))
-    .filter((name) => passingTestcase.test(readFileSync(`${JAVA_TARGET.reports}/${name}`, "utf8")));
-  assert.equal(citingFiles.length, 1, `fixture invariant: one report file holds the passing test citing ${JAVA_CITED}`);
-  cited = JAVA_CITED;
-  citingLocator = `${JAVA_CITING_CLASS}::${JAVA_CITING_TEST}`;
+    .filter((name) => passingTestcase.test(readFileSync(`${run.reports}/${name}`, "utf8")));
+  assert.equal(citingFiles.length, 1, `fixture invariant: one report file holds the passing test citing ${run.cited}`);
+  cited = run.cited;
+  citingLocator = `${run.citingClass}::${run.citingTest}`;
 });
 
 Given(
@@ -125,6 +163,8 @@ function reconcileWithTheReports(): void {
 When("balance is asked to reconcile that target with that Surefire report file", reconcileWithTheReports);
 
 When("balance is asked to reconcile that target with that directory of Surefire reports", reconcileWithTheReports);
+
+When("balance is asked to reconcile that target with that directory of Gradle reports", reconcileWithTheReports);
 
 Then("the scenario that JUnit 5 test cites reconciles satisfied, by that test", function () {
   let rows: ScenarioRow[];
