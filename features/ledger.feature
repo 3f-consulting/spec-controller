@@ -30,12 +30,6 @@ Feature: Ledger over obligation-vs-observation evidence
     where its file sorts may discharge it. The item names the first evidence observation carrying that outcome
     in the order the books read evidence in; the rest stay posted on the row.
 
-    @unit @SCN-LDG-036
-    Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
-
-    @unit @SCN-LDG-037
-    Scenario: a passing and a failing test in one file citing the same scenario read failing, whichever order the two evidence observations arrive in
-
     @unit @SCN-LDG-038
     Scenario: whatever evidence observations answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names an evidence observation carrying it
 

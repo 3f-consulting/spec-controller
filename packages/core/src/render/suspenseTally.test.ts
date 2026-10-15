@@ -13,7 +13,7 @@ function uncitedObservation(locator: string): EvidenceObservation {
 
 const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);
 
-describe("[SCN-LDG-007] an evidence observation citing no scenario is reported as a suspense-scenario reconciliation, out of balance", () => {
+describe("[SCN-RPT-024] an evidence observation citing no scenario is reported as a suspense-scenario reconciliation, out of balance", () => {
   it("states only the total when every evidence observation cites a scenario", () => {
     expect(tallyBlock([known])).toEqual([`- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](1, 1, 0)}`]);
   });

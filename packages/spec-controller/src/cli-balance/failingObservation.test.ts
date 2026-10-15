@@ -10,7 +10,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-LDG-037] a passing and a failing test in one file citing the same scenario read failing, whichever order the two evidence observations arrive in", () => {
+describe("[SCN-CLI-004] a passing and a failing test in one file citing the same scenario read failing, whichever order the two evidence observations arrive in", () => {
   const passed = { fullName: "[SCN-ONE-001] the test that passed", status: "passed" };
   const failed = { fullName: "[SCN-ONE-001] the test that failed", status: "failed" };
 
