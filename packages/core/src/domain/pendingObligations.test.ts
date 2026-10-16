@@ -1,0 +1,93 @@
+import { describe, it, expect } from "vitest";
+import { evidenceObligationsOf } from "./scenarioObligations.js";
+
+describe("[SCN-PND-001] a <quality-check>pending tag raises a pending obligation of its quality-check", () => {
+  it.each([
+    ["fitnesspending", "fitness"],
+    ["unitpending", "unit"],
+    ["integrationpending", "integration"],
+    ["e2epending", "e2e"],
+    ["performancepending", "performance"],
+  ] as const)("%s raises a pending %s obligation", (tag, qualityCheck) => {
+    expect(evidenceObligationsOf([tag], [])).toEqual([{ qualityCheck, pending: true }]);
+  });
+
+  it("a <x>pending tag naming no quality-check raises nothing", () => {
+    expect(evidenceObligationsOf(["lintpending"], [])).toEqual([]);
+  });
+});
+
+describe("[SCN-PND-002] the pending suffix is significant — @integrationpending is not read as @integration", () => {
+  it("a bare integration tag raises a plain integration obligation", () => {
+    expect(evidenceObligationsOf(["integration"], [])).toEqual([{ qualityCheck: "integration" }]);
+  });
+
+  it("an integrationpending tag raises a pending integration obligation", () => {
+    expect(evidenceObligationsOf(["integrationpending"], [])).toEqual([{ qualityCheck: "integration", pending: true }]);
+  });
+});
+
+describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignored like any unknown tag", () => {
+  it("an unknown <x>pending alongside a recognised tag leaves the recognised obligation intact", () => {
+    expect(evidenceObligationsOf(["unit", "foopending"], [])).toEqual([{ qualityCheck: "unit" }]);
+  });
+});
+
+describe("[SCN-PND-016] a recognised community deferral tag defers every named obligation on its scenario", () => {
+  const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+  const COMMUNITY_TAGS = ["wip", "ignore", "skip", "todo", "pending"] as const;
+
+  it.each(COMMUNITY_TAGS)("%s marks both the unit and integration obligation pending", (tag) => {
+    expect(evidenceObligationsOf([tag, "unit", "integration"], DEFERRAL_TAGS)).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+});
+
+describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (obligation-scope), not the whole scenario", () => {
+  const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
+  it("defers only the integration obligation — the unit obligation stays owed", () => {
+    expect(evidenceObligationsOf(["unit", "integrationpending"], DEFERRAL_TAGS)).toEqual([
+      { qualityCheck: "unit" },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+
+  it("contrasts with the scenario-scope community tag — adding wip defers the unit obligation too", () => {
+    expect(evidenceObligationsOf(["wip", "unit", "integrationpending"], DEFERRAL_TAGS)).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+});
+
+describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integrationpending` compose — both obligations pending", () => {
+  const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
+  it("defers the bare unit by the scenario-scope wip and the integration by the obligation-scope integrationpending — both pending", () => {
+    expect(evidenceObligationsOf(["wip", "unit", "integrationpending"], DEFERRAL_TAGS)).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+});
+
+describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it defers nothing", () => {
+  const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
+  it("an unrecognised tag derives exactly what no extra tag would — the tag buys no special treatment", () => {
+    const withFoo = evidenceObligationsOf(["foo", "unit"], DEFERRAL_TAGS);
+    expect(withFoo).toEqual(evidenceObligationsOf(["unit"], DEFERRAL_TAGS));
+    expect(withFoo).toEqual([{ qualityCheck: "unit" }]);
+  });
+});
+
+describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises one scenario-scope pending obligation", () => {
+  const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
+  it("a bare wip scenario (no evidence tag) derives ONE scenario-scope pending obligation with no qualityCheck", () => {
+    expect(evidenceObligationsOf(["wip"], DEFERRAL_TAGS)).toEqual([{ pending: true }]);
+  });
+});

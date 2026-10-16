@@ -13,8 +13,8 @@ import {
   UnreadableFeatureCorpusError,
   type GherkinParseError,
 } from "./gherkinValidation.js";
-import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
+  BUILT_IN_DEFERRAL_TAGS,
   corpusCountsOf,
   type EvidenceObligations,
 } from "@3f-consulting/spec-controller-core";
@@ -232,7 +232,7 @@ export function runReconcile(
       opts.ciSteps
     ),
     behaviouralObservations: parseBehaviouralObservations(opts, root),
-    deferralTags: DEFAULT_DEFERRAL_TAGS,
+    deferralTags: BUILT_IN_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
   });
 }

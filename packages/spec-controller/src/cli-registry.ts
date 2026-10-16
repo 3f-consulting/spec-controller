@@ -1,4 +1,4 @@
-import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
+import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export interface FlagSpec {
@@ -127,7 +127,7 @@ const balanceConfigHelp: string[] = [
   `  ${APP_MESSAGES[AppMessage.DeferralTagsKey]()}`,
   `      ${APP_MESSAGES[AppMessage.DeferralTagsExtend]()}`,
   `      ${APP_MESSAGES[AppMessage.DeferralTagsNeverReplace]()}`,
-  `      ${APP_MESSAGES[AppMessage.BuiltInDeferralTags](DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "))}`,
+  `      ${APP_MESSAGES[AppMessage.BuiltInDeferralTags](BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "))}`,
 ];
 
 const balanceRetiredFlags: RetiredFlagSpec[] = [

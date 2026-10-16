@@ -1,5 +1,6 @@
 import { bareTerm } from "../lib/bareTerm.js";
 import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
+import { deferralTagsExtendedBy } from "../domain/pendingItems.js";
 import type { ConfigurationKind, TierWithoutRunner, WrongKindEntry } from "../domain/evidenceReconciliation.js";
 
 function isBlock(value: unknown): value is Record<string, unknown> {
@@ -33,7 +34,7 @@ export function resolveDeferralTags(
         .map(bareTerm)
         .filter((tag) => tag !== "")
     : [];
-  return [...new Set([...starterTags, ...extras])];
+  return deferralTagsExtendedBy(starterTags, extras);
 }
 
 export interface ResolvedRunners {

@@ -31,4 +31,8 @@ describe("[SCN-USG-025] a specController entry of a kind its reader does not tak
       "specController.deferralTags[1]",
     ]);
   });
+
+  it("reads a deferralTags entry that is not a list as no configured tags, so the deferral set is exactly the built-in one", () => {
+    expect(resolveDeferralTags({ specController: { deferralTags: "x" } }, ["wip"])).toEqual(["wip"]);
+  });
 });

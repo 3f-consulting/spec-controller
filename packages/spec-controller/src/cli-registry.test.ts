@@ -9,7 +9,7 @@ import {
   type CommandSpec,
   type FlagSpec,
 } from "./cli-registry.js";
-import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
+import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
@@ -119,9 +119,9 @@ describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry g
   });
 
   it("lists the built-in deferral tags in balance's configuration block, each as its tag, a comma and a space apart", () => {
-    expect(DEFAULT_DEFERRAL_TAGS.length).toBeGreaterThan(1);
+    expect(BUILT_IN_DEFERRAL_TAGS.length).toBeGreaterThan(1);
     const out = renderCommandHelp(balanceCommand);
-    expect(out).toContain(DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "));
+    expect(out).toContain(BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "));
   });
 
   it("ends allocate's help at its last option row, with no configuration block and no trailing blank line, as it has no configuration", () => {

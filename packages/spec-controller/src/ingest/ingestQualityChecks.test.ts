@@ -2,25 +2,8 @@ import { afterAll, describe, it, expect } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveDeferralTags } from "@3f-consulting/spec-controller-core/internal";
-import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import { runReconcile } from "./ingestQualityChecks.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specController.deferralTags", () => {
-  it("unions a project-configured tag with the built-in starter set — the configured tag is recognised", () => {
-    const resolved = resolveDeferralTags({ specController: { deferralTags: ["deferred"] } }, DEFAULT_DEFERRAL_TAGS);
-    expect(resolved).toContain("deferred");
-    for (const builtin of DEFAULT_DEFERRAL_TAGS) {
-      expect(resolved).toContain(builtin);
-    }
-  });
-
-  it("returns exactly the starter set when no specController.deferralTags is configured", () => {
-    expect(new Set(resolveDeferralTags({}, DEFAULT_DEFERRAL_TAGS))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
-    expect(new Set(resolveDeferralTags({ specController: {} }, DEFAULT_DEFERRAL_TAGS))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
-  });
-});
 
 const made: string[] = [];
 

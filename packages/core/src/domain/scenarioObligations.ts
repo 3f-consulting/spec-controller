@@ -8,7 +8,7 @@ const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
   performancepending: "performance",
 };
 
-export function pendingQualityCheck(tag: string): QualityCheck | null {
+function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
 
