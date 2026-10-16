@@ -6,7 +6,7 @@ export { OUTCOME_DESCRIPTION } from "./render/outcomeDescription.js";
 
 export type { ScriptCitation } from "./parse/fitnessCitations.js";
 
-export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
+export { FITNESS_AXIS_TAG } from "./domain/scenarioObligations.js";
 
 export { isFitnessObservation } from "./domain/journal.js";
 

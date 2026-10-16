@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseScenarios,
-  pendingQualityCheck,
-} from "./scenarios.js";
+import { parseScenarios } from "./scenarios.js";
+import { pendingQualityCheck } from "../domain/scenarioObligations.js";
 import { parseCucumberEvidenceObservations } from "./cucumber.js";
 
 const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
