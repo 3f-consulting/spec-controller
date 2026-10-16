@@ -106,7 +106,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     launchers, opens with all of those words; the launchers are set aside first, so a runner
     declared with a launcher's words matches no command. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
-    it follows. A runner named anywhere else, as an argument, inside a path, a flag or an
+    it follows. A line ending in a backslash joins the next line with a space before it is read, so a
+    launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, inside a path, a flag or an
     =-joined value, leaves the step a candidate.
 
     @unit @SCN-USG-012
