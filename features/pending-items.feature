@@ -1,23 +1,14 @@
 @PND
 Feature: A pending evidence obligation raises a Pending Item
 
-  A `<quality-check>pending` tag raises an evidence
-  obligation that is deliberately deferred to a later slice. The parse
-  recognises the tag and derives a pending obligation; on the ledger, a pending
-  obligation raises the one-sided Pending Item the Rules below hold.
-
-  Seam: parsing a scenario derives its Evidence Obligations from its tags. A
-  `<qc>pending` tag over a RECOGNISED quality-check derives `{ qualityCheck: <qc>, pending: true }`
-  — the obligation gains a `pending?: boolean` flag (absent = a normal obligation).
-  `@fitnesspending` derives `{ qualityCheck: "fitness", pending: true }` with NO check payload
-  (one-sided; the check does not exist yet). The `pending` suffix is significant: a SEPARATE
-  recognition from the bare tier tag, so `@integrationpending` is not `@integration`. We give
-  special meaning ONLY to our recognised lexicon (the five `<qc>pending`); anything outside it
-  — an unknown `<x>pending`, or bare `@pending` — is ignored silently, exactly like any
-  unrecognised tag. We do not police the developer's tags.
-
-  Fixture policy: exercised over feature strings planted inline in the unit tests and fed to
-  the pure parser — never a real `@<qc>pending` scenario in the scanned features/ corpus.
+  A `<quality-check>pending` tag defers that quality check's evidence obligation to later work.
+  The scenario still raises the obligation, marked pending, and the ledger shows it as a one-sided
+  Pending Item, tallied apart from the verdict, rather than as missing evidence. The suffix is read
+  apart from the bare tier tag, so `@integrationpending` is not `@integration`. Only the five
+  `<quality-check>pending` tags carry this meaning: an unknown `<x>pending` tag is ignored, like any
+  tag the tool does not recognise. A deferral tag, one of the built-in five (`@wip`, `@ignore`,
+  `@skip`, `@todo`, `@pending`) or one the project configures, defers every obligation on its
+  scenario, as the Rules below state.
 
   Rule: A `<quality-check>pending` tag parses as a pending evidence obligation
 
