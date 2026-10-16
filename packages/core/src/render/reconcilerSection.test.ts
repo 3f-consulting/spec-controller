@@ -28,7 +28,7 @@ const stepLine = (step: string, whatItIs: string): string =>
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[SCN-RPT-050] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("names each reconciler step on its own list line, with what that step does, under a heading and a blank line", () => {
     const lines = section(reportLines(ci));
     const dump = "ci.yml:ci:Dump this run's step record";

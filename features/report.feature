@@ -459,3 +459,34 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-044
     Scenario: a reader finds a key to the evidence cells before the Scenario Reconciliations table, and none where the table has no evidence cell
+
+  Rule: the report names each specController entry it could not read, before any cut of the reconciliation
+
+    @unit @SCN-RPT-045
+    Scenario: each specController entry of a kind its reader does not take is named on a line of its own, after the run provenance and before any cut of the reconciliation
+
+    @unit @SCN-RPT-046
+    Scenario: each key the specController block does not read is named in one sentence, after the entries of the wrong kind
+
+  Rule: the report accounts for fitness-function discovery, each account in a section of its own that is absent when it has nothing to say
+
+    @unit @SCN-RPT-047
+    Scenario: the discovery-scope section tables each workflow and job read with its steps and candidates, and is absent for a target with no pipeline
+
+    @unit @SCN-RPT-048
+    Scenario: the excluded-steps section lists each step the target names a non-check with its reason, and is absent when the target names none
+
+    @unit @SCN-RPT-049
+    Scenario: the fitness-functions section counts the fitness functions that run and those no scenario cites, and is absent when the report carries no fitness-function axis
+
+    @unit @SCN-RPT-050
+    Scenario: the reconciler section names each reconciler step with what it does, and is absent for a pipeline that runs no reconciliation
+
+    @unit @SCN-RPT-051
+    Scenario: the runner-tier account says a tier the target names null has no runner and a tier it omits is unnamed, and is absent when every tier is named
+
+    @unit @SCN-RPT-052
+    Scenario: the step-accounting section tables each count and states that every step read is accounted for, a saved run with no plumbing count reading nought in that cell
+
+    @unit @SCN-RPT-053
+    Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises

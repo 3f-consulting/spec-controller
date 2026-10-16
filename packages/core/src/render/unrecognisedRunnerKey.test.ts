@@ -33,7 +33,7 @@ const section = (lines: readonly string[]): string[] => sectionUnder(heading)(li
 
 const notATier = (key: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`;
 
-describe("[SCN-USG-019] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
+describe("[SCN-RPT-053] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
   it("renders the section for a key outside the four tiers alone, naming that key and no tier", () => {
     const lines = section(
       reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" })

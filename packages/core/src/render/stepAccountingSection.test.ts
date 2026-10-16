@@ -11,7 +11,7 @@ const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
+describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
   it("tables each count the assembler computed under its header, then states that every step read is accounted for", () => {
     const reconciliation = reconcile([ci]);
     const accounting = reconciliation.summary.stepAccounting;

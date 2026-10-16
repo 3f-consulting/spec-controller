@@ -35,7 +35,7 @@ const accountLines = (lines: readonly string[]): string[] => lines.filter((line)
 const namesNone = (tier: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerTierNamesNone](tier)}`;
 const unnamed = (tier: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerTierUnnamed](tier)}`;
 
-describe("[SCN-USG-016] a null runner reports the tier as having none, and an absent key reports it as unnamed", () => {
+describe("[SCN-RPT-051] a null runner reports the tier as having none, and an absent key reports it as unnamed", () => {
   it("accounts for the null tier as having none and the omitted tier as unnamed, and for no named tier", () => {
     const lines = section(reportLines({ unit: "vitest", integration: "cucumber-js", performance: null }));
     const account = accountLines(lines);

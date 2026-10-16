@@ -31,7 +31,7 @@ function rendered(reconciliation: EvidenceReconciliation): string[] {
   return section(renderMarkdown(reconciliation, ctx).split("\n"));
 }
 
-describe("[SCN-USG-020] the report names the workflows, the jobs and the step count discovery ranged over", () => {
+describe("[SCN-RPT-047] the report names the workflows, the jobs and the step count discovery ranged over", () => {
   it("tables each workflow and job it read, with its steps and candidates, one row each in the settled order", () => {
     const reconciliation = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
     const scope = reconciliation.summary.discoveryScope;

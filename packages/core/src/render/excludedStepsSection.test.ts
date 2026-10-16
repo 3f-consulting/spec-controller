@@ -35,7 +35,7 @@ const unmatchedLine = (entry: string): string =>
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
+describe("[SCN-RPT-048] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
   it("lists the excluded step on one line with its reason, under a heading and a blank line, then one blank line", () => {
     const lines = section(reportLines([excludedStep]));
     expect(lines).toStrictEqual([heading, "", excludedLine(excludedStep), ""]);

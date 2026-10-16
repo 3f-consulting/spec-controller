@@ -57,7 +57,7 @@ const section = (lines: readonly string[]): string[] => sectionUnder(heading)(li
 const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx).split("\n");
 
-describe("[SCN-USG-001] a CI check no scenario cites is reported as an uncited fitness function", () => {
+describe("[SCN-RPT-049] a CI check no scenario cites is reported as an uncited fitness function", () => {
   it.each([
     ["renders the section as heading, blank, the counts line with the one uncited check, then one blank", "", 1],
     ["still renders the section, counting no uncited check, when every check is cited", "\n        id: SCN-CVT-002", 0],

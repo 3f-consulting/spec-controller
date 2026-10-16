@@ -13,7 +13,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     A step cites a scenario by carrying that scenario's code as its `id:`. A step with no `id:`
     cites nothing: its check lands on the suspense row under its own name, marked
-    cites-no-scenario, is shown under "### Fitness functions", and reds the run. The check is
+    cites-no-scenario, counts among the uncited fitness functions, and reds the run. The check is
     never dropped from the count.
 
     A step whose `id:` names a code no scenario carries posts to a phantom row under that code,
@@ -133,14 +133,6 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     @unit @SCN-USG-029
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner
-
-  Rule: a tier whose runner is null has no runner; a tier the block omits has not been told
-
-    The report says a tier with a null runner has none, and says a tier the block omits is unnamed.
-    Neither excludes or recognises any step.
-
-    @unit @SCN-USG-016
-    Scenario: a null runner reports the tier as having none, and an absent key reports it as unnamed
 
   Rule: the runner block is keyed by the four tiers and no other
 
