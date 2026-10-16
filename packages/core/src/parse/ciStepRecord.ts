@@ -1,13 +1,7 @@
 import { SCN_CODE } from "./scenarios.js";
 import type { EvidenceStatus, ObservationNote } from "../domain/journal.js";
+import type { StepRecord } from "../domain/stepRecord.js";
 import type { FitnessEvidenceObservation } from "../model.js";
-
-interface CiStepRecordEntry {
-  readonly outcome?: string;
-  readonly conclusion?: string;
-}
-
-export type CiStepRecord = Readonly<Record<string, CiStepRecordEntry>>;
 
 const SUCCESS = "success";
 const FAILURE = "failure";
@@ -58,7 +52,7 @@ function observationOf(
   };
 }
 
-export function ciStepRecordObservations(record: CiStepRecord | undefined): FitnessEvidenceObservation[] {
+export function ciStepRecordObservations(record: StepRecord | undefined): FitnessEvidenceObservation[] {
   if (record === undefined) return [];
   const observations: FitnessEvidenceObservation[] = [];
   for (const [citedScn, step] of Object.entries(record)) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { hasBrokenEvidence } from "../domain/ledger.js";
-import type { CiStepRecord } from "../parse/ciStepRecord.js";
+import type { StepRecord } from "../domain/stepRecord.js";
 import { checkStepReconciler, corpus, manifest } from "./checkStep.test-utils.js";
 
 const ci = `name: fixture CI
@@ -21,7 +21,7 @@ jobs:
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
 `;
 
-const record: CiStepRecord = {
+const record: StepRecord = {
   "SCN-CVT-001": { outcome: "failure", conclusion: "success" },
   "dump-the-step-record": { outcome: "success", conclusion: "success" },
 };

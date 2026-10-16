@@ -1,4 +1,5 @@
 import { parse } from "yaml";
+import type { PipelineStep, PipelineStepAction } from "../domain/pipelineStep.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
@@ -9,19 +10,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 const CONTINUE_ON_ERROR = "continue-on-error";
-
-export type CiStepAction =
-  | { readonly runs: string }
-  | { readonly uses: string };
-
-export type CiWorkflowStep = {
-  readonly sourceIndex: number;
-  readonly jobId: string;
-  readonly identity: string;
-  readonly id?: string;
-  readonly env: readonly string[];
-  readonly abortsJob: boolean;
-} & CiStepAction;
 
 function vouchesForTheStep(value: unknown): boolean {
   return value === undefined || value === false || value === "false";
@@ -43,7 +31,7 @@ function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
   return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
 }
 
-function actionOf(step: Record<string, unknown>): CiStepAction | undefined {
+function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined {
   const runs = step["run"];
   if (typeof runs === "string") return { runs };
   const uses = step["uses"];
@@ -51,18 +39,18 @@ function actionOf(step: Record<string, unknown>): CiStepAction | undefined {
   return undefined;
 }
 
-function identityOf(name: unknown, action: CiStepAction): string {
+function identityOf(name: unknown, action: PipelineStepAction): string {
   if (typeof name === "string" && name.trim() !== "") return name.trim();
   if ("uses" in action) return action.uses;
   return action.runs.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
 }
 
-function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): CiWorkflowStep[] {
+function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): PipelineStep[] {
   if (!isRecord(job)) return [];
   const steps = job["steps"];
   if (!Array.isArray(steps)) return [];
   const jobValue = job[CONTINUE_ON_ERROR];
-  const read: CiWorkflowStep[] = [];
+  const read: PipelineStep[] = [];
   for (const step of steps) {
     if (!isRecord(step)) continue;
     const action = actionOf(step);
@@ -80,7 +68,7 @@ function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): CiWorkflo
   return read;
 }
 
-function stepsOf(ciSource: string, sourceIndex: number): CiWorkflowStep[] {
+function stepsOf(ciSource: string, sourceIndex: number): PipelineStep[] {
   let doc: unknown;
   try {
     doc = parse(ciSource);
@@ -92,7 +80,7 @@ function stepsOf(ciSource: string, sourceIndex: number): CiWorkflowStep[] {
   return Object.entries(jobs).flatMap(([jobId, job]) => stepsOfJob(jobId, job, sourceIndex));
 }
 
-export function ciWorkflowSteps(ciSources: readonly string[]): CiWorkflowStep[] {
+export function ciWorkflowSteps(ciSources: readonly string[]): PipelineStep[] {
   return ciSources.flatMap((ciSource, sourceIndex) => stepsOf(ciSource, sourceIndex));
 }
 

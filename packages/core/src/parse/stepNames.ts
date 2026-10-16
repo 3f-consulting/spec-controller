@@ -1,7 +1,7 @@
-import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 
 export function qualifiedStepName(
-  step: CiWorkflowStep,
+  step: PipelineStep,
   ciSourceNames: readonly string[]
 ): string | undefined {
   const source = ciSourceNames[step.sourceIndex];

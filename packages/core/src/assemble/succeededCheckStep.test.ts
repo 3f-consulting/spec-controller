@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import type { CiStepRecord } from "../parse/ciStepRecord.js";
+import type { StepRecord } from "../domain/stepRecord.js";
 import { checkStepReconciler } from "./checkStep.test-utils.js";
 
 const corpus = `@CVT
@@ -47,7 +47,7 @@ jobs:
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
 `;
 
-const record: CiStepRecord = {
+const record: StepRecord = {
   "SCN-CVT-001": { outcome: "success", conclusion: "success" },
   "SCN-CVT-002": { outcome: "success", conclusion: "success" },
   "dump-the-step-record": { outcome: "success", conclusion: "success" },

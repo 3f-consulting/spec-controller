@@ -1,7 +1,9 @@
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation } from "../model.js";
-import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
-import { ciStepRecordObservations, type CiStepRecord } from "../parse/ciStepRecord.js";
+import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
+import type { StepRecord } from "../domain/stepRecord.js";
+import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
 import { recognisedRunners, runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
@@ -32,7 +34,7 @@ function observationStreams(
   input: {
     behaviouralObservations: readonly EvidenceObservation[];
     ciSources: readonly string[];
-    ciStepRecord?: CiStepRecord;
+    ciStepRecord?: StepRecord;
   },
   corpus: TargetCorpus,
   packageJson: TargetManifest,
@@ -64,7 +66,7 @@ export interface EvidenceReconciliationSources {
   readonly reconcilerInvocation?: string;
   readonly behaviouralObservations: readonly EvidenceObservation[];
   readonly deferralTags: readonly string[];
-  readonly ciStepRecord?: CiStepRecord;
+  readonly ciStepRecord?: StepRecord;
 }
 
 interface FeatureFileHeader {
@@ -76,7 +78,7 @@ interface PipelineReadings {
   readonly runners: ResolvedRunners;
   readonly exclusions: StepExclusions;
   readonly reconciler: ReconcilerSteps;
-  readonly isExcluded: (step: CiWorkflowStep) => boolean;
+  readonly isExcluded: (step: PipelineStep) => boolean;
 }
 
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
@@ -167,7 +169,7 @@ function withReaderAccounts(
   runners: ResolvedRunners,
   exclusions: StepExclusions,
   reconciler: ReconcilerSteps,
-  isExcluded: (step: CiWorkflowStep) => boolean
+  isExcluded: (step: PipelineStep) => boolean
 ): EvidenceReconciliation {
   return withStepAccounting(
     withScopeAccount(
@@ -199,7 +201,7 @@ function withStepAccounting(
   runnerTiers: Readonly<Record<string, string | null>>,
   reconciler: ReconcilerSteps,
   exclusions: StepExclusions,
-  isExcluded: (step: CiWorkflowStep) => boolean
+  isExcluded: (step: PipelineStep) => boolean
 ): EvidenceReconciliation {
   const accounting = stepAccounting(
     ciSources,
@@ -221,7 +223,7 @@ function withScopeAccount(
   input: { ciSources: readonly string[]; ciSourceNames?: readonly string[] },
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
-  isExcluded: (step: CiWorkflowStep) => boolean
+  isExcluded: (step: PipelineStep) => boolean
 ): EvidenceReconciliation {
   const scope = discoveryScope(
     input.ciSources,

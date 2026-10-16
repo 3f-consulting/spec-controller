@@ -3,9 +3,9 @@ import { commandRunsAsCommand } from "./commandRuns.js";
 import {
   ciWorkflowSteps,
   commandInvokesScript,
-  type CiWorkflowStep,
   type PackageJsonScripts,
 } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
 
@@ -20,7 +20,7 @@ function finalStages(command: string): string {
 }
 
 function namedRunnersAt(
-  step: CiWorkflowStep,
+  step: PipelineStep,
   scripts: Readonly<Record<string, string>>,
   runners: Readonly<Record<string, string | null>>
 ): readonly (readonly [string, string])[] {
@@ -35,23 +35,23 @@ function namedRunnersAt(
   );
 }
 
-function handleOf(step: CiWorkflowStep, scripts: Readonly<Record<string, string>>): string {
+function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
   if (!("runs" in step)) return step.identity;
   const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.runs, name));
   return invoked[0] ?? step.identity;
 }
 
 export function isCandidateStep(
-  step: CiWorkflowStep,
+  step: PipelineStep,
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
-  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean
+  isExcludedFromDiscovery: (step: PipelineStep) => boolean
 ): boolean {
   return !isExcludedFromDiscovery(step) && !runsNamedRunner(step, packageJson, runners);
 }
 
 export function runsNamedRunner(
-  step: CiWorkflowStep,
+  step: PipelineStep,
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>
 ): boolean {
@@ -63,7 +63,7 @@ export function runningFitnessFunctions(
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
   citedScn: (script: string, citedByStep?: string) => ScriptCitation | null = () => null,
-  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean = () => false
+  isExcludedFromDiscovery: (step: PipelineStep) => boolean = () => false
 ): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
   const candidates = ciWorkflowSteps(ciSources).filter((step) =>

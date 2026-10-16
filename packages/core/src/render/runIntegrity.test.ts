@@ -6,7 +6,7 @@ import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { VitestJsonReport } from "../parse/vitest.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import type { CiStepRecord } from "../parse/ciStepRecord.js";
+import type { StepRecord } from "../domain/stepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -38,9 +38,9 @@ const collectionFailed = (name: string, message?: string): VitestJsonReport => (
   testResults: [{ name, status: "failed", ...(message !== undefined ? { message } : {}) }],
 });
 
-const SKIPPED_CHECK: CiStepRecord = { "SCN-RIN-001": { outcome: "skipped" } };
+const SKIPPED_CHECK: StepRecord = { "SCN-RIN-001": { outcome: "skipped" } };
 
-function render(vitest: VitestJsonReport, ciSteps?: CiStepRecord): string {
+function render(vitest: VitestJsonReport, ciSteps?: StepRecord): string {
   const ledger = reconcile(parseScenarios(FEATURE), [
     ...parseVitestEvidenceObservations(vitest, "unit", ROOT),
     ...ciStepRecordObservations(ciSteps),

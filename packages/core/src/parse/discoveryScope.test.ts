@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
-import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 
 let CI_YML: string;
 beforeEach(() => {
@@ -51,7 +51,7 @@ const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 
 const excluding =
   (...identities: readonly string[]) =>
-  (step: CiWorkflowStep): boolean =>
+  (step: PipelineStep): boolean =>
     identities.includes(step.identity);
 
 const excludingNothing = (): boolean => false;

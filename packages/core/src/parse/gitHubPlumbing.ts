@@ -1,10 +1,10 @@
-import type { CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 
 const PLUMBING_OWNER = "actions";
 const PLUMBING_REPOSITORIES: ReadonlySet<string> = new Set(["checkout", "cache", "upload-artifact", "download-artifact"]);
 const PLUMBING_REPOSITORY_PREFIX = "setup-";
 
-export function isGitHubPlumbingStep(step: CiWorkflowStep): boolean {
+export function isGitHubPlumbingStep(step: PipelineStep): boolean {
   if (!("uses" in step)) return false;
   const [owner, repository] = step.uses.split(/[/@]/);
   return owner === PLUMBING_OWNER && isPlumbingRepository(String(repository));

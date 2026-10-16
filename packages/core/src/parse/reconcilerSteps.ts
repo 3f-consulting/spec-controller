@@ -1,16 +1,17 @@
-import { ciWorkflowSteps, type CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 import { commandRuns } from "./commandRuns.js";
 import { qualifiedStepName } from "./stepNames.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
 
 export interface ReconcilerSteps {
   readonly steps: readonly ReconcilerStep[];
-  readonly isReconciler: (step: CiWorkflowStep) => boolean;
+  readonly isReconciler: (step: PipelineStep) => boolean;
 }
 
 const STEP_RECORD_EXPRESSION = "tojson(steps)";
 
-function producesTheStepRecord(step: CiWorkflowStep): boolean {
+function producesTheStepRecord(step: PipelineStep): boolean {
   const written = "runs" in step ? [...step.env, step.runs] : step.env;
   return written.some((text) =>
     text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION)
@@ -18,7 +19,7 @@ function producesTheStepRecord(step: CiWorkflowStep): boolean {
 }
 
 function roleOf(
-  step: CiWorkflowStep,
+  step: PipelineStep,
   invocation: string,
   scripts: Readonly<Record<string, string>>
 ): ReconcilerStep["role"] | undefined {

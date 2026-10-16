@@ -1,4 +1,5 @@
-import { ciWorkflowSteps, type CiWorkflowStep, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
 import { isCandidateStep, runsNamedRunner } from "./runningFitnessFunctions.js";
 import type { StepAccounting } from "../domain/evidenceReconciliation.js";
@@ -7,12 +8,12 @@ export function stepAccounting(
   ciSources: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
-  isReconciler: (step: CiWorkflowStep) => boolean,
-  isNamedANonCheck: (step: CiWorkflowStep) => boolean,
-  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean
+  isReconciler: (step: PipelineStep) => boolean,
+  isNamedANonCheck: (step: PipelineStep) => boolean,
+  isExcludedFromDiscovery: (step: PipelineStep) => boolean
 ): StepAccounting {
   const steps = ciWorkflowSteps(ciSources);
-  const count = (holds: (step: CiWorkflowStep) => boolean): number => steps.filter(holds).length;
+  const count = (holds: (step: PipelineStep) => boolean): number => steps.filter(holds).length;
 
   const reconciler = count(isReconciler);
   const excluded = count((step) => !isReconciler(step) && isNamedANonCheck(step));

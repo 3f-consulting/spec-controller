@@ -1,4 +1,4 @@
-import type { CiStepRecord } from "../parse/ciStepRecord.js";
+import type { StepRecord } from "../domain/stepRecord.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 
@@ -25,7 +25,7 @@ export function checkStepReconciler(
   corpus: string,
   manifest: PackageJson,
   ci: string,
-  record: CiStepRecord,
+  record: StepRecord,
 ): () => EvidenceReconciliation {
   return () =>
     evidenceReconciliationFromSources({

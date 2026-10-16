@@ -1,10 +1,11 @@
-import { ciWorkflowSteps, type CiWorkflowStep } from "./checkScriptsRunInCI.js";
+import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 import { qualifiedStepName } from "./stepNames.js";
 
 export interface StepExclusions {
   readonly excluded: readonly string[];
   readonly unmatchedEntries: readonly string[];
-  readonly isExcluded: (step: CiWorkflowStep) => boolean;
+  readonly isExcluded: (step: PipelineStep) => boolean;
 }
 
 export function stepExclusions(

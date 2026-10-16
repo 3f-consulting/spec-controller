@@ -3,7 +3,8 @@ import { stepAccounting } from "./stepAccounting.js";
 import { reconcilerSteps } from "./reconcilerSteps.js";
 import { stepExclusions } from "./stepExclusions.js";
 import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
-import type { CiWorkflowStep, PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 
 let CI_YML: string;
 beforeEach(() => {
@@ -50,20 +51,20 @@ const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 const reconcilerOver = (
   sources: readonly string[],
   names: readonly string[]
-): ((step: CiWorkflowStep) => boolean) =>
+): ((step: PipelineStep) => boolean) =>
   reconcilerSteps(sources, names, INVOCATION, SCRIPTS).isReconciler;
 
 const notChecksOver = (
   sources: readonly string[],
   names: readonly string[],
   entries: readonly string[]
-): ((step: CiWorkflowStep) => boolean) => stepExclusions(sources, names, entries).isExcluded;
+): ((step: PipelineStep) => boolean) => stepExclusions(sources, names, entries).isExcluded;
 
 const excludedFromDiscoveryBy =
   (
-    isReconciler: (step: CiWorkflowStep) => boolean,
-    isNamedANonCheck: (step: CiWorkflowStep) => boolean
-  ): ((step: CiWorkflowStep) => boolean) =>
+    isReconciler: (step: PipelineStep) => boolean,
+    isNamedANonCheck: (step: PipelineStep) => boolean
+  ): ((step: PipelineStep) => boolean) =>
   (step) =>
     isReconciler(step) || isNamedANonCheck(step) || isGitHubPlumbingStep(step);
 

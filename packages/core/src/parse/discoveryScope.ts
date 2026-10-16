@@ -1,20 +1,21 @@
-import { ciWorkflowSteps, type CiWorkflowStep, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PipelineStep } from "../domain/pipelineStep.js";
 import { isCandidateStep } from "./runningFitnessFunctions.js";
 import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
 import type { JobDiscoveryScope } from "../domain/evidenceReconciliation.js";
 
 type Tally = { readonly source?: string; readonly job: string; readonly steps: number; readonly candidates: number };
 
-const keyOf = (step: CiWorkflowStep): string => `${step.sourceIndex}:${step.jobId}`;
+const keyOf = (step: PipelineStep): string => `${step.sourceIndex}:${step.jobId}`;
 
 export function discoveryScope(
   ciSources: readonly string[],
   ciSourceNames: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
-  isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean
+  isExcludedFromDiscovery: (step: PipelineStep) => boolean
 ): readonly JobDiscoveryScope[] {
-  const isExcludedOrPlumbing = (step: CiWorkflowStep): boolean =>
+  const isExcludedOrPlumbing = (step: PipelineStep): boolean =>
     isExcludedFromDiscovery(step) || isGitHubPlumbingStep(step);
   const tallies = new Map<string, Tally>();
   for (const step of ciWorkflowSteps(ciSources)) {
