@@ -1,8 +1,8 @@
-import type { BehaviouralQualityCheck, EvidenceObservation, EvidenceStatus, ObservationNote } from "../model.js";
+import type { BehaviouralQualityCheck, EvidenceObservation, ObservationNote } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
-import { qualityChecksPostedAt } from "../domain/journal.js";
+import { evidenceOfRunResult, qualityChecksPostedAt, type RunResult } from "../domain/journal.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -61,27 +61,38 @@ function scenarioObservations(
   const { scnId, severalCodes } = attributionOf(citedCodesOf(tags));
   const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
-  const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
-  if (ambiguous) {
+  const evidence = evidenceOfRunResult(runResultOf(steps));
+  if (evidence === undefined) return [];
+  if (evidence.broken) {
+    const ambiguous = steps.find(isAmbiguous)!;
     return [{
       qualityCheck: qualityChecksPostedAt(tagNames, fallbackQualityCheck)[0]!,
       scnId,
-      status: "failed",
+      status: evidence.status,
       locator,
-      broken: true,
+      broken: evidence.broken,
       notes: [ambiguousNote(ambiguous), ...severalNotes],
     }];
   }
-  const anyFailed = steps.some((s) => s.result?.status === "failed");
-  const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
-  if (!anyFailed && !allPassed) return [];
-  const status: EvidenceStatus = anyFailed ? "failed" : "passed";
   return qualityChecksPostedAt(tagNames, fallbackQualityCheck).map((level) => ({
     qualityCheck: level,
     scnId,
-    status,
+    status: evidence.status,
     locator,
     testName: scenario.name,
     ...(severalNotes.length > 0 ? { notes: severalNotes } : {}),
   }));
+}
+
+type CucumberStep = NonNullable<CucumberScenario["steps"]>[number];
+
+function isAmbiguous(step: CucumberStep): boolean {
+  return step.result?.status === "ambiguous";
+}
+
+function runResultOf(steps: readonly CucumberStep[]): RunResult {
+  if (steps.some(isAmbiguous)) return "never-reached-its-assertions";
+  if (steps.some((s) => s.result?.status === "failed")) return "failed";
+  if (steps.length > 0 && steps.every((s) => s.result?.status === "passed")) return "passed";
+  return "inconclusive";
 }

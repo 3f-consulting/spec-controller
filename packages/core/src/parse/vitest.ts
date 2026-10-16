@@ -2,6 +2,7 @@ import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { attributionOf } from "../domain/attribution.js";
+import { evidenceOfRunResult, type RunResult } from "../domain/journal.js";
 
 export interface VitestJsonReport {
   readonly testResults?: ReadonlyArray<{
@@ -26,24 +27,25 @@ export function parseVitestEvidenceObservations(
     const locator = file.name && relativizeToRoot(file.name, root);
     const assertions = file.assertionResults ?? [];
     if (file.status === "failed" && assertions.length === 0) {
+      const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
       results.push({
         qualityCheck,
         scnId: null,
-        status: "failed",
+        status: evidence.status,
         locator,
-        broken: true,
+        broken: evidence.broken,
         message: file.message,
       });
       continue;
     }
     for (const assertion of assertions) {
-      const status = assertion.status;
-      if (status !== "passed" && status !== "failed") continue;
+      const evidence = evidenceOfRunResult(runResultOf(assertion.status));
+      if (evidence === undefined) continue;
       const { scnId, severalCodes } = attributionOf(citingCodesOf(assertion));
       results.push({
         qualityCheck,
         scnId,
-        status,
+        status: evidence.status,
         locator,
         testName: assertion.fullName ?? assertion.title,
         ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
@@ -56,4 +58,8 @@ export function parseVitestEvidenceObservations(
 function citingCodesOf(assertion: { readonly title?: string; readonly fullName?: string }): string[] {
   const leafCodes = scnCitationsOf(assertion.title ?? "");
   return leafCodes.length > 0 ? leafCodes : scnCitationsOf(assertion.fullName ?? "");
+}
+
+function runResultOf(status: string | undefined): RunResult {
+  return status === "passed" || status === "failed" ? status : "inconclusive";
 }

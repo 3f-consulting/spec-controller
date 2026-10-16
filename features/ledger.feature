@@ -195,3 +195,15 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-042
     Scenario: an evidence observation citing two scenarios credits neither, and suspense names both codes
+
+  Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
+
+    A test that ran its assertions posts what they said, passed or failed. A test that never reached them,
+    because its file, its class or its setup failed first, posts broken evidence. A test whose result is
+    inconclusive, skipped or pending, posts nothing. Each runner's reader says only which of its results is which.
+
+    @unit @SCN-LDG-043
+    Scenario: a test that never reached its assertions posts broken evidence, whatever the runner
+
+    @unit @SCN-LDG-044
+    Scenario: a test whose result is inconclusive posts no evidence observation, whatever the runner

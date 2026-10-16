@@ -64,6 +64,19 @@ export function pendingItemsOf(scenario: Scenario): PendingItem[] {
 
 export type EvidenceStatus = "passed" | "failed";
 
+export type RunResult = "passed" | "failed" | "never-reached-its-assertions" | "inconclusive";
+
+export interface RunEvidence {
+  readonly status: EvidenceStatus;
+  readonly broken?: true;
+}
+
+export function evidenceOfRunResult(result: RunResult): RunEvidence | undefined {
+  if (result === "inconclusive") return undefined;
+  if (result === "never-reached-its-assertions") return { status: "failed", broken: true };
+  return { status: result };
+}
+
 interface SeveralScnCodesNote {
   readonly kind: "several-scn-codes";
   readonly codes: readonly string[];
