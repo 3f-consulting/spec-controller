@@ -56,8 +56,7 @@ Feature: Ledger over obligation-vs-observation evidence
     (posting to a non-existent account). Each
     phantom cited id becomes ONE phantom-scenario Scenario Reconciliation, its
     Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
-    evidence observation's locator as the where-to-fix), verdict always out of balance. This is
-    the foundation sub-issue that lays the full reconciler spine that consumes evidence observations.
+    evidence observation's locator as the where-to-fix), verdict always out of balance.
 
     @unit @SCN-LDG-006
     Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance
