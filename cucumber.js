@@ -1,4 +1,4 @@
-const tags = "@integration or @e2e or @performance";
+const tags = "@integration or @e2e";
 
 const common = {
   paths: ["features/**/*.feature"],

@@ -38,7 +38,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   identity, and the command that settles it is the one its CI step runs.
 
   AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
-  outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so
+  outside the Cucumber profile's `@integration or @e2e` exactly as `@unit` does, so
   Cucumber selects none of these scenarios. A scenario Cucumber does not select carries no
   Given/When/Then and no step definition, here as for a `@unit`-only scenario: the title is the
   SPECIFICATION, saying what the check asserts of this tree, and the check's own command — run as a
