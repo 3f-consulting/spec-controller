@@ -72,8 +72,7 @@ Feature: spec-controller balance runs standalone
 
   Rule: an unsound run pre-empts the balance verdict
 
-    A run whose evidence did not fully materialise exits 4, even though it is also out of
-    balance.
+    A run whose evidence did not fully materialise exits 4, even when it is also out of balance.
 
     @unit @e2e @SCN-CLI-012
     Scenario: a run whose vitest report carries a collection-failed suite exits 4, not 1
@@ -393,9 +392,9 @@ Feature: spec-controller balance runs standalone
 
   Rule: a target with no Gherkin corpus is reconciled, not refused
 
-    An absent corpus and a corpus
-    holding no scenario get the same answer, and the report names the directory it examined. A
-    supplied --features path that does not exist is still a usage fault, exit 2.
+    An absent corpus and a corpus holding no scenario get the same answer, and the report names
+    the directory it examined. A supplied --features path that does not exist is a usage fault,
+    exit 2.
 
     @SCN-CLI-017 @unit @e2e
     Scenario: a target with no features/ directory is reported on, never crashed over
@@ -437,10 +436,10 @@ Feature: spec-controller balance runs standalone
 
   Rule: --exit-zero moves the verdict codes to 0 and never the couldn't-run codes
 
-    --exit-zero moves the verdict codes to 0 and prints the same report, headline included, so
-    the headline still names the code the gate gives. It never moves the usage, unsound or
-    nothing-to-reconcile codes. Without the flag the gate exits as usual. A saved report
-    records --strict but never --exit-zero.
+    The report under --exit-zero is unchanged, headline included, so the headline names the code
+    the gate would give. The usage, unsound and nothing-to-reconcile codes are never moved.
+    Without the flag the gate exits as usual. A saved report records --strict but never
+    --exit-zero.
 
     @SCN-CLI-021 @unit @e2e
     Scenario Outline: under --exit-zero a <verdict> run prints the same report byte for byte and exits 0

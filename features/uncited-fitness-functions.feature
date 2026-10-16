@@ -13,7 +13,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     A step cites a scenario by carrying that scenario's code as its `id:`. A step with no `id:`
     cites nothing: its check lands on the suspense row under its own name, marked
-    cites-no-scenario, is shown under "### Fitness functions", and reds the run. The check is never dropped from the count.
+    cites-no-scenario, is shown under "### Fitness functions", and reds the run. The check is
+    never dropped from the count.
 
     A step whose `id:` names a code no scenario carries posts to a phantom row under that code,
     not to the suspense row.
@@ -51,9 +52,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a fitness function is observed wherever in the workflows it runs
 
-    By default every workflow file in the target's workflow directory is read. A cited check running in a
-    sibling workflow is satisfied, and no watermelon is raised against it. An uncited check running
-    in a sibling workflow is reported uncited.
+    By default every workflow file in the target's workflow directory is read. A cited check
+    running in a sibling workflow is satisfied, and no watermelon is raised against it. An uncited
+    check running in a sibling workflow is reported uncited.
 
     @unit @integration @SCN-USG-006
     Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
@@ -184,8 +185,9 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     The step that runs this tool's balance invocation, directly or through a manifest script, is
     the reconciler. The step that dumps GitHub's step record is its input. Both are excluded without
     any configuration. The report names both under "### The reconciler", saying which runs the
-    reconciliation and which writes the step record it reads, and lists neither as excluded. The same tool run for another
-    purpose stays a candidate, and neither step is recognised by its title.
+    reconciliation and which writes the step record it reads, and lists neither as excluded. The
+    same tool run for another purpose stays a candidate, and neither step is recognised by its
+    title.
 
     @unit @SCN-USG-014
     Scenario: the balance step and its step-record dump are not candidates, and no configuration says so
