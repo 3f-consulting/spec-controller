@@ -102,7 +102,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     hatch run, pdm run, coverage run -m and bundle exec. A launcher hands on to the word right after it, so
     an option between a launcher and the runner leaves the step a candidate. A runner declared as
     several words, such as a build tool and its test task, is recognised where a command, after any
-    launchers, opens with all of those words. Each command of an
+    launchers, opens with all of those words; the launchers are set aside first, so a runner
+    declared with a launcher's words matches no command. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
     it follows. A runner named anywhere else, as an argument, inside a path, a flag or an
     =-joined value, leaves the step a candidate.

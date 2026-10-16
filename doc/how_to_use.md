@@ -366,7 +366,7 @@ Surefire writes that test into `TEST-example.allocate.NextNumberTest.xml` under 
 <testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
-Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn test"`, `"unit": "mvn clean test"` if the step runs `mvn clean test`, or `"unit": "./mvnw test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, so a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
+Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn clean test"` for the `mvn clean test` this section recommends below, `"unit": "mvn test"` if the step runs `mvn test`, or `"unit": "./mvnw clean test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, so a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
 
 **Old reports are read as well.** Surefire does not clear the directory before a run, so a report left in an uncleaned `target/` by an earlier run is read beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before any report is written, so when the directory is missing, `balance` refuses `--junit` as a path that does not exist.
 
@@ -379,7 +379,7 @@ A JUnit 5 test in Kotlin cites its scenario as a Java one does: the code in squa
 spec-controller balance --junit build/test-results/test
 ```
 
-Gradle writes the display name into the report with no configuration. `balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `binary/` directory beside them.
+Gradle writes the display name into the report with no configuration (measured with Gradle 9.8.1 and JUnit Jupiter 5.11.4). `balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `binary/` directory beside them.
 
 A complete test file:
 
@@ -410,6 +410,8 @@ Gradle's report differs from Surefire's in two ways:
 
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
 - **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. The failing item lands on the suspense row, the scenarios those tests cite read `missing`, and the run is not marked unsound.
+
+`--junit` names one directory. In a build with several modules, each module writes its own `build/test-results/test/`, and `balance` reads only the one given.
 
 Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "./gradlew test"`, or `"unit": "gradle test"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)). Declared as `"./gradlew"` alone, the runner would be recognised in every step that runs the wrapper, so a `./gradlew detekt` step would be taken for the test suite instead of being reported as a check.
 
@@ -541,14 +543,14 @@ Discovery is not Node-shaped. It does not match `package.json` script names agai
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this tier*. The report distinguishes it from an omitted key, which it reads as *you have not told us*.
 - **A key outside the four** is reported as unrecognised, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
-- **A runner is recognised only as the command a step runs**: the first word of each command in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
+- **A runner is recognised only as the command a step runs**: the first word of each command (or its opening words, for a runner named in several words, below) in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
 - **Jest works the same way.** `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
 - **RSpec works the same way.** `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
 - **Go works the same way.** `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
-- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check.
-- **Java works this way.** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, or it is reported as a check.
-- **Kotlin works this way.** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check.
+- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: the launcher is set aside before the words are compared, so `"rspec"` covers `bundle exec rspec`, and `"bundle exec rspec"` matches no step.
+- **Java works this way.** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, or it is reported as a check. The same holds for a step that runs the tests through a later phase, such as `mvn verify` or `mvn install`: declare those words, or the step is reported as a check.
+- **Kotlin works this way.** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check. Declare the words your test step opens with: a step running `./gradlew clean test`, `./gradlew build`, `./gradlew check` or `./gradlew :app:test` is declared with those words, or it is reported as a check.
 - **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
 
 ### Excluding steps that are not checks — `notChecks`
