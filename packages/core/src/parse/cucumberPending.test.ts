@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 
-describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
+describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
   const reportWithStep = (status: string): CucumberJsonReport => [
     {
       uri: "features/pnd013.feature",
@@ -36,5 +36,27 @@ describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario 
       },
     ];
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([]);
+  });
+});
+
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at the caller-named fallback, since a pending tag is no tier tag", () => {
+  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the caller's fallback, never as integration", () => {
+    const observations = parseCucumberEvidenceObservations(
+      [
+        {
+          uri: "features/deferred.feature",
+          elements: [
+            {
+              tags: [{ name: "@integrationpending" }, { name: "@SCN-XXX-002" }],
+              steps: [{ result: { status: "passed" } }],
+            },
+          ],
+        },
+      ],
+      "e2e"
+    );
+    expect(observations).toEqual([
+      { qualityCheck: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+    ]);
   });
 });

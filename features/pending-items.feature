@@ -70,41 +70,13 @@ Feature: A pending evidence obligation raises a Pending Item
 
   Rule: The Pending Item surfaces — visible and tallied, distinct from a Reconciling Item
 
-    @unit @SCN-PND-010
-    Scenario: the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item
-
     @unit @SCN-PND-011
     Scenario: the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance
 
-    @unit @SCN-PND-012
-    Scenario: a balanced scenario carrying a Pending Item is visibly distinguished from a clean-balanced one
-
   Rule: An observation status maps to an existing outcome — pending is never inferred from status
-
-    @unit @SCN-PND-013
-    Scenario Outline: a <result> cucumber observation for a non-deferred obligation → <outcome>
-
-      Examples:
-        | result    | outcome   |
-        | passed    | satisfied |
-        | failed    | failing   |
-        | undefined | missing   |
-        | pending   | missing   |
-        | skipped   | missing   |
-        | ambiguous | missing   |
 
     @unit @SCN-PND-014
     Scenario: an undefined step with no pending flag is reported out-of-balance (missing), not excused as pending
-
-    @unit @SCN-PND-015
-    Scenario Outline: a vitest <result> observation for a non-deferred obligation → <outcome>
-
-      Examples:
-        | result  | outcome   |
-        | passed  | satisfied |
-        | failed  | failing   |
-        | skipped | missing   |
-        | todo    | missing   |
 
   Rule: A recognised deferral tag raises a Pending Item in place of the missing outcome a skipped or pending run would give
 

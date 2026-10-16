@@ -438,3 +438,14 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-040
     Scenario: the markdown's prose refers to an outcome by its sentence, never by its handle
+
+  Rule: the markdown shows each Pending Item, labelled apart from a Reconciling Item and tallied apart from the verdict counts
+
+    @unit @SCN-RPT-041
+    Scenario: a row's exceptions cell labels each Pending Item, naming its quality check when it has one, after the row's Reconciling Items
+
+    @unit @SCN-RPT-042
+    Scenario: the evidence reconciliation summary tallies the Pending Items on a line of their own after its table, and shows no tally line when there are none
+
+    @unit @SCN-RPT-043
+    Scenario: a balanced row carrying a Pending Item reads differently from a clean-balanced row

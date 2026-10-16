@@ -826,3 +826,8 @@ Feature: spec-controller balance runs standalone
       Then the input is refused as one the tool cannot read, never read as a verdict
       And the refusal names the input it could not read and the path
       And the refusal says the tool was not permitted to read it
+
+  Rule: with no deferral tags configured, balance defers a scenario that carries a built-in deferral tag
+
+    @unit @SCN-CLI-088
+    Scenario: a scenario tagged @wip, @ignore, @skip, @todo or @pending reads as a Pending Item while its untagged twin reads missing, whether Cucumber left it out or reported it pending

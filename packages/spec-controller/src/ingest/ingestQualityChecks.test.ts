@@ -42,7 +42,7 @@ function unconfiguredTarget(tag: string): string {
   return root;
 }
 
-describe("[SCN-PND-019] a community deferral tag raises the Pending Item, with no deferralTags configured", () => {
+describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with no deferralTags configured", () => {
   it.each(["wip", "ignore", "skip", "todo", "pending"])(
     "@%s defers its scenario to a Pending Item, while its untagged twin is missing",
     (tag) => {

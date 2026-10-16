@@ -30,3 +30,8 @@ Feature: A Vitest suite's results answer unit evidence obligations
 
     @unit @SCN-VIT-006
     Scenario: every observation read from a Vitest report carries the quality check the caller names, because a Vitest report carries no tier tags
+
+  Rule: a Vitest test's result gives its run result: passed or failed as reported, inconclusive when skipped or todo
+
+    @unit @SCN-VIT-007
+    Scenario: a Vitest test that passed or failed posts that status, and one skipped or todo posts nothing

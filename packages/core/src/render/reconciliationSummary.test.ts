@@ -109,7 +109,7 @@ function expectedTable(
   ];
 }
 
-describe("[SCN-PND-011] the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance", () => {
+describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance", () => {
   let settledTable: string[];
   beforeEach(() => {
     settledTable = expectedTable(

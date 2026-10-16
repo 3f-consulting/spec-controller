@@ -5,7 +5,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
-describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
+describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
   const evidenceReconciliationSection = (md: string): string => {
     const i = md.indexOf("### Evidence reconciliation");
     expect(i, "expected the Evidence reconciliation section").toBeGreaterThanOrEqual(0);
@@ -38,7 +38,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   });
 });
 
-describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
+describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
   const rowFor = (md: string, scnId: string): string => {
     const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
     expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();

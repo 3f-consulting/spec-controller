@@ -21,3 +21,8 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
 
     @unit @SCN-CUC-003
     Scenario: an ambiguous Cucumber step posts a broken suspense item naming the step, while the scenario it would have proven still reads missing
+
+  Rule: a Cucumber scenario's step results give its run result: passed when every step passed, failed when one failed, inconclusive when one was skipped
+
+    @unit @SCN-CUC-004
+    Scenario: a Cucumber scenario whose steps all passed posts a passed observation, one with a failed step posts a failed one, and one with a skipped step posts nothing at any of its quality checks

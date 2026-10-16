@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest.js";
 
-describe("[SCN-PND-015] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
+describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
   const reportWithStatus = (status: string): VitestJsonReport => ({
     testResults: [
       { name: "/r/a.test.ts", assertionResults: [{ fullName: "[SCN-PDV-001] a unit assertion", status }] },

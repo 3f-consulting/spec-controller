@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "./scenarios.js";
 import { pendingQualityCheck } from "../domain/scenarioObligations.js";
-import { parseCucumberEvidenceObservations } from "./cucumber.js";
 
 const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
@@ -28,26 +27,6 @@ describe("[SCN-PND-002] the pending suffix is significant — @integrationpendin
     const [scenario] = parseScenarios(asFeature(source));
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "integration" }]);
     expect(scenario!.evidenceObligations.some((o) => o.pending)).toBe(false);
-  });
-
-  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the caller's fallback, never as integration", () => {
-    const observations = parseCucumberEvidenceObservations(
-      [
-        {
-          uri: "features/deferred.feature",
-          elements: [
-            {
-              tags: [{ name: "@integrationpending" }, { name: "@SCN-XXX-002" }],
-              steps: [{ result: { status: "passed" } }],
-            },
-          ],
-        },
-      ],
-      "e2e"
-    );
-    expect(observations).toEqual([
-      { qualityCheck: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
-    ]);
   });
 });
 

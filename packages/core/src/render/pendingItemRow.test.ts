@@ -63,7 +63,7 @@ function rowFor(md: string, scnId: string): { verdict: string; items: string } {
 const pendingFor = (qualityCheck: string): string => CORE_MESSAGES[CoreMessage.PendingItemFor](qualityCheck);
 const missing = (qualityCheck: string): string => `${qualityCheck} ∅ ${OUTCOME_DESCRIPTION.missing}`;
 
-describe("[SCN-PND-010] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
+describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no quality check carries the bare pending label, and its row still balances", () => {
     expect(rowFor(render(), "SCN-PIR-001")).toEqual({
       verdict: "✓ balanced",
