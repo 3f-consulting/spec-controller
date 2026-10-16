@@ -1,17 +1,23 @@
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation } from "../model.js";
-import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
+import { ciWorkflowSteps, type PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { StepRecord } from "../domain/stepRecord.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import { recognisedRunners, runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
+import { fitnessFunctionsAmong, recognisedRunners } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
-import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js";
 import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
-import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
-import { isGitHubPlumbingStep } from "../parse/gitHubPlumbing.js";
+import { qualifiedStepName } from "../parse/stepNames.js";
+import { commandRuns } from "../parse/commandRuns.js";
+import {
+  isExcludedFromDiscovery,
+  notChecksApplied,
+  reconcilerSteps,
+  type ReconcilerSteps,
+  type StepExclusions,
+} from "../domain/fitnessDiscovery.js";
 import {
   configurationNotRead,
   resolveDeferralTags,
@@ -33,9 +39,9 @@ type TargetManifest = PackageJsonScripts & {
 function observationStreams(
   input: {
     behaviouralObservations: readonly EvidenceObservation[];
-    ciSources: readonly string[];
     ciStepRecord?: StepRecord;
   },
+  steps: readonly PipelineStep[],
   corpus: TargetCorpus,
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
@@ -46,7 +52,7 @@ function observationStreams(
     ...input.behaviouralObservations,
     ...checkObservations(
       corpus,
-      input.ciSources,
+      steps,
       packageJson,
       runnerTiers,
       isExcluded,
@@ -75,6 +81,7 @@ interface FeatureFileHeader {
 }
 
 interface PipelineReadings {
+  readonly steps: readonly PipelineStep[];
   readonly runners: ResolvedRunners;
   readonly exclusions: StepExclusions;
   readonly reconciler: ReconcilerSteps;
@@ -83,27 +90,25 @@ interface PipelineReadings {
 
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
   const { packageJson } = input;
-  const exclusions = stepExclusions(
-    input.ciSources,
-    input.ciSourceNames ?? [],
-    resolveNotChecks(packageJson)
-  );
+  const steps = ciWorkflowSteps(input.ciSources);
+  const ciSourceNames = input.ciSourceNames ?? [];
+  const nameOf = (step: PipelineStep): string | undefined => qualifiedStepName(step, ciSourceNames);
+  const exclusions = notChecksApplied(steps, nameOf, resolveNotChecks(packageJson));
 
   const runners = resolveRunners(packageJson);
 
-  const reconciler = reconcilerSteps(
-    input.ciSources,
-    input.ciSourceNames ?? [],
-    input.reconcilerInvocation ?? "",
-    packageJson
+  const invocation = input.reconcilerInvocation ?? "";
+  const scripts = packageJson.scripts ?? {};
+  const reconciler = reconcilerSteps(steps, nameOf, (command) =>
+    commandRuns(command, invocation, scripts)
   );
 
   return {
+    steps,
     runners,
     exclusions,
     reconciler,
-    isExcluded: (step) =>
-      reconciler.isReconciler(step) || exclusions.isExcluded(step) || isGitHubPlumbingStep(step),
+    isExcluded: (step) => isExcludedFromDiscovery(step, reconciler, exclusions),
   };
 }
 
@@ -116,18 +121,18 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { runners, exclusions, reconciler, isExcluded } = pipelineReadings(input);
+  const { steps, runners, exclusions, reconciler, isExcluded } = pipelineReadings(input);
 
   const reconciliation = evidenceReconciliationOf(
     corpus.scenarios,
-    observationStreams(input, corpus, packageJson, runners.tiers, isExcluded),
+    observationStreams(input, steps, corpus, packageJson, runners.tiers, isExcluded),
     [...input.untaggedScenarios],
     true,
     true
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, input, packageJson, runners, exclusions, reconciler, isExcluded),
+      withReaderAccounts(reconciliation, steps, input.ciSourceNames ?? [], packageJson, runners, exclusions, reconciler, isExcluded),
       packageJson
     ),
     input
@@ -164,7 +169,8 @@ function withScenarioCodeErrors(
 
 function withReaderAccounts(
   reconciliation: EvidenceReconciliation,
-  input: { ciSources: readonly string[]; ciSourceNames?: readonly string[] },
+  steps: readonly PipelineStep[],
+  ciSourceNames: readonly string[],
   packageJson: TargetManifest,
   runners: ResolvedRunners,
   exclusions: StepExclusions,
@@ -175,17 +181,18 @@ function withReaderAccounts(
     withScopeAccount(
       withExclusionAccount(
         withReconcilerAccount(
-          withRunnerAccount(reconciliation, input.ciSources, packageJson, runners),
+          withRunnerAccount(reconciliation, steps, packageJson, runners),
           reconciler
         ),
         exclusions
       ),
-      input,
+      steps,
+      ciSourceNames,
       packageJson,
       runners.tiers,
       isExcluded
     ),
-    input.ciSources,
+    steps,
     packageJson,
     runners.tiers,
     reconciler,
@@ -196,7 +203,7 @@ function withReaderAccounts(
 
 function withStepAccounting(
   reconciliation: EvidenceReconciliation,
-  ciSources: readonly string[],
+  steps: readonly PipelineStep[],
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
   reconciler: ReconcilerSteps,
@@ -204,7 +211,7 @@ function withStepAccounting(
   isExcluded: (step: PipelineStep) => boolean
 ): EvidenceReconciliation {
   const accounting = stepAccounting(
-    ciSources,
+    steps,
     packageJson,
     runnerTiers,
     reconciler.isReconciler,
@@ -220,14 +227,15 @@ function withStepAccounting(
 
 function withScopeAccount(
   reconciliation: EvidenceReconciliation,
-  input: { ciSources: readonly string[]; ciSourceNames?: readonly string[] },
+  steps: readonly PipelineStep[],
+  ciSourceNames: readonly string[],
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
   isExcluded: (step: PipelineStep) => boolean
 ): EvidenceReconciliation {
   const scope = discoveryScope(
-    input.ciSources,
-    input.ciSourceNames ?? [],
+    steps,
+    ciSourceNames,
     packageJson,
     runnerTiers,
     isExcluded
@@ -264,12 +272,12 @@ function withExclusionAccount(
 
 function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
-  ciSources: readonly string[],
+  steps: readonly PipelineStep[],
   packageJson: TargetManifest,
   { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
-    ciSources,
+    steps,
     packageJson,
     runnerTiers
   );
@@ -286,15 +294,15 @@ function withRunnerAccount(
 
 function checkObservations(
   corpus: TargetCorpus,
-  ciSources: readonly string[],
+  steps: readonly PipelineStep[],
   packageJson: TargetManifest,
   runnerTiers: Readonly<Record<string, string | null>>,
   isExcluded: StepExclusions["isExcluded"],
   recordAnswersCitingSteps: boolean
 ): EvidenceObservation[] {
   return [
-    ...runningFitnessFunctions(
-      ciSources,
+    ...fitnessFunctionsAmong(
+      steps,
       packageJson,
       runnerTiers,
       (_script, citedByStep) => corpus.citedRow(citedByStep),

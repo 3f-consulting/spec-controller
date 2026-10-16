@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { stepAccounting } from "./stepAccounting.js";
-import { reconcilerSteps } from "./reconcilerSteps.js";
-import { stepExclusions } from "./stepExclusions.js";
-import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
-import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { commandRuns } from "./commandRuns.js";
+import { qualifiedStepName } from "./stepNames.js";
+import {
+  isGitHubPlumbingStep,
+  notChecksApplied,
+  reconcilerSteps,
+} from "../domain/fitnessDiscovery.js";
+import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
 
 let CI_YML: string;
@@ -52,13 +56,18 @@ const reconcilerOver = (
   sources: readonly string[],
   names: readonly string[]
 ): ((step: PipelineStep) => boolean) =>
-  reconcilerSteps(sources, names, INVOCATION, SCRIPTS).isReconciler;
+  reconcilerSteps(
+    ciWorkflowSteps(sources),
+    (step) => qualifiedStepName(step, names),
+    (command) => commandRuns(command, INVOCATION, SCRIPTS.scripts ?? {})
+  ).isReconciler;
 
 const notChecksOver = (
   sources: readonly string[],
   names: readonly string[],
   entries: readonly string[]
-): ((step: PipelineStep) => boolean) => stepExclusions(sources, names, entries).isExcluded;
+): ((step: PipelineStep) => boolean) =>
+  notChecksApplied(ciWorkflowSteps(sources), (step) => qualifiedStepName(step, names), entries).isExcluded;
 
 const excludedFromDiscoveryBy =
   (
@@ -77,7 +86,7 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
     ]);
     expect(
       stepAccounting(
-        [CI_YML],
+        ciWorkflowSteps([CI_YML]),
         SCRIPTS,
         UNIT_RUNNER,
         isReconciler,
@@ -112,7 +121,7 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
     const isNamedANonCheck = notChecksOver(sources, ["nightly.yml"], []);
     expect(
       stepAccounting(
-        sources,
+        ciWorkflowSteps(sources),
         SCRIPTS,
         NO_RUNNERS,
         isReconciler,

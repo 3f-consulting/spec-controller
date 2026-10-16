@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { PipelineStep, PipelineStepAction } from "../domain/pipelineStep.js";
+import type { PipelineStep, PipelineStepAction, UsedAction } from "../domain/pipelineStep.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
@@ -10,6 +10,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 const CONTINUE_ON_ERROR = "continue-on-error";
+
+const STEP_RECORD_EXPRESSION = "tojson(steps)";
 
 function vouchesForTheStep(value: unknown): boolean {
   return value === undefined || value === false || value === "false";
@@ -31,25 +33,35 @@ function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
   return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
 }
 
+function usedActionOf(name: string): UsedAction {
+  const [owner, repository] = name.split(/[/@]/);
+  return { name, owner: String(owner), repository: String(repository) };
+}
+
 function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined {
-  const runs = step["run"];
-  if (typeof runs === "string") return { runs };
+  const command = step["run"];
+  if (typeof command === "string") return { command };
   const uses = step["uses"];
-  if (typeof uses === "string") return { uses };
+  if (typeof uses === "string") return { action: usedActionOf(uses) };
   return undefined;
 }
 
 function identityOf(name: unknown, action: PipelineStepAction): string {
   if (typeof name === "string" && name.trim() !== "") return name.trim();
-  if ("uses" in action) return action.uses;
-  return action.runs.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
+  if ("action" in action) return action.action.name;
+  return action.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
 }
 
-function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): PipelineStep[] {
-  if (!isRecord(job)) return [];
-  const steps = job["steps"];
+function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
+  const written = "command" in action ? [...envValuesOf(env), action.command] : envValuesOf(env);
+  return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
+}
+
+function stepsOfJob(job: string, jobBody: unknown, sourceIndex: number): PipelineStep[] {
+  if (!isRecord(jobBody)) return [];
+  const steps = jobBody["steps"];
   if (!Array.isArray(steps)) return [];
-  const jobValue = job[CONTINUE_ON_ERROR];
+  const jobValue = jobBody[CONTINUE_ON_ERROR];
   const read: PipelineStep[] = [];
   for (const step of steps) {
     if (!isRecord(step)) continue;
@@ -57,9 +69,9 @@ function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): PipelineS
     if (action === undefined) continue;
     read.push({
       sourceIndex,
-      jobId,
+      job,
       identity: identityOf(step["name"], action),
-      env: envValuesOf(step["env"]),
+      writesStepRecord: writesStepRecordOf(step["env"], action),
       id: idOf(step["id"]),
       ...action,
       abortsJob: abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
@@ -77,7 +89,7 @@ function stepsOf(ciSource: string, sourceIndex: number): PipelineStep[] {
   }
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
-  return Object.entries(jobs).flatMap(([jobId, job]) => stepsOfJob(jobId, job, sourceIndex));
+  return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody, sourceIndex));
 }
 
 export function ciWorkflowSteps(ciSources: readonly string[]): PipelineStep[] {

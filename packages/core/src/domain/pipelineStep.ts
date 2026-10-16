@@ -1,12 +1,18 @@
+export interface UsedAction {
+  readonly name: string;
+  readonly owner: string;
+  readonly repository: string;
+}
+
 export type PipelineStepAction =
-  | { readonly runs: string }
-  | { readonly uses: string };
+  | { readonly command: string }
+  | { readonly action: UsedAction };
 
 export type PipelineStep = {
   readonly sourceIndex: number;
-  readonly jobId: string;
+  readonly job: string;
   readonly identity: string;
   readonly id?: string;
-  readonly env: readonly string[];
+  readonly writesStepRecord: boolean;
   readonly abortsJob: boolean;
 } & PipelineStepAction;

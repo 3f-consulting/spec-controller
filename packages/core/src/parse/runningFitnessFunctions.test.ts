@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { recognisedRunners, runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { resolveRunners } from "./targetManifest.js";
-import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
@@ -80,7 +80,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness fun
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
     const { tiers } = resolveRunners(manifest);
-    expect(recognisedRunners([ci2], pkg2, tiers)).toEqual([
+    expect(recognisedRunners(ciWorkflowSteps([ci2]), pkg2, tiers)).toEqual([
       { tier: "unit", runner: "vitest", step: "pnpm test" },
       { tier: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
     ]);

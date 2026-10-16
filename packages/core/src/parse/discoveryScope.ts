@@ -1,15 +1,15 @@
-import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
-import { isCandidateStep } from "./runningFitnessFunctions.js";
-import { isGitHubPlumbingStep } from "./gitHubPlumbing.js";
+import { runsNamedRunner } from "./runningFitnessFunctions.js";
+import { isCandidateStep, isGitHubPlumbingStep } from "../domain/fitnessDiscovery.js";
 import type { JobDiscoveryScope } from "../domain/evidenceReconciliation.js";
 
 type Tally = { readonly source?: string; readonly job: string; readonly steps: number; readonly candidates: number };
 
-const keyOf = (step: PipelineStep): string => `${step.sourceIndex}:${step.jobId}`;
+const keyOf = (step: PipelineStep): string => `${step.sourceIndex}:${step.job}`;
 
 export function discoveryScope(
-  ciSources: readonly string[],
+  steps: readonly PipelineStep[],
   ciSourceNames: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
@@ -18,15 +18,17 @@ export function discoveryScope(
   const isExcludedOrPlumbing = (step: PipelineStep): boolean =>
     isExcludedFromDiscovery(step) || isGitHubPlumbingStep(step);
   const tallies = new Map<string, Tally>();
-  for (const step of ciWorkflowSteps(ciSources)) {
+  for (const step of steps) {
     const source = ciSourceNames[step.sourceIndex];
     const tally = tallies.get(keyOf(step)) ?? {
       ...(source !== undefined ? { source } : {}),
-      job: step.jobId,
+      job: step.job,
       steps: 0,
       candidates: 0,
     };
-    const candidate = isCandidateStep(step, packageJson, runners, isExcludedOrPlumbing) ? 1 : 0;
+    const candidate = isCandidateStep(step, isExcludedOrPlumbing, (s) => runsNamedRunner(s, packageJson, runners))
+      ? 1
+      : 0;
     tallies.set(keyOf(step), { ...tally, steps: tally.steps + 1, candidates: tally.candidates + candidate });
   }
   return [...tallies.values()].sort(

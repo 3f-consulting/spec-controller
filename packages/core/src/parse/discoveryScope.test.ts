@@ -1,3 +1,4 @@
+import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { describe, it, expect, beforeEach } from "vitest";
 import { discoveryScope } from "./discoveryScope.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
@@ -60,7 +61,7 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
   it("names every workflow and every job, with the steps it read from each", () => {
     expect(
       discoveryScope(
-        [CI_YML, NIGHTLY_YML],
+        ciWorkflowSteps([CI_YML, NIGHTLY_YML]),
         ["ci.yml", "nightly.yml"],
         SCRIPTS,
         UNIT_RUNNER,
@@ -80,12 +81,12 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
       "    uses: ./.github/workflows/x.yml",
       "  empty:",
     ].join("\n");
-    expect(discoveryScope([withStepless], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([
+    expect(discoveryScope(ciWorkflowSteps([withStepless]), ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([
       { source: "ci.yml", job: "ci", steps: 4, candidates: 3 },
     ]);
   });
 
   it("reads nothing from a document that parses to no jobs", () => {
-    expect(discoveryScope(["name: CI\non: [push]\n"], ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([]);
+    expect(discoveryScope(ciWorkflowSteps(["name: CI\non: [push]\n"]), ["ci.yml"], SCRIPTS, NO_RUNNERS, excludingNothing)).toEqual([]);
   });
 });

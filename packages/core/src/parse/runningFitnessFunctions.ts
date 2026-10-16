@@ -8,6 +8,7 @@ import {
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
+import { isCandidateStep } from "../domain/fitnessDiscovery.js";
 
 const UP_TO_LAST_PIPE = /^.*(?<!\|)\|(?!\|)/;
 
@@ -24,8 +25,8 @@ function namedRunnersAt(
   scripts: Readonly<Record<string, string>>,
   runners: Readonly<Record<string, string | null>>
 ): readonly (readonly [string, string])[] {
-  if (!("runs" in step)) return [];
-  const command = finalStages(step.runs);
+  if (!("command" in step)) return [];
+  const command = finalStages(step.command);
   const unpiped = Object.fromEntries(
     Object.entries(scripts).map(([name, body]) => [name, finalStages(body)])
   );
@@ -36,18 +37,9 @@ function namedRunnersAt(
 }
 
 function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
-  if (!("runs" in step)) return step.identity;
-  const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.runs, name));
+  if (!("command" in step)) return step.identity;
+  const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.command, name));
   return invoked[0] ?? step.identity;
-}
-
-export function isCandidateStep(
-  step: PipelineStep,
-  packageJson: PackageJsonScripts,
-  runners: Readonly<Record<string, string | null>>,
-  isExcludedFromDiscovery: (step: PipelineStep) => boolean
-): boolean {
-  return !isExcludedFromDiscovery(step) && !runsNamedRunner(step, packageJson, runners);
 }
 
 export function runsNamedRunner(
@@ -65,9 +57,29 @@ export function runningFitnessFunctions(
   citedScn: (script: string, citedByStep?: string) => ScriptCitation | null = () => null,
   isExcludedFromDiscovery: (step: PipelineStep) => boolean = () => false
 ): FitnessEvidenceObservation[] {
+  return fitnessFunctionsAmong(
+    ciWorkflowSteps(ciSources),
+    packageJson,
+    runners,
+    citedScn,
+    isExcludedFromDiscovery
+  );
+}
+
+type RunnerTiers = Readonly<Record<string, string | null>>;
+type CitationOf = (script: string, citedByStep?: string) => ScriptCitation | null;
+type StepTest = (step: PipelineStep) => boolean;
+
+export function fitnessFunctionsAmong(
+  steps: readonly PipelineStep[],
+  packageJson: PackageJsonScripts,
+  runners: RunnerTiers,
+  citedScn: CitationOf = () => null,
+  isExcludedFromDiscovery: StepTest = () => false
+): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  const candidates = ciWorkflowSteps(ciSources).filter((step) =>
-    isCandidateStep(step, packageJson, runners, isExcludedFromDiscovery)
+  const candidates = steps.filter((step) =>
+    isCandidateStep(step, isExcludedFromDiscovery, (s) => runsNamedRunner(s, packageJson, runners))
   );
   return candidates
     .map((step) => {
@@ -87,12 +99,12 @@ export function runningFitnessFunctions(
 }
 
 export function recognisedRunners(
-  ciSources: readonly string[],
+  steps: readonly PipelineStep[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>
 ): BehaviouralRunner[] {
   const scripts = packageJson.scripts ?? {};
-  return ciWorkflowSteps(ciSources).flatMap((step) =>
+  return steps.flatMap((step) =>
     namedRunnersAt(step, scripts, runners).map(([tier, runner]) => ({
       tier,
       runner,

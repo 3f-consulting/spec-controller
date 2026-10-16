@@ -10,9 +10,6 @@ export { FITNESS_AXIS_TAG } from "./domain/scenarioObligations.js";
 
 export { isFitnessObservation } from "./domain/journal.js";
 
-export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
-export type { PipelineStep, PipelineStepAction } from "./domain/pipelineStep.js";
-
 export {
   resolveDeferralTags,
 } from "./parse/targetManifest.js";
