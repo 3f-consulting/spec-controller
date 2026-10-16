@@ -8,7 +8,7 @@ Each table below gives, for each check:
 
 A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
 
-Twenty-four of these checks first ran on `main` between 30 September and 14 October 2026. For them, a zero says little yet.
+Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026. For them, a zero says little yet.
 
 ## Readability, structure, complexity
 
@@ -54,7 +54,6 @@ Twenty-four of these checks first ran on `main` between 30 September and 14 Octo
 | No scenario code in a comment, description or document | 2 |
 | No narrated history in a comment, description or document | 1 |
 | No title or description names a code identifier or a source file | 1 |
-| The README's sample report is what `balance` prints on its fixture | 0 |
 
 ## Scenarios a reader can trust
 

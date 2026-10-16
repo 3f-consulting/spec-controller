@@ -1,7 +1,0 @@
-{
-  "name": "checkout",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

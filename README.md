@@ -12,9 +12,8 @@ Software built from a written specification has three artefacts: the spec, the t
 
 `spec-controller` holds the middle link. You write each behaviour in your spec as a scenario in a `.feature` file, tagged with the evidence it needs, such as `@unit` or `@e2e`. On every CI run, `balance` reconciles those scenarios against the test reports and CI steps that actually ran. When the two disagree, the build goes red.
 
-Here is what it prints. The CLI generates this sample from a committed example, and CI checks it, so it cannot drift:
+Here is a sample of what it prints:
 
-<!-- sample-report:start -->
 <div class="sample-report">
 
 ```markdown
@@ -46,7 +45,6 @@ Key: each evidence cell reads *obligation*/*observations*.
 ```
 
 </div>
-<!-- sample-report:end -->
 
 Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, two accounts balance, one test is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see.
 

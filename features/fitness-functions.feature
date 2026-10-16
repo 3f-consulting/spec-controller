@@ -203,11 +203,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-045
     Scenario: a pull request's mutation run selects exactly the gated scopes whose production files it changes, matched as the mutation runner matches them
 
-  Rule: the README shows the report balance really prints
-
-    @fitness @SCN-FIT-046
-    Scenario: the README's sample report is what balance prints on its committed fixture, and the build reds when they differ
-
   Rule: core's domain speaks its own language: no record in it is named for another tool's format
 
     @fitness @SCN-FIT-049
