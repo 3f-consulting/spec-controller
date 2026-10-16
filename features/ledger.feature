@@ -197,9 +197,11 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
 
-    A test that ran its assertions posts what they said, passed or failed. A test that never reached them,
-    because its file, its class or its setup failed first, posts broken evidence. A test whose result is
-    inconclusive, skipped or pending, posts nothing. Each runner's reader says only which of its results is which.
+    A test that ran its assertions posts what they said, passed or failed. A test its runner reports as
+    never having reached them posts broken evidence. A test whose result is inconclusive posts nothing.
+    Each runner's reader says which of its runner's results is which, as that runner's own scenarios
+    state: a test file that failed to load, or a Cucumber step matching more than one definition, never
+    reached its assertions, while a failed setup reads as failed for some runners and as skipped for others.
 
     @unit @SCN-LDG-043
     Scenario: a test that never reached its assertions posts broken evidence, whatever the runner
