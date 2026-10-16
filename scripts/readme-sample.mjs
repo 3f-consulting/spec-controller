@@ -25,7 +25,7 @@ const report = () => {
   // From the fixture's directory, so balance reads the fixture's workflows and not this repository's.
   const run = spawnSync(
     "pnpm",
-    ["exec", "tsx", cli, "balance", "--features", "features", "--vitest", "vitest.json", "--package-json", "package.json"],
+    ["exec", "tsx", cli, "balance", "--features", "features", "--vitest", "vitest.json", "--cucumber", "cucumber.json", "--package-json", "package.json"],
     { cwd: fixture, encoding: "utf8" },
   );
   if (run.status !== 0 && run.status !== 1) {

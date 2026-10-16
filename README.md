@@ -24,18 +24,25 @@ Here is what it prints. The CLI generates this sample from a committed example, 
 
 ## Scenario Reconciliations
 
-- 5 Scenario Reconciliation(s): 1 balanced, 4 out-of-balance.
+- 6 Scenario Reconciliation(s): 2 balanced, 4 out-of-balance.
 - 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.
 - 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(no scenario)".
 - 0 @SCN ids seen in non-tag context, excluded
 
-| Scenario | Unit | Verdict | Reconciling items |
-| --- | --- | --- | --- |
-| SCN-CHK-001 | U/1 | ✓ balanced | — |
-| SCN-CHK-002 | U/1 | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
-| SCN-CHK-003 | U/- | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
-| SCN-CHK-004 | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (no scenario) | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
+Key: each evidence cell reads *obligation*/*observations*.
+- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised.
+- The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.
+- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence.
+- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.
+
+| Scenario | Unit | E2e | Verdict | Reconciling items |
+| --- | --- | --- | --- | --- |
+| SCN-CHK-001 | U/1 |  | ✓ balanced | — |
+| SCN-CHK-002 | U/1 |  | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
+| SCN-CHK-003 | U/- |  | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
+| SCN-CHK-005 | U/3 | E/2 | ✓ balanced | — |
+| SCN-CHK-004 | — | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
+| (no scenario) | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>

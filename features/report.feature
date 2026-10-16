@@ -449,3 +449,12 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-043
     Scenario: a balanced row carrying a Pending Item reads differently from a clean-balanced row
+
+  Rule: the markdown report explains its evidence cells in a key under the Scenario Reconciliations heading
+
+    After the section's tally lines and before its table, a key reads each evidence cell as
+    obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean.
+    A table with no evidence column carries no key.
+
+    @unit @SCN-RPT-044
+    Scenario: a reader finds a key to the evidence cells before the Scenario Reconciliations table, and none where the table has no evidence cell

@@ -1,0 +1,17 @@
+[
+  {
+    "uri": "features/checkout.feature",
+    "elements": [
+      {
+        "name": "a placed order is confirmed with its order number",
+        "tags": [{ "name": "@unit" }, { "name": "@e2e" }, { "name": "@SCN-CHK-005" }],
+        "steps": [{ "result": { "status": "passed" } }]
+      },
+      {
+        "name": "a placed order is confirmed with its order number",
+        "tags": [{ "name": "@unit" }, { "name": "@e2e" }, { "name": "@SCN-CHK-005" }],
+        "steps": [{ "result": { "status": "passed" } }]
+      }
+    ]
+  }
+]

@@ -8,6 +8,14 @@
         { "fullName": "[SCN-CHK-004] a gift card pays part of the total", "status": "passed" },
         { "fullName": "rounds a price to two decimal places", "status": "passed" }
       ]
+    },
+    {
+      "name": "src/confirmation.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-CHK-005] the confirmation carries the order number", "status": "passed" },
+        { "fullName": "[SCN-CHK-005] the confirmation carries the order total", "status": "passed" },
+        { "fullName": "[SCN-CHK-005] the confirmation is sent to the customer's email address", "status": "passed" }
+      ]
     }
   ]
 }

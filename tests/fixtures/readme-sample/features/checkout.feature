@@ -11,3 +11,8 @@ Feature: Checkout
 
     @unit @SCN-CHK-003
     Scenario: an empty basket cannot be checked out
+
+  Rule: a placed order is confirmed to the customer
+
+    @unit @e2e @SCN-CHK-005
+    Scenario: a placed order is confirmed with its order number

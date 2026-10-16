@@ -37,7 +37,7 @@ import { reconcilerSection } from "./reconcilerSteps.js";
 import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../domain/featureCode.js";
-import { evidenceColumns, columnHeader, evidenceCell } from "./evidenceGrid.js";
+import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { remarkWordsOf } from "./remarkWords.js";
 import { suspenseGroupsOf, type SuspenseGroup, type SuspenseFileGroup } from "../domain/suspenseGroups.js";
@@ -336,17 +336,23 @@ const ledgerSection: SectionEmitter = (report) => {
   const phantomRows = report.ledger.scenarioReconciliations.filter(isPhantomScenario);
   const suspenseRows = report.ledger.scenarioReconciliations.filter(isSuspenseScenario);
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
-  const withObservations = report.summary.testVolume !== undefined;
+  const columns = report.summary.testVolume !== undefined ? evidenceColumns(scenarios) : [];
   return [
     CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.scenarioReconciliations),
     ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
     "",
-    ...ledgerTableLines(scenarios, withObservations),
+    ...evidenceKeyLines(columns),
+    ...ledgerTableLines(scenarios, columns),
     "",
   ];
 };
+
+function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
+  if (columns.length === 0) return [];
+  return [...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"), ""];
+}
 
 function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
   const lines = [
@@ -381,9 +387,8 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
 
 function ledgerTableLines(
   scenarios: readonly ScenarioReconciliation[],
-  withObservations: boolean
+  columns: readonly EvidenceColumn[]
 ): string[] {
-  const columns = withObservations ? evidenceColumns(scenarios) : [];
   const headers = [
     CORE_MESSAGES[CoreMessage.ScenarioColumn],
     ...columns.map(columnHeader),

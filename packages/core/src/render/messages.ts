@@ -136,6 +136,7 @@ export enum CoreMessage {
   ScenarioColumn,
   VerdictColumn,
   ReconcilingItemsColumn,
+  EvidenceCellKey,
   PendingItem,
   PendingItemFor,
   CheckStepNoOutcome,
@@ -449,6 +450,13 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ScenarioColumn]: "Scenario",
   [CoreMessage.VerdictColumn]: "Verdict",
   [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
+  [CoreMessage.EvidenceCellKey]: [
+    "Key: each evidence cell reads *obligation*/*observations*.",
+    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised.",
+    "- The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.",
+    "- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence.",
+    "- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.",
+  ].join("\n"),
   [CoreMessage.PendingItem]: "⏳ pending",
   [CoreMessage.PendingItemFor]: (qualityCheck) => `⏳ pending: ${qualityCheck}`,
   [CoreMessage.CheckStepNoOutcome]: (scnId) =>

@@ -277,7 +277,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(md).not.toContain("static 🍉");
   });
 
-  it("ends the report with the scenario reconciliations: heading, blank, tally, blank, table, then one closing blank", () => {
+  it("ends the report with the scenario reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {
     const observed: Ledger = reconcile(
       [
         { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -298,19 +298,21 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
     ].join(" | ")} |`;
     const section = lines.slice(start);
-    expect(section.slice(0, 6)).toEqual([
+    expect(section.slice(0, 4)).toEqual([
       heading,
       "",
       `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](2, 1, 1)}`,
       "",
+    ]);
+    const table = section.indexOf(header);
+    expect(table).toBeGreaterThanOrEqual(4);
+    expect(section.slice(table)).toEqual([
       header,
       "| --- | --- | --- | --- |",
-    ]);
-    expect(section.slice(6, 8)).toEqual([
       expect.stringMatching(/^\| SCN-LDG-001 \| .+ \|$/),
       expect.stringMatching(/^\| SCN-LDG-002 \| .+ \|$/),
+      "",
     ]);
-    expect(section.slice(8)).toEqual([""]);
   });
 });
 
