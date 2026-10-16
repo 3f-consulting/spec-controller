@@ -176,7 +176,8 @@ Feature: The report renders the ledger as sectioned facts
     The cell counts backing, not quality: a failing observation still counts, and its
     failure shows in the Verdict and Reconciling-items columns. The Fitness cell's left side
     is a single F, since a scenario names at most one fitness function; its right side
-    counts the fitness guards present, balanced or watermelon. No legend precedes the table.
+    counts the fitness guards present, balanced or watermelon. A key to the cells precedes the
+    table wherever it has an evidence column.
     The columns are markdown only.
 
     A `-/N` cell counts every observation the scenario received at that check, duplicate

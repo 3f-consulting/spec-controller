@@ -48,7 +48,7 @@ Key: each evidence cell reads *obligation*/*observations*.
 </div>
 <!-- sample-report:end -->
 
-Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, one account balances, one test is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing.
+Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, two accounts balance, one test is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see.
 
 ## What double entry buys: a change becomes deliberate
 
