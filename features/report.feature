@@ -115,7 +115,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-032
     Scenario: a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row
 
-  Rule: the corpus census survives its own section's dissolution
+  Rule: the ledger's scenario count is the corpus census, and the report has no census section
 
     The report has no census section under any name. Every scenario is a ledger row, and a
     scenario with no obligation is a both-missing row, so the ledger's scenario count ("- N
@@ -425,7 +425,7 @@ Feature: The report renders the ledger as sectioned facts
       And the CI steps' entry names each of the two checks
       And what the suspense row counts adds up to the count of evidence observations that cite no scenario
 
-  Rule: the markdown names each reconciling item in canon's words, and the JSON keeps the evidence model's terms
+  Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
     The Markdown names phantom-scenario rows as cited scenario ids with no real scenario, and
     the suspense-scenario row as evidence observations citing no scenario. A balanced run's
