@@ -165,7 +165,7 @@ A test that names nothing still runs and is still reported. It lands on the **su
 
 ### Citing a scenario from pytest
 
-A pytest test's name is a Python function name, which cannot hold `[SCN-…]`. So a pytest test cites its scenario with a marker, and a one-time hook copies the marker into the report. Pass the report with `--pytest`:
+A pytest test's name is a Python function name, and cannot hold `[SCN-…]`. A pytest test cites its scenario with a marker instead, and a hook you add once copies the marker into the report. Pass the report with `--pytest`:
 
 ```sh
 pytest --junitxml=reports/pytest.xml
@@ -182,7 +182,7 @@ def pytest_collection_modifyitems(items):
                 item.user_properties.append(("scn", code))
 ```
 
-**2. Register the marker once**, in `pytest.ini`. Unregistered, the marker warns, and under `--strict-markers` it errors:
+**2. Register the marker once**, in `pytest.ini`. An unregistered marker raises a warning, and an error under `--strict-markers`:
 
 ```ini
 [pytest]
@@ -206,7 +206,7 @@ def test_offers_the_next_code():
 <testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="SCN-<FFF>-<NNN>" /></properties></testcase>
 ```
 
-**No hook?** Calling `record_property("scn", "SCN-<FFF>-<NNN>")` inside the test writes the same element. But under pytest's default `junit_family`, each such test then raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
+**No hook?** Calling `record_property("scn", "SCN-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
 
 **What a pytest report posts:**
 
@@ -221,7 +221,7 @@ def test_offers_the_next_code():
 
 ### Citing a scenario from Jest
 
-A Jest test cites its scenario exactly as a Vitest test does: the code in square brackets in its title. Jest's own JSON report keeps each test's title, so nothing else is needed: no reporter package, no setup file. Pass the report with `--jest`:
+A Jest test cites its scenario exactly as a Vitest test does: the code in square brackets in its title. Jest's own JSON report keeps each test's title, so you need no reporter package and no setup file. Pass the report with `--jest`:
 
 ```sh
 npx jest --json --outputFile=reports/jest.json
@@ -249,9 +249,9 @@ describe("allocating the next number", () => {
 }
 ```
 
-The code in the test's own title is read first. Only when the title carries none is a code in an enclosing `describe` title read. Name your runner in the `specController` block as `"unit": "jest"` (see [Naming your runners](#naming-your-runners--runners)).
+`balance` reads the code in the test's own title first. It reads a code in an enclosing `describe` title only when the test's title carries none. Name the runner in the `specController` block as `"unit": "jest"` (see [Naming your runners](#naming-your-runners--runners)).
 
-**A todo test never proves a scenario.** `test.todo` names a test that has not been written, so there is nothing that could pass. Jest's JSON report marks it `todo`, and `balance` reads it as no evidence at all, as it does a skipped test. A scenario whose only test is a todo reads `missing`. This is why `balance` reads Jest's JSON report and not a JUnit XML one: `jest-junit` writes a todo test exactly as it writes a passing one, so a todo would read as proof.
+**A todo test never proves a scenario.** `test.todo` names a test that has not been written, so nothing can pass. Jest's JSON report marks it `todo`, and `balance` reads it as no evidence at all, as it does a skipped test. A scenario whose only test is a todo reads `missing`. This is why `balance` reads Jest's JSON report rather than JUnit XML: `jest-junit` writes a todo test exactly as it writes a passing one, so a todo would read as proof.
 
 **What a Jest report posts:**
 
@@ -265,7 +265,7 @@ The code in the test's own title is read first. Only when the title carries none
 
 ### Citing a scenario from Go
 
-A Go test cites its scenario through a **subtest**: the code in square brackets in the name given to `t.Run`. A Go function name cannot hold brackets, so the test function itself cannot carry the code. Run the suite through [gotestsum](https://github.com/gotestyourself/gotestsum), which writes a JUnit XML report, and pass the report with `--junit`:
+A Go function name cannot hold brackets, so a Go test cites its scenario through a **subtest**: the code in square brackets in the name passed to `t.Run`. Run the suite through [gotestsum](https://github.com/gotestyourself/gotestsum), which writes a JUnit XML report, and pass the report with `--junit`:
 
 ```sh
 go install gotest.tools/gotestsum@v1.13.0
@@ -289,15 +289,15 @@ func TestNextNumber(t *testing.T) {
 }
 ```
 
-gotestsum writes that subtest into the report under its full name, the test function's name and the subtest's joined by `/`, with every space turned into `_`. The code survives in its brackets. This is what `balance` reads:
+gotestsum writes the subtest into the report under its full name: the test function's name and the subtest's, joined by `/`, with every space turned into `_`. The code survives in its brackets. This is what `balance` reads:
 
 ```xml
 <testcase classname="example.com/allocate" name="TestNextNumber/[SCN-&lt;FFF&gt;-&lt;NNN&gt;]_offers_one_past_the_highest_number_already_used" time="0.000000"></testcase>
 ```
 
-A nested subtest's name carries every enclosing subtest's name too, so the code in the subtest's own segment, after the last `/`, is read first. Only when that segment carries none is a code in an enclosing subtest's segment read, nearest first. Name your runner in the `specController` block as `"unit": "gotestsum"` (see [Naming your runners](#naming-your-runners--runners)).
+A nested subtest's name carries every enclosing subtest's name too. `balance` reads the code in the subtest's own segment, after the last `/`, first. Only when that segment carries none does it read a code in an enclosing subtest's segment, nearest first. Name the runner in the `specController` block as `"unit": "gotestsum"` (see [Naming your runners](#naming-your-runners--runners)).
 
-**A panic stops the tests after it.** A panicking subtest posts a failing observation. The panic ends that package's test binary, so the tests it had not yet reached never appear in the report, and the scenarios they cite read `missing` until the panic is fixed.
+**A panic stops the tests after it.** A panicking subtest posts a failing observation, and the panic ends that package's test binary. The tests it had not yet reached never appear in the report, and the scenarios they cite read `missing` until the panic is fixed.
 
 **What a gotestsum report posts:**
 
@@ -312,16 +312,16 @@ A nested subtest's name carries every enclosing subtest's name too, so the code 
 
 ### Citing a scenario from Java
 
-A JUnit 5 test cites its scenario through its **display name**: the code in square brackets in `@DisplayName`. A Java method name cannot hold brackets, so the method itself cannot carry the code. Run the suite with Maven, and pass the directory Maven Surefire writes its reports into with `--junit`:
+A Java method name cannot hold brackets, so a JUnit 5 test cites its scenario through its **display name**: the code in square brackets in `@DisplayName`. Run the suite with Maven, and pass the directory Maven Surefire writes its reports into with `--junit`:
 
 ```sh
 mvn test
 spec-controller balance --junit target/surefire-reports
 ```
 
-`balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `.txt` summaries beside them. A single report file can be given instead.
+`balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
 
-**Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything, every test lands on the suspense row, and every `@unit` scenario reads `missing`. Its phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
+**Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the suspense row, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
 ```xml
 <plugin>
@@ -366,13 +366,13 @@ Surefire writes that test into `TEST-example.allocate.NextNumberTest.xml` under 
 <testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
-Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn clean test"` for the `mvn clean test` this section recommends below, `"unit": "mvn test"` if the step runs `mvn test`, or `"unit": "./mvnw clean test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, so a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
+Name the runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn clean test"` for the `mvn clean test` recommended below, `"unit": "mvn test"` if the step runs `mvn test`, or `"unit": "./mvnw clean test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, and a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
 
-**Old reports are read as well.** Surefire does not clear the directory before a run, so a report left in an uncleaned `target/` by an earlier run is read beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before any report is written, so when the directory is missing, `balance` refuses `--junit` as a path that does not exist.
+**Old reports are read as well.** Surefire does not clear the directory before a run, so a report an earlier run left in an uncleaned `target/` is read beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before any report is written; when the directory is missing, `balance` refuses `--junit` as a path that does not exist.
 
 ### Citing a scenario from Kotlin
 
-A JUnit 5 test in Kotlin cites its scenario as a Java one does: the code in square brackets in `@DisplayName`. A backticked function name cannot carry it, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and pass the directory its test task writes its reports into with `--junit`:
+A JUnit 5 test in Kotlin cites its scenario as a Java one does, with the code in square brackets in `@DisplayName`. A backticked function name cannot carry the code: the JVM forbids brackets in a name, and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and pass the directory its test task writes its reports into with `--junit`:
 
 ```sh
 ./gradlew test
@@ -409,22 +409,22 @@ Gradle writes that test into `TEST-example.allocate.NextNumberTest.xml` under it
 Gradle's report differs from Surefire's in two ways:
 
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
-- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. The failing item lands on the suspense row, the scenarios those tests cite read `missing`, and the run is not marked unsound.
+- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. That item lands on the suspense row, the scenarios the class's tests cite read `missing`, and the run is not marked unsound.
 
 `--junit` names one directory. In a build with several modules, each module writes its own `build/test-results/test/`, and `balance` reads only the one given.
 
-Name your runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "./gradlew test"`, or `"unit": "gradle test"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)). Declared as `"./gradlew"` alone, the runner would be recognised in every step that runs the wrapper, so a `./gradlew detekt` step would be taken for the test suite instead of being reported as a check.
+Name the runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "./gradlew test"`, or `"unit": "gradle test"` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners--runners)). Declared as `"./gradlew"` alone, the runner would be recognised in every step that runs the wrapper, and a `./gradlew detekt` step would be taken for the test suite instead of being reported as a check.
 
 ### Citing a scenario from RSpec
 
-An RSpec example cites its scenario by the code in square brackets in its description, the string given to `it`. RSpec's own JSON formatter keeps each example's description apart from its groups', so nothing else is needed: no extra gem, no `spec_helper` change. Pass the report with `--rspec`:
+An RSpec example cites its scenario with the code in square brackets in its description, the string passed to `it`. RSpec's own JSON formatter keeps each example's description separate from its groups', so you need no extra gem and no `spec_helper` change. Pass the report with `--rspec`:
 
 ```sh
 bundle exec rspec --format progress --format json --out reports/rspec.json
 spec-controller balance --rspec reports/rspec.json
 ```
 
-The first `--format` keeps RSpec's usual output on the console; the second writes the JSON report to the file `--out` names.
+The first `--format` keeps RSpec's usual console output; the second writes the JSON report to the file `--out` names.
 
 A complete spec file:
 
@@ -447,9 +447,9 @@ end
 }
 ```
 
-**Put the code on the example, not on its group.** The code in the example's own description is read first. Only when it carries none is a code in an enclosing `describe` or `context` description read, and then every group's code counts, so a group that cites one scenario around an example nested in another group that cites a second credits neither. One code on each example is the form that cannot go wrong. Name your runner in the `specController` block as `"unit": "rspec"` (see [Naming your runners](#naming-your-runners--runners)).
+**Put the code on the example, not on its group.** `balance` reads the code in the example's own description first. Only when that carries none does it read a code in an enclosing `describe` or `context` description, and then every group's code counts: if one group cites a scenario and a group nested inside it cites a second, an example in the inner group credits neither. One code on each example is the form that cannot go wrong. `balance` reads RSpec's JSON report rather than JUnit XML because `rspec_junit_formatter` joins an example's description to its groups' descriptions, so a code on an example cannot be told from a code on its group. Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming your runners](#naming-your-runners--runners)).
 
-**A pending example proves nothing until it passes.** RSpec runs a `pending` example and expects it to fail. If it fails, RSpec reports it pending and `balance` reads no evidence, as it does for `skip` and `xit`. If it passes, RSpec reports it failed, so the scenario it cites reads failing until the `pending` is removed. This is why `balance` reads RSpec's JSON report and not a JUnit XML one: `rspec_junit_formatter` joins an example's description to its groups' descriptions, so a code on an example cannot be told from a code on its group.
+**A pending example proves nothing until it passes.** RSpec runs a `pending` example and expects it to fail. If it fails, RSpec reports it pending and `balance` reads no evidence, as it does for `skip` and `xit`. If it passes, RSpec reports it failed, and the scenario it cites reads failing until the `pending` is removed.
 
 **What an RSpec report posts:**
 
@@ -470,16 +470,16 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 
 ### Turn a fitness function into an evidence obligation
 
-**There are two artefacts and no third.** Neither of them is a Cucumber step definition. There is no fitness profile to configure, no manifest list, and no step to write.
+**There are two artefacts and no third**, and neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step to write.
 
-**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its axis, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification. The command your CI already runs is the evidence.
+**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its axis, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
 
 ```gherkin
   @fitness @SCN-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
 ```
 
-**2. That scenario's `@SCN` as the `id:` of the CI step that already runs the check.** The check stays exactly where it is in your pipeline. You add only a citation.
+**2. That scenario's `@SCN` as the `id:` of the CI step that already runs the check.** The check stays exactly where it is in your pipeline; you add only a citation.
 
 ```yaml
       - name: Complexity
@@ -488,33 +488,33 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
         run: eslint
 ```
 
-That is all it takes.
+That is all.
 
-- **One `@fitness` scenario is one check.** Its `@SCN` identifies it and its title describes it. Nothing else says what the check is about.
-- **Nothing names a bar.** For example, the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict (see [Wiring into CI](#wiring-into-ci)).
-- **The check's evidence observation is its step's `outcome`.** The tool's exit code on its own CI step is the verdict, whatever the tool measures.
+- **One `@fitness` scenario is one check.** Its `@SCN` identifies the check and its title describes it. Nothing else says what the check is about.
+- **Nothing names a bar.** The mutation bar, for example, is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict (see [Wiring into CI](#wiring-into-ci)).
+- **The check's evidence observation is its step's `outcome`.** Whatever the tool measures, its exit code on its own CI step is the verdict.
 
-**Neither artefact is derived from the other, on purpose.** That is what lets the two disagree, and each disagreement is a fault the run reports:
+**Neither artefact is derived from the other, on purpose.** That lets the two disagree, and the run reports each disagreement as a fault:
 
 - A `@fitness` scenario whose `@SCN` no CI step states reconciles **missing**, and the run is out of balance, exactly as a `@unit` scenario with no test does.
 - A step stating an `@SCN` that no scenario carries posts to a **phantom** row.
 - A step stating no `@SCN` posts to **suspense**.
 
-**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: named under `## Configuration not read`, in the same words as a misspelling. The two artefacts above are all you author.
+**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: it is named under `## Configuration not read`, in the same words as a misspelling. You author only the two artefacts above.
 
-**One `toJSON(steps)` dump step per job** lets the reconciler read what each step did, and `--ci-steps` points `balance` at it. That is wiring, not part of the evidence obligation. It is covered, with the `if: always()` rule that goes with it, in [Wiring into CI](#wiring-into-ci).
+**One `toJSON(steps)` dump step per job** lets the reconciler read what each step did, and `--ci-steps` points `balance` at it. That is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
 ### A converted check is still a command you can run
 
-Converting a check does not move it inside anything. Most of the converted checks in spec-controller's own pipeline are commands you can paste into a terminal, such as `pnpm typecheck`, `pnpm lint:boundaries` or bare `eslint`. Exit 0 is the check passing, with no Cucumber and no `spec-controller` involved. The rest read a number that an earlier step, or a scheduled sweep, already left behind.
+Converting a check does not move it inside anything. Most of the converted checks in spec-controller's own pipeline are commands you can paste into a terminal, such as `pnpm typecheck`, `pnpm lint:boundaries` or bare `eslint`: exit 0 is the check passing, with no Cucumber and no `spec-controller` involved. The rest read a number that an earlier step, or a scheduled sweep, already left behind.
 
-What the scenario and the `id:` add is that the run becomes **observable**: the ledger can say the check ran, and against what.
+The scenario and the `id:` make the run **observable**: the ledger can say the check ran, and against what.
 
 ---
 
 ## Configuration — the `specController` block
 
-All configuration sits under `specController` in the target's `package.json`. `--package-json` points at it (default: `package.json` at the working directory).
+All configuration sits under `specController` in the target's `package.json`, which `--package-json` points at (default: `package.json` in the working directory).
 
 ```jsonc
 "specController": {
@@ -533,25 +533,26 @@ All configuration sits under `specController` in the target's `package.json`. `-
 
 ### How discovery works
 
-Discovery is not Node-shaped. It does not match `package.json` script names against prefixes. A pipeline with a bare `run: ruff` and no `package.json` script is discovered like any other.
+Discovery is not Node-shaped: it does not match `package.json` script names against prefixes. A pipeline with a bare `run: ruff` and no `package.json` script is discovered like any other.
 
-**You do not name a list of checks.** You name the commands that run your behavioural suites: a closed set of four, one per tier. **Every other step of the workflows `--ci` names is a candidate fitness function**, whatever it invokes, and whether it is a `run:` step or a `uses:` action.
+**You do not name a list of checks.** You name the commands that run your behavioural suites, a closed set of four, one per tier. **Every other step of the workflows `--ci` names is a candidate fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
 
 ### Naming your runners — `runners`
 
 - **`runners` is keyed by the four tiers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
-- **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this tier*. The report distinguishes it from an omitted key, which it reads as *you have not told us*.
+- **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this tier*. The report tells it apart from an omitted key, which it reads as *you have not told us*.
 - **A key outside the four** is reported as unrecognised, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
-- **A runner is recognised only as the command a step runs**: the first word of each command (or its opening words, for a runner named in several words, below) in an `&&`, `||` or `;` list, after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. That holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
+- **A runner is recognised only as the command a step runs.** That is the first word of each command in an `&&`, `||` or `;` list (or its opening words, for a runner named in several words, below), after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. This holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
-- **Jest works the same way.** `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
-- **RSpec works the same way.** `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
-- **Go works the same way.** `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
-- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: the launcher is set aside before the words are compared, so `"rspec"` covers `bundle exec rspec`, and `"bundle exec rspec"` matches no step.
-- **Java works this way.** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, or it is reported as a check. The same holds for a step that runs the tests through a later phase, such as `mvn verify` or `mvn install`: declare those words, or the step is reported as a check.
-- **Kotlin works this way.** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check. Declare the words your test step opens with: a step running `./gradlew clean test`, `./gradlew build`, `./gradlew check` or `./gradlew :app:test` is declared with those words, or it is reported as a check.
-- **Python works the same way.** `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
+- **Jest, RSpec, Go and Python work the same way:**
+  - `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
+  - `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
+  - `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
+  - `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
+- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher. The launcher is set aside before the words are compared, so `"rspec"` covers `bundle exec rspec`, and `"bundle exec rspec"` matches no step.
+- **Java:** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, and a step that runs the tests through a later phase, such as `mvn verify` or `mvn install`, is declared with those words. Otherwise the step is reported as a check.
+- **Kotlin:** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check. Declare the words your test step opens with: a step running `./gradlew clean test`, `./gradlew build`, `./gradlew check` or `./gradlew :app:test` is declared with those words, or it is reported as a check.
 
 ### Excluding steps that are not checks — `notChecks`
 
