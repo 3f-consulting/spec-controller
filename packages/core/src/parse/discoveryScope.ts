@@ -1,7 +1,7 @@
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
-import { runsNamedRunner } from "./runningFitnessFunctions.js";
-import { isCandidateStep, isGitHubPlumbingStep } from "../domain/fitnessDiscovery.js";
+import { shellReading } from "./commandRuns.js";
+import { isCandidateStep, isGitHubPlumbingStep, runsADeclaredRunner } from "../domain/fitnessDiscovery.js";
 import type { JobDiscoveryScope } from "../domain/evidenceReconciliation.js";
 
 type Tally = { readonly source?: string; readonly job: string; readonly steps: number; readonly candidates: number };
@@ -13,10 +13,11 @@ export function discoveryScope(
   ciSourceNames: readonly string[],
   packageJson: PackageJsonScripts,
   runners: Readonly<Record<string, string | null>>,
-  isExcludedFromDiscovery: (step: PipelineStep) => boolean
+  isExcluded: (step: PipelineStep) => boolean
 ): readonly JobDiscoveryScope[] {
   const isExcludedOrPlumbing = (step: PipelineStep): boolean =>
-    isExcludedFromDiscovery(step) || isGitHubPlumbingStep(step);
+    isExcluded(step) || isGitHubPlumbingStep(step);
+  const scripts = packageJson.scripts ?? {};
   const tallies = new Map<string, Tally>();
   for (const step of steps) {
     const source = ciSourceNames[step.sourceIndex];
@@ -26,7 +27,7 @@ export function discoveryScope(
       steps: 0,
       candidates: 0,
     };
-    const candidate = isCandidateStep(step, isExcludedOrPlumbing, (s) => runsNamedRunner(s, packageJson, runners))
+    const candidate = isCandidateStep(step, isExcludedOrPlumbing, (s) => runsADeclaredRunner(s, scripts, runners, shellReading))
       ? 1
       : 0;
     tallies.set(keyOf(step), { ...tally, steps: tally.steps + 1, candidates: tally.candidates + candidate });

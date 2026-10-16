@@ -1,5 +1,5 @@
 import type { PipelineStep } from "./pipelineStep.js";
-import type { ReconcilerStep } from "./evidenceReconciliation.js";
+import type { BehaviouralRunner, ReconcilerStep } from "./evidenceReconciliation.js";
 
 type StepTest = (step: PipelineStep) => boolean;
 type StepName = (step: PipelineStep) => string | undefined;
@@ -78,7 +78,56 @@ export function isExcludedFromDiscovery(
 export function isCandidateStep(
   step: PipelineStep,
   isExcluded: StepTest,
-  runsADeclaredRunner: StepTest
+  runsARunner: StepTest
 ): boolean {
-  return !isExcluded(step) && !runsADeclaredRunner(step);
+  return !isExcluded(step) && !runsARunner(step);
+}
+
+type Scripts = Readonly<Record<string, string>>;
+type RunnerTiers = Readonly<Record<string, string | null>>;
+
+export interface ShellReading {
+  readonly lastStagesOf: (commandText: string) => string;
+  readonly runsAsCommand: (commandText: string, invocation: string, scripts: Scripts) => boolean;
+}
+
+function declaredRunnersRunBy(
+  step: PipelineStep,
+  scripts: Scripts,
+  runners: RunnerTiers,
+  shell: ShellReading
+): readonly (readonly [string, string])[] {
+  if (!("command" in step)) return [];
+  const command = shell.lastStagesOf(step.command);
+  const lastStages = Object.fromEntries(
+    Object.entries(scripts).map(([name, body]) => [name, shell.lastStagesOf(body)])
+  );
+  return Object.entries(runners).filter(
+    (entry): entry is [string, string] =>
+      entry[1] !== null && shell.runsAsCommand(command, entry[1], lastStages)
+  );
+}
+
+export function runsADeclaredRunner(
+  step: PipelineStep,
+  scripts: Scripts,
+  runners: RunnerTiers,
+  shell: ShellReading
+): boolean {
+  return declaredRunnersRunBy(step, scripts, runners, shell).length > 0;
+}
+
+export function recognisedRunners(
+  steps: readonly PipelineStep[],
+  scripts: Scripts,
+  runners: RunnerTiers,
+  shell: ShellReading
+): BehaviouralRunner[] {
+  return steps.flatMap((step) =>
+    declaredRunnersRunBy(step, scripts, runners, shell).map(([tier, runner]) => ({
+      tier,
+      runner,
+      step: step.identity,
+    }))
+  );
 }

@@ -1,7 +1,9 @@
 import { commandInvokesScript } from "./checkScriptsRunInCI.js";
+import type { ShellReading } from "../domain/fitnessDiscovery.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
 
+const UP_TO_LAST_PIPE = /^.*(?<!\|)\|(?!\|)/;
 const LIST_SEPARATOR = /&&|\|\||;/;
 const ASSIGNMENT = /^[A-Za-z_]\w*=/;
 const LAUNCHERS: readonly (readonly string[])[] = [
@@ -76,4 +78,17 @@ function runsBy(
 
 export const commandRuns = runsBy(anywhere);
 
-export const commandRunsAsCommand = runsBy(asCommand);
+const commandRunsAsCommand = runsBy(asCommand);
+
+function finalStages(command: string): string {
+  return command
+    .replace(/\\\r?\n/g, " ")
+    .split(/\r?\n/)
+    .map((line) => line.replace(UP_TO_LAST_PIPE, ""))
+    .join("\n");
+}
+
+export const shellReading: ShellReading = {
+  lastStagesOf: finalStages,
+  runsAsCommand: commandRunsAsCommand,
+};

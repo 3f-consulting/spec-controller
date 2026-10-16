@@ -4,16 +4,17 @@ import { ciWorkflowSteps, type PackageJsonScripts } from "../parse/checkScriptsR
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { StepRecord } from "../domain/stepRecord.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import { fitnessFunctionsAmong, recognisedRunners } from "../parse/runningFitnessFunctions.js";
+import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
-import { commandRuns } from "../parse/commandRuns.js";
+import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
   isExcludedFromDiscovery,
   notChecksApplied,
+  recognisedRunners,
   reconcilerSteps,
   type ReconcilerSteps,
   type StepExclusions,
@@ -278,8 +279,9 @@ function withRunnerAccount(
 ): EvidenceReconciliation {
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
     steps,
-    packageJson,
-    runnerTiers
+    packageJson.scripts ?? {},
+    runnerTiers,
+    shellReading
   );
   return {
     ...reconciliation,

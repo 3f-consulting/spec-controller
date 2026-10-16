@@ -1,7 +1,7 @@
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
-import { runsNamedRunner } from "./runningFitnessFunctions.js";
-import { isCandidateStep, isGitHubPlumbingStep } from "../domain/fitnessDiscovery.js";
+import { shellReading } from "./commandRuns.js";
+import { isCandidateStep, isGitHubPlumbingStep, runsADeclaredRunner } from "../domain/fitnessDiscovery.js";
 import type { StepAccounting } from "../domain/evidenceReconciliation.js";
 
 export function stepAccounting(
@@ -10,7 +10,7 @@ export function stepAccounting(
   runners: Readonly<Record<string, string | null>>,
   isReconciler: (step: PipelineStep) => boolean,
   isNamedANonCheck: (step: PipelineStep) => boolean,
-  isExcludedFromDiscovery: (step: PipelineStep) => boolean
+  isExcluded: (step: PipelineStep) => boolean
 ): StepAccounting {
   const count = (holds: (step: PipelineStep) => boolean): number => steps.filter(holds).length;
 
@@ -19,13 +19,14 @@ export function stepAccounting(
   const plumbing = count(
     (step) => !isReconciler(step) && !isNamedANonCheck(step) && isGitHubPlumbingStep(step)
   );
-  const runsADeclaredRunner = (step: PipelineStep): boolean =>
-    runsNamedRunner(step, packageJson, runners);
+  const scripts = packageJson.scripts ?? {};
+  const runsARunner = (step: PipelineStep): boolean =>
+    runsADeclaredRunner(step, scripts, runners, shellReading);
   const runnerSteps = count(
-    (step) => !isExcludedFromDiscovery(step) && runsADeclaredRunner(step)
+    (step) => !isExcluded(step) && runsARunner(step)
   );
   const candidates = count((step) =>
-    isCandidateStep(step, isExcludedFromDiscovery, runsADeclaredRunner)
+    isCandidateStep(step, isExcluded, runsARunner)
   );
 
   return {
