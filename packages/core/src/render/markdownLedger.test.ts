@@ -157,6 +157,46 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 });
 
+describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column", () => {
+  const rows = (): Map<string, string[]> => {
+    const failed = reconcile(
+      [
+        { scnId: "SCN-FIT", evidenceObligations: [{ qualityCheck: "fitness" }] },
+        { scnId: "SCN-UNIT", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [
+        { qualityCheck: "fitness", fitnessFunction: "lint:fails", scnId: "SCN-FIT", exists: true, enforcedOverRealSource: true, status: "failed" },
+        { qualityCheck: "unit", scnId: "SCN-UNIT", status: "failed" },
+      ]
+    );
+    const lines = renderMarkdown(__er(failed, true, false), ctx).split("\n");
+    const header = `| ${CORE_MESSAGES[CoreMessage.ScenarioColumn]} | Fitness | Unit | ${CORE_MESSAGES[CoreMessage.VerdictColumn]} | ${CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn]} |`;
+    const start = lines.indexOf(header);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const table = lines.slice(start + 2, lines.indexOf("", start));
+    return new Map(table.map((row): [string, string[]] => {
+      const cells = row.slice(2, -2).split(" | ");
+      return [cells[0]!, cells.slice(1)];
+    }));
+  };
+
+  it("counts the failed fitness observation in the Fitness cell, as the failed unit test counts in the Unit cell", () => {
+    const table = rows();
+    expect(table.get("SCN-FIT")!.slice(0, 2)).toEqual(["F/1", ""]);
+    expect(table.get("SCN-UNIT")!.slice(0, 2)).toEqual(["", "U/1"]);
+  });
+
+  it("shows the failure in Verdict and Reconciling items, as for the failed unit test", () => {
+    const table = rows();
+    const [, , fitnessVerdict, fitnessItems] = table.get("SCN-FIT")!;
+    const [, , unitVerdict, unitItems] = table.get("SCN-UNIT")!;
+    expect(fitnessVerdict).toBe(unitVerdict);
+    expect(fitnessVerdict).toContain("out-of-balance");
+    expect(unitItems).toMatch(new RegExp(`^unit .*${OUTCOME_DESCRIPTION.failing}$`));
+    expect(fitnessItems).toBe(unitItems!.replace(/^unit /, "fitness "));
+  });
+});
+
 describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows", () => {
   let spanning: Ledger;
   beforeEach(() => {

@@ -176,8 +176,8 @@ Feature: The report renders the ledger as sectioned facts
     The cell counts backing, not quality: a failing observation still counts, and its
     failure shows in the Verdict and Reconciling-items columns. The Fitness cell's left side
     is a single F, since a scenario names at most one fitness function; its right side
-    counts the fitness guards present, balanced or watermelon. A key to the cells precedes the
-    table wherever it has an evidence column.
+    counts the fitness evidence observations posted, as the other cells do. A key to the cells
+    precedes the table wherever it has an evidence column.
     The columns are markdown only.
 
     A `-/N` cell counts every observation the scenario received at that check, duplicate
@@ -186,6 +186,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
+
+    @unit @SCN-RPT-054
+    Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
 
   Rule: the ledger summary counts the untagged scenarios, and each is listed once, on its own ledger row
 

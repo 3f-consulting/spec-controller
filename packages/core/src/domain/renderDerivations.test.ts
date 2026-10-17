@@ -5,7 +5,7 @@ import { fitnessReconciliationsOf, fitnessTally } from "./ledger.js";
 import {
   isScenario,
   fitnessFunctionReconciliationsOf,
-  presentFitnessFunctionCountOf,
+  observationCountOf,
 } from "./scenarioReconciliation.js";
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
@@ -61,20 +61,33 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   });
 });
 
-describe("[SCN-LDG-001] presentFitnessFunctionCountOf counts PRESENCE, not quality", () => {
-  it("counts a watermelon as present, exactly as it counts a satisfied check", () => {
-    const wired = rowOf("SCN-AAA-001");
-    const unwired = rowOf("SCN-AAA-004");
-    expect(fitnessFunctionReconciliationsOf(wired).map((r) => r.outcome)).toEqual(["satisfied"]);
-    expect(fitnessFunctionReconciliationsOf(unwired).map((r) => r.outcome)).toEqual(["watermelon"]);
-    expect(presentFitnessFunctionCountOf(wired)).toBe(1);
-    expect(presentFitnessFunctionCountOf(unwired)).toBe(1);
+describe("[SCN-LDG-001] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
+  const posted = { qualityCheck: "fitness", scnId: "SCN-AAA-001", exists: true } as const;
+  const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
+  const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };
+  const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
+  const rowPostedWith = (observations: EvidenceObservation[]) =>
+    reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] }], observations)
+      .scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001")!;
+
+  it.each([
+    ["a satisfied one", [satisfied], "satisfied"],
+    ["a watermelon one", [watermelon], "watermelon"],
+    ["a failing one", [failing], "failing"],
+  ] as const)("counts %s as one observation", (_title, observations, outcome) => {
+    const row = rowPostedWith([...observations]);
+    expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual([outcome]);
+    expect(observationCountOf(row, "fitness")).toBe(1);
   });
 
-  it("does NOT count a missing guard — no script at all is a real absence", () => {
+  it("counts every one of several, whatever each one's outcome", () => {
+    expect(observationCountOf(rowPostedWith([satisfied, watermelon, failing]), "fitness")).toBe(3);
+  });
+
+  it("counts nothing for a row with no fitness evidence observation", () => {
     const row = rowOf("SCN-AAA-002");
     expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
-    expect(presentFitnessFunctionCountOf(row)).toBe(0);
+    expect(observationCountOf(row, "fitness")).toBe(0);
   });
 });
 

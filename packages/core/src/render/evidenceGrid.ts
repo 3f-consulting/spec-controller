@@ -4,7 +4,6 @@ import {
   isScenario,
   carriesFitnessFunction,
   carriesBehaviouralQualityCheck,
-  presentFitnessFunctionCountOf,
   namesQualityCheck,
   observationCountOf,
 } from "../domain/scenarioReconciliation.js";
@@ -53,8 +52,8 @@ function twoSided(left: string, right: string): string {
 
 function fitnessCell(s: ScenarioReconciliation): string {
   const left = carriesFitnessFunction(s) ? QUALITY_CHECK_LETTER.fitness : "-";
-  const present = presentFitnessFunctionCountOf(s);
-  const right = present > 0 ? String(present) : "-";
+  const observed = observationCountOf(s, "fitness");
+  const right = observed > 0 ? String(observed) : "-";
   return twoSided(left, right);
 }
 
