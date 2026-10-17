@@ -178,3 +178,17 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       When the target's evidence is reconciled and saved as the JSON report
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
+
+  Rule: the summary carries fitness-function discovery's accounts, each absent when it has nothing to say
+
+    @unit @SCN-RMD-012
+    Scenario: the summary carries the discovery scope, each workflow and job read with its steps and candidates in a settled order, and none for a target with no pipeline
+
+    @unit @SCN-RMD-013
+    Scenario: the summary carries no exclusion account for a target that names no step a non-check
+
+    @unit @SCN-RMD-014
+    Scenario: the summary carries each reconciler step with its role, and none for a pipeline that runs no reconciliation
+
+    @unit @SCN-RMD-015
+    Scenario: the summary carries no runner account for a target whose manifest names no runners, and carries the step running a runner once it names one

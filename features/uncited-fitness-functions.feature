@@ -56,7 +56,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     running in a sibling workflow is satisfied, and no watermelon is raised against it. An uncited
     check running in a sibling workflow is reported uncited.
 
-    @unit @integration @SCN-USG-006
+    @integration @SCN-USG-006
     Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
       Given a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly
       And a scenario cites lint:nightly
@@ -133,35 +133,6 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     @unit @SCN-USG-029
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner
-
-  Rule: the runner block is keyed by the four tiers and no other
-
-    The tiers are unit, integration, e2e and performance. Any other key is named on the report,
-    excludes nothing, and does not stop the run. A check whose script that key names is still
-    reported as a fitness function.
-
-    @unit @SCN-USG-019
-    Scenario: a runners key that is not one of the four tiers is reported, never silently honoured
-
-  Rule: a specController entry the tool cannot use is named on the report, and the run is not refused over it
-
-    An entry of the wrong kind is read as absent. The report names where it is, the kind it is and
-    the kind that is read there; every other entry takes effect as it would without it.
-
-    A key the block does not read, a retired key included, is named as unknown in the same words as
-    any other. A saved run, re-rendered, names the same entries its live report named.
-
-    @unit @SCN-USG-025
-    Scenario Outline: a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it
-
-    @unit @SCN-USG-028
-    Scenario Outline: a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it
-
-    @unit @SCN-USG-026
-    Scenario Outline: a specController block whose every entry is a kind its reader takes names nothing as the wrong kind
-
-    @unit @SCN-USG-027
-    Scenario: a saved run re-rendered names the same specController entries its live report named
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
 

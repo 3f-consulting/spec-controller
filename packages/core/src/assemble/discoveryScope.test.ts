@@ -19,7 +19,7 @@ function reconcile(
   });
 }
 
-describe("[SCN-USG-020] the report names the workflows, the jobs and the step count discovery ranged over", () => {
+describe("[SCN-RMD-012] the report names the workflows, the jobs and the step count discovery ranged over", () => {
   it("names every workflow and every job it read, with its steps and candidates, in one settled order", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
     expect(summary.discoveryScope).toStrictEqual([

@@ -31,7 +31,7 @@ function suspenseChecks(reconciliation: EvidenceReconciliation) {
     );
 }
 
-describe("[SCN-USG-019] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
+describe("[SCN-CFG-003] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
   it("names the key outside the four tiers, and keeps the check it names on the books as uncited", () => {
     const reconciliation = reconcile({ unit: "vitest", lint: "eslint" });
     expect(reconciliation.summary.runnerKeysNotATier).toStrictEqual(["lint"]);

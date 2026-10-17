@@ -19,7 +19,7 @@ function reconcile(
   });
 }
 
-describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[SCN-RMD-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
 
   it("labels each reconciler step by its identity when the target gives no workflow names", () => {
     const { summary } = reconcile([ci]);

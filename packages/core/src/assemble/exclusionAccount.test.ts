@@ -21,7 +21,7 @@ function reconcile(notChecks?: readonly string[]): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
+describe("[SCN-RMD-013] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
   it("carries neither account for a target that names no step a non-check", () => {
     const { summary } = reconcile();
     expect(summary).not.toHaveProperty("excludedSteps");

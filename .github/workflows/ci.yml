@@ -109,11 +109,11 @@ jobs:
         id: SCN-FIT-034
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
         shell: bash
-        # The probe is cited by tests in two files, so a selection that keeps one file's tests, or all of them, reds.
+        # The probe is cited by tests in three files, so a selection that keeps one file's tests, or all of them, reds.
         # The expected set is read from the full Test run's report, never from the proof's own run.
         # The proof has a temporary directory of its own: a file whose tests are all filtered out still runs its top-level setup, but never its cleanup.
         env:
-          PROBE: SCN-USG-027
+          PROBE: SCN-CFG-004
           RED_PROOF_DIR: ${{ runner.temp }}/red-proof
           TMPDIR: ${{ runner.temp }}/red-proof/tmp
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
@@ -185,7 +185,7 @@ jobs:
             printf 'the proof of %s at %s was refused: no test selected\n' "$code" "$layer"
           }
           refused unit SCN-ZZZ-999
-          refused integration SCN-USG-027
+          refused integration SCN-CFG-004
 
       - name: A red proof in which no selected test reported a result fails as not a red
         id: SCN-FIT-037

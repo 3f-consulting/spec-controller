@@ -12,7 +12,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
+describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   it("posts lint:foo and lint:bar alone as fitness functions when the manifest names the runners test and cucumber run", () => {
     const balance = runReconcile({
       features: "tests/fixtures/usg/features",
@@ -32,7 +32,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness fun
   });
 });
 
-describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[SCN-CLI-090] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("recognises the pipeline step running this command as the reconciler, with nothing configured", () => {
     const root = mkdtempSync(join(tmpdir(), `scn-usg-014-${process.pid}-`));
     made.push(root);

@@ -831,3 +831,17 @@ Feature: spec-controller balance runs standalone
 
     @unit @SCN-CLI-088
     Scenario: a scenario tagged @wip, @ignore, @skip, @todo or @pending reads as a Pending Item while its untagged twin reads missing, whether Cucumber left it out or reported it pending
+
+  Rule: balance hands fitness-function discovery the target's workflows, its manifest and its own command
+
+    @unit @SCN-CLI-089
+    Scenario: balance posts the checks a target's CI runs as fitness functions, and not the steps running the runners its manifest names
+
+    @unit @SCN-CLI-090
+    Scenario: balance recognises the step that runs it as the reconciler, with nothing configured
+
+    @unit @SCN-CLI-091
+    Scenario: a CI workflows input naming a directory is read as every workflow file in it, of either YAML spelling and nothing else
+
+    @unit @SCN-CLI-092
+    Scenario: balance writes nothing to stderr for a target whose specController block names no runners and no non-checks

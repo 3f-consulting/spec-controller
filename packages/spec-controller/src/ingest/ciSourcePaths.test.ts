@@ -10,7 +10,7 @@ function readerOf(dirs: Record<string, string[]>, files: readonly string[]): CiP
   };
 }
 
-describe("[SCN-USG-006] a CI input names either one workflow file or a directory of them", () => {
+describe("[SCN-CLI-091] a CI input names either one workflow file or a directory of them", () => {
   it.each<[string, Record<string, string[]>, string, string[]]>([
     [
       "resolves a directory to every workflow file in it, so a check in any of them is observed",

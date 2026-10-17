@@ -43,7 +43,7 @@ function balanceOf(specController: unknown): { report: string; stderr: string; e
   return captured([...inputsOf(targetOf(specController)), "--format", "md"]);
 }
 
-describe("[SCN-USG-025] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
+describe("[SCN-CFG-004] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
   const examples: ReadonlyArray<readonly [string, unknown, unknown]> = [
     ["specController", "x", undefined],
     ["specController.runners", { ...block, runners: ["vitest"] }, { ...block, runners: undefined }],
@@ -62,7 +62,7 @@ describe("[SCN-USG-025] a specController entry of a kind its reader does not tak
   });
 });
 
-describe("[SCN-USG-026] a specController block whose every entry is a kind its reader takes names nothing as the wrong kind", () => {
+describe("[SCN-CFG-006] a specController block whose every entry is a kind its reader takes names nothing as the wrong kind", () => {
   it.each([
     ["a null runner", { ...block, runners: { unit: "vitest", e2e: null } }],
     ["an empty notChecks", { ...block, notChecks: [] }],
@@ -76,7 +76,7 @@ describe("[SCN-USG-026] a specController block whose every entry is a kind its r
   });
 });
 
-describe("[SCN-USG-027] a saved run re-rendered names the same specController entries its live report named", () => {
+describe("[SCN-CFG-007] a saved run re-rendered names the same specController entries its live report named", () => {
   it("re-renders a saved run of a target holding a wrong kind and an unread key, naming both as the live report did and writing nothing to stderr", () => {
     const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ scn: "SCN-OWN-001" }] });
     const saved = join(dir, "saved.json");
@@ -89,7 +89,7 @@ describe("[SCN-USG-027] a saved run re-rendered names the same specController en
   });
 });
 
-describe("[SCN-USG-028] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
+describe("[SCN-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
   const SECTION = "## Configuration not read";
   const withoutSection = (report: string): string => {
     const lines = report.split("\n");
@@ -114,7 +114,7 @@ describe("[SCN-USG-028] a key the specController block does not read, a retired 
   });
 });
 
-describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
+describe("[SCN-CLI-092] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
     const dir = mkdtempSync(join(tmpdir(), "scn-usg-017-unit-"));
     made.push(dir);
