@@ -58,7 +58,7 @@ npx spec-controller balance \
 
 - **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have: with no `features/` folder yet, leave out `--features`, because a folder that does not exist is refused.
 - **`--target` names the project in the report.** Without it the report reads `unknown-target`.
-- **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red. Every candidate step cites nothing, so every observation posts to **suspense**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
+- **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red. Every candidate step cites nothing, so every observation posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
 For every other runner's report command, see [Quick start: run it on your project](./how_to_use.md#quick-start-run-it-on-your-project) and [Expect your first run to fail — use `--exit-zero`](./how_to_use.md#expect-your-first-run-to-fail--use---exit-zero).
 
@@ -111,7 +111,7 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
 });
 ```
 
-For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing. The test still runs, but it lands on suspense, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.** Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own `@SCN` tag, and a CI check through its step's `id:`. See [Only these four forms are read](./how_to_use.md#only-these-four-forms-are-read).
+For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing. The test still runs, but it lands on the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.** Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own `@SCN` tag, and a CI check through its step's `id:`. See [Only these four forms are read](./how_to_use.md#only-these-four-forms-are-read).
 
 Other runners cite a scenario in their own way: see [Citing a scenario from pytest](./how_to_use.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./how_to_use.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./how_to_use.md#citing-a-scenario-from-go), [Citing a scenario from Java](./how_to_use.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./how_to_use.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./how_to_use.md#citing-a-scenario-from-rspec).
 
@@ -135,7 +135,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
         run: eslint
 ```
 
-The step's outcome is the evidence: its exit code on its own CI step is the verdict. That outcome reaches `balance` only through the CI run's step record, passed with `--ci-steps`. Only a CI run writes that record, so a local run has none. If no step carries the scenario's code, the scenario reads `missing`. A step citing a code no scenario carries posts to a **phantom** row, a row for a scenario that does not exist. See [Turn a fitness function into an evidence obligation](./how_to_use.md#turn-a-fitness-function-into-an-evidence-obligation).
+The step's outcome is the evidence: its exit code on its own CI step is the verdict. That outcome reaches `balance` only through the CI run's step record, passed with `--ci-steps`. Only a CI run writes that record, so a local run has none. If no step carries the scenario's code, the scenario reads `missing`. A step citing a code no scenario carries posts to a **phantom claim**'s row: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./how_to_use.md#turn-a-fitness-function-into-an-evidence-obligation).
 
 ## Wire the run into CI
 
@@ -191,12 +191,12 @@ Keep the reports as build artefacts, but do not commit them. A report lists your
 The [README's sample report](../README.md) shows every kind of row on one small example. Read it as a ledger:
 
 - **The run verdict** says whether the whole run balanced, and its exit code.
-- **A Scenario Reconciliation** is one row per scenario. It sets the proofs the scenario asked for against the proofs that ran.
+- **A Claim Reconciliation** is one row per claim, and a claim is usually a scenario. It sets the proofs the claim asked for against the proofs that ran.
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
 - **The verdict** is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
-- **A phantom row** holds evidence citing a code no scenario carries, usually a typo or a deleted scenario. There is one per unknown code, named by that code, like the 👻 row in the sample.
-- **The suspense row**, `(no scenario)`, holds evidence that cites nothing.
+- **A phantom claim's row** holds evidence citing a code no scenario carries, usually a typo or a deleted scenario. There is one per unknown code, named by that code, like the 👻 row in the sample.
+- **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.
 
 Watch for a **watermelon**: a check that is green but could not have failed its job, because `continue-on-error` would have swallowed its red. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 

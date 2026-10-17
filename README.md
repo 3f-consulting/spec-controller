@@ -19,13 +19,13 @@ Here is a sample of what it prints:
 ```markdown
 ### Run verdict
 
-**OUT-OF-BALANCE** — the accounts do not agree. At least one Scenario Reconciliation carries a reconciling item. This run FAILED. (exit 1)
+**OUT-OF-BALANCE** — the accounts do not agree. At least one Claim Reconciliation carries a reconciling item. This run FAILED. (exit 1)
 
-## Scenario Reconciliations
+## Claim Reconciliations
 
-- 8 Scenario Reconciliation(s): 3 balanced, 5 out-of-balance.
-- 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.
-- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(no scenario)".
+- 8 Claim Reconciliation(s): 3 balanced, 5 out-of-balance.
+- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.
+- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".
 - 0 @SCN ids seen in non-tag context, excluded
 
 Key: each evidence cell reads *obligation*/*observations*.
@@ -44,14 +44,14 @@ Key: each evidence cell reads *obligation*/*observations*.
 | SCN-CHK-006 | F/1 |  |  | ✓ balanced | — |
 | SCN-CHK-007 | F/1 |  |  | ✗ out-of-balance | fitness ✗ Evidence Observation is failing |
 | SCN-CHK-004 | — | — | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (no scenario) | — | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
+| (unnamed claim) | — | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>
 
 Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, three accounts balance, one test is failing, one CI check is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see. The two `F/1` rows are CI checks, a complexity limit that holds and a lint step that failed: a check is reconciled the same way as a test, its scenario is owed one, and its step's result is the evidence.
 
-The report keeps its exact terms, and they read plainly once named. A *Scenario Reconciliation* is one line per scenario, setting the proofs it asked for (its *Evidence Obligations*) against the proofs that ran (its *Evidence Observations*). A test that names a scenario which does not exist lands on a *phantom scenario*, usually a typo or a scenario since deleted, and one that names no scenario at all lands in the *suspense scenario*. A *watermelon* is a check that passes but could not have failed the build. [`doc/ubiquitous-language.md`](./doc/ubiquitous-language.md) has the rest.
+The report keeps its exact terms, and they read plainly once named. A *Claim Reconciliation* is one line per claim, setting the proofs it asked for (its *Evidence Obligations*) against the proofs that ran (its *Evidence Observations*). A claim is usually a scenario. A test that names a scenario which does not exist makes a *phantom claim*, usually a typo or a scenario since deleted, and one that names no scenario at all lands on the *unnamed claim*. A *watermelon* is a check that passes but could not have failed the build. [`doc/ubiquitous-language.md`](./doc/ubiquitous-language.md) has the rest.
 
 ## What double entry buys: a change becomes deliberate
 

@@ -94,7 +94,7 @@ For the smallest form of the command and every flag, see [Command reference](#co
 
 ### Expect your first run to fail — use `--exit-zero`
 
-Your first run against an unannotated pipeline goes red. Every candidate step cites nothing, so every evidence observation posts to **suspense** and `balance` exits `1`. The ledger is right: the corpus raises nothing yet.
+Your first run against an unannotated pipeline goes red. Every candidate step cites nothing, so every evidence observation posts to the **unnamed claim** and `balance` exits `1`. The ledger is right: the corpus raises nothing yet.
 
 To adopt the tool by observing rather than by breaking the build, add `--exit-zero`. You get the same report, and the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
@@ -173,7 +173,7 @@ Nothing else names a scenario:
 - a code in a comment, including a `// @SCN-…` line in a step-definition file;
 - a code anywhere else.
 
-A test that names nothing still runs and is still reported. It lands on the **suspense** row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
+A test that names nothing still runs and is still reported. It lands on the **unnamed claim**'s row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
 ### Citing a scenario from pytest
 
@@ -226,9 +226,9 @@ def test_offers_the_next_code():
 |---|---|
 | exactly one `scn` property | answers that scenario: passing, or failing when it carries a `<failure>` |
 | skipped | nothing, as a skipped Vitest test posts nothing |
-| a code no feature file carries | lands on a phantom scenario |
-| no `scn` property, or a value that is not a scenario code | lands on suspense |
-| two or more `scn` properties | **credits none of them**; the suspense row names every code, because one test proves exactly one scenario |
+| a code no feature file carries | makes a phantom claim |
+| no `scn` property, or a value that is not a scenario code | lands on the unnamed claim |
+| two or more `scn` properties | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
 | a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
 ### Citing a scenario from Jest
@@ -272,7 +272,7 @@ describe("allocating the next number", () => {
 | passing, citing one scenario | answers that scenario |
 | failing, including a test under a `beforeAll` that threw | answers that scenario as failing |
 | todo or skipped | nothing, so the scenario it cites reads `missing` |
-| two or more codes in its title | **credits none of them**; the suspense row names every code |
+| two or more codes in its title | **credits none of them**; the unnamed claim's row names every code |
 | a test file that failed to run | never ran its proof: it posts a broken item and the run is unsound (exit `4`) |
 
 ### Citing a scenario from Go
@@ -319,7 +319,7 @@ A nested subtest's name carries every enclosing subtest's name too. `balance` re
 | failing, or panicking | answers that scenario as failing |
 | skipped | nothing, so the scenario it cites reads `missing` |
 | never started, because its enclosing test failed first, or a panic stopped its package | nothing, so the scenario it cites reads `missing` |
-| two or more codes in its own name | **credits none of them**; the suspense row names every code |
+| two or more codes in its own name | **credits none of them**; the unnamed claim's row names every code |
 | in a package that failed to compile | never ran its proof: the package posts a broken item and the run is unsound (exit `4`) |
 
 ### Citing a scenario from Java
@@ -333,7 +333,7 @@ spec-controller balance --junit target/surefire-reports
 
 `balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
 
-**Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the suspense row, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
+**Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the unnamed claim's row, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
 ```xml
 <plugin>
@@ -421,7 +421,7 @@ Gradle writes that test into `TEST-example.allocate.NextNumberTest.xml` under it
 Gradle's report differs from Surefire's in two ways:
 
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
-- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. That item lands on the suspense row, the scenarios the class's tests cite read `missing`, and the run is not marked unsound.
+- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. That item lands on the unnamed claim's row, the scenarios the class's tests cite read `missing`, and the run is not marked unsound.
 
 `--junit` names one directory. In a build with several modules, each module writes its own `build/test-results/test/`, and `balance` reads only the one given.
 
@@ -471,7 +471,7 @@ end
 | failing, including an example stopped by a `before` or `before(:context)` hook that raised | answers that scenario as failing |
 | `pending` and passing | answers that scenario as failing |
 | `skip`, `xit`, or `pending` and failing | nothing, so the scenario it cites reads `missing` |
-| two or more codes in its own description | **credits none of them**; the suspense row names every code |
+| two or more codes in its own description | **credits none of them**; the unnamed claim's row names every code |
 | in a spec file that failed to load | never ran its proof: the file posts a broken item and the run is unsound (exit `4`) |
 
 ---
@@ -509,8 +509,8 @@ That is all.
 **Neither artefact is derived from the other, on purpose.** That lets the two disagree, and the run reports each disagreement as a fault:
 
 - A `@fitness` scenario whose `@SCN` no CI step states reconciles **missing**, and the run is out of balance, exactly as a `@unit` scenario with no test does.
-- A step stating an `@SCN` that no scenario carries posts to a **phantom** row.
-- A step stating no `@SCN` posts to **suspense**.
+- A step stating an `@SCN` that no scenario carries posts to a **phantom claim**'s row.
+- A step stating no `@SCN` posts to the **unnamed claim**.
 
 **`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: it is named under `## Configuration not read`, in the same words as a misspelling. You author only the two artefacts above.
 
@@ -704,7 +704,7 @@ spec-controller balance --features ./features \
 
 Drop `--ci-steps` if you have converted nothing.
 
-**Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom scenarios and watermelons. It is more sensitive than the code itself, so it belongs outside version control.
+**Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom claims and watermelons. It is more sensitive than the code itself, so it belongs outside version control.
 
 ### GitHub Actions — put the report on the run summary
 
@@ -737,7 +737,7 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. One **Scenario Reconciliation** per scenario. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into per-quality-check **Quality Check Reconciliations**. Each of those carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` sub-rows are the **reconciling items**. A **Summary** gives the totals.
+- **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into per-quality-check **Quality Check Reconciliations**. Each of those carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` sub-rows are the **reconciling items**. A **Summary** gives the totals.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top.
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
@@ -755,8 +755,8 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 
 | Row or outcome | The Markdown prints | Note |
 |---|---|---|
-| suspense | Scenario Reconciliation for evidence observations citing no scenario | it also holds evidence that never ran (`broken`) |
-| phantom | Scenario Reconciliation for cited scenario ids with no real scenario | |
+| unnamed claim | Claim Reconciliation for evidence observations citing no scenario | it also holds evidence that never ran (`broken`) |
+| phantom claim | Claim Reconciliation for cited scenario ids with no real scenario | |
 | `missing` | Evidence Observation is missing | |
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
 | `watermelon` | Evidence Observation is passing but its check could not fail its job | see below |
@@ -772,7 +772,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code. A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
-- It reconciles as **one** Scenario Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*.
+- It reconciles as **one** Claim Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*.
 - No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says. Every evidence observation citing the code posts to it once.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
 - The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON).
@@ -984,7 +984,7 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's `@SCN` as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors. Finding them is the point.
 
-**My first run reds with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to suspense, so `balance` exits `1`.
+**My first run reds with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
 
 1. Read the report's **Discovery scope** and **Step accounting** sections. They name each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
