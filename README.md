@@ -2,7 +2,7 @@
 
 **Reassurance that your software keeps doing what you said it does.**
 
-Software built from a written specification has three things to keep in step: the spec, a document saying what the application should do; the checks, which test it; and the application itself, its behaviour and its fitness. Each link between them needs something to hold it:
+Software built from a written specification has three things to keep in step: the spec, a document saying what the application should do (a *document specification*); the checks, which test it (its *executable specifications*: scenarios, tests and fitness functions); and the application itself, its behaviour and its fitness. Each link between them needs something to hold it:
 
 | Link | What holds it today |
 |---|---|

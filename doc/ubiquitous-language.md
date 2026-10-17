@@ -20,7 +20,8 @@ Correctness is the agreement of two independent records: the `Evidence Obligatio
 |---|---|---|---|
 | `Behaviour` | One thing the **`Application code`** should do, stated so it can be proved. A `scenario` describes a `behaviour`; its `Evidence Obligations` are the `Quality Checks` it raises; its `Evidence Observations` exercise it against the real code. `Behaviour` is what the **`Test Specification`** exists to describe — the reason a `scenario` is written at all, and the thing `broken` says was never exercised. | Transaction — the real-world event an entry records | feature; functionality |
 | `Application code` | The system under test — the reality that `evidence observations` evidence. On the credit side, but *not an entry itself*. | *(the subject the books describe)* — the real-world thing the accounts account for | |
-| `Spec` | A document saying what the **`Application code`** should do: its behaviour and its fitness, written for people, outside the test framework. A `.feature` file is not the spec: it is part of the **`Test Specification`**, the checks. `balance` never reads the spec, so whether the checks say what the spec says is judgement, not reconciliation. | Source documents — the contracts and invoices the entries are vouched against | specification (for the `.feature` files) |
+| `Document specification` | Written intent: a document saying what the **`Application code`** should do, its behaviour and its fitness — a manifesto, a proposal, a technical design. Needed to make intent clear enough to build from, and never sufficient: a document is not evidence. Its life is meant to be short; once **`executable specifications`** express it, they are the current truth. `balance` never reads one, so whether the checks say what the document says is judgement, not reconciliation. | Source documents — the contracts and invoices the entries are vouched against | spec, the spec (unqualified, where it could mean either kind) |
+| `Executable specification` | A quality check that states what the application must do and is run against it: a scenario, a unit test, a fitness function. The preferred kind of specification, because running it is the evidence. The **`Test Specification`** is the collection of them. | *(the entries themselves)* — what the books record | living documentation (the field's other name, kept as a synonym); the Gherkin spec |
 
 #### The `claims` — a scenario, a phantom claim or an unnamed claim
 
@@ -35,7 +36,7 @@ Correctness is the agreement of two independent records: the `Evidence Obligatio
 
 | Term | Meaning | Bookkeeping term | Double-check |
 |---|---|---|---|
-| `Test Specification` | Feature files (`@`-tags), step definitions, test code — the record of the **behaviours** to be proved, and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
+| `Test Specification` | The **`executable specifications`** taken together: feature files (`@`-tags), step definitions, test code — the record of the **behaviours** to be proved, and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
 | `Evidence Obligation` | A `Scenario` raises one for each `Quality Check` it names, to be met by `Evidence Observations`. These are the `@`-tags on the `Scenario`: the behavioural checks `@unit`, `@integration`, `@e2e`, `@performance`, and `@fitness`. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
 
 #### The credit side
