@@ -136,7 +136,7 @@ Pass whichever reports you have. The *What you need* section of [`doc/how_to_use
 
 **Before you name anything, it lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI doesn't already show: it is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
 
-[`doc/how_to_use.md`](./doc/how_to_use.md) has the full flags, CI wiring and a worked example.
+[`doc/quickstart.md`](./doc/quickstart.md) takes you from nothing to a first run in CI. [`doc/how_to_use.md`](./doc/how_to_use.md) is the full reference: every flag, every runner and the CI wiring in detail.
 
 At `0.x`, nothing is promised between versions ([`doc/compatibility.md`](./doc/compatibility.md)). Pin an exact version.
 
