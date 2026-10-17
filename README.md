@@ -23,30 +23,33 @@ Here is a sample of what it prints:
 
 ## Scenario Reconciliations
 
-- 6 Scenario Reconciliation(s): 2 balanced, 4 out-of-balance.
+- 8 Scenario Reconciliation(s): 3 balanced, 5 out-of-balance.
 - 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.
 - 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(no scenario)".
 - 0 @SCN ids seen in non-tag context, excluded
 
 Key: each evidence cell reads *obligation*/*observations*.
-- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised.
+- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.
 - The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.
-- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence.
+- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence, or whose unit evidence is pending.
 - A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.
+- In Reconciling items, `—` means the row has nothing to reconcile.
 
-| Scenario | Unit | E2e | Verdict | Reconciling items |
-| --- | --- | --- | --- | --- |
-| SCN-CHK-001 | U/1 |  | ✓ balanced | — |
-| SCN-CHK-002 | U/1 |  | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
-| SCN-CHK-003 | U/- |  | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
-| SCN-CHK-005 | U/3 | E/2 | ✓ balanced | — |
-| SCN-CHK-004 | — | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (no scenario) | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
+| Scenario | Fitness | Unit | E2e | Verdict | Reconciling items |
+| --- | --- | --- | --- | --- | --- |
+| SCN-CHK-001 |  | U/1 |  | ✓ balanced | — |
+| SCN-CHK-002 |  | U/1 |  | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
+| SCN-CHK-003 |  | U/- |  | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
+| SCN-CHK-005 |  | U/3 | E/2 | ✓ balanced | — |
+| SCN-CHK-006 | F/1 |  |  | ✓ balanced | — |
+| SCN-CHK-007 | F/1 |  |  | ✗ out-of-balance | fitness ✗ Evidence Observation is failing |
+| SCN-CHK-004 | — | — | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
+| (no scenario) | — | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>
 
-Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, two accounts balance, one test is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see.
+Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, three accounts balance, one test is failing, one CI check is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see. The two `F/1` rows are CI checks, a complexity limit that holds and a lint step that failed: a check is reconciled the same way as a test, its scenario is owed one, and its step's result is the evidence.
 
 ## What double entry buys: a change becomes deliberate
 
