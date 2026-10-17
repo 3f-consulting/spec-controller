@@ -20,6 +20,7 @@ Correctness is the agreement of two independent records: the `Evidence Obligatio
 |---|---|---|---|
 | `Behaviour` | One thing the **`Application code`** should do, stated so it can be proved. A `scenario` describes a `behaviour`; its `Evidence Obligations` are the `Quality Checks` it raises; its `Evidence Observations` exercise it against the real code. `Behaviour` is what the **`Test Specification`** exists to describe — the reason a `scenario` is written at all, and the thing `broken` says was never exercised. | Transaction — the real-world event an entry records | feature; functionality |
 | `Application code` | The system under test — the reality that `evidence observations` evidence. On the credit side, but *not an entry itself*. | *(the subject the books describe)* — the real-world thing the accounts account for | |
+| `Spec` | A document saying what the **`Application code`** should do: its behaviour and its fitness, written for people, outside the test framework. A `.feature` file is not the spec: it is part of the **`Test Specification`**, the checks. `balance` never reads the spec, so whether the checks say what the spec says is judgement, not reconciliation. | Source documents — the contracts and invoices the entries are vouched against | specification (for the `.feature` files) |
 
 #### The `claims` — a scenario, a phantom claim or an unnamed claim
 

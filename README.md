@@ -2,15 +2,15 @@
 
 **Reassurance that your software keeps doing what you said it does.**
 
-Software built from a written specification has three artefacts: the spec, the tests and the code. Each link between them needs something to hold it:
+Software built from a written specification has three things to keep in step: the spec, a document saying what the application should do; the checks, which test it; and the application itself, its behaviour and its fitness. Each link between them needs something to hold it:
 
 | Link | What holds it today |
 |---|---|
-| tests ↔ code | **Mechanism**: the tests themselves, coverage, mutation testing |
-| spec ↔ tests | **Nothing but care.** The spec says one thing, the tests prove another, and nothing notices when they drift |
-| spec ↔ code | only through the other two |
+| checks ↔ application | **Mechanism**: check the application via the behavioural tests themselves, plus coverage, mutation testing, etc |
+| spec ↔ checks | **Nothing but care.** The spec says one thing, the checks prove another, and nothing notices when they drift |
+| spec ↔ application | only through the other two |
 
-`spec-controller` holds the middle link. You write each behaviour in your spec as a scenario in a `.feature` file, tagged with the evidence it needs, such as `@unit` or `@e2e`. On every CI run, `balance` reconciles those scenarios against the test reports and CI steps that actually ran. When the two disagree, the build goes red.
+`balance` makes the first link hold for every kind of check, not only unit tests. You declare each behaviour as a scenario in a `.feature` file, tagged with the evidence it needs, such as `@unit` or `@e2e`. On every CI run, `balance` reconciles those scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. When they disagree, the build goes red. `balance` never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
 
 Here is a sample of what it prints:
 
@@ -86,7 +86,7 @@ Both are good at their own questions, and both live at the unit tier:
 | `@performance` | no such idea | no such idea | yes |
 | `@fitness` (lint, complexity, type checks, any CI check) | no such idea | no such idea | yes |
 
-Coverage and mutation testing guard the link between tests and code. Neither can see the spec, so neither notices a named behaviour with no proof, or a passing test that proves a different behaviour from the one it cites. `spec-controller` keeps one ledger across all five tiers.
+Coverage and mutation testing tell you how much of the application the unit tests reach, and whether they would notice it change. Neither knows which behaviours your scenarios name, so neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` keeps one ledger across all five tiers.
 
 **For a team already well tested at the unit tier, it adds hygiene, not discovery.** Above the unit tier, once behaviours are named, nothing else holds the link. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
 
@@ -107,7 +107,7 @@ On its first run over another of our products, `balance` balanced 228 of 229 sce
   - Ruby's RSpec JSON report (`--rspec`).
 - **Integration and end-to-end evidence:** the JSON report of any Cucumber implementation, in any language.
 - **Fitness evidence:** any check your pipeline runs, in any language.
-- **The spec:** a list of named behaviours in `.feature` files. Unit-level scenarios need no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[SCN-<FFF>-<NNN>]`, in brackets:
+- **The scenarios:** a list of named behaviours in `.feature` files. Unit-level scenarios need no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[SCN-<FFF>-<NNN>]`, in brackets:
   - a Vitest or Jest test, in its title;
   - a Go test, in a subtest's name;
   - a JUnit 5 test in Java or Kotlin, in its `@DisplayName`;
