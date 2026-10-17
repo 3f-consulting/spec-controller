@@ -123,6 +123,18 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tier tag says which kind of run answers the obligation; whether that run really is end-to-end is the test's job.
 
+A whole feature file is its header code on the line above `Feature:`, then its Rules and scenarios, each scenario carrying its own code:
+
+```gherkin
+@<FFF>
+Feature: Allocate the next scenario code for a feature part
+
+  Rule: the next code is one past the highest the repository has ever carried
+
+    @unit @SCN-<FFF>-<NNN>
+    Scenario: a feature part whose highest live code is below a deleted one is offered one past the deleted code
+```
+
 Each piece of evidence names the scenario it answers, **in the one form its runner's report carries**:
 
 | The scenario asks for | The evidence | How it names the scenario |
@@ -612,6 +624,50 @@ Neither refuses the run. Each is named under `## Configuration not read`, right 
 
 The point of `spec-controller` is continuous reconciliation, so `balance` belongs in CI, after your tests have produced their reports.
 
+### A whole workflow
+
+One job, for a project with Vitest tests and one converted fitness function. Each part is explained in the sections below. `mkdir -p reports` makes the folder the report is written to, so the step does not depend on the test runner creating it.
+
+```yaml
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: mkdir -p reports && npx vitest run --reporter=json --outputFile=reports/vitest.json
+      - name: Complexity
+        id: SCN-<FFF>-<NNN>
+        if: always()
+        run: npx eslint .
+      - name: Record the steps
+        if: always()
+        run: echo '${{ toJSON(steps) }}' > ci-steps.json
+      - name: Reconcile
+        if: always()
+        run: |
+          npx spec-controller balance \
+            --target your-project \
+            --features features \
+            --vitest reports/vitest.json \
+            --ci-steps ci-steps.json \
+            --ci .github/workflows/ci.yml \
+            --package-json package.json \
+            --format md:$GITHUB_STEP_SUMMARY \
+            --exit-zero
+```
+
+With `"runners": { "unit": "vitest" }` and `"notChecks": ["ci.yml:build:Install dependencies"]` in `package.json`, the Test step is your unit suite, the install is not a check, checkout and setup-node are GitHub's own setup actions, the last two steps are the reconciler's own, and the Complexity step is the one fitness function. Pin the actions to commit SHAs, and spec-controller to an exact version, in your own repository.
+
 ### If you have converted any fitness function
 
 Each check step carries its `@SCN` as its `id:`, and the job ends with one dump step:
@@ -882,6 +938,13 @@ Ask the tool for the next scenario code instead of inventing one:
 ```bash
 spec-controller allocate <FFF>
 # SCN-<FFF>-<NNN>
+```
+
+For a feature part no feature file carries yet, add `--new`:
+
+```bash
+spec-controller allocate <FFF> --new
+# SCN-<FFF>-001
 ```
 
 The code is one past the highest the repository has **ever** carried for that feature part. So a retired code is never handed out again, and every old reference to it, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
