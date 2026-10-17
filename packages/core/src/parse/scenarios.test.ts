@@ -125,7 +125,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 });
 
-describe("[SCN-STG-029] a scenario tagged with two scenario codes raises no evidence obligation under either", () => {
+describe("[SCN-GRD-004] a scenario tagged with two scenario codes raises no evidence obligation under either", () => {
   const source = (ids: string): string =>
     `@AAA\nFeature: a\n\n  @unit @SCN-AAA-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`;
 

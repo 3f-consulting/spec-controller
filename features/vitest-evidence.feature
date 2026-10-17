@@ -21,6 +21,9 @@ Feature: A Vitest suite's results answer unit evidence obligations
     @unit @SCN-VIT-004
     Scenario: a Vitest test whose title cites two scenarios credits neither, and suspense names both codes
 
+    @unit @SCN-VIT-008
+    Scenario: a title citing a feature part outside two to five characters cites no scenario, beside a citation of five characters that is read
+
   Rule: a Vitest file that failed to collect is broken, not absent
 
     @unit @SCN-VIT-005

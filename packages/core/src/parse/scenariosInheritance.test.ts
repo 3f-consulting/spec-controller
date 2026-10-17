@@ -5,7 +5,7 @@ import {
 } from "./scenarios.js";
 import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 
-describe("[SCN-STG-032] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
+describe("[SCN-GRD-001] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
     const source = `@AAA @integration
 Feature: alpha
@@ -113,7 +113,7 @@ Feature: alpha
   });
 });
 
-describe("[SCN-STG-033] a scenario whose @SCN it inherits from its Feature or Rule is not listed as untagged", () => {
+describe("[SCN-GRD-002] a scenario whose @SCN it inherits from its Feature or Rule is not listed as untagged", () => {
   it.each([
     [
       "Feature",
@@ -149,7 +149,7 @@ Feature: alpha
   });
 });
 
-describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
+describe("[SCN-GRD-003] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
   const underAncestor = {
     Rule: (own: string): string =>
       `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,

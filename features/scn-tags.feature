@@ -81,7 +81,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-024
     Scenario: An @SCN code has a feature part of two to five characters and a number of any width, so a part of one or of six characters makes no code
 
-    @unit @integration @SCN-STG-025
+    @integration @SCN-STG-025
     Scenario: A Vitest title citing a feature part outside two to five characters cites no scenario, beside citations of two and five characters that are read
       Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
@@ -89,7 +89,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       And the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario
       And the grammar target lists no scenario code error
 
-    @unit @integration @SCN-STG-026
+    @integration @SCN-STG-026
     Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that are read
       Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
@@ -97,7 +97,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       And the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario
       And the grammar target lists no scenario code error
 
-    @unit @integration @SCN-STG-027
+    @integration @SCN-STG-027
     Scenario: A CI step whose id is a feature part outside two to five characters is no fitness evidence observation's citation, beside step ids of two and five characters that are
       Given a target with one scenario of its own, and a CI step record whose successful steps are keyed by feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
@@ -127,26 +127,3 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
         | ancestor |
         | Rule     |
         | Feature  |
-
-  Rule: a scenario's tags include the ones it inherits from its Feature and Rule
-
-    @unit @SCN-STG-032
-    Scenario Outline: an evidence tier tagged on the <ancestor> is named of the scenarios beneath it
-
-      Examples:
-        | ancestor |
-        | Feature  |
-        | Rule     |
-
-    @unit @e2e @SCN-STG-033
-    Scenario Outline: a scenario whose @SCN it inherits from its <ancestor> is reconciled once, on that code's row, and never also as no-scn-code
-      Given a target whose one scenario carries no scenario code of its own, inherits one from its <ancestor>, and has passing evidence citing that code
-      When balance reconciles that target
-      Then the scenario is reconciled once, balanced, on its scenario code's row
-      And no reconciliation names it as a scenario with no scenario code
-      And the run balances
-
-      Examples:
-        | ancestor |
-        | Feature  |
-        | Rule     |

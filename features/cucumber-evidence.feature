@@ -12,6 +12,9 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
     @unit @SCN-CUC-001
     Scenario: a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes
 
+    @unit @SCN-CUC-005
+    Scenario: a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that do
+
   Rule: a Cucumber scenario's observations are posted at the quality checks its own tags decide
 
     @unit @SCN-CUC-002

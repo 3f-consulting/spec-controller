@@ -1,7 +1,7 @@
 @WFS
 Feature: balance reads a workflow's steps
 
-  balance reads the command each step of a workflow runs, through launchers, pipes and command lists, and the action each step uses.
+  balance reads the command each step of a workflow runs, through launchers, pipes and command lists, the action each step uses, and the record a run writes of its steps.
 
   Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
 
@@ -84,3 +84,8 @@ Feature: balance reads a workflow's steps
 
     @unit @SCN-WFS-015
     Scenario: a local action, a container image and another owner's look-alike are read as owned by someone other than actions
+
+  Rule: a step's entry in the run's record is read under the scenario code its id states
+
+    @unit @SCN-WFS-016
+    Scenario: a step record entry whose id is a feature part outside two to five characters is read as no citation, beside ids of two and five characters that are
