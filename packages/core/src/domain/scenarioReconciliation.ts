@@ -80,7 +80,7 @@ export function carriesBehaviouralQualityCheck(
   );
 }
 
-export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: BehaviouralQualityCheck): boolean {
+export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: QualityCheck): boolean {
   return evidenceObligationsOf(row.evidenceObligations).some((o) => o.qualityCheck === qualityCheck);
 }
 

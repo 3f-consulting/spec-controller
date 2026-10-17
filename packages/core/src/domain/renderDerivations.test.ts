@@ -61,7 +61,7 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   });
 });
 
-describe("[SCN-LDG-001] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
+describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
   const posted = { qualityCheck: "fitness", scnId: "SCN-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
   const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };

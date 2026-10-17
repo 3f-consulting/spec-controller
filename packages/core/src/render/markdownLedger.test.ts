@@ -135,6 +135,29 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "U/1", "-/1"]]);
   });
 
+  it("letters the Fitness cell only for a scenario that raises a fitness obligation that is not pending, however its one fitness observation reconciles", () => {
+    const fitness = reconcile(
+      [
+        { scnId: "SCN-UNASKED", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-PENDING", evidenceObligations: [{ qualityCheck: "fitness", pending: true }] },
+        { scnId: "SCN-WATERMELON", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-UNASKED", status: "passed" },
+        { qualityCheck: "fitness", fitnessFunction: "guard-a", scnId: "SCN-UNASKED", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "guard-b", scnId: "SCN-PENDING", exists: true, enforcedOverRealSource: true },
+        { qualityCheck: "fitness", fitnessFunction: "guard-c", scnId: "SCN-WATERMELON", exists: true, enforcedOverRealSource: false },
+      ]
+    );
+    const table = ledgerTable(renderMarkdown(__er(fitness, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Fitness", "Unit"));
+    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([
+      ["SCN-UNASKED", "-/1", "U/1"],
+      ["SCN-PENDING", "-/1", ""],
+      ["SCN-WATERMELON", "F/1", ""],
+    ]);
+  });
+
   it("takes no column from a phantom row's evidence observations, and fills the phantom row's evidence cells with —", () => {
     const phantom = reconcile(
       [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],

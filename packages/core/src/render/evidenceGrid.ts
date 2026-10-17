@@ -25,8 +25,12 @@ export function evidenceColumns(
   return columns;
 }
 
+function qualityCheckOf(col: EvidenceColumn): QualityCheck {
+  return col.kind === "fitness" ? "fitness" : col.qualityCheck;
+}
+
 export function columnHeader(col: EvidenceColumn): string {
-  const word = col.kind === "fitness" ? "fitness" : col.qualityCheck;
+  const word = qualityCheckOf(col);
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
@@ -43,23 +47,9 @@ export function evidenceCell(
   col: EvidenceColumn
 ): string {
   if (!isScenario(s)) return "—";
-  return col.kind === "fitness" ? fitnessCell(s) : behaviouralCell(s, col.qualityCheck);
-}
-
-function twoSided(left: string, right: string): string {
-  return left === "-" && right === "-" ? "" : `${left}/${right}`;
-}
-
-function fitnessCell(s: ScenarioReconciliation): string {
-  const left = carriesFitnessFunction(s) ? QUALITY_CHECK_LETTER.fitness : "-";
-  const observed = observationCountOf(s, "fitness");
-  const right = observed > 0 ? String(observed) : "-";
-  return twoSided(left, right);
-}
-
-function behaviouralCell(s: ScenarioReconciliation, qualityCheck: BehaviouralQualityCheck): string {
+  const qualityCheck = qualityCheckOf(col);
   const left = namesQualityCheck(s, qualityCheck) ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
   const observed = observationCountOf(s, qualityCheck);
   const right = observed > 0 ? String(observed) : "-";
-  return twoSided(left, right);
+  return left === "-" && right === "-" ? "" : `${left}/${right}`;
 }
