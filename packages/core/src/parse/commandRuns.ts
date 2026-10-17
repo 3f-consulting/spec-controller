@@ -1,5 +1,5 @@
 import { commandInvokesScript } from "./checkScriptsRunInCI.js";
-import type { ShellReading } from "../domain/fitnessDiscovery.js";
+import type { ShellReading } from "../domain/uncitedFitnessFunctions.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
 

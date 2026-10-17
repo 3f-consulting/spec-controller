@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { reconcilerSteps } from "./fitnessDiscovery.js";
+import { reconcilerSteps } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
 const INVOCATION = "spec-controller balance";

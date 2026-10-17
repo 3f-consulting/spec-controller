@@ -7,7 +7,12 @@ import {
 } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
-import { isCandidateStep, runsADeclaredRunner } from "../domain/fitnessDiscovery.js";
+import {
+  declaredRunnerTest,
+  isCandidateStep,
+  type RunnerTiers,
+  type StepTest,
+} from "../domain/uncitedFitnessFunctions.js";
 
 function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
   if (!("command" in step)) return step.identity;
@@ -15,38 +20,33 @@ function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>)
   return invoked[0] ?? step.identity;
 }
 
+type CitationOf = (script: string, citedByStep?: string) => ScriptCitation | null;
+
 export function runningFitnessFunctions(
   ciSources: readonly string[],
-  packageJson: PackageJsonScripts,
-  runners: Readonly<Record<string, string | null>>,
-  citedScn: (script: string, citedByStep?: string) => ScriptCitation | null = () => null,
-  isExcluded: (step: PipelineStep) => boolean = () => false
-): FitnessEvidenceObservation[] {
-  return fitnessFunctionsAmong(
-    ciWorkflowSteps(ciSources),
-    packageJson,
-    runners,
-    citedScn,
-    isExcluded
-  );
-}
-
-type RunnerTiers = Readonly<Record<string, string | null>>;
-type CitationOf = (script: string, citedByStep?: string) => ScriptCitation | null;
-type StepTest = (step: PipelineStep) => boolean;
-
-export function fitnessFunctionsAmong(
-  steps: readonly PipelineStep[],
   packageJson: PackageJsonScripts,
   runners: RunnerTiers,
   citedScn: CitationOf = () => null,
   isExcluded: StepTest = () => false
 ): FitnessEvidenceObservation[] {
-  const scripts = packageJson.scripts ?? {};
-  const candidates = steps.filter((step) =>
-    isCandidateStep(step, isExcluded, (s) => runsADeclaredRunner(s, scripts, runners, shellReading))
+  const runsARunner = declaredRunnerTest(packageJson.scripts ?? {}, runners, shellReading);
+  return fitnessFunctionsAmong(
+    ciWorkflowSteps(ciSources),
+    packageJson,
+    (step) => isCandidateStep(step, isExcluded, runsARunner),
+    citedScn
   );
-  return candidates
+}
+
+export function fitnessFunctionsAmong(
+  steps: readonly PipelineStep[],
+  packageJson: PackageJsonScripts,
+  isCandidate: StepTest,
+  citedScn: CitationOf
+): FitnessEvidenceObservation[] {
+  const scripts = packageJson.scripts ?? {};
+  return steps
+    .filter(isCandidate)
     .map((step) => {
       const fitnessFunction = handleOf(step, scripts);
       const citation = citedScn(fitnessFunction, step.id);

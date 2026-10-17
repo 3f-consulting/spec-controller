@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { notChecksApplied } from "./fitnessDiscovery.js";
+import { notChecksApplied } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
 const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false } as const;

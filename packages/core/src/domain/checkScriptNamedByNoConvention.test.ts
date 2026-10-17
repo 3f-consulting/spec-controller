@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./fitnessDiscovery.js";
+import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
 const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, writesStepRecord: false } as const;

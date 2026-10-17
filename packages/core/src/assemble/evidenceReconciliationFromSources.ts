@@ -6,19 +6,22 @@ import type { StepRecord } from "../domain/stepRecord.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
-import { discoveryScope } from "../parse/discoveryScope.js";
-import { stepAccounting } from "../parse/stepAccounting.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
 import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
-  isExcludedFromDiscovery,
+  declaredRunnerTest,
+  discoveryScope,
   notChecksApplied,
   recognisedRunners,
   reconcilerSteps,
+  stepAccounting,
+  stepDispositions,
   type ReconcilerSteps,
+  type StepDisposition,
   type StepExclusions,
-} from "../domain/fitnessDiscovery.js";
+  type StepTest,
+} from "../domain/uncitedFitnessFunctions.js";
 import {
   configurationNotRead,
   resolveDeferralTags,
@@ -45,8 +48,7 @@ function observationStreams(
   steps: readonly PipelineStep[],
   corpus: TargetCorpus,
   packageJson: TargetManifest,
-  runnerTiers: Readonly<Record<string, string | null>>,
-  isExcluded: StepExclusions["isExcluded"]
+  isCandidate: StepTest
 ): EvidenceObservation[] {
   const recordAnswersCitingSteps = input.ciStepRecord !== undefined;
   return [
@@ -55,8 +57,7 @@ function observationStreams(
       corpus,
       steps,
       packageJson,
-      runnerTiers,
-      isExcluded,
+      isCandidate,
       recordAnswersCitingSteps
     ),
     ...ciStepRecordObservations(input.ciStepRecord),
@@ -86,7 +87,7 @@ interface PipelineReadings {
   readonly runners: ResolvedRunners;
   readonly exclusions: StepExclusions;
   readonly reconciler: ReconcilerSteps;
-  readonly isExcluded: (step: PipelineStep) => boolean;
+  readonly dispositionOf: (step: PipelineStep) => StepDisposition;
 }
 
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
@@ -104,12 +105,18 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
     commandRuns(command, invocation, scripts)
   );
 
+  const runsARunner = declaredRunnerTest(scripts, runners.tiers, shellReading);
+
   return {
     steps,
     runners,
     exclusions,
     reconciler,
-    isExcluded: (step) => isExcludedFromDiscovery(step, reconciler, exclusions),
+    dispositionOf: stepDispositions({
+      isReconciler: reconciler.isReconciler,
+      isNamedANonCheck: exclusions.isExcluded,
+      runsARunner,
+    }),
   };
 }
 
@@ -122,18 +129,19 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { steps, runners, exclusions, reconciler, isExcluded } = pipelineReadings(input);
+  const { steps, runners, exclusions, reconciler, dispositionOf } = pipelineReadings(input);
+  const isCandidate: StepTest = (step) => dispositionOf(step) === "candidate";
 
   const reconciliation = evidenceReconciliationOf(
     corpus.scenarios,
-    observationStreams(input, steps, corpus, packageJson, runners.tiers, isExcluded),
+    observationStreams(input, steps, corpus, packageJson, isCandidate),
     [...input.untaggedScenarios],
     true,
     true
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, steps, input.ciSourceNames ?? [], packageJson, runners, exclusions, reconciler, isExcluded),
+      withReaderAccounts(reconciliation, steps, input.ciSourceNames ?? [], packageJson, runners, exclusions, reconciler, dispositionOf),
       packageJson
     ),
     input
@@ -176,7 +184,7 @@ function withReaderAccounts(
   runners: ResolvedRunners,
   exclusions: StepExclusions,
   reconciler: ReconcilerSteps,
-  isExcluded: (step: PipelineStep) => boolean
+  dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
     withScopeAccount(
@@ -189,36 +197,19 @@ function withReaderAccounts(
       ),
       steps,
       ciSourceNames,
-      packageJson,
-      runners.tiers,
-      isExcluded
+      dispositionOf
     ),
     steps,
-    packageJson,
-    runners.tiers,
-    reconciler,
-    exclusions,
-    isExcluded
+    dispositionOf
   );
 }
 
 function withStepAccounting(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
-  packageJson: TargetManifest,
-  runnerTiers: Readonly<Record<string, string | null>>,
-  reconciler: ReconcilerSteps,
-  exclusions: StepExclusions,
-  isExcluded: (step: PipelineStep) => boolean
+  dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
-  const accounting = stepAccounting(
-    steps,
-    packageJson,
-    runnerTiers,
-    reconciler.isReconciler,
-    exclusions.isExcluded,
-    isExcluded
-  );
+  const accounting = stepAccounting(steps, dispositionOf);
   if (accounting.stepsRead === 0) return reconciliation;
   return {
     ...reconciliation,
@@ -230,17 +221,9 @@ function withScopeAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   ciSourceNames: readonly string[],
-  packageJson: TargetManifest,
-  runnerTiers: Readonly<Record<string, string | null>>,
-  isExcluded: (step: PipelineStep) => boolean
+  dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
-  const scope = discoveryScope(
-    steps,
-    ciSourceNames,
-    packageJson,
-    runnerTiers,
-    isExcluded
-  );
+  const scope = discoveryScope(steps, ciSourceNames, dispositionOf);
   if (scope.length === 0) return reconciliation;
   return { ...reconciliation, summary: { ...reconciliation.summary, discoveryScope: scope } };
 }
@@ -298,17 +281,15 @@ function checkObservations(
   corpus: TargetCorpus,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  runnerTiers: Readonly<Record<string, string | null>>,
-  isExcluded: StepExclusions["isExcluded"],
+  isCandidate: StepTest,
   recordAnswersCitingSteps: boolean
 ): EvidenceObservation[] {
   return [
     ...fitnessFunctionsAmong(
       steps,
       packageJson,
-      runnerTiers,
-      (_script, citedByStep) => corpus.citedRow(citedByStep),
-      isExcluded
+      isCandidate,
+      (_script, citedByStep) => corpus.citedRow(citedByStep)
     ).filter((o) => !(recordAnswersCitingSteps && o.scnId !== undefined)),
   ];
 }

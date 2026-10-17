@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
-import { recognisedRunners } from "../domain/fitnessDiscovery.js";
+import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
 import { shellReading } from "./commandRuns.js";
 import { resolveRunners } from "./targetManifest.js";
 import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";

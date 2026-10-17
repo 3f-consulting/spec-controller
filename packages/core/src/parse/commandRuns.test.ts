@@ -1,7 +1,7 @@
 import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { describe, it, expect, beforeEach } from "vitest";
 import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
-import { recognisedRunners } from "../domain/fitnessDiscovery.js";
+import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
 import { shellReading } from "./commandRuns.js";
 
 describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
