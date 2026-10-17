@@ -57,11 +57,23 @@ The report keeps its exact terms, and they read plainly once named. A *Claim Rec
 
 Every behaviour is recorded twice, once as a scenario and once as the test that proves it, and the two must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-- **Delete a test**, and its scenario reads `missing`. The build goes red.
-- **Skip a test**, and its scenario reads `missing`. A skipped test proves nothing.
-- **Re-point a test** at another scenario, and the original reads `missing`.
-- **Delete a CI check step**, and its fitness function's scenario reads `missing`.
-- **Delete a scenario but keep its unit tests or its CI check**, and they still run and pass, but their evidence posts to a scenario that doesn't exist.
+Each kind of disagreement has an outcome of its own, and every one but `satisfied` turns the build red:
+
+| You change | The report shows |
+|---|---|
+| Delete a test | `missing` on its scenario |
+| Skip a test | `missing`: a skipped test proves nothing |
+| Break the behaviour a test checks | `failing` |
+| Re-point a test at another scenario | `missing` on the original |
+| Drop the scenario code from a test's title | the test still runs, but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
+| Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
+| Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
+| Delete a CI check step | `missing` on its fitness function's scenario |
+| Let a CI check step run under `continue-on-error` | `watermelon`: green, but it could not have failed the build. Given the run's step record, a red it swallowed reads `failing` |
+| Copy a scenario and keep its `@SCN` code | `duplicate-scn-code` on every quality check of the one row both share: no evidence can be credited to either |
+| Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
+| Remove a scenario's quality-check tags while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
+| Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
 
 To remove a behaviour cleanly, you change both places: the scenario and its evidence. That change shows in the diff, and review judges it.
 
