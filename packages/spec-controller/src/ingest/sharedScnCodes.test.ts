@@ -17,7 +17,7 @@ function corpus(files: Record<string, string>): string {
   return dir;
 }
 
-describe("[SCN-STG-017] readEvidenceObligations names the scenarios sharing each code", () => {
+describe("[SCN-CLI-099] readEvidenceObligations names the scenarios sharing each code", () => {
   it("lists a code carried in two files with the file and the name of each scenario", () => {
     const features = corpus({
       "one.feature": "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: the scenario in one\n    Given a thing\n",

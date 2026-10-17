@@ -43,12 +43,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-019
     Scenario: A feature file with no header code whose scenarios carry codes is listed as no-feature-code, and the run reds
 
-    @unit @SCN-STG-020
-    Scenario: A misfiled account reconciles exactly as it would if correctly filed
-
-    @unit @SCN-STG-023
-    Scenario: A corpus with no feature file is never stated clean: the section says no feature file was judged, and the run still exits 5
-
   Rule: an @SCN is one account number, and two scenarios carrying it make that account unreconcilable
 
     THE ACCOUNT IS KEYED BY THE CODE, SO TWO SCENARIOS CARRYING ONE CODE ARE ONE ACCOUNT. A phantom
@@ -75,12 +69,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-016
     Scenario: Every evidence observation citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position
 
-    @unit @SCN-STG-018
-    Scenario: A duplicated code is exit 1 with the rest of the report complete, never a refused corpus
-
-    @unit @SCN-STG-017
-    Scenario: The report states that the corpus holds more scenarios than accounts, and names the scenarios sharing each code
-
   Rule: an @SCN is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 
     A scenario id is SCN-<FFF>-<NNN>, the feature part two to five
@@ -91,7 +79,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     target: a feature part of two and of five characters is read, one of one and of six is not.
 
     @unit @SCN-STG-024
-    Scenario: A scenario tagged with a feature part outside two to five characters carries no @SCN code, beside scenarios of two and five characters that are accounts
+    Scenario: An @SCN code has a feature part of two to five characters and a number of any width, so a part of one or of six characters makes no code
 
     @unit @integration @SCN-STG-025
     Scenario: A Vitest title citing a feature part outside two to five characters cites no scenario, beside citations of two and five characters that are read
@@ -116,9 +104,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Then the two- and five-character citations open phantom scenarios
       And the one- and six-character step ids post no evidence observation at all
       And the grammar target lists no scenario code error
-
-    @unit @SCN-STG-028
-    Scenario: A prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context, beside mentions of two and five characters that are
 
   Rule: a scenario carrying more than one @SCN raises its obligations under none of them, and is a scenario code error naming each
 

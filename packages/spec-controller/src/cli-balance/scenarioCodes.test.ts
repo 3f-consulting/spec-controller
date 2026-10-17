@@ -10,7 +10,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
+describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
   function duplicateTarget(withDuplicate = true): string {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
     made.push(dir);
@@ -65,7 +65,7 @@ describe("[SCN-STG-018] runBalance over a duplicated @SCN exits 1 with the repor
   });
 });
 
-describe("[SCN-STG-028] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
+describe("[SCN-CLI-094] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
   it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", () => {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-028-unit-"));
     made.push(dir);
@@ -83,7 +83,7 @@ describe("[SCN-STG-028] a prose mention of a feature part outside two to five ch
   });
 });
 
-describe("[SCN-STG-029] a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both", () => {
+describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both", () => {
   function target(ids: string): string {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-029-unit-"));
     made.push(dir);

@@ -14,7 +14,7 @@ afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("[SCN-STG-022] a feature part no file's header carries has no file behind its by-feature row", () => {
+describe("[SCN-CLI-096] a feature part no file's header carries has no file behind its by-feature row", () => {
   it("maps no file to THR when the only scenario coded for it sits in a file headed @TWO", () => {
     const root = mkdtempSync(join(tmpdir(), `scn-stg-022-${process.pid}-`));
     made.push(root);
@@ -34,7 +34,7 @@ describe("[SCN-STG-022] a feature part no file's header carries has no file behi
   });
 });
 
-describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped", () => {
+describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped", () => {
   it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
     const root = targetIn(made, EMPTY_CORPUS);
     const balance = runReconcile({
@@ -48,7 +48,7 @@ describe("[SCN-STG-023] a corpus with no feature file is judged, never skipped",
   });
 });
 
-describe("[SCN-STG-024] a feature file headed by a code of two or five characters carries that code", () => {
+describe("[SCN-CLI-098] a feature file headed by a code of two or five characters carries that code", () => {
   it("reads the two- and five-character header codes, and not the one- or six-character ones", () => {
     const headed = (code: string) => `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a step\n`;
     expect(["A", "AB", "FIVEC", "SIXCHR"].map((code) => extractFeatureCode(headed(code)))).toEqual([null, "AB", "FIVEC", null]);

@@ -50,7 +50,7 @@ const PAIRS: { fault: string; misfiled: Corpus; twin: Corpus }[] = [
   },
 ];
 
-describe("[SCN-STG-020] a misfiled account reconciles exactly as it would if correctly filed", () => {
+describe("[SCN-RMD-016] a misfiled account reconciles exactly as it would if correctly filed", () => {
   for (const { fault, misfiled, twin } of PAIRS) {
     it(`${fault}: the ledger and summary equal the correctly filed twin's; only the code errors differ`, () => {
       const wrong = reconcileCorpus(misfiled);

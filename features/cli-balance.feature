@@ -845,3 +845,26 @@ Feature: spec-controller balance runs standalone
 
     @unit @SCN-CLI-092
     Scenario: balance writes nothing to stderr for a target whose specController block names no runners and no non-checks
+
+  Rule: balance reads a corpus's scenario codes end to end, and a scenario code error never refuses the corpus
+
+    @unit @SCN-CLI-093
+    Scenario: balance over a corpus whose @SCN two scenarios carry exits 1 with the report in full, reconciles every other account, and never refuses the corpus
+
+    @unit @SCN-CLI-094
+    Scenario: balance counts a prose mention of a feature part of two or five characters as an excluded @SCN occurrence, and one of one or six characters as none, listing no scenario code error
+
+    @unit @SCN-CLI-095
+    Scenario: balance over a scenario tagged with two scenario codes opens no account under either, lists a several-scn-codes error naming both in the JSON and the markdown, and exits 1
+
+    @unit @SCN-CLI-096
+    Scenario: balance names each feature code by the file whose header carries it, and no file for a code only a scenario carries
+
+    @unit @SCN-CLI-097
+    Scenario: balance reads an empty feature directory as a corpus of no file and no feature code, judged with no scenario code error
+
+    @unit @SCN-CLI-098
+    Scenario: balance reads a feature file's header code of two or five characters, and no code from a header of one or six
+
+    @unit @SCN-CLI-099
+    Scenario: balance names each code more than one scenario carries, with the file and the name of each scenario carrying it

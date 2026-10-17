@@ -192,3 +192,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-015
     Scenario: the summary carries no runner account for a target whose manifest names no runners, and carries the step running a runner once it names one
+
+  Rule: the summary carries scenario code errors beside the ledger, and they never alter it
+
+    @unit @SCN-RMD-016
+    Scenario: a corpus with a misfiled code reconciles to the same ledger and summary as its correctly filed twin, and differs only in its scenario code errors
