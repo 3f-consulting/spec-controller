@@ -1,37 +1,23 @@
-import type { ScenarioReconciliation, QualityCheck, BehaviouralQualityCheck } from "../model.js";
-import { BEHAVIOURAL_QUALITY_CHECKS } from "../domain/ledger.js";
+import type { ScenarioReconciliation, QualityCheck } from "../model.js";
+import { QUALITY_CHECKS } from "../domain/journal.js";
 import {
   isScenario,
-  carriesFitnessFunction,
-  carriesBehaviouralQualityCheck,
+  carriesQualityCheck,
   namesQualityCheck,
   observationCountOf,
 } from "../domain/scenarioReconciliation.js";
 
-export type EvidenceColumn = { readonly kind: "fitness" } | { readonly kind: "behavioural"; readonly qualityCheck: BehaviouralQualityCheck };
+export type EvidenceColumn = QualityCheck;
 
 export function evidenceColumns(
   scenarios: readonly ScenarioReconciliation[]
 ): EvidenceColumn[] {
-  const scenarioRows = scenarios.filter(
-    isScenario
-  );
-  const hasFitnessFunction = scenarioRows.some(carriesFitnessFunction);
-  const columns: EvidenceColumn[] = [];
-  if (hasFitnessFunction) columns.push({ kind: "fitness" });
-  for (const qualityCheck of BEHAVIOURAL_QUALITY_CHECKS) {
-    if (scenarioRows.some((row) => carriesBehaviouralQualityCheck(row, qualityCheck))) columns.push({ kind: "behavioural", qualityCheck });
-  }
-  return columns;
+  const scenarioRows = scenarios.filter(isScenario);
+  return QUALITY_CHECKS.filter((qualityCheck) => scenarioRows.some((row) => carriesQualityCheck(row, qualityCheck)));
 }
 
-function qualityCheckOf(col: EvidenceColumn): QualityCheck {
-  return col.kind === "fitness" ? "fitness" : col.qualityCheck;
-}
-
-export function columnHeader(col: EvidenceColumn): string {
-  const word = qualityCheckOf(col);
-  return word.charAt(0).toUpperCase() + word.slice(1);
+export function columnHeader(qualityCheck: EvidenceColumn): string {
+  return qualityCheck.charAt(0).toUpperCase() + qualityCheck.slice(1);
 }
 
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
@@ -44,10 +30,9 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
 
 export function evidenceCell(
   s: ScenarioReconciliation,
-  col: EvidenceColumn
+  qualityCheck: EvidenceColumn
 ): string {
   if (!isScenario(s)) return "—";
-  const qualityCheck = qualityCheckOf(col);
   const left = namesQualityCheck(s, qualityCheck) ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
   const observed = observationCountOf(s, qualityCheck);
   const right = observed > 0 ? String(observed) : "-";

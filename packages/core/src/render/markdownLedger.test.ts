@@ -135,6 +135,35 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "U/1", "-/1"]]);
   });
 
+  it("adds a Fitness column for a fitness observation on a shared-code row, as it adds a Unit column for a unit test there", () => {
+    const shared = reconcile(
+      [
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [
+        { qualityCheck: "unit", scnId: "SCN-D", status: "passed" },
+        { qualityCheck: "fitness", fitnessFunction: "guard-d", scnId: "SCN-D", exists: true, enforcedOverRealSource: true },
+      ]
+    );
+    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Fitness", "Unit"));
+    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "-/1", "U/1"]]);
+  });
+
+  it("adds a Fitness column with a blank cell for a shared-code row where one scenario's fitness obligation is pending", () => {
+    const shared = reconcile(
+      [
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "fitness", pending: true }] },
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
+      ],
+      [{ qualityCheck: "unit", scnId: "SCN-D", status: "passed" }]
+    );
+    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx));
+    expect(table[0]).toBe(headerOf("Fitness", "Unit"));
+    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "", "U/1"]]);
+  });
+
   it("letters the Fitness cell only for a scenario that raises a fitness obligation that is not pending, however its one fitness observation reconciles", () => {
     const fitness = reconcile(
       [
