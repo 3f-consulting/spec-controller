@@ -31,12 +31,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     whose feature part is longer than five characters is no @SCN, so it is no scenario code for
     these rules to judge — it is the one-grammar Rule below that says so.
 
-    THE SECTION'S SENTENCES ARE CLAIMS ABOUT A POPULATION, so each is held by a corpus on which a
-    false one would show. A finding says where the by-feature cut counted the scenario,
-    and that depends on which files carry the code its id names: one, none or several. A clean
-    statement counts files and codes, and those counts differ as soon as one file carries no code.
-    A fixture where the counts agree cannot tell a true sentence from a false one.
-
     @unit @SCN-STG-011
     Scenario: A scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file as where the by-feature cut counts it, and the run reds
 
@@ -51,9 +45,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     @unit @SCN-STG-020
     Scenario: A misfiled account reconciles exactly as it would if correctly filed
-
-    @unit @SCN-STG-021
-    Scenario: Clean scenario codes are stated with the corpus's own count of feature files and of feature codes, and the section says a duplicated code is reported on the rows
 
     @unit @SCN-STG-023
     Scenario: A corpus with no feature file is never stated clean: the section says no feature file was judged, and the run still exits 5
@@ -151,9 +142,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
         | ancestor |
         | Rule     |
         | Feature  |
-
-    @unit @SCN-STG-031
-    Scenario: a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile
 
   Rule: a scenario's tags include the ones it inherits from its Feature and Rule
 

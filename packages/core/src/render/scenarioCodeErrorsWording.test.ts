@@ -52,7 +52,7 @@ const ONE_ALONE: File = { slug: "one", featureCode: "ONE", scenarios: ["@SCN-ONE
 const SEVERAL_CODES = "more than one scenario code";
 const NO_ACCOUNT = "no account was raised for it";
 
-describe("[SCN-STG-031] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
+describe("[SCN-RPT-061] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
   describe("when every listed error is several-scn-codes", () => {
     let md: string;
     beforeEach(() => {

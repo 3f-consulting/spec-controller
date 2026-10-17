@@ -94,7 +94,7 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   return block.slice(0, block.indexOf(""));
 }
 
-describe("[SCN-STG-017] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
+describe("[SCN-RPT-064] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
   it.each([
     [
       "states that the corpus holds three scenarios in two accounts",

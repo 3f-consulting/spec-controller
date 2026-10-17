@@ -28,7 +28,7 @@ function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): Evidenc
   return { ...reconciliation, scenarioCodeErrors };
 }
 
-describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
+describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
   let md: string;
   beforeEach(() => {
     md = renderMarkdown(balancedWith([FOREIGN]), ctx);
@@ -74,7 +74,7 @@ describe("[SCN-STG-011] a foreign-scn-code is listed under Scenario code errors,
   });
 });
 
-describe("[SCN-STG-010] a duplicate-feature-code is worded from the shared code and the files that carry it", () => {
+describe("[SCN-RPT-056] a duplicate-feature-code is worded from the shared code and the files that carry it", () => {
   it("lists the error by its handle and the catalogue's words for its code and files", () => {
     const [duplicate] = duplicateFeatureCodes([
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
@@ -87,7 +87,7 @@ describe("[SCN-STG-010] a duplicate-feature-code is worded from the shared code 
   });
 });
 
-describe("[SCN-STG-019] a no-feature-code is worded from the file that carries no feature code", () => {
+describe("[SCN-RPT-057] a no-feature-code is worded from the file that carries no feature code", () => {
   it("lists the error by its handle and the catalogue's words for its file", () => {
     const md = renderMarkdown(balancedWith([{ kind: "no-feature-code", files: ["unc.feature"] }]), ctx);
     expect(md.split("\n").filter((line) => line.startsWith("- `no-feature-code` — "))).toEqual([
@@ -96,7 +96,7 @@ describe("[SCN-STG-019] a no-feature-code is worded from the file that carries n
   });
 });
 
-describe("[SCN-STG-022] a foreign-scn-code whose named code no file carries is worded with no file to move to", () => {
+describe("[SCN-RPT-058] a foreign-scn-code whose named code no file carries is worded with no file to move to", () => {
   it("lists the error by its handle and the catalogue's words for no carrier, naming no header tag or file the corpus lacks", () => {
     const errors = foreignScenarioCodes([
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
@@ -115,7 +115,7 @@ describe("[SCN-STG-022] a foreign-scn-code whose named code no file carries is w
   });
 });
 
-describe("[SCN-STG-029] a several-scn-codes error is worded from its file, its scenario and its codes", () => {
+describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its scenario and its codes", () => {
   it("lists the error by its handle and the catalogue's words for its file, scenario and codes", () => {
     const errors = scenarioCodeErrorsOf([
       {
@@ -163,7 +163,7 @@ function cleanSectionOf(md: string): string[] {
   return lines.slice(start, next === -1 ? lines.length : next);
 }
 
-describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own count of feature files and of feature codes", () => {
+describe("[SCN-RPT-062] clean scenario codes are stated with the corpus's own count of feature files and of feature codes", () => {
   const F = CORE_MESSAGES[CoreMessage.FeatureFileNoun];
   const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
   const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver];
@@ -228,7 +228,7 @@ describe("[SCN-STG-021] clean scenario codes are stated with the corpus's own co
   });
 });
 
-describe("[SCN-STG-023] a corpus with no feature file is never stated clean", () => {
+describe("[SCN-RPT-063] a corpus with no feature file is never stated clean", () => {
   let empty: EvidenceReconciliation;
   beforeEach(() => {
     empty = judgedCorpus([], 0);
@@ -249,7 +249,7 @@ describe("[SCN-STG-023] a corpus with no feature file is never stated clean", ()
   });
 });
 
-describe("[SCN-STG-011] the scenario code errors section counts the errors the corpus holds and lists each by its kind", () => {
+describe("[SCN-RPT-060] the scenario code errors section counts the errors the corpus holds and lists each by its kind", () => {
   function featureFile(slug: string, featureCode: string, scnIds: readonly string[]): CorpusFile {
     const scenarios = scnIds.map((id) => `  @unit @${id}\n  Scenario: ${id.toLowerCase()}\n    Given a thing\n`);
     return { slug, featureCode, source: `@${featureCode}\nFeature: ${slug}\n\n${scenarios.join("\n")}` };

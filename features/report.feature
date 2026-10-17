@@ -493,3 +493,37 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-053
     Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises
+
+  Rule: the report lists each scenario code error in a section of its own, before the summary views, worded from the error's own values
+
+    @unit @SCN-RPT-055
+    Scenario: a foreign-scn-code is listed by its handle under Scenario code errors, worded from its values with the one file or the several files carrying the named code, before the summary views
+
+    @unit @SCN-RPT-056
+    Scenario: a duplicate-feature-code is listed by its handle, worded from the shared code and the files that carry it
+
+    @unit @SCN-RPT-057
+    Scenario: a no-feature-code is listed by its handle, worded from the file that carries no feature code
+
+    @unit @SCN-RPT-058
+    Scenario: a foreign-scn-code whose named code no file carries is worded with no file to move to, naming no header tag or file the corpus lacks
+
+    @unit @SCN-RPT-059
+    Scenario: a several-scn-codes error is listed by its handle, worded from its file, its scenario and its codes
+
+    @unit @SCN-RPT-060
+    Scenario: the section counts its errors, one in the singular and several with their number, then lists each on its own line in the order judged
+
+    @unit @SCN-RPT-061
+    Scenario: a scenario carrying several codes is framed in the section and the run verdict as a scenario no account was raised for, never as a misfiling whose accounts reconcile
+
+  Rule: the report states a corpus's scenario codes clean only over the files it judged, with the counts the run recorded
+
+    @unit @SCN-RPT-062
+    Scenario: clean scenario codes are stated with the run's count of feature files and of feature codes, with no count for a saved report that recorded none, and the section is absent when no corpus was judged
+
+    @unit @SCN-RPT-063
+    Scenario: a corpus with no feature file is stated as no feature file judged, never as clean
+
+    @unit @SCN-RPT-064
+    Scenario: the report states how many scenarios the corpus holds in how many accounts and names the scenarios sharing each code, a code to a line, and says nothing of sharing when no code is shared
