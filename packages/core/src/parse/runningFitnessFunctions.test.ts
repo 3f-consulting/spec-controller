@@ -11,7 +11,7 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] runningFitnessFunctions — the running-guard observer (emits a FitnessEvidenceObservation per running CI guard)", () => {
+describe("[SCN-WFS-008] runningFitnessFunctions — the running-guard observer (emits a FitnessEvidenceObservation per running CI guard)", () => {
   const usgPkg: PackageJsonScripts = {
     scripts: {
       "lint:foo": "echo foo",
@@ -62,7 +62,7 @@ describe("[SCN-USG-001] runningFitnessFunctions — the running-guard observer (
   });
 });
 
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
+describe("[SCN-WFS-009] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   const manifest = {
     scripts: { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" },
     specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
@@ -89,7 +89,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness fun
   });
 });
 
-describe("[SCN-USG-004] runningFitnessFunctions observes a CI script matching no convention of ours", () => {
+describe("[SCN-WFS-010] runningFitnessFunctions observes a CI script matching no convention of ours", () => {
   const checkPkg: PackageJsonScripts = { scripts: { check: "echo check" } };
   const reportedAs = (run: string): string[] =>
     runningFitnessFunctions(
@@ -117,7 +117,7 @@ describe("[SCN-USG-004] runningFitnessFunctions observes a CI script matching no
   });
 });
 
-describe("[SCN-USG-007] a fitness function running in ANY of a target's workflows is observed", () => {
+describe("[SCN-WFS-011] a fitness function running in ANY of a target's workflows is observed", () => {
   const pkg: PackageJsonScripts = {
     scripts: { "lint:sweep": "echo sweep", test: "vitest run" },
   };
@@ -142,7 +142,7 @@ describe("[SCN-USG-007] a fitness function running in ANY of a target's workflow
   });
 });
 
-describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
+describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
   const pkg: PackageJsonScripts = {
     scripts: { "domain-purity": "echo domain-purity", test: "vitest run" },
   };

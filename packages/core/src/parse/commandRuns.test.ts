@@ -1,10 +1,10 @@
-import { ciWorkflowSteps } from "../parse/checkScriptsRunInCI.js";
+import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { describe, it, expect, beforeEach } from "vitest";
-import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
-import { recognisedRunners } from "./fitnessDiscovery.js";
-import { shellReading } from "../parse/commandRuns.js";
+import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
+import { recognisedRunners } from "../domain/fitnessDiscovery.js";
+import { shellReading } from "./commandRuns.js";
 
-describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
+describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
   const ciWith = (...steps: string[]): string =>
     ["jobs:", "  ci:", "    steps:", ...steps].join("\n");
 
@@ -82,7 +82,7 @@ describe("[SCN-USG-011] recognisedRunners — a runner recognised at the step in
   });
 });
 
-describe("[SCN-USG-012] recognisedRunners — a runner's name out of command position leaves the step a candidate", () => {
+describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command position leaves the step a candidate", () => {
   const unit = { unit: "vitest" };
 
   it("recognises the runner beside every one of them — the control", () => {
@@ -137,7 +137,7 @@ describe("[SCN-USG-012] recognisedRunners — a runner's name out of command pos
   });
 });
 
-describe("[SCN-USG-029] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
+describe("[SCN-WFS-007] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
   const stepRunning = (...lines: string[]): string =>
     [
       "jobs:",
@@ -193,7 +193,7 @@ describe("[SCN-USG-029] recognisedRunners — a runner whose output another comm
   });
 });
 
-describe("[SCN-USG-033] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
+describe("[SCN-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
   const stepRunning = (command: string): string =>
     [
       "jobs:",
@@ -239,7 +239,7 @@ describe("[SCN-USG-033] recognisedRunners — a runner started through a launche
   });
 });
 
-describe("[SCN-USG-034] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner", () => {
+describe("[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner", () => {
   const stepRunning = (line: string): string =>
     ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
       "\n"
@@ -284,7 +284,7 @@ describe("[SCN-USG-034] recognisedRunners — a pytest suite started through a P
   });
 });
 
-describe("[SCN-USG-035] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner", () => {
+describe("[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner", () => {
   const stepRunning = (line: string): string =>
     ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
       "\n"
@@ -323,7 +323,7 @@ describe("[SCN-USG-035] recognisedRunners — an RSpec suite started through bun
   });
 });
 
-describe("[SCN-USG-036] recognisedRunners — a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate", () => {
+describe("[SCN-WFS-006] recognisedRunners — a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate", () => {
   const ciRunning = (...steps: readonly (readonly [string, string])[]): string =>
     [
       "jobs:",
