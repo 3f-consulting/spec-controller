@@ -51,6 +51,8 @@ Key: each evidence cell reads *obligation*/*observations*.
 
 Read it as a ledger. Each scenario is an account: its tags are what it is owed, and the evidence that ran is what it was paid. In this sample, three accounts balance, one test is failing, one CI check is failing, one scenario has no test at all, one test cites a scenario that doesn't exist, and one test cites nothing. One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once: the row says that every proof it was promised, at both layers, arrived and passed, which no single test runner can see. The two `F/1` rows are CI checks, a complexity limit that holds and a lint step that failed: a check is reconciled the same way as a test, its scenario is owed one, and its step's result is the evidence.
 
+The report keeps its exact terms, and they read plainly once named. A *Scenario Reconciliation* is one line per scenario, setting the proofs it asked for (its *Evidence Obligations*) against the proofs that ran (its *Evidence Observations*). A test that names a scenario which does not exist lands on a *phantom scenario*, usually a typo or a scenario since deleted, and one that names no scenario at all lands in the *suspense scenario*. A *watermelon* is a check that passes but could not have failed the build. [`doc/ubiquitous-language.md`](./doc/ubiquitous-language.md) has the rest.
+
 ## What double entry buys: a change becomes deliberate
 
 Every behaviour is recorded twice, once as a scenario and once as the test that proves it, and the two must agree. So **changes to your quality checks become deliberate, not accidental.**

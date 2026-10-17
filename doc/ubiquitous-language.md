@@ -174,6 +174,19 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |
 | pair | The scenario code and quality check at which an Evidence Obligation, and the Evidence Observations answering it, are booked. A term names a pair, and a credit at a named pair reconciles as a matched obligation. |
 
+## Descriptions for marketing use
+
+The terms above are exact, and the code, the report and the help use them as they stand. Where a term's meaning is opaque to someone meeting the tool for the first time, it has a description below for writing *about* spec-controller: the README's prose, a talk, an article. Each stays as close to the definition as it can while a newcomer can read it. None is used in an error message, the report or the help, which keep the terms.
+
+| Term | Description for marketing use |
+|---|---|
+| `Evidence Obligation` | A proof a scenario asks for: its tags say which kinds of test or check must show that it holds. |
+| `Evidence Observation` | A proof that actually ran: one test's result, or one CI check's result, naming the scenario it proves. |
+| `Scenario Reconciliation` | One line per scenario, setting the proofs it asked for against the proofs that ran. |
+| `Phantom scenario` | Where a test lands when it names a scenario that does not exist, usually a typo or a scenario since deleted. |
+| `Suspense scenario` | The holding pile for test and check results that name no scenario at all. |
+| `Watermelon` | A check that passes but could not have failed the build: green on the outside, nothing inside holding it. |
+
 ## Borrowed from the methodology
 
 Named here, and used as the methodology defines them; [`how_to_use.md`](./how_to_use.md) describes each as spec-controller reads it.
