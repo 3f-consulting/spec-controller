@@ -37,14 +37,14 @@ Key: each evidence cell reads *obligation*/*observations*.
 
 | Scenario | Fitness | Unit | E2e | Verdict | Reconciling items |
 | --- | --- | --- | --- | --- | --- |
-| SCN-CHK-001 |  | U/1 |  | ✓ balanced | — |
-| SCN-CHK-002 |  | U/1 |  | ✗ out-of-balance | unit ✗ Evidence Observation is failing |
-| SCN-CHK-003 |  | U/- |  | ✗ out-of-balance | unit ∅ Evidence Observation is missing |
-| SCN-CHK-005 |  | U/3 | E/2 | ✓ balanced | — |
-| SCN-CHK-006 | F/1 |  |  | ✓ balanced | — |
-| SCN-CHK-007 | F/1 |  |  | ✗ out-of-balance | fitness ✗ Evidence Observation is failing |
-| SCN-CHK-004 | — | — | — | ✗ out-of-balance | unit 👻 Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (unnamed claim) | — | — | — | ✗ out-of-balance | unit ❓ Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
+| SCN-CHK-001 |  | U/1 |  | balanced | — |
+| SCN-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing |
+| SCN-CHK-003 |  | U/- |  | out-of-balance | unit: Evidence Observation is missing |
+| SCN-CHK-005 |  | U/3 | E/2 | balanced | — |
+| SCN-CHK-006 | F/1 |  |  | balanced | — |
+| SCN-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing |
+| SCN-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
+| (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>

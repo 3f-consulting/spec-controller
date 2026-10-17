@@ -195,7 +195,7 @@ The [README's sample report](../README.md) shows every kind of row on one small 
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
 - **The verdict** is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
-- **A phantom claim's row** holds evidence citing a code no scenario carries, usually a typo or a deleted scenario. There is one per unknown code, named by that code, like the 👻 row in the sample.
+- **A phantom claim's row** holds evidence citing a code no scenario carries, usually a typo or a deleted scenario. There is one per unknown code, named by that code, like the sample's row whose item cites an unknown Scenario.
 - **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.
 
 Watch for a **watermelon**: a check that is green but could not have failed its job, because `continue-on-error` would have swallowed its red. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
