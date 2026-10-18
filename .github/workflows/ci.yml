@@ -472,7 +472,7 @@ jobs:
       - name: No ticket ID in a comment, description or document
         id: SCN-FIT-024
         if: always()
-        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: "3.23.0"
           filter: '.Name == "Identifiers.TicketId"'
@@ -484,7 +484,7 @@ jobs:
       - name: No scenario code in a comment, description or document
         id: SCN-FIT-025
         if: always()
-        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: "3.23.0"
           filter: '.Name == "Identifiers.ScenarioCode"'
@@ -496,7 +496,7 @@ jobs:
       - name: No narrated history in a comment, description or document
         id: SCN-FIT-026
         if: always()
-        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: "3.23.0"
           filter: '.Name == "History.Narrated"'
@@ -508,7 +508,7 @@ jobs:
       - name: No title or description names a code identifier or a source file
         id: SCN-FIT-038
         if: always()
-        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: "3.23.0"
           config: .vale/descriptions.ini
@@ -521,7 +521,7 @@ jobs:
       - name: No Given, When or Then names an interface mechanic
         id: SCN-FIT-030
         if: always()
-        uses: errata-ai/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: "3.23.0"
           config: .vale/steps.ini
