@@ -5,7 +5,7 @@ import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { scenarioCodesOf, type ScenarioTags } from "../domain/scnTags.js";
 import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
-import { evidenceObligationsOf } from "../domain/scenarioObligations.js";
+import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
 import type { Scenario } from "../model.js";
 
 const SCN_OCCURRENCE = new RegExp(`@${SCN_ID_SOURCE}`, "g");
@@ -86,6 +86,6 @@ export function parseScenarios(
 ): Scenario[] {
   return parseTaggedScenarios(source).map((scenario) => ({
     scnId: scenario.scnId,
-    evidenceObligations: evidenceObligationsOf(scenario.tags, deferralTags),
+    evidenceObligations: obligationsRaisedBy(scenario.tags, deferralTags),
   }));
 }

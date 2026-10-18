@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { evidenceObligationsOf } from "./scenarioObligations.js";
+import { obligationsRaisedBy } from "./scenarioObligations.js";
 
 const COMMUNITY_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
@@ -12,8 +12,8 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item for a s
     (tag) => {
       const ledger = reconcile(
         [
-          { scnId: "SCN-DFR-001", evidenceObligations: evidenceObligationsOf([tag, "unit"], COMMUNITY_DEFERRAL_TAGS) },
-          { scnId: "SCN-DFR-002", evidenceObligations: evidenceObligationsOf(["unit"], COMMUNITY_DEFERRAL_TAGS) },
+          { scnId: "SCN-DFR-001", evidenceObligations: obligationsRaisedBy([tag, "unit"], COMMUNITY_DEFERRAL_TAGS) },
+          { scnId: "SCN-DFR-002", evidenceObligations: obligationsRaisedBy(["unit"], COMMUNITY_DEFERRAL_TAGS) },
         ],
         []
       );

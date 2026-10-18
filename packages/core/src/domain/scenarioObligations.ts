@@ -26,7 +26,7 @@ function convertedFitnessObligationsOf(tags: readonly string[]): EvidenceObligat
   return [{ qualityCheck: "fitness" }];
 }
 
-export function evidenceObligationsOf(
+export function obligationsRaisedBy(
   tags: readonly string[],
   deferralTags: readonly string[]
 ): EvidenceObligation[] {
