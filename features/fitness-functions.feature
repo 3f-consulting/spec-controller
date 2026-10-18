@@ -242,3 +242,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-058
     Scenario: the build reds when a tracked file sits outside the folders the layout file declares
+
+  Rule: every reference in a current-state document resolves
+
+    @fitness @SCN-FIT-059
+    Scenario: the build reds when a current-state document cites a file, heading or path that does not exist

@@ -67,7 +67,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | `integration`, `e2e`, `performance` | the Cucumber report's run of the `scenario` | the `scenario`'s own `@SCN` tag, which the report carries | the same `@SCN-<FFF>-<NNN>` tag line, as Cucumber reports it |
 | `fitness` | the CI step that runs the check, read on its `outcome` | the step's `id:` | `id: SCN-FIT-<NNN>` on the step, against `@fitness @SCN-FIT-<NNN>` |
 
-**A citation form counts only when a reader is built for it.** A bare or `@`-prefixed code in a test title, a marker comment in a step-definition file, a code in any other comment, a Playwright spec or a k6 script is read by nothing, so it cites nothing: the evidence observation it was meant for posts to the **unnamed claim**. The three forms are the whole mechanism; the readers are `lib/scnCitation.ts` (through `parse/vitest.ts`), `parse/cucumber.ts` and `parse/ciStepRecord.ts`.
+**A citation form counts only when a reader is built for it.** A bare or `@`-prefixed code in a test title, a marker comment in a step-definition file, a code in any other comment, a Playwright spec or a k6 script is read by nothing, so it cites nothing: the evidence observation it was meant for posts to the **unnamed claim**. The three forms are the whole mechanism; the readers are `packages/core/src/lib/scnCitation.ts` (through `packages/core/src/parse/vitest.ts`), `packages/core/src/parse/cucumber.ts` and `packages/core/src/parse/ciStepRecord.ts`.
 
 #### Reconciling
 

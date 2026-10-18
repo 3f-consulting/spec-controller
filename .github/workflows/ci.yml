@@ -376,6 +376,18 @@ jobs:
         shell: bash
         run: git ls-files -z | xargs -0 pnpm exec ls-lint
 
+      # remark-validate-links checks each relative link and its anchor; scripts/doc-references.mjs checks what no tool reads.
+      # Both read the same documents, the list the script prints. A doc-only push to main skips this step, as it skips Vale.
+      - name: Every reference in a current-state document resolves
+        id: SCN-FIT-059
+        if: always()
+        shell: bash
+        run: |
+          status=0
+          node scripts/doc-references.mjs --list | xargs -0 pnpm exec remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links || status=1
+          node scripts/doc-references.mjs || status=1
+          exit "$status"
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()

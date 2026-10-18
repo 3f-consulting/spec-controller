@@ -109,7 +109,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
     ONE SCENARIO, ONE ACCOUNT NUMBER, ON THE DEBIT SIDE AS ON THE CREDIT SIDE. An evidence
     observation that cites more than one scenario credits none of them, naming each code, so no
-    reader picks one (`doc/ubiquitous-language.md` → *Attribution*). A scenario carrying more than
+    reader picks one (`doc/ubiquitous-language.md` → *Posting*). A scenario carrying more than
     one @SCN is the same fault from the other side: no reader picks one either, so it raises no
     evidence obligation under any of its codes and opens no account under any of them. It is not
     untagged, since it carries codes, so `balance` lists it under `## Scenario code errors`
