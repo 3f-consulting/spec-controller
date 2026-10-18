@@ -31,6 +31,8 @@ export function targetOriginName(remote: string): string {
 export interface RunContext {
   readonly target: string;
   readonly inputs: RunInputs;
+  /** The corpus directory the run examined, whether named by flag or by default. */
+  readonly corpus: string;
   readonly runStart: Date;
   readonly sourceSha: string | null;
   /** The target's origin remote URL as git returns it, read only when no --target was given. */
@@ -49,5 +51,6 @@ export interface ProvenanceObject {
   readonly toolVersion: string;
   readonly runTimestamp: string;
   readonly inputs: RunInputs;
+  readonly corpus: string;
   readonly strict?: boolean;
 }

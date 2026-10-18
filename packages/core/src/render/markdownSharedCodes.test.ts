@@ -15,6 +15,7 @@ const er = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(led
 const ctx: RunContext = {
   target: "stg-017",
   inputs: { features: "features" },
+  corpus: "features",
   runStart: new Date("2026-09-23T20:00:00.000Z"),
   sourceSha: "0000000000000000000000000000000000000000",
   toolSha: "0000000000000000000000000000000000000000",

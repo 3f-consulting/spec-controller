@@ -113,7 +113,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
   });
 
   it("names both codes on the suspense row, beside the test", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | ") && line.includes("test_cases::test_two_codes"));
@@ -179,7 +179,7 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
   });
 
   it("renders the broken item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | ") && line.includes("test_cases::test_setup_error"));

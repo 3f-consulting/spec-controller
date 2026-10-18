@@ -14,6 +14,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "run-integrity-target",
   inputs: { features: "specs/features", vitest: "vitest-report.json" },
+  corpus: "specs/features",
   runStart: new Date("2026-10-05T17:00:00.000Z"),
   sourceSha: "4084f00dc0ffeeba110000000000000000deadbe",
   toolSha: "4084aaaa71ace511efdb2511276284b4cb50c247",

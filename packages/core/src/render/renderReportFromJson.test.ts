@@ -30,6 +30,7 @@ beforeEach(() => {
 const ctx: RunContext = {
   target: "roundtrip-fixture",
   inputs: { features: "tests/fixtures/roundtrip/features" },
+  corpus: "tests/fixtures/roundtrip/features",
   runStart: new Date("2026-07-02T09:00:00.000Z"),
   sourceSha: null,
 };

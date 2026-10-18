@@ -8,6 +8,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "by-feature-no-scn-code",
   inputs: { features: "features" },
+  corpus: "features",
   runStart: new Date("2026-09-27T09:00:00.000Z"),
   sourceSha: null,
 };

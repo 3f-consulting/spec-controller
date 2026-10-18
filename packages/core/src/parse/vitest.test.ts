@@ -247,7 +247,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     });
 
     it("words both codes on the suspense row in the catalogue's words", () => {
-      const ctx: RunContext = { target: "several", inputs: {}, runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+      const ctx: RunContext = { target: "several", inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
       const reconciled = ledger();
       const suspenseRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
         .split("\n")

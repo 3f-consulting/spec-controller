@@ -9,6 +9,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 const ctx: RunContext = {
   target: "fixture",
   inputs: { features: "features" },
+  corpus: "features",
   runStart: new Date("2026-10-05T00:00:00.000Z"),
   sourceSha: null,
 };

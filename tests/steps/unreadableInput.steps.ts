@@ -289,6 +289,10 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string
     "scenarioCodeErrors is a string, not a list",
   ],
   "unreadable below its top": [(saved) => ({ ...saved, ledger: { scenarioReconciliations: [null] } }), "could not be rendered"],
+  "a reconciliation that does not name its corpus": [
+    (saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }),
+    "runProvenance.corpus is missing",
+  ],
 };
 
 function savedReconciliation(dir: string): Record<string, unknown> {

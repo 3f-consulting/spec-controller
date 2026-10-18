@@ -78,7 +78,7 @@ export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" 
 
 export const SAVED_RECONCILIATION: Shape = {
   fields: {
-    runProvenance: { fields: {} },
+    runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
     summary: { fields: {} },
     ledger: { fields: { scenarioReconciliations: { list: "anything" } }, required: ["scenarioReconciliations"] },
     scenarioCodeErrors: { list: "anything" },

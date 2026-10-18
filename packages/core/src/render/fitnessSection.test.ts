@@ -13,6 +13,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "fitness-section-target",
   inputs: { features: "specs/features" },
+  corpus: "specs/features",
   runStart: new Date("2026-10-05T19:00:00.000Z"),
   sourceSha: "4086f00dc0ffeeba110000000000000000deadbe",
   toolSha: "4086aaaa71ace511efdb2511276284b4cb50c247",

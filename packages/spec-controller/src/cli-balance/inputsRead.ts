@@ -7,7 +7,7 @@ import { regularFileIdentity, type ReadInput } from "../outputLocation.js";
 import type { IdentifiedInput } from "./emit/format.js";
 import { jsonInputsOf } from "./unreadableInputs.js";
 
-const DEFAULT_FEATURES_DIR = "features";
+export const DEFAULT_FEATURES_DIR = "features";
 
 export interface InputReader {
   exists(path: string): boolean;

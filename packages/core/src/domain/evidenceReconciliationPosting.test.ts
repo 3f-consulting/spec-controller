@@ -41,7 +41,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOfBalance agreeing with the verdict", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
-  const ctx: RunContext = { target: "obligations-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
+  const ctx: RunContext = { target: "obligations-only", inputs: {}, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
   it("a satisfied citation-routed check as the only evidence observation → balanced, no suspense, summary.outOfBalance 0", () => {
     const fitness: Scenario[] = [

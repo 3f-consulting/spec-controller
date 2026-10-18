@@ -18,6 +18,7 @@ beforeEach(() => {
 const handed = (inputs: RunContext["inputs"]): RunContext => ({
   target: "partly-handed-target",
   inputs,
+  corpus: "features",
   runStart: new Date("2026-09-06T15:30:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
   toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",

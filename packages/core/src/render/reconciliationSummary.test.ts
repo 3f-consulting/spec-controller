@@ -12,6 +12,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "reconciliation-summary-target",
   inputs: { features: "specs/features" },
+  corpus: "specs/features",
   runStart: new Date("2026-10-05T18:00:00.000Z"),
   sourceSha: "4085f00dc0ffeeba110000000000000000deadbe",
   toolSha: "4085aaaa71ace511efdb2511276284b4cb50c247",

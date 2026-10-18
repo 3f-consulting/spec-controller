@@ -12,6 +12,7 @@ import { usageStatusOf } from "../../usageStatus.test-utils.js";
 const ctx: RunContext = {
   target: "unwritable",
   inputs: { features: "features" },
+  corpus: "features",
   runStart: new Date("2026-09-26T00:00:00.000Z"),
   sourceSha: null,
 };

@@ -16,6 +16,7 @@ beforeEach(() => {
 const ctx: RunContext = {
   target: "config-target",
   inputs: { features: "features", packageJson: "package.json" },
+  corpus: "features",
   runStart: new Date("2026-09-28T12:00:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
   toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",

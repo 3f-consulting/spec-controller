@@ -11,6 +11,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "reconciling-items-target",
   inputs: { features: "specs/features" },
+  corpus: "specs/features",
   runStart: new Date("2026-10-05T09:00:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
   toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",

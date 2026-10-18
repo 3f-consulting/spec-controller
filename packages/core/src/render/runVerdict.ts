@@ -1,18 +1,11 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
-import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-const DEFAULT_CORPUS_DIR = "features";
-
 type Verdict = { readonly headline: string; readonly exit: string; readonly gloss: string };
-
-function corpusExamined(provenance: ProvenanceObject): string {
-  return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;
-}
 
 function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
   switch (scenarioCodeErrorsAre(errors)) {
@@ -88,7 +81,7 @@ export const runVerdictSection = (report: RenderInput): string[] => {
     scenarioCodeErrors: report.scenarioCodeErrors,
     strict: report.runProvenance.strict === true,
   });
-  const verdict = verdictFor(code, reconciliation, corpusExamined(report.runProvenance), report.scenarioCodeErrors ?? []);
+  const verdict = verdictFor(code, reconciliation, report.runProvenance.corpus, report.scenarioCodeErrors ?? []);
   const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`];
   if (code === 0 && hasPendingItems(reconciliation)) {
     lines.push("");

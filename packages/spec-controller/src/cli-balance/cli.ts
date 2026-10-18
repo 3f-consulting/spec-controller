@@ -10,7 +10,7 @@ import {
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
 import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
-import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
+import { DEFAULT_FEATURES_DIR, identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
@@ -256,6 +256,7 @@ function runContextOf(
     target: sourceTarget(args),
     ...(targetOrigin !== null ? { targetOrigin } : {}),
     inputs: { ...inputs },
+    corpus: args["features"] ?? DEFAULT_FEATURES_DIR,
     runStart,
     sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),
     root,

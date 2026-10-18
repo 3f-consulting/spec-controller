@@ -406,7 +406,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.XmlFaultAtLine]: (fault, line) => `${fault} at line ${line}`,
   [AppMessage.NotInShape]: (subject, shape, path, fault) => `${subject} is not in the shape ${shape}: ${path} (${fault})`,
   [AppMessage.NotASavedReconciliation]: (subject, path, fault) =>
-    `${subject} is not a saved reconciliation: ${path} (${fault})`,
+    `${subject} is not a saved reconciliation: ${path} (${fault}). Run balance again to save one.`,
   [AppMessage.NotRenderableAsSaved]: (subject, path, reason) =>
     `${subject} could not be rendered as a saved reconciliation: ${path} (${reason})`,
   [AppMessage.CorpusFileUnparseable]: (corpus, file, message) =>

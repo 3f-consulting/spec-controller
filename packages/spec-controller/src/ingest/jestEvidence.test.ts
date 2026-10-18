@@ -100,7 +100,7 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
   });
 
   it("names both codes on the suspense row, beside the test's file", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | ") && line.includes("cases.test.js: 2 scenario codes"));

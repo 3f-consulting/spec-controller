@@ -12,6 +12,7 @@ import { usageStatusOf } from "../../usageStatus.test-utils.js";
 const ctx: RunContext = {
   target: "later",
   inputs: { features: "features" },
+  corpus: "features",
   runStart: new Date("2026-10-11T00:00:00.000Z"),
   sourceSha: null,
 };

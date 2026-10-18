@@ -372,11 +372,12 @@ Feature: spec-controller balance runs standalone
       And the refusal names the input and where its shape is wrong
 
       Examples:
-        | defect                              |
-        | a list, not a reconciliation        |
-        | a reconciliation with no ledger     |
-        | holding a section of the wrong kind |
-        | unreadable below its top            |
+        | defect                                         |
+        | a list, not a reconciliation                   |
+        | a reconciliation with no ledger                |
+        | holding a section of the wrong kind            |
+        | unreadable below its top                       |
+        | a reconciliation that does not name its corpus |
 
     @e2e @SCN-CLI-081
     Scenario Outline: a stored run given an input it cannot read in shape is refused and stores nothing

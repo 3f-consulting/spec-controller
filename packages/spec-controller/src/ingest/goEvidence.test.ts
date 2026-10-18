@@ -87,7 +87,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
   });
 
   it("names both codes on the suspense row, beside the subtest", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | "));
@@ -138,7 +138,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
   });
 
   it("posts the enclosing test's failure to suspense, under its own name", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | "));

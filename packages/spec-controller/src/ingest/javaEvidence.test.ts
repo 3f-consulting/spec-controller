@@ -83,7 +83,7 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
   });
 
   it("names both codes on the suspense row, beside the test", () => {
-    const ctx: RunContext = { target: JAVA, inputs: {}, runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: JAVA, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | "));

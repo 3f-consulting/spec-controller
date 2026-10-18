@@ -23,6 +23,7 @@ export function provenanceObject(ctx: RunContext): ProvenanceObject {
     toolVersion: ctx.toolVersion ?? "unknown",
     runTimestamp: formatUtc(ctx.runStart),
     inputs: presentInputs(ctx.inputs, ctx.root),
+    corpus: relativizeToRoot(ctx.corpus, ctx.root),
     strict: ctx.strict === true,
   };
 }

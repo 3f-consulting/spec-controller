@@ -7,6 +7,7 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
   const mk = (inputs: RunInputs, root?: string): RunContext => ({
     target: "demo",
     inputs,
+    corpus: "features",
     runStart: new Date("2026-06-27T08:17:53.000Z"),
     sourceSha: "abc123",
     root,
@@ -58,6 +59,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
     inputs,
+    corpus: "features",
     runStart: new Date("2026-09-06T15:00:00.000Z"),
     sourceSha: "abc123",
   });
@@ -100,6 +102,7 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
   const handed = (inputs: RunInputs): RunContext => ({
     target: "partly-handed-target",
     inputs,
+    corpus: "features",
     runStart: new Date("2026-09-06T15:30:00.000Z"),
     sourceSha: "abc123",
   });

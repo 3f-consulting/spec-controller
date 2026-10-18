@@ -98,7 +98,7 @@ describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's
   });
 
   it("names both codes on the suspense row, beside the example's file", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (no scenario) | ") && line.includes("cases_spec.rb: 2 scenario codes"));

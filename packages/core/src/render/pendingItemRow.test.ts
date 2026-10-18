@@ -11,6 +11,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 const ctx: RunContext = {
   target: "pending-item-row-target",
   inputs: { features: "specs/features" },
+  corpus: "specs/features",
   runStart: new Date("2026-10-05T16:00:00.000Z"),
   sourceSha: "1e5f00d0c0ffeeba110000000000000000deadbe",
   toolSha: "4083aaaa71ace511efdb2511276284b4cb50c247",
