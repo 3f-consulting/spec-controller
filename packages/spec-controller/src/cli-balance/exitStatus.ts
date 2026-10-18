@@ -1,5 +1,5 @@
-const VERDICT_CODES: ReadonlySet<number> = new Set([1, 3]);
+import { isFailingVerdict, type VerdictCode } from "@3f-consulting/spec-controller-core";
 
-export function statusFor(code: number, exitZero: boolean): number {
-  return exitZero && VERDICT_CODES.has(code) ? 0 : code;
+export function statusFor(code: VerdictCode, exitZero: boolean): number {
+  return exitZero && isFailingVerdict(code) ? 0 : code;
 }

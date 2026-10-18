@@ -18,3 +18,7 @@ export function verdictCode(run: VerdictInputs): VerdictCode {
   if (run.strict && hasPendingItems(run.ledger)) return 3;
   return 0;
 }
+
+export function isFailingVerdict(code: VerdictCode): boolean {
+  return code === 1 || code === 3;
+}

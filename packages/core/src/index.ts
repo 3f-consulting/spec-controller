@@ -35,7 +35,7 @@ export {
   hasNothingToReconcile,
 } from "./domain/ledger.js";
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
-export { verdictCode } from "./domain/verdictCode.js";
+export { isFailingVerdict, verdictCode } from "./domain/verdictCode.js";
 export type { VerdictCode, VerdictInputs } from "./domain/verdictCode.js";
 
 export { nextScnCode } from "./domain/scnAllocation.js";
