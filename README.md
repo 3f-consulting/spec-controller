@@ -69,7 +69,7 @@ Each kind of disagreement has an outcome of its own, and every one but `satisfie
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step run under `continue-on-error` | `watermelon`: green, but it could not have failed the build. Given the run's step record, a red it swallowed reads `failing` |
+| Let a CI check step run under `continue-on-error` | without the run's step record, `watermelon`: green, but it could not have failed the build. With it, the step's own outcome answers: a red it swallowed reads `failing`, and a green reads `satisfied` |
 | Copy a scenario and keep its `@SCN` code | `duplicate-scn-code` on every quality check of the one row both share: no evidence can be credited to either |
 | Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
 | Remove a scenario's quality-check tags while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
