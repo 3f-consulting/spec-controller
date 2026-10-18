@@ -18,6 +18,8 @@ CI runs more than these, including mutation testing, the lint gates and the reco
 
 Open a pull request against `main`. It merges when CI is green.
 
+A push to `main` that changes only `doc/`, `README.md`, `CONTRIBUTING.md` or `LICENSE` runs no CI. Before such a push, run `pnpm docs:check`. It runs every documentation check CI runs, each from the same package script, and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version `.github/workflows/ci.yml` installs.
+
 ## Report a problem
 
 Open an issue at https://github.com/3f-consulting/spec-controller/issues. Say what you ran, what you expected and what happened, and attach the report if `balance` produced one.

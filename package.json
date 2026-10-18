@@ -18,7 +18,14 @@
     "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.js --rule 'no-restricted-imports: off' .",
     "lint:seam": "eslint --config eslint.boundaries.js --rule 'no-restricted-syntax: off' tests/steps",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
-    "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\""
+    "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\"",
+    "docs:check": "node scripts/docs-check.mjs",
+    "docs:ticket-id": "node scripts/vale-tracked.mjs --filter='.Name == \"Identifiers.TicketId\"'",
+    "docs:scenario-code": "node scripts/vale-tracked.mjs --filter='.Name == \"Identifiers.ScenarioCode\"'",
+    "docs:narrated-history": "node scripts/vale-tracked.mjs --filter='.Name == \"History.Narrated\"'",
+    "docs:code-identifier": "vale --config=.vale/descriptions.ini --filter='.Name == \"Descriptions.CodeIdentifier\"' features",
+    "docs:interface-mechanic": "vale --config=.vale/steps.ini features",
+    "docs:references": "status=0; node scripts/doc-references.mjs --list | xargs -0 remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links || status=1; node scripts/doc-references.mjs || status=1; exit $status"
   },
   "specController": {
     "runners": {
