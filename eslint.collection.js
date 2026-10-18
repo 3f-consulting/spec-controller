@@ -4,8 +4,10 @@ const HARNESS = "/^(describe|it|test|beforeAll|beforeEach|afterEach|afterAll|exp
 const DESCRIBE =
   'CallExpression[callee.name="describe"], CallExpression[callee.object.name="describe"], CallExpression[callee.callee.object.name="describe"]';
 const DESCRIBE_BODY = `:is(${DESCRIBE}) > :function > BlockStatement`;
-const NOT_A_FUNCTION = "[init.type!=/^(ArrowFunctionExpression|FunctionExpression)$/]";
 const TABLE = 'CallExpression[callee.object.name=/^(describe|it|test)$/][callee.property.name=/^(each|for)$/]';
+
+// A call inside a function in the declaration runs only when that function is called, so only calls with no function between them and the declarator are flagged.
+const collectedCall = (declarator) => `${declarator} CallExpression:not(${declarator} :function CallExpression)`;
 
 const STATIC =
   "runs while Vitest collects the tests, outside any test, so mutation testing reads every mutant it reaches as static " +
@@ -34,15 +36,15 @@ export default [
       "no-restricted-syntax": [
         "error",
         {
-          selector: `Program > VariableDeclaration > VariableDeclarator${NOT_A_FUNCTION} CallExpression`,
+          selector: collectedCall("Program > VariableDeclaration > VariableDeclarator"),
           message: `A call at module scope ${STATIC}.`,
         },
         {
-          selector: `Program > ExportNamedDeclaration > VariableDeclaration > VariableDeclarator${NOT_A_FUNCTION} CallExpression`,
+          selector: collectedCall("Program > ExportNamedDeclaration > VariableDeclaration > VariableDeclarator"),
           message: `A call at module scope ${STATIC}.`,
         },
         {
-          selector: `${DESCRIBE_BODY} > VariableDeclaration > VariableDeclarator${NOT_A_FUNCTION} CallExpression`,
+          selector: collectedCall(`${DESCRIBE_BODY} > VariableDeclaration > VariableDeclarator`),
           message: `A call in a describe body ${STATIC}.`,
         },
         {

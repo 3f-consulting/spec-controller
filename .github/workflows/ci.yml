@@ -347,6 +347,40 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.collection.js packages
 
+      - name: The collection-time check reports a call that runs while the tests are collected, and no call held in a function that only a test calls
+        id: SCN-FIT-057
+        if: always()
+        shell: bash
+        # Each case is linted alone, so one case's report cannot make up another's count. Any message from another rule,
+        # such as a parse error or an ignored file, reds the step, so a case that was never checked cannot read as 0.
+        run: |
+          status=0
+          while read -r expected source; do
+            report=$(printf '%s\n' "$source" | pnpm exec eslint --config eslint.collection.js --format json --stdin --stdin-filename packages/core/src/collection-case.test.ts) || true
+            actual=$(printf '%s' "$report" | jq '[.[].messages[] | select(.ruleId == "no-restricted-syntax")] | length') || true
+            other=$(printf '%s' "$report" | jq -r '.[].messages[] | select(.ruleId != "no-restricted-syntax") | .message') || true
+            if [ -n "$other" ] || [ "$actual" != "$expected" ]; then
+              echo "$source: reports ${actual:-nothing}, expected $expected${other:+; $other}"
+              status=1
+            fi
+          done <<'CASES'
+          0 describe("c", () => { const t = { a: (s) => f(s) }; });
+          0 describe("c", () => { const t = [(s) => f(s)]; });
+          0 describe("c", () => { const t = { a(s) { return f(s); } }; });
+          0 describe("c", () => { const t = (s) => f(s); });
+          0 const t = { a: (s) => f(s) };
+          0 export const t = { a: (s) => f(s) };
+          0 const t = [(s) => f(s)];
+          1 describe("c", () => { const t = { a: f(1) }; });
+          1 describe("c", () => { const t = [1].map((s) => f(s)); });
+          1 describe("c", () => { const t = Object.freeze({ a: (s) => f(s) }); });
+          1 const t = f(1);
+          1 export const t = f(1);
+          1 const t = [1].map((s) => f(s));
+          1 const t = (() => f(1))();
+          CASES
+          exit "$status"
+
       - name: No type or field in core's domain is named for an external tool or format
         id: SCN-FIT-049
         if: always()
