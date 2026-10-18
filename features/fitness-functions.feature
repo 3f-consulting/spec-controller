@@ -237,3 +237,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-055
     Scenario: a unit test citing a domain concept's scenario placed outside core's domain reds the build
+
+  Rule: every tracked file sits in a folder the layout file declares for its kind
+
+    @fitness @SCN-FIT-058
+    Scenario: the build reds when a tracked file sits outside the folders the layout file declares

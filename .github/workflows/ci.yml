@@ -368,6 +368,14 @@ jobs:
         if: always()
         run: node scripts/test-ratio.mjs
 
+      # The layout is .ls-lint.yml. "**" stays its only glob folder key: a second glob key matching the same folder gives a verdict that varies from run to run.
+      # A failure names the folder and a count, not the file; `git ls-files <folder>` lists what the folder holds.
+      - name: Every tracked file sits in a folder the layout file declares for its kind
+        id: SCN-FIT-058
+        if: always()
+        shell: bash
+        run: git ls-files -z | xargs -0 pnpm exec ls-lint
+
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028
         if: always()
