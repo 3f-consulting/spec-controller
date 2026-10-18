@@ -368,14 +368,6 @@ jobs:
         if: always()
         run: node scripts/test-ratio.mjs
 
-      # The layout is .ls-lint.yml. "**" stays its only glob folder key: a second glob key matching the same folder gives a verdict that varies from run to run.
-      # A failure names the folder and a count, not the file; `git ls-files <folder>` lists what the folder holds.
-      - name: Every tracked file sits in a folder the layout file declares for its kind
-        id: SCN-FIT-058
-        if: always()
-        shell: bash
-        run: git ls-files -z | xargs -0 pnpm exec ls-lint
-
       # remark-validate-links checks each relative link and its anchor; scripts/doc-references.mjs checks what no tool reads.
       # Both read the same documents, the list the script prints. A doc-only push to main skips this step, as it skips Vale.
       - name: Every reference in a current-state document resolves

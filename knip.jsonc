@@ -2,6 +2,6 @@
   // Cucumber step files and their support are test code; knip checks what ships.
   "ignore": ["tests/**"],
   // tsx: loaded through the requireModule string in cucumber.js, which knip's Cucumber plugin does not read.
-  // @ls-lint/ls-lint, remark-cli, remark-validate-links: run from ci.yml behind xargs, which knip's GitHub Actions plugin does not read through.
-  "ignoreDependencies": ["tsx", "@ls-lint/ls-lint", "remark-cli", "remark-validate-links"]
+  // remark-cli, remark-validate-links: run from ci.yml behind xargs, which knip's GitHub Actions plugin does not read through.
+  "ignoreDependencies": ["tsx", "remark-cli", "remark-validate-links"]
 }
