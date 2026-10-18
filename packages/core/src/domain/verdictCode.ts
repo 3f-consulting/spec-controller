@@ -1,6 +1,6 @@
 import type { Ledger } from "./ledger.js";
 import { hasBrokenEvidence, hasNothingToReconcile, hasPendingItems, isBalanced } from "./ledger.js";
-import { hasScenarioCodeErrors, type ScenarioCodeError } from "./scenarioCodeError.js";
+import { hasScenarioCodeErrors, type ScenarioCodeError } from "./scnTags.js";
 
 export type VerdictCode = 0 | 1 | 3 | 4 | 5;
 

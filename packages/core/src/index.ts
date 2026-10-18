@@ -26,8 +26,8 @@ export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenario
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./domain/corpusCounts.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-export { hasScenarioCodeErrors } from "./domain/scenarioCodeError.js";
-export type { ScenarioCodeError, ScenarioCodeErrorKind, ScenarioCodePopulation } from "./domain/scenarioCodeError.js";
+export { hasScenarioCodeErrors } from "./domain/scnTags.js";
+export type { ScenarioCodeError, ScenarioCodeErrorKind, ScenarioCodePopulation } from "./domain/scnTags.js";
 export {
   isBalanced,
   hasPendingItems,

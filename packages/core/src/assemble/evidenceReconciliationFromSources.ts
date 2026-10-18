@@ -6,7 +6,8 @@ import { fitnessObservationsOf } from "../domain/fitnessReconciliation.js";
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
-import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
+import { scenarioCodeErrorsOf, scenarioCodePopulationOf, type FeatureFileScenarios } from "../domain/scnTags.js";
+import { parseScenarioTags } from "../parse/scenarios.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
 import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
@@ -163,7 +164,11 @@ function withScenarioCodeErrors(
   input: EvidenceReconciliationSources
 ): EvidenceReconciliation {
   if (input.featureFiles === undefined) return reconciliation;
-  const files = input.featureFiles.map((header, i) => ({ ...header, source: input.featureSources[i] ?? "" }));
+  const files: FeatureFileScenarios[] = input.featureFiles.map(({ slug, featureCode }, i) => ({
+    slug,
+    featureCode,
+    scenarios: parseScenarioTags(input.featureSources[i] ?? ""),
+  }));
   return {
     ...reconciliation,
     scenarioCodeErrors: scenarioCodeErrorsOf(files),

@@ -1,5 +1,5 @@
 import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
-import { SCN_CODE } from "./scenarios.js";
+import { SCN_CODE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { evidenceOfRunResult, type RunEvidence, type RunResult } from "../domain/journal.js";

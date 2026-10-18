@@ -1,3 +1,5 @@
+import { featureCodeOf } from "@3f-consulting/spec-controller-core";
+
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 export type Shape =
@@ -7,7 +9,7 @@ export type Shape =
   | "anything"
   | { readonly list: Shape }
   | { readonly fields: Readonly<Record<string, Shape>>; readonly required?: readonly string[] }
-  | { readonly entries: Shape; readonly keys?: RegExp };
+  | { readonly entries: Shape; readonly keys?: (key: string) => boolean };
 
 type Fields = Extract<Shape, { fields: unknown }>;
 type Entries = Extract<Shape, { entries: unknown }>;
@@ -69,7 +71,7 @@ export const CUCUMBER_REPORT: Shape = {
 
 export const CI_STEP_RECORD: Shape = {
   entries: { fields: { outcome: "string" } },
-  keys: /^SCN-[A-Z0-9]{2,5}-\d+$/,
+  keys: (key) => featureCodeOf(key) !== null,
 };
 
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };
@@ -138,7 +140,7 @@ function fieldsFault(record: Record<string, unknown>, shape: Fields, where: stri
 
 function entriesFault(record: Record<string, unknown>, shape: Entries, where: string): string | null {
   for (const [key, value] of Object.entries(record)) {
-    if (shape.keys !== undefined && !shape.keys.test(key)) continue;
+    if (shape.keys !== undefined && !shape.keys(key)) continue;
     const fault = shapeFaultIn(value, shape.entries, pathOf(where, key));
     if (fault !== null) return fault;
   }

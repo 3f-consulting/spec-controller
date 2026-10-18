@@ -1,15 +1,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { scenarioCodeErrorsOf, type CorpusFile } from "./scenarioCodeErrors.js";
-import type { ForeignScnCodeError } from "../domain/scenarioCodeError.js";
+import {
+  scenarioCodeErrorsOf,
+  scenarioCodePopulationOf,
+  type FeatureFileScenarios,
+  type ForeignScnCodeError,
+} from "./scnTags.js";
+import { parseScenarioTags } from "../parse/scenarios.js";
 
-function file(slug: string, code: string | null, ids: readonly string[]): CorpusFile {
+function file(slug: string, code: string | null, ids: readonly string[]): FeatureFileScenarios {
   const header = code === null ? "" : `@${code}\n`;
   const scenarios = ids.map((id, i) => `  @unit @${id}\n  Scenario: s${i}\n    Given a thing\n`).join("\n");
-  return { slug, featureCode: code, source: `${header}Feature: ${slug}\n\n${scenarios}` };
+  return { slug, featureCode: code, scenarios: parseScenarioTags(`${header}Feature: ${slug}\n\n${scenarios}`) };
 }
 
 describe("[SCN-STG-011] a scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file", () => {
-  let one: CorpusFile;
+  let one: FeatureFileScenarios;
   beforeEach(() => {
     one = file("one", "ONE", ["SCN-ONE-001"]);
   });
@@ -45,7 +50,7 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
 });
 
 describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
-  function foreignOf(files: readonly CorpusFile[]): ForeignScnCodeError {
+  function foreignOf(files: readonly FeatureFileScenarios[]): ForeignScnCodeError {
     return scenarioCodeErrorsOf(files).find((e): e is ForeignScnCodeError => e.kind === "foreign-scn-code")!;
   }
 
@@ -94,10 +99,10 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
   });
 
   it("lists nothing for a file whose header and scenario codes are both too long to be codes, and lists the same file once its scenario's feature part is five characters", () => {
-    const headedTooLong = (scnId: string): CorpusFile => ({
+    const headedTooLong = (scnId: string): FeatureFileScenarios => ({
       slug: "long",
       featureCode: null,
-      source: `@TOOLONGCODE\nFeature: long\n\n  @unit @${scnId}\n  Scenario: s\n    Given a thing\n`,
+      scenarios: parseScenarioTags(`@TOOLONGCODE\nFeature: long\n\n  @unit @${scnId}\n  Scenario: s\n    Given a thing\n`),
     });
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-TOOLONGCODE-001")])).toEqual([]);
     expect(scenarioCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
@@ -105,10 +110,10 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
 });
 
 describe("[SCN-STG-029] a scenario tagged with two scenario codes is listed as a scenario code error naming both", () => {
-  const twoCodes = (ids: string): CorpusFile => ({
+  const twoCodes = (ids: string): FeatureFileScenarios => ({
     slug: "two",
     featureCode: "TWO",
-    source: `@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`,
+    scenarios: parseScenarioTags(`@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`),
   });
 
   it("lists one several-scn-codes error carrying the file, the scenario and both codes", () => {
@@ -129,23 +134,21 @@ describe("[SCN-STG-029] a scenario tagged with two scenario codes is listed as a
 });
 
 describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
-  const underAncestor = {
-    Rule: (own: string): CorpusFile => ({
-      slug: "alpha",
-      featureCode: "AAA",
-      source: `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
-    }),
-    Feature: (own: string): CorpusFile => ({
-      slug: "alpha",
-      featureCode: "AAA",
-      source: `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
-    }),
+  const sources = {
+    Rule: (own: string) =>
+      `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
+    Feature: (own: string) => `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
   } as const;
+  const underAncestor = (ancestor: keyof typeof sources, own: string): FeatureFileScenarios => ({
+    slug: "alpha",
+    featureCode: "AAA",
+    scenarios: parseScenarioTags(sources[ancestor](own)),
+  });
 
   it.each(["Rule", "Feature"] as const)(
     "a different code of its own under a %s code is one several-scn-codes error naming the file, the scenario and both codes",
     (ancestor) => {
-      const errors = scenarioCodeErrorsOf([underAncestor[ancestor]("@SCN-AAA-002")]);
+      const errors = scenarioCodeErrorsOf([underAncestor(ancestor, "@SCN-AAA-002")]);
       expect(errors).toEqual([
         {
           kind: "several-scn-codes",
@@ -158,6 +161,26 @@ describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is o
   );
 
   it.each(["Rule", "Feature"] as const)("the same code of its own as its %s's lists nothing", (ancestor) => {
-    expect(scenarioCodeErrorsOf([underAncestor[ancestor]("@SCN-AAA-001")])).toEqual([]);
+    expect(scenarioCodeErrorsOf([underAncestor(ancestor, "@SCN-AAA-001")])).toEqual([]);
+  });
+});
+
+describe("[SCN-STG-034] a corpus's feature files are each counted, and a header code is counted once however many files carry it", () => {
+  it("counts every feature file, a file with no header code among them", () => {
+    const population = scenarioCodePopulationOf([
+      file("one", "ONE", ["SCN-ONE-001"]),
+      file("two", "TWO", ["SCN-TWO-001"]),
+      file("unc", null, []),
+    ]);
+    expect(population).toEqual({ featureFiles: 3, featureCodes: 2 });
+  });
+
+  it("counts a header code two files carry once, beside a third file's own", () => {
+    const population = scenarioCodePopulationOf([
+      file("one", "ONE", ["SCN-ONE-001"]),
+      file("one-b", "ONE", ["SCN-ONE-002"]),
+      file("two", "TWO", ["SCN-TWO-001"]),
+    ]);
+    expect(population).toEqual({ featureFiles: 3, featureCodes: 2 });
   });
 });

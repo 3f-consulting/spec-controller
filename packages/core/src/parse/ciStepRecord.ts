@@ -1,4 +1,4 @@
-import { SCN_CODE } from "./scenarios.js";
+import { SCN_CODE } from "../domain/featureCode.js";
 import {
   recordedObservationOf,
   type RecordedCheckStep,

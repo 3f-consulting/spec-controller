@@ -6,10 +6,27 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
-import { duplicateFeatureCodes, foreignScenarioCodes, scenarioCodeErrorsOf } from "../parse/scenarioCodeErrors.js";
-import type { CorpusFile } from "../parse/scenarioCodeErrors.js";
+import * as scnTags from "../domain/scnTags.js";
+import type { FeatureFileScenarios, ScenarioCodeError } from "../domain/scnTags.js";
+import { parseScenarioTags } from "../parse/scenarios.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
+
+interface CorpusFile {
+  readonly slug: string;
+  readonly featureCode: string | null;
+  readonly source: string;
+}
+
+function scenariosOf(files: readonly CorpusFile[]): FeatureFileScenarios[] {
+  return files.map(({ slug, featureCode, source }) => ({ slug, featureCode, scenarios: parseScenarioTags(source) }));
+}
+
+const duplicateFeatureCodes = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+  scnTags.duplicateFeatureCodes(scenariosOf(files));
+const foreignScenarioCodes = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+  scnTags.foreignScenarioCodes(scenariosOf(files));
+const scenarioCodeErrorsOf = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+  scnTags.scenarioCodeErrorsOf(scenariosOf(files));
 
 function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(

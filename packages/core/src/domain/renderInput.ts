@@ -1,4 +1,4 @@
-import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
+import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import type { Ledger } from "./ledger.js";
 import type { Summary } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";

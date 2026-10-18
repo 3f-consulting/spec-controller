@@ -1,13 +1,13 @@
 import { readFileSync, readdirSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
+import { isFeaturePart } from "@3f-consulting/spec-controller-core";
+
 import {
   MissingFeatureCorpusError,
   UnreadableFeatureCorpusError,
   parseErrorsIn,
 } from "./gherkinValidation.js";
-
-const CODE_PATTERN = /^[A-Z0-9]{2,5}$/;
 
 export interface DiscoveredFeature {
   slug: string;
@@ -19,7 +19,7 @@ export interface DiscoveredFeature {
 export function extractFeatureCode(source: string): string | null {
   const lines = source.split(/\r?\n/);
   const featureLine = lines.findIndex((line) => line.trim().startsWith("Feature:"));
-  return headerTagsAbove(lines, featureLine).find((bare) => CODE_PATTERN.test(bare)) ?? null;
+  return headerTagsAbove(lines, featureLine).find((bare) => isFeaturePart(bare)) ?? null;
 }
 
 function headerTagsAbove(lines: readonly string[], featureLine: number): string[] {

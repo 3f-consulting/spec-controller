@@ -1,5 +1,5 @@
 import { bareTerm } from "../lib/bareTerm.js";
-import { SCN_CODE } from "./scenarios.js";
+import { SCN_CODE } from "../domain/featureCode.js";
 
 export interface ScriptCitation {
   readonly scnId: string;

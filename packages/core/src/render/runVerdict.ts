@@ -2,7 +2,7 @@ import type { RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import type { ProvenanceObject } from "../domain/runProvenance.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
-import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags.js";
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 

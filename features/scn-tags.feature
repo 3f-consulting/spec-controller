@@ -127,3 +127,13 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
         | ancestor |
         | Rule     |
         | Feature  |
+
+  Rule: the scenario codes are judged over a counted corpus, every feature file and each header code once
+
+    The scenario codes are judged over every feature file the corpus holds, so each file is
+    counted, a file with no header code among them. A header code is counted once however many
+    files carry it, so two files carrying one code add one feature code, not two. The report
+    states clean scenario codes with these two counts.
+
+    @unit @SCN-STG-034
+    Scenario: A corpus's feature files are each counted, and a header code is counted once however many files carry it

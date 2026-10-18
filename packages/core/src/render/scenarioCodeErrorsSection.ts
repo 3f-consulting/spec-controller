@@ -4,7 +4,7 @@ import {
   type ForeignScnCodeError,
   type ScenarioCodeError,
   type ScenarioCodePopulation,
-} from "../domain/scenarioCodeError.js";
+} from "../domain/scnTags.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 function scenarioCodeErrorsFraming(errors: readonly ScenarioCodeError[], count: string): string {

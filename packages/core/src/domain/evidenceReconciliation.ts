@@ -37,7 +37,7 @@ import {
   qualityCheckReconciliationsOf,
   SUSPENSE_SCENARIO_ID,
 } from "./scenarioReconciliation.js";
-import type { ScenarioCodeError, ScenarioCodePopulation } from "./scenarioCodeError.js";
+import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";

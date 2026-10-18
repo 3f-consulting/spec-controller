@@ -42,6 +42,12 @@ describe("[SCN-RMD-015] a target with no runners block reports every step of its
     expect(summary).not.toHaveProperty("runnerKeysNotATier");
   });
 
+  it("carries no runner account for a runners block that names no tier", () => {
+    const { summary } = reconcile({});
+    expect(summary).not.toHaveProperty("behaviouralRunners");
+    expect(summary).not.toHaveProperty("tiersWithoutRunner");
+  });
+
   it("carries the step that runs the unit runner for the same pipeline once its runners block names it", () => {
     const { summary } = reconcile({ unit: "vitest" });
     expect(summary.behaviouralRunners).toStrictEqual([

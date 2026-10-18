@@ -1,4 +1,4 @@
-import type { ScenarioCodeError } from "../domain/scenarioCodeError.js";
+import type { ScenarioCodeError } from "../domain/scnTags.js";
 import type { RunContext } from "../domain/runProvenance.js";
 
 export const codeErrorsCtx: RunContext = {

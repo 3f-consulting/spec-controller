@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { reconcilerSteps } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
+import { commandRuns } from "../parse/commandRuns.js";
 
 const INVOCATION = "spec-controller balance";
 
@@ -30,11 +31,18 @@ const CHECKOUT: PipelineStep = {
   writesStepRecord: false,
   action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
 };
+const LINTS: PipelineStep = {
+  ...IN_THE_CI_JOB,
+  identity: "Lint",
+  writesStepRecord: false,
+  command: "pnpm lint:sweep\npnpm lint\n",
+};
 const STEPS = [CHECKOUT, DUMP, BALANCE, SWEEP];
 
 const runsTheReconciler = (command: string): boolean => command.includes(INVOCATION);
 const namedInItsWorkflow = (step: PipelineStep): string => `ci.yml:${step.job}:${step.identity}`;
 const givenNoName = (): undefined => undefined;
+const noInvocationKnown = (command: string): boolean => commandRuns(command, "", {});
 
 describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("gives the step that runs the reconciler's invocation the role reconciles, and the step that writes the step record the role records", () => {
@@ -63,5 +71,12 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
     const { steps, isReconciler } = reconcilerSteps([SWEEP], namedInItsWorkflow, runsTheReconciler);
     expect(steps).toStrictEqual([]);
     expect(isReconciler(SWEEP)).toBe(false);
+  });
+
+  it("finds no reconciler when no reconciler invocation is known, even a step whose command holds a blank line", () => {
+    const { steps, isReconciler } = reconcilerSteps([BALANCE, LINTS], namedInItsWorkflow, noInvocationKnown);
+    expect(steps).toStrictEqual([]);
+    expect(isReconciler(BALANCE)).toBe(false);
+    expect(isReconciler(LINTS)).toBe(false);
   });
 });
