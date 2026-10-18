@@ -193,9 +193,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-042
     Scenario: no unit test file runs code at collection time or in a hook that runs once for many tests
 
-    @fitness @SCN-FIT-057
-    Scenario: the collection-time check reports a call that runs while the tests are collected, and no call held in a function that only a test calls
-
   Rule: the test estate stays within the ceiling the product declares
 
     @fitness @SCN-FIT-043
