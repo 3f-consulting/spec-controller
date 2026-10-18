@@ -36,7 +36,7 @@ import {
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
-import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
+import type { PackageJsonScripts, StepRecord } from "@3f-consulting/spec-controller-core";
 import type {
   BehaviouralQualityCheck,
   EvidenceObservation,
@@ -228,9 +228,7 @@ export function runReconcile(
     packageJson,
     ciSources: ciPaths.map((path) => readFileSync(path, "utf8")),
     ciSourceNames: ciPaths.map((path) => basename(path)),
-    ciStepRecord: readJsonIfPresent<Record<string, { outcome?: string; conclusion?: string }>>(
-      opts.ciSteps
-    ),
+    ciStepRecord: readJsonIfPresent<StepRecord>(opts.ciSteps),
     behaviouralObservations: parseBehaviouralObservations(opts, root),
     deferralTags: BUILT_IN_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,

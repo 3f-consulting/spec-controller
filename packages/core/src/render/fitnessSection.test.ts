@@ -4,7 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import type { StepRecord } from "../domain/stepRecord.js";
+import type { StepRecord } from "../parse/ciStepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";

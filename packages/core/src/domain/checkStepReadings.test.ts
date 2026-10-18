@@ -1,92 +1,28 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import type { StepRecord } from "../domain/stepRecord.js";
-import { hasBrokenEvidence } from "../domain/ledger.js";
-import type { EvidenceReconciliation } from "./renderInput.js";
-import { checkStepReconciler } from "./checkStep.test-utils.js";
-import { remarkWordsOf } from "../render/remarkWords.js";
+import { describe, it, expect } from "vitest";
+import { evidenceReconciliationOf, type EvidenceReconciliation } from "./evidenceReconciliation.js";
+import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
+import type { Scenario } from "./journal.js";
+import { hasBrokenEvidence } from "./ledger.js";
 
-const corpus = `@CVT
-Feature: a converted target's fitness corpus
+const scenarios: Scenario[] = [
+  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-CVT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-CVT-003", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-CVT-004", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-CVT-005", evidenceObligations: [{ qualityCheck: "fitness" }] },
+];
 
-  Rule: the tree stays inside its thresholds
+const recorded: RecordedCheckStep[] = [
+  { citedScn: "SCN-CVT-001", report: "succeeded", said: "success" },
+  { citedScn: "SCN-CVT-002", report: "failed", said: "failure" },
+  { citedScn: "SCN-CVT-003", report: "other", said: "skipped" },
+  { citedScn: "SCN-CVT-004", report: "other", said: "neutral" },
+  { citedScn: "SCN-CVT-005", report: "other" },
+];
 
-    @fitness @SCN-CVT-001
-    Scenario: the codebase stays under its complexity threshold
-
-    @fitness @SCN-CVT-002
-    Scenario: every scenario in the corpus is traceable to its own sub-issue
-
-    @fitness @SCN-CVT-003
-    Scenario: the codebase carries no duplicated block above its threshold
-
-    @fitness @SCN-CVT-004
-    Scenario: every documented command is one this repository still ships
-
-    @fitness @SCN-CVT-005
-    Scenario: every public export is imported somewhere in the tree
-`;
-
-const manifest = {
-  scripts: { build: "tsc" },
-  specController: {
-    notChecks: ["ci.yml:quality:Checkout"],
-    fitnessChecks: [
-      { scn: "SCN-CVT-001", command: "eslint" },
-      { scn: "SCN-CVT-002", command: "scn-subissues" },
-      { scn: "SCN-CVT-003", command: "jscpd" },
-      { scn: "SCN-CVT-004", command: "doc-audit" },
-      { scn: "SCN-CVT-005", command: "knip" },
-    ],
-  },
-};
-
-const ci = `name: fixture CI
-jobs:
-  quality:
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Complexity
-        id: SCN-CVT-001
-        if: always()
-        run: eslint
-      - name: Traceability
-        id: SCN-CVT-002
-        if: always()
-        run: scn-subissues
-      - name: Duplication
-        id: SCN-CVT-003
-        if: always()
-        run: jscpd
-      - name: Doc accuracy
-        id: SCN-CVT-004
-        if: always()
-        run: doc-audit
-      - name: Unused exports
-        id: SCN-CVT-005
-        if: always()
-        run: knip
-      - name: Dump this run's step record
-        id: dump-the-step-record
-        if: always()
-        env:
-          STEPS_JSON: \${{ toJSON(steps) }}
-        run: printf '%s' "$STEPS_JSON" > ci-steps.json
-`;
-
-const record: StepRecord = {
-  "SCN-CVT-001": { outcome: "success", conclusion: "success" },
-  "SCN-CVT-002": { outcome: "failure", conclusion: "failure" },
-  "SCN-CVT-003": { outcome: "skipped", conclusion: "skipped" },
-  "SCN-CVT-004": { outcome: "neutral", conclusion: "neutral" },
-  "SCN-CVT-005": { conclusion: "success" },
-  "dump-the-step-record": { outcome: "success", conclusion: "success" },
-};
-
-let reconcile: ReturnType<typeof checkStepReconciler>;
-beforeEach(() => {
-  reconcile = checkStepReconciler(corpus, manifest, ci, record);
-});
+function reconcile() {
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), [], false, true);
+}
 
 function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, unknown[]][] {
   return reconciliation.ledger.scenarioReconciliations
@@ -147,16 +83,6 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
       { kind: "check-step-did-not-run", code: "SCN-CVT-005" },
     ]);
     expect(items.filter((item) => "message" in item)).toEqual([]);
-  });
-
-  it("words each step it has no reading for, prefixed by the code it cites", () => {
-    expect(suspenseItemsOf(reconcile()).map(remarkWordsOf)).toEqual([
-      "SCN-CVT-003: the CI run's record says this check's step was skipped — so the check did not run.",
-      "SCN-CVT-004: the CI run's record says this check's step ended `neutral` — so the check " +
-        "did not run.",
-      "SCN-CVT-005: the CI run's record carries no outcome for this check's step — so the check " +
-        "did not run.",
-    ]);
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {

@@ -50,6 +50,7 @@ export type { RspecJsonReport } from "./parse/rspec.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";
 export { runningFitnessFunctions } from "./parse/runningFitnessFunctions.js";
+export type { StepRecord } from "./parse/ciStepRecord.js";
 export { commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 

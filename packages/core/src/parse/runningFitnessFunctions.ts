@@ -13,6 +13,7 @@ import {
   type RunnerTiers,
   type StepTest,
 } from "../domain/uncitedFitnessFunctions.js";
+import { workflowObservationsOf } from "../domain/fitnessReconciliation.js";
 
 function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
   if (!("command" in step)) return step.identity;
@@ -45,20 +46,5 @@ export function fitnessFunctionsAmong(
   citedScn: CitationOf
 ): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  return steps
-    .filter(isCandidate)
-    .map((step) => {
-      const fitnessFunction = handleOf(step, scripts);
-      const citation = citedScn(fitnessFunction, step.id);
-      return {
-        qualityCheck: "fitness" as const,
-        fitnessFunction,
-        exists: true,
-        enforcedOverRealSource: step.abortsJob,
-        ...(citation !== null
-          ? { scnId: step.id ?? citation.scnId }
-          : {}),
-      };
-    })
-    .sort((a, b) => a.fitnessFunction.localeCompare(b.fitnessFunction));
+  return workflowObservationsOf(steps, isCandidate, (step) => handleOf(step, scripts), citedScn);
 }

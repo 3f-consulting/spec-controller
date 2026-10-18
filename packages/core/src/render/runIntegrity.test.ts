@@ -6,7 +6,7 @@ import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { VitestJsonReport } from "../parse/vitest.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import type { StepRecord } from "../domain/stepRecord.js";
+import type { StepRecord } from "../parse/ciStepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";

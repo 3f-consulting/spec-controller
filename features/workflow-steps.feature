@@ -55,6 +55,10 @@ Feature: balance reads a workflow's steps
 
   Rule: each step is read as the check it runs, under the name the report gives it
 
+    A step's continue-on-error is read from the step and from its job. The job's verdict depends
+    on the step only when continue-on-error is absent, false or the string "false" on both; any
+    other value, an expression included, leaves the verdict not depending on it.
+
     @unit @SCN-WFS-008
     Scenario: a step that runs a manifest script is read under that script's name, and an unnamed step under its first non-blank command, trimmed
 
@@ -66,6 +70,12 @@ Feature: balance reads a workflow's steps
 
     @unit @SCN-WFS-012
     Scenario: a uses: step is read under the action it uses, or under its trimmed name, with its own continue-on-error
+
+    @unit @SCN-WFS-017
+    Scenario: a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string "false" leaves its job's verdict depending on it
+
+    @unit @SCN-WFS-018
+    Scenario: a step's id: is read trimmed, so a padded code cites as if written unpadded
 
   Rule: every workflow the CI input names is read
 
@@ -89,3 +99,11 @@ Feature: balance reads a workflow's steps
 
     @unit @SCN-WFS-016
     Scenario: a step record entry whose id is a feature part outside two to five characters is read as no citation, beside ids of two and five characters that are
+
+  Rule: the run's step record is read by what each step did
+
+    Each step in the record is read by its outcome, what the step itself did. Its conclusion, which
+    continue-on-error turns to success, is never read.
+
+    @unit @SCN-WFS-019
+    Scenario: each step in the run's record is read by its outcome, never its conclusion, so a red the job swallowed still reads failed

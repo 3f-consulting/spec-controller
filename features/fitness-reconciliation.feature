@@ -90,14 +90,10 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     @unit @SCN-LNT-031
     Scenario: a check step's id: is the citation it supplies, so an annotated pipeline is not read as unannotated
 
-  Rule: a check the job's verdict does not depend on is not enforced over the real source, wherever the severance is written
-
-    A check whose step or whose job carries continue-on-error is not enforced. The check counts as
-    enforced only when continue-on-error is absent, false or the string "false"; an expression
-    counts as not enforced.
+  Rule: a check its job's verdict does not depend on is not enforced over the real source
 
     @unit @SCN-LNT-032
-    Scenario: a check whose step or whose job carries continue-on-error reconciles as the watermelon, beside a sibling check whose red is the job's verdict
+    Scenario: a check its job's verdict does not depend on reconciles as the watermelon, beside a sibling check whose red is the job's verdict
 
     @unit @SCN-LNT-033
     Scenario: the fitness-function census counts a check whose red its job survives as a check that ran, on both of its counts
@@ -125,12 +121,6 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
       A failed step reconciles failing, not broken or missing, exactly as a failed unit test does.
       The row is read from its own step alone, never from the run as a whole.
-
-    @unit @SCN-LNT-030
-    Scenario: the reader takes the step's outcome, so a red the job swallowed still reds its scenario
-
-      The reader takes what the step did, not the result the job was given after
-      continue-on-error.
 
   Rule: a fitness obligation answered by several Evidence Observations reads the worst outcome any of them carries, and names an Evidence Observation carrying it
 

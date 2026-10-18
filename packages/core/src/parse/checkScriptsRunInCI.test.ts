@@ -28,3 +28,95 @@ describe("[SCN-WFS-015] an action outside the closed list stays a candidate — 
     for (const owner of owners) expect(owner).not.toBe("actions");
   });
 });
+
+const continueOnErrorCi = `jobs:
+  pinned:
+    steps:
+      - name: absent
+        run: pnpm lint:absent
+      - name: "true"
+        continue-on-error: true
+        run: pnpm lint:true
+      - name: "false"
+        continue-on-error: false
+        run: pnpm lint:false
+      - name: quoted false
+        continue-on-error: "false"
+        run: pnpm lint:quoted
+      - name: quoted true
+        continue-on-error: "true"
+        run: pnpm lint:quoted-true
+      - name: expression
+        continue-on-error: \${{ matrix.experimental }}
+        run: pnpm lint:expression
+  severed:
+    continue-on-error: true
+    steps:
+      - name: absent
+        run: pnpm lint:absent
+      - name: "false"
+        continue-on-error: false
+        run: pnpm lint:false
+  unsevered:
+    continue-on-error: false
+    steps:
+      - name: absent
+        run: pnpm lint:absent
+      - name: "true"
+        continue-on-error: true
+        run: pnpm lint:true
+  quoted:
+    continue-on-error: "false"
+    steps:
+      - name: absent
+        run: pnpm lint:absent
+  expressed:
+    continue-on-error: \${{ matrix.experimental }}
+    steps:
+      - name: absent
+        run: pnpm lint:absent
+`;
+
+describe("[SCN-WFS-017] a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string \"false\" leaves its job's verdict depending on it", () => {
+  it("reads the job's verdict as depending on a step only when neither the step nor its job sets continue-on-error to anything but false or \"false\"", () => {
+    const read = ciWorkflowSteps([continueOnErrorCi]).map((step) => [step.job, step.identity, step.abortsJob]);
+    expect(read).toStrictEqual([
+      ["pinned", "absent", true],
+      ["pinned", "true", false],
+      ["pinned", "false", true],
+      ["pinned", "quoted false", true],
+      ["pinned", "quoted true", false],
+      ["pinned", "expression", false],
+      ["severed", "absent", false],
+      ["severed", "false", false],
+      ["unsevered", "absent", true],
+      ["unsevered", "true", false],
+      ["quoted", "absent", true],
+      ["expressed", "absent", false],
+    ]);
+  });
+});
+
+const idCi = `jobs:
+  check:
+    steps:
+      - name: padded
+        id: "  SCN-FIT-001  "
+        run: pnpm lint:padded
+      - name: blank
+        id: "   "
+        run: pnpm lint:blank
+      - name: none
+        run: pnpm lint:none
+`;
+
+describe("[SCN-WFS-018] a step's id: is read trimmed, so a padded code cites as if written unpadded", () => {
+  it("reads a padded id: as the unpadded code, and an id: of only spaces as no id: at all", () => {
+    const read = ciWorkflowSteps([idCi]).map((step) => [step.identity, step.id]);
+    expect(read).toStrictEqual([
+      ["padded", "SCN-FIT-001"],
+      ["blank", undefined],
+      ["none", undefined],
+    ]);
+  });
+});

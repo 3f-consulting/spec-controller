@@ -1,9 +1,9 @@
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObservation } from "../model.js";
+import type { EvidenceObservation, FitnessEvidenceObservation } from "../model.js";
 import { ciWorkflowSteps, type PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
-import type { StepRecord } from "../domain/stepRecord.js";
-import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
+import { fitnessObservationsOf } from "../domain/fitnessReconciliation.js";
+import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../parse/scenarioCodeErrors.js";
@@ -50,17 +50,12 @@ function observationStreams(
   packageJson: TargetManifest,
   isCandidate: StepTest
 ): EvidenceObservation[] {
-  const recordAnswersCitingSteps = input.ciStepRecord !== undefined;
   return [
     ...input.behaviouralObservations,
-    ...checkObservations(
-      corpus,
-      steps,
-      packageJson,
-      isCandidate,
-      recordAnswersCitingSteps
+    ...fitnessObservationsOf(
+      checkObservations(corpus, steps, packageJson, isCandidate),
+      recordedCheckStepsOf(input.ciStepRecord)
     ),
-    ...ciStepRecordObservations(input.ciStepRecord),
   ];
 }
 
@@ -281,15 +276,9 @@ function checkObservations(
   corpus: TargetCorpus,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  isCandidate: StepTest,
-  recordAnswersCitingSteps: boolean
-): EvidenceObservation[] {
-  return [
-    ...fitnessFunctionsAmong(
-      steps,
-      packageJson,
-      isCandidate,
-      (_script, citedByStep) => corpus.citedRow(citedByStep)
-    ).filter((o) => !(recordAnswersCitingSteps && o.scnId !== undefined)),
-  ];
+  isCandidate: StepTest
+): FitnessEvidenceObservation[] {
+  return fitnessFunctionsAmong(steps, packageJson, isCandidate, (_script, citedByStep) =>
+    corpus.citedRow(citedByStep)
+  );
 }

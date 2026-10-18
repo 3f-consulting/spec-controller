@@ -300,6 +300,9 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-021
     Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
 
+    @unit @SCN-RPT-065
+    Scenario: a check step that did not run is worded by what the record said, skipped, ended with another outcome or carrying none, prefixed by the code it cites
+
   Rule: the summary opens with the run's verdict
 
     The summary opens with the run's verdict in one line, so a run that exits non-zero never
