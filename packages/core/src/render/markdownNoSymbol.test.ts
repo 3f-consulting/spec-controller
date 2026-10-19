@@ -54,7 +54,7 @@ const balancedWithPendingItems = (): string =>
     { qualityCheck: "unit", scnId: "SCN-NSY-007", status: "passed", locator: "src/g.test.ts" },
   ]);
 
-describe("[SCN-RPT-067] no line of the markdown report holds a symbol character, whatever its outcomes, Pending Items or run integrity", () => {
+describe("[SCN-RPT-067] the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity", () => {
   it("counts a symbol by what it is: a known one and one no list ever named are found, and punctuation is not", () => {
     expect(symbolCharactersIn("pending ⏳")).toEqual(["⏳"]);
     expect(symbolCharactersIn("★ row")).toEqual(["★"]);

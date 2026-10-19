@@ -84,9 +84,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown report groups out-of-balance scenarios by feature
 
     Under "## Summary views", the "### Out-of-balance by feature" section shows which
-    features hold the out-of-balance scenarios. It opens with a total line, "N of M scenario
-    Claim Reconciliation(s) out of balance, grouped by feature.", then a "Feature | Count |
-    Out-of-balance @SCN ids" table with one row per feature and its count. Balanced scenarios
+    features hold the out-of-balance scenarios. It opens with a total line,
+    "N of M Claim Reconciliation(s) of scenarios out of balance, grouped by feature.", then a
+    "Feature | Count | Out-of-balance @SCN ids" table with one row per feature and its count. Balanced scenarios
     are left out. A scenario's feature is the feature code in its @SCN code. The Feature cell reads "<full
     name> (<code>)", where the full name is the name of the feature file carrying that code.
     A code that no feature file carries shows as the bare code, and every code does when a
@@ -267,17 +267,19 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-066
     Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
 
-  Rule: the markdown report carries no symbol on any line
+  Rule: the markdown report's own words carry no symbol
 
-    Every line of the markdown report reads in words. A Pending Item reads "pending", or
+    The markdown report's own words carry no symbol. A Pending Item reads "pending", or
     "pending" and its quality check; the Pending Items tally and the outstanding note open
     with their words; the unsound stamp opens "This run is unsound."; and each cause row of
     the Evidence reconciliation summary reads its outcome's sentence alone. A symbol is any
     character that is not a letter, a number, punctuation, a space or printable ASCII, so
-    an arrow, a dingbat or an emoji is one, whether or not it was ever printed before.
+    an arrow, a dingbat or an emoji is one, whether or not it was ever printed before. Text
+    the report quotes from a run or a corpus, such as a runner's error message, a test's
+    name, a scenario title, a locator or a fitness function's name, keeps any symbol it holds.
 
     @unit @SCN-RPT-067
-    Scenario: no line of the markdown report holds a symbol character, whatever its outcomes, Pending Items or run integrity
+    Scenario: the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity
 
   Rule: the gloss for every outcome is its sentence, verbatim
 

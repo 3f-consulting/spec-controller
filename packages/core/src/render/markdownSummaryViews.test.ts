@@ -140,7 +140,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     const at = md.indexOf("### Out-of-balance by feature");
     return at < 0 ? "" : md.slice(at, md.indexOf("\n## ", at));
   };
-  const phantomAndUnnamedClaimReconciliations = (): string =>
+  const phantomClaimAndUnnamedClaimReconciliations = (): string =>
     [CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](1), CORE_MESSAGES[CoreMessage.UnnamedClaimReconciliations](1)].join(
       CORE_MESSAGES[CoreMessage.AndJoiner]
     );
@@ -159,14 +159,14 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
       `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
-        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndUnnamedClaimReconciliations())}.`
+        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`
     );
   });
 
   it("renders the section with no table when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndUnnamedClaimReconciliations())}.`
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`
     );
     expect(section).not.toContain("| Feature | Count |");
   });
@@ -176,7 +176,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     expect(section.split("\n")).toEqual([
       CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndUnnamedClaimReconciliations())}.`,
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`,
       "",
     ]);
   });
