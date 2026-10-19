@@ -2,7 +2,17 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkInputPaths, checkInputShapes, checkSavedReconciliation, jsonInputsOf, reRenderOrRefusal } from "./unreadableInputs.js";
+import { parse } from "yaml";
+import {
+  checkInputPaths,
+  checkInputShapes,
+  checkSavedReconciliation,
+  checkWorkflowsParse,
+  jsonInputsOf,
+  reRenderOrRefusal,
+} from "./unreadableInputs.js";
+import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
+import { DEFAULT_CI_PATH } from "../ingest/ingestQualityChecks.js";
 import { reRender } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
@@ -659,6 +669,55 @@ describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is re
     expect(checkInputPaths({ features }, features)).toBe(
       APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason),
     );
+  });
+});
+
+describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not parse as YAML, naming the workflows, the file and the parse error", () => {
+  const NOT_YAML = "jobs:\n  ci: [\n";
+  const readText = (path: string): string => readFileSync(path, "utf8");
+
+  function parseErrorOf(text: string): string {
+    try {
+      parse(text);
+    } catch (err) {
+      return (err as Error).message;
+    }
+    throw new Error("expected the text not to parse as YAML");
+  }
+
+  const refusal = (workflows: string, file: string): string =>
+    `${workflows} contain a workflow that is not valid YAML: ${file}\n${parseErrorOf(NOT_YAML)}`;
+
+  it("refuses a --ci workflow file that does not parse, naming --ci, the file and the parser's error", () => {
+    const { ci } = targetOnDisk();
+    const file = join(ci, "ci.yml");
+    writeFileSync(file, NOT_YAML);
+
+    expect(checkWorkflowsParse({ ci: file }, readText)).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+  });
+
+  it("refuses a workflow in the --ci folder that does not parse, naming that workflow", () => {
+    const { ci } = targetOnDisk();
+    const file = join(ci, "build.yml");
+    writeFileSync(file, NOT_YAML);
+
+    expect(checkWorkflowsParse({ ci }, readText)).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+  });
+
+  it("refuses a workflow read by default that does not parse, naming the CI workflows read by default", () => {
+    const [file] = ciSourcePathsOf(DEFAULT_CI_PATH);
+    expect(file, "the repository's own workflows are read by default").toBeDefined();
+
+    const error = checkWorkflowsParse({}, (path) => (path === file ? NOT_YAML : readText(path)));
+
+    expect(error).toBe(refusal(APP_MESSAGES[AppMessage.DefaultCiWorkflows](), file!));
+  });
+
+  it("refuses nothing for a workflow that parses but declares no jobs", () => {
+    const { ci } = targetOnDisk();
+    writeFileSync(join(ci, "ci.yml"), "name: no jobs\n");
+
+    expect(checkWorkflowsParse({ ci }, readText)).toBeNull();
   });
 });
 

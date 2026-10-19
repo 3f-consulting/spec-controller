@@ -348,6 +348,42 @@ Then("the refused run leaves nothing in the run store", function () {
   assert.deepEqual(filesUnder(store), [], "a refused run must store nothing: no run.yaml and no report");
 });
 
+const NOT_YAML = "jobs:\n  ci: [\n";
+const YAML_PARSE_ERROR = "Flow sequence in block collection must be sufficiently indented and end with a ]";
+
+const UNPARSEABLE_WORKFLOW: Record<string, (dir: string) => Target> = {
+  "--ci workflow file": (dir) => {
+    writeFileSync(join(dir, "ci.yml"), NOT_YAML);
+    return { dir, args: ["--features", "features", "--ci", "ci.yml"], named: "ci.yml", where: "The --ci workflows" };
+  },
+  "workflow in the --ci folder": (dir) => {
+    mkdirSync(join(dir, "workflows"));
+    writeFileSync(join(dir, "workflows", "a-lint.yml"), "jobs:\n  lint:\n    steps:\n      - run: pnpm lint\n");
+    writeFileSync(join(dir, "workflows", "build.yml"), NOT_YAML);
+    return { dir, args: ["--features", "features", "--ci", "workflows"], named: join("workflows", "build.yml"), where: "The --ci workflows" };
+  },
+  "workflow read by default": (dir) => {
+    mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
+    writeFileSync(join(dir, ".github", "workflows", "ci.yml"), NOT_YAML);
+    return {
+      dir,
+      args: ["--features", "features"],
+      named: join(".github", "workflows", "ci.yml"),
+      where: "The CI workflows read by default",
+    };
+  },
+};
+
+Given("a target whose {} does not parse as YAML", function (workflow: string) {
+  target = rowOf(UNPARSEABLE_WORKFLOW, workflow)(targetDir());
+});
+
+Then("the refusal names the workflow and the parse error", function () {
+  assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+  assert.ok(result.stderr.includes(YAML_PARSE_ERROR), `expected stderr to carry the YAML parser's error; got:\n${result.stderr}`);
+});
+
 When("the balance run reads that input", function () {
   result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...target.args], { cwd: target.dir, encoding: "utf8" });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);

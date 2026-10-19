@@ -16,6 +16,7 @@ import { corpusDirOf } from "./corpusDir.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
+  checkWorkflowsParse,
   checkInputShapes,
   corpusDirRefusal,
   checkSavedReconciliation,
@@ -232,6 +233,9 @@ function refuseUnreadableInputs(args: Record<string, string>): string {
 
   const unreadablePathError = checkInputPaths(args, corpusDir);
   if (unreadablePathError) refuse(unreadablePathError);
+
+  const unparseableWorkflowError = checkWorkflowsParse(args, readText);
+  if (unparseableWorkflowError) refuse(unparseableWorkflowError);
 
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
   if (misshapenInputError) refuse(misshapenInputError);

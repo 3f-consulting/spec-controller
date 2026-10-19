@@ -205,15 +205,14 @@ Feature: spec-controller balance runs standalone
     status, naming the input and the fault, and never ends on exit 1.
 
     This holds for every input the run reads: a report that does not parse, a report that
-    parses but is not in the shape its reader expects, a feature corpus or CI workflows path
-    that is not the kind of path its flag reads, a path the tool is not permitted to read, and
-    a working directory that has since been removed, from which the feature corpus read by
-    default cannot be read. It holds for --render-from-json too: a missing or unparseable
-    saved report is a usage error.
+    parses but is not in the shape its reader expects, a workflow that does not parse as
+    YAML, a feature corpus or CI workflows path that is not the kind of path its flag reads, a
+    path the tool is not permitted to read, and a working directory that has since been
+    removed, from which the feature corpus read by default cannot be read. It holds for
+    --render-from-json too: a missing or unparseable saved report is a usage error.
 
-    A workflow whose YAML the reader cannot walk is the one exception: it contributes no
-    steps, and the run reconciles without them. A valid report whose evidence did not fully
-    materialise is unsound, exit 4, not unreadable.
+    A workflow that parses but declares no jobs is read, and contributes no steps. A valid
+    report whose evidence did not fully materialise is unsound, exit 4, not unreadable.
 
     @unit @e2e @SCN-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
@@ -371,6 +370,19 @@ Feature: spec-controller balance runs standalone
       When balance is asked to reconcile it with no feature corpus given
       Then the input is refused as one the tool cannot read, never read as a verdict
       And the refusal names the feature corpus read by default and the working directory's read failure
+
+    @unit @e2e @SCN-CLI-102
+    Scenario Outline: a workflow that does not parse as YAML is refused as unreadable, naming the workflow and the parse error — <workflow>
+      Given a target whose <workflow> does not parse as YAML
+      When the balance run reads that input
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the workflow and the parse error
+
+      Examples:
+        | workflow                    |
+        | --ci workflow file          |
+        | workflow in the --ci folder |
+        | workflow read by default    |
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered

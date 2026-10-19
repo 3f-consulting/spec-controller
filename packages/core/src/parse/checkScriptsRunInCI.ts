@@ -1,5 +1,6 @@
 import { parse } from "yaml";
 import type { PipelineStep, PipelineStepAction, UsedAction } from "../domain/pipelineStep.js";
+import { WorkflowSourceNotYaml } from "./workflowSourceNotYaml.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
@@ -80,13 +81,16 @@ function stepsOfJob(job: string, jobBody: unknown, sourceIndex: number): Pipelin
   return read;
 }
 
-function stepsOf(ciSource: string, sourceIndex: number): PipelineStep[] {
-  let doc: unknown;
+function parseWorkflow(ciSource: string): unknown {
   try {
-    doc = parse(ciSource);
-  } catch {
-    // An unparseable workflow declares no steps, as one with no jobs does.
+    return parse(ciSource);
+  } catch (err) {
+    throw new WorkflowSourceNotYaml(err as Error);
   }
+}
+
+function stepsOf(ciSource: string, sourceIndex: number): PipelineStep[] {
+  const doc = parseWorkflow(ciSource);
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
   return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody, sourceIndex));

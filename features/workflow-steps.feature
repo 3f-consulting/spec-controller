@@ -82,6 +82,9 @@ Feature: balance reads a workflow's steps
     @unit @SCN-WFS-011
     Scenario: a check run by the second of two workflows is read, as one run by the first is
 
+    @unit @SCN-WFS-020
+    Scenario: a workflow that does not parse is refused by the reader, never read as one with no steps
+
   Rule: the step that dumps GitHub's step record is read wherever GitHub lets its expression be written
 
     @unit @SCN-WFS-013

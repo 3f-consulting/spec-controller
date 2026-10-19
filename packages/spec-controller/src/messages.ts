@@ -110,6 +110,7 @@ export enum AppMessage {
   NotASavedReconciliation,
   NotRenderableAsSaved,
   CorpusFileUnparseable,
+  WorkflowNotYaml,
   ReRenderReadsOnly,
   UnknownFormat,
   MoreThanOneToStdout,
@@ -195,6 +196,7 @@ interface AppMessageParams {
   [AppMessage.NotASavedReconciliation]: [subject: string, path: string, fault: string];
   [AppMessage.NotRenderableAsSaved]: [subject: string, path: string, reason: string];
   [AppMessage.CorpusFileUnparseable]: [corpus: string, file: string, message: string];
+  [AppMessage.WorkflowNotYaml]: [workflows: string, file: string, message: string];
   [AppMessage.ReRenderReadsOnly]: [ignored: string];
   [AppMessage.UnknownFormat]: [formats: string, supported: string];
   [AppMessage.MoreThanOneToStdout]: [formats: string];
@@ -411,6 +413,8 @@ export const APP_MESSAGES: AppMessages = {
     `${subject} could not be rendered as a saved reconciliation: ${path} (${reason})`,
   [AppMessage.CorpusFileUnparseable]: (corpus, file, message) =>
     `${corpus} contains a feature file that could not be parsed: ${file}\n${message}`,
+  [AppMessage.WorkflowNotYaml]: (workflows, file, message) =>
+    `${workflows} contain a workflow that is not valid YAML: ${file}\n${message}`,
   [AppMessage.ReRenderReadsOnly]: (ignored) =>
     `--render-from-json re-renders a saved report and reads only --strict and --exit-zero beside it; ` +
     `${ignored} would be ignored. Remove it, or run balance without --render-from-json.`,

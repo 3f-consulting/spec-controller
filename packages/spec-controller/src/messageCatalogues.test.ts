@@ -239,6 +239,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.NotASavedReconciliation]: ["The --render-from-json file", "saved.json", "ledger is missing"],
   [AppMessage.NotRenderableAsSaved]: ["The --render-from-json file", "saved.json", "cannot read properties of undefined"],
   [AppMessage.CorpusFileUnparseable]: ["The --features corpus", "features/a.feature", "(3:1): expected: #Feature"],
+  [AppMessage.WorkflowNotYaml]: ["The --ci workflows", "ci.yml", "Flow sequence in block collection must end with a ]"],
   [AppMessage.ReRenderReadsOnly]: ["--features"],
   [AppMessage.UnknownFormat]: ["html", "md, json"],
   [AppMessage.MoreThanOneToStdout]: ["md, json"],

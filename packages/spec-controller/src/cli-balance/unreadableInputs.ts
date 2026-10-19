@@ -1,7 +1,10 @@
 import { statSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
+import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import {
   ciReadFault,
   corpusReadFault,
+  DEFAULT_CI_PATH,
   DEFAULT_PACKAGE_JSON,
   type InputReadFault,
 } from "../ingest/ingestQualityChecks.js";
@@ -195,10 +198,7 @@ export function checkInputPaths(args: Record<string, string>, corpusDir: string)
   }
   const ci = ciReadFault(args["ci"]);
   if (ci !== null) {
-    return pathRefusal(
-      args["ci"] === undefined ? APP_MESSAGES[AppMessage.DefaultCiWorkflows]() : APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"),
-      ci,
-    );
+    return pathRefusal(workflowsSubjectOf(args), ci);
   }
   return null;
 }
@@ -219,4 +219,19 @@ export function reRenderOrRefusal(path: string, savedJson: string, strict: boole
       reasonOf(err),
     );
   }
+}
+
+function workflowsSubjectOf(args: Record<string, string>): string {
+  return args["ci"] === undefined ? APP_MESSAGES[AppMessage.DefaultCiWorkflows]() : APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci");
+}
+
+export function checkWorkflowsParse(args: Record<string, string>, read: (path: string) => string): string | null {
+  for (const file of ciSourcePathsOf(args["ci"] ?? DEFAULT_CI_PATH)) {
+    try {
+      parseYaml(read(file));
+    } catch (err) {
+      return APP_MESSAGES[AppMessage.WorkflowNotYaml](workflowsSubjectOf(args), file, reasonOf(err));
+    }
+  }
+  return null;
 }

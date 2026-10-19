@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
+import { WorkflowSourceNotYaml } from "./workflowSourceNotYaml.js";
 
 const usesValues = [
   ["actions/checkout@v4", "checkout"],
@@ -118,5 +119,28 @@ describe("[SCN-WFS-018] a step's id: is read trimmed, so a padded code cites as 
       ["blank", undefined],
       ["none", undefined],
     ]);
+  });
+});
+
+describe("[SCN-WFS-020] a workflow that does not parse is refused by the reader, never read as one with no steps", () => {
+  it("THROWS on a source that is not YAML a typed error in the YAML parser's own words", () => {
+    let thrown: unknown;
+    try {
+      ciWorkflowSteps(["jobs:\n  ci: [\n"]);
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(WorkflowSourceNotYaml);
+    const error = thrown as WorkflowSourceNotYaml;
+    expect(error.message).toBe(
+      "Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:\n\n  ci: [\n\n^\n"
+    );
+    expect(error.cause).toBeInstanceOf(Error);
+    expect((error.cause as Error).message).toBe(error.message);
+  });
+
+  it("reads a source that parses with no jobs, and an empty source, as no steps", () => {
+    expect(ciWorkflowSteps(["name: CI\non: [push]\n", ""])).toStrictEqual([]);
   });
 });
