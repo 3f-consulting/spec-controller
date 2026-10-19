@@ -72,8 +72,8 @@ importers:
         specifier: 13.1.0
         version: 13.1.0
       spec-controller:
-        specifier: 0.1.46
-        version: 0.1.46
+        specifier: 0.1.50
+        version: 0.1.50
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -126,8 +126,8 @@ importers:
 
 packages:
 
-  '@3f-consulting/spec-controller-core@0.1.46':
-    resolution: {integrity: sha512-6lKQcfHWttWO2HvCW9sUrED2aVhJPbP/AABbikU3pzSBhpoanw3hnteCoNNXQBYdOZLeBWJpvn5a+bsjAFfm0A==}
+  '@3f-consulting/spec-controller-core@0.1.50':
+    resolution: {integrity: sha512-jRHNDLIP4OZDTXvqtJ3ZRHOCLAQPTX8Us1UkAjMyS4k7xBum+3jWt7QODUtlH/A3kRD/x1cCfEmFDDihhpdjzg==}
     engines: {node: '>=22'}
 
   '@andrewbranch/untar.js@1.0.4':
@@ -2973,8 +2973,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.46:
-    resolution: {integrity: sha512-p6bXXvuhyhZOAhT49vH2dnq1RxS6h4Pfh7szdMuYT3JZQSHYRf533npL5waYvG65ekwPCz2HTbxGrrd2129jMQ==}
+  spec-controller@0.1.50:
+    resolution: {integrity: sha512-V2cT+s7/JqdxHkEDuHJpge2JZRNdzGQDlfY8GNiohVMvXemRytXk8WQl0+cOh+7k1uLNL06QjbcaRkyZiOfweQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -3460,7 +3460,7 @@ packages:
 
 snapshots:
 
-  '@3f-consulting/spec-controller-core@0.1.46':
+  '@3f-consulting/spec-controller-core@0.1.50':
     dependencies:
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
@@ -6417,9 +6417,9 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.46:
+  spec-controller@0.1.50:
     dependencies:
-      '@3f-consulting/spec-controller-core': 0.1.46
+      '@3f-consulting/spec-controller-core': 0.1.50
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
       fast-xml-parser: 5.11.2
@@ -6654,7 +6654,7 @@ snapshots:
       vfile-message: 4.0.3
       vfile-reporter: 8.1.1
       vfile-statistics: 3.0.0
-      yaml: 2.9.1
+      yaml: 2.9.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
