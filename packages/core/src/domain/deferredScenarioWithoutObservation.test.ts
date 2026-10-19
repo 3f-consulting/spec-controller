@@ -17,7 +17,7 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item for a s
         ],
         []
       );
-      const scenario = (scnId: string) => ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => ledger.claimReconciliations.find((s) => s.scnId === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
       expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);

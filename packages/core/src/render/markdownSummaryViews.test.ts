@@ -145,7 +145,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
       CORE_MESSAGES[CoreMessage.AndJoiner]
     );
 
-  it("names the out-of-balance phantom-scenario row beside the grouped scenario rows, and never groups it", () => {
+  it("names the out-of-balance phantom-claim row beside the grouped scenario rows, and never groups it", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
       `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
@@ -155,7 +155,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     expect(section).not.toContain("SCN-GONE-001");
   });
 
-  it("names both ungrouped kinds when a phantom-scenario and the suspense-scenario row are out of balance", () => {
+  it("names both ungrouped kinds when a phantom-claim and the unnamed-claim row are out of balance", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
       `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +

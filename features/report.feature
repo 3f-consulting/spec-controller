@@ -90,8 +90,8 @@ Feature: The report renders the ledger as sectioned facts
     A code that no feature file carries shows as the bare code, and every code does when a
     report is re-rendered from saved JSON that carries no feature names.
 
-    The total line accounts for every out-of-balance row. Phantom-scenario and
-    suspense-scenario rows name no feature file, so they are not grouped; the sentence
+    The total line accounts for every out-of-balance row. Phantom-claim and
+    unnamed-claim rows name no feature file, so they are not grouped; the sentence
     states each of their out-of-balance counts as not grouped by feature, and its numbers
     add up to the header's out-of-balance count and total. The section is left out only when
     no Scenario Reconciliation is out of balance. When only ungrouped rows are, it states
@@ -434,14 +434,14 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
-    The Markdown names phantom-scenario rows as cited scenario ids with no real scenario, and
-    the suspense-scenario row as evidence observations citing no scenario. A balanced run's
+    The Markdown names phantom-claim rows as cited scenario ids with no real scenario, and
+    the unnamed-claim row as evidence observations citing no scenario. A balanced run's
     gloss quotes the satisfied outcome's sentence. Where the Markdown's prose refers to an
     outcome, it quotes the outcome's sentence, never its handle. The JSON keeps the terms
-    `phantom-scenario` and `suspense-scenario` as the rows' kinds.
+    `phantom-claim` and `unnamed-claim` as the rows' kinds.
 
     @unit @SCN-RPT-039
-    Scenario: the markdown counts phantom-scenario and suspense-scenario rows by the reconciliation model's definitions of them, while the JSON keeps the terms
+    Scenario: the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms
 
     @unit @SCN-RPT-040
     Scenario: the markdown's prose refers to an outcome by its sentence, never by its handle

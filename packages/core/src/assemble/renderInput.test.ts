@@ -55,7 +55,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
 
   it("materialises the summary totals from the balance", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
-    expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
+    expect(report.summary.claimReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantomClaim: 0, unnamedClaim: 0 });
     expect(report.summary.qualityCheckReconciliations.total).toBe(3);
     expect(report.summary.qualityCheckReconciliations.outOfBalance).toBe(2);
     expect(report.summary.qualityCheckReconciliations.byOutcome["satisfied"]).toBe(1);
@@ -83,15 +83,15 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(balanceWithPhantom), ctx);
-    expect(report.summary.scenarioReconciliations).toEqual({
+    expect(report.summary.claimReconciliations).toEqual({
       total: 4,
       balanced: 2,
       outOfBalance: 2,
-      phantom: 1,
-      suspense: 1,
+      phantomClaim: 1,
+      unnamedClaim: 1,
     });
-    const t = report.summary.scenarioReconciliations;
-    expect(t.total - t.phantom - t.suspense).toBe(2);
+    const t = report.summary.claimReconciliations;
+    expect(t.total - t.phantomClaim - t.unnamedClaim).toBe(2);
     expect(isBalanced(balanceWithPhantom)).toBe(false);
   });
 });
@@ -110,7 +110,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     const observation = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
     const real = reconcile(parseScenarios(feature), [observation]);
     const parsed = JSON.parse(renderJson(__er(real), ctx));
-    const account = parsed.ledger.scenarioReconciliations.find(
+    const account = parsed.ledger.claimReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
     );
     expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
@@ -143,12 +143,12 @@ describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary;
 
   it("the phantom and suspense evidence observations live on their ledger rows, not a section detail array", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
-    const phantom = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "phantom-scenario");
-    const suspense = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "suspense-scenario");
+    const phantom = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
+    const suspense = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
     expect(phantom.scnId).toBe("SCN-PHX-999");
     expect(suspense.evidenceObservations).toHaveLength(1);
-    expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
-    expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
+    expect(parsed.summary.testVolume.onPhantomClaim).toBe(1);
+    expect(parsed.summary.testVolume.onUnnamedClaim).toBe(1);
   });
 });
 

@@ -24,8 +24,8 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
 }
 
 function suspenseChecks(reconciliation: EvidenceReconciliation) {
-  return reconciliation.ledger.scenarioReconciliations
-    .filter((row) => row.kind === "suspense-scenario")
+  return reconciliation.ledger.claimReconciliations
+    .filter((row) => row.kind === "unnamed-claim")
     .flatMap((row) =>
       row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome])
     );

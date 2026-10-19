@@ -61,7 +61,7 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const phantom = balance.scenarioReconciliations.find((s) => s.kind === "phantom-scenario");
+    const phantom = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
     expect(phantom?.scnId).toBe("SCN-AAA-001");
     expect(phantom?.verdict).toBe("out-of-balance");
     expect(phantom?.evidenceObligations).toEqual([]);
@@ -78,7 +78,7 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
     expect(phantom?.pendingItems).toEqual([]);
 
     expect(
-      balance.scenarioReconciliations
+      balance.claimReconciliations
         .filter((row) => row.evidenceObservations.includes(observation!))
         .map((row) => row.scnId)
     ).toEqual(["SCN-AAA-001"]);
@@ -130,7 +130,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     ]);
 
     const balance = reconcile(scenarios, [unitObservation, ...fitnessObservations]);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     expect(scenario?.verdict).toBe("out-of-balance");
 

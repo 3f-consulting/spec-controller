@@ -28,7 +28,7 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
     );
 
     expect(tally.pending).toBe(2);
-    expect(tally.scenarioReconciliations).toMatchObject({ total: 4, balanced: 2, outOfBalance: 2 });
+    expect(tally.claimReconciliations).toMatchObject({ total: 4, balanced: 2, outOfBalance: 2 });
   });
 
   it("counts a row whose only exceptions are Pending Items as balanced", () => {
@@ -48,6 +48,6 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
     );
 
     expect(tally.pending).toBe(2);
-    expect(tally.scenarioReconciliations).toMatchObject({ total: 1, balanced: 1, outOfBalance: 0 });
+    expect(tally.claimReconciliations).toMatchObject({ total: 1, balanced: 1, outOfBalance: 0 });
   });
 });

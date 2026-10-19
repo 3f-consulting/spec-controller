@@ -16,7 +16,7 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
     ];
 
     const reconciliation = reconcile(namedScenarios, observed, ["beta must never lose the money"]);
-    const row = reconciliation.scenarioReconciliations.find(
+    const row = reconciliation.claimReconciliations.find(
       (r) => r.scnId === "beta must never lose the money",
     );
     expect(row).toBeDefined();

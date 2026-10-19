@@ -17,7 +17,7 @@ const observed: EvidenceObservation[] = [
 describe("[SCN-LDG-021] the untagged scenario's row carries no evidence observation and no Pending Item", () => {
   const ledger = () => reconcile(namedScenarios, observed, [UNTAGGED]);
   const rowFor = (scnId: string) =>
-    ledger().scenarioReconciliations.find((r) => r.scnId === scnId);
+    ledger().claimReconciliations.find((r) => r.scnId === scnId);
 
   it("routes the run's one evidence observation to the account its citation names, not to the untagged row", () => {
     expect(rowFor("SCN-AAA-001")?.evidenceObservations).toStrictEqual([observed[0]]);

@@ -25,10 +25,10 @@ describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pendi
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const pendingCount = balance.scenarioReconciliations.flatMap((s) => s.pendingItems ?? []).length;
+    const pendingCount = balance.claimReconciliations.flatMap((s) => s.pendingItems ?? []).length;
     expect(pendingCount).toBe(3);
     expect(
-      balance.scenarioReconciliations.every((s) => s.reconcilingItems.length === 0)
+      balance.claimReconciliations.every((s) => s.reconcilingItems.length === 0)
     ).toBe(true);
 
     expect(isBalanced(balance)).toBe(true);

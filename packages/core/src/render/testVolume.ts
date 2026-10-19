@@ -10,7 +10,7 @@ export const testVolumeSection = (report: RenderInput): string[] => {
   const lines = [
     CORE_MESSAGES[CoreMessage.TestVolumeHeading],
     "",
-    CORE_MESSAGES[CoreMessage.TestVolumeSum](total, volume.onScenario, volume.onPhantomScenario, volume.onSuspenseScenario),
+    CORE_MESSAGES[CoreMessage.TestVolumeSum](total, volume.onScenario, volume.onPhantomClaim, volume.onUnnamedClaim),
     "",
     CORE_MESSAGES[CoreMessage.TestVolumeTableHeader],
     "| --- | --- |",

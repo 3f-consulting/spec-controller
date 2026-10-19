@@ -13,7 +13,7 @@ describe("the behavioural-observation tally reports the raw counts and the inven
   });
 
   it("[SCN-RPT-023] counts the phantom and suspense (incl. broken) evidence observations on their invented accounts", () => {
-    expect(tally.onPhantomScenario).toBe(1);
-    expect(tally.onSuspenseScenario).toBe(2);
+    expect(tally.onPhantomClaim).toBe(1);
+    expect(tally.onUnnamedClaim).toBe(2);
   });
 });

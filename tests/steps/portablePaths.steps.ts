@@ -122,7 +122,7 @@ Then(
     );
     const parsed = JSON.parse(jsonText) as {
       runProvenance?: { inputs?: Record<string, string> };
-      ledger?: { scenarioReconciliations: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }> };
+      ledger?: { claimReconciliations: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }> };
     };
     assert.equal(
       parsed.runProvenance?.inputs?.features,
@@ -134,8 +134,8 @@ Then(
       "vitest.json",
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
-    const suspense = (parsed.ledger?.scenarioReconciliations ?? []).find((s) => s.kind === "suspense-scenario");
-    assert.ok(suspense, `expected a suspense-scenario row carrying the uncited evidence observations; got:\n${jsonText}`);
+    const suspense = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
+    assert.ok(suspense, `expected an unnamed-claim row carrying the uncited evidence observations; got:\n${jsonText}`);
     const locators = suspense!.qualityCheckReconciliations
       .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
       .map((o) => o.locator!);

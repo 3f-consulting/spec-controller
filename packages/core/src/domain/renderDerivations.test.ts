@@ -6,7 +6,7 @@ import {
   isScenario,
   fitnessFunctionReconciliationsOf,
   observationCountOf,
-} from "./scenarioReconciliation.js";
+} from "./claimReconciliation.js";
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 const scenarios: Scenario[] = [
@@ -36,7 +36,7 @@ beforeEach(() => {
   ledger = reconcile(scenarios, evidenceObservations);
 });
 const rowOf = (scnId: string) =>
-  ledger.scenarioReconciliations.find((r) => r.scnId === scnId)!;
+  ledger.claimReconciliations.find((r) => r.scnId === scnId)!;
 
 describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   let mixed: Ledger;
@@ -50,12 +50,12 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
       ]
     );
   });
-  const kindOf = (k: string) => mixed.scenarioReconciliations.find((r) => r.kind === k)!;
+  const kindOf = (k: string) => mixed.claimReconciliations.find((r) => r.kind === k)!;
 
   it.each([
     ["is true for a real scenario row", "scenario", true],
-    ["is FALSE for a phantom row — a cited-but-phantom id is not a scenario", "phantom-scenario", false],
-    ["is FALSE for the suspense row — the bucket for uncited evidence observations is not a scenario", "suspense-scenario", false],
+    ["is FALSE for a phantom row — a cited-but-phantom id is not a scenario", "phantom-claim", false],
+    ["is FALSE for the suspense row — the bucket for uncited evidence observations is not a scenario", "unnamed-claim", false],
   ] as const)("%s", (_title, kind, expected) => {
     expect(isScenario(kindOf(kind))).toBe(expected);
   });
@@ -68,7 +68,7 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
     reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] }], observations)
-      .scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001")!;
+      .claimReconciliations.find((r) => r.scnId === "SCN-AAA-001")!;
 
   it.each([
     ["a satisfied one", [satisfied], "satisfied"],

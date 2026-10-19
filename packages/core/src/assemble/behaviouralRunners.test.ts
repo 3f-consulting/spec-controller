@@ -27,8 +27,8 @@ beforeEach(() => {
 describe("[SCN-RMD-015] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("posts every step of the pipeline but its checkout to the suspense row, each counted run and uncited, and carries no runner account", () => {
     const { summary, ledger } = reconcile();
-    const suspense = ledger.scenarioReconciliations
-      .filter((row) => row.kind === "suspense-scenario")
+    const suspense = ledger.claimReconciliations
+      .filter((row) => row.kind === "unnamed-claim")
       .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]));
     expect(suspense).toStrictEqual([
       ["Install", "cites-no-scenario"],

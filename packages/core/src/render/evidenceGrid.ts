@@ -1,16 +1,16 @@
-import type { ScenarioReconciliation, QualityCheck } from "../model.js";
+import type { ClaimReconciliation, QualityCheck } from "../model.js";
 import { QUALITY_CHECKS } from "../domain/journal.js";
 import {
   isScenario,
   carriesQualityCheck,
   namesQualityCheck,
   observationCountOf,
-} from "../domain/scenarioReconciliation.js";
+} from "../domain/claimReconciliation.js";
 
 export type EvidenceColumn = QualityCheck;
 
 export function evidenceColumns(
-  scenarios: readonly ScenarioReconciliation[]
+  scenarios: readonly ClaimReconciliation[]
 ): EvidenceColumn[] {
   const scenarioRows = scenarios.filter(isScenario);
   return QUALITY_CHECKS.filter((qualityCheck) => scenarioRows.some((row) => carriesQualityCheck(row, qualityCheck)));
@@ -29,7 +29,7 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
 };
 
 export function evidenceCell(
-  s: ScenarioReconciliation,
+  s: ClaimReconciliation,
   qualityCheck: EvidenceColumn
 ): string {
   if (!isScenario(s)) return "—";

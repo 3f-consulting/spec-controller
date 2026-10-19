@@ -27,7 +27,7 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const row = balance.scenarioReconciliations.find(
+    const row = balance.claimReconciliations.find(
       (s) => s.scnId === "SCN-LNT-026",
     );
     expect(row?.verdict).toBe("out-of-balance");
@@ -38,8 +38,8 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
         evidenceObligation: { qualityCheck: "fitness" },
       },
     ]);
-    const suspense = balance.scenarioReconciliations.find(
-      (s) => s.kind === "suspense-scenario",
+    const suspense = balance.claimReconciliations.find(
+      (s) => s.kind === "unnamed-claim",
     );
     expect(suspense?.qualityCheckReconciliations).toEqual([
       {

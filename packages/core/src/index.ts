@@ -8,10 +8,10 @@ export type {
   FitnessEvidenceObservation,
   EvidenceObservation,
   Outcome,
-  ScenarioVerdict,
-  ScenarioKind,
+  Verdict,
+  ClaimKind,
   QualityCheckReconciliation,
-  ScenarioReconciliation,
+  ClaimReconciliation,
   Ledger,
 } from "./model.js";
 
@@ -59,7 +59,7 @@ export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNa
 export type {
   EvidenceReconciliation,
   Summary,
-  ScenarioReconciliationTotals,
+  ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   MissingByQualityCheck,
   TestVolumeTotals,

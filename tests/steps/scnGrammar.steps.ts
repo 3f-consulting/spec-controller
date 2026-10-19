@@ -17,7 +17,7 @@ interface GrammarRow {
 
 interface GrammarRun {
   status: number;
-  report: { ledger: { scenarioReconciliations: GrammarRow[] }; scenarioCodeErrors?: unknown[] };
+  report: { ledger: { claimReconciliations: GrammarRow[] }; scenarioCodeErrors?: unknown[] };
 }
 
 let target: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
@@ -67,7 +67,7 @@ function balanceGrammarTarget(): GrammarRun {
 }
 
 function rowOf(scnId: string): GrammarRow | undefined {
-  return grammarRun.report.ledger.scenarioReconciliations.find((row) => row.scnId === scnId);
+  return grammarRun.report.ledger.claimReconciliations.find((row) => row.scnId === scnId);
 }
 
 When("balance reconciles that grammar target", function () {
@@ -81,11 +81,11 @@ Then("the grammar target lists no scenario code error", function () {
 const OWN = "SCN-OWN-001";
 
 function rowsOfKind(kind: string): GrammarRow[] {
-  return grammarRun.report.ledger.scenarioReconciliations.filter((row) => row.kind === kind);
+  return grammarRun.report.ledger.claimReconciliations.filter((row) => row.kind === kind);
 }
 
 function suspenseObservations(): number {
-  return rowsOfKind("suspense-scenario")
+  return rowsOfKind("unnamed-claim")
     .flatMap((row) => row.qualityCheckReconciliations)
     .filter((qcr) => qcr.outcome === "cites-no-scenario").length;
 }
@@ -103,7 +103,7 @@ Given(
 
 Then("the two- and five-character citations open phantom scenarios", function () {
   for (const id of INSIDE) {
-    assert.equal(rowOf(id)?.kind, "phantom-scenario", `expected a phantom for ${id}; got ${JSON.stringify(rowOf(id))}`);
+    assert.equal(rowOf(id)?.kind, "phantom-claim", `expected a phantom for ${id}; got ${JSON.stringify(rowOf(id))}`);
   }
   assert.equal(rowOf(OWN)?.kind, "scenario", `expected the target's own scenario as an account`);
 });
@@ -112,7 +112,7 @@ Then(
   "the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
+    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
   },
 );
 
@@ -135,7 +135,7 @@ Then(
   "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
+    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
   },
 );
 
@@ -153,7 +153,7 @@ Given(
 
 Then("the one- and six-character step ids post no evidence observation at all", function () {
   for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-  assert.equal(suspenseObservations(), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind("suspense-scenario"))}`);
-  const rows = grammarRun.report.ledger.scenarioReconciliations.map((row) => row.scnId);
+  assert.equal(suspenseObservations(), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
+  const rows = grammarRun.report.ledger.claimReconciliations.map((row) => row.scnId);
   assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantoms; got ${JSON.stringify(rows)}`);
 });

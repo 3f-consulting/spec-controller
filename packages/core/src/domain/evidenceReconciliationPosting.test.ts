@@ -7,7 +7,7 @@ import type {
   Scenario,
   EvidenceObservation,
   Ledger,
-  ScenarioReconciliation,
+  ClaimReconciliation,
 } from "../model.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
@@ -18,8 +18,8 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
   ];
 
-  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.scnId === scnId);
 
   it.each([
     ["posts a matched evidence observation to the account it cites", "SCN-AAA-001"],
@@ -32,15 +32,15 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 
   it("sets evidenceObservations explicitly on every account, even when nothing posts", () => {
     const ledger = reconcile(namedScenarios, []);
-    for (const account of ledger.scenarioReconciliations) {
+    for (const account of ledger.claimReconciliations) {
       expect(account.evidenceObservations).toEqual([]);
     }
   });
 });
 
 describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOfBalance agreeing with the verdict", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.scnId === scnId);
   const ctx: RunContext = { target: "obligations-only", inputs: {}, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
   it("a satisfied citation-routed check as the only evidence observation → balanced, no suspense, summary.outOfBalance 0", () => {
@@ -56,15 +56,15 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
       { qualityCheck: "fitness", outcome: "satisfied", evidenceObligation: { qualityCheck: "fitness" }, evidenceObservation: { scnId: "SCN-DEM-001", qualityCheck: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
-    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+    expect(accountFor(ledger, "(unnamed claim)")).toBeUndefined();
     expect(isBalanced(ledger)).toBe(true);
-    expect(assembleRenderInput(__er(ledger), ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
+    expect(assembleRenderInput(__er(ledger), ctx).summary.claimReconciliations.outOfBalance).toBe(0);
   });
 });
 
 describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names post to its ledger account", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.scnId === scnId);
 
   it("posts no debits to the accounts no scenario names — suspense and phantom", () => {
     const namedScenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
@@ -73,6 +73,6 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names 
       { scnId: null, qualityCheck: "unit", status: "passed" },
     ]);
     expect(accountFor(ledger, "SCN-ZZZ-999")?.evidenceObligations).toEqual([]);
-    expect(accountFor(ledger, "(no scenario)")?.evidenceObligations).toEqual([]);
+    expect(accountFor(ledger, "(unnamed claim)")?.evidenceObligations).toEqual([]);
   });
 });

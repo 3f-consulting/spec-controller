@@ -52,7 +52,7 @@ function reconcileWithRecord() {
 describe("[SCN-LNT-029] a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report", () => {
   it("keeps every uncited check on the suspense row where the run's step record answers the cited ones", () => {
     const suspense = reconcileWithRecord()
-      .ledger.scenarioReconciliations.filter((row) => row.scnId === "(no scenario)")
+      .ledger.claimReconciliations.filter((row) => row.scnId === "(unnamed claim)")
       .map((row) => [
         row.scnId,
         row.kind,
@@ -61,8 +61,8 @@ describe("[SCN-LNT-029] a check step citing no @SCN posts to suspense, which is 
       ]);
     expect(suspense).toEqual([
       [
-        "(no scenario)",
-        "suspense-scenario",
+        "(unnamed claim)",
+        "unnamed-claim",
         "out-of-balance",
         [
           ["lint:beta", "cites-no-scenario"],

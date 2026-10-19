@@ -15,7 +15,7 @@ describe("[SCN-LDG-002] a scenario whose Evidence Obligation names a test that e
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-002");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-002");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
@@ -34,7 +34,7 @@ describe("[SCN-LDG-003] a scenario that raises an Evidence Obligation with no ma
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-003");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-003");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
@@ -59,7 +59,7 @@ describe("[SCN-LDG-004] a multi-evidenceObligation scenario failing one level an
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-004");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-004");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual(
@@ -82,7 +82,7 @@ describe("[SCN-LDG-005] an out-of-balance scenario carries its reconciling items
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-005");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-005");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(Array.isArray(scenario?.reconcilingItems)).toBe(true);
@@ -106,7 +106,7 @@ describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence obse
     const evidenceObservations: EvidenceObservation[] = [observation];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-027");
+    const row = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-027");
 
     const noEvidenceObligation = row?.qualityCheckReconciliations.find((o) => o.outcome === "no-evidence-obligation");
     expect(noEvidenceObligation?.evidenceObservation).toEqual(observation);
@@ -125,7 +125,7 @@ describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray evi
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-010");
+    const row = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-010");
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     expect(row?.reconcilingItems).toEqual([
@@ -144,7 +144,7 @@ describe("[SCN-LDG-009] a scenario with zero rows on both sides is reported as b
     const evidenceObservations: EvidenceObservation[] = [];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-009");
+    const row = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-009");
 
     expect(row?.verdict).toBe("out-of-balance");
     expect(row?.reconcilingItems).toEqual([{ qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } }]);

@@ -20,14 +20,14 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
       packageJson: "tests/fixtures/usg/package.json",
     }, resolveTargetRoot({ features: "tests/fixtures/usg/features" }));
 
-    const postings = balance.ledger.scenarioReconciliations.flatMap((row) =>
+    const postings = balance.ledger.claimReconciliations.flatMap((row) =>
       row.evidenceObservations
         .filter((o) => o.qualityCheck === "fitness")
         .map((o) => [row.kind, o.fitnessFunction])
     );
     expect(postings).toEqual([
       ["scenario", "lint:foo"],
-      ["suspense-scenario", "lint:bar"],
+      ["unnamed-claim", "lint:bar"],
     ]);
   });
 });

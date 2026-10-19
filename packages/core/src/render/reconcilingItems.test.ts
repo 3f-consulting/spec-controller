@@ -18,7 +18,7 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-const SUSPENSE_ROW = "(no scenario)";
+const SUSPENSE_ROW = "(unnamed claim)";
 
 function render(
   scenarios: Scenario[],

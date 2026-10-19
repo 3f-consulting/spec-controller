@@ -169,7 +169,7 @@ When("balance is asked to reconcile that target with that directory of Gradle re
 Then("the scenario that JUnit 5 test cites reconciles satisfied, by that test", function () {
   let rows: ScenarioRow[];
   try {
-    rows = (JSON.parse(result.stdout) as { ledger: { scenarioReconciliations: ScenarioRow[] } }).ledger.scenarioReconciliations;
+    rows = (JSON.parse(result.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
   }

@@ -15,7 +15,7 @@ describe("[SCN-GOT-001] runReconcile reads a real gotestsum report as unit evide
       ci: TARGET,
       junit: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-GOF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -36,7 +36,7 @@ describe("[SCN-GOT-002] runReconcile reads a failing Go subtest as a failing uni
       ci: TARGET,
       junit: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-GOF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -77,7 +77,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (scnId: string) =>
     balance()
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -90,7 +90,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | "));
+      .find((line) => line.startsWith("| (unnamed claim) | "));
 
     expect(suspenseRow ?? "").toContain(
       "cited::TestCited/[SCN-GOF-005]_[SCN-GOF-006]_a_subtest_that_cites_two_scenarios: 2 scenario codes cite SCN-GOF-005, SCN-GOF-006",
@@ -111,7 +111,7 @@ describe("[SCN-GOT-005] runReconcile reads a skipped Go subtest as posting no ev
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       junit: `${TARGET}/report.xml`,
-    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-GOF-007")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -129,7 +129,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("leaves the scenario the never-started subtest cites missing, with no observation", () => {
-    const unit = balance().ledger.scenarioReconciliations
+    const unit = balance().ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-GOF-008")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -141,7 +141,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | "));
+      .find((line) => line.startsWith("| (unnamed claim) | "));
 
     expect(suspenseRow ?? "").toContain(
       "Evidence Observation cites no Scenario (example.com/gofixture/cited::TestEnclosingFailsFirst) — 1 ran, 0 passed, 1 failed",
@@ -158,12 +158,12 @@ describe("[SCN-GOT-007] runReconcile reads a Go package that failed to compile a
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("posts one broken item, on suspense, naming the package and saying its build failed", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toBe("example.com/gofixture/broken");
     expect(broken[0]?.item.message).toContain("example.com/gofixture/broken [build failed]");
   });
@@ -180,7 +180,7 @@ describe("[SCN-GOT-008] runReconcile reads a Go subtest that panics as a failing
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       junit: `${TARGET}/report.xml`,
-    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 

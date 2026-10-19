@@ -20,18 +20,19 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     `warnings` key: a zero-evidence scenario is a both-missing row on the ledger. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
 
-    And its summary totals count EVERY Scenario Reconciliation. The Evidence
-    Reconciliation is all Scenario Reconciliations assembled, and the summary is its
-    totals (doc/ubiquitous-language.md, The evidence model). Three row kinds — real, phantom,
-    suspense — and phantom / suspense reconciliations are ALWAYS out-of-balance, so they
-    count into the total and into out-of-balance; `phantom` / `suspense` survive as
-    sub-counts, a BREAKDOWN of the total rather than a bucket outside it (real =
-    total − phantom − suspense). Tallying real rows only would let a run whose suspense row is
-    out of balance, and so exits 1, show a tally reading 0 out-of-balance: a headline that reads
-    as a pass. Counting every row keeps the tally and the exit code in agreement.
+    And its summary totals count EVERY Claim Reconciliation. The Evidence
+    Reconciliation is all Claim Reconciliations assembled, and the summary is its
+    totals (doc/ubiquitous-language.md, The evidence model). Three claim kinds — scenario, phantom
+    claim, unnamed claim — and a phantom claim's or the unnamed claim's reconciliation is ALWAYS
+    out-of-balance, so they count into the total and into out-of-balance; `phantomClaim` /
+    `unnamedClaim` survive as sub-counts, a BREAKDOWN of the total rather than a bucket outside it
+    (scenarios = total − phantomClaim − unnamedClaim). Tallying scenario rows only would let a run
+    whose unnamed claim's row is out of balance, and so exits 1, show a tally reading 0
+    out-of-balance: a headline that reads as a pass. Counting every row keeps the tally and the
+    exit code in agreement.
 
     @unit @SCN-RMD-001
-    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model whose summary totals count every Scenario Reconciliation
+    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model whose summary totals count every Claim Reconciliation
 
   Rule: the ledger is the detail beside the summary's totals
 
@@ -40,10 +41,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     it names is the LEDGER. Root then reads as chain step 6 literally: "The summary
     has the totals and the ledger the detail."
 
-    The key is not `scenarios` — a phantom / suspense is not a scenario — and it is `ledger`.
+    The key is not `scenarios` — a phantom claim or the unnamed claim is not a scenario — and it is `ledger`.
 
     Code identifiers and JSON keys are ONE vocabulary, so the model's
-    `interface Ledger { scenarioReconciliations }` and the JSON `"ledger": { "scenarioReconciliations":
+    `interface Ledger { claimReconciliations }` and the JSON `"ledger": { "claimReconciliations":
     [...] }` agree as objects — a Ledger that holds entries cannot serialise as a bare array
     of rows.
 
@@ -55,8 +56,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The behavioural evidence-observation counting is a FOLD the Ledger owns.
     The raw per-quality-check totals are materialised on summary.rawByBehaviouralQualityCheck, and
     the persisted JSON carries NO separate evidence-observations section: every evidence observation is
-    already posted on the ledger, a phantom evidence observation on its phantom-scenario row and an uncited one
-    on the suspense-scenario row, each with its file locator. The markdown's Test volume cut and
+    already posted on the ledger, a phantom evidence observation on its phantom-claim row and an uncited one
+    on the unnamed-claim row, each with its file locator. The markdown's Test volume cut and
     its identity line read the same summary folds. The balancing identity Σ
     rawByBehaviouralQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
     construction on the persisted file. Its unit tests hold the assembled totals in isolation.
@@ -70,7 +71,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
     with the behavioural testVolume counter. There is no standalone member-list section, because
     each check's detail lives on the rows: a cited check on its scenario's own row, an
-    uncited one as a cites-no-scenario evidence observation on the suspense row, so nothing is reported twice.
+    uncited one as a cites-no-scenario evidence observation on the unnamed claim's row, so nothing is reported twice.
     The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited
     count is implicit, running − uncited. A pure derive over the model, held in isolation by
     Vitest.
@@ -86,7 +87,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     reads them too. The test-volume identity line is a reconciliation fact (a balance check,
     Σ = Σ) that belongs in the model, not asserted by the renderer:
 
-      Test volume — Σ rawByBehaviouralQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
+      Test volume — Σ rawByBehaviouralQualityCheck = onScenario + onPhantomClaim + onUnnamedClaim.
 
     The fitness-function census carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the
     cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
@@ -137,7 +138,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The evidence coordinate is ONE flat quality-check ∈ {fitness, unit, integration, e2e,
     performance}: fitness is one quality-check value, not a second axis. So each sub-row of
-    ledger.scenarioReconciliations[].qualityCheckReconciliations[] and reconcilingItems[] is keyed
+    ledger.claimReconciliations[].qualityCheckReconciliations[] and reconcilingItems[] is keyed
     by qualityCheck alone, and the summary's missing split, missingByQualityCheck under
     summary.qualityCheckReconciliations, is keyed by the same flat quality-check. One reconcile function
     serves every quality check, and the fitness value is what tells a watermelon apart. The
@@ -163,7 +164,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: a behavioural evidence observation carries the name its runner gave the test
 
-    The suspense row names what failed, and it regenerates from the saved JSON alone, so the name
+    The unnamed claim's row names what failed, and it regenerates from the saved JSON alone, so the name
     travels on the evidence observation itself. Each parser translates its runner's name for the
     test into one neutral field at the edge: a Vitest test's full name, or its title where it has
     none, and a Cucumber scenario's name. No runner's shape reaches the domain. The JSON serialises

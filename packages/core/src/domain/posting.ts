@@ -7,18 +7,18 @@ import { isFitnessObservation } from "./journal.js";
 
 export type Posting =
   | { readonly kind: "scenario"; readonly scnId: string }
-  | { readonly kind: "phantom-scenario"; readonly scnId: string }
-  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
+  | { readonly kind: "phantom-claim"; readonly scnId: string }
+  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" };
 
 export type BehaviouralPosting =
   | { readonly kind: "scenario"; readonly scnId: string }
-  | { readonly kind: "phantom-scenario"; readonly scnId: string }
-  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
+  | { readonly kind: "phantom-claim"; readonly scnId: string }
+  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" };
 
 export type FitnessFunctionPosting =
   | { readonly kind: "scenario"; readonly scnId: string }
-  | { readonly kind: "phantom-scenario"; readonly scnId: string }
-  | { readonly kind: "suspense-scenario"; readonly posted: "broken" | "cites-nothing" };
+  | { readonly kind: "phantom-claim"; readonly scnId: string }
+  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" };
 
 export function postingOf(
   observation: BehaviouralEvidenceObservation,
@@ -38,19 +38,19 @@ export function postingOf(
 ): Posting {
   if (observation.qualityCheck === "fitness") {
     if (isFitnessObservation(observation) && observation.broken === true) {
-      return { kind: "suspense-scenario", posted: "broken" };
+      return { kind: "unnamed-claim", posted: "broken" };
     }
     if (observation.scnId !== undefined) {
       return scenarioIds.has(observation.scnId)
         ? { kind: "scenario", scnId: observation.scnId }
-        : { kind: "phantom-scenario", scnId: observation.scnId };
+        : { kind: "phantom-claim", scnId: observation.scnId };
     }
-    return { kind: "suspense-scenario", posted: "cites-nothing" };
+    return { kind: "unnamed-claim", posted: "cites-nothing" };
   }
-  if (observation.broken === true) return { kind: "suspense-scenario", posted: "broken" };
-  if (observation.scnId === null) return { kind: "suspense-scenario", posted: "cites-nothing" };
+  if (observation.broken === true) return { kind: "unnamed-claim", posted: "broken" };
+  if (observation.scnId === null) return { kind: "unnamed-claim", posted: "cites-nothing" };
   if (!scenarioIds.has(observation.scnId)) {
-    return { kind: "phantom-scenario", scnId: observation.scnId };
+    return { kind: "phantom-claim", scnId: observation.scnId };
   }
   return { kind: "scenario", scnId: observation.scnId };
 }

@@ -6,7 +6,7 @@ import type {
   PendingItem,
   BehaviouralEvidenceObservation,
 } from "./journal.js";
-import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
+import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Ledger } from "./ledger.js";
 import {
   evidenceObligationPairsOf,
@@ -17,7 +17,7 @@ import {
   reconcileEvidenceObligation,
   noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
-  suspenseReconciliationsOf,
+  unnamedClaimReconciliationsOf,
   noScnCodeReconciliations,
   duplicateScnCodeReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
@@ -27,7 +27,7 @@ import {
   fitnessFunctionTally,
 } from "./ledger.js";
 import type {
-  ScenarioReconciliationTotals,
+  ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   FitnessTally,
 } from "./ledger.js";
@@ -35,35 +35,35 @@ import {
   verdictFor,
   reconcilingItemsOf,
   qualityCheckReconciliationsOf,
-  SUSPENSE_SCENARIO_ID,
-} from "./scenarioReconciliation.js";
+  UNNAMED_CLAIM_ID,
+} from "./claimReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { isFitnessObservation } from "./journal.js";
 
-type CitedPosting = { readonly kind: "scenario" | "phantom-scenario"; readonly scnId: string };
+type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly scnId: string };
 
 interface CitationIndex {
   file(posting: CitedPosting, observation: EvidenceObservation): void;
   observationsFor(scnId: string): readonly EvidenceObservation[];
-  readonly phantomIds: readonly string[];
+  readonly phantomClaimIds: readonly string[];
 }
 
 function citationIndex(): CitationIndex {
   const byScn = new Map<string, EvidenceObservation[]>();
-  const phantomIds: string[] = [];
+  const phantomClaimIds: string[] = [];
   return {
     file(posting, observation) {
       const list = byScn.get(posting.scnId) ?? [];
       list.push(observation);
       byScn.set(posting.scnId, list);
-      if (posting.kind === "phantom-scenario" && !phantomIds.includes(posting.scnId)) {
-        phantomIds.push(posting.scnId);
+      if (posting.kind === "phantom-claim" && !phantomClaimIds.includes(posting.scnId)) {
+        phantomClaimIds.push(posting.scnId);
       }
     },
     observationsFor: (scnId) => byScn.get(scnId) ?? [],
-    phantomIds,
+    phantomClaimIds,
   };
 }
 
@@ -84,7 +84,7 @@ function routeObservations(
   const uncitedFitnessFunctions: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     const posting = postingOf(o, scenarioIds);
-    if (posting.kind !== "suspense-scenario") citations.file(posting, o);
+    if (posting.kind !== "unnamed-claim") citations.file(posting, o);
     else if (posting.posted === "broken") brokenEvidence.push(o);
     else if (isFitnessObservation(o)) uncitedFitnessFunctions.push(o);
     else uncited.push(o);
@@ -97,7 +97,7 @@ function scenarioRow(
   evidenceObservations: EvidenceObservation[],
   citations: CitationIndex,
   evidenceObligationPairs: ReadonlySet<string>
-): ScenarioReconciliation {
+): ClaimReconciliation {
   const pendingItems: PendingItem[] = pendingItemsOf(d);
 
   const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((obligation) =>
@@ -140,7 +140,7 @@ function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
 function duplicateScnCodeRow(
   sharers: readonly Scenario[],
   citations: CitationIndex
-): ScenarioReconciliation {
+): ClaimReconciliation {
   const scnId = sharers[0]!.scnId;
   const evidenceObligations = sharers.flatMap((s) => s.evidenceObligations);
   const items = duplicateScnCodeReconciliationsOf(evidenceObligations);
@@ -156,14 +156,14 @@ function duplicateScnCodeRow(
   };
 }
 
-function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[] {
-  const rows: ScenarioReconciliation[] = [];
-  for (const scnId of citations.phantomIds) {
+function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
+  const rows: ClaimReconciliation[] = [];
+  for (const scnId of citations.phantomClaimIds) {
     const observations = citations.observationsFor(scnId);
     const items = citesUnknownScenarioReconciliationsOf(observations);
     rows.push({
       scnId,
-      kind: "phantom-scenario",
+      kind: "phantom-claim",
       verdict: verdictFor(items),
       evidenceObservations: [...observations],
       evidenceObligations: [],
@@ -175,17 +175,17 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
   return rows;
 }
 
-function suspenseScenarioRows(
+function unnamedClaimRows(
   brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly BehaviouralEvidenceObservation[],
   uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
-): ScenarioReconciliation[] {
-  const rows: ScenarioReconciliation[] = [];
+): ClaimReconciliation[] {
+  const rows: ClaimReconciliation[] = [];
   if (brokenEvidence.length > 0 || uncited.length > 0 || uncitedFitnessFunctions.length > 0) {
-    const items = suspenseReconciliationsOf(brokenEvidence, uncited, uncitedFitnessFunctions);
+    const items = unnamedClaimReconciliationsOf(brokenEvidence, uncited, uncitedFitnessFunctions);
     rows.push({
-      scnId: SUSPENSE_SCENARIO_ID,
-      kind: "suspense-scenario",
+      scnId: UNNAMED_CLAIM_ID,
+      kind: "unnamed-claim",
       verdict: verdictFor(items),
       evidenceObservations: [...brokenEvidence, ...uncited, ...uncitedFitnessFunctions],
       evidenceObligations: [],
@@ -197,8 +197,8 @@ function suspenseScenarioRows(
   return rows;
 }
 
-function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioReconciliation[] {
-  const rows: ScenarioReconciliation[] = [];
+function untaggedScenarioRows(untaggedScenarios: readonly string[]): ClaimReconciliation[] {
+  const rows: ClaimReconciliation[] = [];
   for (const name of untaggedScenarios) {
     const items = noScnCodeReconciliations();
     rows.push({
@@ -228,14 +228,14 @@ export function reconcile(
     scenarioIds
   );
   return {
-    scenarioReconciliations: [
+    claimReconciliations: [
       ...accountsByCode(scenarios).map((sharers) =>
         sharers.length === 1
           ? scenarioRow(sharers[0]!, observations, citations, evidenceObligationPairs)
           : duplicateScnCodeRow(sharers, citations)
       ),
-      ...phantomScenarioRows(citations),
-      ...suspenseScenarioRows(brokenEvidence, uncited, uncitedFitnessFunctions),
+      ...phantomClaimRows(citations),
+      ...unnamedClaimRows(brokenEvidence, uncited, uncitedFitnessFunctions),
       ...untaggedScenarioRows(untaggedScenarios),
     ],
   };
@@ -244,8 +244,8 @@ export function reconcile(
 export interface TestVolumeTotals {
   readonly totalEvidenceObservations: number;
   readonly onScenario: number;
-  readonly onPhantomScenario: number;
-  readonly onSuspenseScenario: number;
+  readonly onPhantomClaim: number;
+  readonly onUnnamedClaim: number;
 }
 
 export interface FitnessFunctionTotals {
@@ -306,7 +306,7 @@ export interface TierWithoutRunner {
 }
 
 export interface Summary {
-  readonly scenarioReconciliations: ScenarioReconciliationTotals;
+  readonly claimReconciliations: ClaimReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly testVolume?: TestVolumeTotals;
@@ -341,7 +341,7 @@ export function summaryOf(
   const observations = behaviouralObservationTally(ledger);
   const fitnessFunctions = fitnessFunctionTally(ledger);
   return {
-    scenarioReconciliations: tally.scenarioReconciliations,
+    claimReconciliations: tally.claimReconciliations,
     qualityCheckReconciliations: tally.qualityCheckReconciliations,
     pending: tally.pending,
     ...(withBehaviouralObservations
@@ -349,8 +349,8 @@ export function summaryOf(
           testVolume: {
             totalEvidenceObservations: observations.total,
             onScenario: observations.onScenario,
-            onPhantomScenario: observations.onPhantomScenario,
-            onSuspenseScenario: observations.onSuspenseScenario,
+            onPhantomClaim: observations.onPhantomClaim,
+            onUnnamedClaim: observations.onUnnamedClaim,
           },
           rawByBehaviouralQualityCheck: observations.rawByBehaviouralQualityCheck,
         }

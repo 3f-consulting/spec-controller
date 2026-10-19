@@ -42,7 +42,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
 
   function ownRowOf(dir: string): unknown {
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
-    const rows = JSON.parse(stdout).ledger.scenarioReconciliations as { scnId: string }[];
+    const rows = JSON.parse(stdout).ledger.claimReconciliations as { scnId: string }[];
     return rows.find((r) => r.scnId === "SCN-DUP-002");
   }
 
@@ -56,7 +56,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
       "--format", "json",
     ]);
     const report = JSON.parse(stdout);
-    const rows = report.ledger.scenarioReconciliations as { scnId: string; verdict: string }[];
+    const rows = report.ledger.claimReconciliations as { scnId: string; verdict: string }[];
     expect(rows.filter((r) => r.scnId === "SCN-DUP-001")).toHaveLength(1);
     expect(rows.find((r) => r.scnId === "SCN-DUP-002")?.verdict).toBe("balanced");
     expect(exitCode).toBe(1);
@@ -126,9 +126,9 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
 
   it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", () => {
     const report = JSON.parse(balance(target("@SCN-TWO-002 @SCN-TWO-003"), "json").stdout);
-    const rows = report.ledger.scenarioReconciliations as Row[];
+    const rows = report.ledger.claimReconciliations as Row[];
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.scnId)).toEqual(["SCN-TWO-001"]);
-    expect(rows.find((r) => r.scnId === "SCN-TWO-002")?.kind).toBe("phantom-scenario");
+    expect(rows.find((r) => r.scnId === "SCN-TWO-002")?.kind).toBe("phantom-claim");
     expect(rows.find((r) => r.scnId === "SCN-TWO-003")).toBeUndefined();
     expect(report.evidenceObligations.untaggedScenarios).toEqual([]);
   });
@@ -159,7 +159,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
   it("reconciles a scenario with one code as today, listing no scenario code error", () => {
     const json = balance(target("@SCN-TWO-002"), "json");
     const report = JSON.parse(json.stdout);
-    const row = (report.ledger.scenarioReconciliations as Row[]).find((r) => r.scnId === "SCN-TWO-002");
+    const row = (report.ledger.claimReconciliations as Row[]).find((r) => r.scnId === "SCN-TWO-002");
     expect(row).toMatchObject({ kind: "scenario", verdict: "balanced" });
     expect(report.scenarioCodeErrors).toEqual([]);
     expect(json.exitCode).toBe(0);

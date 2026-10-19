@@ -54,8 +54,8 @@ function reconcileUncited() {
 
 describe("[SCN-LNT-033] the fitness-function census counts a check whose red its job survives as a check that ran", () => {
   it("still POSTS both checks to the suspense row, the severed one included", () => {
-    const suspense = reconcileUncited().ledger.scenarioReconciliations.filter(
-      (row) => row.kind === "suspense-scenario"
+    const suspense = reconcileUncited().ledger.claimReconciliations.filter(
+      (row) => row.kind === "unnamed-claim"
     );
     expect(suspense.flatMap((row) => row.evidenceObservations)).toEqual([
       {

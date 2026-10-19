@@ -14,7 +14,7 @@ describe("[SCN-PYT-001] runReconcile reads a real pytest report as unit evidence
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-PYF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -31,7 +31,7 @@ describe("[SCN-PYT-002] runReconcile reads a failing test in a real pytest repor
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-PYF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -48,7 +48,7 @@ describe("[SCN-PYT-003] runReconcile reads a skipped test in a real pytest repor
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-PYF-003")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -65,9 +65,9 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const phantom = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-PYF-099");
+    const phantom = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-099");
 
-    expect(phantom?.kind).toBe("phantom-scenario");
+    expect(phantom?.kind).toBe("phantom-claim");
     expect(phantom?.evidenceObservations).toEqual([
       { qualityCheck: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
     ]);
@@ -82,7 +82,7 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario to s
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const suspense = balance.ledger.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+    const suspense = balance.ledger.claimReconciliations.find((s) => s.kind === "unnamed-claim");
 
     expect(suspense?.evidenceObservations).toContainEqual({
       qualityCheck: "unit",
@@ -103,7 +103,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (scnId: string) =>
     balance()
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -116,7 +116,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | ") && line.includes("test_cases::test_two_codes"));
+      .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("test_cases::test_two_codes"));
 
     expect(suspenseRow ?? "").toContain("SCN-PYF-004");
     expect(suspenseRow ?? "").toContain("SCN-PYF-005");
@@ -134,12 +134,12 @@ describe("[SCN-PYT-007] runReconcile reads a real pytest run that failed to coll
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("posts one broken item, on suspense, naming the module and carrying the collection error", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toBe("test_uncollectable");
     expect(broken[0]?.item.message).toContain("ModuleNotFoundError: No module named 'module_that_does_not_exist'");
   });
@@ -160,7 +160,7 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
 
   it("leaves the scenario the test cites missing, with no observation", () => {
     const unit = balance()
-      .ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-PYF-006")
+      .ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-006")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("missing");
@@ -168,12 +168,12 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
   });
 
   it("posts one broken item, on suspense, naming the test and carrying the setup error", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toBe("test_cases::test_setup_error");
     expect(broken[0]?.item.message).toContain("RuntimeError: the resource could not be set up");
   });
@@ -182,7 +182,7 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | ") && line.includes("test_cases::test_setup_error"));
+      .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("test_cases::test_setup_error"));
 
     expect(suspenseRow ?? "").toContain(`${OUTCOME_DESCRIPTION.broken} (test_cases::test_setup_error`);
     expect(suspenseRow ?? "").not.toContain("failed to collect");

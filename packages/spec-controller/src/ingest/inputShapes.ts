@@ -80,7 +80,7 @@ export const SAVED_RECONCILIATION: Shape = {
   fields: {
     runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
     summary: { fields: {} },
-    ledger: { fields: { scenarioReconciliations: { list: "anything" } }, required: ["scenarioReconciliations"] },
+    ledger: { fields: { claimReconciliations: { list: "anything" } }, required: ["claimReconciliations"] },
     scenarioCodeErrors: { list: "anything" },
     scenarioCodePopulation: { fields: {} },
     evidenceObligations: { fields: {} },

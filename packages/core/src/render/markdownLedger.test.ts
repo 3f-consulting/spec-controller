@@ -43,11 +43,11 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("builds the fixture through the reconciler — the no-evidence-obligation evidence observation is OUT of an evidence obligation", () => {
-    const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
+    const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
       s.qualityCheckReconciliations.filter((o) => o.outcome === "no-evidence-obligation")
     );
     expect(noEvidenceObligation).toHaveLength(2);
-    const scnC = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-C")!;
+    const scnC = balance.claimReconciliations.find((s) => s.scnId === "SCN-C")!;
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "no-evidence-obligation")).toBe(true);
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
   });
@@ -195,9 +195,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         { qualityCheck: "e2e", scnId: "SCN-GHOST", status: "passed" },
       ]
     );
-    expect(phantom.scenarioReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
+    expect(phantom.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
       ["SCN-U", "scenario"],
-      ["SCN-GHOST", "phantom-scenario"],
+      ["SCN-GHOST", "phantom-claim"],
     ]);
     const table = ledgerTable(renderMarkdown(__er(phantom, true, false), ctx));
     expect(table[0]).toBe(headerOf("Unit"));

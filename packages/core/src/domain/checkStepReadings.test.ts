@@ -25,7 +25,7 @@ function reconcile() {
 }
 
 function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, unknown[]][] {
-  return reconciliation.ledger.scenarioReconciliations
+  return reconciliation.ledger.claimReconciliations
     .filter((row) => row.kind === "scenario")
     .map((row) => [
       row.scnId,
@@ -35,8 +35,8 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
 }
 
 function suspenseItemsOf(reconciliation: EvidenceReconciliation) {
-  const row = reconciliation.ledger.scenarioReconciliations.find(
-    (r) => r.kind === "suspense-scenario"
+  const row = reconciliation.ledger.claimReconciliations.find(
+    (r) => r.kind === "unnamed-claim"
   );
   return row?.qualityCheckReconciliations ?? [];
 }
@@ -53,7 +53,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("carries the failed step's verdict on its own observation, because nothing else carries it", () => {
-    const failed = reconcile().ledger.scenarioReconciliations.find(
+    const failed = reconcile().ledger.claimReconciliations.find(
       (row) => row.scnId === "SCN-CVT-002"
     );
     expect(failed?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
@@ -69,7 +69,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   it("stamps the run unsound, carrying for each step it has no reading for a note with the cited code and what the record said", () => {
     const reconciliation = reconcile();
     expect(
-      hasBrokenEvidence({ scenarioReconciliations: reconciliation.ledger.scenarioReconciliations })
+      hasBrokenEvidence({ claimReconciliations: reconciliation.ledger.claimReconciliations })
     ).toBe(true);
     const items = suspenseItemsOf(reconciliation);
     expect(items.map((item) => [item.outcome, item.notes])).toEqual([
@@ -86,8 +86,8 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
-    const suspense = reconcile().ledger.scenarioReconciliations.find(
-      (row) => row.kind === "suspense-scenario"
+    const suspense = reconcile().ledger.claimReconciliations.find(
+      (row) => row.kind === "unnamed-claim"
     );
     expect(
       suspense?.evidenceObservations.map((o) => [

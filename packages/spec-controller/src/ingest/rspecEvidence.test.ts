@@ -13,7 +13,7 @@ describe("[SCN-RSP-001] runReconcile reads a real RSpec report as unit evidence"
       ci: TARGET,
       rspec: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-RSF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -34,7 +34,7 @@ describe("[SCN-RSP-002] runReconcile reads a failing RSpec example as a failing 
       ci: TARGET,
       rspec: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-RSF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -53,7 +53,7 @@ describe("[SCN-RSP-003] runReconcile reads a code in an RSpec example's own desc
     packageJson: `${TARGET}/package.json`,
     ci: TARGET,
     rspec: `${TARGET}/report.json`,
-  }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+  }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
     .find((s) => s.scnId === scnId)
     ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -88,7 +88,7 @@ describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (scnId: string) =>
     balance()
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -101,7 +101,7 @@ describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | ") && line.includes("cases_spec.rb: 2 scenario codes"));
+      .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("cases_spec.rb: 2 scenario codes"));
 
     expect(suspenseRow ?? "").toContain("cases_spec.rb: 2 scenario codes cite SCN-RSF-005, SCN-RSF-006");
   });
@@ -113,7 +113,7 @@ describe("[SCN-RSP-005] runReconcile reads a skipped or pending RSpec example as
     packageJson: `${TARGET}/package.json`,
     ci: TARGET,
     rspec: `${TARGET}/report.json`,
-  }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+  }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
     .find((s) => s.scnId === scnId)
     ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -136,7 +136,7 @@ describe("[SCN-RSP-006] runReconcile reads a pending RSpec example that passes a
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       rspec: `${TARGET}/report.json`,
-    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-RSF-010")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -159,7 +159,7 @@ describe("[SCN-RSP-007] runReconcile reads an RSpec example a failing before hoo
       packageJson: `${TARGET}/package.json`,
       ci: TARGET,
       rspec: `${TARGET}/report.json`,
-    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${TARGET}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -181,19 +181,19 @@ describe("[SCN-RSP-008] runReconcile reads a real RSpec run with a spec file tha
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("posts one broken item, on suspense, naming the file and carrying RSpec's load error", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toBe("tests/fixtures/rspec/project/spec/unloadable_spec.rb");
     expect(broken[0]?.item.message).toContain("While loading ./tests/fixtures/rspec/project/spec/unloadable_spec.rb a `raise SyntaxError` occurred");
   });
 
   it("stamps the run unsound, though the other file's examples ran", () => {
     const ledger = balance().ledger;
-    const unit = ledger.scenarioReconciliations
+    const unit = ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-RSF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 

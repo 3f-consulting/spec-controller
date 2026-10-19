@@ -8,16 +8,18 @@ tokens:
 exceptions:
   # The keys of the published report, which a reader of spec-reconciliation.json reads.
   - byOutcome
+  - claimReconciliations
   - evidenceObligations
   - evidenceObservations
   - excludedOccurrences
   - featureNames
   - fitnessFunctions
   - missingByQualityCheck
-  - onPhantomScenario
+  - onPhantomClaim
   - onScenario
-  - onSuspenseScenario
+  - onUnnamedClaim
   - outOfBalance
+  - phantomClaim
   - qualityCheck
   - qualityCheckReconciliations
   - rawByBehaviouralQualityCheck
@@ -26,11 +28,11 @@ exceptions:
   - runProvenance
   - scenarioCodeErrors
   - scenarioCodePopulation
-  - scenarioReconciliations
   - scnId
   - sourceSha
   - testVolume
   - uncitedFitnessFunctionCount
+  - unnamedClaim
   - untaggedScenarios
   # The keys an adopter writes in package.json; checkRegistry and staticChecks are the retired ones the report names as not read.
   - specController

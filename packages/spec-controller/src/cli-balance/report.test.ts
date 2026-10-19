@@ -46,7 +46,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     }
 
     const report = JSON.parse(readFileSync(reportPath, "utf8"));
-    const integrationRow = report.ledger.scenarioReconciliations.find(
+    const integrationRow = report.ledger.claimReconciliations.find(
       (row: { scnId: string }) => row.scnId === "SCN-TGT-002",
     );
     expect({ inputs: report.runProvenance.inputs, observations: integrationRow?.evidenceObservations }).toEqual({

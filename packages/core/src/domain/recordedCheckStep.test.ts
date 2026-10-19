@@ -17,7 +17,7 @@ const citingStep: FitnessEvidenceObservation = {
 
 function rowWith(recordedStep: string) {
   const observations = fitnessObservationsOf([citingStep], [{ citedScn: recordedStep, report: "succeeded" }]);
-  return evidenceReconciliationOf(scenarios, observations, [], false, true).ledger.scenarioReconciliations.find(
+  return evidenceReconciliationOf(scenarios, observations, [], false, true).ledger.claimReconciliations.find(
     (row) => row.scnId === "SCN-AAA-001"
   );
 }

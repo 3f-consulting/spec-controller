@@ -23,7 +23,7 @@ describe("[SCN-PND-004] a named-pending obligation reconciles as a one-sided Pen
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-004");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-004");
 
     expect(scenario?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PND-004", status: "passed" } },
@@ -46,11 +46,11 @@ describe("[SCN-PND-005] the pending deferral governs even when a matching observ
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-005");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-005");
 
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
     expect(scenario?.qualityCheckReconciliations.some((r) => r.outcome === "satisfied")).toBe(false);
-    const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
+    const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
       s.reconcilingItems.filter((r) => r.outcome === "no-evidence-obligation")
     );
     expect(noEvidenceObligation).toEqual([{ qualityCheck: "integration", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-PND-005", status: "passed" } }]);
@@ -59,7 +59,7 @@ describe("[SCN-PND-005] the pending deferral governs even when a matching observ
       { qualityCheck: "integration", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-PND-005", status: "passed" } },
     ]);
     expect(isBalanced(balance)).toBe(false);
-    expect(balance.scenarioReconciliations.every((s) => s.kind === "scenario")).toBe(true);
+    expect(balance.claimReconciliations.every((s) => s.kind === "scenario")).toBe(true);
   });
 });
 
@@ -75,7 +75,7 @@ describe("[SCN-PND-006] a Pending Item is not a Reconciling Item — a structura
       },
     ];
     const balance = reconcile(scenarios, []);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-006");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-006");
 
     expect(scenario?.reconcilingItems).toEqual([
       { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
@@ -106,7 +106,7 @@ describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has ve
       { qualityCheck: "unit", scnId: "SCN-PND-007", status: "passed" },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-007");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-007");
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
@@ -130,7 +130,7 @@ describe("[SCN-PND-009] a @unit @integrationpending scenario with a passing unit
       { qualityCheck: "unit", scnId: "SCN-PND-009", status: "passed" },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-009");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-009");
 
     expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PND-009", status: "passed" } }]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
@@ -159,7 +159,7 @@ describe("[SCN-PND-014] an undefined step with no pending deferral is reported o
     expect(observations).toEqual([]);
 
     const balance = reconcile(scenarios, observations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-014");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-PND-014");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([

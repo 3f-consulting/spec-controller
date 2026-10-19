@@ -2,15 +2,15 @@ import type { BehaviouralQualityCheck, BehaviouralEvidenceObservation, Observati
 import { isFitnessObservation } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 
-interface SuspenseRemark {
+interface UnnamedClaimRemark {
   readonly message?: string;
   readonly notes?: readonly ObservationNote[];
 }
 
-export interface SuspenseFileGroup {
+export interface UnnamedClaimFileGroup {
   readonly qualityCheck: BehaviouralQualityCheck;
   readonly locator: string | undefined;
-  readonly remarks: readonly SuspenseRemark[];
+  readonly remarks: readonly UnnamedClaimRemark[];
   readonly ran: number;
   readonly passed: number;
   readonly failed: number;
@@ -24,11 +24,11 @@ interface FileGroupedItem {
   readonly evidenceObservation: BehaviouralEvidenceObservation;
 }
 
-interface SuspenseStepsGroup {
+interface UnnamedClaimStepsGroup {
   readonly names: readonly string[];
 }
 
-export type SuspenseGroup = SuspenseFileGroup | SuspenseStepsGroup;
+export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
 
 function isFileGrouped(item: QualityCheckReconciliation): boolean {
   return item.evidenceObservation !== undefined && !isFitnessObservation(item.evidenceObservation);
@@ -38,7 +38,7 @@ function keyOf(item: FileGroupedItem): string {
   return JSON.stringify([item.evidenceObservation.qualityCheck, item.locator ?? null]);
 }
 
-function remarksOf(items: readonly FileGroupedItem[]): SuspenseRemark[] {
+function remarksOf(items: readonly FileGroupedItem[]): UnnamedClaimRemark[] {
   return items.flatMap(({ message, notes }) =>
     message === undefined && notes === undefined
       ? []
@@ -46,7 +46,7 @@ function remarksOf(items: readonly FileGroupedItem[]): SuspenseRemark[] {
   );
 }
 
-function groupOf(items: readonly FileGroupedItem[]): SuspenseFileGroup {
+function groupOf(items: readonly FileGroupedItem[]): UnnamedClaimFileGroup {
   const [first] = items as [FileGroupedItem, ...FileGroupedItem[]];
   const passed = items.filter((item) => item.evidenceObservation.status === "passed").length;
   return {
@@ -62,14 +62,14 @@ function groupOf(items: readonly FileGroupedItem[]): SuspenseFileGroup {
   };
 }
 
-function stepsGroupOf(items: readonly QualityCheckReconciliation[]): SuspenseStepsGroup[] {
+function stepsGroupOf(items: readonly QualityCheckReconciliation[]): UnnamedClaimStepsGroup[] {
   const names = items.flatMap(({ evidenceObservation: o }) =>
     o !== undefined && isFitnessObservation(o) ? [o.fitnessFunction] : []
   );
   return names.length === 0 ? [] : [{ names }];
 }
 
-export function suspenseGroupsOf(items: readonly QualityCheckReconciliation[]): SuspenseGroup[] {
+export function unnamedClaimGroupsOf(items: readonly QualityCheckReconciliation[]): UnnamedClaimGroup[] {
   const byFile = new Map<string, FileGroupedItem[]>();
   for (const item of items.filter(isFileGrouped) as FileGroupedItem[]) {
     const key = keyOf(item);

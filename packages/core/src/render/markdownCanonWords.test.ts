@@ -5,7 +5,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 
-describe("[SCN-RPT-039] the markdown counts phantom-scenario and suspense-scenario rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
+describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
   const proven = { scnId: "SCN-CWD-001", evidenceObligations: [{ qualityCheck: "unit" as const }] };
   const provenObservation = { qualityCheck: "unit" as const, scnId: "SCN-CWD-001", status: "passed" as const };
   const strandedObservation = { qualityCheck: "unit" as const, scnId: "SCN-GONE-001", status: "passed" as const };
@@ -16,7 +16,7 @@ describe("[SCN-RPT-039] the markdown counts phantom-scenario and suspense-scenar
     const md = renderMarkdown(__er(unbalanced()), ctx);
     expect(md).toContain("- 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.\n");
     expect(md).toContain(
-      '- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(no scenario)".\n'
+      '- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".\n'
     );
   });
 
@@ -44,14 +44,14 @@ describe("[SCN-RPT-039] the markdown counts phantom-scenario and suspense-scenar
     expect(md).toContain(`every Scenario Reconciliation balances: every ${OUTCOME_DESCRIPTION.satisfied}.`);
   });
 
-  it("keeps the terms phantom-scenario and suspense-scenario as the JSON's row kinds", () => {
+  it("keeps the terms phantom-claim and unnamed-claim as the JSON's row kinds", () => {
     const json = JSON.parse(renderJson(__er(unbalanced()), ctx)) as {
-      ledger: { scenarioReconciliations: { kind: string }[] };
+      ledger: { claimReconciliations: { kind: string }[] };
     };
-    expect(json.ledger.scenarioReconciliations.map((row) => row.kind)).toEqual([
+    expect(json.ledger.claimReconciliations.map((row) => row.kind)).toEqual([
       "scenario",
-      "phantom-scenario",
-      "suspense-scenario",
+      "phantom-claim",
+      "unnamed-claim",
     ]);
   });
 });

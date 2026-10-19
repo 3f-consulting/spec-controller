@@ -690,7 +690,7 @@ Then("the uncited evidence observations are posted to the suspense reconciliatio
   const { summary } = JSON.parse(readFileSync(uncitedJsonPath, "utf8"));
   const { testVolume } = summary;
   assert.deepEqual(
-    [testVolume.totalEvidenceObservations, testVolume.onScenario, testVolume.onPhantomScenario, testVolume.onSuspenseScenario],
+    [testVolume.totalEvidenceObservations, testVolume.onScenario, testVolume.onPhantomClaim, testVolume.onUnnamedClaim],
     [2, 0, 0, 2],
     `expected both uncited evidence observations on the suspense scenario and none anywhere else; got: ${JSON.stringify(testVolume)}`,
   );

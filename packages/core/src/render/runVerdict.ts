@@ -75,7 +75,7 @@ function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeEr
 }
 
 export const runVerdictSection = (report: RenderInput): string[] => {
-  const reconciliation = { scenarioReconciliations: report.ledger.scenarioReconciliations };
+  const reconciliation = { claimReconciliations: report.ledger.claimReconciliations };
   const code = verdictCode({
     ledger: reconciliation,
     scenarioCodeErrors: report.scenarioCodeErrors,

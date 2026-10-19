@@ -65,7 +65,7 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
 
     const balance = runReconcile({ features, packageJson, ci }, resolveTargetRoot({ features }));
 
-    expect(balance.ledger.scenarioReconciliations).toEqual([]);
+    expect(balance.ledger.claimReconciliations).toEqual([]);
   });
 });
 

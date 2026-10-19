@@ -55,7 +55,7 @@ const NO_OBLIGATION_PASSED_TEST = "tests/fixtures/no-obligation-status/sound.tes
 
 let args: string[] = [];
 let report = "";
-let savedJson: { ledger: { scenarioReconciliations: { evidenceObservations: Record<string, unknown>[] }[] } };
+let savedJson: { ledger: { claimReconciliations: { evidenceObservations: Record<string, unknown>[] }[] } };
 
 function rowItemFor(rowName: string, locator: string): string {
   const row = report.split("\n").find((line) => line.startsWith(`| ${rowName} |`));
@@ -66,7 +66,7 @@ function rowItemFor(rowName: string, locator: string): string {
 }
 
 function suspenseItems(): string[] {
-  const row = report.split("\n").find((line) => line.startsWith("| (no scenario) |"));
+  const row = report.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
   assert.ok(row, `expected a suspense row in the report; got:\n${report}`);
   return row.replace(/ \|$/, "").split(" | ").at(-1)!.split("; ");
 }
@@ -266,7 +266,7 @@ Then("the scenario's row shows the test that passed as passed", function () {
 });
 
 function savedObservationAt(locator: string, status: string): Record<string, unknown> {
-  const observations = savedJson.ledger.scenarioReconciliations.flatMap((row) => row.evidenceObservations);
+  const observations = savedJson.ledger.claimReconciliations.flatMap((row) => row.evidenceObservations);
   const found = observations.find((o) => o["locator"] === locator && o["status"] === status);
   assert.ok(found, `expected the JSON report to carry a ${status} evidence observation at ${locator}`);
   return found;

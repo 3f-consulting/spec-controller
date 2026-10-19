@@ -42,13 +42,13 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     );
   });
 
-  it("materialises the test-volume totals (onScenario excludes onPhantomScenario)", () => {
+  it("materialises the test-volume totals (onScenario excludes onPhantomClaim)", () => {
     const report = assembleRenderInput(__er(rmd005Balance, true, false), ctx);
     expect(report.summary.testVolume).toEqual({
       totalEvidenceObservations: 6,
       onScenario: 4,
-      onPhantomScenario: 1,
-      onSuspenseScenario: 1,
+      onPhantomClaim: 1,
+      onUnnamedClaim: 1,
     });
   });
 
@@ -68,7 +68,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
-    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
+    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomClaim: 1, onUnnamedClaim: 1 });
     expect(parsed.summary.fitnessFunctions).toEqual({ runningFitnessFunctionCount: 3, uncitedFitnessFunctionCount: 1 });
     expect(parsed.summary.fitness).toEqual({ satisfied: 1, total: 2 });
   });
@@ -116,7 +116,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
   const report = () =>
     JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [])), ctx))) as {
       ledger: {
-        scenarioReconciliations: Array<{
+        claimReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;
           reconcilingItems: Array<Record<string, unknown>>;
         }>;
@@ -126,7 +126,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 
   it("carries a fitness sub-row's qualityCheck as 'fitness', naming no characteristic", () => {
     const r = report();
-    const fitness = r.ledger.scenarioReconciliations
+    const fitness = r.ledger.claimReconciliations
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "fitness");
     expect(fitness).toBeDefined();

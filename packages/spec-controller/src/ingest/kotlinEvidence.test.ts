@@ -11,7 +11,7 @@ describe("[SCN-KOT-001] runReconcile reads the directory of reports Gradle wrote
       packageJson: `${KOTLIN}/package.json`,
       ci: KOTLIN,
       junit: `${KOTLIN}/test-results`,
-    }, resolveTargetRoot({ features: `${KOTLIN}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${KOTLIN}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-KOF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 

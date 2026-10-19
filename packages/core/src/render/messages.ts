@@ -1,5 +1,5 @@
 import { QualityCheckFaultCode, type QualityCheckFault } from "../domain/qualityCheckFault.js";
-import { SUSPENSE_SCENARIO_ID } from "../domain/scenarioReconciliation.js";
+import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
 export type QualityCheckFaultMessages = {
   readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { readonly code: C }>) => string;
@@ -208,7 +208,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: [alsoOutOfBalance: string];
   readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
-  readonly [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomScenario: number, onSuspenseScenario: number];
+  readonly [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessFunctionsCounts]: [running: number, uncited: number];
   readonly [CoreMessage.RunnerTierNamesNone]: [tier: string];
   readonly [CoreMessage.RunnerTierUnnamed]: [tier: string];
@@ -394,8 +394,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PendingTally]: (pending) =>
     `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.TestVolumeHeading]: "### Test volume",
-  [CoreMessage.TestVolumeSum]: (total, onScenario, onPhantomScenario, onSuspenseScenario) =>
-    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomScenario} on ${CITED_WITH_NO_SCENARIO} + ${onSuspenseScenario} citing no scenario.`,
+  [CoreMessage.TestVolumeSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
+    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
   [CoreMessage.TestVolumeTableHeader]: "| Quality-check | Evidence observations |",
   [CoreMessage.DiscoveryScopeHeading]: "### Discovery scope",
   [CoreMessage.DiscoveryScopeTableHeader]: "| Workflow | Job | Steps read | Candidates |",
@@ -441,7 +441,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PhantomScenarioTally]: (count) =>
     `${count} Scenario Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
   [CoreMessage.SuspenseScenarioTally]: (count) =>
-    `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${SUSPENSE_SCENARIO_ID}".`,
+    `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>

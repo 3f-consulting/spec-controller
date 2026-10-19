@@ -57,7 +57,7 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
 describe("[SCN-CLI-019] hasNothingToReconcile — the whole-run predicate for a ledger with no accounts", () => {
   it("is true for the ledger reconcile() emits over a target that carried no scenario and produced nothing", () => {
     const empty = reconcile([], []);
-    expect(empty.scenarioReconciliations).toEqual([]);
+    expect(empty.claimReconciliations).toEqual([]);
     expect(hasNothingToReconcile(empty)).toBe(true);
   });
 });

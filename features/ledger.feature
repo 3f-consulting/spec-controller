@@ -48,35 +48,35 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-004
     Scenario: a multi-evidence obligation scenario failing one level and missing another lists both reconciling items
 
-  Rule: an evidence observation citing a scenario no feature carries is a phantom-scenario reconciliation
+  Rule: an evidence observation citing a scenario no feature carries is a phantom claim's reconciliation
 
     The bidirectional reconciler consumes evidence observations,
     not just evidence obligations. An evidence observation citing an @SCN id that NO feature carries
-    posts to no real scenario — it lands on a PHANTOM scenario
+    posts to no real scenario — it lands on a PHANTOM claim
     (posting to a non-existent account). Each
-    phantom cited id becomes ONE phantom-scenario Scenario Reconciliation, its
+    phantom cited id becomes ONE phantom claim's Claim Reconciliation, its
     Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
     evidence observation's locator as the where-to-fix), verdict always out of balance.
 
     @unit @SCN-LDG-006
-    Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom-scenario reconciliation, out of balance
+    Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom claim's reconciliation, out of balance
 
     @unit @SCN-LDG-034
     Scenario: a phantom row's item carries the keys its evidence observation has a value for and omits the rest
 
-  Rule: an evidence observation citing no scenario is a suspense-scenario reconciliation
+  Rule: an evidence observation citing no scenario is the unnamed claim's reconciliation
 
     The bidirectional reconciler also consumes evidence observations that cite NO scenario at
-    all — a behavioural result carrying no @SCN anchor, or a CI fitness function no scenario cites
-    (ruling Q4). An evidence observation that posts to no scenario lands on the SUSPENSE scenario
+    all — a behavioural result carrying no @SCN anchor, or a CI fitness function no scenario cites.
+    An evidence observation that posts to no scenario lands on the UNNAMED claim
     (a suspense account holds postings that match no
-    real account). ALL uncited evidence observations aggregate into ONE suspense-scenario Scenario
-    Reconciliation, sentinel id "(no scenario)", each Quality Check Reconciliation carrying
+    real account). ALL uncited evidence observations aggregate into ONE unnamed claim's Claim
+    Reconciliation, sentinel id "(unnamed claim)", each Quality Check Reconciliation carrying
     the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
     verdict always out of balance. Every uncited evidence observation is listed on this row.
 
     @unit @SCN-LDG-007
-    Scenario: an evidence observation citing no scenario is reported as a suspense-scenario reconciliation, out of balance
+    Scenario: an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance
 
   Rule: an evidence observation at a quality-check the scenario never raised is no-evidence-obligation
 

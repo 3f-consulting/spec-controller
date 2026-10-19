@@ -20,7 +20,7 @@ describe("[SCN-RMD-010] the JSON report carries each test's name on its evidence
       ),
     ];
     const json = JSON.parse(renderJson(__er(reconcile([], observations)), ctx));
-    const saved = json.ledger.scenarioReconciliations.flatMap((row: { evidenceObservations: unknown[] }) => row.evidenceObservations);
+    const saved = json.ledger.claimReconciliations.flatMap((row: { evidenceObservations: unknown[] }) => row.evidenceObservations);
 
     expect(saved.map((o: { locator: string; testName?: string }) => [o.locator, o.testName])).toEqual([
       ["a.test.ts", "spawns yarn"],

@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
-describe("[SCN-LDG-007] an evidence observation citing no scenario is reported as a suspense-scenario reconciliation, out of balance", () => {
+describe("[SCN-LDG-007] an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   ];
@@ -18,14 +18,14 @@ describe("[SCN-LDG-007] an evidence observation citing no scenario is reported a
     { qualityCheck: "integration", scnId: null, status: "passed", locator: "features/orphan-b.feature" },
     { qualityCheck: "e2e", scnId: null, status: "failed", locator: "tests/orphan-c.e2e.ts" },
   ];
-  const reconciled = () => reconcile(scenarios, [cited, ...uncited]).scenarioReconciliations;
+  const reconciled = () => reconcile(scenarios, [cited, ...uncited]).claimReconciliations;
   const suspenseRowsOf = (rows: ReturnType<typeof reconciled>) =>
-    rows.filter((r) => r.kind === "suspense-scenario");
+    rows.filter((r) => r.kind === "unnamed-claim");
 
-  it("aggregates every uncited evidence observation into exactly one suspense-scenario row, under the sentinel id", () => {
+  it("aggregates every uncited evidence observation into exactly one unnamed-claim row, under the sentinel id", () => {
     const suspenseRows = suspenseRowsOf(reconciled());
     expect(suspenseRows).toHaveLength(1);
-    expect(suspenseRows[0]!.scnId).toBe("(no scenario)");
+    expect(suspenseRows[0]!.scnId).toBe("(unnamed claim)");
   });
 
   it("gives each uncited evidence observation a cites-no-scenario item carrying its locator", () => {

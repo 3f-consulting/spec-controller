@@ -60,8 +60,8 @@ describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence 
     expect(reconciliation.summary.testVolume).toStrictEqual({
       totalEvidenceObservations: 6,
       onScenario: 3,
-      onPhantomScenario: 1,
-      onSuspenseScenario: 2,
+      onPhantomClaim: 1,
+      onUnnamedClaim: 2,
     });
     expect(section(linesOf(reconciliation))).toStrictEqual([
       heading,

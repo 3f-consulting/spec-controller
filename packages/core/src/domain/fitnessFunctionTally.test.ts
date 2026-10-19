@@ -9,7 +9,7 @@ import type {
   EvidenceObservation,
   Ledger,
   Scenario,
-  ScenarioReconciliation,
+  ClaimReconciliation,
 } from "../model.js";
 
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
@@ -56,8 +56,8 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
 });
 
 describe("[SCN-USG-001] a fitness function no scenario cites is banked on the suspense row and counted uncited", () => {
-  const rowFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+  const rowFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.scnId === scnId);
 
   const pkg: PackageJsonScripts = {
     scripts: {
@@ -110,7 +110,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the su
   });
 
   it("banks the uncited evidence observation on the suspense row as cites-no-scenario, naming the handle that ran", () => {
-    expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
+    expect(rowFor(ledger, "(unnamed claim)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:bar",

@@ -13,7 +13,7 @@ describe("[SCN-JST-001] runReconcile reads a real Jest report as unit evidence",
       ci: TARGET,
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JSF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -34,7 +34,7 @@ describe("[SCN-JST-002] runReconcile reads a failing Jest test as a failing unit
       ci: TARGET,
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JSF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -55,7 +55,7 @@ describe("[SCN-JST-003] runReconcile reads a code in a Jest test's own title bef
     jest: `${TARGET}/report.json`,
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (ledger: ReturnType<typeof balance>["ledger"], scnId: string) =>
-    ledger.scenarioReconciliations
+    ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -90,7 +90,7 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (scnId: string) =>
     balance()
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -103,7 +103,7 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | ") && line.includes("cases.test.js: 2 scenario codes"));
+      .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("cases.test.js: 2 scenario codes"));
 
     expect(suspenseRow ?? "").toContain("cases.test.js: 2 scenario codes cite SCN-JSF-005, SCN-JSF-006");
   });
@@ -117,7 +117,7 @@ describe("[SCN-JST-005] runReconcile posts no evidence observation for a todo or
       ci: TARGET,
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }))
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -138,7 +138,7 @@ describe("[SCN-JST-006] runReconcile reads a Jest test under a failing beforeAll
       ci: TARGET,
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unit = balance.ledger.scenarioReconciliations
+    const unit = balance.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JSF-009")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -162,12 +162,12 @@ describe("[SCN-JST-007] runReconcile reads a Jest test file that failed to run a
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
   it("posts one broken item, on suspense, naming the file and carrying the error that stopped it", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toMatch(/tests\/fixtures\/jest\/project\/unloadable\.test\.js$/);
     expect(broken[0]?.item.message).toContain("Test suite failed to run");
     expect(broken[0]?.item.message).toContain("the test file could not be loaded");

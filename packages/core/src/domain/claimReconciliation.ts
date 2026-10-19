@@ -8,16 +8,16 @@ import { evidenceObligationsOf } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation } from "./qualityCheckReconciliation.js";
 
-export type ScenarioVerdict = "balanced" | "out-of-balance";
+export type Verdict = "balanced" | "out-of-balance";
 
-export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario";
+export type ClaimKind = "scenario" | "phantom-claim" | "unnamed-claim";
 
-export const SUSPENSE_SCENARIO_ID = "(no scenario)";
+export const UNNAMED_CLAIM_ID = "(unnamed claim)";
 
-export interface ScenarioReconciliation {
+export interface ClaimReconciliation {
   readonly scnId: string;
-  readonly kind: ScenarioKind;
-  readonly verdict: ScenarioVerdict;
+  readonly kind: ClaimKind;
+  readonly verdict: Verdict;
   readonly evidenceObservations: readonly EvidenceObservation[];
   readonly evidenceObligations: readonly EvidenceObligation[];
   readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
@@ -25,7 +25,7 @@ export interface ScenarioReconciliation {
   readonly pendingItems: readonly PendingItem[];
 }
 
-export function verdictFor(evidenceObligations: QualityCheckReconciliation[]): ScenarioVerdict {
+export function verdictFor(evidenceObligations: QualityCheckReconciliation[]): Verdict {
   return reconcilingItemsOf(evidenceObligations).length === 0 ? "balanced" : "out-of-balance";
 }
 
@@ -35,48 +35,48 @@ export function reconcilingItemsOf(
   return evidenceObligations.filter((r) => r.outcome !== "satisfied");
 }
 
-export function isScenario(row: ScenarioReconciliation): boolean {
+export function isScenario(row: ClaimReconciliation): boolean {
   return row.kind === "scenario";
 }
 
-export function isPhantomScenario(row: ScenarioReconciliation): boolean {
-  return row.kind === "phantom-scenario";
+export function isPhantomClaim(row: ClaimReconciliation): boolean {
+  return row.kind === "phantom-claim";
 }
 
-export function isSuspenseScenario(row: ScenarioReconciliation): boolean {
-  return row.kind === "suspense-scenario";
+export function isUnnamedClaim(row: ClaimReconciliation): boolean {
+  return row.kind === "unnamed-claim";
 }
 
-export function isOutOfBalance(row: ScenarioReconciliation): boolean {
+export function isOutOfBalance(row: ClaimReconciliation): boolean {
   return row.verdict === "out-of-balance";
 }
 
-export function outOfBalanceCountOf(rows: readonly ScenarioReconciliation[]): number {
+export function outOfBalanceCountOf(rows: readonly ClaimReconciliation[]): number {
   return rows.filter(isOutOfBalance).length;
 }
 
-export function carriesNoScnCode(row: ScenarioReconciliation): boolean {
+export function carriesNoScnCode(row: ClaimReconciliation): boolean {
   return row.reconcilingItems.some((item) => item.outcome === "no-scn-code");
 }
 
 export function fitnessFunctionReconciliationsOf(
-  row: ScenarioReconciliation
+  row: ClaimReconciliation
 ): QualityCheckReconciliation[] {
   return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "fitness");
 }
 
-export function carriesQualityCheck(row: ScenarioReconciliation, qualityCheck: QualityCheck): boolean {
+export function carriesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
   return (
     row.qualityCheckReconciliations.some((r) => r.qualityCheck === qualityCheck) ||
     row.evidenceObservations.some((o) => o.qualityCheck === qualityCheck)
   );
 }
 
-export function namesQualityCheck(row: ScenarioReconciliation, qualityCheck: QualityCheck): boolean {
+export function namesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
   return evidenceObligationsOf(row.evidenceObligations).some((o) => o.qualityCheck === qualityCheck);
 }
 
-export function observationCountOf(row: ScenarioReconciliation, qualityCheck: QualityCheck): number {
+export function observationCountOf(row: ClaimReconciliation, qualityCheck: QualityCheck): number {
   return row.evidenceObservations.filter((o) => o.qualityCheck === qualityCheck).length;
 }
 

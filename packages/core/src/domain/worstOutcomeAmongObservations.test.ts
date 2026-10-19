@@ -68,7 +68,7 @@ function readsAlone(observation: EvidenceObservation): Outcome {
 
 function itemOf(arm: Arm, observations: EvidenceObservation[]) {
   const rows: Scenario[] = [{ scnId: SCN, evidenceObligations: [arm.obligation] }];
-  const row = reconcile(rows, observations).scenarioReconciliations.find((r) => r.scnId === SCN)!;
+  const row = reconcile(rows, observations).claimReconciliations.find((r) => r.scnId === SCN)!;
   return row.qualityCheckReconciliations.find(
     (i) => i.qualityCheck === arm.obligation.qualityCheck
   )!;

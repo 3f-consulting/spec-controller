@@ -5,7 +5,7 @@ import type { RenderInput } from "../domain/renderInput.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 
 export type {
-  ScenarioReconciliationTotals,
+  ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   MissingByQualityCheck,
   FitnessTally,

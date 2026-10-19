@@ -12,7 +12,7 @@ describe("[SCN-JAV-010] runReconcile reads a single Surefire report file whose r
       packageJson: `${SINGLE_REPORT}/package.json`,
       ci: SINGLE_REPORT,
       junit: `${SINGLE_REPORT}/report.xml`,
-    }, resolveTargetRoot({ features: `${SINGLE_REPORT}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${SINGLE_REPORT}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-AAA-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -33,7 +33,7 @@ describe("[SCN-JAV-001] runReconcile reads the directory of reports Maven Surefi
       packageJson: `${JAVA}/package.json`,
       ci: JAVA,
       junit: `${JAVA}/surefire-reports`,
-    }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JVF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -52,7 +52,7 @@ describe("[SCN-JAV-002] runReconcile reads a failing JUnit 5 test in the directo
       packageJson: `${JAVA}/package.json`,
       ci: JAVA,
       junit: `${JAVA}/surefire-reports`,
-    }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.scenarioReconciliations
+    }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JVF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -73,7 +73,7 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
   }, resolveTargetRoot({ features: `${JAVA}/features` }));
   const unitOf = (scnId: string) =>
     balance()
-      .ledger.scenarioReconciliations
+      .ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -86,7 +86,7 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
     const ctx: RunContext = { target: JAVA, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const suspenseRow = renderMarkdown(balance(), ctx)
       .split("\n")
-      .find((line) => line.startsWith("| (no scenario) | "));
+      .find((line) => line.startsWith("| (unnamed claim) | "));
 
     expect(suspenseRow ?? "").toContain(
       "example.CitedTest::[SCN-JVF-005] [SCN-JVF-006] a test that cites two scenarios: 2 scenario codes cite SCN-JVF-005, SCN-JVF-006",
@@ -100,7 +100,7 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
     packageJson: `${JAVA}/package.json`,
     ci: JAVA,
     junit: `${JAVA}/surefire-reports`,
-  }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.scenarioReconciliations
+  }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
     .find((s) => s.scnId === "SCN-JVF-007");
 
   it("posts one passing observation per invocation, each citing that scenario and located at its own invocation", () => {
@@ -137,7 +137,7 @@ describe("[SCN-JAV-007] runReconcile posts no evidence observation for a disable
     ["a disabled test", "SCN-JVF-008"],
     ["a test whose assumption fails", "SCN-JVF-009"],
   ])("leaves the scenario %s cites missing, with no observation", (_, scnId) => {
-    const unit = balance().ledger.scenarioReconciliations
+    const unit = balance().ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -169,7 +169,7 @@ describe("[SCN-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
       "example.BeforeEachFailsTest::[SCN-JVF-011] a test whose setup before each test throws cites its scenario",
     ],
   ])("reconciles the scenario %s cites as failing, by that test", (_, scnId, locator) => {
-    const unit = balance().ledger.scenarioReconciliations
+    const unit = balance().ledger.claimReconciliations
       .find((s) => s.scnId === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
@@ -179,7 +179,7 @@ describe("[SCN-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
   });
 
   it("posts no broken item for either test", () => {
-    const brokenLocators = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const brokenLocators = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => item.locator)
     );
 
@@ -196,18 +196,18 @@ describe("[SCN-JAV-009] runReconcile reads a JUnit 5 class whose setup before al
   }, resolveTargetRoot({ features: `${JAVA}/features` }));
 
   it("posts one broken item, on suspense, naming the class and carrying the error that stopped it", () => {
-    const broken = balance().ledger.scenarioReconciliations.flatMap((row) =>
+    const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("suspense-scenario");
+    expect(broken[0]?.kind).toBe("unnamed-claim");
     expect(broken[0]?.item.locator).toBe("example.BeforeAllFailsTest");
     expect(broken[0]?.item.message).toContain("the shared resource could not be set up");
   });
 
   it("reads the scenario the class's test cites as missing", () => {
-    const unit = balance().ledger.scenarioReconciliations
+    const unit = balance().ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-JVF-012")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 

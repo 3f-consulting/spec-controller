@@ -23,7 +23,7 @@ function rowCells(md: string, rowName: string): string[] {
 }
 
 function suspenseItemsOf(md: string): string[] {
-  return rowCells(md, "(no scenario)").at(-1)!.split("; ");
+  return rowCells(md, "(unnamed claim)").at(-1)!.split("; ");
 }
 
 function unit(status: "passed" | "failed", locator: string | undefined, message?: string): BehaviouralEvidenceObservation {
@@ -81,7 +81,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the suspense 
     const cell = rowCells(reportOf([
       unit("passed", "src/a.test.ts"),
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
-    ]), "(no scenario)").at(-1);
+    ]), "(unnamed claim)").at(-1);
     expect(cell).toBe(
       `unit 💥 ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
         `unit ${UNCITED} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`
@@ -126,7 +126,7 @@ describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together 
       step("lint:uncited"),
       unit("passed", "src/a.test.ts"),
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
-    ]), "(no scenario)").at(-1);
+    ]), "(unnamed claim)").at(-1);
     expect(cell).toBe(
       `unit 💥 ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
         `unit ${UNCITED} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness ${UNCITED} — 1 CI step: lint:uncited`

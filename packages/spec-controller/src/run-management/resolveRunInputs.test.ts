@@ -377,7 +377,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
         ci: target,
         vitest: join(target, "vitest.json"),
       }, resolveTargetRoot({ features: join(target, "features") }));
-      const scenario = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-WGT-001");
+      const scenario = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-WGT-001");
 
       expect(scenario?.evidenceObservations).toEqual([
         { qualityCheck: "unit", scnId: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[SCN-WGT-001] the widget is proven works" },

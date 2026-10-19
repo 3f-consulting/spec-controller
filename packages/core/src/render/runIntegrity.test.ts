@@ -63,7 +63,7 @@ function suspenseCell(md: string): string {
   const lines = md.split("\n");
   const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
   expect(header).toBeGreaterThanOrEqual(0);
-  const rows = lines.slice(header + 2).filter((line) => line.startsWith("| (no scenario) | "));
+  const rows = lines.slice(header + 2).filter((line) => line.startsWith("| (unnamed claim) | "));
   expect(rows).toHaveLength(1);
   return rows[0]!.slice(2, -2).split(" | ")[2]!;
 }

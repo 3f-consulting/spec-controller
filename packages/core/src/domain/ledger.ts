@@ -1,21 +1,21 @@
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
-import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
-import { fitnessFunctionReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
+import type { ClaimReconciliation } from "./claimReconciliation.js";
+import { fitnessFunctionReconciliationsOf, isScenario } from "./claimReconciliation.js";
 import type { BehaviouralQualityCheck } from "./journal.js";
 import { QUALITY_CHECKS } from "./journal.js";
 
 export interface Ledger {
-  readonly scenarioReconciliations: readonly ScenarioReconciliation[];
+  readonly claimReconciliations: readonly ClaimReconciliation[];
 }
 
 export function isBalanced(ledger: Ledger): boolean {
-  return ledger.scenarioReconciliations.every(
+  return ledger.claimReconciliations.every(
     (row) => row.reconcilingItems.length === 0
   );
 }
 
 export function hasPendingItems(ledger: Ledger): boolean {
-  return ledger.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
+  return ledger.claimReconciliations.some((row) => row.pendingItems.length > 0);
 }
 
 export function hasBrokenEvidence(ledger: Ledger): boolean {
@@ -23,11 +23,11 @@ export function hasBrokenEvidence(ledger: Ledger): boolean {
 }
 
 export function hasNothingToReconcile(ledger: Ledger): boolean {
-  return ledger.scenarioReconciliations.length === 0;
+  return ledger.claimReconciliations.length === 0;
 }
 
 export function brokenItemsOf(ledger: Ledger): QualityCheckReconciliation[] {
-  return ledger.scenarioReconciliations.flatMap((row) =>
+  return ledger.claimReconciliations.flatMap((row) =>
     row.reconcilingItems.filter((item) => item.outcome === "broken")
   );
 }
@@ -35,19 +35,19 @@ export function brokenItemsOf(ledger: Ledger): QualityCheckReconciliation[] {
 export function fitnessReconciliationsOf(
   ledger: Ledger
 ): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
-  return ledger.scenarioReconciliations
+  return ledger.claimReconciliations
     .filter(isScenario)
     .flatMap((row) =>
       fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
     );
 }
 
-export interface ScenarioReconciliationTotals {
+export interface ClaimReconciliationTotals {
   readonly total: number;
   readonly balanced: number;
   readonly outOfBalance: number;
-  readonly phantom: number;
-  readonly suspense: number;
+  readonly phantomClaim: number;
+  readonly unnamedClaim: number;
 }
 
 export interface MissingByQualityCheck {
@@ -68,44 +68,44 @@ export interface FitnessTally {
 }
 
 export interface LedgerTally {
-  readonly scenarioReconciliations: ScenarioReconciliationTotals;
+  readonly claimReconciliations: ClaimReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
   readonly fitness: FitnessTally;
 }
 
 export function ledgerTally(ledger: Ledger): LedgerTally {
-  const { scenarioReconciliations, pending } = scenarioReconciliationTally(ledger);
+  const { claimReconciliations, pending } = claimReconciliationTally(ledger);
   const qualityCheckReconciliations = qualityCheckReconciliationTotals(ledger);
   return {
-    scenarioReconciliations,
+    claimReconciliations,
     qualityCheckReconciliations,
     pending,
     fitness: fitnessTally(ledger),
   };
 }
 
-function scenarioReconciliationTally(ledger: Ledger): {
-  scenarioReconciliations: ScenarioReconciliationTotals;
+function claimReconciliationTally(ledger: Ledger): {
+  claimReconciliations: ClaimReconciliationTotals;
   pending: number;
 } {
   const verdict: Record<"balanced" | "out-of-balance", number> = { balanced: 0, "out-of-balance": 0 };
-  let phantom = 0;
-  let suspense = 0;
+  let phantomClaim = 0;
+  let unnamedClaim = 0;
   let pending = 0;
-  for (const s of ledger.scenarioReconciliations) {
+  for (const s of ledger.claimReconciliations) {
     pending += s.pendingItems.length;
-    if (s.kind === "phantom-scenario") phantom++;
-    if (s.kind === "suspense-scenario") suspense++;
+    if (s.kind === "phantom-claim") phantomClaim++;
+    if (s.kind === "unnamed-claim") unnamedClaim++;
     verdict[s.verdict]++;
   }
   return {
-    scenarioReconciliations: {
+    claimReconciliations: {
       total: verdict.balanced + verdict["out-of-balance"],
       balanced: verdict.balanced,
       outOfBalance: verdict["out-of-balance"],
-      phantom,
-      suspense,
+      phantomClaim,
+      unnamedClaim,
     },
     pending,
   };
@@ -126,7 +126,7 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
     "both-missing": 0,
   };
   const missing = new Map<string, number>();
-  for (const s of ledger.scenarioReconciliations) {
+  for (const s of ledger.claimReconciliations) {
     for (const o of s.qualityCheckReconciliations) {
       byOutcome[o.outcome]++;
       if (o.outcome === "missing" && o.qualityCheck) {
@@ -161,8 +161,8 @@ export interface BehaviouralObservationTally {
   readonly rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number>;
   readonly total: number;
   readonly onScenario: number;
-  readonly onPhantomScenario: number;
-  readonly onSuspenseScenario: number;
+  readonly onPhantomClaim: number;
+  readonly onUnnamedClaim: number;
 }
 
 export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservationTally {
@@ -173,22 +173,22 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
     performance: 0,
   };
   let onScenario = 0;
-  let onPhantomScenario = 0;
-  let onSuspenseScenario = 0;
+  let onPhantomClaim = 0;
+  let onUnnamedClaim = 0;
 
-  for (const row of ledger.scenarioReconciliations) {
+  for (const row of ledger.claimReconciliations) {
     for (const observation of row.evidenceObservations) {
       if (observation.qualityCheck === "fitness") continue;
       rawByBehaviouralQualityCheck[observation.qualityCheck]++;
-      if (row.kind === "phantom-scenario") onPhantomScenario++;
-      else if (row.kind === "suspense-scenario") onSuspenseScenario++;
+      if (row.kind === "phantom-claim") onPhantomClaim++;
+      else if (row.kind === "unnamed-claim") onUnnamedClaim++;
       else onScenario++;
     }
   }
 
   const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByBehaviouralQualityCheck[qc], 0);
 
-  return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
+  return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomClaim, onUnnamedClaim };
 }
 
 export interface FitnessFunctionTally {
@@ -199,13 +199,13 @@ export interface FitnessFunctionTally {
 export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
   let runningFitnessFunctionCount = 0;
   let uncitedFitnessFunctionCount = 0;
-  for (const row of ledger.scenarioReconciliations) {
+  for (const row of ledger.claimReconciliations) {
     for (const observation of row.evidenceObservations) {
       if (observation.qualityCheck !== "fitness") continue;
       if (observation.broken === true) continue;
       if (!observation.exists) continue;
       runningFitnessFunctionCount++;
-      if (row.kind === "suspense-scenario") uncitedFitnessFunctionCount++;
+      if (row.kind === "unnamed-claim") uncitedFitnessFunctionCount++;
     }
   }
 

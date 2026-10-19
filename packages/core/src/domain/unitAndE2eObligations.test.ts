@@ -46,7 +46,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     ]);
 
     const balance = reconcile(scenarios, [...vitestObs, ...cucumberObs]);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-013");
+    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-LDG-013");
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);

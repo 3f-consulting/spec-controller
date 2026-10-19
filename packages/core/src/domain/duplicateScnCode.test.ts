@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import type { Ledger, ScenarioReconciliation } from "../model.js";
+import type { Ledger, ClaimReconciliation } from "../model.js";
 
-function accountsFor(ledger: Ledger, scnId: string): ScenarioReconciliation[] {
-  return ledger.scenarioReconciliations.filter((r) => r.scnId === scnId);
+function accountsFor(ledger: Ledger, scnId: string): ClaimReconciliation[] {
+  return ledger.claimReconciliations.filter((r) => r.scnId === scnId);
 }
 
 describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {

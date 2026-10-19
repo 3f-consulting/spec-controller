@@ -18,11 +18,11 @@ describe("[SCN-WRN-001] a scenario naming no evidence obligations is reported as
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const bothMissing = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-001");
+    const bothMissing = balance.claimReconciliations.find((s) => s.scnId === "SCN-WRN-001");
     expect(bothMissing?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
-    const verdictScenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-002");
+    const verdictScenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-WRN-002");
     expect(verdictScenario?.verdict).toBe("balanced");
-    expect(balance.scenarioReconciliations.map((s) => s.scnId)).toEqual([
+    expect(balance.claimReconciliations.map((s) => s.scnId)).toEqual([
       "SCN-WRN-001",
       "SCN-WRN-002",
     ]);

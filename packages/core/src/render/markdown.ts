@@ -1,7 +1,7 @@
 import type {
-  ScenarioReconciliation,
+  ClaimReconciliation,
   Outcome,
-  ScenarioVerdict,
+  Verdict,
   PendingItem,
   EvidenceStatus,
 } from "../model.js";
@@ -17,12 +17,12 @@ import {
 import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import {
   isScenario,
-  isPhantomScenario,
-  isSuspenseScenario,
+  isPhantomClaim,
+  isUnnamedClaim,
   isOutOfBalance,
   outOfBalanceCountOf,
   carriesNoScnCode,
-} from "../domain/scenarioReconciliation.js";
+} from "../domain/claimReconciliation.js";
 import type { RenderInput } from "../domain/renderInput.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
@@ -40,7 +40,7 @@ import { featureCodeOf } from "../domain/featureCode.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { remarkWordsOf } from "./remarkWords.js";
-import { suspenseGroupsOf, type SuspenseGroup, type SuspenseFileGroup } from "../domain/suspenseGroups.js";
+import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
@@ -56,12 +56,12 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   "both-missing": "⊘",
 };
 
-const VERDICT_GLYPH: Record<ScenarioVerdict, string> = {
+const VERDICT_GLYPH: Record<Verdict, string> = {
   balanced: "✓",
   "out-of-balance": "✗",
 };
 
-function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): string {
+function renderItem(item: ClaimReconciliation["reconcilingItems"][number]): string {
   if (item.outcome === "both-missing") {
     return `${ITEM_GLYPH["both-missing"]} ${OUTCOME_DESCRIPTION["both-missing"]}`;
   }
@@ -76,7 +76,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
 
-function observationSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
+function observationSuffix(item: ClaimReconciliation["reconcilingItems"][number]): string | undefined {
   const observationOnly = isObservationOnly(item.outcome);
   const remark = remarkWordsOf(item);
   if (item.outcome === "broken") {
@@ -96,7 +96,7 @@ const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
   failed: CoreMessage.ObservationFailed,
 };
 
-function resultOf(item: ScenarioReconciliation["reconcilingItems"][number]): string {
+function resultOf(item: ClaimReconciliation["reconcilingItems"][number]): string {
   const status = item.evidenceObservation?.status;
   return status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[status]]}`;
 }
@@ -115,7 +115,7 @@ function renderPendingItem(item: PendingItem): string {
     : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheck);
 }
 
-function renderFileGroup(group: SuspenseFileGroup): string {
+function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkWordsOf(remark) ?? []);
   const said = [...new Set(remarks.map((remark) => cellSafe(headlineOf(remark))))].join(" / ");
   const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
@@ -125,19 +125,19 @@ function renderFileGroup(group: SuspenseFileGroup): string {
   return `${group.qualityCheck} ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
 }
 
-function renderSuspenseGroup(group: SuspenseGroup): string {
+function renderSuspenseGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = CORE_MESSAGES[CoreMessage.SuspenseCiSteps](group.names);
   return `fitness ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
 }
 
-function renderSuspenseItems(items: ScenarioReconciliation["reconcilingItems"]): string[] {
+function renderSuspenseItems(items: ClaimReconciliation["reconcilingItems"]): string[] {
   const broken = items.filter((item) => item.outcome === "broken");
-  return [...broken.map(renderItem), ...suspenseGroupsOf(items).map(renderSuspenseGroup)];
+  return [...broken.map(renderItem), ...unnamedClaimGroupsOf(items).map(renderSuspenseGroup)];
 }
 
-function renderRowExceptions(s: ScenarioReconciliation): string {
-  const items = isSuspenseScenario(s) ? renderSuspenseItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
+function renderRowExceptions(s: ClaimReconciliation): string {
+  const items = isUnnamedClaim(s) ? renderSuspenseItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
   const reconciling = items.join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
@@ -149,9 +149,9 @@ type SectionEmitter = (report: RenderInput) => readonly string[];
 const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
 const runIntegritySection: SectionEmitter = (report) => {
-  if (!hasBrokenEvidence({ scenarioReconciliations: report.ledger.scenarioReconciliations })) return [];
+  if (!hasBrokenEvidence({ claimReconciliations: report.ledger.claimReconciliations })) return [];
   const brokenItems = brokenItemsOf({
-    scenarioReconciliations: report.ledger.scenarioReconciliations,
+    claimReconciliations: report.ledger.claimReconciliations,
   });
   const count = brokenItems.length;
   const proofs =
@@ -187,7 +187,7 @@ const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
 ];
 
 const evidenceReconciliationSection: SectionEmitter = (report) => {
-  const scenarioReconciliations = report.summary.scenarioReconciliations;
+  const claimReconciliations = report.summary.claimReconciliations;
   const qualityCheckReconciliations = report.summary.qualityCheckReconciliations;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
   const missingSplit = qualityCheckReconciliations.missingByQualityCheck
@@ -200,9 +200,9 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(["---", "---", "---", "---", "---"]),
     row([
       CORE_MESSAGES[CoreMessage.ScenarioReconciliationSubject],
-      String(scenarioReconciliations.total),
-      String(scenarioReconciliations.balanced),
-      String(scenarioReconciliations.outOfBalance),
+      String(claimReconciliations.total),
+      String(claimReconciliations.balanced),
+      String(claimReconciliations.outOfBalance),
       "",
     ]),
     row([
@@ -230,7 +230,7 @@ function pendingTally(pending: number): string[] {
 
 const fitnessSection: SectionEmitter = (report) => {
   const rows = fitnessReconciliationsOf({
-    scenarioReconciliations: report.ledger.scenarioReconciliations,
+    claimReconciliations: report.ledger.claimReconciliations,
   }).map(
     ({ scnId, reconciliation: r }) =>
       `| ${scnId} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
@@ -250,14 +250,14 @@ const fitnessSection: SectionEmitter = (report) => {
 };
 
 const byFeatureSection: SectionEmitter = (report) => {
-  const rows = report.ledger.scenarioReconciliations;
+  const rows = report.ledger.claimReconciliations;
   const scenarios = rows.filter(isScenario);
   const groups = outOfBalanceByFeature(
     scenarios,
     report.evidenceObligations?.untaggedScenarios ?? [],
     report.metadata?.featureNames ?? {},
   );
-  const ungrouped = ungroupedOutOfBalance(report.summary.scenarioReconciliations);
+  const ungrouped = ungroupedOutOfBalance(report.summary.claimReconciliations);
   if (groups.size === 0 && ungrouped.length === 0) return [];
   const head = CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
   return [
@@ -274,7 +274,7 @@ interface FeatureGroup {
   readonly noScnCode: number;
 }
 
-type ScenarioRows = RenderInput["ledger"]["scenarioReconciliations"];
+type ScenarioRows = RenderInput["ledger"]["claimReconciliations"];
 
 function outOfBalanceByFeature(
   scenarios: ScenarioRows,
@@ -316,10 +316,10 @@ function idsCell(group: FeatureGroup): string {
   return ids === "" ? noScnCode : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${noScnCode}`;
 }
 
-function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
+function ungroupedOutOfBalance(totals: RenderInput["summary"]["claimReconciliations"]): string[] {
   return [
-    ...(totals.phantom > 0 ? [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](totals.phantom)] : []),
-    ...(totals.suspense > 0 ? [CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](totals.suspense)] : []),
+    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](totals.phantomClaim)] : []),
+    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](totals.unnamedClaim)] : []),
   ];
 }
 
@@ -330,17 +330,17 @@ function ungroupedTail(ungrouped: readonly string[]): string {
 }
 
 const ledgerSection: SectionEmitter = (report) => {
-  const scenarioRows = report.ledger.scenarioReconciliations.filter(
+  const scenarioRows = report.ledger.claimReconciliations.filter(
     isScenario
   );
-  const phantomRows = report.ledger.scenarioReconciliations.filter(isPhantomScenario);
-  const suspenseRows = report.ledger.scenarioReconciliations.filter(isSuspenseScenario);
+  const phantomRows = report.ledger.claimReconciliations.filter(isPhantomClaim);
+  const suspenseRows = report.ledger.claimReconciliations.filter(isUnnamedClaim);
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
   const columns = report.summary.testVolume !== undefined ? evidenceColumns(scenarios) : [];
   return [
     CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading],
     "",
-    ...ledgerTallyLines(report.summary.scenarioReconciliations),
+    ...ledgerTallyLines(report.summary.claimReconciliations),
     ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
     "",
     ...evidenceKeyLines(columns),
@@ -354,15 +354,15 @@ function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
   return [...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"), ""];
 }
 
-function ledgerTallyLines(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
+function ledgerTallyLines(totals: RenderInput["summary"]["claimReconciliations"]): string[] {
   const lines = [
     `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](totals.total, totals.balanced, totals.outOfBalance)}`,
   ];
-  if (totals.phantom > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomScenarioTally](totals.phantom)}`);
+  if (totals.phantomClaim > 0) {
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomScenarioTally](totals.phantomClaim)}`);
   }
-  if (totals.suspense > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.SuspenseScenarioTally](totals.suspense)}`);
+  if (totals.unnamedClaim > 0) {
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.SuspenseScenarioTally](totals.unnamedClaim)}`);
   }
   return lines;
 }
@@ -386,7 +386,7 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
 }
 
 function ledgerTableLines(
-  scenarios: readonly ScenarioReconciliation[],
+  scenarios: readonly ClaimReconciliation[],
   columns: readonly EvidenceColumn[]
 ): string[] {
   const headers = [

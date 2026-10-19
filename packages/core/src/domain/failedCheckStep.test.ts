@@ -19,7 +19,7 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
     const reconciliation = reconcile();
 
     expect(
-      reconciliation.ledger.scenarioReconciliations.map((row) => [
+      reconciliation.ledger.claimReconciliations.map((row) => [
         row.scnId,
         row.kind,
         row.verdict,
@@ -27,7 +27,7 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
       ])
     ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]]);
 
-    const [item] = reconciliation.ledger.scenarioReconciliations[0]!.qualityCheckReconciliations;
+    const [item] = reconciliation.ledger.claimReconciliations[0]!.qualityCheckReconciliations;
     expect(item?.evidenceObservation).toMatchObject({
       qualityCheck: "fitness",
       scnId: "SCN-CVT-001",

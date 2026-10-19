@@ -238,7 +238,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
       []
     );
     const unitOutcomeOf = (scnId: string) =>
-      ledger().scenarioReconciliations
+      ledger().claimReconciliations
         .find((row) => row.scnId === scnId)
         ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
 
@@ -251,7 +251,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
       const reconciled = ledger();
       const suspenseRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
         .split("\n")
-        .find((line) => line.startsWith("| (no scenario) | "));
+        .find((line) => line.startsWith("| (unnamed claim) | "));
 
       expect(suspenseRow ?? "").toContain(
         `(/r/several.test.ts: ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](["SCN-AAA-001", "SCN-AAA-002"])})`

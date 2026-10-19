@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { attributionOf } from "./attribution.js";
 import { reconcile } from "./evidenceReconciliation.js";
-import { isSuspenseScenario } from "./scenarioReconciliation.js";
-import { suspenseGroupsOf } from "./suspenseGroups.js";
+import { isUnnamedClaim } from "./claimReconciliation.js";
+import { unnamedClaimGroupsOf } from "./unnamedClaimGroups.js";
 import type { BehaviouralEvidenceObservation } from "./journal.js";
 
 const LOCATOR = "/r/several.test.ts";
@@ -44,17 +44,17 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
       );
     const unitOutcomeOf = (codes: readonly string[], scnId: string) =>
       ledgerOf(codes)
-        .scenarioReconciliations.find((row) => row.scnId === scnId)
+        .claimReconciliations.find((row) => row.scnId === scnId)
         ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
-    const suspenseGroups = (codes: readonly string[]) =>
-      suspenseGroupsOf(ledgerOf(codes).scenarioReconciliations.find(isSuspenseScenario)?.reconcilingItems ?? []);
+    const unnamedClaimGroups = (codes: readonly string[]) =>
+      unnamedClaimGroupsOf(ledgerOf(codes).claimReconciliations.find(isUnnamedClaim)?.reconcilingItems ?? []);
 
     it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (scnId) => {
       expect(unitOutcomeOf(["SCN-AAA-001", "SCN-AAA-002"], scnId)).toBe("missing");
     });
 
     it("posts the observation to one suspense group whose remark names both codes", () => {
-      expect(suspenseGroups(["SCN-AAA-001", "SCN-AAA-002"])).toEqual([
+      expect(unnamedClaimGroups(["SCN-AAA-001", "SCN-AAA-002"])).toEqual([
         {
           qualityCheck: "unit",
           locator: LOCATOR,
@@ -73,7 +73,7 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
     ])("CONTROL: %s credits that scenario and posts nothing to suspense", (_, codes) => {
       expect(unitOutcomeOf(codes, "SCN-AAA-001")).not.toBe("missing");
       expect(unitOutcomeOf(codes, "SCN-AAA-002")).toBe("missing");
-      expect(suspenseGroups(codes)).toEqual([]);
+      expect(unnamedClaimGroups(codes)).toEqual([]);
     });
   });
 });

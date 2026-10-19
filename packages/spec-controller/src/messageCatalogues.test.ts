@@ -270,7 +270,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.ShapeKindOfType]: ["number"],
   [AppMessage.ShapeTopLevel]: [],
   [AppMessage.ShapeWrongKind]: ["testResults", "an object", "a list"],
-  [AppMessage.ShapeFieldMissing]: ["ledger.scenarioReconciliations"],
+  [AppMessage.ShapeFieldMissing]: ["ledger.claimReconciliations"],
   [AppMessage.HostUsageError]: ["--store applies to stored runs only"],
   [AppMessage.HelpUsageLine]: ["[--store <dir>] [--run-id <id>]"],
 };

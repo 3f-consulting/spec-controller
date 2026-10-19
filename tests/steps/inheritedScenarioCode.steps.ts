@@ -13,7 +13,7 @@ const SCENARIO_CODE_INHERITED_FROM: Readonly<Record<string, string>> = {
 
 const THE_ONE_SCENARIO = "the one scenario beneath it";
 
-interface ScenarioReconciliation {
+interface ClaimReconciliation {
   scnId: string;
   kind: string;
   verdict: string;
@@ -22,7 +22,7 @@ interface ScenarioReconciliation {
 interface Run {
   status: number | null;
   report: {
-    ledger: { scenarioReconciliations: ScenarioReconciliation[] };
+    ledger: { claimReconciliations: ClaimReconciliation[] };
     evidenceObligations: { untaggedScenarios: { feature: string; scenario: string }[] };
   };
 }
@@ -68,7 +68,7 @@ function reconciled(): Run {
 }
 
 Then("the scenario is reconciled once, balanced, on its scenario code's row", function () {
-  const rows = reconciled().report.ledger.scenarioReconciliations.filter(({ kind }) => kind === "scenario");
+  const rows = reconciled().report.ledger.claimReconciliations.filter(({ kind }) => kind === "scenario");
   assert.deepEqual(
     rows.map(({ scnId, verdict }) => ({ scnId, verdict })),
     [{ scnId: SCENARIO_CODE_INHERITED_FROM[ancestor], verdict: "balanced" }],
@@ -79,7 +79,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
 Then("no reconciliation names it as a scenario with no scenario code", function () {
   const { report } = reconciled();
   assert.deepEqual(report.evidenceObligations.untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
-  const named = report.ledger.scenarioReconciliations.filter(({ scnId }) => scnId.endsWith(THE_ONE_SCENARIO));
+  const named = report.ledger.claimReconciliations.filter(({ scnId }) => scnId.endsWith(THE_ONE_SCENARIO));
   assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
 });
 

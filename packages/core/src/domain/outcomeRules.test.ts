@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
-  suspenseReconciliationsOf,
+  unnamedClaimReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import type {
   BehaviouralEvidenceObservation,
@@ -124,7 +124,7 @@ describe("[SCN-LDG-034] a fitness evidence observation's item carries no locator
   });
 });
 
-describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's items", () => {
+describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the suspense row's items", () => {
   let broken: ReturnType<typeof observation>;
   let uncited: ReturnType<typeof observation>;
   beforeEach(() => {
@@ -143,13 +143,13 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
   };
 
   it("lists broken FIRST, then the uncited behavioural evidence observations, then the uncited fitness functions", () => {
-    const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
+    const items = unnamedClaimReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
     expect(items[2]!.fitnessFunction).toBe("lint:nobody-asked");
   });
 
   it("carries locator + message on a broken item, and no evidence observation", () => {
-    const [item] = suspenseReconciliationsOf([broken], [], []);
+    const [item] = unnamedClaimReconciliationsOf([broken], [], []);
     expect(item!.locator).toBe("tests/broken.test.ts");
     expect(item!.message).toBe("Failed to collect");
     expect(item!.evidenceObservation).toBeUndefined();
@@ -159,7 +159,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
 describe("[SCN-LDG-007] a suspense item omits the payload keys its observation has no value for", () => {
   it("omits BOTH the locator and the message key on a broken item that carries neither", () => {
     const silent = observation("unit", null, { broken: true, status: "failed" });
-    const [item] = suspenseReconciliationsOf([silent], [], []);
+    const [item] = unnamedClaimReconciliationsOf([silent], [], []);
     expect(item).toStrictEqual({ qualityCheck: "unit", outcome: "broken" });
     expect(item).not.toHaveProperty("locator");
     expect(item).not.toHaveProperty("message");
@@ -167,7 +167,7 @@ describe("[SCN-LDG-007] a suspense item omits the payload keys its observation h
 
   it("omits the locator key on an uncited behavioural evidence observation that came from no test file", () => {
     const anonymous = observation("integration", null);
-    const [item] = suspenseReconciliationsOf([], [anonymous], []);
+    const [item] = unnamedClaimReconciliationsOf([], [anonymous], []);
     expect(item).toStrictEqual({
       qualityCheck: "integration",
       outcome: "cites-no-scenario",

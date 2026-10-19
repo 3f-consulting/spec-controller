@@ -39,7 +39,7 @@ function permutations<T>(items: readonly T[]): T[][] {
 }
 
 const rowOf = (observations: EvidenceObservation[], scnId = SCN) =>
-  reconcile(scenarios, observations).scenarioReconciliations.find((r) => r.scnId === scnId)!;
+  reconcile(scenarios, observations).claimReconciliations.find((r) => r.scnId === scnId)!;
 
 const coordinates = (observations: readonly EvidenceObservation[]) =>
   observations.map((o) => [o.qualityCheck, o.locator ?? null]);
@@ -75,18 +75,18 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   it("orders evidence observations at one location by the scenario they cite — the phantom rows they mint follow it", () => {
     const ghost2: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-002", status: "passed", locator: "p.test.ts" };
     const ghost1: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-001", status: "passed", locator: "p.test.ts" };
-    const phantomIds = reconcile(scenarios, [ghost2, ghost1])
-      .scenarioReconciliations.filter((r) => r.kind === "phantom-scenario")
+    const phantomClaimIds = reconcile(scenarios, [ghost2, ghost1])
+      .claimReconciliations.filter((r) => r.kind === "phantom-claim")
       .map((r) => r.scnId);
-    expect(phantomIds).toEqual(["SCN-GHOST-001", "SCN-GHOST-002"]);
+    expect(phantomClaimIds).toEqual(["SCN-GHOST-001", "SCN-GHOST-002"]);
   });
 
   it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {
     const broken = { qualityCheck: "unit", status: "failed", broken: true, locator: "a.test.ts" } as const;
     const citing: EvidenceObservation = { ...broken, scnId: "SCN-CITED-001" };
     const citingNone: EvidenceObservation = { ...broken, scnId: null };
-    const suspense = reconcile(scenarios, [citing, citingNone]).scenarioReconciliations.find(
-      (r) => r.kind === "suspense-scenario"
+    const suspense = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
+      (r) => r.kind === "unnamed-claim"
     )!;
     expect(suspense.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });

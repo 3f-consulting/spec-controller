@@ -78,7 +78,7 @@ Then(
         `lint:foo is the weaker claim, and a reader posting the evidence observation to a scenario the corpus ` +
         `never wrote satisfies it too. Got:\n${activeMd}`
     );
-    const suspenseRow = activeMd.split("\n").find((line) => line.startsWith("| (no scenario) |"));
+    const suspenseRow = activeMd.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
     assert.ok(
       !suspenseRow?.includes("lint:foo"),
       `a scenario cites lint:foo; the suspense row must not name it at all; got:\n${suspenseRow}`

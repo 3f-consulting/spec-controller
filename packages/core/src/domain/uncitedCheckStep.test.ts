@@ -48,7 +48,7 @@ function reconcileUnannotated() {
 describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it runs, citing nothing", () => {
   it("puts every check on the one suspense row and reports the steps that are not checks nowhere", () => {
     expect(
-      reconcileUnannotated().ledger.scenarioReconciliations.map((row) => [
+      reconcileUnannotated().ledger.claimReconciliations.map((row) => [
         row.scnId,
         row.kind,
         row.verdict,
@@ -56,8 +56,8 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
       ])
     ).toEqual([
       [
-        "(no scenario)",
-        "suspense-scenario",
+        "(unnamed claim)",
+        "unnamed-claim",
         "out-of-balance",
         [
           ["lint:alpha", "cites-no-scenario"],

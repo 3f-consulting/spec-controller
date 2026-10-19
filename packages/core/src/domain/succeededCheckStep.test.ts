@@ -22,7 +22,7 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
     const reconciliation = reconcile();
 
     expect(
-      reconciliation.ledger.scenarioReconciliations.map((row) => [
+      reconciliation.ledger.claimReconciliations.map((row) => [
         row.scnId,
         row.kind,
         row.verdict,
@@ -35,7 +35,7 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
   });
 
   it("carries both facts as OBSERVED and cites the row's own code, no registry standing behind it", () => {
-    const [first, second] = reconcile().ledger.scenarioReconciliations;
+    const [first, second] = reconcile().ledger.claimReconciliations;
     expect(first?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
       qualityCheck: "fitness",
       fitnessFunction: "SCN-CVT-001",

@@ -35,7 +35,7 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
         packageJson: join(root, "package.json"),
         ci: root,
       }, resolveTargetRoot({ features: join(root, "features") }));
-      const scenario = (scnId: string) => balance.ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.scnId === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
       expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);
@@ -56,7 +56,7 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
         ci: root,
         cucumber: join(root, "cucumber.json"),
       }, resolveTargetRoot({ features: join(root, "features") }));
-      const scenario = (scnId: string) => balance.ledger.scenarioReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.scnId === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
       expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);

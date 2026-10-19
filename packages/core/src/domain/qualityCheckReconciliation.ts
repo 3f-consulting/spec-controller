@@ -208,7 +208,7 @@ export function citesUnknownScenarioReconciliationsOf(
   );
 }
 
-export function suspenseReconciliationsOf(
+export function unnamedClaimReconciliationsOf(
   brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly BehaviouralEvidenceObservation[],
   uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]

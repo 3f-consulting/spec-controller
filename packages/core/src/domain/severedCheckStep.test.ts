@@ -88,7 +88,7 @@ function reconcileSevered() {
 describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles as the watermelon, beside a sibling check whose red is the job's verdict", () => {
   it("reconciles each severed check as the watermelon and leaves the siblings satisfied", () => {
     expect(
-      reconcileSevered().ledger.scenarioReconciliations.map((row) => [
+      reconcileSevered().ledger.claimReconciliations.map((row) => [
         row.scnId,
         row.kind,
         row.verdict,
@@ -105,7 +105,7 @@ describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles 
 
   it("still OBSERVES a severed check, as one that exists and enforces nothing", () => {
     const observed = reconcileSevered()
-      .ledger.scenarioReconciliations.filter((row) => row.scnId === "SCN-CVT-001" || row.scnId === "SCN-CVT-002")
+      .ledger.claimReconciliations.filter((row) => row.scnId === "SCN-CVT-001" || row.scnId === "SCN-CVT-002")
       .flatMap((row) => row.evidenceObservations);
     expect(observed).toEqual([
       {

@@ -53,7 +53,7 @@ When("balance is asked to reconcile that target with the gotestsum report", func
 Then("the scenario that Go subtest cites reconciles satisfied, by that subtest", function () {
   let rows: ScenarioRow[];
   try {
-    rows = (JSON.parse(result.stdout) as { ledger: { scenarioReconciliations: ScenarioRow[] } }).ledger.scenarioReconciliations;
+    rows = (JSON.parse(result.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
   }

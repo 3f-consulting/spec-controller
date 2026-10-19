@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import type { Ledger, ScenarioReconciliation } from "../model.js";
+import type { Ledger, ClaimReconciliation } from "../model.js";
 import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -41,7 +41,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   };
 
   const balanceWithBroken = (
-    item: ScenarioReconciliation["reconcilingItems"][number]
+    item: ClaimReconciliation["reconcilingItems"][number]
   ): Ledger => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-HNS-002", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -95,7 +95,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
   it("carries the locator on the suspense row's broken item — a broken proof, not an absent one", () => {
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
-    const suspense = rowFor(vitestMd, "(no scenario)");
+    const suspense = rowFor(vitestMd, "(unnamed claim)");
     expect(suspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
     expect(suspense).toContain(VITEST_LOCATOR);
     expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
@@ -104,7 +104,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(namedRow).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
     expect(namedRow).not.toContain("💥");
 
-    const cucumberSuspense = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(no scenario)");
+    const cucumberSuspense = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(unnamed claim)");
     expect(cucumberSuspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
     expect(cucumberSuspense).toContain(CUCUMBER_LOCATOR);
     expect(cucumberSuspense).toContain("is ambiguous");
