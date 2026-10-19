@@ -119,25 +119,25 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkWordsOf(remark) ?? []);
   const said = [...new Set(remarks.map((remark) => cellSafe(headlineOf(remark))))].join(" / ");
   const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
-  const counts = CORE_MESSAGES[CoreMessage.SuspenseGroupCounts](group.ran, group.passed, group.failed);
+  const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
   const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
-  const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.SuspenseFailedNames](names)}`;
+  const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
   return `${group.qualityCheck} ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
 }
 
-function renderSuspenseGroup(group: UnnamedClaimGroup): string {
+function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
-  const steps = CORE_MESSAGES[CoreMessage.SuspenseCiSteps](group.names);
+  const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names);
   return `fitness ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
 }
 
-function renderSuspenseItems(items: ClaimReconciliation["reconcilingItems"]): string[] {
+function renderUnnamedClaimItems(items: ClaimReconciliation["reconcilingItems"]): string[] {
   const broken = items.filter((item) => item.outcome === "broken");
-  return [...broken.map(renderItem), ...unnamedClaimGroupsOf(items).map(renderSuspenseGroup)];
+  return [...broken.map(renderItem), ...unnamedClaimGroupsOf(items).map(renderUnnamedClaimGroup)];
 }
 
 function renderRowExceptions(s: ClaimReconciliation): string {
-  const items = isUnnamedClaim(s) ? renderSuspenseItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
+  const items = isUnnamedClaim(s) ? renderUnnamedClaimItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
   const reconciling = items.join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
@@ -199,7 +199,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(EVIDENCE_RECONCILIATION_COLUMNS),
     row(["---", "---", "---", "---", "---"]),
     row([
-      CORE_MESSAGES[CoreMessage.ScenarioReconciliationSubject],
+      CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject],
       String(claimReconciliations.total),
       String(claimReconciliations.balanced),
       String(claimReconciliations.outOfBalance),
@@ -318,8 +318,8 @@ function idsCell(group: FeatureGroup): string {
 
 function ungroupedOutOfBalance(totals: RenderInput["summary"]["claimReconciliations"]): string[] {
   return [
-    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](totals.phantomClaim)] : []),
-    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](totals.unnamedClaim)] : []),
+    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomClaimRows](totals.phantomClaim)] : []),
+    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.UnnamedClaimRows](totals.unnamedClaim)] : []),
   ];
 }
 
@@ -333,12 +333,12 @@ const ledgerSection: SectionEmitter = (report) => {
   const scenarioRows = report.ledger.claimReconciliations.filter(
     isScenario
   );
-  const phantomRows = report.ledger.claimReconciliations.filter(isPhantomClaim);
-  const suspenseRows = report.ledger.claimReconciliations.filter(isUnnamedClaim);
-  const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
+  const phantomClaimRows = report.ledger.claimReconciliations.filter(isPhantomClaim);
+  const unnamedClaimRows = report.ledger.claimReconciliations.filter(isUnnamedClaim);
+  const scenarios = [...scenarioRows, ...phantomClaimRows, ...unnamedClaimRows];
   const columns = report.summary.testVolume !== undefined ? evidenceColumns(scenarios) : [];
   return [
-    CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading],
+    CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.claimReconciliations),
     ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
@@ -356,13 +356,13 @@ function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
 
 function ledgerTallyLines(totals: RenderInput["summary"]["claimReconciliations"]): string[] {
   const lines = [
-    `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](totals.total, totals.balanced, totals.outOfBalance)}`,
+    `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](totals.total, totals.balanced, totals.outOfBalance)}`,
   ];
   if (totals.phantomClaim > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomScenarioTally](totals.phantomClaim)}`);
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomClaimTally](totals.phantomClaim)}`);
   }
   if (totals.unnamedClaim > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.SuspenseScenarioTally](totals.unnamedClaim)}`);
+    lines.push(`- ${CORE_MESSAGES[CoreMessage.UnnamedClaimTally](totals.unnamedClaim)}`);
   }
   return lines;
 }

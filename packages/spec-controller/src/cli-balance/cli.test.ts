@@ -147,7 +147,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
     ]);
 
     expect(emitted).toMatch(/^# Evidence Reconciliation/m);
-    expect(emitted).toMatch(/^\| Scenario Reconciliation \| 0 \| 0 \| 0 \|/m);
+    expect(emitted).toMatch(/^\| Claim Reconciliation \| 0 \| 0 \| 0 \|/m);
     expect(exitCode).toBe(5);
   });
 });
@@ -276,8 +276,8 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
 
   function threeViewsOf(argv: readonly string[]): { outOfBalance: number; word: string; headlineExit: number; exitCode: number } {
     const { stdout: emitted, exitCode } = runBalanceCaptured(argv);
-    const tally = emitted.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
-    expect(tally, `expected a Scenario Reconciliation tally row; got:\n${emitted}`).not.toBeNull();
+    const tally = emitted.match(/^\| Claim Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
+    expect(tally, `expected a Claim Reconciliation tally row; got:\n${emitted}`).not.toBeNull();
     const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
     expect(headline, `expected a run-verdict headline; got:\n${emitted}`).not.toBeNull();
     return {

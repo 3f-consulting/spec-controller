@@ -87,7 +87,7 @@ export enum CoreMessage {
   BalancedColumn,
   OutOfBalanceColumn,
   DetailColumn,
-  ScenarioReconciliationSubject,
+  ClaimReconciliationSubject,
   QualityCheckReconciliationSubject,
   PendingTally,
   TestVolumeHeading,
@@ -120,15 +120,15 @@ export enum CoreMessage {
   ScenarioRowsOutOfBalance,
   GroupedByFeature,
   NotGroupedByFeature,
-  PhantomScenarioRows,
-  SuspenseScenarioRows,
+  PhantomClaimRows,
+  UnnamedClaimRows,
   AndJoiner,
   ByFeatureTableHeader,
   NoScnCodeScenarios,
-  ScenarioReconciliationsHeading,
-  ScenarioReconciliationTally,
-  PhantomScenarioTally,
-  SuspenseScenarioTally,
+  ClaimReconciliationsHeading,
+  ClaimReconciliationTally,
+  PhantomClaimTally,
+  UnnamedClaimTally,
   ExcludedScnOccurrences,
   UntaggedScenarios,
   SharedScnCodes,
@@ -162,9 +162,9 @@ export enum CoreMessage {
   OutcomeBothMissing,
   ObservationPassed,
   ObservationFailed,
-  SuspenseGroupCounts,
-  SuspenseCiSteps,
-  SuspenseFailedNames,
+  UnnamedClaimGroupCounts,
+  UnnamedClaimCiSteps,
+  UnnamedClaimFailedNames,
   SeveralScnCodes,
 }
 
@@ -220,12 +220,12 @@ interface CoreMessageParams {
   readonly [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
   readonly [CoreMessage.ScenarioRowsOutOfBalance]: [outOfBalance: number, rows: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
-  readonly [CoreMessage.PhantomScenarioRows]: [count: number];
-  readonly [CoreMessage.SuspenseScenarioRows]: [count: number];
+  readonly [CoreMessage.PhantomClaimRows]: [count: number];
+  readonly [CoreMessage.UnnamedClaimRows]: [count: number];
   readonly [CoreMessage.NoScnCodeScenarios]: [count: number];
-  readonly [CoreMessage.ScenarioReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
-  readonly [CoreMessage.PhantomScenarioTally]: [count: number];
-  readonly [CoreMessage.SuspenseScenarioTally]: [count: number];
+  readonly [CoreMessage.ClaimReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
+  readonly [CoreMessage.PhantomClaimTally]: [count: number];
+  readonly [CoreMessage.UnnamedClaimTally]: [count: number];
   readonly [CoreMessage.ExcludedScnOccurrences]: [count: number];
   readonly [CoreMessage.UntaggedScenarios]: [count: number];
   readonly [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
@@ -235,9 +235,9 @@ interface CoreMessageParams {
   readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
   readonly [CoreMessage.ManifestKindOfType]: [type: string];
-  readonly [CoreMessage.SuspenseGroupCounts]: [ran: number, passed: number, failed: number];
-  readonly [CoreMessage.SuspenseCiSteps]: [names: readonly string[]];
-  readonly [CoreMessage.SuspenseFailedNames]: [names: readonly string[]];
+  readonly [CoreMessage.UnnamedClaimGroupCounts]: [ran: number, passed: number, failed: number];
+  readonly [CoreMessage.UnnamedClaimCiSteps]: [names: readonly string[]];
+  readonly [CoreMessage.UnnamedClaimFailedNames]: [names: readonly string[]];
   readonly [CoreMessage.SeveralScnCodes]: [codes: readonly string[]];
 }
 
@@ -360,10 +360,10 @@ export const CORE_MESSAGES: CoreMessages = {
     "trusted, and a scenario in it carries more than one scenario code, so no account was raised for it " +
     `under any of them. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
   [CoreMessage.AlsoOutOfBalance]:
-    " The accounts do not agree either: at least one Scenario Reconciliation carries a reconciling item.",
+    " The accounts do not agree either: at least one Claim Reconciliation carries a reconciling item.",
   [CoreMessage.OutOfBalanceHeadline]: "**OUT-OF-BALANCE**",
   [CoreMessage.OutOfBalanceGloss]:
-    "the accounts do not agree. At least one Scenario Reconciliation carries a reconciling item. This run FAILED.",
+    "the accounts do not agree. At least one Claim Reconciliation carries a reconciling item. This run FAILED.",
   [CoreMessage.UnsoundHeadline]: "**UNSOUND**",
   [CoreMessage.UnsoundGloss]:
     "the evidence could not be TRUSTED to reconcile. A proof never ran, so the behaviour " +
@@ -371,13 +371,13 @@ export const CORE_MESSAGES: CoreMessages = {
     "below it.",
   [CoreMessage.PendingHeadline]: "**PENDING**",
   [CoreMessage.PendingGloss]:
-    "every Scenario Reconciliation balances, but Pending Items are outstanding and this run " +
+    "every Claim Reconciliation balances, but Pending Items are outstanding and this run " +
     "treats a deferral as a failure (`--strict`). This run FAILED.",
   [CoreMessage.BalancedHeadline]: "**BALANCED**",
-  [CoreMessage.BalancedGloss]: `every Scenario Reconciliation balances: every ${SATISFIED}.`,
+  [CoreMessage.BalancedGloss]: `every Claim Reconciliation balances: every ${SATISFIED}.`,
   [CoreMessage.NothingToReconcileHeadline]: "**NOTHING TO RECONCILE**",
   [CoreMessage.NothingToReconcileGloss]: (corpusDir) =>
-    "there were no accounts to agree. The ledger carries no Scenario Reconciliation at " +
+    "there were no accounts to agree. The ledger carries no Claim Reconciliation at " +
     `all, so this run has NO BASIS FOR A VERDICT — the corpus \`${corpusDir}\` ` +
     "carried no scenario and nothing was produced. Not balanced: a run that examined nothing must not certify.",
   [CoreMessage.PendingItemsOutstanding]:
@@ -389,7 +389,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.BalancedColumn]: "Balanced",
   [CoreMessage.OutOfBalanceColumn]: "Out-of-balance",
   [CoreMessage.DetailColumn]: "Detail",
-  [CoreMessage.ScenarioReconciliationSubject]: "Scenario Reconciliation",
+  [CoreMessage.ClaimReconciliationSubject]: "Claim Reconciliation",
   [CoreMessage.QualityCheckReconciliationSubject]: "Quality Check Reconciliation",
   [CoreMessage.PendingTally]: (pending) =>
     `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
@@ -430,18 +430,18 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.GroupedByFeature]: ", grouped by feature",
   [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
     `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,
-  [CoreMessage.PhantomScenarioRows]: (count) => `${count} Scenario Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
-  [CoreMessage.SuspenseScenarioRows]: (count) => `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}`,
+  [CoreMessage.PhantomClaimRows]: (count) => `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
+  [CoreMessage.UnnamedClaimRows]: (count) => `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}`,
   [CoreMessage.AndJoiner]: " and ",
   [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
   [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
-  [CoreMessage.ScenarioReconciliationsHeading]: "## Scenario Reconciliations",
-  [CoreMessage.ScenarioReconciliationTally]: (total, balanced, outOfBalance) =>
-    `${total} Scenario Reconciliation(s): ${balanced} balanced, ${outOfBalance} out-of-balance.`,
-  [CoreMessage.PhantomScenarioTally]: (count) =>
-    `${count} Scenario Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
-  [CoreMessage.SuspenseScenarioTally]: (count) =>
-    `${count} Scenario Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
+  [CoreMessage.ClaimReconciliationsHeading]: "## Claim Reconciliations",
+  [CoreMessage.ClaimReconciliationTally]: (total, balanced, outOfBalance) =>
+    `${total} Claim Reconciliation(s): ${balanced} balanced, ${outOfBalance} out-of-balance.`,
+  [CoreMessage.PhantomClaimTally]: (count) =>
+    `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
+  [CoreMessage.UnnamedClaimTally]: (count) =>
+    `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
@@ -489,9 +489,9 @@ export const CORE_MESSAGES: CoreMessages = {
     "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
   [CoreMessage.ObservationPassed]: "passed",
   [CoreMessage.ObservationFailed]: "failed",
-  [CoreMessage.SuspenseGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
-  [CoreMessage.SuspenseCiSteps]: (names) => `${names.length} CI step${names.length === 1 ? "" : "s"}: ${names.join(", ")}`,
-  [CoreMessage.SuspenseFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
+  [CoreMessage.UnnamedClaimGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
+  [CoreMessage.UnnamedClaimCiSteps]: (names) => `${names.length} CI step${names.length === 1 ? "" : "s"}: ${names.join(", ")}`,
+  [CoreMessage.UnnamedClaimFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
   [CoreMessage.SeveralScnCodes]: (codes) =>
     `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
 };

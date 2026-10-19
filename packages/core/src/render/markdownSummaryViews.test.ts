@@ -68,7 +68,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     const md = renderMarkdown(__er(withAll), ctx);
     const iFitness = md.indexOf("### Fitness evidence obligations");
     const iByFeature = md.indexOf("### Out-of-balance by feature");
-    const iLedger = md.indexOf("## Scenario Reconciliations");
+    const iLedger = md.indexOf("## Claim Reconciliations");
     expect(iFitness).toBeGreaterThanOrEqual(0);
     expect(iByFeature).toBeGreaterThanOrEqual(0);
     expect(iLedger).toBeGreaterThanOrEqual(0);
@@ -87,7 +87,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
   });
 
-  const ledgerHeading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+  const ledgerHeading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
 
   function byFeatureLines(lines: string[]): string[] {
     const start = lines.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
@@ -141,7 +141,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     return at < 0 ? "" : md.slice(at, md.indexOf("\n## ", at));
   };
   const phantomAndSuspense = (): string =>
-    [CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1), CORE_MESSAGES[CoreMessage.SuspenseScenarioRows](1)].join(
+    [CORE_MESSAGES[CoreMessage.PhantomClaimRows](1), CORE_MESSAGES[CoreMessage.UnnamedClaimRows](1)].join(
       CORE_MESSAGES[CoreMessage.AndJoiner]
     );
 
@@ -149,7 +149,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
       `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
-        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](CORE_MESSAGES[CoreMessage.PhantomScenarioRows](1))}.`
+        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](CORE_MESSAGES[CoreMessage.PhantomClaimRows](1))}.`
     );
     expect(section).toContain("| BFP | 1 | SCN-BFP-002 |");
     expect(section).not.toContain("SCN-GONE-001");
@@ -202,13 +202,13 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
       "## Run provenance",
       "## Scenario code errors",
       "## Summary views",
-      "## Scenario Reconciliations",
+      "## Claim Reconciliations",
     ]);
   });
 
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
-    expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
+    expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
     expect(md).toContain("SCN-C");
     expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
   });
@@ -226,13 +226,13 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);
-    expect(md).toContain("## Scenario Reconciliations");
+    expect(md).toContain("## Claim Reconciliations");
     expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
     const lines = renderMarkdown(__er(simple), ctx).split("\n");
-    const heading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+    const heading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
     const section = lines.slice(lines.indexOf(heading));
     const header = `| ${[
       CORE_MESSAGES[CoreMessage.ScenarioColumn],
@@ -242,7 +242,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     expect(section.slice(0, 6)).toEqual([
       heading,
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](1, 1, 0)}`,
+      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](1, 1, 0)}`,
       "",
       header,
       "| --- | --- | --- |",
@@ -277,7 +277,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(md).not.toContain("static 🍉");
   });
 
-  it("ends the report with the scenario reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {
+  it("ends the report with the Claim Reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {
     const observed: Ledger = reconcile(
       [
         { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -286,7 +286,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       [{ qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(observed, true), ctx).split("\n");
-    const heading = CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading];
+    const heading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
     const start = lines.indexOf(heading);
     expect(start).toBeGreaterThan(0);
     expect(lines.filter((line) => line.startsWith("## ")).at(-1)).toBe(heading);
@@ -301,7 +301,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(section.slice(0, 4)).toEqual([
       heading,
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](2, 1, 1)}`,
+      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
       "",
     ]);
     const table = section.indexOf(header);

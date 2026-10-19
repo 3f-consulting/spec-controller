@@ -74,7 +74,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     expect(md).toContain("### Evidence reconciliation");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
-    expect(md).toContain("| Scenario Reconciliation | 3 | 0 | 3 |");
+    expect(md).toContain("| Claim Reconciliation | 3 | 0 | 3 |");
     expect(md).toContain("| Quality Check Reconciliation | 6 | 2 | 4 |");
   });
 
@@ -124,8 +124,8 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
 
   it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(__er(threeNamedPlusSuspense), ctx);
-    expect(md).toContain("| Scenario Reconciliation | 4 | 3 | 1 |");
-    expect(md).not.toContain("| Scenario Reconciliation | 3 | 3 | 0 |");
+    expect(md).toContain("| Claim Reconciliation | 4 | 3 | 1 |");
+    expect(md).not.toContain("| Claim Reconciliation | 3 | 3 | 0 |");
   });
 });
 

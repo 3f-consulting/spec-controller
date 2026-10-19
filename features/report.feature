@@ -2,7 +2,7 @@
 Feature: The report renders the ledger as sectioned facts
 
   The report renders the reconciled ledger as facts, in sections: the run provenance first, the
-  summary views opening with the run verdict, and the scenario reconciliations last.
+  summary views opening with the run verdict, and the Claim Reconciliations last.
   It states facts only, with no interpretation, editorial or cross-run comparison.
 
   Rule: the markdown report opens with a run-provenance header
@@ -42,14 +42,15 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
     Under "## Summary views", the "### Evidence reconciliation" section renders one table.
-    Its rows are the subjects, Scenario Reconciliation and Quality Check Reconciliation,
+    Its rows are the subjects, Claim Reconciliation and Quality Check Reconciliation,
     each with its own Total. Its columns are balanced and out-of-balance. Nothing in it is
     bold.
 
-    The Scenario Reconciliation row counts every row of the collection: real, phantom and
-    suspense. Phantom and suspense rows are always out of balance, so a run whose only
-    out-of-balance row is the suspense row reads N+1 | N | 1. This out-of-balance count
-    agrees with the balance verdict and with the exit code.
+    The Claim Reconciliation row counts every row of the collection: each scenario, each
+    phantom claim and the unnamed claim. A phantom claim's row and the unnamed claim's row
+    are always out of balance, so a run whose only out-of-balance row is the unnamed claim's
+    reads N+1 | N | 1. This out-of-balance count agrees with the balance verdict and with
+    the exit code.
 
     The Quality Check Reconciliation row counts every quality check reconciliation on every
     row, phantom and suspense included, and an evidence observation that answers no evidence
@@ -60,7 +61,7 @@ Feature: The report renders the ledger as sectioned facts
     first: a behavioural check by its bare level, a fitness check as "fitness".
 
     The two out-of-balance counts differ by granularity. A scenario with two missing arms is
-    one out-of-balance Scenario Reconciliation and two out-of-balance Quality Check
+    one out-of-balance Claim Reconciliation and two out-of-balance Quality Check
     Reconciliations.
 
     @unit @SCN-RPT-004
@@ -94,7 +95,7 @@ Feature: The report renders the ledger as sectioned facts
     unnamed-claim rows name no feature file, so they are not grouped; the sentence
     states each of their out-of-balance counts as not grouped by feature, and its numbers
     add up to the header's out-of-balance count and total. The section is left out only when
-    no Scenario Reconciliation is out of balance. When only ungrouped rows are, it states
+    no Claim Reconciliation is out of balance. When only ungrouped rows are, it states
     them and has no table.
 
     A scenario with no @SCN code counts on the row of the feature file it sits in: under the
@@ -119,7 +120,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The report has no census section under any name. Every scenario is a ledger row, and a
     scenario with no obligation is a both-missing row, so the ledger's scenario count ("- N
-    Scenario Reconciliation(s): …") is the corpus census. The excluded-occurrence bullet
+    Claim Reconciliation(s): …") is the corpus census. The excluded-occurrence bullet
     sits in the ledger summary.
 
     @unit @SCN-RPT-007
@@ -140,14 +141,14 @@ Feature: The report renders the ledger as sectioned facts
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance"
     comes first. "## Summary views" holds the derived cuts, opening with Run verdict, then
     Evidence reconciliation and Test volume, and ending with Fitness evidence obligations and
-    Out-of-balance by feature. "## Scenario Reconciliations" comes last, with its summary lines
+    Out-of-balance by feature. "## Claim Reconciliations" comes last, with its summary lines
     on top: the verdict tally and the excluded-occurrence bullet. The layout is markdown only; the
     JSON is unaffected. Every reconciling item is labelled by its tag, the bare level for a
     behavioural check (unit, integration, …) and "fitness" for a fitness check, never by an
     internal kind.
 
     @unit @SCN-RPT-009
-    Scenario: the markdown report renders summary-first with the scenario reconciliations last
+    Scenario: the markdown report renders summary-first with the Claim Reconciliations last
 
   Rule: the report reconciles the test evidence observation — raw = attributed + suspense
 
@@ -327,15 +328,16 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
 
-  Rule: the reconciliation collection renders as "Scenario Reconciliation(s)", never "scenario(s)", on every surface that names it
+  Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
-    The report names the reconciled collection "Scenario Reconciliation(s)", never
-    "scenario(s)", in both places it appears: the Subject cell of the collection's row in
-    the Evidence reconciliation table, and the verdict tally under "## Scenario
-    Reconciliations". The tally counts every row, real, phantom and suspense.
+    The report names the reconciled collection "Claim Reconciliation(s)", never
+    "Scenario Reconciliation(s)" or "scenario(s)", in both places it appears: the Subject
+    cell of the collection's row in the Evidence reconciliation table, and the verdict tally
+    under "## Claim Reconciliations". The tally counts every row: scenario, phantom claim and
+    unnamed claim.
 
     @unit @SCN-RPT-024
-    Scenario: the reconciliation collection is named "Scenario Reconciliation(s)" on every surface, never "scenario(s)"
+    Scenario: the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"
 
   Rule: the tool identity is the tool's OWN checkout — an installed tool has none, whatever repository it is sitting inside
 
@@ -457,14 +459,14 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-043
     Scenario: a balanced row carrying a Pending Item reads differently from a clean-balanced row
 
-  Rule: the markdown report explains its evidence cells in a key under the Scenario Reconciliations heading
+  Rule: the markdown report explains its evidence cells in a key under the Claim Reconciliations heading
 
     After the section's tally lines and before its table, a key reads each evidence cell as
     obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean.
     A table with no evidence column carries no key.
 
     @unit @SCN-RPT-044
-    Scenario: a reader finds a key to the evidence cells before the Scenario Reconciliations table, and none where the table has no evidence cell
+    Scenario: a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell
 
   Rule: the report names each specController entry it could not read, before any cut of the reconciliation
 

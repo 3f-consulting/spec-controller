@@ -105,14 +105,14 @@ Feature: spec-controller balance runs standalone
 
   Rule: the printed verdict agrees with the process exit code
 
-    The tally counts every Scenario Reconciliation. The tally, the verdict headline and the
+    The tally counts every Claim Reconciliation. The tally, the verdict headline and the
     exit code always state the same outcome.
 
     @unit @e2e @SCN-CLI-013
     Scenario: the tally, the verdict headline and the process exit code name the same outcome
       Given a target whose only out-of-balance row is the suspense reconciliation
       When balance is asked to reconcile that target
-      Then the trial-balance table counts 1 out-of-balance Scenario Reconciliation
+      Then the trial-balance table counts 1 out-of-balance Claim Reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
       And the run ends on the out-of-balance verdict
       And the tally, the verdict headline and the run's exit agree

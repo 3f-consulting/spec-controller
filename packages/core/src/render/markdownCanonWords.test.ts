@@ -14,17 +14,17 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 
   it("tallies each row kind by its definition", () => {
     const md = renderMarkdown(__er(unbalanced()), ctx);
-    expect(md).toContain("- 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.\n");
+    expect(md).toContain("- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.\n");
     expect(md).toContain(
-      '- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".\n'
+      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".\n'
     );
   });
 
   it("states the rows no feature groups by their definitions", () => {
     const md = renderMarkdown(__er(unbalanced()), ctx);
     expect(md).toContain(
-      "1 Scenario Reconciliation(s) for cited scenario ids with no real scenario and " +
-        "1 Scenario Reconciliation(s) for evidence observations citing no scenario " +
+      "1 Claim Reconciliation(s) for cited scenario ids with no real scenario and " +
+        "1 Claim Reconciliation(s) for evidence observations citing no scenario " +
         "out of balance, not grouped by feature (no feature file names them)"
     );
   });
@@ -39,9 +39,9 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
   it("glosses a balanced run with the satisfied outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [provenObservation])), ctx);
     expect(md).toContain(
-      "every Scenario Reconciliation balances: every Evidence Observation satisfies its Evidence Obligation."
+      "every Claim Reconciliation balances: every Evidence Observation satisfies its Evidence Obligation."
     );
-    expect(md).toContain(`every Scenario Reconciliation balances: every ${OUTCOME_DESCRIPTION.satisfied}.`);
+    expect(md).toContain(`every Claim Reconciliation balances: every ${OUTCOME_DESCRIPTION.satisfied}.`);
   });
 
   it("keeps the terms phantom-claim and unnamed-claim as the JSON's row kinds", () => {

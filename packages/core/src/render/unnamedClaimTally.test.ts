@@ -12,23 +12,23 @@ function uncitedObservation(locator: string): EvidenceObservation {
 
 const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);
 
-describe('[SCN-RPT-024] the verdict tally names the collection "Scenario Reconciliation(s)" and counts every row, real, phantom and suspense', () => {
+describe('[SCN-RPT-024] the verdict tally names the collection "Claim Reconciliation(s)" and counts every row: scenario, phantom claim and unnamed claim', () => {
   it("states only the total when every evidence observation cites a scenario", () => {
-    expect(tallyBlock([known])).toEqual(["- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance."]);
+    expect(tallyBlock([known])).toEqual(["- 1 Claim Reconciliation(s): 1 balanced, 0 out-of-balance."]);
   });
 
   it("follows the total with the unnamed-claim count when one evidence observation cites no scenario", () => {
     expect(tallyBlock([known, uncitedObservation("src/a.test.ts")])).toEqual([
-      "- 2 Scenario Reconciliation(s): 1 balanced, 1 out-of-balance.",
-      '- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
+      "- 2 Claim Reconciliation(s): 1 balanced, 1 out-of-balance.",
+      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
     ]);
   });
 
   it("counts the real, phantom and suspense rows in the total, then the phantom count, then one suspense row however many evidence observations cite no scenario", () => {
     expect(tallyBlock([known, phantom, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
-      "- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.",
-      "- 1 Scenario Reconciliation(s) for cited scenario ids with no real scenario.",
-      '- 1 Scenario Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
+      "- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.",
+      "- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.",
+      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
     ]);
   });
 });

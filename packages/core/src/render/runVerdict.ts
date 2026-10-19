@@ -5,7 +5,7 @@ import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags
 import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-type Verdict = { readonly headline: string; readonly exit: string; readonly gloss: string };
+type RunVerdict = { readonly headline: string; readonly exit: string; readonly gloss: string };
 
 function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
   switch (scenarioCodeErrorsAre(errors)) {
@@ -18,7 +18,7 @@ function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOf
   }
 }
 
-function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): Verdict {
+function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): RunVerdict {
   const alsoOutOfBalance = isBalanced(ledger) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
   return {
     headline: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline],
@@ -27,31 +27,31 @@ function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCode
   };
 }
 
-const OUT_OF_BALANCE: Verdict = {
+const OUT_OF_BALANCE: RunVerdict = {
   headline: CORE_MESSAGES[CoreMessage.OutOfBalanceHeadline],
   exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
   gloss: CORE_MESSAGES[CoreMessage.OutOfBalanceGloss],
 };
 
-const UNSOUND: Verdict = {
+const UNSOUND: RunVerdict = {
   headline: CORE_MESSAGES[CoreMessage.UnsoundHeadline],
   exit: CORE_MESSAGES[CoreMessage.VerdictExit](4),
   gloss: CORE_MESSAGES[CoreMessage.UnsoundGloss],
 };
 
-const PENDING: Verdict = {
+const PENDING: RunVerdict = {
   headline: CORE_MESSAGES[CoreMessage.PendingHeadline],
   exit: CORE_MESSAGES[CoreMessage.VerdictExit](3),
   gloss: CORE_MESSAGES[CoreMessage.PendingGloss],
 };
 
-const BALANCED: Verdict = {
+const BALANCED: RunVerdict = {
   headline: CORE_MESSAGES[CoreMessage.BalancedHeadline],
   exit: CORE_MESSAGES[CoreMessage.VerdictExit](0),
   gloss: CORE_MESSAGES[CoreMessage.BalancedGloss],
 };
 
-function nothingToReconcile(corpusDir: string): Verdict {
+function nothingToReconcile(corpusDir: string): RunVerdict {
   return {
     headline: CORE_MESSAGES[CoreMessage.NothingToReconcileHeadline],
     exit: CORE_MESSAGES[CoreMessage.VerdictExit](5),
@@ -59,7 +59,7 @@ function nothingToReconcile(corpusDir: string): Verdict {
   };
 }
 
-function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: readonly ScenarioCodeError[]): Verdict {
+function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: readonly ScenarioCodeError[]): RunVerdict {
   switch (code) {
     case 5:
       return nothingToReconcile(corpusDir);

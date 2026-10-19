@@ -149,7 +149,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   });
 });
 
-describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconciliation(s)", never "scenario(s)"', () => {
+describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"', () => {
   let namedPhantomSuspense: Ledger;
   beforeEach(() => {
     namedPhantomSuspense = reconcile(
@@ -162,8 +162,15 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
     );
   });
 
-  it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
+  it('names the collection "Claim Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
     const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
-    expect(md).toContain("| Scenario Reconciliation |");
+    expect(md).toContain("| Claim Reconciliation |");
+  });
+
+  it('names no row "Scenario Reconciliation" anywhere in a report holding a scenario, a phantom claim and the unnamed claim', () => {
+    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
+    expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
+    expect(md.match(/Claim Reconciliation\(s\) for /g)).toHaveLength(4);
+    expect(md).not.toMatch(/scenario reconciliation/i);
   });
 });

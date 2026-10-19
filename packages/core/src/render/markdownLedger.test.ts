@@ -86,7 +86,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   const ledgerTable = (md: string): string[] => {
     const lines = md.split("\n");
-    const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading]);
+    const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(section).toBeGreaterThanOrEqual(0);
     const start = lines.findIndex(
       (l, i) => i > section && l.startsWith(`| ${CORE_MESSAGES[CoreMessage.ScenarioColumn]} |`)

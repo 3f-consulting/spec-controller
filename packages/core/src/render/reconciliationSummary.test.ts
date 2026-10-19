@@ -85,7 +85,7 @@ function expectedTable(
     ]),
     "| --- | --- | --- | --- | --- |",
     row([
-      CORE_MESSAGES[CoreMessage.ScenarioReconciliationSubject],
+      CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject],
       String(scenarios.total),
       String(scenarios.balanced),
       String(scenarios.outOfBalance),

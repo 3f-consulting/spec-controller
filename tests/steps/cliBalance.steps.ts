@@ -96,7 +96,7 @@ Then("it reports the Evidence Reconciliation", function () {
 });
 
 Then("the reconciliation reports the target's scenarios", function () {
-  assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
+  assert.match(cliResult.stdout, /\| Claim Reconciliation \| 2 \|/);
 });
 
 Then("the run is rejected for the missing path", function () {
@@ -138,7 +138,7 @@ When("balance is asked to reconcile that target without the Cucumber report opti
 
 Then("it reconciles the scenarios against the supplied evidence", function () {
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
-  assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
+  assert.match(cliResult.stdout, /\| Claim Reconciliation \| 2 \|/);
 });
 
 Given("a target that reconciles out-of-balance", function () {
@@ -377,8 +377,8 @@ Given("a target whose only out-of-balance row is the suspense reconciliation", f
 });
 
 function tallyOutOfBalance(stdout: string): number {
-  const row = stdout.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
-  assert.ok(row, `expected a Scenario Reconciliation tally row in stdout; got:\n${stdout}`);
+  const row = stdout.match(/^\| Claim Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
+  assert.ok(row, `expected a Claim Reconciliation tally row in stdout; got:\n${stdout}`);
   return Number(row[3]);
 }
 
@@ -388,11 +388,11 @@ function verdictHeadline(stdout: string): { word: string; exit: number } {
   return { word: String(headline[1]), exit: Number(headline[2]) };
 }
 
-Then("the trial-balance table counts {int} out-of-balance Scenario Reconciliation", function (count: number) {
+Then("the trial-balance table counts {int} out-of-balance Claim Reconciliation", function (count: number) {
   assert.equal(
     tallyOutOfBalance(cliResult.stdout),
     count,
-    `expected the tally to count ${count} out-of-balance Scenario Reconciliation; got:\n${cliResult.stdout}`,
+    `expected the tally to count ${count} out-of-balance Claim Reconciliation; got:\n${cliResult.stdout}`,
   );
 });
 

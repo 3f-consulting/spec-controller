@@ -15,7 +15,7 @@ const KEY = [
   "- In Reconciling items, `—` means the row has no reconciling item.",
 ];
 
-describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Scenario Reconciliations table, and none where the table has no evidence cell", () => {
+describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
@@ -28,7 +28,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Sc
   });
   const sectionOf = (md: string): string[] => {
     const lines = md.split("\n");
-    return lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading]));
+    return lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]));
   };
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
@@ -40,9 +40,9 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Sc
       CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
     ].join(" | ")} |`;
     expect(section.slice(0, 12)).toEqual([
-      CORE_MESSAGES[CoreMessage.ScenarioReconciliationsHeading],
+      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ScenarioReconciliationTally](2, 1, 1)}`,
+      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
       "",
       ...KEY,
       "",
