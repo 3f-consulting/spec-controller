@@ -62,19 +62,19 @@ function rowFor(md: string, scnId: string): { verdict: string; items: string } {
 }
 
 const pendingFor = (qualityCheck: string): string => CORE_MESSAGES[CoreMessage.PendingItemFor](qualityCheck);
-const missing = (qualityCheck: string): string => `${qualityCheck} ∅ ${OUTCOME_DESCRIPTION.missing}`;
+const missing = (qualityCheck: string): string => `${qualityCheck}: ${OUTCOME_DESCRIPTION.missing}`;
 
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no quality check carries the bare pending label, and its row still balances", () => {
     expect(rowFor(render(), "SCN-PIR-001")).toEqual({
-      verdict: "✓ balanced",
+      verdict: "balanced",
       items: CORE_MESSAGES[CoreMessage.PendingItem],
     });
   });
 
   it("a Pending Item with a quality check carries the label that names it", () => {
     expect(rowFor(render(), "SCN-PIR-002")).toEqual({
-      verdict: "✓ balanced",
+      verdict: "balanced",
       items: pendingFor("integration"),
     });
     expect(CORE_MESSAGES[CoreMessage.PendingItem]).not.toBe(pendingFor("integration"));
@@ -82,19 +82,19 @@ describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliati
 
   it("two Pending Items on one row are each labelled, joined in the order their tiers were tagged", () => {
     expect(rowFor(render(), "SCN-PIR-003")).toEqual({
-      verdict: "✓ balanced",
+      verdict: "balanced",
       items: [pendingFor("unit"), pendingFor("integration")].join("; "),
     });
   });
 
   it("Reconciling Items come first, then the Pending Items, every exception joined in order on the one cell", () => {
     expect(rowFor(render(), "SCN-PIR-004")).toEqual({
-      verdict: "✗ out-of-balance",
+      verdict: "out-of-balance",
       items: [missing("unit"), missing("integration"), pendingFor("e2e"), pendingFor("performance")].join("; "),
     });
   });
 
   it("a row with neither Reconciling nor Pending Items shows the placeholder alone", () => {
-    expect(rowFor(render(), "SCN-PIR-005")).toEqual({ verdict: "✓ balanced", items: "—" });
+    expect(rowFor(render(), "SCN-PIR-005")).toEqual({ verdict: "balanced", items: "—" });
   });
 });

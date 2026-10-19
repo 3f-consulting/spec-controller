@@ -72,7 +72,7 @@ const whatBroke = (locator: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`;
 
 const brokenCell = (qualityCheck: string, where: string): string =>
-  `${qualityCheck} 💥 ${OUTCOME_DESCRIPTION.broken} (${where})`;
+  `${qualityCheck}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;

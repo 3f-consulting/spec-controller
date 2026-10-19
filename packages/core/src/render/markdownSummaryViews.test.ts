@@ -44,7 +44,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     const md = renderMarkdown(__er(spanning), ctx);
 
     expect(md).toContain("### Out-of-balance by feature");
-    expect(md).toContain("3 of 5 scenario rows out of balance, grouped by feature.");
+    expect(md).toContain("3 of 5 scenario Claim Reconciliation(s) out of balance, grouped by feature.");
     expect(md).toContain("| Feature | Count | Out-of-balance `@SCN` ids |");
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
@@ -57,7 +57,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     );
     const md = renderMarkdown(__er(allBalanced), ctx);
     expect(md).not.toContain("### Out-of-balance by feature");
-    expect(md).not.toContain("scenario rows out of balance");
+    expect(md).not.toContain("scenario Claim Reconciliation(s) out of balance");
   });
 
   it("slots the by-feature section after the fitness section and before the ledger (no warnings section)", () => {
@@ -104,7 +104,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(byFeatureLines(lines)).toEqual([
       CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`,
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`,
       "",
       CORE_MESSAGES[CoreMessage.ByFeatureTableHeader],
       "| --- | --- | --- |",
@@ -148,7 +148,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("names the out-of-balance phantom-claim row beside the grouped scenario rows, and never groups it", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
         `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](CORE_MESSAGES[CoreMessage.PhantomClaimRows](1))}.`
     );
     expect(section).toContain("| BFP | 1 | SCN-BFP-002 |");
@@ -158,7 +158,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("names both ungrouped kinds when a phantom-claim and the unnamed-claim row are out of balance", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
         `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`
     );
   });
@@ -166,7 +166,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("renders the section with no table when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`
     );
     expect(section).not.toContain("| Feature | Count |");
   });
@@ -176,7 +176,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
     expect(section.split("\n")).toEqual([
       CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`,
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomAndSuspense())}.`,
       "",
     ]);
   });
@@ -210,7 +210,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
     expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
     expect(md).toContain("SCN-C");
-    expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
+    expect(md).toContain(`| out-of-balance | ${OUTCOME_DESCRIPTION["both-missing"]} |`);
   });
 });
 
@@ -269,12 +269,12 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
-    expect(md).toContain(`| SCN-LDG-002 | ✗ out-of-balance | unit ∅ ${OUTCOME_DESCRIPTION.missing} |`);
+    expect(md).toContain(`| SCN-LDG-002 | out-of-balance | unit: ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain(
-      `| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`
+      `| SCN-LNT-001 | out-of-balance | fitness: ${OUTCOME_DESCRIPTION.watermelon} |`
     );
     expect(md).not.toContain("runtime/");
-    expect(md).not.toContain("static 🍉");
+    expect(md).not.toContain("static:");
   });
 
   it("ends the report with the Claim Reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {

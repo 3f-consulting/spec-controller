@@ -24,7 +24,7 @@ describe('[SCN-RPT-024] the verdict tally names the collection "Claim Reconcilia
     ]);
   });
 
-  it("counts the real, phantom and suspense rows in the total, then the phantom count, then one suspense row however many evidence observations cite no scenario", () => {
+  it("counts the real, phantom and unnamed-claim rows in the total, then the phantom count, then one unnamed-claim row however many evidence observations cite no scenario", () => {
     expect(tallyBlock([known, phantom, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
       "- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.",
       "- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.",

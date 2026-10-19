@@ -117,7 +117,7 @@ export enum CoreMessage {
   FitnessSatisfiedOf,
   FitnessTableHeader,
   OutOfBalanceByFeatureHeading,
-  ScenarioRowsOutOfBalance,
+  ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
   NotGroupedByFeature,
   PhantomClaimRows,
@@ -218,7 +218,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
   readonly [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
   readonly [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
-  readonly [CoreMessage.ScenarioRowsOutOfBalance]: [outOfBalance: number, rows: number];
+  readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, rows: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   readonly [CoreMessage.PhantomClaimRows]: [count: number];
   readonly [CoreMessage.UnnamedClaimRows]: [count: number];
@@ -426,7 +426,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `${satisfied} of ${total} fitness evidence obligations reconcile satisfied.`,
   [CoreMessage.FitnessTableHeader]: "| Scenario | Outcome |",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
-  [CoreMessage.ScenarioRowsOutOfBalance]: (outOfBalance, rows) => `${outOfBalance} of ${rows} scenario rows out of balance`,
+  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, rows) => `${outOfBalance} of ${rows} scenario Claim Reconciliation(s) out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",
   [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
     `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,

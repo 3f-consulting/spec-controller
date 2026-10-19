@@ -69,7 +69,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it.each([
-    ["[SCN-RPT-018] renders both cells for a scenario naming two behavioural tiers — neither collapses to ∅", "| SCN-G |  | U/1 | I/1 |"],
+    ["[SCN-RPT-018] renders both cells for a scenario naming two behavioural tiers — neither reads as missing", "| SCN-G |  | U/1 | I/1 |"],
     ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation, no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
   ])("%s", (_title, row) => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
@@ -243,9 +243,9 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
     const [, , fitnessVerdict, fitnessItems] = table.get("SCN-FIT")!;
     const [, , unitVerdict, unitItems] = table.get("SCN-UNIT")!;
     expect(fitnessVerdict).toBe(unitVerdict);
-    expect(fitnessVerdict).toContain("out-of-balance");
-    expect(unitItems).toMatch(new RegExp(`^unit .*${OUTCOME_DESCRIPTION.failing}$`));
-    expect(fitnessItems).toBe(unitItems!.replace(/^unit /, "fitness "));
+    expect(fitnessVerdict).toBe("out-of-balance");
+    expect(unitItems).toBe(`unit: ${OUTCOME_DESCRIPTION.failing}`);
+    expect(fitnessItems).toBe(`fitness: ${OUTCOME_DESCRIPTION.failing}`);
   });
 });
 

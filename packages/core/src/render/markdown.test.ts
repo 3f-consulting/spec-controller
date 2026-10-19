@@ -47,7 +47,7 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     const md = renderMarkdown(__er(balance), ctx);
     expect(md).toContain("| Scenario | Verdict | Reconciling items |");
     expect(md).toContain("| --- | --- | --- |");
-    expect(md).toContain("| SCN-RPT-001 | ✓ balanced | — |");
+    expect(md).toContain("| SCN-RPT-001 | balanced | — |");
   });
 });
 
@@ -104,9 +104,9 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     expect(afterMissingCause).toMatch(/^[^\d]*2 \|/);
   });
 
-  let threeNamedPlusSuspense: Ledger;
+  let threeNamedPlusUnnamedClaim: Ledger;
   beforeEach(() => {
-    threeNamedPlusSuspense = reconcile(
+    threeNamedPlusUnnamedClaim = reconcile(
       [
         { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
         { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -122,8 +122,8 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     );
   });
 
-  it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
-    const md = renderMarkdown(__er(threeNamedPlusSuspense), ctx);
+  it("counts the unnamed claim's reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
+    const md = renderMarkdown(__er(threeNamedPlusUnnamedClaim), ctx);
     expect(md).toContain("| Claim Reconciliation | 4 | 3 | 1 |");
     expect(md).not.toContain("| Claim Reconciliation | 3 | 3 | 0 |");
   });
@@ -156,15 +156,15 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
     );
   });
 
-  it("renders a '### Fitness evidence obligations' table with each fitness row's scenario and glyphed outcome — including the watermelon", () => {
+  it("renders a '### Fitness evidence obligations' table with each fitness row's scenario and its outcome's sentence — including the watermelon", () => {
     const md = renderMarkdown(__er(spanning), ctx);
 
     expect(md).toContain("### Fitness evidence obligations");
     expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
     expect(md).toContain("| Scenario | Outcome |");
     expect(md).not.toContain("| Scenario | Fitness function | Outcome |");
-    expect(md).toContain(`| SCN-A | ✓ ${OUTCOME_DESCRIPTION.satisfied} |`);
-    expect(md).toContain(`| SCN-B | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
+    expect(md).toContain(`| SCN-A | ${OUTCOME_DESCRIPTION.satisfied} |`);
+    expect(md).toContain(`| SCN-B | ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
   it("omits the section entirely (total line and all) when no scenario names a fitness evidenceObligation", () => {

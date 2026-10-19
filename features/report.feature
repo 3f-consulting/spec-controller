@@ -72,7 +72,7 @@ Feature: The report renders the ledger as sectioned facts
     Under "## Summary views", the "### Fitness evidence obligations" section lists the
     fitness evidence obligations on their own. It opens with a total line, "N of M fitness
     evidence obligations reconcile satisfied.", then a table listing each fitness evidence
-    obligation by its scenario and its outcome, including any 🍉 watermelon. The section has
+    obligation by its scenario and its outcome, including any watermelon. The section has
     no check column, and it labels obligations by the quality check, fitness, never by an
     internal kind. When no scenario raises a fitness evidence obligation, the section is
     left out entirely.
@@ -84,9 +84,9 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "## Summary views", the "### Out-of-balance by feature" section shows which
     features hold the out-of-balance scenarios. It opens with a total line, "N of M scenario
-    rows out of balance, grouped by feature.", then a "Feature | Count | Out-of-balance @SCN ids"
-    table with one row per feature and its count. Balanced scenarios are left out. A
-    scenario's feature is the feature code in its @SCN code. The Feature cell reads "<full
+    Claim Reconciliation(s) out of balance, grouped by feature.", then a "Feature | Count |
+    Out-of-balance @SCN ids" table with one row per feature and its count. Balanced scenarios
+    are left out. A scenario's feature is the feature code in its @SCN code. The Feature cell reads "<full
     name> (<code>)", where the full name is the name of the feature file carrying that code.
     A code that no feature file carries shows as the bare code, and every code does when a
     report is re-rendered from saved JSON that carries no feature names.
@@ -247,13 +247,24 @@ Feature: The report renders the ledger as sectioned facts
     The markdown shows each outcome's sentence in place of its handle wherever an outcome
     reaches a reader: the "↳" rows of the Evidence reconciliation summary, each scenario's
     reconciling items, and the Outcome column of the fitness evidence obligations table. "↳
-    missing" reads "↳ Evidence Observation is missing". The glyph stays: "unit ∅ missing"
-    reads "unit ∅ Evidence Observation is missing", and "🍉 watermelon" reads "🍉 Evidence
-    Observation is passing but its check could not fail its job". The Detail column
-    shows no sentence. The JSON keeps the bare handle.
+    missing" reads "↳ Evidence Observation is missing", a reconciling item "unit: missing"
+    reads "unit: Evidence Observation is missing", and a "watermelon" Outcome cell reads
+    "Evidence Observation is passing but its check could not fail its job". The Detail
+    column shows no sentence. The JSON keeps the bare handle.
 
     @unit @SCN-RPT-020
     Scenario: the markdown renders each outcome's sentence, not the bare handle
+
+  Rule: the markdown states each verdict and each reconciling item in words, with no glyph
+
+    A ledger row's Verdict cell reads "balanced" or "out-of-balance" alone. A reconciling
+    item reads its quality check, a colon and its outcome's sentence, as "unit: Evidence
+    Observation is missing"; an item with no quality check reads the sentence alone. The
+    fitness evidence obligations table's Outcome cell reads the sentence alone. No symbol
+    stands beside a verdict or an outcome.
+
+    @unit @SCN-RPT-066
+    Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
 
   Rule: the gloss for every outcome is its sentence, verbatim
 
@@ -379,8 +390,8 @@ Feature: The report renders the ledger as sectioned facts
 
     On a phantom row, and on a scenario's row at a check where the scenario holds no
     obligation, each observation is listed by its outcome and where it ran, with its own
-    result, failed or passed, beside the outcome's glyph and sentence. The suspense row
-    counts its results by file instead, under the Rule below.
+    result, failed or passed, after its quality check and the outcome's sentence. The
+    suspense row counts its results by file instead, under the Rule below.
 
     @SCN-RPT-034 @unit @e2e
     Scenario: a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran
@@ -405,7 +416,7 @@ Feature: The report renders the ledger as sectioned facts
     individually. The grouping is not stored; the JSON carries each observation's test name.
 
     @SCN-RPT-033 @unit @e2e
-    Scenario: tests that cite no scenario are grouped on the suspense row by the file they ran in, each group counting how many ran, passed and failed
+    Scenario: tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
       Then the suspense row lists each of the two files once
@@ -413,7 +424,7 @@ Feature: The report renders the ledger as sectioned facts
       And the counts of tests that ran add up to the count of evidence observations that cite no scenario
 
     @SCN-RPT-036 @unit @e2e
-    Scenario: a failed test that cites no scenario is named on the suspense row by its test title
+    Scenario: a failed test that cites no scenario is named on the unnamed claim's row by its test title
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
       Then the file's entry on the suspense row names the test that failed by its title
@@ -427,7 +438,7 @@ Feature: The report renders the ledger as sectioned facts
       And the feature file's entry does not name the Cucumber scenario that passed
 
     @SCN-RPT-038 @unit @e2e
-    Scenario: the CI steps that cite no scenario are grouped together on the suspense row, each named
+    Scenario: the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named
       Given a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario
       When the target's evidence is reconciled into a report
       Then the suspense row lists the CI steps together once, after the test's file

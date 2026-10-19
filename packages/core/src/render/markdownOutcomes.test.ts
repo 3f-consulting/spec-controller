@@ -50,7 +50,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
 
   it("renders the fitness table's Outcome column with the outcome's sentence", () => {
     const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain(`| SCN-A | 🍉 ${OUTCOME_DESCRIPTION.watermelon} |`);
+    expect(md).toContain(`| SCN-A | ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 });
 

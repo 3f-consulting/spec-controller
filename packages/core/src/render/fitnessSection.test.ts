@@ -53,8 +53,8 @@ function fitnessLines(lines: string[]): string[] {
   return lines.slice(start, end);
 }
 
-const SATISFIED_ROW = `✓ ${OUTCOME_DESCRIPTION.satisfied}`;
-const FAILING_ROW = `✗ ${OUTCOME_DESCRIPTION.failing}`;
+const SATISFIED_ROW = OUTCOME_DESCRIPTION.satisfied;
+const FAILING_ROW = OUTCOME_DESCRIPTION.failing;
 
 describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligations as their own section", () => {
   it("renders heading, blank, total line, blank, header, separator, one row per fitness obligation naming its scenario, then one blank", () => {

@@ -52,40 +52,40 @@ function rowFor(md: string, account: string): { verdict: string; items: string }
   return { verdict: cells[1]!, items: cells[2]! };
 }
 
-function item(outcome: Outcome, glyph: string, subject?: string, suffix?: string, result?: string): string {
-  const head = subject === undefined ? "" : `${subject} `;
+function item(outcome: Outcome, subject?: string, suffix?: string, result?: string): string {
+  const head = subject === undefined ? "" : `${subject}: `;
   const tail = suffix === undefined ? "" : ` (${suffix})`;
   const ran = result === undefined ? "" : ` — ${result}`;
-  return `${head}${glyph} ${OUTCOME_DESCRIPTION[outcome]}${tail}${ran}`;
+  return `${head}${OUTCOME_DESCRIPTION[outcome]}${tail}${ran}`;
 }
 
 describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns", () => {
   describe("an obligation side with nothing to show for it", () => {
-    it("a failing observation renders its quality check, the failing glyph and the outcome, with no suffix", () => {
+    it("a failing observation renders its quality check and the outcome's sentence, with no suffix", () => {
       const md = render(
         [{ scnId: "SCN-RCI-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
         [{ qualityCheck: "unit", scnId: "SCN-RCI-001", status: "failed", locator: "src/a.test.ts" }]
       );
       expect(rowFor(md, "SCN-RCI-001")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("failing", "✗", "unit"),
+        verdict: "out-of-balance",
+        items: item("failing", "unit"),
       });
     });
 
-    it("a scenario with no obligation and no observation renders the both-missing glyph and outcome alone", () => {
+    it("a scenario with no obligation and no observation renders the both-missing sentence alone", () => {
       const md = render([{ scnId: "SCN-RCI-002", evidenceObligations: [] }], []);
       expect(rowFor(md, "SCN-RCI-002")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("both-missing", "⊘"),
+        verdict: "out-of-balance",
+        items: item("both-missing"),
       });
     });
 
-    it("a scenario with no @SCN code renders the no-scn-code glyph and outcome alone, under its feature and title", () => {
+    it("a scenario with no @SCN code renders the no-scn-code sentence alone, under its feature and title", () => {
       const untagged = "features/checkout.feature : a scenario with no code";
       const md = render([], [], [untagged]);
       expect(rowFor(md, untagged)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("no-scn-code", "🔗"),
+        verdict: "out-of-balance",
+        items: item("no-scn-code"),
       });
     });
   });
@@ -100,8 +100,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         ]
       );
       expect(rowFor(md, "SCN-RCI-003")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("no-evidence-obligation", "◇", "integration", "tests/steps/c.steps.ts", "passed"),
+        verdict: "out-of-balance",
+        items: item("no-evidence-obligation", "integration", "tests/steps/c.steps.ts", "passed"),
       });
     });
 
@@ -120,8 +120,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         ]
       );
       expect(rowFor(md, "SCN-RCI-004")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("no-evidence-obligation", "◇", "fitness", "lint:rci"),
+        verdict: "out-of-balance",
+        items: item("no-evidence-obligation", "fitness", "lint:rci"),
       });
     });
 
@@ -131,26 +131,26 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         [{ qualityCheck: "unit", scnId: "SCN-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
       );
       expect(rowFor(md, "SCN-GHO-001")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("cites-unknown-scenario", "👻", "unit", "src/ghost.test.ts", "passed"),
+        verdict: "out-of-balance",
+        items: item("cites-unknown-scenario", "unit", "src/ghost.test.ts", "passed"),
       });
     });
 
     it("a behavioural evidence observation citing an unknown scenario with no locator names no locator", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: "SCN-GHO-002", status: "passed" }]);
       expect(rowFor(md, "SCN-GHO-002")).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("cites-unknown-scenario", "👻", "unit", undefined, "passed"),
+        verdict: "out-of-balance",
+        items: item("cites-unknown-scenario", "unit", undefined, "passed"),
       });
     });
 
     it("a behavioural evidence observation citing no scenario names its check, outcome and file on the suspense row, and that it passed", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
       const { verdict, items } = rowFor(md, SUSPENSE_ROW);
-      expect(verdict).toBe("✗ out-of-balance");
+      expect(verdict).toBe("out-of-balance");
       const [named, result, ...rest] = items.split(" — ");
       expect(rest).toEqual([]);
-      expect(named).toBe(item("cites-no-scenario", "❓", "unit", "src/uncited.test.ts"));
+      expect(named).toBe(item("cites-no-scenario", "unit", "src/uncited.test.ts"));
       expect(result).toMatch(/^(?:passed|1 ran, 1 passed, 0 failed)$/);
     });
   });
@@ -164,8 +164,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         "unit"
       );
       expect(brokenRow(observations)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "unit", "src/broken.test.ts: Error: Cannot find module './gone.js'"),
+        verdict: "out-of-balance",
+        items: item("broken", "unit", "src/broken.test.ts: Error: Cannot find module './gone.js'"),
       });
     });
 
@@ -183,8 +183,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     ])("%s", (_title, testResult, locator) => {
       const observations = parseVitestEvidenceObservations({ testResults: [testResult] }, "unit");
       expect(brokenRow(observations)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "unit", locator),
+        verdict: "out-of-balance",
+        items: item("broken", "unit", locator),
       });
     });
 
@@ -194,8 +194,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         "unit"
       );
       expect(brokenRow(observations)).toEqual({
-        verdict: "✗ out-of-balance",
-        items: item("broken", "💥", "unit"),
+        verdict: "out-of-balance",
+        items: item("broken", "unit"),
       });
     });
   });

@@ -10,9 +10,9 @@ import {
 export type EvidenceColumn = QualityCheck;
 
 export function evidenceColumns(
-  scenarios: readonly ClaimReconciliation[]
+  claims: readonly ClaimReconciliation[]
 ): EvidenceColumn[] {
-  const scenarioRows = scenarios.filter(isScenario);
+  const scenarioRows = claims.filter(isScenario);
   return QUALITY_CHECKS.filter((qualityCheck) => scenarioRows.some((row) => carriesQualityCheck(row, qualityCheck)));
 }
 

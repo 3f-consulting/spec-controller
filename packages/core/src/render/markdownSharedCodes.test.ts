@@ -127,7 +127,7 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       []
     );
     const row = renderMarkdown(er(bare), ctx).split("\n").find((line) => line.startsWith("| SCN-ONE-001 "));
-    expect(row).toContain("⧉ Evidence Obligation's @SCN code is carried by another Scenario");
+    expect(row).toContain("| out-of-balance | Evidence Obligation's @SCN code is carried by another Scenario");
     expect(row).not.toContain("undefined");
   });
 

@@ -96,16 +96,16 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   it("carries the locator on the suspense row's broken item — a broken proof, not an absent one", () => {
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
     const suspense = rowFor(vitestMd, "(unnamed claim)");
-    expect(suspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
+    expect(suspense).toContain(`unit: ${OUTCOME_DESCRIPTION.broken}`);
     expect(suspense).toContain(VITEST_LOCATOR);
     expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
     expect(suspense).not.toContain("at packageResolve");
     const namedRow = rowFor(vitestMd, "SCN-HNS-002");
-    expect(namedRow).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
-    expect(namedRow).not.toContain("💥");
+    expect(namedRow).toContain(`unit: ${OUTCOME_DESCRIPTION.missing}`);
+    expect(namedRow).not.toContain(OUTCOME_DESCRIPTION.broken);
 
     const cucumberSuspense = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(unnamed claim)");
-    expect(cucumberSuspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
+    expect(cucumberSuspense).toContain(`integration: ${OUTCOME_DESCRIPTION.broken}`);
     expect(cucumberSuspense).toContain(CUCUMBER_LOCATOR);
     expect(cucumberSuspense).toContain("is ambiguous");
   });

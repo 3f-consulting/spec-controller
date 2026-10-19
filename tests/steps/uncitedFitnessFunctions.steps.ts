@@ -6,6 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
+const WATERMELON = "Evidence Observation is passing but its check could not fail its job";
+
 interface UsgFixture {
   features: string;
   ci: string;
@@ -71,7 +73,7 @@ Then(
   function () {
     assert.ok(
       activeMd.includes(
-        "| SCN-TGT-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"
+        "| SCN-TGT-001 | Evidence Observation satisfies its Evidence Obligation |"
       ),
       `expected lint:foo's evidence observation posted to SCN-TGT-001, satisfied — the ` +
         `attribution the citation seam produces. Asserting only that no uncited evidence observation names ` +
@@ -184,14 +186,14 @@ Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
   function () {
     assert.ok(
-      activeMd.includes("| SCN-TGS-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"),
+      activeMd.includes("| SCN-TGS-001 | Evidence Observation satisfies its Evidence Obligation |"),
       `expected the nightly check SATISFIED — lint:nightly is invoked by nightly.yml, so the ` +
         `scenario citing it is telling the truth. Reading ci.yml alone is what makes the tool ` +
         `disagree. Report:\n${activeMd}`,
     );
     assert.ok(
-      !activeMd.includes("🍉"),
-      `expected NO watermelon anywhere: a watermelon says a cited check is passing but ` +
+      !activeMd.split("\n").some((line) => line.startsWith("| SCN-") && line.includes(WATERMELON)),
+      `expected NO watermelon on any scenario's row: a watermelon says a cited check is passing but ` +
         `fabricated, and this one genuinely runs. Accusing a real gate of being fake is ` +
         `worse than missing it. Report:\n${activeMd}`,
     );

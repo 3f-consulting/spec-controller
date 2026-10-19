@@ -65,10 +65,10 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.TestVolumeSum](3, 1, 1, 1));
     expect(regenerated).toContain("2 fitness function(s) run, 1 uncited fitness function(s).");
     expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1));
-    const suspenseRow = regenerated.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
-    expect(suspenseRow).toContain(`unit ❓ ${citesNoScenario} (src/b.test.ts)`);
-    expect(suspenseRow).toContain(`fitness ❓ ${citesNoScenario}`);
-    expect(suspenseRow).toMatch(/fitness ❓ [^;|]*\blint:bar\b/);
+    const unnamedClaimRow = regenerated.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
+    expect(unnamedClaimRow).toContain(`unit: ${citesNoScenario} (src/b.test.ts)`);
+    expect(unnamedClaimRow).toContain(`fitness: ${citesNoScenario}`);
+    expect(unnamedClaimRow).toMatch(/fitness: [^;|]*\blint:bar\b/);
   });
 
   it("needs no RunContext — the JSON string alone reconstructs the report", () => {

@@ -1,7 +1,5 @@
 import type {
   ClaimReconciliation,
-  Outcome,
-  Verdict,
   PendingItem,
   EvidenceStatus,
 } from "../model.js";
@@ -42,38 +40,12 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { remarkWordsOf } from "./remarkWords.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
-const ITEM_GLYPH: Record<Outcome, string> = {
-  satisfied: "✓",
-  "failing": "✗",
-  "watermelon": "🍉",
-  "missing": "∅",
-  "no-scn-code": "🔗",
-  "duplicate-scn-code": "⧉",
-  "cites-unknown-scenario": "👻",
-  "cites-no-scenario": "❓",
-  "broken": "💥",
-  "no-evidence-obligation": "◇",
-  "both-missing": "⊘",
-};
-
-const VERDICT_GLYPH: Record<Verdict, string> = {
-  balanced: "✓",
-  "out-of-balance": "✗",
-};
-
 function renderItem(item: ClaimReconciliation["reconcilingItems"][number]): string {
-  if (item.outcome === "both-missing") {
-    return `${ITEM_GLYPH["both-missing"]} ${OUTCOME_DESCRIPTION["both-missing"]}`;
+  const sentence = OUTCOME_DESCRIPTION[item.outcome];
+  if (item.outcome === "both-missing" || item.outcome === "no-scn-code" || item.qualityCheck === undefined) {
+    return sentence;
   }
-  if (item.outcome === "no-scn-code") {
-    return `${ITEM_GLYPH["no-scn-code"]} ${OUTCOME_DESCRIPTION["no-scn-code"]}`;
-  }
-  if (item.qualityCheck === undefined) {
-    return `${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}`;
-  }
-  const subject = item.qualityCheck;
-  const suffix = observationSuffix(item) ?? "";
-  return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
+  return `${item.qualityCheck}: ${sentence}${observationSuffix(item) ?? ""}`;
 }
 
 function observationSuffix(item: ClaimReconciliation["reconcilingItems"][number]): string | undefined {
@@ -122,13 +94,13 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
   const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
   const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
-  return `${group.qualityCheck} ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
+  return `${group.qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
 }
 
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names);
-  return `fitness ${ITEM_GLYPH["cites-no-scenario"]} ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
+  return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
 }
 
 function renderUnnamedClaimItems(items: ClaimReconciliation["reconcilingItems"]): string[] {
@@ -233,7 +205,7 @@ const fitnessSection: SectionEmitter = (report) => {
     claimReconciliations: report.ledger.claimReconciliations,
   }).map(
     ({ scnId, reconciliation: r }) =>
-      `| ${scnId} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
+      `| ${scnId} | ${OUTCOME_DESCRIPTION[r.outcome]} |`
   );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.fitness;
@@ -259,7 +231,7 @@ const byFeatureSection: SectionEmitter = (report) => {
   );
   const ungrouped = ungroupedOutOfBalance(report.summary.claimReconciliations);
   if (groups.size === 0 && ungrouped.length === 0) return [];
-  const head = CORE_MESSAGES[CoreMessage.ScenarioRowsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
+  const head = CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
   return [
     CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
     "",
@@ -274,10 +246,10 @@ interface FeatureGroup {
   readonly noScnCode: number;
 }
 
-type ScenarioRows = RenderInput["ledger"]["claimReconciliations"];
+type ClaimRows = RenderInput["ledger"]["claimReconciliations"];
 
 function outOfBalanceByFeature(
-  scenarios: ScenarioRows,
+  scenarios: ClaimRows,
   untagged: readonly UntaggedScenario[],
   featureNames: Readonly<Record<string, string>>,
 ): Map<string, FeatureGroup> {
@@ -335,8 +307,8 @@ const ledgerSection: SectionEmitter = (report) => {
   );
   const phantomClaimRows = report.ledger.claimReconciliations.filter(isPhantomClaim);
   const unnamedClaimRows = report.ledger.claimReconciliations.filter(isUnnamedClaim);
-  const scenarios = [...scenarioRows, ...phantomClaimRows, ...unnamedClaimRows];
-  const columns = report.summary.testVolume !== undefined ? evidenceColumns(scenarios) : [];
+  const claims = [...scenarioRows, ...phantomClaimRows, ...unnamedClaimRows];
+  const columns = report.summary.testVolume !== undefined ? evidenceColumns(claims) : [];
   return [
     CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
@@ -344,7 +316,7 @@ const ledgerSection: SectionEmitter = (report) => {
     ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
     "",
     ...evidenceKeyLines(columns),
-    ...ledgerTableLines(scenarios, columns),
+    ...ledgerTableLines(claims, columns),
     "",
   ];
 };
@@ -386,7 +358,7 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
 }
 
 function ledgerTableLines(
-  scenarios: readonly ClaimReconciliation[],
+  claims: readonly ClaimReconciliation[],
   columns: readonly EvidenceColumn[]
 ): string[] {
   const headers = [
@@ -396,11 +368,11 @@ function ledgerTableLines(
     CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
   ];
   const lines = [`| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`];
-  for (const s of scenarios) {
+  for (const s of claims) {
     const cells = columns.map((col) => evidenceCell(s, col));
     const items = renderRowExceptions(s);
     lines.push(
-      `| ${[s.scnId, ...cells, `${VERDICT_GLYPH[s.verdict]} ${s.verdict}`, items].join(" | ")} |`
+      `| ${[s.scnId, ...cells, s.verdict, items].join(" | ")} |`
     );
   }
   return lines;

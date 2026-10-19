@@ -98,7 +98,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.NotChecksEntryMatchesNoStep]: ["ci.yml / build / gone"],
   [CoreMessage.StepsNotAccountedFor]: [5, 4],
   [CoreMessage.FitnessSatisfiedOf]: [1, 2],
-  [CoreMessage.ScenarioRowsOutOfBalance]: [1, 3],
+  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
   [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],
   [CoreMessage.PhantomClaimRows]: [1],
   [CoreMessage.UnnamedClaimRows]: [1],
