@@ -61,12 +61,12 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const phantomClaim = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
-    expect(phantomClaim?.scnId).toBe("SCN-AAA-001");
-    expect(phantomClaim?.verdict).toBe("out-of-balance");
-    expect(phantomClaim?.evidenceObligations).toEqual([]);
-    expect(phantomClaim?.evidenceObservations).toEqual([observation]);
-    expect(phantomClaim?.qualityCheckReconciliations).toEqual([
+    const phantomClaimRow = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
+    expect(phantomClaimRow?.scnId).toBe("SCN-AAA-001");
+    expect(phantomClaimRow?.verdict).toBe("out-of-balance");
+    expect(phantomClaimRow?.evidenceObligations).toEqual([]);
+    expect(phantomClaimRow?.evidenceObservations).toEqual([observation]);
+    expect(phantomClaimRow?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: REAL_GUARD,
@@ -74,8 +74,8 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
         evidenceObservation: observation,
       },
     ]);
-    expect(phantomClaim?.reconcilingItems).toEqual(phantomClaim?.qualityCheckReconciliations);
-    expect(phantomClaim?.pendingItems).toEqual([]);
+    expect(phantomClaimRow?.reconcilingItems).toEqual(phantomClaimRow?.qualityCheckReconciliations);
+    expect(phantomClaimRow?.pendingItems).toEqual([]);
 
     expect(
       balance.claimReconciliations

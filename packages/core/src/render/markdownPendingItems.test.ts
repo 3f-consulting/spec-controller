@@ -31,10 +31,10 @@ describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately fr
     );
   });
 
-  it("renders the Pending Items tally (3) in the Evidence reconciliation view, marked with ⏳", () => {
+  it("renders the Pending Items tally (3) in the Evidence reconciliation view, on a line that opens with its count", () => {
     const md = renderMarkdown(__er(pendingBalance), ctx);
     const section = evidenceReconciliationSection(md);
-    expect(section).toMatch(/⏳\s*3 Pending Item/);
+    expect(section).toMatch(/^3 Pending Item\(s\) — deferred, tallied apart from balanced and out-of-balance\.$/m);
   });
 });
 
@@ -63,6 +63,6 @@ describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished fro
     const pendingCell = exceptionsCell(rowFor(md, "SCN-PDD-002"));
     expect(cleanCell).toBe("—");
     expect(pendingCell).not.toBe(cleanCell);
-    expect(pendingCell).toMatch(/⏳ pending: integration/);
+    expect(pendingCell).toBe("pending: integration");
   });
 });

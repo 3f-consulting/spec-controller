@@ -61,14 +61,14 @@ function rowFor(md: string, scnId: string): { verdict: string; items: string } {
   return { verdict: cells[1]!, items: cells[2]! };
 }
 
-const pendingFor = (qualityCheck: string): string => CORE_MESSAGES[CoreMessage.PendingItemFor](qualityCheck);
+const pendingFor = (qualityCheck: string): string => `pending: ${qualityCheck}`;
 const missing = (qualityCheck: string): string => `${qualityCheck}: ${OUTCOME_DESCRIPTION.missing}`;
 
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no quality check carries the bare pending label, and its row still balances", () => {
     expect(rowFor(render(), "SCN-PIR-001")).toEqual({
       verdict: "balanced",
-      items: CORE_MESSAGES[CoreMessage.PendingItem],
+      items: "pending",
     });
   });
 
@@ -77,7 +77,7 @@ describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliati
       verdict: "balanced",
       items: pendingFor("integration"),
     });
-    expect(CORE_MESSAGES[CoreMessage.PendingItem]).not.toBe(pendingFor("integration"));
+    expect(rowFor(render(), "SCN-PIR-001").items).not.toBe(rowFor(render(), "SCN-PIR-002").items);
   });
 
   it("two Pending Items on one row are each labelled, joined in the order their tiers were tagged", () => {

@@ -187,7 +187,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   ];
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(qualityCheckReconciliations.byOutcome[outcome]), detail]));
+    lines.push(row([OUTCOME_DESCRIPTION[outcome], "", "", String(qualityCheckReconciliations.byOutcome[outcome]), detail]));
   }
   lines.push(...pendingTally(report.summary.pending));
   lines.push("");
@@ -290,8 +290,8 @@ function idsCell(group: FeatureGroup): string {
 
 function ungroupedOutOfBalance(totals: RenderInput["summary"]["claimReconciliations"]): string[] {
   return [
-    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomClaimRows](totals.phantomClaim)] : []),
-    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.UnnamedClaimRows](totals.unnamedClaim)] : []),
+    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](totals.phantomClaim)] : []),
+    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.UnnamedClaimReconciliations](totals.unnamedClaim)] : []),
   ];
 }
 
@@ -362,7 +362,7 @@ function ledgerTableLines(
   columns: readonly EvidenceColumn[]
 ): string[] {
   const headers = [
-    CORE_MESSAGES[CoreMessage.ScenarioColumn],
+    CORE_MESSAGES[CoreMessage.ClaimColumn],
     ...columns.map(columnHeader),
     CORE_MESSAGES[CoreMessage.VerdictColumn],
     CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],

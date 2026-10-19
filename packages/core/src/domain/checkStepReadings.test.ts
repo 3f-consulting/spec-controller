@@ -86,11 +86,11 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
-    const unnamedClaim = reconcile().ledger.claimReconciliations.find(
+    const unnamedClaimRow = reconcile().ledger.claimReconciliations.find(
       (row) => row.kind === "unnamed-claim"
     );
     expect(
-      unnamedClaim?.evidenceObservations.map((o) => [
+      unnamedClaimRow?.evidenceObservations.map((o) => [
         o.scnId,
         "exists" in o ? o.exists : undefined,
         "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,

@@ -54,7 +54,7 @@ Then("the markdown report is in that file, and nothing else is reported", functi
   assert.ok(existsSync(fmt003FilePath), `expected the markdown report at ${fmt003FilePath}; it does not exist`);
   const report = readFileSync(fmt003FilePath, "utf8");
   assert.match(report, /^## Run provenance$/m, `expected the markdown report in the file; got:\n${report}`);
-  assert.match(report, /^\| Scenario \|/m, `expected the scenario ledger in the file; got:\n${report}`);
+  assert.match(report, /^\| Claim \|/m, `expected the claim table in the file; got:\n${report}`);
   assert.equal(fmt003Run.stdout, "", `expected nothing on stdout; got:\n${fmt003Run.stdout}`);
 });
 

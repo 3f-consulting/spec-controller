@@ -65,16 +65,16 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const phantomClaim = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-099");
+    const phantomClaimRow = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-099");
 
-    expect(phantomClaim?.kind).toBe("phantom-claim");
-    expect(phantomClaim?.evidenceObservations).toEqual([
+    expect(phantomClaimRow?.kind).toBe("phantom-claim");
+    expect(phantomClaimRow?.evidenceObservations).toEqual([
       { qualityCheck: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
     ]);
   });
 });
 
-describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario to the unnamed claim", () => {
+describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario as its passed observation to the unnamed claim", () => {
   it("holds the uncited test's observation on the unnamed claim, citing no scenario", () => {
     const balance = runReconcile({
       features: `${TARGET}/features`,
@@ -82,9 +82,9 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario to t
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const unnamedClaim = balance.ledger.claimReconciliations.find((s) => s.kind === "unnamed-claim");
+    const unnamedClaimRow = balance.ledger.claimReconciliations.find((s) => s.kind === "unnamed-claim");
 
-    expect(unnamedClaim?.evidenceObservations).toContainEqual({
+    expect(unnamedClaimRow?.evidenceObservations).toContainEqual({
       qualityCheck: "unit",
       scnId: null,
       status: "passed",

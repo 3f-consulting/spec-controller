@@ -100,7 +100,7 @@ function expectedTable(
     ]),
     ...OUT_OF_BALANCE_OUTCOMES.map((outcome) =>
       row([
-        `↳ ${OUTCOME_DESCRIPTION[outcome]}`,
+        OUTCOME_DESCRIPTION[outcome],
         "",
         "",
         String(leafCounts[outcome] ?? 0),
@@ -134,7 +134,7 @@ describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Item
         "1 unit + 1 integration"
       ),
       "",
-      CORE_MESSAGES[CoreMessage.PendingTally](1),
+      "1 Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.",
       "",
     ]);
   });

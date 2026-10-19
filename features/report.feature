@@ -55,8 +55,9 @@ Feature: The report renders the ledger as sectioned facts
     The Quality Check Reconciliation row counts every quality check reconciliation on every
     row, a phantom claim's and the unnamed claim's included, and an evidence observation that answers no evidence
     obligation included. It is therefore not a count of evidence obligations. Its
-    out-of-balance count is broken down in place into nested "↳" cause rows that fill the
-    out-of-balance column only, are always shown even at zero, and sum to it. The missing
+    out-of-balance count is broken down in place into cause rows, one per outcome, each
+    reading the outcome's sentence alone. They fill the out-of-balance column only, are
+    always shown even at zero, and sum to it. The missing
     row's Detail splits the missing quality check reconciliations by quality check, fitness
     first: a behavioural check by its bare level, a fitness check as "fitness".
 
@@ -232,8 +233,8 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the Quality Check Reconciliation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
     The Quality Check Reconciliation out-of-balance count in the Evidence reconciliation
-    table breaks down into a flat list of the ten out-of-balance outcomes, each a counted "↳
-    <outcome>" row, in this order: missing, failing, watermelon, no-scn-code,
+    table breaks down into a flat list of the ten out-of-balance outcomes, each a counted row
+    that reads the outcome's sentence alone, in this order: missing, failing, watermelon, no-scn-code,
     duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation,
     broken, both-missing. Their counts sum to the out-of-balance total. No debit-side,
     credit-side or neither-side subtotal row appears. Every outcome except satisfied has a
@@ -245,9 +246,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown renders each outcome's sentence in place of the bare handle
 
     The markdown shows each outcome's sentence in place of its handle wherever an outcome
-    reaches a reader: the "↳" rows of the Evidence reconciliation summary, each scenario's
-    reconciling items, and the Outcome column of the fitness evidence obligations table. "↳
-    missing" reads "↳ Evidence Observation is missing", a reconciling item for a missing unit
+    reaches a reader: the cause rows of the Evidence reconciliation summary, each scenario's
+    reconciling items, and the Outcome column of the fitness evidence obligations table. The
+    "missing" cause row reads "Evidence Observation is missing", a reconciling item for a missing unit
     observation reads "unit: Evidence Observation is missing", and a "watermelon" Outcome cell reads
     "Evidence Observation is passing but its check could not fail its job". The Detail
     column shows no sentence. The JSON keeps the bare handle.
@@ -265,6 +266,18 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-066
     Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
+
+  Rule: the markdown report carries no symbol on any line
+
+    Every line of the markdown report reads in words. A Pending Item reads "pending", or
+    "pending" and its quality check; the Pending Items tally and the outstanding note open
+    with their words; the unsound stamp opens "This run is unsound."; and each cause row of
+    the Evidence reconciliation summary reads its outcome's sentence alone. A symbol is any
+    character that is not a letter, a number, punctuation, a space or printable ASCII, so
+    an arrow, a dingbat or an emoji is one, whether or not it was ever printed before.
+
+    @unit @SCN-RPT-067
+    Scenario: no line of the markdown report holds a symbol character, whatever its outcomes, Pending Items or run integrity
 
   Rule: the gloss for every outcome is its sentence, verbatim
 

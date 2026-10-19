@@ -67,22 +67,22 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(report.summary).not.toHaveProperty("evidenceObligations");
   });
 
-  const unnamedClaimScenarios: Scenario[] = [
+  const twoBalancedScenarios: Scenario[] = [
     { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheck: "unit" }] },
   ];
-  const unnamedClaimObservations: EvidenceObservation[] = [
+  const twoPassingTestsAndAnUncitedCheck: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-TGT-001", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
     { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
 
   it("counts the phantom claim's reconciliation in the summary totals too — a phantom claim is out-of-balance, not a bucket apart", () => {
-    const balanceWithPhantomClaim: Ledger = reconcile(unnamedClaimScenarios, [
-      ...unnamedClaimObservations,
+    const ledgerWithPhantomClaimRow: Ledger = reconcile(twoBalancedScenarios, [
+      ...twoPassingTestsAndAnUncitedCheck,
       { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
     ]);
-    const report = assembleRenderInput(__er(balanceWithPhantomClaim), ctx);
+    const report = assembleRenderInput(__er(ledgerWithPhantomClaimRow), ctx);
     expect(report.summary.claimReconciliations).toEqual({
       total: 4,
       balanced: 2,
@@ -92,7 +92,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     });
     const t = report.summary.claimReconciliations;
     expect(t.total - t.phantomClaim - t.unnamedClaim).toBe(2);
-    expect(isBalanced(balanceWithPhantomClaim)).toBe(false);
+    expect(isBalanced(ledgerWithPhantomClaimRow)).toBe(false);
   });
 });
 
@@ -143,10 +143,10 @@ describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary;
 
   it("the phantom claim's and the unnamed claim's evidence observations live on their ledger rows, not a section detail array", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
-    const phantomClaim = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
-    const unnamedClaim = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
-    expect(phantomClaim.scnId).toBe("SCN-PHX-999");
-    expect(unnamedClaim.evidenceObservations).toHaveLength(1);
+    const phantomClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
+    const unnamedClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
+    expect(phantomClaimRow.scnId).toBe("SCN-PHX-999");
+    expect(unnamedClaimRow.evidenceObservations).toHaveLength(1);
     expect(parsed.summary.testVolume.onPhantomClaim).toBe(1);
     expect(parsed.summary.testVolume.onUnnamedClaim).toBe(1);
   });

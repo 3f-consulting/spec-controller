@@ -41,7 +41,7 @@ const FEATURE_FILE = "tests/fixtures/unnamed-claim-status/features/checkout.feat
 const FEATURE_FILE_FAILED_SCENARIO = "a basket with an expired coupon is refused";
 const FEATURE_FILE_PASSED_SCENARIO = "an empty basket cannot be checked out";
 const PASSING_FILE = { locator: "tests/fixtures/unnamed-claim-status/sound.test.ts", ran: 1, passed: 1, failed: 0 };
-const UNCITED_OUTCOME_ROW = "↳ Evidence Observation cites no Scenario";
+const UNCITED_OUTCOME_ROW = "Evidence Observation cites no Scenario";
 const UNCITED_STEPS = ["lint:bar", "lint:foo"];
 const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
 

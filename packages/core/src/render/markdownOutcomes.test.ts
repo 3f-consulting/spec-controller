@@ -24,16 +24,16 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     );
   });
 
-  it("renders every summary ↳ decomposition row with the outcome's sentence, and no bare handle", () => {
+  it("renders every summary cause row as the outcome's sentence alone, and no bare handle", () => {
     const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain("| ↳ Evidence Observation is missing |");
-    expect(md).toContain("| ↳ Evidence Observation is failing |");
-    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.watermelon} |`);
-    expect(md).toContain("| ↳ Evidence Observation cites an unknown Scenario |");
-    expect(md).toContain("| ↳ Evidence Observation cites no Scenario |");
-    expect(md).toContain("| ↳ Evidence Observation cites a Scenario with no matching Evidence Obligation |");
+    expect(md).toContain("\n| Evidence Observation is missing |");
+    expect(md).toContain("\n| Evidence Observation is failing |");
+    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.watermelon} |`);
+    expect(md).toContain("\n| Evidence Observation cites an unknown Scenario |");
+    expect(md).toContain("\n| Evidence Observation cites no Scenario |");
+    expect(md).toContain("\n| Evidence Observation cites a Scenario with no matching Evidence Obligation |");
     expect(md).toContain(
-      "| ↳ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited |"
+      "\n| Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited |"
     );
     for (const handle of [
       "missing",
@@ -44,7 +44,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
       "no-evidence-obligation",
       "both-missing",
     ]) {
-      expect(md).not.toContain(`| ↳ ${handle} |`);
+      expect(md).not.toContain(`\n| ${handle} |`);
     }
   });
 

@@ -54,7 +54,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("renders corpus-driven columns — Fitness first, then the behavioural levels present (e2e/performance absent)", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| Scenario | Fitness | Unit | Integration | Verdict | Reconciling items |");
+    expect(md).toContain("| Claim | Fitness | Unit | Integration | Verdict | Reconciling items |");
     expect(md).not.toContain("| Performance |");
     expect(md).not.toContain(" E2e ");
   });
@@ -78,7 +78,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   const headerOf = (...evidence: string[]): string =>
     `| ${[
-      CORE_MESSAGES[CoreMessage.ScenarioColumn],
+      "Claim",
       ...evidence,
       CORE_MESSAGES[CoreMessage.VerdictColumn],
       CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
@@ -89,7 +89,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(section).toBeGreaterThanOrEqual(0);
     const start = lines.findIndex(
-      (l, i) => i > section && l.startsWith(`| ${CORE_MESSAGES[CoreMessage.ScenarioColumn]} |`)
+      (l, i) => i > section && l.startsWith("| Claim |")
     );
     expect(start).toBeGreaterThan(section);
     const end = lines.indexOf("", start);
@@ -188,18 +188,18 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("takes no column from a phantom claim's row's evidence observations, and fills that row's evidence cells with —", () => {
-    const phantomClaim = reconcile(
+    const ledgerWithPhantomClaimRow = reconcile(
       [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [
         { qualityCheck: "unit", scnId: "SCN-U", status: "passed" },
         { qualityCheck: "e2e", scnId: "SCN-GHOST", status: "passed" },
       ]
     );
-    expect(phantomClaim.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
+    expect(ledgerWithPhantomClaimRow.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
       ["SCN-U", "scenario"],
       ["SCN-GHOST", "phantom-claim"],
     ]);
-    const table = ledgerTable(renderMarkdown(__er(phantomClaim, true, false), ctx));
+    const table = ledgerTable(renderMarkdown(__er(ledgerWithPhantomClaimRow, true, false), ctx));
     expect(table[0]).toBe(headerOf("Unit"));
     expect(table[1]).toBe("| --- | --- | --- | --- |");
     expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
@@ -222,7 +222,7 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
       ]
     );
     const lines = renderMarkdown(__er(failed, true, false), ctx).split("\n");
-    const header = `| ${CORE_MESSAGES[CoreMessage.ScenarioColumn]} | Fitness | Unit | ${CORE_MESSAGES[CoreMessage.VerdictColumn]} | ${CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn]} |`;
+    const header = "| Claim | Fitness | Unit | Verdict | Reconciling items |";
     const start = lines.indexOf(header);
     expect(start).toBeGreaterThanOrEqual(0);
     const table = lines.slice(start + 2, lines.indexOf("", start));
@@ -294,23 +294,25 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
     );
   });
 
-  it("decomposes the Quality Check Reconciliation out-of-balance into exactly the ten leaf outcome rows", () => {
+  const leafCellsOf = (md: string): string[] => {
+    const sentences = new Set<string>(Object.values(OUTCOME_DESCRIPTION));
+    return md
+      .split("\n")
+      .map((line) => line.split(" | ")[0]?.replace(/^\| /, "") ?? "")
+      .filter((cell) => sentences.has(cell));
+  };
+
+  it("decomposes the Quality Check Reconciliation out-of-balance into exactly the ten leaf outcome rows, each opening with its outcome's sentence alone", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     for (const leaf of LEAVES) {
-      expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
+      expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION[leaf]} |`);
     }
-    const arrowRows = md.split("\n").filter((line) => line.includes("↳"));
-    expect(arrowRows.length).toBe(10);
+    expect(leafCellsOf(md).length).toBe(10);
   });
 
   it("renders a leaf row for EVERY Outcome member except satisfied (the exhaustiveness guard)", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    const rendered = new Set(
-      md
-        .split("\n")
-        .filter((line) => line.includes("↳"))
-        .map((line) => line.split("|")[1]?.trim().replace("↳ ", ""))
-    );
+    const rendered = new Set(leafCellsOf(md));
     for (const outcome of EXPECTED_LEAVES) {
       expect(rendered).toContain(OUTCOME_DESCRIPTION[outcome]);
     }
@@ -328,7 +330,7 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
     let leafSum = 0;
     for (const leaf of LEAVES) {
       const gloss = OUTCOME_DESCRIPTION[leaf].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const n = Number(new RegExp(`↳ ${gloss} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]);
+      const n = Number(new RegExp(`\\n\\| ${gloss} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]);
       expect(Number.isNaN(n)).toBe(false);
       leafSum += n;
     }

@@ -120,8 +120,8 @@ export enum CoreMessage {
   ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
   NotGroupedByFeature,
-  PhantomClaimRows,
-  UnnamedClaimRows,
+  PhantomClaimReconciliations,
+  UnnamedClaimReconciliations,
   AndJoiner,
   ByFeatureTableHeader,
   NoScnCodeScenarios,
@@ -133,7 +133,7 @@ export enum CoreMessage {
   UntaggedScenarios,
   SharedScnCodes,
   LedgerTableHeader,
-  ScenarioColumn,
+  ClaimColumn,
   VerdictColumn,
   ReconcilingItemsColumn,
   EvidenceCellKey,
@@ -218,10 +218,10 @@ interface CoreMessageParams {
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
   readonly [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
   readonly [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
-  readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, rows: number];
+  readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
-  readonly [CoreMessage.PhantomClaimRows]: [count: number];
-  readonly [CoreMessage.UnnamedClaimRows]: [count: number];
+  readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
+  readonly [CoreMessage.UnnamedClaimReconciliations]: [count: number];
   readonly [CoreMessage.NoScnCodeScenarios]: [count: number];
   readonly [CoreMessage.ClaimReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
   readonly [CoreMessage.PhantomClaimTally]: [count: number];
@@ -286,7 +286,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OneProofNeverRan]: "1 proof never ran, so the behaviour it proves was never exercised.",
   [CoreMessage.ProofsNeverRan]: (count) => `${count} proofs never ran, so the behaviours they prove were never exercised.`,
   [CoreMessage.RunUnsound]: (proofs) =>
-    `⚠ **This run is unsound.** ${proofs} A row reading "${MISSING}" ` +
+    `**This run is unsound.** ${proofs} A row reading "${MISSING}" ` +
     "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
     `"write the test", because the test may already be there. Fix the harness and regenerate.`,
   [CoreMessage.BrokenEvidenceNotNamed]: "(evidence not named by the runner)",
@@ -381,7 +381,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `all, so this run has NO BASIS FOR A VERDICT — the corpus \`${corpusDir}\` ` +
     "carried no scenario and nothing was produced. Not balanced: a run that examined nothing must not certify.",
   [CoreMessage.PendingItemsOutstanding]:
-    "⏳ Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
+    "Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
   [CoreMessage.SubjectColumn]: "Subject",
@@ -392,7 +392,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ClaimReconciliationSubject]: "Claim Reconciliation",
   [CoreMessage.QualityCheckReconciliationSubject]: "Quality Check Reconciliation",
   [CoreMessage.PendingTally]: (pending) =>
-    `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
+    `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.TestVolumeHeading]: "### Test volume",
   [CoreMessage.TestVolumeSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
     `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
@@ -426,12 +426,12 @@ export const CORE_MESSAGES: CoreMessages = {
     `${satisfied} of ${total} fitness evidence obligations reconcile satisfied.`,
   [CoreMessage.FitnessTableHeader]: "| Scenario | Outcome |",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
-  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, rows) => `${outOfBalance} of ${rows} scenario Claim Reconciliation(s) out of balance`,
+  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",
   [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
     `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,
-  [CoreMessage.PhantomClaimRows]: (count) => `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
-  [CoreMessage.UnnamedClaimRows]: (count) => `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}`,
+  [CoreMessage.PhantomClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
+  [CoreMessage.UnnamedClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}`,
   [CoreMessage.AndJoiner]: " and ",
   [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
   [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
@@ -446,8 +446,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
     `The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${codes} @SCN code(s) carried by more than one scenario:`,
-  [CoreMessage.LedgerTableHeader]: "| Scenario | Verdict | Reconciling items |",
-  [CoreMessage.ScenarioColumn]: "Scenario",
+  [CoreMessage.LedgerTableHeader]: "| Claim | Verdict | Reconciling items |",
+  [CoreMessage.ClaimColumn]: "Claim",
   [CoreMessage.VerdictColumn]: "Verdict",
   [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
   [CoreMessage.EvidenceCellKey]: [
@@ -458,8 +458,8 @@ export const CORE_MESSAGES: CoreMessages = {
     "- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.",
     "- In Reconciling items, `—` means the row has no reconciling item.",
   ].join("\n"),
-  [CoreMessage.PendingItem]: "⏳ pending",
-  [CoreMessage.PendingItemFor]: (qualityCheck) => `⏳ pending: ${qualityCheck}`,
+  [CoreMessage.PendingItem]: "pending",
+  [CoreMessage.PendingItemFor]: (qualityCheck) => `pending: ${qualityCheck}`,
   [CoreMessage.CheckStepNoOutcome]: (scnId) =>
     `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`,
   [CoreMessage.CheckStepSkipped]: (scnId) =>

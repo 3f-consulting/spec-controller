@@ -134,9 +134,9 @@ Then(
       "vitest.json",
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
-    const unnamedClaim = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
-    assert.ok(unnamedClaim, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${jsonText}`);
-    const locators = unnamedClaim!.qualityCheckReconciliations
+    const unnamedClaimRow = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
+    assert.ok(unnamedClaimRow, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${jsonText}`);
+    const locators = unnamedClaimRow!.qualityCheckReconciliations
       .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
       .map((o) => o.locator!);
     assert.ok(

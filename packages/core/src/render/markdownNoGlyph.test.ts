@@ -5,8 +5,8 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { symbolCharactersIn } from "./symbolCharacter.test-utils.js";
 
-const GLYPHS = ["✓", "✗", "∅", "🍉", "🔗", "⧉", "👻", "❓", "💥", "◇", "⊘"];
 const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"];
 const UNTAGGED = "features/checkout.feature : a scenario with no code";
 
@@ -16,7 +16,7 @@ function cellsOf(line: string): string[] {
 
 function ledgerRows(md: string): string[][] {
   const lines = md.split("\n");
-  const header = lines.findIndex((line) => line.startsWith("| Scenario |") && line.endsWith("| Verdict | Reconciling items |"));
+  const header = lines.findIndex((line) => line.startsWith("| Claim |") && line.endsWith("| Verdict | Reconciling items |"));
   expect(header, "expected the ledger table").toBeGreaterThan(-1);
   const rows: string[][] = [];
   for (const line of lines.slice(header + 2)) {
@@ -90,8 +90,9 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     expect(md).toContain(`| SCN-NGL-003 | ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
-  it("prints none of the glyphs anywhere in the report", () => {
-    const md = renderMarkdown(__er(everyOutcome), ctx);
-    for (const glyph of GLYPHS) expect(md, glyph).not.toContain(glyph);
+  it("holds no symbol character in any cell of the claim table, judged by what a symbol is, not by a list of known ones", () => {
+    const cells = ledgerRows(renderMarkdown(__er(everyOutcome), ctx)).flat();
+    expect(cells.length).toBeGreaterThan(0);
+    expect(symbolCharactersIn(cells.join("\n"))).toEqual([]);
   });
 });

@@ -74,7 +74,7 @@ describe("[SCN-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
   });
 });
 
-describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase that cites no scenario citing none", () => {
+describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no scn property as a passed observation citing no scenario", () => {
   const reportOf = (properties?: { property: { name: string; value: string }[] }): JunitXmlReport => ({
     testsuites: {
       testsuite: [

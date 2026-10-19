@@ -191,7 +191,7 @@ Then(
         `scenario citing it is telling the truth. Reading ci.yml alone is what makes the tool ` +
         `disagree. Report:\n${activeMd}`,
     );
-    const watermelonRow = activeMd.split("\n").find((line) => line.startsWith(`| ↳ ${WATERMELON} |`));
+    const watermelonRow = activeMd.split("\n").find((line) => line.startsWith(`| ${WATERMELON} |`));
     assert.ok(
       watermelonRow,
       `expected the Evidence reconciliation summary's watermelon row, which is printed even at ` +

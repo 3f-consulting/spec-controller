@@ -85,10 +85,10 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const broken = { qualityCheck: "unit", status: "failed", broken: true, locator: "a.test.ts" } as const;
     const citing: EvidenceObservation = { ...broken, scnId: "SCN-CITED-001" };
     const citingNone: EvidenceObservation = { ...broken, scnId: null };
-    const unnamedClaim = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
+    const unnamedClaimRow = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
       (r) => r.kind === "unnamed-claim"
     )!;
-    expect(unnamedClaim.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
+    expect(unnamedClaimRow.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });
 
   it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {

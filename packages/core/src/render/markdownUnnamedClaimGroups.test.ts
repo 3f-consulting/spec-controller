@@ -48,7 +48,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   it("counts tests that ran adding up to the count of evidence observations that cite no scenario", () => {
     const md = mixedReport();
     const ran = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) ran,/.exec(item)![1]));
-    const uncited = Number(rowCells(md, "↳ Evidence Observation cites no Scenario")[3]);
+    const uncited = Number(rowCells(md, "Evidence Observation cites no Scenario")[3]);
     expect(ran.reduce((a, b) => a + b, 0)).toBe(uncited);
     expect(uncited).toBe(3);
   });
@@ -140,7 +140,7 @@ describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together 
   it("counts what ran adding up to the count of evidence observations that cite no scenario", () => {
     const md = reportOf([step("lint:bar"), step("lint:foo"), unit("failed", "src/a.test.ts"), unit("passed", "src/b.test.ts")]);
     const counted = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)![1]));
-    const uncited = Number(rowCells(md, "↳ Evidence Observation cites no Scenario")[3]);
+    const uncited = Number(rowCells(md, "Evidence Observation cites no Scenario")[3]);
     expect(counted.reduce((a, b) => a + b, 0)).toBe(uncited);
     expect(uncited).toBe(4);
   });

@@ -38,10 +38,10 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
         evidenceObligation: { qualityCheck: "fitness" },
       },
     ]);
-    const unnamedClaim = balance.claimReconciliations.find(
+    const unnamedClaimRow = balance.claimReconciliations.find(
       (s) => s.kind === "unnamed-claim",
     );
-    expect(unnamedClaim?.qualityCheckReconciliations).toEqual([
+    expect(unnamedClaimRow?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         outcome: "broken",

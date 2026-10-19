@@ -35,7 +35,7 @@ Key: each evidence cell reads *obligation*/*observations*.
 - A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.
 - In Reconciling items, `—` means the row has no reconciling item.
 
-| Scenario | Fitness | Unit | E2e | Verdict | Reconciling items |
+| Claim | Fitness | Unit | E2e | Verdict | Reconciling items |
 | --- | --- | --- | --- | --- | --- |
 | SCN-CHK-001 |  | U/1 |  | balanced | — |
 | SCN-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing |

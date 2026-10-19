@@ -37,15 +37,15 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     expect(targetRepo(renderMarkdown(__er(balance), untargeted))).toBe("- Target repo: unknown-target");
   });
 
-  it("positions the provenance header above the per-scenario table (sectioned-renderer order)", () => {
+  it("positions the provenance header above the claim table (sectioned-renderer order)", () => {
     const md = renderMarkdown(__er(balance), ctx);
     expect(md.indexOf("# Evidence Reconciliation")).toBeLessThan(md.indexOf("## Run provenance"));
-    expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("| Scenario | Verdict | Reconciling items |"));
+    expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("| Claim | Verdict | Reconciling items |"));
   });
 
-  it("keeps the existing scenario table byte-green (the Scenario-CRUD Read regression guard)", () => {
+  it("keeps the existing claim table byte-green (the Scenario-CRUD Read regression guard)", () => {
     const md = renderMarkdown(__er(balance), ctx);
-    expect(md).toContain("| Scenario | Verdict | Reconciling items |");
+    expect(md).toContain("| Claim | Verdict | Reconciling items |");
     expect(md).toContain("| --- | --- | --- |");
     expect(md).toContain("| SCN-RPT-001 | balanced | — |");
   });
@@ -78,12 +78,12 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     expect(md).toContain("| Quality Check Reconciliation | 6 | 2 | 4 |");
   });
 
-  it("decomposes the Quality Check Reconciliation out-of-balance into its nested reconciling-item causes, with the level split as Detail", () => {
+  it("decomposes the Quality Check Reconciliation out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.missing} |`);
+    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain("1 unit + 1 integration");
-    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.failing} |`);
-    expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION.watermelon} |`);
+    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.failing} |`);
+    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
@@ -98,15 +98,15 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     );
     const md = renderMarkdown(__er(lintAndBehavioural), ctx);
     expect(md).toContain("1 fitness + 1 integration");
-    const missingCause = `↳ ${OUTCOME_DESCRIPTION.missing} |`;
+    const missingCause = `\n| ${OUTCOME_DESCRIPTION.missing} |`;
     const afterMissingCause = md.slice(md.indexOf(missingCause) + missingCause.length);
     expect(md).toContain(missingCause);
     expect(afterMissingCause).toMatch(/^[^\d]*2 \|/);
   });
 
-  let threeNamedPlusUnnamedClaim: Ledger;
+  let threeScenarioRowsPlusUnnamedClaimRow: Ledger;
   beforeEach(() => {
-    threeNamedPlusUnnamedClaim = reconcile(
+    threeScenarioRowsPlusUnnamedClaimRow = reconcile(
       [
         { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
         { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -123,7 +123,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
   });
 
   it("counts the unnamed claim's reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
-    const md = renderMarkdown(__er(threeNamedPlusUnnamedClaim), ctx);
+    const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx);
     expect(md).toContain("| Claim Reconciliation | 4 | 3 | 1 |");
     expect(md).not.toContain("| Claim Reconciliation | 3 | 3 | 0 |");
   });

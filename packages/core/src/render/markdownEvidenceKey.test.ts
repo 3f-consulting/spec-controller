@@ -33,12 +33,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
     const section = sectionOf(renderMarkdown(__er(ledger, true), ctx));
-    const header = `| ${[
-      CORE_MESSAGES[CoreMessage.ScenarioColumn],
-      "Unit",
-      CORE_MESSAGES[CoreMessage.VerdictColumn],
-      CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
-    ].join(" | ")} |`;
+    const header = "| Claim | Unit | Verdict | Reconciling items |";
     expect(section.slice(0, 12)).toEqual([
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
       "",
@@ -52,13 +47,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
 
   it("renders no line of the key when the table carries no evidence column", () => {
     const md = renderMarkdown(__er(ledger, false), ctx);
-    expect(sectionOf(md)[4]).toBe(
-      `| ${[
-        CORE_MESSAGES[CoreMessage.ScenarioColumn],
-        CORE_MESSAGES[CoreMessage.VerdictColumn],
-        CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
-      ].join(" | ")} |`
-    );
+    expect(sectionOf(md)[4]).toBe("| Claim | Verdict | Reconciling items |");
     for (const line of KEY) expect(md).not.toContain(line);
   });
 });

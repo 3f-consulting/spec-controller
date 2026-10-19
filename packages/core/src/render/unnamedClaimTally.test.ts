@@ -4,7 +4,7 @@ import { tallyBlockOf } from "./tallyBlock.test-utils.js";
 
 const scenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
 const known: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" };
-const phantomClaim: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
+const phantomClaimObservation: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
 
 function uncitedObservation(locator: string): EvidenceObservation {
   return { qualityCheck: "unit", scnId: null, status: "passed", locator };
@@ -25,7 +25,7 @@ describe('[SCN-RPT-024] the verdict tally names the collection "Claim Reconcilia
   });
 
   it("counts the real, phantom claims' and unnamed claim's rows in the total, then the phantom claims' count, then the unnamed claim's one row however many evidence observations cite no scenario", () => {
-    expect(tallyBlock([known, phantomClaim, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
+    expect(tallyBlock([known, phantomClaimObservation, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
       "- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.",
       "- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.",
       '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
