@@ -1,21 +1,23 @@
 @RPT
 Feature: The report renders the ledger as sectioned facts
 
-  The report renders the reconciled ledger as facts, in sections: the run provenance first, the
-  summary views opening with the run verdict, and the Claim Reconciliations last.
+  The report renders the reconciled ledger as facts, in sections: the run provenance first,
+  then the summary views, opening with the run verdict, and the Claim Reconciliations last.
+
   It states facts only, with no interpretation, editorial or cross-run comparison.
 
   Rule: the markdown report opens with a run-provenance header
 
     The markdown report opens with a "## Run provenance" section, ahead of the per-scenario
     table. It states the target repo, the input paths and flags actually used, the run-start
-    time in UTC, the target's source SHA, and the tool's own SHA and version. A missing
-    source SHA reads "unknown (non-git target)". A missing tool SHA reads "unknown (not a
-    git checkout)", and the version is still shown.
+    time in UTC, the target's source SHA, and the tool's own SHA and version.
+
+    A missing source SHA reads "unknown (non-git target)". A missing tool SHA reads
+    "unknown (not a git checkout)", and the version still shows.
 
     The "Target repo:" line is the --target value verbatim, never resolved and never guessed
-    from a path. Without --target it reads "unknown-target" and also names the target's git
-    origin beside it, never in place of it.
+    from a path. Without --target it reads "unknown-target" and names the target's git origin
+    beside it, never in place of it.
 
     @unit @SCN-RPT-001
     Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target and naming the git origin beside it
@@ -23,9 +25,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the JSON report carries a provenance object
 
     The JSON report carries a top-level run provenance object beside the reconciliation body,
-    its summary and ledger. It holds the same run facts as the
-    markdown header: the target, the source SHA, the tool's own SHA and version, the UTC run
-    timestamp, and the input paths and flags actually used.
+    its summary and ledger. The object holds the same run facts as the markdown header: the
+    target, the source SHA, the tool's own SHA and version, the UTC run timestamp, and the
+    input paths and flags actually used.
 
     @unit @SCN-RPT-002
     Scenario: the JSON report carries a provenance object stating target, source SHA, tool SHA, tool version, UTC timestamp, and inputs, with the reconciliation body intact
@@ -33,35 +35,37 @@ Feature: The report renders the ledger as sectioned facts
   Rule: an explicit source SHA wins, and a non-git target resolves to unknown
 
     An explicit, non-empty source SHA given by the override flag wins over any git read.
-    With no override and a target that is not a git repository, the source SHA is recorded
-    as unknown and the run completes.
+
+    With no override and a target that is not a git repository, the source SHA is recorded as
+    unknown and the run completes.
 
     @unit @SCN-RPT-003
     Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
 
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
-    Under "## Summary views", the "### Evidence reconciliation" section renders one table.
-    Its rows are the subjects, Claim Reconciliation and Quality Check Reconciliation,
-    each with its own Total. Its columns are balanced and out-of-balance. Nothing in it is
-    bold.
+    Under "## Summary views", the "### Evidence reconciliation" section renders one table. Its
+    rows are the subjects, Claim Reconciliation and Quality Check Reconciliation, each with its
+    own Total. Its columns are balanced and out-of-balance. Nothing in it is bold.
 
     The Claim Reconciliation row counts every row of the collection: each scenario, each
-    phantom claim and the unnamed claim. A phantom claim's row and the unnamed claim's row
-    are always out of balance, so a run whose only out-of-balance row is the unnamed claim's
-    reads N+1 | N | 1. This out-of-balance count agrees with the balance verdict and with
-    the exit code.
+    phantom claim and the unnamed claim. A phantom claim's row and the unnamed claim's row are
+    always out of balance, so a run whose only out-of-balance row is the unnamed claim's reads
+    N+1 | N | 1. This out-of-balance count agrees with the balance verdict and the exit code.
 
     The Quality Check Reconciliation row counts every quality check reconciliation on every
-    row, a phantom claim's and the unnamed claim's included, and an evidence observation that answers no evidence
-    obligation included. It is therefore not a count of evidence obligations. Its
-    out-of-balance count is broken down in place into cause rows, one per outcome, each
-    reading the outcome's sentence alone. They fill the out-of-balance column only, are
-    always shown even at zero, and sum to it. The missing
-    row's Detail splits the missing quality check reconciliations by quality check, fitness
-    first: a behavioural check by its bare level, a fitness check as "fitness".
+    row, including the rows of phantom claims and the unnamed claim, and including each
+    evidence observation that answers no evidence obligation. It is therefore not a count of
+    evidence obligations.
 
-    The two out-of-balance counts differ by granularity. A scenario with two missing arms is
+    Its out-of-balance count breaks down in place into cause rows, one per outcome, each
+    reading the outcome's sentence alone. The cause rows fill only the out-of-balance column,
+    always show even at zero, and sum to that count.
+
+    The missing cause row's Detail splits the missing quality check reconciliations by quality
+    check, fitness first: a behavioural check by its bare level, a fitness check as "fitness".
+
+    The two out-of-balance counts differ in granularity: a scenario with two missing arms is
     one out-of-balance Claim Reconciliation and two out-of-balance Quality Check
     Reconciliations.
 
@@ -70,40 +74,47 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
-    Under "## Summary views", the "### Fitness evidence obligations" section lists the
-    fitness evidence obligations on their own. It opens with a total line, "N of M fitness
-    evidence obligations reconcile satisfied.", then a table listing each fitness evidence
-    obligation by its scenario and its outcome, including any watermelon. The section has
-    no check column, and it labels obligations by the quality check, fitness, never by an
-    internal kind. When no scenario raises a fitness evidence obligation, the section is
-    left out entirely.
+    Under "## Summary views", the "### Fitness evidence obligations" section lists the fitness
+    evidence obligations on their own. It opens with a total line,
+    "N of M fitness evidence obligations reconcile satisfied.", then a table listing each
+    fitness evidence obligation by its scenario and its outcome, including any watermelon.
+
+    The section has no check column. It labels obligations by the quality check, fitness,
+    never by an internal kind.
+
+    The section is left out entirely when no scenario raises a fitness evidence obligation.
 
     @unit @SCN-RPT-005
     Scenario: the markdown report lists the fitness evidence obligations as their own section
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
-    Under "## Summary views", the "### Out-of-balance by feature" section shows which
-    features hold the out-of-balance scenarios. It opens with a total line,
-    "N of M Claim Reconciliation(s) of scenarios out of balance, grouped by feature.", then a
-    "Feature | Count | Out-of-balance @SCN ids" table with one row per feature and its count. Balanced scenarios
-    are left out. A scenario's feature is the feature code in its @SCN code. The Feature cell reads "<full
-    name> (<code>)", where the full name is the name of the feature file carrying that code.
-    A code that no feature file carries shows as the bare code, and every code does when a
-    report is re-rendered from saved JSON that carries no feature names.
+    Under "## Summary views", the "### Out-of-balance by feature" section shows which features
+    hold the out-of-balance scenarios. It opens with a total line that starts
+    "N of M Claim Reconciliation(s) of scenarios out of balance", says which of them are grouped
+    by feature, and names any that are not grouped, "(no feature file names them)". A table
+    headed "| Feature | Count | Out-of-balance `@SCN` ids |" follows, one row per feature with
+    its count.
+    Balanced scenarios are left out.
+
+    A scenario's feature is the feature code in its @SCN code. The Feature cell reads
+    "<full name> (<code>)", where the full name is the name of the feature file carrying that
+    code. A code that no feature file carries shows as the bare code. Every code shows bare
+    when the report is re-rendered from saved JSON that carries no feature names.
 
     The total line accounts for every out-of-balance row. A phantom claim's row and the
-    unnamed claim's row name no feature file, so they are not grouped; the sentence
-    states each of their out-of-balance counts as not grouped by feature, and its numbers
-    add up to the header's out-of-balance count and total. The section is left out only when
-    no Claim Reconciliation is out of balance. When only ungrouped rows are, it states
-    them and has no table.
+    unnamed claim's row name no feature file, so they are not grouped: the total line states
+    each of their out-of-balance counts as not grouped by feature, and its numbers add up to
+    the header's out-of-balance count and total.
+
+    The section is left out only when no Claim Reconciliation is out of balance. When only
+    ungrouped rows are out of balance, the section states them and has no table.
 
     A scenario with no @SCN code counts on the row of the feature file it sits in: under the
-    file's header code when the file has one, and under the file's name when it has none.
-    Its cell states how many such scenarios the row holds rather than naming them; the
-    untagged-scenario list names each one. A re-render from the saved JSON groups them the
-    same way.
+    file's header code when the file has one, and under the file's name when it has none. Its
+    cell states how many such scenarios the row holds rather than naming them; the
+    untagged-scenario list names each one. A re-render from saved JSON groups them the same
+    way.
 
     @unit @SCN-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code for a foreign-scn-code
@@ -119,20 +130,22 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the ledger's scenario count is the corpus census, and the report has no census section
 
-    The report has no census section under any name. Every scenario is a ledger row, and a
-    scenario with no obligation is a both-missing row, so the ledger's scenario count ("- N
-    Claim Reconciliation(s): …") is the corpus census. The excluded-occurrence bullet
-    sits in the ledger summary.
+    The report has no census section under any name.
+
+    Every scenario is a ledger row, and a scenario with no obligation is a both-missing row, so
+    the ledger's scenario count ("- N Claim Reconciliation(s): …") is the corpus census.
+
+    The excluded-occurrence bullet sits in the ledger summary.
 
     @unit @SCN-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
 
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 
-    The report states "N @SCN ids seen in non-tag context, excluded": the difference between
-    the raw @SCN code occurrences in the feature source, in prose, comments and step text,
-    and the codes read as scenarios. It appears on both surfaces, as a bullet in the
-    markdown ledger summary and in the JSON evidence-obligations object.
+    The report states "N @SCN ids seen in non-tag context, excluded": the raw @SCN code
+    occurrences in the feature source (in prose, comments and step text) minus the codes read
+    as scenarios. It appears on both surfaces: as a bullet in the markdown ledger summary, and
+    in the JSON evidence-obligations object.
 
     @unit @SCN-RPT-008
     Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
@@ -140,13 +153,15 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report renders summary-first, ledger-last
 
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance"
-    comes first. "## Summary views" holds the derived cuts, opening with Run verdict, then
-    Evidence reconciliation and Test volume, and ending with Fitness evidence obligations and
-    Out-of-balance by feature. "## Claim Reconciliations" comes last, with its summary lines
-    on top: the verdict tally and the excluded-occurrence bullet. The layout is markdown only; the
-    JSON is unaffected. Every reconciling item is labelled by its tag, the bare level for a
-    behavioural check (unit, integration, …) and "fitness" for a fitness check, never by an
-    internal kind.
+    comes first. "## Summary views" holds the derived cuts: Run verdict first, then Evidence
+    reconciliation and Test volume, and Fitness evidence obligations and Out-of-balance by
+    feature last. "## Claim Reconciliations" comes last, with its summary lines on top: the
+    verdict tally and the excluded-occurrence bullet.
+
+    This layout is markdown only; the JSON is unaffected.
+
+    Every reconciling item is labelled by its tag: the bare level for a behavioural check
+    (unit, integration, …) and "fitness" for a fitness check, never an internal kind.
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the Claim Reconciliations last
@@ -154,12 +169,18 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report reconciles the test evidence observation — raw = attributed + phantom claim + unnamed claim
 
     Under "## Summary views", the "### Test volume" cut counts the observed test evidence
-    observations. It opens with the identity "N evidence observations = a on scenarios + b
-    on cited scenario ids with no real scenario + c citing no scenario", which always
-    balances. A phantom claim is an @SCN code no scenario carries; the unnamed claim
-    holds observations with no @SCN code. A table by level follows, always listing all four
-    levels, with e2e and performance shown at zero when empty. The raw per-level totals and the three
-    per-account counts are also on the JSON; the identity line is markdown only.
+    observations. It opens with the identity
+    "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c citing no scenario",
+    which always balances.
+
+    A phantom claim is an @SCN code no scenario carries; the unnamed claim holds observations
+    with no @SCN code.
+
+    A table by level follows, always listing all four levels, with e2e and performance shown
+    at zero when empty.
+
+    The raw per-level totals and the three per-account counts are also in the JSON; the
+    identity line is markdown only.
 
     @unit @SCN-RPT-010
     Scenario: the report renders the Test volume cut and the evidence observation identity balances by construction
@@ -167,24 +188,28 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
 
     Each ledger row has evidence columns between Scenario and Verdict: Fitness first, then
-    Unit, Integration, E2e and Performance, each present only when some scenario in the run
-    obligates or observes that check. Each cell is two-sided,
-    `<obligation>/<observation>`. The left side is the check's letter (F, U, I, E or P) when
-    the scenario obligates that check, else `-`. The right side is the number of evidence
-    observations posted at that check, passing or failing, else `-`. So `letter/N` is
-    obligated and observed, `letter/-` is obligated and missing, `-/N` is observed at a
-    check the scenario never named, and a cell with neither is blank.
+    Unit, Integration, E2e and Performance. Each column is present only when some scenario in
+    the run obligates or observes that check.
 
-    The cell counts backing, not quality: a failing observation still counts, and its
-    failure shows in the Verdict and Reconciling-items columns. The Fitness cell's left side
-    is a single F, since a scenario names at most one fitness function; its right side
-    counts the fitness evidence observations posted, as the other cells do. A key to the cells
-    precedes the table wherever it has an evidence column.
-    The columns are markdown only.
+    Each cell is two-sided, `<obligation>/<observation>`. The left side is the check's letter
+    (F, U, I, E or P) when the scenario obligates that check, else `-`. The right side is the
+    number of evidence observations posted at that check, passing or failing, else `-`. So
+    `letter/N` is obligated and observed, `letter/-` is obligated and missing, `-/N` is
+    observed at a check the scenario never named, and a cell with neither is blank.
+
+    The cell counts backing, not quality: a failing observation still counts, and its failure
+    shows in the Verdict and Reconciling-items columns.
+
+    The Fitness cell's left side is a single F, since a scenario names at most one fitness
+    function; its right side counts the fitness evidence observations posted, as the other
+    cells do.
+
+    A key to the cells precedes the table wherever it has an evidence column. The columns are
+    markdown only.
 
     A `-/N` cell counts every observation the scenario received at that check, duplicate
-    citations included. An observation citing a pending obligation, such
-    as @unitpending, reconciles the same way and also renders `-/N`.
+    citations included. An observation citing a pending obligation, such as @unitpending,
+    reconciles the same way and also renders `-/N`.
 
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
@@ -194,9 +219,12 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the ledger summary counts the untagged scenarios, and each is listed once, on its own ledger row
 
-    The ledger summary states how many scenarios carry no @SCN code. Each one is named once,
-    by its `feature-file : scenario` locator, on its own ledger row. Every scenario header
-    counts, including outlines, templates and examples, but an Examples data table does not.
+    The ledger summary states how many scenarios carry no @SCN code. Each is named once, by its
+    `feature-file : scenario` locator, on its own ledger row.
+
+    Every scenario header counts, including outlines, templates and examples; an Examples data
+    table does not.
+
     The JSON evidence-obligations object carries the untagged scenarios beside the excluded
     occurrences.
 
@@ -206,10 +234,12 @@ Feature: The report renders the ledger as sectioned facts
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
     Provenance inputs and evidence-observation locators are relative to the target repo's
-    root, never to the directory the run was started from, so neither surface carries the
-    target's absolute paths. The root is the git top level of the parent of the --features
-    path when the target is a git repository, else that parent directory itself, else the
-    run's working directory for a self-reconcile with no --features.
+    root, never to the directory the run started from, so neither surface carries the target's
+    absolute paths.
+
+    The root is the git top level of the parent of the --features path when the target is a
+    git repository; else that parent directory itself; else, for a self-reconcile with no
+    --features, the run's working directory.
 
     @unit @integration @SCN-RPT-016
     Scenario: a cross-repo reconcile run from a foreign cwd yields zero absolute paths on both surfaces
@@ -220,9 +250,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report's evidence-observation views level a behavioural observation by the cited scenario's tag
 
     A behavioural observation is levelled by the cited scenario's own tier tag, in the
-    report's views as in the reconciliation. A Cucumber run of an @e2e scenario counts at
-    e2e in Test volume and in the scenario's E2e cell, and one tagged both @integration
-    and @e2e counts in both tiers.
+    report's views as in the reconciliation. A Cucumber run of an @e2e scenario counts at e2e
+    in Test volume and in the scenario's E2e cell. A Cucumber run of a scenario tagged
+    both @integration and @e2e counts in both tiers.
 
     @unit @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
@@ -232,51 +262,61 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the Quality Check Reconciliation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
-    The Quality Check Reconciliation out-of-balance count in the Evidence reconciliation
-    table breaks down into a flat list of the ten out-of-balance outcomes, each a counted row
-    that reads the outcome's sentence alone, in this order: missing, failing, watermelon, no-scn-code,
-    duplicate-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation,
-    broken, both-missing. Their counts sum to the out-of-balance total. No debit-side,
-    credit-side or neither-side subtotal row appears. Every outcome except satisfied has a
-    row.
+    The Quality Check Reconciliation out-of-balance count in the Evidence reconciliation table
+    breaks down into a flat list of the ten out-of-balance outcomes. Each is a counted row that
+    reads the outcome's sentence alone, in this order: missing, failing, watermelon,
+    no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario,
+    no-evidence-obligation, broken, both-missing. Their counts sum to the out-of-balance total.
+
+    Every outcome except satisfied has a row. No debit-side, credit-side or neither-side
+    subtotal row appears.
 
     @unit @SCN-RPT-019
     Scenario: the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows
 
   Rule: the markdown renders each outcome's sentence in place of the bare handle
 
-    The markdown shows each outcome's sentence in place of its handle wherever an outcome
-    reaches a reader: the cause rows of the Evidence reconciliation summary, each scenario's
-    reconciling items, and the Outcome column of the fitness evidence obligations table. The
-    "missing" cause row reads "Evidence Observation is missing", a reconciling item for a missing unit
-    observation reads "unit: Evidence Observation is missing", and a "watermelon" Outcome cell reads
-    "Evidence Observation is passing but its check could not fail its job". The Detail
-    column shows no sentence. The JSON keeps the bare handle.
+    Wherever an outcome reaches a reader, the markdown shows its sentence in place of its
+    handle: the cause rows of the Evidence reconciliation summary, each scenario's reconciling
+    items, and the Outcome column of the fitness evidence obligations table.
+
+    The "missing" cause row reads "Evidence Observation is missing". A reconciling item for a
+    missing unit observation reads "unit: Evidence Observation is missing". A "watermelon"
+    Outcome cell reads "Evidence Observation is passing but its check could not fail its job".
+
+    The Detail column shows no sentence. The JSON keeps the bare handle.
 
     @unit @SCN-RPT-020
     Scenario: the markdown renders each outcome's sentence, not the bare handle
 
   Rule: the markdown states each verdict and each reconciling item in words, with no glyph
 
-    A ledger row's Verdict cell reads "balanced" or "out-of-balance" alone. A reconciling
-    item reads its quality check, a colon and its outcome's sentence, as "unit: Evidence
-    Observation is missing"; an item with no quality check reads the sentence alone. The
-    fitness evidence obligations table's Outcome cell reads the sentence alone. No symbol
-    stands beside a verdict or an outcome.
+    A ledger row's Verdict cell reads "balanced" or "out-of-balance" alone.
+
+    A reconciling item reads its quality check, a colon and its outcome's sentence, as
+    "unit: Evidence Observation is missing". An item with no quality check reads the sentence
+    alone. The fitness evidence obligations table's Outcome cell reads the sentence alone.
+
+    No symbol stands beside a verdict or an outcome.
 
     @unit @SCN-RPT-066
     Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
 
   Rule: the markdown report's own words carry no symbol
 
-    The markdown report's own words carry no symbol. A Pending Item reads "pending", or
-    "pending" and its quality check; the Pending Items tally and the outstanding note open
-    with their words; the unsound stamp opens "This run is unsound."; and each cause row of
-    the Evidence reconciliation summary reads its outcome's sentence alone. A symbol is any
-    character that is not a letter, a number, punctuation, a space or printable ASCII, so
-    an arrow, a dingbat or an emoji is one, whether or not it was ever printed before. Text
-    the report quotes from a run or a corpus, such as a runner's error message, a test's
-    name, a scenario title, a locator or a fitness function's name, keeps any symbol it holds.
+    The report's own words are the wording it writes itself: headings, labels, verdicts,
+    outcome sentences, tallies and notes. A Pending Item reads "pending", or
+    "pending" and its quality check. The Pending Items tally and the outstanding note open with
+    their words. The unsound stamp opens "This run is unsound.". Each cause row of the
+    Evidence reconciliation summary reads its outcome's sentence alone.
+
+    A symbol is any character that is not a letter, a number, punctuation, a space, a tab or
+    printable ASCII. An arrow, a dingbat or an emoji is a symbol, with no exception for one the
+    report has printed before.
+
+    Text the report quotes from a run or a corpus is not its own words, so the rule does not
+    reach it: a runner's error message, a test's name, a scenario title, a locator or a fitness
+    function's name.
 
     @unit @SCN-RPT-067
     Scenario: the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity
@@ -305,24 +345,27 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report surfaces broken evidence as a harness failure, and stamps the run unsound
 
     A broken observation is a proof that never ran, such as a Vitest suite that failed to
-    collect or a Cucumber step that two step definitions match. The markdown does three
-    things for it that a missing row cannot.
+    collect or a Cucumber step that two step definitions match. The markdown does three things
+    for it that a missing row cannot.
 
-    It names the broken evidence by the locator the runner gave it, a test file or a feature
-    file. It prints what broke: the message appears verbatim, in a fenced block, in the
-    run-integrity section, and the unnamed claim's broken item carries the same locator and
-    the message's first line. Where the runner gives its own message, the report shows it
+    First, it names the broken evidence by the locator the runner gave it: a test file or a
+    feature file.
+
+    Second, it prints what broke. The message appears verbatim, in a fenced block, in the
+    run-integrity section, and the unnamed claim's broken item carries the same locator and the
+    message's first line. Where the runner gives its own message, the report shows it
     unchanged. Where it gives none, as for an ambiguous Cucumber step, the report shows a
-    diagnosis built from what the runner reported. Either way it names what failed and
-    where, in one shape, and never reports one kind of break as the other.
+    diagnosis built from what the runner reported. Either way it names what failed and where,
+    in one shape, and never reports one kind of break as the other.
 
-    It stamps the run "unsound" under a "## Run integrity: unsound" heading. It tells the reader
-    that any missing outcome in the run may be a proof that exists but did not run, not a
-    test still to write.
+    Third, it stamps the run "unsound" under a "## Run integrity: unsound" heading, and tells
+    the reader that any missing outcome in the run may be a proof that exists but did not run,
+    not a test still to write.
 
-    The report names what broke and prints the message without prescribing a cure. The one
-    remedy it gives is to fix the harness and regenerate. A run with no broken evidence has
-    no run-integrity section. The section is markdown only.
+    The report names what broke and prints the message without prescribing a cure. Its one
+    remedy is to fix the harness and regenerate.
+
+    A run with no broken evidence has no run-integrity section. The section is markdown only.
 
     @unit @SCN-RPT-021
     Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
@@ -332,14 +375,16 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the summary opens with the run's verdict
 
-    The summary opens with the run's verdict in one line, so a run that exits non-zero never
-    opens with a line that reads as a pass. The verdict agrees with the "## Run integrity:
-    unsound" stamp and with the Pending Items line. It is decided in the same order as the
-    exit code: broken evidence first, then out of balance, then pending items. Unsound names
-    exit 4, out-of-balance names exit 1, and balanced names exit 0. Under --strict, a
-    balanced run carrying pending items reads pending and names exit 3. Without --strict, it
-    reads balanced and names exit 3 only conditionally, as "exit 3 under --strict". The verdict
-    line is always present.
+    The summary always opens with the run's verdict in one line, so a run that exits non-zero
+    never opens with a line that reads as a pass.
+
+    The verdict agrees with the "## Run integrity: unsound" stamp and with the Pending Items
+    line. It is decided in the same order as the exit code: broken evidence first, then out of
+    balance, then pending items.
+
+    Unsound names exit 4, out-of-balance names exit 1, and balanced names exit 0. Under
+    --strict, a balanced run carrying pending items reads pending and names exit 3. Without
+    --strict, it reads balanced and names exit 3 only conditionally, as "exit 3 under --strict".
 
     @unit @SCN-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
@@ -348,8 +393,9 @@ Feature: The report renders the ledger as sectioned facts
 
     A broken observation discharges and fails no obligation, even when it cites a real
     scenario, as an ambiguous Cucumber step does. It is posted to the unnamed claim and counted
-    there, not as attributed to that scenario. Fitness observations are not counted in Test
-    volume.
+    there, not as attributed to that scenario.
+
+    Fitness observations are not counted in Test volume.
 
     @unit @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts on the unnamed claim, not attributed to that scenario
@@ -357,21 +403,25 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
     The report names the reconciled collection "Claim Reconciliation(s)", never
-    "Scenario Reconciliation(s)" or "scenario(s)", in both places it appears: the Subject
-    cell of the collection's row in the Evidence reconciliation table, and the verdict tally
-    under "## Claim Reconciliations". The tally counts every row: scenario, phantom claim and
-    unnamed claim.
+    "Scenario Reconciliation(s)" or "scenario(s)". This holds in both places it appears: the
+    Subject cell of the collection's row in the Evidence reconciliation table, and the verdict
+    tally under "## Claim Reconciliations".
+
+    The tally counts every row: scenario, phantom claim and unnamed claim.
 
     @unit @SCN-RPT-024
     Scenario: the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"
 
   Rule: the tool identity is the tool's OWN checkout — an installed tool has none, whatever repository it is sitting inside
 
-    The tool SHA is the HEAD of the tool's own checkout, never the target's. A tool
-    installed under node_modules has no checkout of its own, so it reports no tool SHA, even
-    when it sits inside a git repository. A tool reached through a node_modules symlink to a
-    checkout of itself reports that checkout's HEAD. The version, read from the tool's own
-    package manifest, is always shown, so a run stays attributable without a SHA.
+    The tool SHA is the HEAD of the tool's own checkout, never the target's.
+
+    A tool installed under node_modules has no checkout of its own, so it reports no tool SHA,
+    even when it sits inside a git repository. A tool reached through a node_modules symlink to
+    a checkout of itself reports that checkout's HEAD.
+
+    The version, read from the tool's own package manifest, is always shown, so a run stays
+    attributable without a SHA.
 
     @unit @SCN-RPT-026
     Scenario: the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version
@@ -387,10 +437,11 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the Run provenance names every stream the run was handed, and every one it was not
 
-    The Run provenance Inputs block lists the canonical inputs the run was handed, in
-    canonical order. The optional fitness stream comes last, after --package-json. A run
-    lists exactly the inputs it was handed. Both surfaces show the same inputs the reconcile
-    consumed. A run handed no inputs reads "Inputs: none specified".
+    The Run provenance Inputs block lists the canonical inputs the run received, in canonical
+    order, with the optional fitness stream last, after --package-json. A run lists exactly the
+    inputs it received, and both surfaces show the same inputs the reconcile consumed.
+
+    A run handed no inputs reads "Inputs: none specified".
 
     @unit @SCN-RPT-027
     Scenario: the Inputs block names the optional fitness stream when the run received it
@@ -404,9 +455,10 @@ Feature: The report renders the ledger as sectioned facts
   Rule: an evidence observation that answers no evidence obligation shows its own result
 
     On a phantom claim's row, and on a scenario's row at a check where the scenario holds no
-    obligation, each observation is listed by its outcome and where it ran, with its own
-    result, failed or passed, after its quality check and the outcome's sentence. The
-    unnamed claim's row counts its results by file instead, under the Rule below.
+    obligation, each observation is listed by its outcome and where it ran. After its quality
+    check and the outcome's sentence, it shows its own result, failed or passed.
+
+    The unnamed claim's row counts its results by file instead, under the Rule below.
 
     @SCN-RPT-034 @unit @e2e
     Scenario: a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran
@@ -424,11 +476,14 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
 
-    The unnamed claim's row groups its observations that cite no scenario by the file they ran in,
-    with the CI steps as one group of their own, listed after the files. Each group counts
-    what ran, passed and failed. It names each failed test, by its test title or Cucumber
-    scenario name, and each CI step, which holds no result. Broken items are listed
-    individually. The grouping is not stored; the JSON carries each observation's test name.
+    The unnamed claim's row groups its observations that cite no scenario by the file they ran
+    in. The CI steps form one group of their own, listed after the files.
+
+    Each group counts what ran, passed and failed. It names each failed test, by its test title
+    or Cucumber scenario name, and each CI step, which holds no result. Broken items are listed
+    individually.
+
+    The grouping is not stored; the JSON carries each observation's test name.
 
     @SCN-RPT-033 @unit @e2e
     Scenario: tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
@@ -463,10 +518,12 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
     The Markdown names a phantom claim's row as a cited scenario id with no real scenario, and
-    the unnamed claim's row as evidence observations citing no scenario. A balanced run's
-    gloss quotes the satisfied outcome's sentence. Where the Markdown's prose refers to an
-    outcome, it quotes the outcome's sentence, never its handle. The JSON keeps the terms
-    `phantom-claim` and `unnamed-claim` as the rows' kinds.
+    the unnamed claim's row as evidence observations citing no scenario.
+
+    A balanced run's gloss quotes the satisfied outcome's sentence. Wherever the Markdown's
+    prose refers to an outcome, it quotes the outcome's sentence, never its handle.
+
+    The JSON keeps the terms `phantom-claim` and `unnamed-claim` as the rows' kinds.
 
     @unit @SCN-RPT-039
     Scenario: the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms
@@ -489,6 +546,7 @@ Feature: The report renders the ledger as sectioned facts
 
     After the section's tally lines and before its table, a key reads each evidence cell as
     obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean.
+
     A table with no evidence column carries no key.
 
     @unit @SCN-RPT-044
