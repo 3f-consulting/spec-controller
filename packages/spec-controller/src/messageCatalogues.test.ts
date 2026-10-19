@@ -274,6 +274,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.ShapeFieldMissing]: ["ledger.claimReconciliations"],
   [AppMessage.HostUsageError]: ["--store applies to stored runs only"],
   [AppMessage.HelpUsageLine]: ["[--store <dir>] [--run-id <id>]"],
+  [AppMessage.UnexpectedError]: ["Error", "write EPIPE"],
 };
 
 function renderedApp(code: AppMessage): string {

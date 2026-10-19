@@ -55,7 +55,7 @@ Feature: spec-controller balance runs standalone
     the unnamed claim still exits 1.
 
     The exit codes are 0 balanced, 1 out of balance, 2 usage, 3 pending under --strict, 4
-    unsound, 5 nothing to reconcile.
+    unsound, 5 nothing to reconcile, 6 an unexpected error.
 
     @SCN-CLI-004 @unit @e2e
     Scenario: an out-of-balance reconciliation exits 1
@@ -490,6 +490,13 @@ Feature: spec-controller balance runs standalone
         | unsound              | a target whose vitest report carries a collection-failed suite                | the unsound verdict              | it reports the Evidence Reconciliation                                             |
         | nothing to reconcile | a target that carried no scenario and produced no evidence                    | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
         | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code   | the unsound verdict              | the report still lists the scenario code error                                     |
+
+  Rule: a run that stops on an unexpected error exits 6, a code no verdict uses
+
+    An error no refusal names ends the run on exit 6, never Node's default 1, so a broken run is never read as an out-of-balance ledger. One line on stderr names the error. --exit-zero never moves 6.
+
+    @unit @SCN-CLI-101
+    Scenario: a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too
 
   Rule: a corpus-shape fault never pre-empts the report
 

@@ -24,6 +24,10 @@ import {
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { settlingRefusal } from "./outputLocation.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
+
+// A process outcome, not a verdict: the ledger was never finished, so no verdict code may stand for it.
+const UNEXPECTED_ERROR_EXIT_CODE = 6;
 
 function runCommand(command: string, argv: string[], ownRunDir?: string): boolean {
   switch (command) {
@@ -54,6 +58,21 @@ function leadingRefusal(inv: HostInvocation): string | undefined {
 }
 
 export function main(hostArgv: string[]): void {
+  try {
+    settlingRefusal(() => run(hostArgv), undefined);
+  } catch (err) {
+    process.stderr.write(unexpectedErrorLine(err) + "\n");
+    process.exitCode = UNEXPECTED_ERROR_EXIT_CODE;
+  }
+}
+
+function unexpectedErrorLine(err: unknown): string {
+  const name = err instanceof Error ? err.name : typeof err;
+  const message = err instanceof Error ? err.message : String(err);
+  return APP_MESSAGES[AppMessage.UnexpectedError](name, message.split("\n", 1)[0] ?? "");
+}
+
+function run(hostArgv: string[]): void {
   const inv = parseHostInvocation(hostArgv);
   if (refuseLeadingFaults(inv)) return;
   const command = inv.command;

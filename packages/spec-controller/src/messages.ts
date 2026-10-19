@@ -145,6 +145,7 @@ export enum AppMessage {
   ShapeFieldMissing,
   HostUsageError,
   HelpUsageLine,
+  UnexpectedError,
 }
 
 interface AppMessageParams {
@@ -219,6 +220,7 @@ interface AppMessageParams {
   [AppMessage.ShapeFieldMissing]: [path: string];
   [AppMessage.HostUsageError]: [message: string];
   [AppMessage.HelpUsageLine]: [modifierUsage: string];
+  [AppMessage.UnexpectedError]: [name: string, firstLine: string];
 }
 
 export type AppMessages = {
@@ -464,6 +466,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.ShapeFieldMissing]: (path) => `${path} is missing`,
   [AppMessage.HostUsageError]: (message) => `spec-controller: usage error — ${message}`,
   [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
+  [AppMessage.UnexpectedError]: (name, firstLine) => `spec-controller stopped on an unexpected error, and gives no verdict: ${name}: ${firstLine}`,
 };
 
 export const Unreadable = {

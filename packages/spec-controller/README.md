@@ -68,10 +68,11 @@ A scenario tagged `@unit` names an obligation: a unit test must exist and pass. 
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |
 | `5` | nothing to reconcile — no scenario was carried and no evidence was produced, so the run had no basis for a verdict |
+| `6` | unexpected error — the run stopped on an error no refusal names, and gave no verdict; one line on stderr names it. `--exit-zero` never moves it |
 
 The whole report is written before the exit code is set, so a failing run still tells you why.
 
-**Design your pipeline for new codes.** The list is open at the top. A state that is none of the above gets a **new** code rather than being folded into the nearest one; the highest is `5`. So **treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. Matching `1` exactly is not affected when a code is added. Treating any non-zero code as a red build is already correct, only less precise about why.
+**Design your pipeline for new codes.** The list is open at the top. A state that is none of the above gets a **new** code rather than being folded into the nearest one; the highest is `6`. So **treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. Matching `1` exactly is not affected when a code is added. Treating any non-zero code as a red build is already correct, only less precise about why.
 
 **Node's default exit code is never one of these.** A run that cannot reconcile ends on one of its own codes, never by falling out of the process: a crash that exits `1` would look, by status, exactly like an honest disagreement.
 

@@ -819,6 +819,7 @@ Scenario code errors are judged over the corpus `--features` names, and no other
 | `3` | Pending Items present under `--strict` |
 | `4` | unsound run |
 | `5` | nothing to reconcile |
+| `6` | unexpected error: the run stopped before a verdict, and one line on stderr names the error |
 
 When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`).
 
