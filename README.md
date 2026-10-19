@@ -2,6 +2,86 @@
 
 **Reassurance that your software keeps doing what you said it does.**
 
+`balance` fails your build when your scenarios and your tests stop agreeing. You name each behaviour as a scenario in a `.feature` file, tagged with the evidence it needs, such as `@unit` or `@e2e`, and with a scenario code of the form `@SCN-<FFF>-<NNN>`. Each test cites the scenario it proves by that code. On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. When they disagree, the build goes red.
+
+**What you need first:** behaviours written as Gherkin scenarios with `@SCN` codes, and tests that cite them; for CI checks, GitHub Actions (*Who it fits*, below). `balance` keeps a codebase reconciled. It does not name your behaviours for you.
+
+## A small example
+
+<div class="sample-report">
+
+A scenario:
+
+```gherkin
+@CHK
+Feature: Checkout
+
+  @unit @SCN-CHK-001
+  Scenario: an empty basket cannot be checked out
+```
+
+A Vitest test that cites it, in its title:
+
+```ts
+it("[SCN-CHK-001] refuses an empty basket", () => { /* … */ });
+```
+
+`balance` reconciles them, and the row balances:
+
+```markdown
+| Claim | Unit | Verdict | Reconciling items |
+| --- | --- | --- | --- |
+| SCN-CHK-001 | U/1 | balanced | — |
+```
+
+Delete the test, and the run is out of balance and exits `1`:
+
+```markdown
+| Claim | Unit | Verdict | Reconciling items |
+| --- | --- | --- | --- |
+| SCN-CHK-001 | U/- | out-of-balance | unit: Evidence Observation is missing |
+```
+
+</div>
+
+`U/1` is a unit obligation answered by one unit test; `U/-` is one that no unit test answered.
+
+## What double entry buys: a change becomes deliberate
+
+Every behaviour is recorded twice, once as a scenario and once as the test that proves it, and the two must agree. So **changes to your quality checks become deliberate, not accidental.**
+
+Each kind of disagreement has an outcome of its own, and every one but `satisfied` turns the build red:
+
+| You change | The report shows |
+|---|---|
+| Delete a test | `missing` on its scenario |
+| Skip a test | `missing`: a skipped test proves nothing |
+| Break the behaviour a test checks | `failing` |
+| Re-point a test at another scenario | `missing` on the original |
+| Drop the scenario code from a test's title | the test still runs, but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
+| Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
+| Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
+| Delete a CI check step | `missing` on its fitness function's scenario |
+| Let a CI check step run under `continue-on-error` | without the run's step record, `watermelon`: green, but it could not have failed the build. With it, the step's own outcome answers: a red it swallowed reads `failing`, and a green reads `satisfied` |
+| Copy a scenario and keep its `@SCN` code | `duplicate-scn-code` on every quality check of the one row both share: no evidence can be credited to either |
+| Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
+| Remove a scenario's quality-check tags while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
+| Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
+
+To remove a behaviour cleanly, you change both places: the scenario and its evidence. That change shows in the diff, and review judges it.
+
+This matters most when an agent writes the code. Asked to make failing tests pass, an agent can delete them. Here that gives a red build, not a quiet green.
+
+**The limits, said plainly:**
+
+- **Deliberate is not right.** A change made in both places balances; whether it should have been made is for review to decide.
+- **A change inside one check is one entry, and is not seen.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row checks that the step ran and what it reported, read from your CI run's own record, so a red that `continue-on-error` swallowed still turns its row red. It does not read what the tool examined.
+- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` can't see it. A check for unused step definitions catches it; this repository runs one.
+- **No named behaviours, no second entry, no protection.** Code that arrives with no scenario raises nothing to reconcile.
+- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and holds, not that the test checks what its title says.
+
+## The gap it closes
+
 Software built from a written specification has three things to keep in step: the spec, a document saying what the application should do (a *document specification*); the checks, which test it (its *executable specifications*: scenarios, tests and fitness functions); and the application itself, its behaviour and its fitness. Each link between them needs something to hold it:
 
 | Link | What holds it today |
@@ -10,9 +90,11 @@ Software built from a written specification has three things to keep in step: th
 | spec ↔ checks | **Nothing but care.** The spec says one thing, the checks prove another, and nothing notices when they drift |
 | spec ↔ application | only through the other two |
 
-`balance` makes the first link hold for every kind of check, not only unit tests. You declare each behaviour as a scenario in a `.feature` file, tagged with the evidence it needs, such as `@unit` or `@e2e`. On every CI run, `balance` reconciles those scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. When they disagree, the build goes red. `balance` never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
+`balance` makes the first link hold for every kind of check, not only unit tests. It never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
 
-Here is a sample of what it prints:
+## Reading the full report
+
+Here is a sample of what it prints for a larger corpus:
 
 <div class="sample-report">
 
@@ -53,40 +135,6 @@ Read it as a ledger. Each scenario is an account: its tags are what it is owed, 
 
 The report keeps its exact terms, and they read plainly once named. A *Claim Reconciliation* is one line per claim, setting the proofs it asked for (its *Evidence Obligations*) against the proofs that ran (its *Evidence Observations*). A claim is usually a scenario. A test that names a scenario which does not exist makes a *phantom claim*, usually a typo or a scenario since deleted, and one that names no scenario at all lands on the *unnamed claim*. A *watermelon* is a check that passes but could not have failed the build. [`doc/ubiquitous-language.md`](./doc/ubiquitous-language.md) has the rest.
 
-## What double entry buys: a change becomes deliberate
-
-Every behaviour is recorded twice, once as a scenario and once as the test that proves it, and the two must agree. So **changes to your quality checks become deliberate, not accidental.**
-
-Each kind of disagreement has an outcome of its own, and every one but `satisfied` turns the build red:
-
-| You change | The report shows |
-|---|---|
-| Delete a test | `missing` on its scenario |
-| Skip a test | `missing`: a skipped test proves nothing |
-| Break the behaviour a test checks | `failing` |
-| Re-point a test at another scenario | `missing` on the original |
-| Drop the scenario code from a test's title | the test still runs, but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
-| Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
-| Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
-| Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step run under `continue-on-error` | without the run's step record, `watermelon`: green, but it could not have failed the build. With it, the step's own outcome answers: a red it swallowed reads `failing`, and a green reads `satisfied` |
-| Copy a scenario and keep its `@SCN` code | `duplicate-scn-code` on every quality check of the one row both share: no evidence can be credited to either |
-| Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
-| Remove a scenario's quality-check tags while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
-| Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
-
-To remove a behaviour cleanly, you change both places: the scenario and its evidence. That change shows in the diff, and review judges it.
-
-This matters most when an agent writes the code. Asked to make failing tests pass, an agent can delete them. Here that gives a red build, not a quiet green.
-
-**The limits, said plainly:**
-
-- **Deliberate is not right.** A change made in both places balances; whether it should have been made is for review to decide.
-- **A change inside one check is one entry, and is not seen.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row checks that the step ran and what it reported, read from your CI run's own record, so a red that `continue-on-error` swallowed still turns its row red. It does not read what the tool examined.
-- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` can't see it. A check for unused step definitions catches it; this repository runs one.
-- **No named behaviours, no second entry, no protection.** Code that arrives with no scenario raises nothing to reconcile.
-- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and holds, not that the test checks what its title says.
-
 ## Why not coverage or mutation testing?
 
 Both are good at their own questions, and both live at the unit tier:
@@ -101,10 +149,6 @@ Both are good at their own questions, and both live at the unit tier:
 Coverage and mutation testing tell you how much of the application the unit tests reach, and whether they would notice it change. Neither knows which behaviours your scenarios name, so neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` keeps one ledger across all five tiers.
 
 **For a team already well tested at the unit tier, it adds hygiene, not discovery.** Above the unit tier, once behaviours are named, nothing else holds the link. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
-
-## What it found on a real codebase
-
-On its first run over another of our products, `balance` balanced 228 of 229 scenarios. The one exception was a real problem: two passing unit tests cited a scenario that asked only for end-to-end evidence. That product's CI was green and had no way to notice. The fix was to point each test's citation at the scenario it actually proved.
 
 ## Who it fits
 
@@ -170,9 +214,9 @@ The repository is held to the same discipline it sells. Its own CI reconciles it
 
 It has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the first limit above in practice: a change made in both places balances, and review is what judges it.
 
-## Getting there
+## Starting from an existing codebase
 
-`balance` keeps a reconciled codebase reconciled. Getting a brownfield codebase reconciled in the first place is a service.
+`balance` keeps a reconciled codebase reconciled. It does not get one there: that work is naming each behaviour as a scenario and putting its code on the tests that prove it. Before that, `balance` lists what ran (*Try it*, above), and `--exit-zero` lets you watch before you gate.
 
 ## The library
 
