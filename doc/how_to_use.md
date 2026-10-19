@@ -651,7 +651,9 @@ jobs:
         run: npx eslint .
       - name: Record the steps
         if: always()
-        run: echo '${{ toJSON(steps) }}' > ci-steps.json
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: printf '%s' "$STEPS_JSON" > ci-steps.json
       - name: Reconcile
         if: always()
         run: |
@@ -680,11 +682,14 @@ Each check step carries its `@SCN` as its `id:`, and the job ends with one dump 
   id: SCN-<FFF>-<MMM>
   if: always()
 - if: always()
-  run: echo '${{ toJSON(steps) }}' > ci-steps.json
+  env:
+    STEPS_JSON: ${{ toJSON(steps) }}
+  run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
 - **Put `if: always()` on every check step, not just the dump.** Without it, the first red aborts the job and every later check is skipped. The ledger then reports one `failing` and N `broken`: a worse account from a correct mechanism.
 - **The dump must be `toJSON(steps)`.** It is the only place a step's `id` and its `outcome` travel together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not.
+- **Pass the dump through an environment variable,** never write `${{ toJSON(steps) }}` into the command itself. A step's output can hold a quote, and the shell would then run what follows it.
 - **A check that runs on a schedule is still one step here.** For a nightly mutation sweep, say, the push step reads the newest scheduled run's conclusion with stock `gh` and carries the scenario's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run.
 
 ### Reconcile once, over the reports and the record

@@ -157,10 +157,12 @@ The step's outcome is the evidence: its exit code on its own CI step is the verd
   id: SCN-<FFF>-<MMM>
   if: always()
 - if: always()
-  run: echo '${{ toJSON(steps) }}' > ci-steps.json
+  env:
+    STEPS_JSON: ${{ toJSON(steps) }}
+  run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump must be `toJSON(steps)`. It is the only place a step's `id` and its `outcome` travel together.
+The dump must be `toJSON(steps)`. It is the only place a step's `id` and its `outcome` travel together. It reaches the command through an environment variable, never written into the command itself: a step's output can hold a quote, and the shell would run what follows it.
 
 Then one Reconcile step reads the reports and the record. It matches the first run, with the step record added. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
 
