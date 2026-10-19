@@ -2,15 +2,14 @@
 Feature: Ledger over obligation-vs-observation evidence
 
   spec-controller is a reconciliation engine, not a spec engine. It sets the evidence
-  obligations a scenario RAISES (its @unit / @integration tags, read as the
-  debit side) against the evidence those tests actually
-  PRODUCED, and reports a ledger — per scenario, whether the books
-  balance. Evidence is keyed by (kind, level) per the two-axis model:
-  per evidence obligation, present+pass → balanced;
-  present+fail → failing; absent → missing. The scenario
-  VERDICT is binary: a scenario is balanced iff EVERY Evidence Obligation
-  it raises balances; otherwise it is out of balance, carrying the LIST of
-  every non-balanced reconciling item — each typed, none ranked.
+  obligations a scenario raises through its quality-check tags, the debit side, against
+  the evidence its tests produced, and reports a ledger: for each scenario, whether the
+  books balance. Each evidence obligation is matched on its quality check. Evidence that is
+  present and passes is balanced, present and failing is failing, and absent is missing.
+
+  A scenario's verdict is binary. It is balanced when every Evidence Obligation it raises
+  balances. Otherwise it is out of balance, and carries the list of every reconciling item
+  that does not balance, each typed and none ranked.
 
   Rule: a scenario whose Evidence Obligation is answered by evidence that exists and passes is balanced
 

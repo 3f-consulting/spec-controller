@@ -76,9 +76,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
     through the domain, a driven module of the command-line app never reaches into another, and a
-    test of the app reaches the engine only through its front door or its internal seam. A break
-    the tree still holds is named on a known list beside the rules, each entry naming the work that
-    removes it. A listed break passes; any break not on the list fails the check.
+    test of the app reaches the engine only through its front door or its internal seam. Every
+    break fails the check; there is no list of tolerated breaks.
 
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
