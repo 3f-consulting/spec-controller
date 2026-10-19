@@ -14,8 +14,8 @@ Feature: a fixture target whose uncited fitness function runs in a sibling workf
   corpus below ever carried the tag it would have resolved.
 
   The mirror of the usg-sibling fixture, and kept separate from it: that one's check IS
-  cited, so it reconciles balanced, and adding an uncited check to it would fold a
-  suspense row onto a target asserted to exit 0.
+  cited, so it reconciles balanced, and adding an uncited check to it would fold the
+  unnamed claim's row onto a target asserted to exit 0.
 
   The uncited verdict reds a build, which is what makes this the
   interesting direction — moving a check into a sibling workflow would otherwise be a

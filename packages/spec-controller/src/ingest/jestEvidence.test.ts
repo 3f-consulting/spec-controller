@@ -81,7 +81,7 @@ describe("[SCN-JST-003] runReconcile reads a code in a Jest test's own title bef
   });
 });
 
-describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's title cites when it cites two, and suspense names both codes", () => {
+describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's title cites when it cites two, and the unnamed claim's row names both codes", () => {
   const balance = () => runReconcile({
     features: `${TARGET}/features`,
     packageJson: `${TARGET}/package.json`,
@@ -99,13 +99,13 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
     expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
   });
 
-  it("names both codes on the suspense row, beside the test's file", () => {
+  it("names both codes on the unnamed claim's row, beside the test's file", () => {
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("cases.test.js: 2 scenario codes"));
 
-    expect(suspenseRow ?? "").toContain("cases.test.js: 2 scenario codes cite SCN-JSF-005, SCN-JSF-006");
+    expect(unnamedClaimRow ?? "").toContain("cases.test.js: 2 scenario codes cite SCN-JSF-005, SCN-JSF-006");
   });
 });
 
@@ -161,7 +161,7 @@ describe("[SCN-JST-007] runReconcile reads a Jest test file that failed to run a
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
-  it("posts one broken item, on suspense, naming the file and carrying the error that stopped it", () => {
+  it("posts one broken item, on the unnamed claim's row, naming the file and carrying the error that stopped it", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );

@@ -1,6 +1,6 @@
 [
   {
-    "uri": "tests/fixtures/suspense-status/features/checkout.feature",
+    "uri": "tests/fixtures/unnamed-claim-status/features/checkout.feature",
     "name": "checkout",
     "elements": [
       {

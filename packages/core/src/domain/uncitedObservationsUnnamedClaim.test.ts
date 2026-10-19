@@ -19,18 +19,18 @@ describe("[SCN-LDG-007] an evidence observation citing no scenario is reported a
     { qualityCheck: "e2e", scnId: null, status: "failed", locator: "tests/orphan-c.e2e.ts" },
   ];
   const reconciled = () => reconcile(scenarios, [cited, ...uncited]).claimReconciliations;
-  const suspenseRowsOf = (rows: ReturnType<typeof reconciled>) =>
+  const unnamedClaimRowsOf = (rows: ReturnType<typeof reconciled>) =>
     rows.filter((r) => r.kind === "unnamed-claim");
 
-  it("aggregates every uncited evidence observation into exactly one unnamed-claim row, under the sentinel id", () => {
-    const suspenseRows = suspenseRowsOf(reconciled());
-    expect(suspenseRows).toHaveLength(1);
-    expect(suspenseRows[0]!.scnId).toBe("(unnamed claim)");
+  it("aggregates every uncited evidence observation into the unnamed claim's one row, under the sentinel id", () => {
+    const unnamedClaimRows = unnamedClaimRowsOf(reconciled());
+    expect(unnamedClaimRows).toHaveLength(1);
+    expect(unnamedClaimRows[0]!.scnId).toBe("(unnamed claim)");
   });
 
   it("gives each uncited evidence observation a cites-no-scenario item carrying its locator", () => {
-    const suspenseRows = suspenseRowsOf(reconciled());
-    const items = suspenseRows[0]!.qualityCheckReconciliations;
+    const unnamedClaimRows = unnamedClaimRowsOf(reconciled());
+    const items = unnamedClaimRows[0]!.qualityCheckReconciliations;
     expect(items.map((i) => i.outcome)).toEqual([
       "cites-no-scenario",
       "cites-no-scenario",
@@ -44,17 +44,17 @@ describe("[SCN-LDG-007] an evidence observation citing no scenario is reported a
     for (const item of items) expect(item.locator).toBe(item.evidenceObservation?.locator);
   });
 
-  it("lists every uncited evidence observation on the suspense row, and none of the cited ones", () => {
-    const suspenseRows = suspenseRowsOf(reconciled());
-    const listed = suspenseRows[0]!.evidenceObservations;
+  it("lists every uncited evidence observation on the unnamed claim's row, and none of the cited ones", () => {
+    const unnamedClaimRows = unnamedClaimRowsOf(reconciled());
+    const listed = unnamedClaimRows[0]!.evidenceObservations;
     expect(listed).toHaveLength(uncited.length);
     for (const observation of uncited) expect(listed).toContain(observation);
     expect(listed).not.toContain(cited);
   });
 
-  it("judges the suspense row out of balance while the real scenario's row stays balanced", () => {
+  it("judges the unnamed claim's row out of balance while the real scenario's row stays balanced", () => {
     const rows = reconciled();
-    expect(suspenseRowsOf(rows)[0]!.verdict).toBe("out-of-balance");
+    expect(unnamedClaimRowsOf(rows)[0]!.verdict).toBe("out-of-balance");
     const real = rows.find((r) => r.scnId === "SCN-AAA-001");
     expect(real?.kind).toBe("scenario");
     expect(real?.verdict).toBe("balanced");

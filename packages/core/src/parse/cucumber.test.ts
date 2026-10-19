@@ -204,7 +204,7 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
   });
 });
 
-describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credits neither, and suspense names both codes", () => {
+describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credits neither, and the unnamed claim's row names both codes", () => {
   const severalNote = { kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] };
   const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
     {
@@ -249,7 +249,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
     ]);
   });
 
-  it("leaves both scenarios missing, and the suspense row names both codes", () => {
+  it("leaves both scenarios missing, and the unnamed claim's row names both codes", () => {
     const ledger = reconcile(
       [
         { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "integration" }] },
@@ -265,13 +265,13 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
           ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "integration")?.outcome
     );
     const ctx: RunContext = { target: "several", inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown({ summary: summaryOf(ledger, false, false), ledger }, ctx)
+    const unnamedClaimRow = renderMarkdown({ summary: summaryOf(ledger, false, false), ledger }, ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
     expect(outcomes).toEqual(["missing", "missing"]);
-    expect(suspenseRow ?? "").toContain("SCN-AAA-001");
-    expect(suspenseRow ?? "").toContain("SCN-AAA-002");
+    expect(unnamedClaimRow ?? "").toContain("SCN-AAA-001");
+    expect(unnamedClaimRow ?? "").toContain("SCN-AAA-002");
   });
 
   it.each([

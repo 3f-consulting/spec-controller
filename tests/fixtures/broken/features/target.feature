@@ -5,10 +5,10 @@ Feature: an unsound reconciliation fixture target
   suite FAILED TO COLLECT. The scenario's
   test exists and cites it correctly, but the file errored before it named a single
   test (a missing dependency), so the vitest report carries the file with
-  `status: "failed"` and ZERO assertionResults. The reader posts a `broken` suspense
-  item; the scenario itself still reads `missing` (honest at that resolution).
+  `status: "failed"` and ZERO assertionResults. The reader posts a `broken` item to the
+  unnamed claim; the scenario itself still reads `missing` (honest at that resolution).
 
-  The run is therefore BOTH out-of-balance (the broken item sits on the suspense row)
+  The run is therefore BOTH out-of-balance (the broken item sits on the unnamed claim's row)
   and UNSOUND — which is exactly the trap @SCN-CLI-012 exists to close: without
   checking `hasBrokenEvidence` FIRST, this run exits 1 and the collection failure is
   masked as an honest disagreement.

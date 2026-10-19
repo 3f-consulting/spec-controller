@@ -30,16 +30,16 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       Both Evidence Observations cite the same scenario code and post to the same row, and each
       obligation is answered only by an observation of its own quality check. One may reconcile while the other does not.
 
-  Rule: a fitness Evidence Observation matching no Evidence Obligation lands in suspense or on a phantom row
+  Rule: a fitness Evidence Observation matching no Evidence Obligation lands on the unnamed claim or a phantom claim
 
-    An Evidence Observation citing nothing lands in suspense. One citing a code no scenario
-    carries creates a phantom row for that code and posts there.
+    An Evidence Observation citing nothing lands on the unnamed claim. One citing a code no scenario
+    carries creates a phantom claim's row for that code and posts there.
 
     @unit @SCN-LNT-009
-    Scenario: a fitness Evidence Observation citing an @SCN no scenario carries posts to a phantom row, named by the @SCN its step stated
+    Scenario: a fitness Evidence Observation citing an @SCN no scenario carries posts to a phantom claim's row, named by the @SCN its step stated
       The citation is resolved against the corpus, never a manifest list, so such a step does not
-      fall to suspense.
-      The Evidence Observation is never dropped: it posts to the phantom row carrying the check
+      fall to the unnamed claim.
+      The Evidence Observation is never dropped: it posts to the phantom claim's row carrying the check
       that ran, and the row is out of balance.
 
   Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
@@ -60,7 +60,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a check that did not run is broken evidence rather than an absent one
 
-    A broken check posts to the suspense row with where to fix it and what broke, and carries no
+    A broken check posts to the unnamed claim's row with where to fix it and what broke, and carries no
     Evidence Observation. The obligation it cites reconciles missing, and the run is stamped
     unsound.
 
@@ -73,14 +73,14 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no scenario
 
     With no @fitness scenarios and no annotated steps, the report lists every check the pipeline
-    runs, each in suspense. Steps the target lists as not checks, such as checkout, toolchain
+    runs, each on the unnamed claim. Steps the target lists as not checks, such as checkout, toolchain
     setup, install and build, are reported as excluded. Only that list excludes a step.
 
     @unit @SCN-LNT-029
-    Scenario: a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report
+    Scenario: a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report
 
-      Each check in suspense is named by the script that ran. With no corpus, suspense is the
-      only row on the report.
+      Each check on the unnamed claim is named by the script that ran. With no corpus, the unnamed
+      claim's row is the only row on the report.
 
   Rule: a running check's citation is the @SCN its own CI step states, and nothing resolves it
 

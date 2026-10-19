@@ -18,7 +18,7 @@ function observationCiting(codes: readonly string[]): BehaviouralEvidenceObserva
   };
 }
 
-describe("[SCN-LDG-042] an evidence observation citing two scenarios credits neither, and suspense names both codes", () => {
+describe("[SCN-LDG-042] an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes", () => {
   it("credits no scenario and names both codes", () => {
     expect(attributionOf(["SCN-AAA-001", "SCN-AAA-002"])).toEqual({
       scnId: null,
@@ -53,7 +53,7 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
       expect(unitOutcomeOf(["SCN-AAA-001", "SCN-AAA-002"], scnId)).toBe("missing");
     });
 
-    it("posts the observation to one suspense group whose remark names both codes", () => {
+    it("posts the observation to one group on the unnamed claim's row whose remark names both codes", () => {
       expect(unnamedClaimGroups(["SCN-AAA-001", "SCN-AAA-002"])).toEqual([
         {
           qualityCheck: "unit",
@@ -70,7 +70,7 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
     it.each([
       ["one code", ["SCN-AAA-001"]],
       ["one code repeated", ["SCN-AAA-001", "SCN-AAA-001"]],
-    ])("CONTROL: %s credits that scenario and posts nothing to suspense", (_, codes) => {
+    ])("CONTROL: %s credits that scenario and posts nothing to the unnamed claim", (_, codes) => {
       expect(unitOutcomeOf(codes, "SCN-AAA-001")).not.toBe("missing");
       expect(unitOutcomeOf(codes, "SCN-AAA-002")).toBe("missing");
       expect(unnamedClaimGroups(codes)).toEqual([]);

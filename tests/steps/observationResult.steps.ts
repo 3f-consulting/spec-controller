@@ -6,25 +6,25 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
-const SUSPENSE_STATUS = {
-  features: "tests/fixtures/suspense-status/features",
-  vitest: "tests/fixtures/suspense-status/vitest.json",
-  packageJson: "tests/fixtures/suspense-status/package.json",
-  ci: "tests/fixtures/suspense-status",
+const UNNAMED_CLAIM_STATUS = {
+  features: "tests/fixtures/unnamed-claim-status/features",
+  vitest: "tests/fixtures/unnamed-claim-status/vitest.json",
+  packageJson: "tests/fixtures/unnamed-claim-status/package.json",
+  ci: "tests/fixtures/unnamed-claim-status",
 };
 
-const SUSPENSE_STEPS = {
-  features: "tests/fixtures/suspense-steps/features",
-  vitest: "tests/fixtures/suspense-steps/vitest.json",
-  packageJson: "tests/fixtures/suspense-steps/package.json",
-  ci: "tests/fixtures/suspense-steps",
+const UNNAMED_CLAIM_STEPS = {
+  features: "tests/fixtures/unnamed-claim-steps/features",
+  vitest: "tests/fixtures/unnamed-claim-steps/vitest.json",
+  packageJson: "tests/fixtures/unnamed-claim-steps/package.json",
+  ci: "tests/fixtures/unnamed-claim-steps",
 };
 
-const PHANTOM_STATUS = {
-  features: "tests/fixtures/phantom-status/features",
-  vitest: "tests/fixtures/phantom-status/vitest.json",
-  packageJson: "tests/fixtures/phantom-status/package.json",
-  ci: "tests/fixtures/phantom-status",
+const CITES_UNKNOWN_SCENARIO_STATUS = {
+  features: "tests/fixtures/cites-unknown-scenario-status/features",
+  vitest: "tests/fixtures/cites-unknown-scenario-status/vitest.json",
+  packageJson: "tests/fixtures/cites-unknown-scenario-status/package.json",
+  ci: "tests/fixtures/cites-unknown-scenario-status",
 };
 
 const NO_OBLIGATION_STATUS = {
@@ -34,20 +34,20 @@ const NO_OBLIGATION_STATUS = {
   ci: "tests/fixtures/no-obligation-status",
 };
 
-const MIXED_FILE = { locator: "tests/fixtures/suspense-status/broken-spawn.test.ts", ran: 2, passed: 1, failed: 1 };
+const MIXED_FILE = { locator: "tests/fixtures/unnamed-claim-status/broken-spawn.test.ts", ran: 2, passed: 1, failed: 1 };
 const MIXED_FILE_FAILED_TEST = "spawns yarn";
 const MIXED_FILE_PASSED_TEST = "reads the lockfile";
-const FEATURE_FILE = "tests/fixtures/suspense-status/features/checkout.feature";
+const FEATURE_FILE = "tests/fixtures/unnamed-claim-status/features/checkout.feature";
 const FEATURE_FILE_FAILED_SCENARIO = "a basket with an expired coupon is refused";
 const FEATURE_FILE_PASSED_SCENARIO = "an empty basket cannot be checked out";
-const PASSING_FILE = { locator: "tests/fixtures/suspense-status/sound.test.ts", ran: 1, passed: 1, failed: 0 };
+const PASSING_FILE = { locator: "tests/fixtures/unnamed-claim-status/sound.test.ts", ran: 1, passed: 1, failed: 0 };
 const UNCITED_OUTCOME_ROW = "↳ Evidence Observation cites no Scenario";
 const UNCITED_STEPS = ["lint:bar", "lint:foo"];
-const UNCITED_TEST_FILE = "tests/fixtures/suspense-steps/sound.test.ts";
+const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
 
-const PHANTOM_SCENARIO = "SCN-PST-901";
-const PHANTOM_FAILED_TEST = "tests/fixtures/phantom-status/broken-spawn.test.ts";
-const PHANTOM_PASSED_TEST = "tests/fixtures/phantom-status/sound.test.ts";
+const PHANTOM_CLAIM = "SCN-PST-901";
+const PHANTOM_CLAIM_FAILED_TEST = "tests/fixtures/cites-unknown-scenario-status/broken-spawn.test.ts";
+const PHANTOM_CLAIM_PASSED_TEST = "tests/fixtures/cites-unknown-scenario-status/sound.test.ts";
 
 const NO_OBLIGATION_SCENARIO = "SCN-NOS-001";
 const NO_OBLIGATION_FAILED_TEST = "tests/fixtures/no-obligation-status/broken-spawn.test.ts";
@@ -65,14 +65,14 @@ function rowItemFor(rowName: string, locator: string): string {
   return item.replace(/ \|$/, "");
 }
 
-function suspenseItems(): string[] {
+function unnamedClaimItems(): string[] {
   const row = report.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
-  assert.ok(row, `expected a suspense row in the report; got:\n${report}`);
+  assert.ok(row, `expected the unnamed claim's row in the report; got:\n${report}`);
   return row.replace(/ \|$/, "").split(" | ").at(-1)!.split("; ");
 }
 
-function suspenseItemsFor(locator: string): string[] {
-  return suspenseItems().filter((item) => item.includes(`(${locator})`) || item.includes(`(${locator}: `));
+function unnamedClaimItemsFor(locator: string): string[] {
+  return unnamedClaimItems().filter((item) => item.includes(`(${locator})`) || item.includes(`(${locator}: `));
 }
 
 function argsFor(target: Record<"features" | "vitest" | "packageJson" | "ci", string>): string[] {
@@ -96,29 +96,29 @@ function endsWithResult(locator: string, result: string): RegExp {
 Given(
   "a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed",
   function () {
-    args = argsFor(SUSPENSE_STATUS);
+    args = argsFor(UNNAMED_CLAIM_STATUS);
   },
 );
 
 Given(
   "a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed",
   function () {
-    args = [...argsFor(SUSPENSE_STATUS), "--cucumber", "tests/fixtures/suspense-status/cucumber.json"];
+    args = [...argsFor(UNNAMED_CLAIM_STATUS), "--cucumber", "tests/fixtures/unnamed-claim-status/cucumber.json"];
   },
 );
 
 Given("a target whose tests that cite no scenario ran under Vitest and under Cucumber", function () {
-  args = [...argsFor(SUSPENSE_STATUS), "--cucumber", "tests/fixtures/suspense-status/cucumber.json"];
+  args = [...argsFor(UNNAMED_CLAIM_STATUS), "--cucumber", "tests/fixtures/unnamed-claim-status/cucumber.json"];
 });
 
 Given("a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario", function () {
-  args = argsFor(SUSPENSE_STEPS);
+  args = argsFor(UNNAMED_CLAIM_STEPS);
 });
 
 Given(
   "a target with two tests that cite a scenario no feature carries, one that failed and one that passed",
   function () {
-    args = argsFor(PHANTOM_STATUS);
+    args = argsFor(CITES_UNKNOWN_SCENARIO_STATUS);
   },
 );
 
@@ -154,16 +154,16 @@ When("the target's evidence is reconciled and saved as the JSON report", functio
   }
 });
 
-Then("the suspense row lists each of the two files once", function () {
+Then("the unnamed claim's row lists each of the two files once", function () {
   for (const { locator } of [MIXED_FILE, PASSING_FILE]) {
-    const items = suspenseItemsFor(locator);
-    assert.equal(items.length, 1, `expected the suspense row to list ${locator} once; got:\n${suspenseItems().join("\n")}`);
+    const items = unnamedClaimItemsFor(locator);
+    assert.equal(items.length, 1, `expected the unnamed claim's row to list ${locator} once; got:\n${unnamedClaimItems().join("\n")}`);
   }
 });
 
 Then("each file's entry counts how many of its tests ran, how many passed and how many failed", function () {
   for (const { locator, ran, passed, failed } of [MIXED_FILE, PASSING_FILE]) {
-    const [item] = suspenseItemsFor(locator);
+    const [item] = unnamedClaimItemsFor(locator);
     const counts = ` — ${ran} ran, ${passed} passed, ${failed} failed`;
     assert.ok(
       item?.endsWith(counts) || item?.includes(`${counts} `),
@@ -176,18 +176,18 @@ Then("the counts of tests that ran add up to the count of evidence observations 
   const outcomeRow = report.split("\n").find((line) => line.startsWith(`| ${UNCITED_OUTCOME_ROW} |`));
   assert.ok(outcomeRow, `expected a "${UNCITED_OUTCOME_ROW}" row in the report; got:\n${report}`);
   const uncited = Number(outcomeRow.split(" | ")[3]);
-  const ran = suspenseItems().reduce((sum, item) => sum + Number(/ — (\d+) ran,/.exec(item)?.[1] ?? Number.NaN), 0);
-  assert.equal(ran, uncited, `the suspense row's ran counts must add up to ${uncited}; got:\n${suspenseItems().join("\n")}`);
+  const ran = unnamedClaimItems().reduce((sum, item) => sum + Number(/ — (\d+) ran,/.exec(item)?.[1] ?? Number.NaN), 0);
+  assert.equal(ran, uncited, `the unnamed claim's row's ran counts must add up to ${uncited}; got:\n${unnamedClaimItems().join("\n")}`);
   assert.equal(uncited, MIXED_FILE.ran + PASSING_FILE.ran);
 });
 
 function mixedFileEntry(): string {
-  const [item] = suspenseItemsFor(MIXED_FILE.locator);
-  assert.ok(item, `expected the suspense row to list ${MIXED_FILE.locator}; got:\n${suspenseItems().join("\n")}`);
+  const [item] = unnamedClaimItemsFor(MIXED_FILE.locator);
+  assert.ok(item, `expected the unnamed claim's row to list ${MIXED_FILE.locator}; got:\n${unnamedClaimItems().join("\n")}`);
   return item;
 }
 
-Then("the file's entry on the suspense row names the test that failed by its title", function () {
+Then("the file's entry on the unnamed claim's row names the test that failed by its title", function () {
   const entry = mixedFileEntry();
   assert.ok(entry.endsWith(`(failed: ${MIXED_FILE_FAILED_TEST})`), `expected the entry to name "${MIXED_FILE_FAILED_TEST}" as failed; got:\n${entry}`);
 });
@@ -198,12 +198,12 @@ Then("the file's entry does not name the test that passed", function () {
 });
 
 function featureFileEntry(): string {
-  const [item] = suspenseItemsFor(FEATURE_FILE);
-  assert.ok(item, `expected the suspense row to list ${FEATURE_FILE}; got:\n${suspenseItems().join("\n")}`);
+  const [item] = unnamedClaimItemsFor(FEATURE_FILE);
+  assert.ok(item, `expected the unnamed claim's row to list ${FEATURE_FILE}; got:\n${unnamedClaimItems().join("\n")}`);
   return item;
 }
 
-Then("the feature file's entry on the suspense row names the Cucumber scenario that failed by its name", function () {
+Then("the feature file's entry on the unnamed claim's row names the Cucumber scenario that failed by its name", function () {
   const entry = featureFileEntry();
   assert.ok(entry.endsWith(`(failed: ${FEATURE_FILE_FAILED_SCENARIO})`), `expected the entry to name "${FEATURE_FILE_FAILED_SCENARIO}" as failed; got:\n${entry}`);
 });
@@ -214,45 +214,45 @@ Then("the feature file's entry does not name the Cucumber scenario that passed",
 });
 
 function stepsEntryIndex(): number {
-  const indices = suspenseItems().flatMap((item, i) => (UNCITED_STEPS.some((name) => item.includes(name)) ? [i] : []));
-  assert.equal(indices.length, 1, `expected the CI steps listed together once; got:\n${suspenseItems().join("\n")}`);
+  const indices = unnamedClaimItems().flatMap((item, i) => (UNCITED_STEPS.some((name) => item.includes(name)) ? [i] : []));
+  assert.equal(indices.length, 1, `expected the CI steps listed together once; got:\n${unnamedClaimItems().join("\n")}`);
   return indices[0]!;
 }
 
-Then("the suspense row lists the CI steps together once, after the test's file", function () {
-  const fileIndex = suspenseItems().findIndex((item) => item.includes(`(${UNCITED_TEST_FILE})`));
-  assert.ok(fileIndex >= 0, `expected the suspense row to list ${UNCITED_TEST_FILE}; got:\n${suspenseItems().join("\n")}`);
-  assert.ok(stepsEntryIndex() > fileIndex, `expected the CI steps after the test's file; got:\n${suspenseItems().join("\n")}`);
+Then("the unnamed claim's row lists the CI steps together once, after the test's file", function () {
+  const fileIndex = unnamedClaimItems().findIndex((item) => item.includes(`(${UNCITED_TEST_FILE})`));
+  assert.ok(fileIndex >= 0, `expected the unnamed claim's row to list ${UNCITED_TEST_FILE}; got:\n${unnamedClaimItems().join("\n")}`);
+  assert.ok(stepsEntryIndex() > fileIndex, `expected the CI steps after the test's file; got:\n${unnamedClaimItems().join("\n")}`);
 });
 
 Then("the CI steps' entry names each of the two checks", function () {
-  const entry = suspenseItems()[stepsEntryIndex()];
+  const entry = unnamedClaimItems()[stepsEntryIndex()];
   assert.ok(
     entry?.endsWith(` — ${UNCITED_STEPS.length} CI steps: ${UNCITED_STEPS.join(", ")}`),
     `expected the CI steps' entry to name ${UNCITED_STEPS.join(" and ")}; got:\n${entry}`,
   );
 });
 
-Then("what the suspense row counts adds up to the count of evidence observations that cite no scenario", function () {
+Then("what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario", function () {
   const outcomeRow = report.split("\n").find((line) => line.startsWith(`| ${UNCITED_OUTCOME_ROW} |`));
   assert.ok(outcomeRow, `expected a "${UNCITED_OUTCOME_ROW}" row in the report; got:\n${report}`);
   const uncited = Number(outcomeRow.split(" | ")[3]);
-  const counted = suspenseItems().reduce(
+  const counted = unnamedClaimItems().reduce(
     (sum, item) => sum + Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)?.[1] ?? Number.NaN),
     0,
   );
-  assert.equal(counted, uncited, `the suspense row's counts must add up to ${uncited}; got:\n${suspenseItems().join("\n")}`);
+  assert.equal(counted, uncited, `the unnamed claim's row's counts must add up to ${uncited}; got:\n${unnamedClaimItems().join("\n")}`);
   assert.equal(uncited, UNCITED_STEPS.length + 1);
 });
 
-Then("the phantom row shows the test that failed as failed", function () {
-  const item = rowItemFor(PHANTOM_SCENARIO, PHANTOM_FAILED_TEST);
-  assert.match(item, endsWithResult(PHANTOM_FAILED_TEST, "failed"));
+Then("the phantom claim's row shows the test that failed as failed", function () {
+  const item = rowItemFor(PHANTOM_CLAIM, PHANTOM_CLAIM_FAILED_TEST);
+  assert.match(item, endsWithResult(PHANTOM_CLAIM_FAILED_TEST, "failed"));
 });
 
-Then("the phantom row shows the test that passed as passed", function () {
-  const item = rowItemFor(PHANTOM_SCENARIO, PHANTOM_PASSED_TEST);
-  assert.match(item, endsWithResult(PHANTOM_PASSED_TEST, "passed"));
+Then("the phantom claim's row shows the test that passed as passed", function () {
+  const item = rowItemFor(PHANTOM_CLAIM, PHANTOM_CLAIM_PASSED_TEST);
+  assert.match(item, endsWithResult(PHANTOM_CLAIM_PASSED_TEST, "passed"));
 });
 
 Then("the scenario's row shows the test that failed as failed", function () {

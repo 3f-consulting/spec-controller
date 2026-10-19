@@ -31,8 +31,8 @@ function severedWiringFor(script: string): { ciSource: string; packageJson: Pack
   };
 }
 
-describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenario carries posts to a phantom row", () => {
-  it("mints the phantom row for the cited @SCN, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
+describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenario carries posts to a phantom claim's row", () => {
+  it("mints the phantom claim's row for the cited @SCN, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
     const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const citedScn = (script: string): ScriptCitation | null =>
@@ -61,12 +61,12 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const phantom = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
-    expect(phantom?.scnId).toBe("SCN-AAA-001");
-    expect(phantom?.verdict).toBe("out-of-balance");
-    expect(phantom?.evidenceObligations).toEqual([]);
-    expect(phantom?.evidenceObservations).toEqual([observation]);
-    expect(phantom?.qualityCheckReconciliations).toEqual([
+    const phantomClaim = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
+    expect(phantomClaim?.scnId).toBe("SCN-AAA-001");
+    expect(phantomClaim?.verdict).toBe("out-of-balance");
+    expect(phantomClaim?.evidenceObligations).toEqual([]);
+    expect(phantomClaim?.evidenceObservations).toEqual([observation]);
+    expect(phantomClaim?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: REAL_GUARD,
@@ -74,8 +74,8 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
         evidenceObservation: observation,
       },
     ]);
-    expect(phantom?.reconcilingItems).toEqual(phantom?.qualityCheckReconciliations);
-    expect(phantom?.pendingItems).toEqual([]);
+    expect(phantomClaim?.reconcilingItems).toEqual(phantomClaim?.qualityCheckReconciliations);
+    expect(phantomClaim?.pendingItems).toEqual([]);
 
     expect(
       balance.claimReconciliations

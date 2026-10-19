@@ -1,5 +1,5 @@
 {
-  "name": "suspense-status-fixture-target",
+  "name": "byfeature-cites-unknown-scenario-fixture-target",
   "private": true,
   "scripts": {
     "test": "vitest run"

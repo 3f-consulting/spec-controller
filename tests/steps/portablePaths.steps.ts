@@ -134,14 +134,14 @@ Then(
       "vitest.json",
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
-    const suspense = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
-    assert.ok(suspense, `expected an unnamed-claim row carrying the uncited evidence observations; got:\n${jsonText}`);
-    const locators = suspense!.qualityCheckReconciliations
+    const unnamedClaim = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
+    assert.ok(unnamedClaim, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${jsonText}`);
+    const locators = unnamedClaim!.qualityCheckReconciliations
       .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
       .map((o) => o.locator!);
     assert.ok(
       locators.length > 0 && locators.every((l) => !l.startsWith("/")),
-      `expected the suspense-row evidence observation locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`
+      `expected the unnamed claim's evidence observation locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`
     );
   }
 );

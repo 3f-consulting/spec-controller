@@ -187,19 +187,19 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     ]);
   });
 
-  it("takes no column from a phantom row's evidence observations, and fills the phantom row's evidence cells with —", () => {
-    const phantom = reconcile(
+  it("takes no column from a phantom claim's row's evidence observations, and fills that row's evidence cells with —", () => {
+    const phantomClaim = reconcile(
       [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [
         { qualityCheck: "unit", scnId: "SCN-U", status: "passed" },
         { qualityCheck: "e2e", scnId: "SCN-GHOST", status: "passed" },
       ]
     );
-    expect(phantom.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
+    expect(phantomClaim.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
       ["SCN-U", "scenario"],
       ["SCN-GHOST", "phantom-claim"],
     ]);
-    const table = ledgerTable(renderMarkdown(__er(phantom, true, false), ctx));
+    const table = ledgerTable(renderMarkdown(__er(phantomClaim, true, false), ctx));
     expect(table[0]).toBe(headerOf("Unit"));
     expect(table[1]).toBe("| --- | --- | --- | --- |");
     expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([

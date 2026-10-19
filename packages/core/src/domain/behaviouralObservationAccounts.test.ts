@@ -12,7 +12,7 @@ describe("the behavioural-observation tally reports the raw counts and the inven
     expect(tally.rawByBehaviouralQualityCheck).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 
-  it("[SCN-RPT-023] counts the phantom and suspense (incl. broken) evidence observations on their invented accounts", () => {
+  it("[SCN-RPT-023] counts the phantom claim's and the unnamed claim's (incl. broken) evidence observations on their accounts", () => {
     expect(tally.onPhantomClaim).toBe(1);
     expect(tally.onUnnamedClaim).toBe(2);
   });

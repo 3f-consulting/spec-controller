@@ -23,7 +23,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 
   it.each([
     ["posts a matched evidence observation to the account it cites", "SCN-AAA-001"],
-    ["posts an evidence observation citing an unknown @SCN to that phantom account", "SCN-ZZZ-999"],
+    ["posts an evidence observation citing an unknown @SCN to that phantom claim's account", "SCN-ZZZ-999"],
   ] as const)("%s", (_title, scnId) => {
     const observation: EvidenceObservation = { scnId, qualityCheck: "unit", status: "passed" };
     const ledger = reconcile(namedScenarios, [observation]);
@@ -43,7 +43,7 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
     ledger.claimReconciliations.find((r) => r.scnId === scnId);
   const ctx: RunContext = { target: "obligations-only", inputs: {}, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
-  it("a satisfied citation-routed check as the only evidence observation → balanced, no suspense, summary.outOfBalance 0", () => {
+  it("a satisfied citation-routed check as the only evidence observation → balanced, no unnamed claim, summary.outOfBalance 0", () => {
     const fitness: Scenario[] = [
       { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ];
@@ -66,7 +66,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names 
   const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
     ledger.claimReconciliations.find((r) => r.scnId === scnId);
 
-  it("posts no debits to the accounts no scenario names — suspense and phantom", () => {
+  it("posts no debits to the accounts no scenario names — the unnamed claim and a phantom claim", () => {
     const namedScenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
     const ledger = reconcile(namedScenarios, [
       { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed" },

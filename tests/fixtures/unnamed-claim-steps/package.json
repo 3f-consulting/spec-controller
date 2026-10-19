@@ -1,5 +1,5 @@
 {
-  "name": "suspense-steps-fixture-target",
+  "name": "unnamed-claim-steps-fixture-target",
   "private": true,
   "scripts": {
     "lint:bar": "echo bar-check",

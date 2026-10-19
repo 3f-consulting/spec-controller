@@ -18,7 +18,7 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-const SUSPENSE_ROW = "(unnamed claim)";
+const UNNAMED_CLAIM_ROW = "(unnamed claim)";
 
 function render(
   scenarios: Scenario[],
@@ -125,7 +125,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a behavioural evidence observation citing an unknown scenario names its locator on the phantom row", () => {
+    it("a behavioural evidence observation citing an unknown scenario names its locator on the phantom claim's row", () => {
       const md = render(
         [],
         [{ qualityCheck: "unit", scnId: "SCN-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
@@ -144,9 +144,9 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
       });
     });
 
-    it("a behavioural evidence observation citing no scenario names its check, outcome and file on the suspense row, and that it passed", () => {
+    it("a behavioural evidence observation citing no scenario names its check, outcome and file on the unnamed claim's row, and that it passed", () => {
       const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
-      const { verdict, items } = rowFor(md, SUSPENSE_ROW);
+      const { verdict, items } = rowFor(md, UNNAMED_CLAIM_ROW);
       expect(verdict).toBe("out-of-balance");
       const [named, result, ...rest] = items.split(" — ");
       expect(rest).toEqual([]);
@@ -155,8 +155,8 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     });
   });
 
-  describe("broken evidence on the suspense row names where it broke and what it said", () => {
-    const brokenRow = (observations: EvidenceObservation[]) => rowFor(render([], observations), SUSPENSE_ROW);
+  describe("broken evidence on the unnamed claim's row names where it broke and what it said", () => {
+    const brokenRow = (observations: EvidenceObservation[]) => rowFor(render([], observations), UNNAMED_CLAIM_ROW);
 
     it("a file that failed to collect, with its error, names the locator and the error joined by a colon", () => {
       const observations = parseVitestEvidenceObservations(

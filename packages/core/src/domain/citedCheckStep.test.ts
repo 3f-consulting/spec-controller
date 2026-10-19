@@ -48,7 +48,7 @@ function reconcileAnnotated() {
 }
 
 describe("[SCN-LNT-031] a check step stating its row's code supplies that row's citation", () => {
-  it("answers the obligation on the row the annotated step names and leaves the unannotated check in suspense", () => {
+  it("answers the obligation on the row the annotated step names and leaves the unannotated check on the unnamed claim", () => {
     expect(
       reconcileAnnotated().ledger.claimReconciliations.map((row) => [
         row.scnId,

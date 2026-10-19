@@ -11,15 +11,15 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     - @SCN-CEL-001 — @unit + @fitness, both discharged → Fitness `F/1`, Unit `U/1`
       (named and met — the count).
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `I/-` (named, missing),
-      and Unit / E2e `—` (a column absent for this scenario — neither named nor present).
+      and Unit / E2e blank (a column absent for this scenario — neither named nor present).
     - @SCN-CEL-003 — @e2e ONLY, discharged by a passing cucumber observation → E2e `E/1`; a VITEST
       unit test nonetheless cites it, which the reconciler posts as a NO-EVIDENCE-OBLIGATION evidence-observation row
       (@SCN-LDG-008) and the census counts into `noEvidenceObligationCount`, OUT of `attributed` → its Unit
       cell must read `-/1`, NOT `U/-`. This is the SCN-CLI-054 shape — the bug this scenario fixes.
     - @SCN-CEL-004 — @unitpending: the unit obligation is DEFERRED, so it partitions to a one-sided
-      Pending Item and posts NO reconciled row; but the pending pair STAYS in
-      evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not no-evidence-obligation →
-      its Unit cell must read `(1)`. The second, live-today production shape of `(N)`.
+      Pending Item and posts NO reconciled row; the vitest observation citing it answers no
+      obligation, so it posts as a no-evidence-obligation row → its Unit cell reads `-/1`, beside
+      its pending item.
 
   A FIFTH SCENARIO ONCE STOOD HERE — SCN-CEL-005, two bare checks on one row, both wired and
   discharged, pinning the `L2/2` left-count path. It carried no corpus obligation of its own (it
@@ -53,5 +53,5 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       Given the target repo's source
 
     @unitpending @SCN-CEL-004
-    Scenario: a pending unit obligation an observation is nonetheless attributed to
+    Scenario: a pending unit obligation a unit test nonetheless cites
       Given the target repo's source

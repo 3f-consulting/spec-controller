@@ -23,7 +23,7 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
   });
 }
 
-function suspenseChecks(reconciliation: EvidenceReconciliation) {
+function unnamedClaimChecks(reconciliation: EvidenceReconciliation) {
   return reconciliation.ledger.claimReconciliations
     .filter((row) => row.kind === "unnamed-claim")
     .flatMap((row) =>
@@ -35,7 +35,7 @@ describe("[SCN-CFG-003] a runners key that is not one of the four tiers is repor
   it("names the key outside the four tiers, and keeps the check it names on the books as uncited", () => {
     const reconciliation = reconcile({ unit: "vitest", lint: "eslint" });
     expect(reconciliation.summary.runnerKeysNotATier).toStrictEqual(["lint"]);
-    expect(suspenseChecks(reconciliation)).toStrictEqual([["lint", "cites-no-scenario"]]);
+    expect(unnamedClaimChecks(reconciliation)).toStrictEqual([["lint", "cites-no-scenario"]]);
   });
 
   it("names no unrecognised runner key for a target whose every runners key is a tier", () => {

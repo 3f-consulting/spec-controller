@@ -6,7 +6,7 @@ Feature: a fixture target citing one of the two checks its CI runs
   for only one of them. Its lint:foo step carries that scenario's code as its
   own `id:`, so the running-check observer reads the citation directly off the step rather
   than through a registered handle. lint:bar's step carries no `id:` and no row answers it,
-  which is therefore the uncited fitness function the suspense row carries. `test` / `cucumber`
+  which is therefore the uncited fitness function the unnamed claim's row carries. `test` / `cucumber`
   run in this CI too and carry no check prefix, so they are never observed on this axis.
 
   ONE CHECK CITING AND ONE NOT IS WHAT GIVES THE PAIR ITS TEETH. Leaving lint:bar's step

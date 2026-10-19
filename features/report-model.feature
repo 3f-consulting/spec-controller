@@ -56,8 +56,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The behavioural evidence-observation counting is a FOLD the Ledger owns.
     The raw per-quality-check totals are materialised on summary.rawByBehaviouralQualityCheck, and
     the persisted JSON carries NO separate evidence-observations section: every evidence observation is
-    already posted on the ledger, a phantom evidence observation on its phantom-claim row and an uncited one
-    on the unnamed-claim row, each with its file locator. The markdown's Test volume cut and
+    already posted on the ledger, an evidence observation citing an unknown scenario on its phantom claim's row and an uncited one
+    on the unnamed claim's row, each with its file locator. The markdown's Test volume cut and
     its identity line read the same summary folds. The balancing identity Σ
     rawByBehaviouralQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
     construction on the persisted file. Its unit tests hold the assembled totals in isolation.

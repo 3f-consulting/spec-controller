@@ -25,7 +25,7 @@ Feature: An RSpec suite's results answer unit evidence obligations
     Scenario: a code in an RSpec example's own description is read before a code in the groups around it
 
     @unit @SCN-RSP-004
-    Scenario: an RSpec example whose description cites two scenarios credits neither, and suspense names both codes
+    Scenario: an RSpec example whose description cites two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: an RSpec example that did not run proves nothing
 

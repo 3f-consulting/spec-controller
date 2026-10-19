@@ -34,7 +34,7 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
     ]);
 }
 
-function suspenseItemsOf(reconciliation: EvidenceReconciliation) {
+function unnamedClaimItemsOf(reconciliation: EvidenceReconciliation) {
   const row = reconciliation.ledger.claimReconciliations.find(
     (r) => r.kind === "unnamed-claim"
   );
@@ -71,7 +71,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
     expect(
       hasBrokenEvidence({ claimReconciliations: reconciliation.ledger.claimReconciliations })
     ).toBe(true);
-    const items = suspenseItemsOf(reconciliation);
+    const items = unnamedClaimItemsOf(reconciliation);
     expect(items.map((item) => [item.outcome, item.notes])).toEqual([
       ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" }]],
       ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" }]],
@@ -86,11 +86,11 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
-    const suspense = reconcile().ledger.claimReconciliations.find(
+    const unnamedClaim = reconcile().ledger.claimReconciliations.find(
       (row) => row.kind === "unnamed-claim"
     );
     expect(
-      suspense?.evidenceObservations.map((o) => [
+      unnamedClaim?.evidenceObservations.map((o) => [
         o.scnId,
         "exists" in o ? o.exists : undefined,
         "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,

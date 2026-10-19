@@ -11,7 +11,7 @@ function rowOf(md: string, rowName: string): string {
   return row;
 }
 
-describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran", () => {
+describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(

@@ -4,7 +4,7 @@ import { hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
-  it("leaves the obligation missing and posts to suspense even when the evidence observation says the check exists and ran", () => {
+  it("leaves the obligation missing and posts to the unnamed claim even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
         scnId: "SCN-LNT-026",
@@ -38,10 +38,10 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
         evidenceObligation: { qualityCheck: "fitness" },
       },
     ]);
-    const suspense = balance.claimReconciliations.find(
+    const unnamedClaim = balance.claimReconciliations.find(
       (s) => s.kind === "unnamed-claim",
     );
-    expect(suspense?.qualityCheckReconciliations).toEqual([
+    expect(unnamedClaim?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
         outcome: "broken",

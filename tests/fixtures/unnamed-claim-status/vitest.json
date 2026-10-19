@@ -1,20 +1,20 @@
 {
   "testResults": [
     {
-      "name": "tests/fixtures/suspense-status/proven.test.ts",
+      "name": "tests/fixtures/unnamed-claim-status/proven.test.ts",
       "assertionResults": [
         { "fullName": "[SCN-SST-001] the target unit scenario is proven", "status": "passed" }
       ]
     },
     {
-      "name": "tests/fixtures/suspense-status/broken-spawn.test.ts",
+      "name": "tests/fixtures/unnamed-claim-status/broken-spawn.test.ts",
       "assertionResults": [
         { "fullName": "spawns yarn", "status": "failed" },
         { "fullName": "reads the lockfile", "status": "passed" }
       ]
     },
     {
-      "name": "tests/fixtures/suspense-status/sound.test.ts",
+      "name": "tests/fixtures/unnamed-claim-status/sound.test.ts",
       "assertionResults": [
         { "fullName": "adds two numbers", "status": "passed" }
       ]

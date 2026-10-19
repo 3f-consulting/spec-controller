@@ -68,7 +68,7 @@ describe("[SCN-GOT-003] parseJunitEvidenceObservations reads the code in a Go su
   });
 });
 
-describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's name cites when it cites two, and suspense names both codes", () => {
+describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's name cites when it cites two, and the unnamed claim's row names both codes", () => {
   const balance = () => runReconcile({
     features: `${TARGET}/features`,
     packageJson: `${TARGET}/package.json`,
@@ -86,13 +86,13 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
     expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
   });
 
-  it("names both codes on the suspense row, beside the subtest", () => {
+  it("names both codes on the unnamed claim's row, beside the subtest", () => {
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
-    expect(suspenseRow ?? "").toContain(
+    expect(unnamedClaimRow ?? "").toContain(
       "cited::TestCited/[SCN-GOF-005]_[SCN-GOF-006]_a_subtest_that_cites_two_scenarios: 2 scenario codes cite SCN-GOF-005, SCN-GOF-006",
     );
   });
@@ -137,13 +137,13 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
     expect(unit?.evidenceObservation).toBeUndefined();
   });
 
-  it("posts the enclosing test's failure to suspense, under its own name", () => {
+  it("posts the enclosing test's failure to the unnamed claim, under its own name", () => {
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
-    expect(suspenseRow ?? "").toContain(
+    expect(unnamedClaimRow ?? "").toContain(
       "Evidence Observation cites no Scenario (example.com/gofixture/cited::TestEnclosingFailsFirst) — 1 ran, 0 passed, 1 failed",
     );
   });
@@ -157,7 +157,7 @@ describe("[SCN-GOT-007] runReconcile reads a Go package that failed to compile a
     junit: `${TARGET}/report.xml`,
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
-  it("posts one broken item, on suspense, naming the package and saying its build failed", () => {
+  it("posts one broken item, on the unnamed claim's row, naming the package and saying its build failed", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );

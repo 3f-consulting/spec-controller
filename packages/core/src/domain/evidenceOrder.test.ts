@@ -72,7 +72,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     ]);
   });
 
-  it("orders evidence observations at one location by the scenario they cite — the phantom rows they mint follow it", () => {
+  it("orders evidence observations at one location by the scenario they cite — the phantom claims' rows they mint follow it", () => {
     const ghost2: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-002", status: "passed", locator: "p.test.ts" };
     const ghost1: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-001", status: "passed", locator: "p.test.ts" };
     const phantomClaimIds = reconcile(scenarios, [ghost2, ghost1])
@@ -85,10 +85,10 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const broken = { qualityCheck: "unit", status: "failed", broken: true, locator: "a.test.ts" } as const;
     const citing: EvidenceObservation = { ...broken, scnId: "SCN-CITED-001" };
     const citingNone: EvidenceObservation = { ...broken, scnId: null };
-    const suspense = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
+    const unnamedClaim = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
       (r) => r.kind === "unnamed-claim"
     )!;
-    expect(suspense.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
+    expect(unnamedClaim.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });
 
   it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {

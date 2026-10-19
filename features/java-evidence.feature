@@ -28,7 +28,7 @@ Feature: A Java suite's results answer unit evidence obligations
     Scenario: a JUnit 5 test with no code of its own is credited to the innermost class around it that cites one
 
     @unit @SCN-JAV-005
-    Scenario: a JUnit 5 test whose display name cites two scenarios credits neither, and suspense names both codes
+    Scenario: a JUnit 5 test whose display name cites two scenarios credits neither, and the unnamed claim's row names both codes
 
     @unit @SCN-JAV-006
     Scenario: each invocation of a parameterised JUnit 5 test cites the scenario its name pattern carries

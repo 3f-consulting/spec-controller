@@ -53,7 +53,7 @@ Feature: The report renders the ledger as sectioned facts
     the exit code.
 
     The Quality Check Reconciliation row counts every quality check reconciliation on every
-    row, phantom and suspense included, and an evidence observation that answers no evidence
+    row, a phantom claim's and the unnamed claim's included, and an evidence observation that answers no evidence
     obligation included. It is therefore not a count of evidence obligations. Its
     out-of-balance count is broken down in place into nested "↳" cause rows that fill the
     out-of-balance column only, are always shown even at zero, and sum to it. The missing
@@ -91,8 +91,8 @@ Feature: The report renders the ledger as sectioned facts
     A code that no feature file carries shows as the bare code, and every code does when a
     report is re-rendered from saved JSON that carries no feature names.
 
-    The total line accounts for every out-of-balance row. Phantom-claim and
-    unnamed-claim rows name no feature file, so they are not grouped; the sentence
+    The total line accounts for every out-of-balance row. A phantom claim's row and the
+    unnamed claim's row name no feature file, so they are not grouped; the sentence
     states each of their out-of-balance counts as not grouped by feature, and its numbers
     add up to the header's out-of-balance count and total. The section is left out only when
     no Claim Reconciliation is out of balance. When only ungrouped rows are, it states
@@ -150,12 +150,12 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the Claim Reconciliations last
 
-  Rule: the report reconciles the test evidence observation — raw = attributed + suspense
+  Rule: the report reconciles the test evidence observation — raw = attributed + phantom claim + unnamed claim
 
     Under "## Summary views", the "### Test volume" cut counts the observed test evidence
     observations. It opens with the identity "N evidence observations = a on scenarios + b
     on cited scenario ids with no real scenario + c citing no scenario", which always
-    balances. A phantom scenario is an @SCN code no scenario carries; the suspense scenario
+    balances. A phantom claim is an @SCN code no scenario carries; the unnamed claim
     holds observations with no @SCN code. A table by level follows, always listing all four
     levels, with e2e and performance shown at zero when empty. The raw per-level totals and the three
     per-account counts are also on the JSON; the identity line is markdown only.
@@ -247,8 +247,8 @@ Feature: The report renders the ledger as sectioned facts
     The markdown shows each outcome's sentence in place of its handle wherever an outcome
     reaches a reader: the "↳" rows of the Evidence reconciliation summary, each scenario's
     reconciling items, and the Outcome column of the fitness evidence obligations table. "↳
-    missing" reads "↳ Evidence Observation is missing", a reconciling item "unit: missing"
-    reads "unit: Evidence Observation is missing", and a "watermelon" Outcome cell reads
+    missing" reads "↳ Evidence Observation is missing", a reconciling item for a missing unit
+    observation reads "unit: Evidence Observation is missing", and a "watermelon" Outcome cell reads
     "Evidence Observation is passing but its check could not fail its job". The Detail
     column shows no sentence. The JSON keeps the bare handle.
 
@@ -295,7 +295,7 @@ Feature: The report renders the ledger as sectioned facts
 
     It names the broken evidence by the locator the runner gave it, a test file or a feature
     file. It prints what broke: the message appears verbatim, in a fenced block, in the
-    run-integrity section, and the suspense row's broken item carries the same locator and
+    run-integrity section, and the unnamed claim's broken item carries the same locator and
     the message's first line. Where the runner gives its own message, the report shows it
     unchanged. Where it gives none, as for an ambiguous Cucumber step, the report shows a
     diagnosis built from what the runner reported. Either way it names what failed and
@@ -332,12 +332,12 @@ Feature: The report renders the ledger as sectioned facts
   Rule: a proof that never ran is attributed to no scenario, even when it cites one
 
     A broken observation discharges and fails no obligation, even when it cites a real
-    scenario, as an ambiguous Cucumber step does. It is posted to suspense and counted
+    scenario, as an ambiguous Cucumber step does. It is posted to the unnamed claim and counted
     there, not as attributed to that scenario. Fitness observations are not counted in Test
     volume.
 
     @unit @SCN-RPT-023
-    Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
+    Scenario: a broken observation citing a real scenario counts on the unnamed claim, not attributed to that scenario
 
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
@@ -388,17 +388,17 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: an evidence observation that answers no evidence obligation shows its own result
 
-    On a phantom row, and on a scenario's row at a check where the scenario holds no
+    On a phantom claim's row, and on a scenario's row at a check where the scenario holds no
     obligation, each observation is listed by its outcome and where it ran, with its own
     result, failed or passed, after its quality check and the outcome's sentence. The
-    suspense row counts its results by file instead, under the Rule below.
+    unnamed claim's row counts its results by file instead, under the Rule below.
 
     @SCN-RPT-034 @unit @e2e
-    Scenario: a test that cites a scenario no feature carries shows on its phantom row as failed or passed, as it ran
+    Scenario: a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran
       Given a target with two tests that cite a scenario no feature carries, one that failed and one that passed
       When the target's evidence is reconciled into a report
-      Then the phantom row shows the test that failed as failed
-      And the phantom row shows the test that passed as passed
+      Then the phantom claim's row shows the test that failed as failed
+      And the phantom claim's row shows the test that passed as passed
 
     @SCN-RPT-035 @unit @e2e
     Scenario: a test observed at a check its scenario holds no obligation for shows as failed or passed, as it ran
@@ -407,9 +407,9 @@ Feature: The report renders the ledger as sectioned facts
       Then the scenario's row shows the test that failed as failed
       And the scenario's row shows the test that passed as passed
 
-  Rule: the suspense row groups what ran by where it ran, counting what passed and naming what failed
+  Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
 
-    The suspense row groups its observations that cite no scenario by the file they ran in,
+    The unnamed claim's row groups its observations that cite no scenario by the file they ran in,
     with the CI steps as one group of their own, listed after the files. Each group counts
     what ran, passed and failed. It names each failed test, by its test title or Cucumber
     scenario name, and each CI step, which holds no result. Broken items are listed
@@ -419,7 +419,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
-      Then the suspense row lists each of the two files once
+      Then the unnamed claim's row lists each of the two files once
       And each file's entry counts how many of its tests ran, how many passed and how many failed
       And the counts of tests that ran add up to the count of evidence observations that cite no scenario
 
@@ -427,28 +427,28 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a failed test that cites no scenario is named on the unnamed claim's row by its test title
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
-      Then the file's entry on the suspense row names the test that failed by its title
+      Then the file's entry on the unnamed claim's row names the test that failed by its title
       And the file's entry does not name the test that passed
 
     @SCN-RPT-037 @unit @e2e
-    Scenario: a failed Cucumber scenario that cites no scenario is named on the suspense row by its scenario name
+    Scenario: a failed Cucumber scenario that cites no scenario is named on the unnamed claim's row by its scenario name
       Given a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed
       When the target's evidence is reconciled into a report
-      Then the feature file's entry on the suspense row names the Cucumber scenario that failed by its name
+      Then the feature file's entry on the unnamed claim's row names the Cucumber scenario that failed by its name
       And the feature file's entry does not name the Cucumber scenario that passed
 
     @SCN-RPT-038 @unit @e2e
     Scenario: the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named
       Given a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario
       When the target's evidence is reconciled into a report
-      Then the suspense row lists the CI steps together once, after the test's file
+      Then the unnamed claim's row lists the CI steps together once, after the test's file
       And the CI steps' entry names each of the two checks
-      And what the suspense row counts adds up to the count of evidence observations that cite no scenario
+      And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
 
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
-    The Markdown names phantom-claim rows as cited scenario ids with no real scenario, and
-    the unnamed-claim row as evidence observations citing no scenario. A balanced run's
+    The Markdown names a phantom claim's row as a cited scenario id with no real scenario, and
+    the unnamed claim's row as evidence observations citing no scenario. A balanced run's
     gloss quotes the satisfied outcome's sentence. Where the Markdown's prose refers to an
     outcome, it quotes the outcome's sentence, never its handle. The JSON keeps the terms
     `phantom-claim` and `unnamed-claim` as the rows' kinds.

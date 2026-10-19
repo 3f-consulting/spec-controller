@@ -176,7 +176,7 @@ describe("[SCN-RPT-036] parseVitestEvidenceObservations names each test by its f
   });
 });
 
-describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits neither, and suspense names both codes", () => {
+describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes", () => {
   const reportOf = (...assertions: Array<{ title: string; fullName?: string }>): VitestJsonReport => ({
     testResults: [
       {
@@ -246,14 +246,14 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
       expect(unitOutcomeOf(scnId)).toBe("missing");
     });
 
-    it("words both codes on the suspense row in the catalogue's words", () => {
+    it("words both codes on the unnamed claim's row in the catalogue's words", () => {
       const ctx: RunContext = { target: "several", inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
       const reconciled = ledger();
-      const suspenseRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
+      const unnamedClaimRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
         .split("\n")
         .find((line) => line.startsWith("| (unnamed claim) | "));
 
-      expect(suspenseRow ?? "").toContain(
+      expect(unnamedClaimRow ?? "").toContain(
         `(/r/several.test.ts: ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](["SCN-AAA-001", "SCN-AAA-002"])})`
       );
     });

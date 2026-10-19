@@ -25,13 +25,13 @@ Feature: A pytest suite's results answer unit evidence obligations
     Scenario: a skipped pytest test posts no evidence observation, as a skipped Vitest test posts none
 
     @unit @SCN-PYT-004
-    Scenario: a pytest test citing a scenario no feature file carries posts to a phantom scenario
+    Scenario: a pytest test citing a scenario no feature file carries posts to a phantom claim
 
     @unit @SCN-PYT-005
-    Scenario: a pytest test citing no scenario posts to suspense, citing no scenario
+    Scenario: a pytest test citing no scenario posts to the unnamed claim, citing no scenario
 
     @unit @SCN-PYT-006
-    Scenario: a pytest test whose testcase carries two scn properties credits neither scenario, and suspense names both codes
+    Scenario: a pytest test whose testcase carries two scn properties credits neither scenario, and the unnamed claim's row names both codes
 
   Rule: a pytest run whose proof never ran is broken evidence, never missing or failing
 

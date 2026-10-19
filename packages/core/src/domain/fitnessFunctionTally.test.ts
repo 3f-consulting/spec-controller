@@ -38,7 +38,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
     expect(tally.runningFitnessFunctionCount).toBe(3);
   });
 
-  it("counts the fitness evidence observations on the SUSPENSE row as the uncited fitness functions", () => {
+  it("counts the fitness evidence observations on the UNNAMED CLAIM's row as the uncited fitness functions", () => {
     expect(tally.uncitedFitnessFunctionCount).toBe(1);
   });
 
@@ -55,7 +55,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
   });
 });
 
-describe("[SCN-USG-001] a fitness function no scenario cites is banked on the suspense row and counted uncited", () => {
+describe("[SCN-USG-001] a fitness function no scenario cites is banked on the unnamed claim's row and counted uncited", () => {
   const rowFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
     ledger.claimReconciliations.find((r) => r.scnId === scnId);
 
@@ -109,7 +109,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the su
     ]);
   });
 
-  it("banks the uncited evidence observation on the suspense row as cites-no-scenario, naming the handle that ran", () => {
+  it("banks the uncited evidence observation on the unnamed claim's row as cites-no-scenario, naming the handle that ran", () => {
     expect(rowFor(ledger, "(unnamed claim)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",

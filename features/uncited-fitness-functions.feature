@@ -2,7 +2,7 @@
 Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Every check a CI step runs is reported. A check whose step cites a scenario posts to that
-  scenario's row; a check whose step cites none lands on the suspense row as an uncited fitness
+  scenario's row; a check whose step cites none lands on the unnamed claim's row as an uncited fitness
   function, and the report counts running and uncited fitness functions under "### Fitness functions".
 
   A fitness function is any CI step left once the manifest's named runners, the reconciler,
@@ -12,12 +12,12 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   Rule: a CI check no scenario cites is reported as an uncited fitness function
 
     A step cites a scenario by carrying that scenario's code as its `id:`. A step with no `id:`
-    cites nothing: its check lands on the suspense row under its own name, marked
+    cites nothing: its check lands on the unnamed claim's row under its own name, marked
     cites-no-scenario, counts among the uncited fitness functions, and reds the run. The check is
     never dropped from the count.
 
-    A step whose `id:` names a code no scenario carries posts to a phantom row under that code,
-    not to the suspense row.
+    A step whose `id:` names a code no scenario carries posts to a phantom claim's row under that code,
+    not to the unnamed claim's row.
 
     @unit @SCN-USG-001
     Scenario: a CI check no scenario cites is reported as an uncited fitness function
@@ -141,7 +141,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     With no runners block, every step except the reconciler, its step-record dump and GitHub's
     plumbing is a candidate, the target's own test suite included. No error or warning asks for
-    configuration. A candidate citing nothing posts to suspense, so the run reds; --exit-zero
+    configuration. A candidate citing nothing posts to the unnamed claim, so the run reds; --exit-zero
     changes only the exit status, never the report.
 
     @unit @SCN-USG-017

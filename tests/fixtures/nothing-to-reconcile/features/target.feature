@@ -6,12 +6,12 @@ Feature: a fixture target that carried no scenario and produced nothing
   directory and it is EMPTY OF SCENARIOS — the corpus carries no scenario, so no
   evidence obligation is raised — and the target supplies no evidence report, so no
   evidence observation is posted either. A GUARDLESS package.json and no --ci keep the
-  suspense row empty: no fitness function is running, so nothing is uncited.
+  unnamed claim's row empty: no fitness function is running, so nothing is uncited.
 
-  The ledger that reconcile() emits over this target therefore carries ZERO Scenario
+  The ledger that reconcile() emits over this target therefore carries ZERO Claim
   Reconciliation rows, which is the one shape `isBalanced` cannot speak about:
   `.every()` over `[]` is VACUOUSLY TRUE, so before @SCN-CLI-019 this target was told
-  "BALANCED — every Scenario Reconciliation balances … (exit 0)".
+  "BALANCED — every Claim Reconciliation balances … (exit 0)".
 
   The file deliberately carries NO scenario. That absence IS the fixture — adding one
   here would give the run a row and destroy the shape under test.

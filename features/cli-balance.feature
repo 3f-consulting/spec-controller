@@ -49,10 +49,10 @@ Feature: spec-controller balance runs standalone
 
   Rule: balance's exit code reflects the reconciliation verdict.
 
-    Any out-of-balance reconciliation exits exactly 1. A run is out of balance when any Scenario
-    Reconciliation carries a reconciling item: a scenario's, a phantom scenario's or the suspense
-    scenario's, a fitness function's watermelon included. A run whose only reconciling item is on
-    the suspense scenario still exits 1.
+    Any out-of-balance reconciliation exits exactly 1. A run is out of balance when any Claim
+    Reconciliation carries a reconciling item: a scenario's, a phantom claim's or the unnamed
+    claim's, a fitness function's watermelon included. A run whose only reconciling item is on
+    the unnamed claim still exits 1.
 
     The exit codes are 0 balanced, 1 out of balance, 2 usage, 3 pending under --strict, 4
     unsound, 5 nothing to reconcile.
@@ -110,7 +110,7 @@ Feature: spec-controller balance runs standalone
 
     @unit @e2e @SCN-CLI-013
     Scenario: the tally, the verdict headline and the process exit code name the same outcome
-      Given a target whose only out-of-balance row is the suspense reconciliation
+      Given a target whose only out-of-balance row is the unnamed claim's reconciliation
       When balance is asked to reconcile that target
       Then the trial-balance table counts 1 out-of-balance Claim Reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
@@ -424,8 +424,8 @@ Feature: spec-controller balance runs standalone
     A run whose ledger holds no row has nothing to reconcile. It exits 5, and its headline
     says so, never that it balanced.
 
-    A target with no corpus but with uncited evidence observations is not empty: its suspense row
-    makes it an ordinary out-of-balance run at exit 1.
+    A target with no corpus but with uncited evidence observations is not empty: the unnamed claim's
+    row makes it an ordinary out-of-balance run at exit 1.
 
     @SCN-CLI-019 @unit @e2e
     Scenario: a run with nothing to reconcile exits 5 and its headline says so, rather than reporting balanced
@@ -438,7 +438,7 @@ Feature: spec-controller balance runs standalone
     Scenario: a corpus-less run carrying uncited evidence observations is an ordinary out-of-balance report at exit 1
       Given a target with no Gherkin corpus whose unit evidence cites no scenario
       When balance is asked to reconcile that target
-      Then the uncited evidence observations are posted to the suspense reconciliation
+      Then the uncited evidence observations are posted to the unnamed claim's reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
       And the run ends on the out-of-balance verdict
       And the run is never read as one with nothing to reconcile
@@ -819,7 +819,7 @@ Feature: spec-controller balance runs standalone
       And the same target with every one of those feature files at the top level of its corpus
       When balance is asked to reconcile both of those targets
       Then the nested target's reconciliation reports the scenarios of every one of its feature files
-      And both targets reach the same verdict over the same Scenario Reconciliations
+      And both targets reach the same verdict over the same Claim Reconciliations
 
     @SCN-CLI-086 @unit @e2e
     Scenario: a feature file in a subdirectory is named by its path under the corpus, so two files of one name in different subdirectories are told apart

@@ -93,21 +93,21 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     }
   });
 
-  it("carries the locator on the suspense row's broken item — a broken proof, not an absent one", () => {
+  it("carries the locator on the unnamed claim's broken item — a broken proof, not an absent one", () => {
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
-    const suspense = rowFor(vitestMd, "(unnamed claim)");
-    expect(suspense).toContain(`unit: ${OUTCOME_DESCRIPTION.broken}`);
-    expect(suspense).toContain(VITEST_LOCATOR);
-    expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
-    expect(suspense).not.toContain("at packageResolve");
+    const unnamedClaim = rowFor(vitestMd, "(unnamed claim)");
+    expect(unnamedClaim).toContain(`unit: ${OUTCOME_DESCRIPTION.broken}`);
+    expect(unnamedClaim).toContain(VITEST_LOCATOR);
+    expect(unnamedClaim).toContain("Cannot find package '@cucumber/tag-expressions'");
+    expect(unnamedClaim).not.toContain("at packageResolve");
     const namedRow = rowFor(vitestMd, "SCN-HNS-002");
     expect(namedRow).toContain(`unit: ${OUTCOME_DESCRIPTION.missing}`);
     expect(namedRow).not.toContain(OUTCOME_DESCRIPTION.broken);
 
-    const cucumberSuspense = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(unnamed claim)");
-    expect(cucumberSuspense).toContain(`integration: ${OUTCOME_DESCRIPTION.broken}`);
-    expect(cucumberSuspense).toContain(CUCUMBER_LOCATOR);
-    expect(cucumberSuspense).toContain("is ambiguous");
+    const cucumberUnnamedClaim = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(unnamed claim)");
+    expect(cucumberUnnamedClaim).toContain(`integration: ${OUTCOME_DESCRIPTION.broken}`);
+    expect(cucumberUnnamedClaim).toContain(CUCUMBER_LOCATOR);
+    expect(cucumberUnnamedClaim).toContain("is ambiguous");
   });
 });
 
@@ -150,9 +150,9 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 });
 
 describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"', () => {
-  let namedPhantomSuspense: Ledger;
+  let namedPhantomClaimUnnamedClaim: Ledger;
   beforeEach(() => {
-    namedPhantomSuspense = reconcile(
+    namedPhantomClaimUnnamedClaim = reconcile(
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [
         { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -163,12 +163,12 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
   });
 
   it('names the collection "Claim Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
-    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
+    const md = renderMarkdown(__er(namedPhantomClaimUnnamedClaim), ctx);
     expect(md).toContain("| Claim Reconciliation |");
   });
 
   it('names no row "Scenario Reconciliation" anywhere in a report holding a scenario, a phantom claim and the unnamed claim', () => {
-    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
+    const md = renderMarkdown(__er(namedPhantomClaimUnnamedClaim), ctx);
     expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
     expect(md.match(/Claim Reconciliation\(s\) for /g)).toHaveLength(4);
     expect(md).not.toMatch(/scenario reconciliation/i);

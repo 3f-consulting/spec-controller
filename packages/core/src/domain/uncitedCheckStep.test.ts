@@ -46,7 +46,7 @@ function reconcileUnannotated() {
 }
 
 describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it runs, citing nothing", () => {
-  it("puts every check on the one suspense row and reports the steps that are not checks nowhere", () => {
+  it("puts every check on the unnamed claim's one row and reports the steps that are not checks nowhere", () => {
     expect(
       reconcileUnannotated().ledger.claimReconciliations.map((row) => [
         row.scnId,

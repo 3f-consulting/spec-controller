@@ -25,7 +25,7 @@ Feature: A Go suite's results answer unit evidence obligations
     Scenario: a code in a Go subtest's own name is read before a code in the names of the tests around it
 
     @unit @SCN-GOT-004
-    Scenario: a Go subtest whose name cites two scenarios credits neither, and suspense names both codes
+    Scenario: a Go subtest whose name cites two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: a Go test that did not run proves nothing
 

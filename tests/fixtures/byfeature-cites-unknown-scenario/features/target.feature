@@ -5,7 +5,7 @@ Feature: a fixture target whose evidence still cites a scenario whose feature fi
   deletion leaves. The target names two unit-level scenarios: one proven, one with
   no evidence at all, so exactly one scenario row is out of balance. Its vitest.json also
   cites @SCN-BFP-099, which no feature file names — standing in for a feature file deleted
-  while its tests still cite it — so the run carries one phantom-scenario row, which is
+  while its tests still cite it — so the run carries one phantom claim's row, which is
   always out of balance and names no feature to be grouped under.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code

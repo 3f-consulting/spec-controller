@@ -13,13 +13,13 @@ Feature: A Vitest suite's results answer unit evidence obligations
     Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
 
     @unit @SCN-VIT-002
-    Scenario: a test whose only SCN-shaped token is prose cites no scenario, and its evidence observation posts to suspense
+    Scenario: a test whose only SCN-shaped token is prose cites no scenario, and its evidence observation posts to the unnamed claim
 
     @unit @SCN-VIT-003
     Scenario: a leaf naming a scenario code in prose does not override its describe's bracketed citation
 
     @unit @SCN-VIT-004
-    Scenario: a Vitest test whose title cites two scenarios credits neither, and suspense names both codes
+    Scenario: a Vitest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes
 
     @unit @SCN-VIT-008
     Scenario: a title citing a feature part outside two to five characters cites no scenario, beside a citation of five characters that is read
@@ -27,7 +27,7 @@ Feature: A Vitest suite's results answer unit evidence obligations
   Rule: a Vitest file that failed to collect is broken, not absent
 
     @unit @SCN-VIT-005
-    Scenario: a Vitest file that failed to collect posts a broken suspense item naming the file and its error, while the scenario it would have proven still reads missing
+    Scenario: a Vitest file that failed to collect posts a broken item naming the file and its error to the unnamed claim's row, while the scenario it would have proven still reads missing
 
   Rule: a Vitest observation carries the quality check the caller names
 

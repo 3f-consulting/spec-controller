@@ -84,7 +84,7 @@ function rowsOfKind(kind: string): GrammarRow[] {
   return grammarRun.report.ledger.claimReconciliations.filter((row) => row.kind === kind);
 }
 
-function suspenseObservations(): number {
+function unnamedClaimObservations(): number {
   return rowsOfKind("unnamed-claim")
     .flatMap((row) => row.qualityCheckReconciliations)
     .filter((qcr) => qcr.outcome === "cites-no-scenario").length;
@@ -101,18 +101,18 @@ Given(
   },
 );
 
-Then("the two- and five-character citations open phantom scenarios", function () {
+Then("the two- and five-character citations open phantom claims", function () {
   for (const id of INSIDE) {
-    assert.equal(rowOf(id)?.kind, "phantom-claim", `expected a phantom for ${id}; got ${JSON.stringify(rowOf(id))}`);
+    assert.equal(rowOf(id)?.kind, "phantom-claim", `expected a phantom claim for ${id}; got ${JSON.stringify(rowOf(id))}`);
   }
   assert.equal(rowOf(OWN)?.kind, "scenario", `expected the target's own scenario as an account`);
 });
 
 Then(
-  "the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario",
+  "the one- and six-character titles cite no scenario, so both evidence observations post to the unnamed claim",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
+    assert.equal(unnamedClaimObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
   },
 );
 
@@ -132,10 +132,10 @@ Given(
 );
 
 Then(
-  "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario",
+  "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the unnamed claim",
   function () {
     for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-    assert.equal(suspenseObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
+    assert.equal(unnamedClaimObservations(), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
   },
 );
 
@@ -153,7 +153,7 @@ Given(
 
 Then("the one- and six-character step ids post no evidence observation at all", function () {
   for (const id of OUTSIDE) assert.equal(rowOf(id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(id))}`);
-  assert.equal(suspenseObservations(), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
+  assert.equal(unnamedClaimObservations(), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind("unnamed-claim"))}`);
   const rows = grammarRun.report.ledger.claimReconciliations.map((row) => row.scnId);
-  assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantoms; got ${JSON.stringify(rows)}`);
+  assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantom claims; got ${JSON.stringify(rows)}`);
 });

@@ -49,9 +49,9 @@ function reconcileWithRecord() {
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, recorded), [], false, true);
 }
 
-describe("[SCN-LNT-029] a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report", () => {
-  it("keeps every uncited check on the suspense row where the run's step record answers the cited ones", () => {
-    const suspense = reconcileWithRecord()
+describe("[SCN-LNT-029] a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report", () => {
+  it("keeps every uncited check on the unnamed claim's row where the run's step record answers the cited ones", () => {
+    const unnamedClaim = reconcileWithRecord()
       .ledger.claimReconciliations.filter((row) => row.scnId === "(unnamed claim)")
       .map((row) => [
         row.scnId,
@@ -59,7 +59,7 @@ describe("[SCN-LNT-029] a check step citing no @SCN posts to suspense, which is 
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
       ]);
-    expect(suspense).toEqual([
+    expect(unnamedClaim).toEqual([
       [
         "(unnamed claim)",
         "unnamed-claim",

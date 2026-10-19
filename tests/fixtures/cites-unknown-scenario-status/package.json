@@ -1,5 +1,5 @@
 {
-  "name": "byfeature-phantom-fixture-target",
+  "name": "cites-unknown-scenario-status-fixture-target",
   "private": true,
   "scripts": {
     "test": "vitest run"

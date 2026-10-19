@@ -64,7 +64,7 @@ describe("[SCN-JAV-002] runReconcile reads a failing JUnit 5 test in the directo
   });
 });
 
-describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's display name cites when it cites two, and suspense names both codes", () => {
+describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's display name cites when it cites two, and the unnamed claim's row names both codes", () => {
   const balance = () => runReconcile({
     features: `${JAVA}/features`,
     packageJson: `${JAVA}/package.json`,
@@ -82,13 +82,13 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
     expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
   });
 
-  it("names both codes on the suspense row, beside the test", () => {
+  it("names both codes on the unnamed claim's row, beside the test", () => {
     const ctx: RunContext = { target: JAVA, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
-    expect(suspenseRow ?? "").toContain(
+    expect(unnamedClaimRow ?? "").toContain(
       "example.CitedTest::[SCN-JVF-005] [SCN-JVF-006] a test that cites two scenarios: 2 scenario codes cite SCN-JVF-005, SCN-JVF-006",
     );
   });
@@ -148,7 +148,7 @@ describe("[SCN-JAV-007] runReconcile posts no evidence observation for a disable
   it.each([
     "a disabled test cites its scenario",
     "a test whose assumption fails cites its scenario",
-  ])("posts no observation for the test named \"%s\" anywhere in the ledger, suspense included", (testName) => {
+  ])("posts no observation for the test named \"%s\" anywhere in the ledger, the unnamed claim included", (testName) => {
     expect(JSON.stringify(balance().ledger)).not.toContain(testName);
   });
 });
@@ -195,7 +195,7 @@ describe("[SCN-JAV-009] runReconcile reads a JUnit 5 class whose setup before al
     junit: `${JAVA}/surefire-reports`,
   }, resolveTargetRoot({ features: `${JAVA}/features` }));
 
-  it("posts one broken item, on suspense, naming the class and carrying the error that stopped it", () => {
+  it("posts one broken item, on the unnamed claim's row, naming the class and carrying the error that stopped it", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );

@@ -4,7 +4,7 @@
       "name": "tests/fixtures/evidence-observation/widget.test.ts",
       "assertionResults": [
         { "fullName": "[SCN-TGT-001] the target unit scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-PHM-999] a unit test pointing at a phantom scenario", "status": "passed" },
+        { "fullName": "[SCN-PHM-999] a unit test pointing at a phantom claim", "status": "passed" },
         { "fullName": "an ordinary unit test carrying no @SCN id", "status": "passed" }
       ]
     }

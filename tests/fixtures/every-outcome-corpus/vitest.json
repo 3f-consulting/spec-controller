@@ -34,11 +34,11 @@
       ]
     },
     {
-      "name": "tests/fixtures/every-outcome-corpus/toc-phantom.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-phantom-claim.test.ts",
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "phantom [SCN-TOC-999]",
+          "fullName": "phantom claim [SCN-TOC-999]",
           "title": "[SCN-TOC-999] an evidence observation citing a scenario no feature names",
           "status": "passed"
         }

@@ -249,12 +249,12 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
       exit: 0,
     },
     {
-      name: "a run whose only out-of-balance row is the suspense reconciliation",
+      name: "a run whose only out-of-balance row is the unnamed claim's reconciliation",
       argv: [
-        "--features", "tests/fixtures/suspense-only/features",
-        "--vitest", "tests/fixtures/suspense-only/vitest.json",
-        "--package-json", "tests/fixtures/suspense-only/package.json",
-        "--ci", "tests/fixtures/suspense-only/ci.yml",
+        "--features", "tests/fixtures/unnamed-claim-only/features",
+        "--vitest", "tests/fixtures/unnamed-claim-only/vitest.json",
+        "--package-json", "tests/fixtures/unnamed-claim-only/package.json",
+        "--ci", "tests/fixtures/unnamed-claim-only/ci.yml",
       ],
       outOfBalance: 1,
       word: "OUT-OF-BALANCE",

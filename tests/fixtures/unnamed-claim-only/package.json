@@ -1,5 +1,5 @@
 {
-  "name": "suspense-only-fixture-target",
+  "name": "unnamed-claim-only-fixture-target",
   "private": true,
   "scripts": {
     "lint:uncited": "echo uncited-guard",

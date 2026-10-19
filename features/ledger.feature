@@ -54,7 +54,7 @@ Feature: Ledger over obligation-vs-observation evidence
     not just evidence obligations. An evidence observation citing an @SCN id that NO feature carries
     posts to no real scenario — it lands on a PHANTOM claim
     (posting to a non-existent account). Each
-    phantom cited id becomes ONE phantom claim's Claim Reconciliation, its
+    cited id with no scenario behind it becomes ONE phantom claim's Claim Reconciliation, its
     Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
     evidence observation's locator as the where-to-fix), verdict always out of balance.
 
@@ -62,7 +62,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom claim's reconciliation, out of balance
 
     @unit @SCN-LDG-034
-    Scenario: a phantom row's item carries the keys its evidence observation has a value for and omits the rest
+    Scenario: an item on a phantom claim's row carries the keys its evidence observation has a value for and omits the rest
 
   Rule: an evidence observation citing no scenario is the unnamed claim's reconciliation
 
@@ -157,7 +157,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 
     @unit @SCN-LDG-025
-    Scenario: a corpus whose only fitness evidence observation is one satisfied citation-routed check reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
+    Scenario: a corpus whose only fitness evidence observation is one satisfied citation-routed check reconciles balanced with no row for the unnamed claim, so summary.outOfBalance agrees with the balanced verdict
 
   Rule: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
 
@@ -189,11 +189,11 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: an evidence observation that cites more than one scenario credits none of them, whatever the runner
 
-    A test cites exactly one scenario. One that cites several credits none of them and posts to suspense,
+    A test cites exactly one scenario. One that cites several credits none of them and posts to the unnamed claim,
     naming every code, so no reader picks one (doc/ubiquitous-language.md, Attribution).
 
     @unit @SCN-LDG-042
-    Scenario: an evidence observation citing two scenarios credits neither, and suspense names both codes
+    Scenario: an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
 

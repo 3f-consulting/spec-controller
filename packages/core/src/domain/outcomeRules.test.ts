@@ -73,7 +73,7 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its evidenc
   });
 });
 
-describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom row's items", () => {
+describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom claim's row's items", () => {
   it("posts one cites-unknown-scenario item, with an evidence observation and no obligation, per citing evidence observation, in citation order", () => {
     const items = citesUnknownScenarioReconciliationsOf([
       observation("unit", "SCN-ZZZ-009", { locator: "tests/z1.test.ts" }),
@@ -88,7 +88,7 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
   });
 });
 
-describe("[SCN-LDG-006] a phantom row's items carry only the fields the evidence observation has", () => {
+describe("[SCN-LDG-006] the items on a phantom claim's row carry only the fields the evidence observation has", () => {
   it("carries neither a locator nor a fitnessFunction key when the behavioural evidence observation has no locator", () => {
     const noLocator = observation("unit", "SCN-ZZZ-009");
     const [item] = citesUnknownScenarioReconciliationsOf([noLocator]);
@@ -124,7 +124,7 @@ describe("[SCN-LDG-034] a fitness evidence observation's item carries no locator
   });
 });
 
-describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the suspense row's items", () => {
+describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's row's items", () => {
   let broken: ReturnType<typeof observation>;
   let uncited: ReturnType<typeof observation>;
   beforeEach(() => {
@@ -156,7 +156,7 @@ describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the suspense row's 
   });
 });
 
-describe("[SCN-LDG-007] a suspense item omits the payload keys its observation has no value for", () => {
+describe("[SCN-LDG-007] an item on the unnamed claim's row omits the payload keys its observation has no value for", () => {
   it("omits BOTH the locator and the message key on a broken item that carries neither", () => {
     const silent = observation("unit", null, { broken: true, status: "failed" });
     const [item] = unnamedClaimReconciliationsOf([silent], [], []);

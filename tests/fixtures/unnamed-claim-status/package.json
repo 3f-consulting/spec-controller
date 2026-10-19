@@ -1,5 +1,5 @@
 {
-  "name": "phantom-status-fixture-target",
+  "name": "unnamed-claim-status-fixture-target",
   "private": true,
   "scripts": {
     "test": "vitest run"

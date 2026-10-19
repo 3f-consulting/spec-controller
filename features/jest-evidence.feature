@@ -24,7 +24,7 @@ Feature: A Jest suite's results answer unit evidence obligations
     Scenario: a code in a Jest test's own title is read before a code in the describe blocks around it
 
     @unit @SCN-JST-004
-    Scenario: a Jest test whose title cites two scenarios credits neither, and suspense names both codes
+    Scenario: a Jest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: a Jest test that did not run proves nothing
 

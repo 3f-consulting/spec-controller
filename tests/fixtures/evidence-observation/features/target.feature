@@ -4,7 +4,7 @@ Feature: a evidence observation-reconciliation fixture target
   A FIXTURE feature (NOT under features/) standing in for a target repo whose Vitest /
   Cucumber reports the evidence observation reconciliation reads (@SCN-RPT-010). It names
   two scenarios so the fixture reports can carry evidence observations attributed to a NAMED
-  scenario, alongside a phantom-id (an @SCN no scenario here names) and cites-no-scenario evidence observation
+  scenario, alongside a phantom claim's id (an @SCN no scenario here names) and cites-no-scenario evidence observation
   results — the spanning partition the @integration arm asserts balances.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code

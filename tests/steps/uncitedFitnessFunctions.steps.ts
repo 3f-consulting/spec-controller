@@ -80,10 +80,10 @@ Then(
         `lint:foo is the weaker claim, and a reader posting the evidence observation to a scenario the corpus ` +
         `never wrote satisfies it too. Got:\n${activeMd}`
     );
-    const suspenseRow = activeMd.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
+    const unnamedClaimRow = activeMd.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
     assert.ok(
-      !suspenseRow?.includes("lint:foo"),
-      `a scenario cites lint:foo; the suspense row must not name it at all; got:\n${suspenseRow}`
+      !unnamedClaimRow?.includes("lint:foo"),
+      `a scenario cites lint:foo; the unnamed claim's row must not name it at all; got:\n${unnamedClaimRow}`
     );
     assert.ok(
       activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
@@ -190,6 +190,19 @@ Then(
       `expected the nightly check SATISFIED — lint:nightly is invoked by nightly.yml, so the ` +
         `scenario citing it is telling the truth. Reading ci.yml alone is what makes the tool ` +
         `disagree. Report:\n${activeMd}`,
+    );
+    const watermelonRow = activeMd.split("\n").find((line) => line.startsWith(`| ↳ ${WATERMELON} |`));
+    assert.ok(
+      watermelonRow,
+      `expected the Evidence reconciliation summary's watermelon row, which is printed even at ` +
+        `zero; without it this check cannot tell no watermelon from a reworded one. Report:\n${activeMd}`,
+    );
+    const outOfBalance = watermelonRow.split("|").map((cell) => cell.trim())[4];
+    assert.equal(
+      outOfBalance,
+      "0",
+      `expected NO watermelon in the summary: a watermelon says a cited check is passing but ` +
+        `fabricated, and this one genuinely runs. Report:\n${activeMd}`,
     );
     assert.ok(
       !activeMd.split("\n").some((line) => line.startsWith("| SCN-") && line.includes(WATERMELON)),

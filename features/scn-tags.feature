@@ -46,7 +46,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   Rule: an @SCN is one account number, and two scenarios carrying it make that account unreconcilable
 
     THE ACCOUNT IS KEYED BY THE CODE, SO TWO SCENARIOS CARRYING ONE CODE ARE ONE ACCOUNT. A phantom
-    account already exists for a cited code with no scenario behind it; a code carried twice is the
+    claim's account already exists for a cited code with no scenario behind it; a code carried twice is the
     mirror, two scenarios behind one account. No evidence observation citing that code can be attributed to either
     of them, so nothing the account says can be trusted, and every quality check on it reads
     `duplicate-scn-code`. Each is a reconciling item, so the account is out of balance by the
@@ -85,23 +85,23 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     Scenario: A Vitest title citing a feature part outside two to five characters cites no scenario, beside citations of two and five characters that are read
       Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom scenarios
-      And the one- and six-character titles cite no scenario, so both evidence observations post to the suspense scenario
+      Then the two- and five-character citations open phantom claims
+      And the one- and six-character titles cite no scenario, so both evidence observations post to the unnamed claim
       And the grammar target lists no scenario code error
 
     @integration @SCN-STG-026
     Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that are read
       Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom scenarios
-      And the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the suspense scenario
+      Then the two- and five-character citations open phantom claims
+      And the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the unnamed claim
       And the grammar target lists no scenario code error
 
     @integration @SCN-STG-027
     Scenario: A CI step whose id is a feature part outside two to five characters is no fitness evidence observation's citation, beside step ids of two and five characters that are
       Given a target with one scenario of its own, and a CI step record whose successful steps are keyed by feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom scenarios
+      Then the two- and five-character citations open phantom claims
       And the one- and six-character step ids post no evidence observation at all
       And the grammar target lists no scenario code error
 

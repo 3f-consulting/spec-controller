@@ -30,11 +30,11 @@ const BROKEN = {
   packageJson: "tests/fixtures/broken/package.json",
 };
 
-const SUSPENSE_ONLY = {
-  features: "tests/fixtures/suspense-only/features",
-  vitest: "tests/fixtures/suspense-only/vitest.json",
-  packageJson: "tests/fixtures/suspense-only/package.json",
-  ci: "tests/fixtures/suspense-only/ci.yml",
+const UNNAMED_CLAIM_ONLY = {
+  features: "tests/fixtures/unnamed-claim-only/features",
+  vitest: "tests/fixtures/unnamed-claim-only/vitest.json",
+  packageJson: "tests/fixtures/unnamed-claim-only/package.json",
+  ci: "tests/fixtures/unnamed-claim-only/ci.yml",
 };
 
 const NO_WORKFLOWS = (fixtureDir: string): string[] => ["--ci", fixtureDir];
@@ -359,20 +359,20 @@ Then("the refusal advises no pin toward a version that still accepts the flag", 
   assert.doesNotMatch(retiredFlagResult.stderr, /accepts --measurements/);
 });
 
-Given("a target whose only out-of-balance row is the suspense reconciliation", function () {
+Given("a target whose only out-of-balance row is the unnamed claim's reconciliation", function () {
   const root = process.cwd();
-  for (const path of Object.values(SUSPENSE_ONLY)) {
+  for (const path of Object.values(UNNAMED_CLAIM_ONLY)) {
     assert.ok(existsSync(join(root, path)), `missing fixture input: ${path}`);
   }
   invocationArgs = [
     "--features",
-    SUSPENSE_ONLY.features,
+    UNNAMED_CLAIM_ONLY.features,
     "--vitest",
-    SUSPENSE_ONLY.vitest,
+    UNNAMED_CLAIM_ONLY.vitest,
     "--package-json",
-    SUSPENSE_ONLY.packageJson,
+    UNNAMED_CLAIM_ONLY.packageJson,
     "--ci",
-    SUSPENSE_ONLY.ci,
+    UNNAMED_CLAIM_ONLY.ci,
   ];
 });
 
@@ -686,13 +686,13 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
   invocationCwd = dir;
 });
 
-Then("the uncited evidence observations are posted to the suspense reconciliation", function () {
+Then("the uncited evidence observations are posted to the unnamed claim's reconciliation", function () {
   const { summary } = JSON.parse(readFileSync(uncitedJsonPath, "utf8"));
   const { testVolume } = summary;
   assert.deepEqual(
     [testVolume.totalEvidenceObservations, testVolume.onScenario, testVolume.onPhantomClaim, testVolume.onUnnamedClaim],
     [2, 0, 0, 2],
-    `expected both uncited evidence observations on the suspense scenario and none anywhere else; got: ${JSON.stringify(testVolume)}`,
+    `expected both uncited evidence observations on the unnamed claim and none anywhere else; got: ${JSON.stringify(testVolume)}`,
   );
   assert.equal(
     summary.qualityCheckReconciliations.byOutcome["cites-no-scenario"],
@@ -705,7 +705,7 @@ Then("the run is never read as one with nothing to reconcile", function () {
   assert.doesNotMatch(
     cliResult.stdout,
     /NOTHING TO RECONCILE/,
-    `a corpus-less run WITH accounts has something to reconcile — its suspense row; got:\n${cliResult.stdout}`,
+    `a corpus-less run WITH accounts has something to reconcile — the unnamed claim's row; got:\n${cliResult.stdout}`,
   );
   assert.notEqual(
     cliResult.status,

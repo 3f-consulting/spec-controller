@@ -91,7 +91,7 @@ Then("the nested target's reconciliation reports the scenarios of every one of i
   );
 });
 
-Then("both targets reach the same verdict over the same Scenario Reconciliations", function () {
+Then("both targets reach the same verdict over the same Claim Reconciliations", function () {
   assert.ok(nestedRun && flatRun, "both targets must have been reconciled");
   assert.deepEqual(scenarioCodesOf(flatRun), SCENARIOS_OF_EVERY_FILE, "fixture invariant: the flat corpus reads every file");
   assert.equal(nestedRun.status, flatRun.status, "the nested target reached a different verdict from the flat one");

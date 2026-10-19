@@ -79,7 +79,7 @@ describe("[SCN-RSP-003] runReconcile reads a code in an RSpec example's own desc
   });
 });
 
-describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's description cites when it cites two, and suspense names both codes", () => {
+describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's description cites when it cites two, and the unnamed claim's row names both codes", () => {
   const balance = () => runReconcile({
     features: `${TARGET}/features`,
     packageJson: `${TARGET}/package.json`,
@@ -97,13 +97,13 @@ describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's
     expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
   });
 
-  it("names both codes on the suspense row, beside the example's file", () => {
+  it("names both codes on the unnamed claim's row, beside the example's file", () => {
     const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const suspenseRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("cases_spec.rb: 2 scenario codes"));
 
-    expect(suspenseRow ?? "").toContain("cases_spec.rb: 2 scenario codes cite SCN-RSF-005, SCN-RSF-006");
+    expect(unnamedClaimRow ?? "").toContain("cases_spec.rb: 2 scenario codes cite SCN-RSF-005, SCN-RSF-006");
   });
 });
 
@@ -180,7 +180,7 @@ describe("[SCN-RSP-008] runReconcile reads a real RSpec run with a spec file tha
     rspec: `${TARGET}/report.json`,
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
-  it("posts one broken item, on suspense, naming the file and carrying RSpec's load error", () => {
+  it("posts one broken item, on the unnamed claim's row, naming the file and carrying RSpec's load error", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
       row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );

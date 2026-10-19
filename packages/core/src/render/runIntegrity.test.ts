@@ -59,7 +59,7 @@ function runIntegrityLines(md: string): string[] {
   return lines.slice(start, end);
 }
 
-function suspenseCell(md: string): string {
+function unnamedClaimCell(md: string): string {
   const lines = md.split("\n");
   const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
   expect(header).toBeGreaterThanOrEqual(0);
@@ -121,12 +121,12 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     ]);
   });
 
-  it("the suspense row headlines each broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped", () => {
+  it("the unnamed claim's row headlines each broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped", () => {
     const md = render(
       collectionFailed(`${ROOT}/${COLLECTION_FAILED_LOCATOR}`, COLLECTION_FAILED_MESSAGE),
       SKIPPED_CHECK,
     );
-    expect(suspenseCell(md)).toBe(
+    expect(unnamedClaimCell(md)).toBe(
       [
         brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Error: Cannot find \\| package`),
         brokenCell("fitness", checkDidNotRun),
@@ -134,8 +134,8 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     );
   });
 
-  it("the suspense row trims a broken file's locator that begins with a space, when the runner reports no error", () => {
+  it("the unnamed claim's row trims a broken file's locator that begins with a space, when the runner reports no error", () => {
     const md = render(collectionFailed(`${ROOT}/ spaced/collect.test.ts`));
-    expect(suspenseCell(md)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
+    expect(unnamedClaimCell(md)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
   });
 });

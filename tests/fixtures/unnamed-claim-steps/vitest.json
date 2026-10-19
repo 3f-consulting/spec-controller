@@ -1,13 +1,13 @@
 {
   "testResults": [
     {
-      "name": "tests/fixtures/suspense-steps/proven.test.ts",
+      "name": "tests/fixtures/unnamed-claim-steps/proven.test.ts",
       "assertionResults": [
         { "fullName": "[SCN-SSP-001] the target unit scenario is proven", "status": "passed" }
       ]
     },
     {
-      "name": "tests/fixtures/suspense-steps/sound.test.ts",
+      "name": "tests/fixtures/unnamed-claim-steps/sound.test.ts",
       "assertionResults": [
         { "fullName": "adds two numbers", "status": "passed" }
       ]
