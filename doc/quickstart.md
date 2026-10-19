@@ -188,7 +188,7 @@ Keep the reports as build artefacts, but do not commit them. A report lists your
 
 ## Read the report
 
-`balance` is a gate. A balanced run exits `0`, and an out-of-balance run exits `1`. Three more exits fail even under `--exit-zero`: `2` for a usage error, `4` for an unsound run, and `5` when there is nothing to reconcile. See [Exit codes](./how_to_use.md#exit-codes).
+`balance` is a gate. A balanced run exits `0`, and an out-of-balance run exits `1`. Four more exits fail even under `--exit-zero`: `2` for a usage error, `4` for an unsound run, `5` when there is nothing to reconcile, and `6` when the run stopped on an unexpected error before its verdict. See [Exit codes](./how_to_use.md#exit-codes).
 
 The [README's sample report](../README.md) shows every kind of row on one small example. Read it as a ledger:
 

@@ -275,6 +275,7 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.HostUsageError]: ["--store applies to stored runs only"],
   [AppMessage.HelpUsageLine]: ["[--store <dir>] [--run-id <id>]"],
   [AppMessage.UnexpectedError]: ["Error", "write EPIPE"],
+  [AppMessage.UnexpectedErrorAfterVerdict]: ["Error", "write EPIPE"],
 };
 
 function renderedApp(code: AppMessage): string {

@@ -821,7 +821,7 @@ Scenario code errors are judged over the corpus `--features` names, and no other
 | `5` | nothing to reconcile |
 | `6` | unexpected error: the run stopped before a verdict, and one line on stderr names the error |
 
-When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`).
+When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder: it is the code only when the run stopped before any verdict was reached, and a run that reached its verdict keeps it.
 
 ---
 
@@ -854,7 +854,7 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
 | `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON: no reconcile, no live inputs. See [Re-rendering a saved run](#re-rendering-a-saved-run). |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
-| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output

@@ -491,12 +491,21 @@ Feature: spec-controller balance runs standalone
         | nothing to reconcile | a target that carried no scenario and produced no evidence                    | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
         | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code   | the unsound verdict              | the report still lists the scenario code error                                     |
 
-  Rule: a run that stops on an unexpected error exits 6, a code no verdict uses
+  Rule: a run that stops on an unexpected error before its verdict exits 6, a code no verdict uses
 
-    An error no refusal names ends the run on exit 6, never Node's default 1, so a broken run is never read as an out-of-balance ledger. One line on stderr names the error. --exit-zero never moves 6.
+    An error no refusal names ends the run on exit 6, never Node's default 1, so a broken run is never read as an out-of-balance ledger. One line on stderr names the error. A verdict already reached is kept. --exit-zero never moves 6.
 
     @unit @SCN-CLI-101
     Scenario: a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too
+
+    @unit @SCN-CLI-103
+    Scenario: an error that cannot be formatted still ends the run at 6, named on one line
+
+    @unit @SCN-CLI-104
+    Scenario: an error raised after the verdict is set keeps the verdict's exit code
+
+    @unit @SCN-CLI-105
+    Scenario: an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6
 
   Rule: a corpus-shape fault never pre-empts the report
 

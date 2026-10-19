@@ -43,7 +43,7 @@ spec-controller balance --features ./features --vitest ./vitest-report.json --ex
 The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status changes:
 
 - Out-of-balance and scenario code errors (`1`), and pending under `--strict` (`3`), exit `0`.
-- Usage (`2`), unsound (`4`) and nothing to reconcile (`5`) still fail. Each means the run could not reach a verdict at all, and a flag that suppresses verdicts does not suppress that.
+- Usage (`2`), unsound (`4`), nothing to reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Each means the run could not reach a verdict at all, and a flag that suppresses verdicts does not suppress that.
 
 Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted, and they leave nothing in the command to show the gate is off.
 

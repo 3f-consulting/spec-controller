@@ -61,15 +61,78 @@ export function main(hostArgv: string[]): void {
   try {
     settlingRefusal(() => run(hostArgv), undefined);
   } catch (err) {
-    process.stderr.write(unexpectedErrorLine(err) + "\n");
-    process.exitCode = UNEXPECTED_ERROR_EXIT_CODE;
+    settleUnexpectedError(err, process, process.stderr);
   }
 }
 
-function unexpectedErrorLine(err: unknown): string {
-  const name = err instanceof Error ? err.name : typeof err;
-  const message = err instanceof Error ? err.message : String(err);
-  return APP_MESSAGES[AppMessage.UnexpectedError](name, message.split("\n", 1)[0] ?? "");
+interface ExitCodeHolder {
+  exitCode?: number | string | null | undefined;
+}
+
+interface LineWriter {
+  write(chunk: string): unknown;
+}
+
+interface CrashingProcess extends ExitCodeHolder {
+  on(event: "uncaughtException" | "unhandledRejection", listener: (err: unknown) => void): unknown;
+}
+
+interface ErroringStream {
+  on(event: "error", listener: (err: unknown) => void): unknown;
+}
+
+// An error that arrives after main has returned — a stream that fails, a throw in a later tick, a rejected promise — would otherwise reach Node's default handler and end the run at 1.
+// The guards never call exit: the process ends when its work drains, so a report still being written is not cut short.
+export function installCrashGuards(proc: CrashingProcess, stdout: ErroringStream, stderr: ErroringStream & LineWriter): void {
+  const settle = (err: unknown): void => settleUnexpectedError(err, proc, stderr);
+  proc.on("uncaughtException", settle);
+  proc.on("unhandledRejection", settle);
+  stdout.on("error", settle);
+  stderr.on("error", () => {
+    settleExitCode(proc);
+  });
+}
+
+// The code is settled first, so neither a value that cannot be formatted nor a stderr that cannot be written can leave the run on Node's 1.
+// A code already set is a verdict or a refusal the run reached, and it stands.
+function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr: LineWriter): void {
+  const afterVerdict = settleExitCode(proc);
+  try {
+    stderr.write(unexpectedErrorLine(err, afterVerdict) + "\n");
+  } catch {
+    // stderr is what failed, and the exit code already says the run stopped.
+  }
+}
+
+// Answers whether a verdict was already reached.
+function settleExitCode(proc: ExitCodeHolder): boolean {
+  const afterVerdict = proc.exitCode != null;
+  proc.exitCode ??= UNEXPECTED_ERROR_EXIT_CODE;
+  return afterVerdict;
+}
+
+function unexpectedErrorLine(err: unknown, afterVerdict: boolean): string {
+  const message = afterVerdict ? AppMessage.UnexpectedErrorAfterVerdict : AppMessage.UnexpectedError;
+  return APP_MESSAGES[message](nameOf(err), firstLineOf(err));
+}
+
+function nameOf(err: unknown): string {
+  if (!(err instanceof Error)) return typeof err;
+  const name = readOrUndefined(() => err.name);
+  return typeof name === "string" ? name : Error.name;
+}
+
+function firstLineOf(err: unknown): string {
+  const message = readOrUndefined(() => (err instanceof Error ? err.message : String(err)));
+  return typeof message === "string" ? (message.split("\n", 1)[0] ?? "") : "";
+}
+
+function readOrUndefined(read: () => unknown): unknown {
+  try {
+    return read();
+  } catch {
+    return undefined;
+  }
 }
 
 function run(hostArgv: string[]): void {

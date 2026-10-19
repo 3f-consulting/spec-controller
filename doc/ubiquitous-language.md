@@ -100,9 +100,9 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | `allocate` | The command that prints the next `@SCN` code for a feature part: one past the highest the repository has ever carried. |
 | host modifier | A flag that goes before the command (`--store`, `--run-id`). It needs a command, or `--help`, after it. |
 | re-render | `--render-from-json`: Markdown rebuilt from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. |
-| `--exit-zero` | The same report, exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never moves a run that could not judge (unsound, or nothing to reconcile). The on-ramp before gating. |
+| `--exit-zero` | The same report, exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never moves a run that could not judge (unsound, nothing to reconcile, or an unexpected error before the verdict). The on-ramp before gating. |
 | run verdict | The whole run's headline and its exit code: BALANCED, OUT-OF-BALANCE, UNSOUND, PENDING, NOTHING TO RECONCILE or SCENARIO CODE ERRORS. |
-| verdict ladder | The order in which the run verdict is decided: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). |
+| verdict ladder | The order in which the run verdict is decided: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). An unexpected error before any verdict (`6`) is not on the ladder; a run that reached its verdict keeps it. |
 | nothing to reconcile | The ledger carries no Claim Reconciliation at all, so the run has no basis for a verdict (exit `5`). |
 | usage error | A malformed invocation, refused before anything runs (exit `2`). |
 | retired flag | A flag refused as retired, naming what replaced it. |

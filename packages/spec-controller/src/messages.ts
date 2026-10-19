@@ -146,6 +146,7 @@ export enum AppMessage {
   HostUsageError,
   HelpUsageLine,
   UnexpectedError,
+  UnexpectedErrorAfterVerdict,
 }
 
 interface AppMessageParams {
@@ -221,6 +222,7 @@ interface AppMessageParams {
   [AppMessage.HostUsageError]: [message: string];
   [AppMessage.HelpUsageLine]: [modifierUsage: string];
   [AppMessage.UnexpectedError]: [name: string, firstLine: string];
+  [AppMessage.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
 }
 
 export type AppMessages = {
@@ -467,6 +469,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.HostUsageError]: (message) => `spec-controller: usage error — ${message}`,
   [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
   [AppMessage.UnexpectedError]: (name, firstLine) => `spec-controller stopped on an unexpected error, and gives no verdict: ${name}: ${firstLine}`,
+  [AppMessage.UnexpectedErrorAfterVerdict]: (name, firstLine) => `spec-controller hit an unexpected error after its verdict: ${name}: ${firstLine}`,
 };
 
 export const Unreadable = {
