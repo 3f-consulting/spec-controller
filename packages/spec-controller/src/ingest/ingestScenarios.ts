@@ -33,10 +33,6 @@ function headerTagsAbove(lines: readonly string[], featureLine: number): string[
   return tags;
 }
 
-function featuresDir(): string {
-  return join(process.cwd(), "features");
-}
-
 export interface CorpusFeatureFile {
   path: string;
   relativePath: string;
@@ -82,7 +78,7 @@ function readFeatureSource(path: string): string {
   }
 }
 
-export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature[] {
+export function discoverFeatures(dir: string): DiscoveredFeature[] {
   const files = corpusFeatureFiles(dir).map(({ path, relativePath }) => ({
     relativePath,
     path,

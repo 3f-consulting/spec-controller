@@ -2,7 +2,6 @@ import { afterAll, describe, it, expect, vi } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readFeatureNames } from "../ingest/ingestQualityChecks.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const made: string[] = [];
@@ -58,7 +57,8 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
     writeFileSync(join(dir, "features", "default-corpus.feature"), "@DEF\nFeature: the default corpus\n");
     const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(dir);
     try {
-      expect(Object.fromEntries(readFeatureNames())).toEqual({ DEF: "default-corpus" });
+      const { stdout } = runBalanceCaptured(["--format", "json"]);
+      expect(JSON.parse(stdout).metadata?.featureNames).toEqual({ DEF: "default-corpus" });
     } finally {
       cwdSpy.mockRestore();
     }

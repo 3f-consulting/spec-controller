@@ -88,7 +88,7 @@ function readJunitReportsIfPresent(path: string | undefined): JunitXmlReport | u
   return { testsuites: { testsuite: reports.flatMap((report) => report.testsuites?.testsuite ?? []) } };
 }
 
-function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
+function balanceCorpus(featuresDir: string): DiscoveredFeature[] {
   try {
     return discoverFeatures(featuresDir);
   } catch (err) {
@@ -105,7 +105,7 @@ export interface CorpusFile extends ParsedFeature {
   readonly source: string;
 }
 
-export function readFeatureCorpus(featuresDir: string | undefined): CorpusFile[] {
+export function readFeatureCorpus(featuresDir: string): CorpusFile[] {
   return balanceCorpus(featuresDir).map(({ slug, featureCode, source }) => ({
     slug,
     featureCode,
@@ -115,7 +115,7 @@ export function readFeatureCorpus(featuresDir: string | undefined): CorpusFile[]
   }));
 }
 
-export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
+export function featureCorpusParseErrors(featuresDir: string): GherkinParseError[] {
   try {
     balanceCorpus(featuresDir);
     return [];
@@ -136,13 +136,13 @@ function readFaultOf(err: unknown, path: string): InputReadFault | null {
   return { path: errno.path ?? path, reason: err.message };
 }
 
-export function corpusReadFault(featuresDir: string | undefined): InputReadFault | null {
+export function corpusReadFault(featuresDir: string): InputReadFault | null {
   try {
     balanceCorpus(featuresDir);
     return null;
   } catch (err) {
     if (err instanceof UnreadableFeatureCorpusError) return null;
-    const fault = readFaultOf(err, featuresDir ?? "features");
+    const fault = readFaultOf(err, featuresDir);
     if (fault === null) throw err;
     return fault;
   }
@@ -170,7 +170,7 @@ function readCiSource(source: string): void {
   }
 }
 
-export function readFeatureNames(featuresDir?: string): Map<string, string> {
+export function readFeatureNames(featuresDir: string): Map<string, string> {
   const map = new Map<string, string>();
   for (const f of balanceCorpus(featuresDir)) {
     if (f.featureCode !== null) map.set(f.featureCode, f.slug);
@@ -178,7 +178,7 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
   return map;
 }
 
-export function readEvidenceObligations(features?: string): EvidenceObligations {
+export function readEvidenceObligations(features: string): EvidenceObligations {
   return corpusCountsOf(readFeatureCorpus(features));
 }
 
@@ -208,7 +208,7 @@ type TargetManifest = PackageJsonScripts & {
 };
 
 export function runReconcile(
-  opts: ReconcileOptions,
+  opts: ReconcileOptions & { features: string },
   root: string,
   corpus?: readonly CorpusFile[],
 ): EvidenceReconciliation {

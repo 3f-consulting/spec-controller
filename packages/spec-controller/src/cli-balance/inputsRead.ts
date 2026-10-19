@@ -2,12 +2,11 @@ import { existsSync } from "node:fs";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH } from "../ingest/ingestQualityChecks.js";
 import { corpusFeatureFiles } from "../ingest/ingestScenarios.js";
+import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { regularFileIdentity, type ReadInput } from "../outputLocation.js";
 import type { IdentifiedInput } from "./emit/format.js";
 import { jsonInputsOf } from "./unreadableInputs.js";
-
-export const DEFAULT_FEATURES_DIR = "features";
 
 export interface InputReader {
   exists(path: string): boolean;

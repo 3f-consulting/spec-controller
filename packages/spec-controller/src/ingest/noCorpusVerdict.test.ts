@@ -6,7 +6,7 @@ import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn, type Shape } from "./corpusFixtures.test-utils.js";
 import { runReconcile } from "./ingestQualityChecks.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-import { DEFAULT_FEATURES_DIR } from "../cli-balance/inputsRead.js";
+import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 
 const made: string[] = [];
 

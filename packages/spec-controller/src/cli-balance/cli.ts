@@ -10,7 +10,9 @@ import {
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
 import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
-import { DEFAULT_FEATURES_DIR, identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
+import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
+import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
+import { corpusDirOf } from "./corpusDir.js";
 import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
@@ -176,16 +178,15 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const corpus = readFeatureCorpus(inputs.features);
-  const balance = runReconcile(inputs, root, corpus);
-
-  const featureNames = readFeatureNames(args["features"]);
+  const corpusDir = corpusDirOf(args);
+  const corpus = readFeatureCorpus(corpusDir);
+  const balance = runReconcile({ ...inputs, features: corpusDir }, root, corpus);
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations: corpusCountsOf(corpus), featureNames };
+  const payloads = { balance, ctx, evidenceObligations: corpusCountsOf(corpus), featureNames: readFeatureNames(corpusDir) };
   writeOutputs(
     planResult.plan,
     payloads,
@@ -232,7 +233,7 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
   if (misshapenInputError) refuse(misshapenInputError);
 
-  const featureParseErrors = featureCorpusParseErrors(args["features"]);
+  const featureParseErrors = featureCorpusParseErrors(corpusDirOf(args));
   if (featureParseErrors.length > 0) {
     refuse(
       featureParseErrors
