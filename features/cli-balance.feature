@@ -206,9 +206,10 @@ Feature: spec-controller balance runs standalone
 
     This holds for every input the run reads: a report that does not parse, a report that
     parses but is not in the shape its reader expects, a feature corpus or CI workflows path
-    that is not the kind of path its flag reads, and a path the tool is not permitted to read.
-    It holds for --render-from-json too: a missing or unparseable saved report is a usage
-    error.
+    that is not the kind of path its flag reads, a path the tool is not permitted to read, and
+    a working directory that has since been removed, from which the feature corpus read by
+    default cannot be read. It holds for --render-from-json too: a missing or unparseable
+    saved report is a usage error.
 
     A workflow whose YAML the reader cannot walk is the one exception: it contributes no
     steps, and the run reconciles without them. A valid report whose evidence did not fully
@@ -363,6 +364,13 @@ Feature: spec-controller balance runs standalone
         | the RSpec report             |
         | the JUnit report             |
         | the JUnit report directory   |
+
+    @unit @e2e @SCN-CLI-100
+    Scenario: a run from a working directory that no longer exists is refused as unreadable, naming the feature corpus read by default
+      Given a target whose working directory has since been removed
+      When balance is asked to reconcile it with no feature corpus given
+      Then the input is refused as one the tool cannot read, never read as a verdict
+      And the refusal names the feature corpus read by default and the working directory's read failure
 
     @unit @e2e @SCN-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered

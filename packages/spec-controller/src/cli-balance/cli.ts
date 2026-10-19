@@ -17,6 +17,7 @@ import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
   checkInputShapes,
+  corpusDirRefusal,
   checkSavedReconciliation,
   jsonInputsOf,
   reasonOf,
@@ -172,13 +173,12 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (missingValueError) refuse(missingValueError);
 
   if (renderSavedReport(args)) return false;
-  refuseUnreadableInputs(args);
+  const corpusDir = refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const corpusDir = corpusDirOf(args);
   const corpus = readFeatureCorpus(corpusDir);
   const balance = runReconcile({ ...inputs, features: corpusDir }, root, corpus);
 
@@ -220,20 +220,23 @@ function renderSavedReport(args: Record<string, string>): boolean {
   return true;
 }
 
-function refuseUnreadableInputs(args: Record<string, string>): void {
+function refuseUnreadableInputs(args: Record<string, string>): string {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) refuse(missingInputError);
 
   const unparseableInputError = checkInputsParse(args, readText);
   if (unparseableInputError) refuse(unparseableInputError);
 
-  const unreadablePathError = checkInputPaths(args);
+  const corpusDir = corpusDirOf(args);
+  if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
+
+  const unreadablePathError = checkInputPaths(args, corpusDir);
   if (unreadablePathError) refuse(unreadablePathError);
 
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
   if (misshapenInputError) refuse(misshapenInputError);
 
-  const featureParseErrors = featureCorpusParseErrors(corpusDirOf(args));
+  const featureParseErrors = featureCorpusParseErrors(corpusDir);
   if (featureParseErrors.length > 0) {
     refuse(
       featureParseErrors
@@ -243,6 +246,7 @@ function refuseUnreadableInputs(args: Record<string, string>): void {
         .join("\n"),
     );
   }
+  return corpusDir;
 }
 
 function runContextOf(

@@ -20,7 +20,6 @@ import { junitReportPathsOf } from "../ingest/junitReportPaths.js";
 import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "../ingest/junitXml.js";
 import { reRender, type ReRendered } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { corpusDirOf } from "./corpusDir.js";
 
 interface Syntax {
   readonly parse: (text: string) => unknown;
@@ -180,8 +179,12 @@ function pathRefusal(subject: string, fault: InputReadFault): string {
   return APP_MESSAGES[AppMessage.CouldNotBeReadAt](subject, fault.path, fault.reason);
 }
 
-export function checkInputPaths(args: Record<string, string>): string | null {
-  const corpus = corpusReadFault(corpusDirOf(args));
+export function corpusDirRefusal(fault: InputReadFault): string {
+  return pathRefusal(APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), fault);
+}
+
+export function checkInputPaths(args: Record<string, string>, corpusDir: string): string | null {
+  const corpus = corpusReadFault(corpusDir);
   if (corpus !== null) {
     return pathRefusal(
       args["features"] === undefined

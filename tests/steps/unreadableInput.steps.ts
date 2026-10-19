@@ -353,6 +353,23 @@ When("the balance run reads that input", function () {
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
 });
 
+Given("a target whose working directory has since been removed", function () {
+  const parent = mkdtempSync(join(tmpdir(), "unreadable-input-"));
+  temporaryDirectories.push(parent);
+  const removed = join(parent, "removed");
+  mkdirSync(removed);
+  target = { dir: removed, args: [], named: "features", where: "The feature corpus read by default" };
+});
+
+When("balance is asked to reconcile it with no feature corpus given", function () {
+  const script = 'cd "$1" && rmdir "$1" && shift && exec "$@"';
+  result = spawnSync("/bin/sh", ["-c", script, "sh", target.dir, NODE, ...SPEC_CONTROLLER_ARGV, "balance", ...target.args], {
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  assert.equal(existsSync(target.dir), false, "the working directory should have been removed before the binary ran");
+});
+
 Then("the input is refused as one the tool cannot read, never read as a verdict", function () {
   assert.equal(result.status, 2, `expected the usage exit; got ${result.status}\n${result.stderr}${result.stdout}`);
   assert.doesNotMatch(result.stdout, /Evidence Reconciliation/, "a refused input must not reach a report");
@@ -412,6 +429,14 @@ Then("the run reads it and reaches its verdict", function () {
 Then("the refusal names the input it could not read and the path", function () {
   assert.ok(result.stderr.includes(target.where), `expected stderr to name ${target.where}; got:\n${result.stderr}`);
   assert.ok(result.stderr.includes(target.named), `expected stderr to name ${target.named}; got:\n${result.stderr}`);
+});
+
+Then("the refusal names the feature corpus read by default and the working directory's read failure", function () {
+  assert.ok(
+    result.stderr.startsWith(`${target.where} could not be read: ${target.named} (`),
+    `expected stderr to name the feature corpus read by default; got:\n${result.stderr}`,
+  );
+  assert.match(result.stderr, /uv_cwd/, `expected the working directory's read failure; got:\n${result.stderr}`);
 });
 
 Then("the refusal says the tool was not permitted to read it", function () {
