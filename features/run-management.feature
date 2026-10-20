@@ -73,9 +73,9 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
   Rule: a store location that cannot be written is refused, never a crash
 
-    A stored run writes a run directory, the two reports inside it and a run.yaml. Where any of
-    them cannot be written, the run is refused as a usage error, naming the location and the
-    operating system's reason, with no stack trace and no run directory announced as if output had
+    A stored run writes a run directory and the two reports inside it. Where any of them cannot
+    be written, the run is refused as a usage error, naming the location and the operating
+    system's reason, with no stack trace and no run directory announced as if output had
     landed there. The refusal outranks the verdict: the operator asked for a stored run, and it
     could not be stored. A root whose missing parents can be created is not refused, because the
     store creates them.
@@ -98,7 +98,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | a root whose run directory is a file       | the location already exists     |
 
     @unit @e2e @SCN-RMG-009
-    Scenario Outline: a stored run that cannot write a report or its run.yaml into its run directory is refused naming the file and why, with no stack trace and no run directory printed
+    Scenario Outline: a stored run that cannot write a report into its run directory is refused naming the file and why, with no stack trace and no run directory printed
       Given an out-of-balance target and a run store whose run directory already holds <obstacle>
       When the operator stores a run of it under that run store
       Then the run is refused as a usage error, never reported as a verdict
@@ -111,8 +111,6 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | nothing it may write into                                     | the saved reconciliation, in markdown | permission was denied          |
         | a directory where the saved reconciliation, in markdown, goes | the saved reconciliation, in markdown | the destination is a directory |
         | a directory where the saved reconciliation, in JSON, goes     | the saved reconciliation, in JSON     | the destination is a directory |
-        | a directory where the run manifest goes                       | the run manifest                      | the destination is a directory |
-        | a run manifest it may not write                               | the run manifest                      | permission was denied          |
 
   Rule: a --format output never shares a file the stored run writes
 

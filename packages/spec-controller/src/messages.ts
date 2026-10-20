@@ -14,7 +14,6 @@ export enum AppMessage {
   FeatureCorpusUnparseable,
   FeatureCorpusDirectoryMissing,
   StoredRunDirectoryNotCreated,
-  StoredRunManifestNotWritten,
   FormatNamesStoredRunManifest,
   StoredRunReadsItsManifest,
   SeeCommandsAndModifiers,
@@ -245,7 +244,6 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.FeatureCorpusUnparseable]: () => "The feature corpus contains a file that could not be parsed as Gherkin:",
   [AppMessage.FeatureCorpusDirectoryMissing]: (directory) => `The feature corpus directory does not exist: ${directory}`,
   [AppMessage.StoredRunDirectoryNotCreated]: () => "The stored run's directory could not be created",
-  [AppMessage.StoredRunManifestNotWritten]: () => "The stored run's run.yaml could not be written",
   [AppMessage.FormatNamesStoredRunManifest]: (formatPath, manifestPath, runDir) =>
     `A --format output names ${formatPath}, which is this stored run's own ${manifestPath}. ` +
     `Give the report a path outside ${runDir}.`,

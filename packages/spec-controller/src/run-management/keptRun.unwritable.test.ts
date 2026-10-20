@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
+import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
+import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
+import { wrapCommandArgv } from "../host.js";
 
 const TARGET = "unwritable";
 const RUN_ID = "r1";
+
+const BALANCE_ARGS = [
+  "--features", "tests/fixtures/evidence-observation/features",
+  "--vitest", "tests/fixtures/evidence-observation/vitest.json",
+];
 
 const meta: RunManifestMeta = {
   sourceSha: "unknown",
@@ -45,26 +52,23 @@ describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create,
   });
 });
 
-describe("[SCN-RMG-009] executeKeptRun refuses a run.yaml it cannot write, naming it and why", () => {
-  const arrangeRunDir = (): { storeRoot: string; runYaml: string } => {
+describe("[SCN-RMG-009] a stored run that cannot write a report into its run directory is refused naming the file and why", () => {
+  it("refuses a markdown report whose place in the run directory is a directory, with EISDIR, and stamps no run.yaml", () => {
     const storeRoot = join(scratch, "store");
-    mkdirSync(join(storeRoot, TARGET, RUN_ID), { recursive: true });
-    return { storeRoot, runYaml: join(storeRoot, TARGET, RUN_ID, "run.yaml") };
-  };
+    const runDir = join(storeRoot, TARGET, RUN_ID);
+    const document = join(runDir, "spec-reconciliation.md");
+    mkdirSync(document, { recursive: true });
+    let balance: BalanceRun | undefined;
+    const route = (formatSpecs: readonly string[]): boolean => {
+      balance = runBalanceCaptured(wrapCommandArgv(BALANCE_ARGS, [...formatSpecs]));
+      return balance.wrote;
+    };
 
-  it("refuses a run.yaml it may not write, with EACCES, leaving it as it was", () => {
-    const { storeRoot, runYaml } = arrangeRunDir();
-    writeFileSync(runYaml, "an earlier run's manifest\n");
-    chmodSync(runYaml, 0o444);
+    expect(executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, route)).toBeUndefined();
 
-    try {
-      expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, meta, vi.fn(() => true)))).toBe(2);
-
-      expect(stderr.join("")).toContain(runYaml);
-      expect(stderr.join("")).toContain("EACCES");
-      expect(readFileSync(runYaml, "utf8")).toBe("an earlier run's manifest\n");
-    } finally {
-      chmodSync(runYaml, 0o644);
-    }
+    expect(balance?.exitCode).toBe(2);
+    expect(balance?.stderr).toContain(document);
+    expect(balance?.stderr).toContain("EISDIR");
+    expect(existsSync(join(runDir, RUN_MANIFEST))).toBe(false);
   });
 });

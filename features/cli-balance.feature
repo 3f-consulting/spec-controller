@@ -507,6 +507,18 @@ Feature: spec-controller balance runs standalone
     @unit @SCN-CLI-105
     Scenario: an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6
 
+    @unit @SCN-CLI-106
+    Scenario: an error while the program loads ends the run at 6, named on one line
+
+    @unit @SCN-CLI-107
+    Scenario: a run writes at most one crash line, and never calls a refusal's code or its own 6 a verdict
+
+    @unit @SCN-CLI-108
+    Scenario: an uncaught error ends the process once its line is written, on 6 or on the verdict kept
+
+    @unit @SCN-CLI-109
+    Scenario: a kept run whose manifest cannot be written did not finish, and ends at 6
+
   Rule: a corpus-shape fault never pre-empts the report
 
     A scenario code error never stops the reconciliation, and the report still carries every

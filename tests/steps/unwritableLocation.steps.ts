@@ -60,11 +60,6 @@ const RUN_DIRECTORY_OBSTACLE: Readonly<Record<string, (runDir: string) => void>>
   "nothing it may write into": (runDir) => chmodSync(runDir, 0o555),
   "a directory where the saved reconciliation, in markdown, goes": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.md")),
   "a directory where the saved reconciliation, in JSON, goes": (runDir) => mkdirSync(join(runDir, "spec-reconciliation.json")),
-  "a directory where the run manifest goes": (runDir) => mkdirSync(join(runDir, "run.yaml")),
-  "a run manifest it may not write": (runDir) => {
-    writeFileSync(join(runDir, "run.yaml"), "an earlier run's manifest\n");
-    chmodSync(join(runDir, "run.yaml"), 0o444);
-  },
 };
 
 const FORMAT_FLAG: Readonly<Record<string, string>> = { json: "json", markdown: "md" };

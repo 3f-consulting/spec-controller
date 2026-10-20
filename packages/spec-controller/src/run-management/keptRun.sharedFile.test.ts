@@ -78,13 +78,13 @@ describe("[SCN-RMG-010] a --format path is the stored run's own run.yaml only wh
     expect(existsSync(join(scratch, "no-such-folder"))).toBe(false);
   });
 
-  it("finds no --format path sharing a run.yaml that is not a file, and routes the run before its manifest write is refused", () => {
+  it("finds no --format path sharing a run.yaml that is not a file, and routes the run before its manifest write fails", () => {
     mkdirSync(runYaml, { recursive: true });
     const report = join(scratch, "report.md");
     writeFileSync(report, "a report\n");
     const route = vi.fn(() => true);
 
-    expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [report] }, meta, route))).toBe(2);
+    expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [report] }, meta, route)).toThrow(/EISDIR/);
 
     expect(route).toHaveBeenCalledOnce();
     expect(stderr.join("")).not.toContain(report);

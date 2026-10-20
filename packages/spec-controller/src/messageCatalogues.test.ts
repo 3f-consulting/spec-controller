@@ -143,7 +143,6 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.FeatureCorpusUnparseable]: [],
   [AppMessage.FeatureCorpusDirectoryMissing]: ["features"],
   [AppMessage.StoredRunDirectoryNotCreated]: [],
-  [AppMessage.StoredRunManifestNotWritten]: [],
   [AppMessage.FormatNamesStoredRunManifest]: ["store/t/r1/run.yaml", "store/t/r1/run.yaml", "store/t/r1"],
   [AppMessage.StoredRunReadsItsManifest]: ["store/t/r1/run.yaml", "store/t/r1/run.yaml", "the cucumber report"],
   [AppMessage.SeeCommandsAndModifiers]: [],

@@ -157,8 +157,6 @@ export function executeKeptRun(
   }
   if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`], plan.runDir)) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });
-  writeOrRefuse(APP_MESSAGES[AppMessage.StoredRunManifestNotWritten](), manifestPath, () =>
-    writeFileSync(manifestPath, serialiseRunManifest(manifest)),
-  );
+  writeFileSync(manifestPath, serialiseRunManifest(manifest));
   return plan;
 }

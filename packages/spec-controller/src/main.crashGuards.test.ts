@@ -2,10 +2,11 @@ import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import * as shell from "./main.js";
+import * as guards from "./crashGuards.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
+  exit(code?: number | string | null): void;
 }
 
 interface StandInStream extends EventEmitter {
@@ -30,13 +31,14 @@ interface Guarded {
   stderr: StandInStream;
 }
 
-function guarded(exitCode?: number): Guarded {
-  const install = (shell as Record<string, unknown>)["installCrashGuards"];
+function guarded(verdict?: number): Guarded {
+  const install = (guards as Record<string, unknown>)["installCrashGuards"];
   expect(typeof install).toBe("function");
-  const proc: StandInProcess = Object.assign(new EventEmitter(), { exitCode });
+  const proc: StandInProcess = Object.assign(new EventEmitter(), { exitCode: verdict, exit: (): void => {} });
   const stdout = standInStream();
   const stderr = standInStream();
   (install as Installer)(proc, stdout, stderr);
+  if (verdict !== undefined) guards.markRunFinished();
   return { proc, stdout, stderr };
 }
 
@@ -119,8 +121,6 @@ describe("[SCN-CLI-105] an error raised after the run's own call, on stdout, on 
 
   it("is installed by the bin on the real process and its streams before it calls main", () => {
     const bin = readFileSync(fileURLToPath(new URL("./cli.ts", import.meta.url)), "utf8").replace(/\s+/g, " ");
-    const install = bin.indexOf("installCrashGuards(process, process.stdout, process.stderr)");
-    expect(install).toBeGreaterThan(-1);
-    expect(bin.indexOf("main(", install)).toBeGreaterThan(install);
+    expect(bin).toContain("boot(process, process.stdout, process.stderr,");
   });
 });

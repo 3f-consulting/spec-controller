@@ -821,7 +821,9 @@ Scenario code errors are judged over the corpus `--features` names, and no other
 | `5` | nothing to reconcile |
 | `6` | unexpected error: the run stopped before a verdict, and one line on stderr names the error |
 
-When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder: it is the code only when the run stopped before any verdict was reached, and a run that reached its verdict keeps it.
+When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder: it is the code only when the run did not finish. A stored run whose `run.yaml` cannot be written did not finish, so it ends at `6`, and the reports it already wrote stay in the run directory. A run already refused as a usage error keeps `2` when an error follows.
+
+An error after the verdict is reached does not change the exit code. stderr gets one line, `spec-controller hit an unexpected error after its verdict: <name>: <message>`, and the exit code is the verdict's: the report stands as written. A run writes at most one such line, whichever it is.
 
 ---
 
