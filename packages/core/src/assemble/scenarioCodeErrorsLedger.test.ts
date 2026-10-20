@@ -21,7 +21,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     featureFiles: entries.map(([slug, { code }]) => ({ slug, featureCode: code })),
     untaggedScenarios: [],
     packageJson: {},
-    ciSources: [],
+    ciWorkflows: [],
     behaviouralObservations: observations,
     deferralTags: [],
   });

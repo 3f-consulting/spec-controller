@@ -7,9 +7,13 @@ import { MissingFeatureCorpusError, readFeatureSources, type FeatureFileSource }
 import {
   featureCountsOf,
   parseFeatureCorpus,
+  parseWorkflows,
   untaggedScenarioId,
   type FeatureSourceFault,
   type ParsedFeatureFile,
+  type ParsedWorkflow,
+  type WorkflowSource,
+  type WorkflowSourceFault,
 } from "@3f-consulting/spec-controller-core";
 import {
   BUILT_IN_DEFERRAL_TAGS,
@@ -143,26 +147,43 @@ function readFaultOf(err: unknown, path: string): InputReadFault | null {
   return { path: errno.path ?? path, reason: err.message };
 }
 
-export function ciReadFault(ciPath: string | undefined): InputReadFault | null {
-  const path = ciPath ?? DEFAULT_CI_PATH;
+export interface ReadWorkflows {
+  readonly names: readonly string[];
+  readonly workflows: readonly ParsedWorkflow[];
+}
+
+export type WorkflowReading =
+  | { readonly kind: "read-fault"; readonly fault: InputReadFault }
+  | { readonly kind: "unparseable"; readonly faults: readonly WorkflowSourceFault[] }
+  | { readonly kind: "read"; readonly workflows: ReadWorkflows };
+
+function readUtf8(path: string): string {
+  return readFileSync(path, "utf8");
+}
+
+function readWorkflowSource(path: string, read: (path: string) => string): WorkflowSource {
   try {
-    for (const source of ciSourcePathsOf(path)) readCiSource(source);
-    return null;
+    return { file: path, source: read(path) };
   } catch (err) {
-    const fault = readFaultOf(err, path);
-    if (fault === null) throw err;
-    return fault;
+    const errno = err as NodeJS.ErrnoException;
+    errno.path ??= path;
+    throw err;
   }
 }
 
-function readCiSource(source: string): void {
+export function readWorkflows(ciPath: string | undefined, read: (path: string) => string = readUtf8): WorkflowReading {
+  const path = ciPath ?? DEFAULT_CI_PATH;
+  let sources: WorkflowSource[];
   try {
-    readFileSync(source);
+    sources = ciSourcePathsOf(path).map((source) => readWorkflowSource(source, read));
   } catch (err) {
-    const errno = err as NodeJS.ErrnoException;
-    errno.path ??= source;
-    throw err;
+    const fault = readFaultOf(err, path);
+    if (fault === null) throw err;
+    return { kind: "read-fault", fault };
   }
+  const parse = parseWorkflows(sources);
+  if (parse.kind === "unparseable") return parse;
+  return { kind: "read", workflows: { names: sources.map(({ file }) => basename(file)), workflows: parse.workflows } };
 }
 
 export function featureNamesOf(corpus: readonly CorpusFile[]): Map<string, string> {
@@ -202,11 +223,10 @@ export function runReconcile(
   opts: ReconcileOptions & { features: string },
   root: string,
   corpus: readonly CorpusFile[],
+  workflows: ReadWorkflows,
 ): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
-  const ciPath = opts.ci ?? DEFAULT_CI_PATH;
-  const ciPaths = ciSourcePathsOf(ciPath);
 
   return evidenceReconciliationFromSources({
     features: corpus.map((f) => f.parsed),
@@ -215,8 +235,8 @@ export function runReconcile(
       untaggedScenarios.map((scenario) => untaggedScenarioId({ feature, scenario }))
     ),
     packageJson,
-    ciSources: ciPaths.map((path) => readFileSync(path, "utf8")),
-    ciSourceNames: ciPaths.map((path) => basename(path)),
+    ciWorkflows: workflows.workflows,
+    ciSourceNames: workflows.names,
     ciStepRecord: readJsonIfPresent<StepRecord>(opts.ciSteps),
     behaviouralObservations: parseBehaviouralObservations(opts, root),
     deferralTags: BUILT_IN_DEFERRAL_TAGS,

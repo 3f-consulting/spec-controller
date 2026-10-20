@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
 import { commandRuns } from "./commandRuns.js";
 import { qualifiedStepName } from "./stepNames.js";
 import { reconcilerSteps } from "../domain/uncitedFitnessFunctions.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
+import { workflowSteps } from "./parsedWorkflows.test-utils.js";
 
 const INVOCATION = "spec-controller balance";
 
@@ -14,7 +14,7 @@ const nameOf = (step: PipelineStep) => qualifiedStepName(step, NAMES);
 const runsTheReconciler = (command: string) => commandRuns(command, INVOCATION, {});
 
 function stepNamed(ci: string, identity: string) {
-  const step = ciWorkflowSteps([ci]).find((s) => s.identity === identity);
+  const step = workflowSteps([ci]).find((s) => s.identity === identity);
   if (step === undefined) throw new Error(`no step named "${identity}" in the fixture`);
   return step;
 }
@@ -22,7 +22,7 @@ function stepNamed(ci: string, identity: string) {
 describe("[SCN-WFS-013] reconcilerSteps — how the step-record expression is read", () => {
   const dumpWith = (env: string): unknown[] => [
     ...reconcilerSteps(
-      ciWorkflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        env:\n          J: ${env}\n        run: echo done`]),
+      workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        env:\n          J: ${env}\n        run: echo done`]),
       nameOf,
       runsTheReconciler
     ).steps,
@@ -47,7 +47,7 @@ jobs:
           STEPS_JSON: \${{ toJSON(steps) }}
         run: echo done
 `;
-    const { steps, isReconciler } = reconcilerSteps(ciWorkflowSteps([ci]), nameOf, runsTheReconciler);
+    const { steps, isReconciler } = reconcilerSteps(workflowSteps([ci]), nameOf, runsTheReconciler);
     expect(steps).toEqual([{ step: "ci.yml:ci:Dump", role: "records" }]);
     expect(isReconciler(stepNamed(ci, "Dump"))).toBe(true);
   });
@@ -56,7 +56,7 @@ jobs:
     expect(
       [
         ...reconcilerSteps(
-          ciWorkflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        run: echo '\${{ toJSON(steps) }}' > r.json`]),
+          workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        run: echo '\${{ toJSON(steps) }}' > r.json`]),
           nameOf,
           runsTheReconciler
         ).steps,

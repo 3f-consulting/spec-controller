@@ -296,6 +296,11 @@ jobs:
         if: always()
         run: pnpm exec depcruise --config .dependency-cruiser.gherkin.js packages
 
+      - name: Workflow YAML is parsed by one module
+        id: SCN-FIT-061
+        if: always()
+        run: pnpm exec depcruise --config .dependency-cruiser.yaml.js packages
+
       - name: Evidence layers cross a seam
         id: SCN-FIT-027
         if: always()

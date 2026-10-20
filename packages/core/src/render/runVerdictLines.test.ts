@@ -110,7 +110,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         ],
         untaggedScenarios: [],
         packageJson: {},
-        ciSources: [],
+        ciWorkflows: [],
         behaviouralObservations,
         deferralTags: [],
       });

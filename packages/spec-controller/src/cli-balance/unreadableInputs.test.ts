@@ -12,7 +12,7 @@ import {
   reRenderOrRefusal,
 } from "./unreadableInputs.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
-import { DEFAULT_CI_PATH, readCorpus } from "../ingest/ingestQualityChecks.js";
+import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
 import { reRender } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
@@ -403,7 +403,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("refuses a regular file given as the feature corpus, naming the flag and the path", () => {
     const { features } = targetOnDisk();
     const file = join(features, "a.feature");
-    const error = checkInputPaths({ features: file }, readCorpus(file));
+    const error = checkInputPaths({ features: file }, readCorpus(file), readWorkflows(undefined));
 
     expect(error).toContain("--features");
     expect(error).toContain(file);
@@ -413,7 +413,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("names the entry when the corpus holds a directory named as a feature file", () => {
     const { features } = targetOnDisk();
     mkdirSync(join(features, "z.feature"));
-    const error = checkInputPaths({ features }, readCorpus(features));
+    const error = checkInputPaths({ features }, readCorpus(features), readWorkflows(undefined));
 
     expect(error).toContain("--features");
     expect(error).toContain(join(features, "z.feature"));
@@ -423,7 +423,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("names the entry when the CI workflows hold a directory named as a workflow file", () => {
     const { features, ci } = targetOnDisk();
     mkdirSync(join(ci, "x.yml"));
-    const error = checkInputPaths({ features, ci }, readCorpus(features));
+    const error = checkInputPaths({ features, ci }, readCorpus(features), readWorkflows(ci));
 
     expect(error).toContain("--ci");
     expect(error).toContain(join(ci, "x.yml"));
@@ -612,7 +612,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     vi.spyOn(process, "cwd").mockReturnValue(join(features, ".."));
     const reason = osReasonFor(() => readdirSync(features));
 
-    expect(checkInputPaths({ ci: target.ci }, readCorpus(features))).toBe(
+    expect(checkInputPaths({ ci: target.ci }, readCorpus(features), readWorkflows(target.ci))).toBe(
       APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), features, reason),
     );
   });
@@ -666,7 +666,7 @@ describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is re
     skip(runsAsRoot());
     const { features, subdirectory, reason } = corpusWithLockedSubdirectory();
 
-    expect(checkInputPaths({ features }, readCorpus(features))).toBe(
+    expect(checkInputPaths({ features }, readCorpus(features), readWorkflows(undefined))).toBe(
       APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason),
     );
   });
@@ -693,7 +693,7 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
     const file = join(ci, "ci.yml");
     writeFileSync(file, NOT_YAML);
 
-    expect(checkWorkflowsParse({ ci: file }, readText)).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+    expect(checkWorkflowsParse({ ci: file }, readWorkflows(file, readText))).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
   });
 
   it("refuses a workflow in the --ci folder that does not parse, naming that workflow", () => {
@@ -701,14 +701,14 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
     const file = join(ci, "build.yml");
     writeFileSync(file, NOT_YAML);
 
-    expect(checkWorkflowsParse({ ci }, readText)).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+    expect(checkWorkflowsParse({ ci }, readWorkflows(ci, readText))).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
   });
 
   it("refuses a workflow read by default that does not parse, naming the CI workflows read by default", () => {
     const [file] = ciSourcePathsOf(DEFAULT_CI_PATH);
     expect(file, "the repository's own workflows are read by default").toBeDefined();
 
-    const error = checkWorkflowsParse({}, (path) => (path === file ? NOT_YAML : readText(path)));
+    const error = checkWorkflowsParse({}, readWorkflows(undefined, (path) => (path === file ? NOT_YAML : readText(path))));
 
     expect(error).toBe(refusal(APP_MESSAGES[AppMessage.DefaultCiWorkflows](), file!));
   });
@@ -717,7 +717,7 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
     const { ci } = targetOnDisk();
     writeFileSync(join(ci, "ci.yml"), "name: no jobs\n");
 
-    expect(checkWorkflowsParse({ ci }, readText)).toBeNull();
+    expect(checkWorkflowsParse({ ci }, readWorkflows(ci, readText))).toBeNull();
   });
 });
 

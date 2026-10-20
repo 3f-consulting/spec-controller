@@ -48,10 +48,11 @@ The package publishes exactly one entrypoint: a barrel that exports the followin
 - **Parse**:
   - scenarios: `parseFeatureCorpus`, which parses the feature files once, then `scenariosOf`, `untaggedScenariosOf` and `featureCountsOf` over a parsed file, and `countScnOccurrences` over a file's text;
   - evidence: `parseVitestEvidenceObservations`; `parseJunitEvidenceObservations` and `parsePytestEvidenceObservations`, both over a JUnit XML report you have already parsed into objects, from pytest, gotestsum or another runner; `parseRspecEvidenceObservations`, over RSpec's JSON report; and `parseCucumberEvidenceObservations`;
+  - workflows: `parseWorkflows`, which parses the CI workflows once;
   - the readers for fitness functions, and for what a pipeline's steps actually ran.
 
   The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing observation, and `parsePytestEvidenceObservations` reads it as broken, as pytest's setup error.
-- **Reconcile**: `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over the parsed feature files and the other sources you have already read.
+- **Reconcile**: `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over the parsed feature files, the parsed workflows and the other sources you have already read.
 - **Ask the ledger**: `isBalanced`, `hasPendingItems`, `hasBrokenEvidence` and `hasNothingToReconcile`. These are the four questions a caller decides on. The CLI builds its balanced, out-of-balance, unsound, pending-under-strict and nothing-to-reconcile verdicts from these four and nothing else.
 - **Render**: `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string.
 - **Provenance**: the pure subset, which records what a run was without asking the filesystem what it is.

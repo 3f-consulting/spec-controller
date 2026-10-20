@@ -6,6 +6,7 @@ import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { unitTestsAndLintCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const tiers = ["unit", "integration", "e2e", "performance"];
 
@@ -20,7 +21,7 @@ function reportLines(runners: Record<string, string | null>): string[] {
         notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
       },
     },
-    ciSources: [ci],
+    ciWorkflows: parsedWorkflows([ci]),
     ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],

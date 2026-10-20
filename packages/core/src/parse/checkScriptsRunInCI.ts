@@ -1,10 +1,27 @@
 import { parse } from "yaml";
-import type { PipelineStep, PipelineStepAction, UsedAction } from "../domain/pipelineStep.js";
-import { WorkflowSourceNotYaml } from "./workflowSourceNotYaml.js";
+import type { PipelineStep, PipelineStepAction, UsedAction, WorkflowStep } from "../domain/pipelineStep.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
 }
+
+export interface WorkflowSource {
+  readonly file: string;
+  readonly source: string;
+}
+
+export interface ParsedWorkflow {
+  readonly steps: readonly WorkflowStep[];
+}
+
+export interface WorkflowSourceFault {
+  readonly file: string;
+  readonly message: string;
+}
+
+export type WorkflowsParse =
+  | { readonly kind: "parsed"; readonly workflows: readonly ParsedWorkflow[] }
+  | { readonly kind: "unparseable"; readonly faults: readonly WorkflowSourceFault[] };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
@@ -58,18 +75,17 @@ function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
   return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
 }
 
-function stepsOfJob(job: string, jobBody: unknown, sourceIndex: number): PipelineStep[] {
+function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
   if (!isRecord(jobBody)) return [];
   const steps = jobBody["steps"];
   if (!Array.isArray(steps)) return [];
   const jobValue = jobBody[CONTINUE_ON_ERROR];
-  const read: PipelineStep[] = [];
+  const read: WorkflowStep[] = [];
   for (const step of steps) {
     if (!isRecord(step)) continue;
     const action = actionOf(step);
     if (action === undefined) continue;
     read.push({
-      sourceIndex,
       job,
       identity: identityOf(step["name"], action),
       writesStepRecord: writesStepRecordOf(step["env"], action),
@@ -81,23 +97,37 @@ function stepsOfJob(job: string, jobBody: unknown, sourceIndex: number): Pipelin
   return read;
 }
 
-function parseWorkflow(ciSource: string): unknown {
-  try {
-    return parse(ciSource);
-  } catch (err) {
-    throw new WorkflowSourceNotYaml(err as Error);
-  }
-}
-
-function stepsOf(ciSource: string, sourceIndex: number): PipelineStep[] {
-  const doc = parseWorkflow(ciSource);
+function stepsOfDocument(doc: unknown): WorkflowStep[] {
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
-  return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody, sourceIndex));
+  return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
 }
 
-export function ciWorkflowSteps(ciSources: readonly string[]): PipelineStep[] {
-  return ciSources.flatMap((ciSource, sourceIndex) => stepsOf(ciSource, sourceIndex));
+type SourceParse = { readonly workflow: ParsedWorkflow } | { readonly fault: string };
+
+function parseWorkflowSource(source: string): SourceParse {
+  let doc: unknown;
+  try {
+    doc = parse(source);
+  } catch (err) {
+    return { fault: (err as Error).message };
+  }
+  return { workflow: { steps: stepsOfDocument(doc) } };
+}
+
+export function parseWorkflows(sources: readonly WorkflowSource[]): WorkflowsParse {
+  const workflows: ParsedWorkflow[] = [];
+  const faults: WorkflowSourceFault[] = [];
+  for (const { file, source } of sources) {
+    const parsed = parseWorkflowSource(source);
+    if ("fault" in parsed) faults.push({ file, message: parsed.fault });
+    else workflows.push(parsed.workflow);
+  }
+  return faults.length > 0 ? { kind: "unparseable", faults } : { kind: "parsed", workflows };
+}
+
+export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {
+  return workflows.flatMap(({ steps }, sourceIndex) => steps.map((step) => ({ sourceIndex, ...step })));
 }
 
 function lineInvokesScript(line: string, script: string): boolean {

@@ -1,6 +1,6 @@
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, FitnessEvidenceObservation } from "../model.js";
-import { ciWorkflowSteps, type PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
+import { pipelineStepsOf, type PackageJsonScripts, type ParsedWorkflow } from "../parse/checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import { fitnessObservationsOf } from "../domain/fitnessReconciliation.js";
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
@@ -65,7 +65,7 @@ export interface EvidenceReconciliationSources {
   readonly featureFiles?: readonly FeatureFileHeader[];
   readonly untaggedScenarios: readonly string[];
   readonly packageJson: TargetManifest;
-  readonly ciSources: readonly string[];
+  readonly ciWorkflows: readonly ParsedWorkflow[];
   readonly ciSourceNames?: readonly string[];
   readonly reconcilerInvocation?: string;
   readonly behaviouralObservations: readonly EvidenceObservation[];
@@ -88,7 +88,7 @@ interface PipelineReadings {
 
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
   const { packageJson } = input;
-  const steps = ciWorkflowSteps(input.ciSources);
+  const steps = pipelineStepsOf(input.ciWorkflows);
   const ciSourceNames = input.ciSourceNames ?? [];
   const nameOf = (step: PipelineStep): string | undefined => qualifiedStepName(step, ciSourceNames);
   const exclusions = notChecksApplied(steps, nameOf, resolveNotChecks(packageJson));

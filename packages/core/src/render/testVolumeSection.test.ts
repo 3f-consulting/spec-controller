@@ -32,7 +32,7 @@ const reconcile = (): EvidenceReconciliation =>
     features: parsedFeatures([corpus]),
     untaggedScenarios: [],
     packageJson: {},
-    ciSources: [],
+    ciWorkflows: [],
     behaviouralObservations: observations,
     deferralTags: [],
   });

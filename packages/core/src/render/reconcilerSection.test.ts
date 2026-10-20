@@ -6,13 +6,14 @@ import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
-    ciSources: [ciSource],
+    ciWorkflows: parsedWorkflows([ciSource]),
     ciSourceNames: ["ci.yml"],
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],

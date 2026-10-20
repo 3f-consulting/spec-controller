@@ -3,8 +3,10 @@ import { dirname } from "node:path";
 import {
   runReconcile,
   readCorpus,
+  readWorkflows,
   featureNamesOf,
   type CorpusFile,
+  type ReadWorkflows,
   type ReconcileOptions,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
@@ -174,13 +176,13 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (missingValueError) refuse(missingValueError);
 
   if (renderSavedReport(args)) return true;
-  const { corpusDir, corpus } = refuseUnreadableInputs(args);
+  const { corpusDir, corpus, workflows } = refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const balance = runReconcile({ ...inputs, features: corpusDir }, root, corpus);
+  const balance = runReconcile({ ...inputs, features: corpusDir }, root, corpus, workflows);
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
@@ -220,7 +222,13 @@ function renderSavedReport(args: Record<string, string>): boolean {
   return true;
 }
 
-function refuseUnreadableInputs(args: Record<string, string>): { corpusDir: string; corpus: readonly CorpusFile[] } {
+interface ReadInputs {
+  readonly corpusDir: string;
+  readonly corpus: readonly CorpusFile[];
+  readonly workflows: ReadWorkflows;
+}
+
+function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) refuse(missingInputError);
 
@@ -231,10 +239,11 @@ function refuseUnreadableInputs(args: Record<string, string>): { corpusDir: stri
   if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
 
   const corpusReading = readCorpus(corpusDir);
-  const unreadablePathError = checkInputPaths(args, corpusReading);
+  const workflowReading = readWorkflows(args["ci"]);
+  const unreadablePathError = checkInputPaths(args, corpusReading, workflowReading);
   if (unreadablePathError) refuse(unreadablePathError);
 
-  const unparseableWorkflowError = checkWorkflowsParse(args, readText);
+  const unparseableWorkflowError = checkWorkflowsParse(args, workflowReading);
   if (unparseableWorkflowError) refuse(unparseableWorkflowError);
 
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
@@ -249,8 +258,12 @@ function refuseUnreadableInputs(args: Record<string, string>): { corpusDir: stri
         .join("\n"),
     );
   }
-  // A read fault was refused by checkInputPaths above, so the corpus was read.
-  return { corpusDir, corpus: corpusReading.kind === "read" ? corpusReading.corpus : [] };
+  // A read fault was refused by checkInputPaths above, and a parse fault by the checks after it, so both were read.
+  return {
+    corpusDir,
+    corpus: corpusReading.kind === "read" ? corpusReading.corpus : [],
+    workflows: workflowReading.kind === "read" ? workflowReading.workflows : { names: [], workflows: [] },
+  };
 }
 
 function runContextOf(

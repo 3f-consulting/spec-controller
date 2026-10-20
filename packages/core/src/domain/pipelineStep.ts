@@ -8,11 +8,12 @@ export type PipelineStepAction =
   | { readonly command: string }
   | { readonly action: UsedAction };
 
-export type PipelineStep = {
-  readonly sourceIndex: number;
+export type WorkflowStep = {
   readonly job: string;
   readonly identity: string;
   readonly id?: string;
   readonly writesStepRecord: boolean;
   readonly abortsJob: boolean;
 } & PipelineStepAction;
+
+export type PipelineStep = { readonly sourceIndex: number } & WorkflowStep;

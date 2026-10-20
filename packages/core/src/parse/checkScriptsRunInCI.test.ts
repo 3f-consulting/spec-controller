@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ciWorkflowSteps } from "./checkScriptsRunInCI.js";
-import { WorkflowSourceNotYaml } from "./workflowSourceNotYaml.js";
+import { parseWorkflows } from "./checkScriptsRunInCI.js";
+import { workflowSteps } from "./parsedWorkflows.test-utils.js";
 
 const usesValues = [
   ["actions/checkout@v4", "checkout"],
@@ -14,7 +14,7 @@ const usesValues = [
 describe("[SCN-WFS-014] a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it", () => {
   it("reads each uses: value as the owner and repository it names, whatever ref or sub-path follows", () => {
     const ci = `jobs:\n  quality:\n    steps:\n${usesValues.map(([uses]) => `      - uses: ${uses}\n`).join("")}`;
-    const actions = ciWorkflowSteps([ci]).map((step) => ("action" in step ? step.action : undefined));
+    const actions = workflowSteps([ci]).map((step) => ("action" in step ? step.action : undefined));
     expect(actions).toStrictEqual(
       usesValues.map(([name, repository]) => ({ name, owner: "actions", repository }))
     );
@@ -24,7 +24,7 @@ describe("[SCN-WFS-014] a step that only uses one of GitHub's plumbing actions i
 describe("[SCN-WFS-015] an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action", () => {
   it("reads a local action, a container image and another owner's look-alike as owned by someone other than actions", () => {
     const ci = `jobs:\n  quality:\n    steps:\n      - uses: ./.github/actions/lint\n      - uses: docker://alpine:3\n      - uses: someone/checkout@v1\n`;
-    const owners = ciWorkflowSteps([ci]).map((step) => ("action" in step ? step.action.owner : undefined));
+    const owners = workflowSteps([ci]).map((step) => ("action" in step ? step.action.owner : undefined));
     expect(owners).toHaveLength(3);
     for (const owner of owners) expect(owner).not.toBe("actions");
   });
@@ -80,7 +80,7 @@ const continueOnErrorCi = `jobs:
 
 describe("[SCN-WFS-017] a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string \"false\" leaves its job's verdict depending on it", () => {
   it("reads the job's verdict as depending on a step only when neither the step nor its job sets continue-on-error to anything but false or \"false\"", () => {
-    const read = ciWorkflowSteps([continueOnErrorCi]).map((step) => [step.job, step.identity, step.abortsJob]);
+    const read = workflowSteps([continueOnErrorCi]).map((step) => [step.job, step.identity, step.abortsJob]);
     expect(read).toStrictEqual([
       ["pinned", "absent", true],
       ["pinned", "true", false],
@@ -113,7 +113,7 @@ const idCi = `jobs:
 
 describe("[SCN-WFS-018] a step's id: is read trimmed, so a padded code cites as if written unpadded", () => {
   it("reads a padded id: as the unpadded code, and an id: of only spaces as no id: at all", () => {
-    const read = ciWorkflowSteps([idCi]).map((step) => [step.identity, step.id]);
+    const read = workflowSteps([idCi]).map((step) => [step.identity, step.id]);
     expect(read).toStrictEqual([
       ["padded", "SCN-FIT-001"],
       ["blank", undefined],
@@ -123,24 +123,30 @@ describe("[SCN-WFS-018] a step's id: is read trimmed, so a padded code cites as 
 });
 
 describe("[SCN-WFS-020] a workflow that does not parse is refused by the reader, never read as one with no steps", () => {
-  it("THROWS on a source that is not YAML a typed error in the YAML parser's own words", () => {
-    let thrown: unknown;
-    try {
-      ciWorkflowSteps(["jobs:\n  ci: [\n"]);
-    } catch (err) {
-      thrown = err;
-    }
-
-    expect(thrown).toBeInstanceOf(WorkflowSourceNotYaml);
-    const error = thrown as WorkflowSourceNotYaml;
-    expect(error.message).toBe(
-      "Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:\n\n  ci: [\n\n^\n"
-    );
-    expect(error.cause).toBeInstanceOf(Error);
-    expect((error.cause as Error).message).toBe(error.message);
+  it("returns a source that is not YAML as a fault naming the file, in the YAML parser's own words, and no parsed workflow", () => {
+    expect(
+      parseWorkflows([
+        { file: "ci.yml", source: "name: CI\non: [push]\n" },
+        { file: "build.yml", source: "jobs:\n  ci: [\n" },
+      ])
+    ).toStrictEqual({
+      kind: "unparseable",
+      faults: [
+        {
+          file: "build.yml",
+          message:
+            "Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:\n\n  ci: [\n\n^\n",
+        },
+      ],
+    });
   });
 
   it("reads a source that parses with no jobs, and an empty source, as no steps", () => {
-    expect(ciWorkflowSteps(["name: CI\non: [push]\n", ""])).toStrictEqual([]);
+    expect(
+      parseWorkflows([
+        { file: "ci.yml", source: "name: CI\non: [push]\n" },
+        { file: "empty.yml", source: "" },
+      ])
+    ).toStrictEqual({ kind: "parsed", workflows: [{ steps: [] }, { steps: [] }] });
   });
 });

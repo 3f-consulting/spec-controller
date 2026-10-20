@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { discoveryScope, type StepDisposition } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
-import { ciWorkflowSteps } from "../parse/checkScriptsRunInCI.js";
+import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 
 const ciYml = (): string =>
   [
@@ -43,7 +43,7 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
   it("names every workflow and every job, with the steps it read from each", () => {
     const dispositionOf = answering({ ...CHECKOUT_IS_PLUMBING, Install: "nonCheck", "Unit tests": "runner" });
     expect(
-      discoveryScope(ciWorkflowSteps([ciYml(), nightlyYml()]), ["ci.yml", "nightly.yml"], dispositionOf)
+      discoveryScope(workflowSteps([ciYml(), nightlyYml()]), ["ci.yml", "nightly.yml"], dispositionOf)
     ).toEqual([
       { source: "ci.yml", job: "ci", steps: 4, candidates: 1 },
       { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
@@ -53,12 +53,12 @@ describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read
 
   it("adds no steps for a job that calls a reusable workflow, or for a job with no body", () => {
     const withStepless = [ciYml(), "  reuse:", "    uses: ./.github/workflows/x.yml", "  empty:"].join("\n");
-    expect(discoveryScope(ciWorkflowSteps([withStepless]), ["ci.yml"], answering(CHECKOUT_IS_PLUMBING))).toEqual([
+    expect(discoveryScope(workflowSteps([withStepless]), ["ci.yml"], answering(CHECKOUT_IS_PLUMBING))).toEqual([
       { source: "ci.yml", job: "ci", steps: 4, candidates: 3 },
     ]);
   });
 
   it("reads nothing from a document that parses to no jobs", () => {
-    expect(discoveryScope(ciWorkflowSteps(["name: CI\non: [push]\n"]), ["ci.yml"], answering({}))).toEqual([]);
+    expect(discoveryScope(workflowSteps(["name: CI\non: [push]\n"]), ["ci.yml"], answering({}))).toEqual([]);
   });
 });

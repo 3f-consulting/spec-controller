@@ -1,9 +1,10 @@
 import type { FitnessEvidenceObservation } from "../model.js";
 import { shellReading } from "./commandRuns.js";
 import {
-  ciWorkflowSteps,
   commandInvokesScript,
+  pipelineStepsOf,
   type PackageJsonScripts,
+  type ParsedWorkflow,
 } from "./checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
@@ -24,7 +25,7 @@ function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>)
 type CitationOf = (script: string, citedByStep?: string) => ScriptCitation | null;
 
 export function runningFitnessFunctions(
-  ciSources: readonly string[],
+  ciWorkflows: readonly ParsedWorkflow[],
   packageJson: PackageJsonScripts,
   runners: RunnerTiers,
   citedScn: CitationOf = () => null,
@@ -32,7 +33,7 @@ export function runningFitnessFunctions(
 ): FitnessEvidenceObservation[] {
   const runsARunner = declaredRunnerTest(packageJson.scripts ?? {}, runners, shellReading);
   return fitnessFunctionsAmong(
-    ciWorkflowSteps(ciSources),
+    pipelineStepsOf(ciWorkflows),
     packageJson,
     (step) => isCandidateStep(step, isExcluded, runsARunner),
     citedScn

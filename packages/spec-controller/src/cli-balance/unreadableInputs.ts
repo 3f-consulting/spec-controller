@@ -1,12 +1,9 @@
 import { statSync } from "node:fs";
-import { parse as parseYaml } from "yaml";
-import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import {
-  ciReadFault,
-  DEFAULT_CI_PATH,
   DEFAULT_PACKAGE_JSON,
   type CorpusReading,
   type InputReadFault,
+  type WorkflowReading,
 } from "../ingest/ingestQualityChecks.js";
 import {
   CI_STEP_RECORD,
@@ -186,7 +183,11 @@ export function corpusDirRefusal(fault: InputReadFault): string {
   return pathRefusal(APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), fault);
 }
 
-export function checkInputPaths(args: Record<string, string>, corpusReading: CorpusReading): string | null {
+export function checkInputPaths(
+  args: Record<string, string>,
+  corpusReading: CorpusReading,
+  workflowReading: WorkflowReading,
+): string | null {
   if (corpusReading.kind === "read-fault") {
     return pathRefusal(
       args["features"] === undefined
@@ -195,9 +196,8 @@ export function checkInputPaths(args: Record<string, string>, corpusReading: Cor
       corpusReading.fault,
     );
   }
-  const ci = ciReadFault(args["ci"]);
-  if (ci !== null) {
-    return pathRefusal(workflowsSubjectOf(args), ci);
+  if (workflowReading.kind === "read-fault") {
+    return pathRefusal(workflowsSubjectOf(args), workflowReading.fault);
   }
   return null;
 }
@@ -224,13 +224,8 @@ function workflowsSubjectOf(args: Record<string, string>): string {
   return args["ci"] === undefined ? APP_MESSAGES[AppMessage.DefaultCiWorkflows]() : APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci");
 }
 
-export function checkWorkflowsParse(args: Record<string, string>, read: (path: string) => string): string | null {
-  for (const file of ciSourcePathsOf(args["ci"] ?? DEFAULT_CI_PATH)) {
-    try {
-      parseYaml(read(file));
-    } catch (err) {
-      return APP_MESSAGES[AppMessage.WorkflowNotYaml](workflowsSubjectOf(args), file, reasonOf(err));
-    }
-  }
-  return null;
+export function checkWorkflowsParse(args: Record<string, string>, workflowReading: WorkflowReading): string | null {
+  if (workflowReading.kind !== "unparseable") return null;
+  const { file, message } = workflowReading.faults[0]!;
+  return APP_MESSAGES[AppMessage.WorkflowNotYaml](workflowsSubjectOf(args), file, message);
 }

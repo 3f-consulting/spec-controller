@@ -3,9 +3,10 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 function reconcile(
-  ciSources: readonly string[],
+  workflowSources: readonly string[],
   ciSourceNames?: readonly string[],
   manifest: typeof packageJson = packageJson
 ): EvidenceReconciliation {
@@ -13,7 +14,7 @@ function reconcile(
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: manifest,
-    ciSources,
+    ciWorkflows: parsedWorkflows(workflowSources),
     ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
     behaviouralObservations: [],
     deferralTags: [],

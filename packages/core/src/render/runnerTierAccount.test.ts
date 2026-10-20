@@ -6,6 +6,7 @@ import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { unitTestsCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 function reconcile(runners?: Record<string, string | null>) {
   const specController = runners === undefined ? {} : { runners };
@@ -16,7 +17,7 @@ function reconcile(runners?: Record<string, string | null>) {
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
-    ciSources: [ci],
+    ciWorkflows: parsedWorkflows([ci]),
     ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],

@@ -3,6 +3,7 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { unitTestsAndLintCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const scripts = { test: "vitest run", lint: "eslint ." };
 
@@ -17,7 +18,7 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
         notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
       },
     },
-    ciSources: [ci],
+    ciWorkflows: parsedWorkflows([ci]),
     ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],

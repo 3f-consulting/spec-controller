@@ -3,6 +3,7 @@ import { summaryOf } from "./domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./domain/evidenceReconciliation.js";
 import type { Ledger } from "./model.js";
 import { parsedFeatures } from "./parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "./parse/parsedWorkflows.test-utils.js";
 
 export const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
@@ -157,13 +158,13 @@ const stepAccountingPackageJson = {
   },
 } as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
 
-export function reconcileStepAccounting(ciSources: readonly string[]): EvidenceReconciliation {
+export function reconcileStepAccounting(workflowSources: readonly string[]): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: stepAccountingPackageJson,
-    ciSources,
-    ciSourceNames: ciSources.map(() => "ci.yml"),
+    ciWorkflows: parsedWorkflows(workflowSources),
+    ciSourceNames: workflowSources.map(() => "ci.yml"),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],
     deferralTags: [],

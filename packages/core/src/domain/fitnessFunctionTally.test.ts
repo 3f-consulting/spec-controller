@@ -11,6 +11,7 @@ import type {
   Scenario,
   ClaimReconciliation,
 } from "../model.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   unit: "vitest",
@@ -88,7 +89,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   let uncitedObservations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    const runningObservations = runningFitnessFunctions([ciLines.join("\n")], pkg, SUITE_RUNNERS, citedScn);
+    const runningObservations = runningFitnessFunctions(parsedWorkflows([ciLines.join("\n")]), pkg, SUITE_RUNNERS, citedScn);
     citedObservations = runningObservations.filter((o) => o.fitnessFunction === "lint:foo");
     uncitedObservations = runningObservations.filter((o) => o.fitnessFunction !== "lint:foo");
     ledger = reconcile(fitness, [...citedObservations, ...uncitedObservations]);
@@ -151,7 +152,7 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
   let observations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    observations = runningFitnessFunctions([guardCiLines.join("\n")], guardPkg, SUITE_RUNNERS, citedScn).filter(
+    observations = runningFitnessFunctions(parsedWorkflows([guardCiLines.join("\n")]), guardPkg, SUITE_RUNNERS, citedScn).filter(
       (o) => o.fitnessFunction === "domain-purity"
     );
     ledger = reconcile(fitness, observations);

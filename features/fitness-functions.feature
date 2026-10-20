@@ -246,3 +246,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-060
     Scenario: the build reds when a second module imports the Gherkin parser
+
+    @fitness @SCN-FIT-061
+    Scenario: the build reds when a module other than the workflow module and the run store imports the YAML parser

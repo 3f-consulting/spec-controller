@@ -3,7 +3,8 @@ import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
 import { shellReading } from "./commandRuns.js";
 import { resolveRunners } from "./targetManifest.js";
-import { ciWorkflowSteps, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { parsedWorkflows, workflowSteps } from "./parsedWorkflows.test-utils.js";
 
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
@@ -34,7 +35,7 @@ describe("[SCN-WFS-008] runningFitnessFunctions — the running-guard observer (
   });
 
   it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
-    expect(runningFitnessFunctions([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
+    expect(runningFitnessFunctions(parsedWorkflows([usgCi]), usgPkg, SUITE_RUNNERS)).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
@@ -50,13 +51,13 @@ describe("[SCN-WFS-008] runningFitnessFunctions — the running-guard observer (
 
   it("reports an unnamed step that invokes no script by its first non-blank command, trimmed, whatever its line endings", () => {
     expect(
-      runningFitnessFunctions([unscriptedCi.join("\n")], usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)
+      runningFitnessFunctions(parsedWorkflows([unscriptedCi.join("\n")]), usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)
     ).toEqual(["./scripts/audit.sh", "./scripts/check.sh"]);
   });
 
   it("still reports the checks beside a step whose command is blank", () => {
     const withBlank = [...unscriptedCi, '      - run: ""'].join("\n");
-    expect(runningFitnessFunctions([withBlank], usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual(
+    expect(runningFitnessFunctions(parsedWorkflows([withBlank]), usgPkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual(
       expect.arrayContaining(["./scripts/audit.sh", "./scripts/check.sh"])
     );
   });
@@ -82,7 +83,7 @@ describe("[SCN-WFS-009] test and cucumber CI steps are not candidate fitness fun
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
     const { tiers } = resolveRunners(manifest);
-    expect(recognisedRunners(ciWorkflowSteps([ci2]), pkg2.scripts ?? {}, tiers, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([ci2]), pkg2.scripts ?? {}, tiers, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "pnpm test" },
       { tier: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
     ]);
@@ -93,7 +94,7 @@ describe("[SCN-WFS-010] runningFitnessFunctions observes a CI script matching no
   const checkPkg: PackageJsonScripts = { scripts: { check: "echo check" } };
   const reportedAs = (run: string): string[] =>
     runningFitnessFunctions(
-      [["jobs:", "  ci:", "    steps:", `      - run: ${JSON.stringify(run)}`].join("\n")],
+      parsedWorkflows([["jobs:", "  ci:", "    steps:", `      - run: ${JSON.stringify(run)}`].join("\n")]),
       checkPkg,
       NO_RUNNERS
     ).map((o) => o.fitnessFunction);
@@ -136,7 +137,7 @@ describe("[SCN-WFS-011] a fitness function running in ANY of a target's workflow
   });
 
   it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
-    expect(runningFitnessFunctions([ci, nightly], pkg, SUITE_RUNNERS)).toEqual([
+    expect(runningFitnessFunctions(parsedWorkflows([ci, nightly]), pkg, SUITE_RUNNERS)).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
@@ -161,7 +162,7 @@ describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported
   });
 
   it("observes an action step, named by the action it uses", () => {
-    expect(runningFitnessFunctions([ci], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
+    expect(runningFitnessFunctions(parsedWorkflows([ci]), pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
       "Dependency review",
       "domain-purity",
       "github/codeql-action/analyze@v3",
@@ -179,7 +180,7 @@ describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported
       '      - name: "  Lint  "',
       "        uses: super-linter/super-linter@v7",
     ].join("\n");
-    expect(runningFitnessFunctions([shapes], pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
+    expect(runningFitnessFunctions(parsedWorkflows([shapes]), pkg, SUITE_RUNNERS).map((o) => o.fitnessFunction)).toEqual([
       "actions/dependency-review-action@v4",
       "github/codeql-action/analyze@v3",
       "Lint",
@@ -194,7 +195,7 @@ describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported
       "      - uses: github/codeql-action/analyze@v3",
       "        continue-on-error: true",
     ].join("\n");
-    expect(runningFitnessFunctions([severed], pkg, SUITE_RUNNERS)).toEqual([
+    expect(runningFitnessFunctions(parsedWorkflows([severed]), pkg, SUITE_RUNNERS)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "github/codeql-action/analyze@v3",

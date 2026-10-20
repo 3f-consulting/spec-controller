@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { everyStepAccountedFor, stepAccounting, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
-import { ciWorkflowSteps } from "../parse/checkScriptsRunInCI.js";
+import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 
 const ciYml = (): string =>
   [
@@ -40,7 +40,7 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
       isNamedANonCheck: named("actions/checkout@v4", "Install"),
       runsARunner: named("Unit tests"),
     });
-    expect(stepAccounting(ciWorkflowSteps([ciYml()]), dispositionOf)).toEqual({
+    expect(stepAccounting(workflowSteps([ciYml()]), dispositionOf)).toEqual({
       stepsRead: 10,
       candidates: 2,
       runners: 1,
@@ -63,7 +63,7 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
       "        run: pnpm lint:depth",
     ].join("\n");
     const dispositionOf = stepDispositions({ isReconciler: NONE, isNamedANonCheck: NONE, runsARunner: NONE });
-    expect(stepAccounting(ciWorkflowSteps([source]), dispositionOf)).toEqual({
+    expect(stepAccounting(workflowSteps([source]), dispositionOf)).toEqual({
       stepsRead: 1,
       candidates: 1,
       runners: 0,

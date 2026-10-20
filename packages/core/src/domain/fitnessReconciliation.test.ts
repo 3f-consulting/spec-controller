@@ -5,6 +5,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
 
@@ -47,7 +48,7 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
     ].join("\n");
 
     const evidenceObservations = runningFitnessFunctions(
-      [ciSource],
+      parsedWorkflows([ciSource]),
       packageJson,
       NO_RUNNERS,
       citedScn
@@ -114,7 +115,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       status: "passed",
     };
     const fitnessObservations = runningFitnessFunctions(
-      [plantedCi],
+      parsedWorkflows([plantedCi]),
       plantedPackageJson,
       NO_RUNNERS,
       citedScn

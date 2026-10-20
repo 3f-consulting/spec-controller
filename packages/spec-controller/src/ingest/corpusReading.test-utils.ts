@@ -1,5 +1,12 @@
 import { corpusCountsOf, type EvidenceObligations, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { readCorpus, runReconcile as reconcileReadCorpus, type CorpusFile, type ReconcileOptions } from "./ingestQualityChecks.js";
+import {
+  readCorpus,
+  readWorkflows,
+  runReconcile as reconcileReadInputs,
+  type CorpusFile,
+  type ReadWorkflows,
+  type ReconcileOptions,
+} from "./ingestQualityChecks.js";
 
 export function readFeatureCorpus(featuresDir: string): CorpusFile[] {
   const reading = readCorpus(featuresDir);
@@ -11,6 +18,12 @@ export function readEvidenceObligations(featuresDir: string): EvidenceObligation
   return corpusCountsOf(readFeatureCorpus(featuresDir));
 }
 
+function readWorkflowsAt(ciPath: string | undefined): ReadWorkflows {
+  const reading = readWorkflows(ciPath);
+  if (reading.kind !== "read") throw new Error(`the workflows at ${ciPath} were not read: ${JSON.stringify(reading)}`);
+  return reading.workflows;
+}
+
 export function runReconcile(opts: ReconcileOptions & { features: string }, root: string): EvidenceReconciliation {
-  return reconcileReadCorpus(opts, root, readFeatureCorpus(opts.features));
+  return reconcileReadInputs(opts, root, readFeatureCorpus(opts.features), readWorkflowsAt(opts.ci));
 }

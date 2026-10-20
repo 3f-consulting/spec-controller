@@ -4,6 +4,7 @@ import type { EvidenceReconciliation } from "./renderInput.js";
 import { block } from "./configurationBlock.test-utils.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 
@@ -15,7 +16,7 @@ function reconcile(specController: unknown): EvidenceReconciliation {
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
-    ciSources: [ci],
+    ciWorkflows: parsedWorkflows([ci]),
     ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],

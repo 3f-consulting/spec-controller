@@ -3,16 +3,17 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 function reconcile(
-  ciSources: readonly string[],
+  workflowSources: readonly string[],
   ciSourceNames?: readonly string[]
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
-    ciSources,
+    ciWorkflows: parsedWorkflows(workflowSources),
     ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],

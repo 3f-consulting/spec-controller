@@ -167,7 +167,7 @@ function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconcil
     ],
     untaggedScenarios: [],
     packageJson: {},
-    ciSources: [],
+    ciWorkflows: [],
     behaviouralObservations: codes.map((code) => ({ qualityCheck: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
     deferralTags: [],
   });
@@ -279,7 +279,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
       featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
       untaggedScenarios: [],
       packageJson: {},
-      ciSources: [],
+      ciWorkflows: [],
       behaviouralObservations: [],
       deferralTags: [],
     });

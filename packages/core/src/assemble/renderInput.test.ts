@@ -30,7 +30,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       ],
       untaggedScenarios: [],
       packageJson: {},
-      ciSources: [],
+      ciWorkflows: [],
       behaviouralObservations: [],
       deferralTags: [],
     });

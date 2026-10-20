@@ -7,6 +7,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 const corpus = `@CVT
 Feature: fixture fitness corpus
@@ -43,7 +44,7 @@ function reconcile(barCitation: string): EvidenceReconciliation {
     features: parsedFeatures([corpus]),
     untaggedScenarios: [],
     packageJson,
-    ciSources: [ci(barCitation)],
+    ciWorkflows: parsedWorkflows([ci(barCitation)]),
     ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],

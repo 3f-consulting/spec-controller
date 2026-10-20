@@ -31,7 +31,7 @@ function assembled(): EvidenceReconciliation {
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: { scripts: {} },
-    ciSources: [],
+    ciWorkflows: [],
     behaviouralObservations: parseVitestEvidenceObservations(vitestResult, "unit", "/repo"),
     deferralTags: [],
   });

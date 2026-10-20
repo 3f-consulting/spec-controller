@@ -1,6 +1,7 @@
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 export function runnersReconciler(
   feature: string,
@@ -16,7 +17,7 @@ export function runnersReconciler(
       features: parsedFeatures([feature]),
       untaggedScenarios: [],
       packageJson,
-      ciSources: [ci],
+      ciWorkflows: parsedWorkflows([ci]),
       ciSourceNames: ["ci.yml"],
       behaviouralObservations: [],
       deferralTags: [],
