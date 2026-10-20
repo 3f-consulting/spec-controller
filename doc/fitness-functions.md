@@ -8,7 +8,7 @@ Each table below gives, for each check:
 
 A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
 
-Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026. For them, a zero says little yet.
+Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and three more on 20 October, after the window. For them, a zero says little yet.
 
 ## Readability, structure, complexity
 
@@ -26,6 +26,8 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | No sentence for a reader is written in core's domain | 0 |
 | A unit test citing a domain concept's scenario lives in core's domain | 0 |
 | No production source file writes message prose outside its package's catalogue | 1 |
+| Only one module imports the Gherkin parser | 0 |
+| Only the workflow module and the run store import the YAML parser | 0 |
 
 ## Tests missing or weak
 
@@ -43,6 +45,7 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 |---|---|
 | Duplication: no clone touches a changed production file | 0 |
 | Unused code: no changed file carries an unused file, export or dependency | 8 |
+| Test helpers written once: no helper in a changed test file copies one in another | 0 |
 | No unused step definition | 0 |
 
 ## Comments and docs
