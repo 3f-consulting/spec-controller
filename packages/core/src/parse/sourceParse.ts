@@ -14,15 +14,20 @@ export type SourcesParse<T> =
   | { readonly kind: "parsed"; readonly parsed: readonly Parsed<T>[] }
   | { readonly kind: "unparseable"; readonly faults: readonly SourceFault[] };
 
-export function parseSources<T extends object>(sources: readonly Source[], parseOne: (source: string) => T): SourcesParse<T> {
-  const parsed: Parsed<T>[] = [];
+export function parseSources<D, T extends object>(
+  sources: readonly Source[],
+  parse: (source: string) => D,
+  read: (document: D, source: string) => T
+): SourcesParse<T> {
+  const documents: { readonly file: string; readonly source: string; readonly document: D }[] = [];
   const faults: SourceFault[] = [];
   for (const { file, source } of sources) {
     try {
-      parsed.push({ ...parseOne(source), file });
+      documents.push({ file, source, document: parse(source) });
     } catch (err) {
       faults.push({ file, message: err instanceof Error ? err.message : String(err) });
     }
   }
-  return faults.length > 0 ? { kind: "unparseable", faults } : { kind: "parsed", parsed };
+  if (faults.length > 0) return { kind: "unparseable", faults };
+  return { kind: "parsed", parsed: documents.map(({ file, source, document }) => ({ ...read(document, source), file })) };
 }

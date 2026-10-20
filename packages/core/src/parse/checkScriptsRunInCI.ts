@@ -108,12 +108,12 @@ function stepsOfDocument(doc: unknown): WorkflowStep[] {
   return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
 }
 
-function workflowOf(source: string): WorkflowContent {
-  return { steps: stepsOfDocument(parse(source)) };
+function workflowOf(document: unknown): WorkflowContent {
+  return { steps: stepsOfDocument(document) };
 }
 
 export function parseWorkflows(sources: readonly Source[]): SourcesParse<WorkflowContent> {
-  return parseSources(sources, workflowOf);
+  return parseSources(sources, (source): unknown => parse(source), workflowOf);
 }
 
 export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {

@@ -22,12 +22,12 @@ interface FeatureFileContent {
 
 export type ParsedFeatureFile = Parsed<FeatureFileContent>;
 
-function featureFileOf(source: string): FeatureFileContent {
-  const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
-  return contentOf(parser.parse(source), countScnOccurrences(source));
+function gherkinDocumentOf(source: string): GherkinDocument {
+  return new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source);
 }
 
-function contentOf({ feature }: GherkinDocument, scnOccurrences: number): FeatureFileContent {
+function contentOf({ feature }: GherkinDocument, source: string): FeatureFileContent {
+  const scnOccurrences = countScnOccurrences(source);
   if (feature === undefined) return { featureCode: null, scenarios: [], scnOccurrences };
 
   const scenarios: ScenarioTags[] = [];
@@ -51,7 +51,7 @@ function contentOf({ feature }: GherkinDocument, scnOccurrences: number): Featur
 }
 
 export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<FeatureFileContent> {
-  return parseSources(sources, featureFileOf);
+  return parseSources(sources, gherkinDocumentOf, contentOf);
 }
 
 interface TaggedScenario {

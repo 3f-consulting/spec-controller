@@ -522,6 +522,9 @@ Feature: spec-controller balance runs standalone
     @unit @SCN-CLI-110
     Scenario: an error after a re-rendered report's verdict keeps that verdict, named on one line
 
+    @unit @SCN-CLI-111
+    Scenario: an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse
+
   Rule: a corpus-shape fault never pre-empts the report
 
     A scenario code error never stops the reconciliation. The report still carries every
