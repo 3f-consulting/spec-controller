@@ -147,7 +147,7 @@ The step's outcome is the evidence: its exit code on its own CI step is the verd
 4. Dump the run's step record, with `if: always()`.
 5. Run `balance`, with `if: always()`.
 
-`if: always()` matters. Without it, the first red aborts the job, and every later check is skipped. Here are the check steps and the dump:
+`if: always()` matters. Without it, the first failing step aborts the job and skips every later check. Here are the check steps and the dump:
 
 ```yaml
 - run: eslint
@@ -162,9 +162,9 @@ The step's outcome is the evidence: its exit code on its own CI step is the verd
   run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump must be `toJSON(steps)`. It is the only place a step's `id` and its `outcome` travel together. It reaches the command through an environment variable, never written into the command itself: a step's output can hold a quote, and the shell would run what follows it.
+The dump must be `toJSON(steps)`. It is the only place that carries a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows it.
 
-Then one Reconcile step reads the reports and the record. It matches the first run, with the step record added. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
+Then a single Reconcile step reads the reports and the record. It is the same as the first run, plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
 
 ```yaml
 - name: Reconcile
@@ -184,20 +184,20 @@ Then one Reconcile step reads the reports and the record. It matches the first r
 
 Add `--cucumber reports/cucumber.json` if you have a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
 
-Keep the reports as build artefacts, but do not commit them. A report lists your codebase's gaps, so it belongs outside version control. See [Wiring into CI](./how_to_use.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./how_to_use.md#github-actions--put-the-report-on-the-run-summary).
+Keep the reports as build artefacts, but do not commit them. A report lists your codebase's gaps, so keep it out of version control. See [Wiring into CI](./how_to_use.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./how_to_use.md#github-actions--put-the-report-on-the-run-summary).
 
 ## Read the report
 
-`balance` is a gate. A balanced run exits `0`, and an out-of-balance run exits `1`. Four more exits fail even under `--exit-zero`: `2` for a usage error, `4` for an unsound run, `5` when there is nothing to reconcile, and `6` when the run stopped on an unexpected error before its verdict. See [Exit codes](./how_to_use.md#exit-codes).
+`balance` is a gate. A balanced run exits `0`, and an out-of-balance run exits `1`. Four more exit codes fail even under `--exit-zero`: `2` for a usage error, `4` for an unsound run, `5` when there is nothing to reconcile, and `6` when the run stops on an unexpected error before its verdict. See [Exit codes](./how_to_use.md#exit-codes).
 
-The [README's sample report](../README.md) shows every kind of row on one small example. Read it as a ledger:
+The [README's sample report](../README.md) shows every kind of row in one small example. Read it as a ledger:
 
-- **The run verdict** says whether the whole run balanced, and its exit code.
-- **A Claim Reconciliation** is one row per claim, and a claim is usually a scenario. It sets the proofs the claim asked for against the proofs that ran.
+- **The run verdict** says whether the whole run balanced, and gives its exit code.
+- **A Claim Reconciliation** is one row per claim. A claim is usually a scenario. The row sets the proofs the claim asks for against the proofs that ran.
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
 - **The verdict** is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
-- **A phantom claim's row** holds evidence citing a code no scenario carries, usually a typo or a deleted scenario. There is one per unknown code, named by that code, like the sample's row whose item cites an unknown Scenario.
+- **A phantom claim's row** holds evidence that cites a code no scenario carries, usually a typo or the code of a deleted scenario. Each unknown code gets one such row, named by that code, like the sample's row whose item cites an unknown Scenario.
 - **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.
 
 Watch for a **watermelon**: a check that is green but could not have failed its job, because `continue-on-error` would have swallowed its red. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.

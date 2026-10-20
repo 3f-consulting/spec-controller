@@ -73,13 +73,13 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
   Rule: a store location that cannot take the run's reports is refused, never a crash
 
-    A stored run writes a run directory and the two reports inside it. Where any of them cannot
-    be written, the run is refused as a usage error, naming the location and the operating
-    system's reason, with no stack trace and no run directory announced as if output had
-    landed there. The refusal outranks the verdict: the operator asked for a stored run, and it
-    could not be stored. A root whose missing parents can be created is not refused, because the
-    store creates them. The run manifest is written last, after the reports; a run whose
-    manifest cannot be written did not finish, and ends as an unexpected error, not a refusal.
+    A stored run writes a run directory and the two reports inside it. If any of them cannot
+    be written, the run is refused as a usage error that names the location and the operating
+    system's reason. The refusal shows no stack trace, and announces no run directory as if
+    output had landed there. The refusal outranks the verdict. A root whose missing parents
+    can be created is not refused: the store creates them. The run manifest is written last,
+    after the reports. A run whose manifest cannot be written does not finish, and ends as an
+    unexpected error, not a refusal.
 
     @unit @e2e @SCN-RMG-008
     Scenario Outline: a --store root that cannot be created is refused naming the location and why, with no stack trace and no run directory printed

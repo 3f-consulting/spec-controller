@@ -96,16 +96,16 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 
 | Term | Meaning |
 |---|---|
-| `balance` | The command that reconciles the Gherkin scenarios against the test and CI evidence and writes the Evidence Reconciliation. It is a gate: an out-of-balance run exits `1`. |
-| `allocate` | The command that prints the next `@SCN` code for a feature part: one past the highest the repository has ever carried. |
-| host modifier | A flag that goes before the command (`--store`, `--run-id`). It needs a command, or `--help`, after it. |
+| `balance` | The command that reconciles the Gherkin scenarios against the test and CI evidence, and writes the Evidence Reconciliation. It is a gate: an out-of-balance run exits `1`. |
+| `allocate` | The command that prints the next `@SCN` code for a feature part: one past the highest code the repository has ever carried. |
+| host modifier | A flag that goes before the command (`--store`, `--run-id`). A command, or `--help`, must follow it. |
 | re-render | `--render-from-json`: Markdown rebuilt from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. |
-| `--exit-zero` | The same report, exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never moves a run that could not judge (unsound, nothing to reconcile, or an unexpected error before the verdict). The on-ramp before gating. |
+| `--exit-zero` | The same report, but exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never changes the exit code of a run that could not judge (unsound, nothing to reconcile, or an unexpected error before the verdict). The on-ramp before gating. |
 | run verdict | The whole run's headline and its exit code: BALANCED, OUT-OF-BALANCE, UNSOUND, PENDING, NOTHING TO RECONCILE or SCENARIO CODE ERRORS. |
-| verdict ladder | The order in which the run verdict is decided: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). An unexpected error before any verdict (`6`) is not on the ladder; a run that reached its verdict keeps it. |
+| verdict ladder | The order that decides the run verdict: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). An unexpected error before any verdict (`6`) is not on the ladder. A run that reaches its verdict keeps it. |
 | nothing to reconcile | The ledger carries no Claim Reconciliation at all, so the run has no basis for a verdict (exit `5`). |
 | usage error | A malformed invocation, refused before anything runs (exit `2`). |
-| retired flag | A flag refused as retired, naming what replaced it. |
+| retired flag | A flag refused as retired. The refusal names what replaced it. |
 | target | The repository being reconciled. `--target` names it in the report's provenance. |
 | provenance | The report's header recording what was reconciled (the target, its source SHA, the tool SHA and the input paths), so a reconciliation is reproducible and attributable. |
 | source SHA | The target's commit, by default its resolved `HEAD`. |

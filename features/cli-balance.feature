@@ -49,13 +49,13 @@ Feature: spec-controller balance runs standalone
 
   Rule: balance's exit code reflects the reconciliation verdict.
 
-    Any out-of-balance reconciliation exits exactly 1. A run is out of balance when any Claim
-    Reconciliation carries a reconciling item: a scenario's, a phantom claim's or the unnamed
-    claim's, a fitness function's watermelon included. A run whose only reconciling item is on
-    the unnamed claim still exits 1.
+    An out-of-balance reconciliation exits exactly 1. A run is out of balance when any
+    Claim Reconciliation carries a reconciling item: a scenario's, a phantom claim's or the
+    unnamed claim's, including a fitness function's watermelon. A run whose only reconciling
+    item is on the unnamed claim still exits 1.
 
-    The exit codes are 0 balanced, 1 out of balance, 2 usage, 3 pending under --strict, 4
-    unsound, 5 nothing to reconcile, 6 an unexpected error.
+    The exit codes are: 0 balanced, 1 out of balance, 2 usage error, 3 pending under --strict,
+    4 unsound, 5 nothing to reconcile, 6 unexpected error.
 
     @SCN-CLI-004 @unit @e2e
     Scenario: an out-of-balance reconciliation exits 1
@@ -201,18 +201,18 @@ Feature: spec-controller balance runs standalone
 
   Rule: an input the tool cannot read is a usage error, never a verdict
 
-    An input the tool cannot read halts the run before reconciling. It exits 2, the usage
-    status, naming the input and the fault, and never ends on exit 1.
+    An input the tool cannot read stops the run before it reconciles. The run exits 2, the
+    usage status, names the input and the fault, and never ends on exit 1.
 
     This holds for every input the run reads: a report that does not parse, a report that
-    parses but is not in the shape its reader expects, a workflow that does not parse as
-    YAML, a feature corpus or CI workflows path that is not the kind of path its flag reads, a
+    parses but does not have the shape its reader expects, a workflow that does not parse as
+    YAML, a feature corpus or CI workflows path that is the wrong kind of path for its flag, a
     path the tool is not permitted to read, and a working directory that has since been
-    removed, from which the feature corpus read by default cannot be read. It holds for
-    --render-from-json too: a missing or unparseable saved report is a usage error.
+    removed, from which the feature corpus read by default cannot be read. It also holds for --render-from-json: a
+    missing or unparseable saved report is a usage error.
 
-    A workflow that parses but declares no jobs is read, and contributes no steps. A valid
-    report whose evidence did not fully materialise is unsound, exit 4, not unreadable.
+    A workflow that parses but declares no jobs is read, and adds no steps. A valid report
+    whose evidence did not fully materialise is unsound (exit 4), not unreadable.
 
     @unit @e2e @SCN-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
@@ -493,7 +493,7 @@ Feature: spec-controller balance runs standalone
 
   Rule: a run that stops on an unexpected error before its verdict exits 6, a code no verdict uses
 
-    An error no refusal names ends the run on exit 6, never Node's default 1, so a broken run is never read as an out-of-balance ledger. One line on stderr names the error. A verdict already reached is kept. --exit-zero never moves 6.
+    An error that no refusal names ends the run on exit 6, never on Node's default 1. One line on stderr names the error. A run that has already reached its verdict keeps it. --exit-zero never changes 6.
 
     @unit @SCN-CLI-101
     Scenario: a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too
@@ -524,8 +524,8 @@ Feature: spec-controller balance runs standalone
 
   Rule: a corpus-shape fault never pre-empts the report
 
-    A scenario code error never stops the reconciliation, and the report still carries every
-    account, balanced or not. The exit precedence is 5, then 4, then 1
+    A scenario code error never stops the reconciliation. The report still carries every
+    account, balanced or not. When several exit codes apply, 5 comes first, then 4, then 1
     for scenario code errors, then 1 for out of balance, then 3.
 
     @SCN-CLI-055 @unit @e2e

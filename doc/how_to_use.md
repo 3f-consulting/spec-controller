@@ -803,11 +803,11 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### What counts as an `@SCN` code
 
-An `@SCN` is `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, and a number of any width. `balance` reads an id by that one grammar wherever it meets one: a scenario tag, a Vitest title's `[SCN-…]` citation, a Cucumber scenario's tag, a CI step's `id:`, and a prose mention.
+An `@SCN` code has the form `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
-So an id such as `@SCN-TOOLONGCODE-001` is no `@SCN` at all. It opens no account and cites nothing. A scenario tagged only with it carries no `@SCN` code and reconciles `no-scn-code`.
+So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no `@SCN` code, and reconciles as `no-scn-code`.
 
-Scenario code errors are judged over the corpus `--features` names, and no other.
+The tool judges scenario code errors only over the corpus that `--features` names.
 
 ### Exit codes
 
@@ -819,11 +819,11 @@ Scenario code errors are judged over the corpus `--features` names, and no other
 | `3` | Pending Items present under `--strict` |
 | `4` | unsound run |
 | `5` | nothing to reconcile |
-| `6` | unexpected error: the run stopped before a verdict, and one line on stderr names the error |
+| `6` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several apply, the ladder is: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder: it is the code only when the run did not finish. A stored run whose `run.yaml` cannot be written did not finish, so it ends at `6`, and the reports it already wrote stay in the run directory. A run already refused as a usage error keeps `2` when an error follows.
+When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A stored run that cannot write its `run.yaml` does not finish, so it exits `6`, and the reports it has already written stay in the run directory. A run already refused as a usage error keeps `2` if an error follows.
 
-An error after the verdict is reached does not change the exit code. stderr gets one line, `spec-controller hit an unexpected error after its verdict: <name>: <message>`, and the exit code is the verdict's: the report stands as written. A run writes at most one such line, whichever it is.
+An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
 ---
 
@@ -835,37 +835,37 @@ spec-controller balance --features ./features \
   --cucumber ./cucumber-report.json
 ```
 
-Run `spec-controller --help` for the top-level summary of commands and host modifiers, or `spec-controller balance --help` for `balance`'s full flag list.
+Run `spec-controller --help` for the top-level summary of the commands and host modifiers. Run `spec-controller balance --help` for the full list of `balance`'s flags.
 
 ### Flags
 
 | Flag | Purpose |
 |---|---|
-| `--features <dir>` | Directory of Gherkin `.feature` files: the scenarios. Every `.feature` file under it is read, at any depth, and named in the report by its path under the directory. A symbolically linked directory is not entered. |
+| `--features <dir>` | A directory of Gherkin `.feature` files: the scenarios. The tool reads every `.feature` file under it, at any depth, and names each one in the report by its path within the directory. It does not enter a symbolically linked directory. |
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
-| `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
-| `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
-| `--junit <report.xml>` | A JUnit XML report from any runner that writes one, such as Go's through `gotestsum --junitfile <path>`, or a directory of them, such as the `target/surefire-reports` Maven Surefire writes for a Java suite or the `build/test-results/test` Gradle writes for a Kotlin one: runtime unit test evidence. A test cites its scenario with the code in square brackets in its name. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
-| `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Give it beside `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
+| `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
+| `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
+| `--junit <report.xml>` | A JUnit XML report, or a directory of them, from any runner that writes one: runtime unit test evidence. For example, for Go, `gotestsum --junitfile <path>` writes one; Maven Surefire writes the `target/surefire-reports` directory for a Java suite; Gradle writes `build/test-results/test` for a Kotlin one. A test cites its scenario with the code in square brackets in its name. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
+| `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** Every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. It is also where an UNCONVERTED fitness function is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
-| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, evidence for the converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
-| `--target <name>` | A name recorded verbatim in the report's provenance: which project this run reconciled. |
+| `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the `@SCN` that its result cites. |
+| `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` in the working directory. |
+| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
+| `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
-| `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON: no reconcile, no live inputs. See [Re-rendering a saved run](#re-rendering-a-saved-run). |
-| `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
-| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. The on-ramp before gating. |
+| `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. See [Re-rendering a saved run](#re-rendering-a-saved-run). |
+| `--strict` | Fail the run (exit `3`) when it carries Pending Items. Otherwise, Pending Items do not affect the run's outcome. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) verdict, or a `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Use it as the on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
 
 `--format` takes a format (`md` or `json`), optionally followed by `:<path>`:
 
-- `--format md` sends Markdown to stdout. This is the default when no `--format` is given.
+- `--format md` sends Markdown to stdout. This is the default when you give no `--format`.
 - `--format json:out.json` sends JSON to a file.
-- Repeat the flag to emit several at once: `--format md:report.md --format json:report.json`.
+- Repeat the flag to emit several outputs at once: `--format md:report.md --format json:report.json`.
 
 There is no `--json <path>` flag. Use `--format json:<path>`.
 
