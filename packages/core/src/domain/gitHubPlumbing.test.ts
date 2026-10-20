@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isCandidateStep, isExcludedFromDiscovery, notChecksApplied, stepDispositions } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
+import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 
 const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
@@ -100,8 +101,6 @@ const UNNAMED_CHECKOUT: PipelineStep = {
   action: { name: "actions/checkout@v4" },
 };
 const NAMED_A_NON_CHECK = "ci.yml:quality:Set up Node";
-
-const namedInItsWorkflow = (step: PipelineStep): string => `ci.yml:${step.job}:${step.identity}`;
 
 describe("[SCN-USG-032] a plumbing step the manifest names a non-check is excluded as the manifest says, and its entry is not stale", () => {
   it("names the plumbing step excluded, and reports no entry matching no step", () => {

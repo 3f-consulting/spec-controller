@@ -1,14 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { ciSourcePathsOf, type CiPathReader } from "./ciSourcePaths.js";
-
-function readerOf(dirs: Record<string, string[]>, files: readonly string[]): CiPathReader {
-  return {
-    exists: (path) => path in dirs || files.includes(path),
-    isDirectory: (path) => path in dirs,
-    readDir: (path) => dirs[path] ?? [],
-  };
-}
+import { ciSourcePathsOf } from "./ciSourcePaths.js";
+import { readerOf } from "./ciPathReader.test-utils.js";
 
 describe("[SCN-CLI-091] a CI input names either one workflow file or a directory of them", () => {
   it.each<[string, Record<string, string[]>, string, string[]]>([

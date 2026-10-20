@@ -3,7 +3,7 @@ import { mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
-import { git, writeInto, commitAll, taken, withhold } from "./repository.test-utils.js";
+import { git, writeInto, commitAll, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
@@ -56,8 +56,6 @@ function historyRefusalReason(answered: Answered, path: string): string {
 
 const NOT_PERMITTED = /^(EACCES|EPERM): /;
 const GIT_LOG_FAILED = /^git log exited 128: \S/;
-
-const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
   it("refuses ONE when its loose objects are not permitted to be read, in git's own words", ({ skip }) => {

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { renderJson } from "../assemble/composers.js";
-import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
+import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
 import { countScnOccurrences } from "../parse/scenarios.js";
 import { parseFeatureCounts, parseScenarios, parseUntaggedScenarios } from "../parse/scenarioReaders.test-utils.js";
@@ -10,8 +10,6 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
-
-const er = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
 
 const ctx: RunContext = {
   target: "stg-017",

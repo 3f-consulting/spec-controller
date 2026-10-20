@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { reconcilerSteps } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
+import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 import { commandRuns } from "../parse/commandRuns.js";
 
 const INVOCATION = "spec-controller balance";
@@ -41,7 +42,6 @@ const LINTS: PipelineStep = {
 const STEPS = [CHECKOUT, DUMP, BALANCE, SWEEP];
 
 const runsTheReconciler = (command: string): boolean => command.includes(INVOCATION);
-const namedInItsWorkflow = (step: PipelineStep): string => `ci.yml:${step.job}:${step.identity}`;
 const givenNoName = (): undefined => undefined;
 const noInvocationKnown = (command: string): boolean => commandRuns(command, "", {});
 

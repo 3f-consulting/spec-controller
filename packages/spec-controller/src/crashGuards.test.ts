@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { installCrashGuards, markRunFinished } from "./crashGuards.js";
+import { closedPipe, FIRST_LINE } from "./crashGuards.test-utils.js";
 
 type Happening = { stderr: string } | { exit: unknown };
 
@@ -42,12 +43,6 @@ function guarded(exitCode?: number): Guarded {
   const stderr = standInStream((chunk) => happened.push({ stderr: chunk }));
   installCrashGuards(proc, stdout, stderr);
   return { proc, stdout, stderr, happened };
-}
-
-const FIRST_LINE = "write EPIPE";
-
-function closedPipe(): Error {
-  return Object.assign(new Error(`${FIRST_LINE}\nthe reader closed its end of the pipe`), { code: "EPIPE" });
 }
 
 const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;

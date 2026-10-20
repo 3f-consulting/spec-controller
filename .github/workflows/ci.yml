@@ -286,6 +286,11 @@ jobs:
           pnpm exec knip --include files,exports,types,dependencies --reporter json --no-exit-code > "$RUNNER_TEMP/knip.json"
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --slurpfile report "$RUNNER_TEMP/knip.json" '. as $changed | $report[0].issues[] | select(.file as $f | $changed | index($f)) | . as $i | ([(if (.files | length) > 0 then "unused file" else empty end)] + [.exports[]?, .types[]?, .dependencies[]?, .devDependencies[]?, .optionalPeerDependencies[]? | .name]) | map("\($i.file): \(.)")[]' | awk '{ print } END { exit NR > 0 }'
 
+      - name: A test helper is written once, in a test-utils file
+        id: SCN-FIT-062
+        if: always()
+        run: git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | node scripts/test-helpers-written-once.mjs
+
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()

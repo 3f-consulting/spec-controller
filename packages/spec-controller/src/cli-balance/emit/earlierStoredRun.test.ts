@@ -8,6 +8,7 @@ import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
 import { earlierStoredRunDirOf, planRunManifest, serialiseRunManifest } from "../../run-management/keptRun.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
+import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 
 const ctx: RunContext = {
   target: "later",
@@ -22,8 +23,6 @@ const EARLIER_MARKDOWN = "# an earlier run's reconciliation\n";
 
 const toFile = (path: string, fmt: "md" | "json"): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
 const plan = (...outputs: PlannedOutput[]): OutputPlan => ({ outputs });
-
-const noOwnRun = (path: string): string | undefined => earlierStoredRunDirOf(path, undefined);
 
 let payloads: OutputPayloads;
 let manifest: string;

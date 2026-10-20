@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { inputOverwriteRefusal, type FileIdentity, type IdentifiedInput, type IdentifiedOutput, type PlannedOutput } from "./format.js";
+import { inputOverwriteRefusal, type FileIdentity, type IdentifiedInput } from "./format.js";
+import { toFile, toStdout, fileIdentity as id, identifiedAs as at } from "./plannedOutput.test-utils.js";
 
-const toFile = (fmt: "md" | "json", path: string): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
-const toStdout = (fmt: "md" | "json"): PlannedOutput => ({ fmt, dest: { kind: "stdout" } });
-const id = (dev: bigint, ino: bigint): FileIdentity => ({ dev, ino });
-const at = (output: PlannedOutput, identity: FileIdentity | undefined): IdentifiedOutput => ({ output, identity });
 const input = (subject: string, path: string, identity: FileIdentity | undefined): IdentifiedInput => ({ subject, path, identity });
 
 describe("[SCN-FMT-013] an output on the regular file an input is refused, naming the output and the input", () => {

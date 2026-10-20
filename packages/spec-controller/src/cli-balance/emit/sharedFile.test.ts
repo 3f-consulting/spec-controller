@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { sharedFileRefusal, type FileIdentity, type IdentifiedOutput, type PlannedOutput } from "./format.js";
+import { sharedFileRefusal } from "./format.js";
+import { toFile, toStdout, fileIdentity as id, identifiedAs as at } from "./plannedOutput.test-utils.js";
 
-const toFile = (fmt: "md" | "json", path: string): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
-const toStdout = (fmt: "md" | "json"): PlannedOutput => ({ fmt, dest: { kind: "stdout" } });
-const id = (dev: bigint, ino: bigint): FileIdentity => ({ dev, ino });
-const at = (output: PlannedOutput, identity: FileIdentity | undefined): IdentifiedOutput => ({ output, identity });
 
 describe("[SCN-FMT-010] two outputs whose regular files share one device and inode are refused, naming both", () => {
   it("refuses two outputs on one file, naming each as the operator gave it", () => {

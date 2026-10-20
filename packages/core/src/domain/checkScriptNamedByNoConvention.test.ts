@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
+import { runsAsCommand } from "./shellReading.test-utils.js";
 
 const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
@@ -13,12 +14,6 @@ const SCRIPTS = {
   my_check: "echo mine",
 };
 const RUNNERS = { unit: "vitest", integration: "cucumber-js" };
-
-const scriptOf = (command: string, scripts: Readonly<Record<string, string>>): string =>
-  scripts[command.replace(/^pnpm /, "")] ?? command;
-
-const runsAsCommand: ShellReading["runsAsCommand"] = (commandText, invocation, scripts) =>
-  scriptOf(commandText, scripts).startsWith(invocation);
 
 const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
 

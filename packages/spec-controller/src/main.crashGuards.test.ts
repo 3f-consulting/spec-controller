@@ -3,24 +3,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import * as guards from "./crashGuards.js";
+import { closedPipe, FIRST_LINE, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
   exit(code?: number | string | null): void;
-}
-
-interface StandInStream extends EventEmitter {
-  readonly written: string[];
-  write(chunk: string): boolean;
-}
-
-function standInStream(): StandInStream {
-  const written: string[] = [];
-  const write = (chunk: string): boolean => {
-    written.push(chunk);
-    return true;
-  };
-  return Object.assign(new EventEmitter(), { written, write });
 }
 
 type Installer = (proc: StandInProcess, stdout: StandInStream, stderr: StandInStream) => void;
@@ -40,12 +27,6 @@ function guarded(verdict?: number): Guarded {
   (install as Installer)(proc, stdout, stderr);
   if (verdict !== undefined) guards.markRunFinished();
   return { proc, stdout, stderr };
-}
-
-const FIRST_LINE = "write EPIPE";
-
-function closedPipe(): Error {
-  return Object.assign(new Error(`${FIRST_LINE}\nthe reader closed its end of the pipe`), { code: "EPIPE" });
 }
 
 const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;

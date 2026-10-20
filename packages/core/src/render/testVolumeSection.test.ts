@@ -4,9 +4,7 @@ import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObservation } from "../model.js";
-import { renderMarkdown } from "../assemble/composers.js";
-import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
-import { sectionUnder } from "./renderedSection.test-utils.js";
+import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const corpus = `@VOL
@@ -42,9 +40,6 @@ const sum = CORE_MESSAGES[CoreMessage.TestVolumeSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.TestVolumeTableHeader];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
-
-const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
-  renderMarkdown(reconciliation, ctx).split("\n");
 
 function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliation): void {
   const lines = linesOf(reconciliation);

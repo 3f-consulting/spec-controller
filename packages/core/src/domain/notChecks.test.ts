@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { notChecksApplied } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
+import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 
 const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
@@ -10,8 +11,6 @@ const STEPS = [TYPES, TESTS];
 
 const EXCLUDED_STEP = "ci.yml:quality:Types";
 const STRAY_ENTRY = "ci.yml:quality:Lint";
-
-const namedInItsWorkflow = (step: PipelineStep): string => `ci.yml:${step.job}:${step.identity}`;
 
 describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
   it("excludes the step an entry names, and reports it as excluded", () => {

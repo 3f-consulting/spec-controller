@@ -3,9 +3,7 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import { renderMarkdown } from "../assemble/composers.js";
-import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
-import { sectionUnder } from "./renderedSection.test-utils.js";
+import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
@@ -54,9 +52,6 @@ const heading = CORE_MESSAGES[CoreMessage.FitnessFunctionsHeading];
 const counts = CORE_MESSAGES[CoreMessage.FitnessFunctionsCounts];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
-
-const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
-  renderMarkdown(reconciliation, ctx).split("\n");
 
 describe("[SCN-RPT-049] a CI check no scenario cites is reported as an uncited fitness function", () => {
   it.each([

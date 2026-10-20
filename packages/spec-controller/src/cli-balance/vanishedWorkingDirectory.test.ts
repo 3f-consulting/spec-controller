@@ -1,16 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
-
-// The shape Node gives process.cwd() when the directory the process stands in
-// does not exist: a plain Error carrying errno, code and syscall, and no path.
-function removedWorkingDirectory(): Error {
-  return Object.assign(
-    new Error(
-      "ENOENT: process.cwd failed with error no such file or directory, the current working directory was likely removed without changing the working directory, uv_cwd",
-    ),
-    { errno: -2, code: "ENOENT", syscall: "uv_cwd" },
-  );
-}
+import { removedWorkingDirectory } from "../vanishedWorkingDirectory.test-utils.js";
 
 function balanceWhereCwdThrows(thrown: Error): BalanceRun {
   vi.spyOn(process, "cwd").mockImplementation(() => {

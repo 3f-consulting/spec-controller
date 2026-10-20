@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { git, writeInto, made, freshDirectory, taken, withhold } from "./repository.test-utils.js";
+import { git, writeInto, made, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
@@ -55,8 +55,6 @@ const EXAMPLES: readonly Withheld[] = [
   { copy: "copy without git", path: "docs/notes.md", subject: "a file in the tree" },
   { copy: "copy without git", path: "docs", subject: "a directory in the tree" },
 ];
-
-const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
   beforeEach(({ skip }) => {

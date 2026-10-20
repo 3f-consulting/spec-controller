@@ -6,8 +6,8 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
-import { earlierStoredRunDirOf } from "../../run-management/keptRun.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
+import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 
 const ctx: RunContext = {
   target: "unwritable",
@@ -16,8 +16,6 @@ const ctx: RunContext = {
   runStart: new Date("2026-09-26T00:00:00.000Z"),
   sourceSha: null,
 };
-
-const noOwnRun = (path: string): string | undefined => earlierStoredRunDirOf(path, undefined);
 
 let payloads: OutputPayloads;
 

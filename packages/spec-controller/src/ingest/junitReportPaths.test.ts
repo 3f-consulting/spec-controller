@@ -1,15 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import type { CiPathReader } from "./ciSourcePaths.js";
 import { junitReportPathsOf } from "./junitReportPaths.js";
-
-function readerOf(dirs: Record<string, string[]>, files: readonly string[]): CiPathReader {
-  return {
-    exists: (path) => path in dirs || files.includes(path),
-    isDirectory: (path) => path in dirs,
-    readDir: (path) => dirs[path] ?? [],
-  };
-}
+import { readerOf } from "./ciPathReader.test-utils.js";
 
 describe("[SCN-JAV-001] --junit names one JUnit XML report file or a directory of Surefire's reports", () => {
   it("resolves a directory to every report file Surefire wrote in it, in name order", () => {

@@ -3,24 +3,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import * as guards from "./crashGuards.js";
+import { standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
   exit(code?: number | string | null): void;
-}
-
-interface StandInStream extends EventEmitter {
-  readonly written: string[];
-  write(chunk: string): boolean;
-}
-
-function standInStream(): StandInStream {
-  const written: string[] = [];
-  const write = (chunk: string): boolean => {
-    written.push(chunk);
-    return true;
-  };
-  return Object.assign(new EventEmitter(), { written, write });
 }
 
 type Boot = (proc: StandInProcess, stdout: StandInStream, stderr: StandInStream, argv: string[], load: () => Promise<unknown>) => Promise<void>;

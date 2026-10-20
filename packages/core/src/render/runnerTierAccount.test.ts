@@ -3,7 +3,7 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { sectionUnder } from "./renderedSection.test-utils.js";
+import { behaviouralRunnersSection as section } from "./renderedSection.test-utils.js";
 import { unitTestsCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
@@ -28,8 +28,6 @@ const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
 function reportLines(runners?: Record<string, string | null>): string[] {
   return renderMarkdown(reconcile(runners), ctx).split("\n");
 }
-
-const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const accountLines = (lines: readonly string[]): string[] => lines.filter((line) => line.startsWith("- "));
 

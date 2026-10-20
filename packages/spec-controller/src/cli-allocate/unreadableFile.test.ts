@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { git, taken, withhold } from "./repository.test-utils.js";
+import { git, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
@@ -142,8 +142,6 @@ const EXAMPLES: readonly Row[] = [
     subject: "a directory in the tree",
   },
 ];
-
-const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
   // On macOS, git resolving a working directory beneath a top it may not list scans every ancestor, so a crowded temporary directory can take seconds.

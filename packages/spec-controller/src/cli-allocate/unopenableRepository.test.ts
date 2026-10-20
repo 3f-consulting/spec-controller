@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { git, writeInto, taken, withhold } from "./repository.test-utils.js";
+import { git, writeInto, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
@@ -46,8 +46,6 @@ function expectRefusedNaming(answered: Answered, gitEntry: string, git: { status
     `spec-controller allocate: usage error — the repository could not be read: ${gitEntry} (git rev-parse exited ${git.status}: ${git.said})\n`,
   );
 }
-
-const runsAsRoot = (): boolean => process.getuid?.() === 0;
 
 describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
   it("refuses ONE when its .git directory is not permitted to be read, naming the .git in git's own words", ({ skip }) => {

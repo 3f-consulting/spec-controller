@@ -84,3 +84,5 @@ export function withholdDirectory(path: string, mode: number): void {
   chmodSync(path, mode);
   taken.push(() => chmodSync(path, 0o755));
 }
+
+export const runsAsRoot = (): boolean => process.getuid?.() === 0;
