@@ -519,6 +519,9 @@ Feature: spec-controller balance runs standalone
     @unit @SCN-CLI-109
     Scenario: a kept run whose manifest cannot be written did not finish, and ends at 6
 
+    @unit @SCN-CLI-110
+    Scenario: an error after a re-rendered report's verdict keeps that verdict, named on one line
+
   Rule: a corpus-shape fault never pre-empts the report
 
     A scenario code error never stops the reconciliation, and the report still carries every

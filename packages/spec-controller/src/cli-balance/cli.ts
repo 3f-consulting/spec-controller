@@ -173,7 +173,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
   if (missingValueError) refuse(missingValueError);
 
-  if (renderSavedReport(args)) return false;
+  if (renderSavedReport(args)) return true;
   const corpusDir = refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
