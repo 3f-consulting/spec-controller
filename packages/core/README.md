@@ -18,21 +18,24 @@ npm install @3f-consulting/spec-controller-core
 
 ```ts
 import {
-  parseScenarios,
+  parseFeatureCorpus,
+  scenariosOf,
   parseVitestEvidenceObservations,
   reconcile,
   isBalanced,
 } from "@3f-consulting/spec-controller-core";
 
 // One .feature file's text, and one already-parsed Vitest JSON report.
-const scenarios = parseScenarios(featureSource);
+const corpus = parseFeatureCorpus([{ file: "features/checkout.feature", source: featureSource }]);
+if (corpus.kind === "unparseable") throw new Error(corpus.faults[0].message);
+const scenarios = corpus.features.flatMap((feature) => scenariosOf(feature));
 const observed = parseVitestEvidenceObservations(vitestReport, "unit");
 
 const ledger = reconcile(scenarios, observed);
 isBalanced(ledger); // false while any scenario names evidence that did not arrive
 ```
 
-- `parseScenarios` reads the `@SCN` code and the quality-check tags off each scenario, and turns them into the **obligations** the scenario names.
+- `parseFeatureCorpus` parses each feature file once, and returns every file parsed or, when any does not parse, each file's fault in the parser's own words. `scenariosOf` reads the `@SCN` code and the quality-check tags off each parsed scenario, and turns them into the **obligations** the scenario names.
 - `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the `@SCN` it claims.
 - `reconcile` sets the two sides against each other and gives an answer per scenario.
 
@@ -43,12 +46,12 @@ Everything else the package exports is a variation on these three steps.
 The package publishes exactly one entrypoint: a barrel that exports the following.
 
 - **Parse**:
-  - scenarios: `parseScenarios`, `parseUntaggedScenarios` and `countScnOccurrences`;
+  - scenarios: `parseFeatureCorpus`, which parses the feature files once, then `scenariosOf`, `untaggedScenariosOf` and `featureCountsOf` over a parsed file, and `countScnOccurrences` over a file's text;
   - evidence: `parseVitestEvidenceObservations`; `parseJunitEvidenceObservations` and `parsePytestEvidenceObservations`, both over a JUnit XML report you have already parsed into objects, from pytest, gotestsum or another runner; `parseRspecEvidenceObservations`, over RSpec's JSON report; and `parseCucumberEvidenceObservations`;
   - the readers for fitness functions, and for what a pipeline's steps actually ran.
 
   The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing observation, and `parsePytestEvidenceObservations` reads it as broken, as pytest's setup error.
-- **Reconcile**: `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over sources you have already read.
+- **Reconcile**: `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over the parsed feature files and the other sources you have already read.
 - **Ask the ledger**: `isBalanced`, `hasPendingItems`, `hasBrokenEvidence` and `hasNothingToReconcile`. These are the four questions a caller decides on. The CLI builds its balanced, out-of-balance, unsound, pending-under-strict and nothing-to-reconcile verdicts from these four and nothing else.
 - **Render**: `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string.
 - **Provenance**: the pure subset, which records what a run was without asking the filesystem what it is.

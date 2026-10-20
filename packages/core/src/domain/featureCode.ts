@@ -16,3 +16,7 @@ const FEATURE_PART = new RegExp(`^${FEATURE_PART_SOURCE}$`);
 export function isFeaturePart(text: string): boolean {
   return FEATURE_PART.test(text);
 }
+
+export function headerFeatureCode(featureTags: readonly string[]): string | null {
+  return featureTags.find(isFeaturePart) ?? null;
+}

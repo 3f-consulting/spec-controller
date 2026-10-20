@@ -4,12 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { discover, temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
-import {
-  featureCorpusParseErrors,
-  readEvidenceObligations,
-  readFeatureNames,
-  runReconcile,
-} from "./ingestQualityChecks.js";
+import { featureNamesOf, readCorpus } from "./ingestQualityChecks.js";
+import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
@@ -45,7 +41,7 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
   it("reads no feature-code map", () => {
     const { features } = absentCorpus();
 
-    expect([...readFeatureNames(features)]).toEqual([]);
+    expect([...featureNamesOf(readFeatureCorpus(features))]).toEqual([]);
   });
 
   it("raises no evidence obligation, and finds no untagged scenario", () => {
@@ -73,9 +69,9 @@ describe("[SCN-CLI-017] a corpus that is PRESENT and unreadable is still refused
   it("keeps reporting the parse failure rather than reading absence into it", () => {
     const { features, file } = unreadableCorpus();
 
-    const errors = featureCorpusParseErrors(features);
+    const reading = readCorpus(features);
 
-    expect(errors.map((e) => e.file)).toEqual([file]);
+    expect(reading.kind === "unparseable" ? reading.faults.map(({ file: faulted }) => faulted) : reading).toEqual([file]);
   });
 });
 
@@ -97,16 +93,11 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
     const notADirectory = join(temporaryDirectoryIn(made, `scn-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
-    let returned: unknown;
-    let thrown: unknown;
-    try {
-      returned = featureCorpusParseErrors(notADirectory);
-    } catch (err) {
-      thrown = err;
-    }
+    const reading = readCorpus(notADirectory);
 
-    expect(returned).toBeUndefined();
-    expect(thrown).not.toBeInstanceOf(TypeError);
-    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
+    expect(reading).toEqual({
+      kind: "read-fault",
+      fault: { path: notADirectory, reason: expect.stringMatching(/^ENOTDIR: /) as unknown },
+    });
   });
 });

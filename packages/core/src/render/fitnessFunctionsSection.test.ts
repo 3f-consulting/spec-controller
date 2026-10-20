@@ -6,6 +6,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const corpus = `@CVT
 Feature: fixture fitness corpus
@@ -39,7 +40,7 @@ jobs:
 
 function reconcile(barCitation: string): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
-    featureSources: [corpus],
+    features: parsedFeatures([corpus]),
     untaggedScenarios: [],
     packageJson,
     ciSources: [ci(barCitation)],

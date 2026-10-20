@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { EvidenceObservation } from "../model.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 type Corpus = Record<string, { code: string | null; ids: string[] }>;
 
@@ -16,7 +17,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     .flatMap(([, { ids }]) => ids)
     .map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" }));
   return evidenceReconciliationFromSources({
-    featureSources: sources,
+    features: parsedFeatures(sources),
     featureFiles: entries.map(([slug, { code }]) => ({ slug, featureCode: code })),
     untaggedScenarios: [],
     packageJson: {},

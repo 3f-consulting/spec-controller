@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 
@@ -11,7 +12,7 @@ function reconcile(notChecks?: readonly string[]): EvidenceReconciliation {
     typeof evidenceReconciliationFromSources
   >[0]["packageJson"];
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
     ciSources: [ci],

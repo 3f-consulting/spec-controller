@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { renderJson } from "./composers.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";

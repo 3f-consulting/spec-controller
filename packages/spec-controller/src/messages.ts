@@ -11,7 +11,6 @@ export enum AppMessage {
   CouldNotBeReadAt,
   UsageError,
   GitExited,
-  FeatureCorpusUnparseable,
   FeatureCorpusDirectoryMissing,
   StoredRunDirectoryNotCreated,
   FormatNamesStoredRunManifest,
@@ -241,7 +240,6 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.CouldNotBeReadAt]: (subject, path, reason) => `${subject} could not be read: ${path} (${reason})`,
   [AppMessage.UsageError]: (command, message) => `spec-controller ${command}: usage error — ${message}`,
   [AppMessage.GitExited]: (args, status, said) => `git ${args[0]} exited ${status}: ${said}`,
-  [AppMessage.FeatureCorpusUnparseable]: () => "The feature corpus contains a file that could not be parsed as Gherkin:",
   [AppMessage.FeatureCorpusDirectoryMissing]: (directory) => `The feature corpus directory does not exist: ${directory}`,
   [AppMessage.StoredRunDirectoryNotCreated]: () => "The stored run's directory could not be created",
   [AppMessage.FormatNamesStoredRunManifest]: (formatPath, manifestPath, runDir) =>

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { discoverFeatures } from "./ingestScenarios.js";
+import { corpusFeatureFiles } from "./ingestScenarios.js";
 
 // Each test file passes its own list of made directories and removes them in its own hook.
 export function temporaryDirectoryIn(made: string[], prefix: string): string {
@@ -15,7 +15,7 @@ export function discover(dir: string): { returned: unknown; thrown: unknown } {
   let returned: unknown;
   let thrown: unknown;
   try {
-    returned = discoverFeatures(dir);
+    returned = corpusFeatureFiles(dir);
   } catch (err) {
     thrown = err;
   }

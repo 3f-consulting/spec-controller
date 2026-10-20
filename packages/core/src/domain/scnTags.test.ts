@@ -5,7 +5,7 @@ import {
   type FeatureFileScenarios,
   type ForeignScnCodeError,
 } from "./scnTags.js";
-import { parseScenarioTags } from "../parse/scenarios.js";
+import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 
 function file(slug: string, code: string | null, ids: readonly string[]): FeatureFileScenarios {
   const header = code === null ? "" : `@${code}\n`;

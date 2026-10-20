@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn, type Shape } from "./corpusFixtures.test-utils.js";
-import { runReconcile } from "./ingestQualityChecks.js";
+import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 

@@ -3,6 +3,7 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { block } from "./configurationBlock.test-utils.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 
@@ -11,7 +12,7 @@ function reconcile(specController: Record<string, unknown>): EvidenceReconciliat
     typeof evidenceReconciliationFromSources
   >[0]["packageJson"];
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
     ciSources: [ci],

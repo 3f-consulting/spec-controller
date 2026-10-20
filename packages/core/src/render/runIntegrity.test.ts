@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { VitestJsonReport } from "../parse/vitest.js";
 import { ciStepRecordObservations } from "../parse/ciStepRecord.js";

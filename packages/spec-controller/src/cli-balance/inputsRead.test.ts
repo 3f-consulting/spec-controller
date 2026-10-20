@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { discoverFeatures } from "../ingest/ingestScenarios.js";
+import { readFeatureSources } from "../ingest/ingestScenarios.js";
 import { inputsReadBy, NODE_INPUT_READER, type InputReader } from "./inputsRead.js";
 
 function workflowFilesAt(path: string): string[] {
@@ -125,6 +125,6 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus is among 
   });
 
   it("names the same files, in the same order, as the run judges", () => {
-    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual(discoverFeatures(corpus).map(({ path }) => path));
+    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual(readFeatureSources(corpus).map(({ path }) => path));
   });
 });

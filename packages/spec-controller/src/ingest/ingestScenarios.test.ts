@@ -2,9 +2,11 @@ import { copyFileSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "nod
 import { basename, join } from "node:path";
 import { afterAll, describe, it, expect } from "vitest";
 
-import { discover, temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
-import { readEvidenceObligations, readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
-import { discoverFeatures } from "./ingestScenarios.js";
+import { temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
+import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
+import { featureNamesOf, readCorpus } from "./ingestQualityChecks.js";
+import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
+import { readFeatureSources } from "./ingestScenarios.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
@@ -56,14 +58,22 @@ function corpusWithTwoUnreadableFiles(): {
   return { dir, good, firstBad, secondBad };
 }
 
+function parserWordsFor(source: string): string {
+  const parse = parseFeatureCorpus([{ file: "any.feature", source }]);
+  return parse.kind === "unparseable" ? parse.faults[0]!.message : "";
+}
+
 describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the parser rejects", () => {
-  it("refuses the corpus instead of returning it", () => {
-    const { dir } = corpusWithTwoUnreadableFiles();
+  it("returns no corpus, and names every file the parser rejects with the parser's own words, in path order", () => {
+    const { dir, firstBad, secondBad } = corpusWithTwoUnreadableFiles();
 
-    const { thrown } = discover(dir);
-
-    expect(thrown).toBeInstanceOf(Error);
-    expect((thrown as Error).name).toBe("UnreadableFeatureCorpusError");
+    expect(readCorpus(dir)).toEqual({
+      kind: "unparseable",
+      faults: [
+        { file: firstBad, message: parserWordsFor(CORRUPT_TAG_LINE) },
+        { file: secondBad, message: parserWordsFor(CORRUPT_SCENARIO_KEYWORD) },
+      ],
+    });
   });
 });
 
@@ -88,13 +98,13 @@ function reconciled(features: string): ReturnType<typeof runReconcile> {
 
 describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any depth, is read and judged as at the top level", () => {
   it("reads every feature file under the corpus, in the order of its path under the corpus", () => {
-    expect(discoverFeatures(NESTED_FEATURES).map(({ path }) => path)).toEqual(
+    expect(readFeatureSources(NESTED_FEATURES).map(({ path }) => path)).toEqual(
       NESTED_FILES.map((file) => join(NESTED_FEATURES, file)),
     );
   });
 
   it("reads each nested file's feature code, as it would at the top level", () => {
-    expect(discoverFeatures(NESTED_FEATURES).map(({ featureCode }) => featureCode)).toEqual(["NTC", "NTB", "NTA"]);
+    expect(readFeatureCorpus(NESTED_FEATURES).map(({ featureCode }) => featureCode)).toEqual(["NTC", "NTB", "NTA"]);
   });
 
   it("reconciles the scenarios of every nested file exactly as it reconciles the same files laid flat", () => {
@@ -120,7 +130,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
     symlinkSync(outside, join(corpus, "linked-dir"), "dir");
     symlinkSync(join(outside, "elsewhere.feature"), join(corpus, "linked.feature"));
 
-    expect(discoverFeatures(corpus).map(({ path }) => path)).toEqual([
+    expect(readFeatureSources(corpus).map(({ path }) => path)).toEqual([
       join(corpus, "linked.feature"),
       join(corpus, "sub", "inner.feature"),
     ]);
@@ -132,11 +142,11 @@ const SAME_NAME_FEATURES = `${SAME_NAME}/features`;
 
 describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path under the corpus, so two files of one name are told apart", () => {
   it("names each feature file by its path under the corpus, without its extension", () => {
-    expect(discoverFeatures(SAME_NAME_FEATURES).map(({ slug }) => slug)).toEqual(["alpha/run", "beta/run"]);
+    expect(readFeatureCorpus(SAME_NAME_FEATURES).map(({ slug }) => slug)).toEqual(["alpha/run", "beta/run"]);
   });
 
   it("maps each feature code to the path of its own file", () => {
-    expect([...readFeatureNames(SAME_NAME_FEATURES)]).toEqual([
+    expect([...featureNamesOf(readFeatureCorpus(SAME_NAME_FEATURES))]).toEqual([
       ["SNA", "alpha/run"],
       ["SNB", "beta/run"],
     ]);

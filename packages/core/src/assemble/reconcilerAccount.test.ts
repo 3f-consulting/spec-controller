@@ -2,13 +2,14 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 function reconcile(
   ciSources: readonly string[],
   ciSourceNames?: readonly string[]
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
     ciSources,

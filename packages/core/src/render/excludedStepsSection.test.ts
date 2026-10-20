@@ -5,6 +5,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 
@@ -17,7 +18,7 @@ function reportLines(notChecks?: readonly string[]): string[] {
     typeof evidenceReconciliationFromSources
   >[0]["packageJson"];
   const reconciliation = evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
     ciSources: [ci],

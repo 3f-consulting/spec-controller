@@ -2,9 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   runReconcile,
-  readFeatureCorpus,
-  readFeatureNames,
-  featureCorpusParseErrors,
+  readCorpus,
+  featureNamesOf,
+  type CorpusFile,
   type ReconcileOptions,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
@@ -174,20 +174,19 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (missingValueError) refuse(missingValueError);
 
   if (renderSavedReport(args)) return true;
-  const corpusDir = refuseUnreadableInputs(args);
+  const { corpusDir, corpus } = refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const corpus = readFeatureCorpus(corpusDir);
   const balance = runReconcile({ ...inputs, features: corpusDir }, root, corpus);
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations: corpusCountsOf(corpus), featureNames: readFeatureNames(corpusDir) };
+  const payloads = { balance, ctx, evidenceObligations: corpusCountsOf(corpus), featureNames: featureNamesOf(corpus) };
   writeOutputs(
     planResult.plan,
     payloads,
@@ -221,7 +220,7 @@ function renderSavedReport(args: Record<string, string>): boolean {
   return true;
 }
 
-function refuseUnreadableInputs(args: Record<string, string>): string {
+function refuseUnreadableInputs(args: Record<string, string>): { corpusDir: string; corpus: readonly CorpusFile[] } {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) refuse(missingInputError);
 
@@ -231,7 +230,8 @@ function refuseUnreadableInputs(args: Record<string, string>): string {
   const corpusDir = corpusDirOf(args);
   if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
 
-  const unreadablePathError = checkInputPaths(args, corpusDir);
+  const corpusReading = readCorpus(corpusDir);
+  const unreadablePathError = checkInputPaths(args, corpusReading);
   if (unreadablePathError) refuse(unreadablePathError);
 
   const unparseableWorkflowError = checkWorkflowsParse(args, readText);
@@ -240,17 +240,17 @@ function refuseUnreadableInputs(args: Record<string, string>): string {
   const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
   if (misshapenInputError) refuse(misshapenInputError);
 
-  const featureParseErrors = featureCorpusParseErrors(corpusDir);
-  if (featureParseErrors.length > 0) {
+  if (corpusReading.kind === "unparseable") {
     refuse(
-      featureParseErrors
+      corpusReading.faults
         .map(({ file, message }) =>
           APP_MESSAGES[AppMessage.CorpusFileUnparseable](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), file, message),
         )
         .join("\n"),
     );
   }
-  return corpusDir;
+  // A read fault was refused by checkInputPaths above, so the corpus was read.
+  return { corpusDir, corpus: corpusReading.kind === "read" ? corpusReading.corpus : [] };
 }
 
 function runContextOf(

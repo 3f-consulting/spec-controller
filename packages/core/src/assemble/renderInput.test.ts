@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { assembleRenderInput } from "./renderInput.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { renderJson } from "./composers.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
@@ -11,6 +11,7 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { reportLedger } from "./renderInput.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,
@@ -22,7 +23,7 @@ const evidenceObligations: EvidenceObligations = {
 describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
     const judged = evidenceReconciliationFromSources({
-      featureSources: ["@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"],
+      features: parsedFeatures(["@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"]),
       featureFiles: [
         { slug: "one", featureCode: "ONE" },
         { slug: "plain", featureCode: null },

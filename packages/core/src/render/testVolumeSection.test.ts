@@ -7,6 +7,7 @@ import type { EvidenceObservation } from "../model.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const corpus = `@VOL
 Feature: fixture volume corpus
@@ -28,7 +29,7 @@ const observations: EvidenceObservation[] = [
 
 const reconcile = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({
-    featureSources: [corpus],
+    features: parsedFeatures([corpus]),
     untaggedScenarios: [],
     packageJson: {},
     ciSources: [],

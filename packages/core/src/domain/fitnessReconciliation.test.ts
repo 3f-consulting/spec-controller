@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { runningFitnessFunctions } from "../parse/runningFitnessFunctions.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";

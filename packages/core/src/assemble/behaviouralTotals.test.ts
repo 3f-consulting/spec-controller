@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { type EvidenceReconciliation } from "./renderInput.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const feature = `Feature: alpha
 
@@ -27,7 +28,7 @@ const vitestResult: VitestJsonReport = {
 
 function assembled(): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: { scripts: {} },
     ciSources: [],

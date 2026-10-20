@@ -386,6 +386,7 @@ const WRONG_KIND: Record<string, (path: string) => void> = {
   },
   "a directory": (path) => mkdirSync(path, { recursive: true }),
   "a link to a file that is not there": (path) => symlinkSync(join(dirname(path), "nowhere.feature"), path),
+  "a feature file the Gherkin parser rejects": (path) => writeFileSync(path, "not gherkin at all {{{\n"),
 };
 
 Given("in that repository {word} is {}", function (path: string, kind: string) {
@@ -414,6 +415,12 @@ function namesPath(refusal: string, path: string): boolean {
 Then("allocate's refusal names {word}", function (path: string) {
   const refusal = refusalOf(answer);
   assert.ok(namesPath(refusal, path), `expected the refusal to name ${path}; got:\n${refusal}`);
+});
+
+Then("allocate's refusal names {word} and the parser's own words", function (path: string) {
+  const named = new RegExp(`^spec-controller allocate: usage error — .+ could not be parsed: .*/${path}$`, "m");
+  assert.match(answer.stderr, named, `expected the refusal to name ${path}; got:\n${answer.stderr}`);
+  assert.match(answer.stderr, /^\(1:1\): expected: .*got 'not gherkin at all \{\{\{'$/m, `expected the parser's own words; got:\n${answer.stderr}`);
 });
 
 const permissionsTaken: Array<() => void> = [];

@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
-import { runReconcile } from "../ingest/ingestQualityChecks.js";
+import { runReconcile } from "../ingest/corpusReading.test-utils.js";
 import { runBalance } from "../cli-balance/cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";

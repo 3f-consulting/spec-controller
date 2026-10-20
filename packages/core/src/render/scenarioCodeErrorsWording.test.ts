@@ -3,6 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { codeErrorsCtx as ctx } from "./scenarioCodeError.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 interface File {
   readonly slug: string;
@@ -19,7 +20,7 @@ function markdownOf(files: readonly File[]): string {
   const codes = files.flatMap((file) => file.scenarios.filter((tags) => !tags.includes(" ")).map((tags) => tags.slice(1)));
   return renderMarkdown(
     evidenceReconciliationFromSources({
-      featureSources: files.map(source),
+      features: parsedFeatures(files.map(source)),
       featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
       untaggedScenarios: [],
       packageJson: {},

@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseScenarios,
-  parseUntaggedScenarios,
-} from "./scenarios.js";
-import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
+import { parseFeatureCorpus } from "./scenarios.js";
+import { parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
 
 describe("[SCN-GRD-001] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
@@ -95,21 +92,19 @@ Feature: alpha
     expect(parseScenarios(source)).toEqual([]);
   });
 
-  it("THROWS on unparseable source a typed error in the parser's own words — an empty corpus balances against anything, so it never returns one", () => {
-    let thrown: unknown;
-    try {
-      parseScenarios("not gherkin at all {{{");
-    } catch (err) {
-      thrown = err;
-    }
+  it("reads unparseable source as a fault in the parser's own words, never as a parsed file — an empty corpus balances against anything, so it never returns one", () => {
+    const parse = parseFeatureCorpus([{ file: "features/broken.feature", source: "not gherkin at all {{{" }]);
 
-    expect(thrown).toBeInstanceOf(FeatureSourceNotGherkin);
-    const error = thrown as FeatureSourceNotGherkin;
-    expect(error.message).toBe(
-      "Parser errors:\n(1:1): expected: #EOF, #Language, #TagLine, #FeatureLine, #Comment, #Empty, got 'not gherkin at all {{{'"
-    );
-    expect(error.cause).toBeInstanceOf(Error);
-    expect((error.cause as Error).message).toBe(error.message);
+    expect(parse).toEqual({
+      kind: "unparseable",
+      faults: [
+        {
+          file: "features/broken.feature",
+          message:
+            "Parser errors:\n(1:1): expected: #EOF, #Language, #TagLine, #FeatureLine, #Comment, #Empty, got 'not gherkin at all {{{'",
+        },
+      ],
+    });
   });
 });
 

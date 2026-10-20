@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import type { Ledger, ClaimReconciliation } from "../model.js";
 
 function accountsFor(ledger: Ledger, scnId: string): ClaimReconciliation[] {

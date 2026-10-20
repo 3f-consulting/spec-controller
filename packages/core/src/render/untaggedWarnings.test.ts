@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
-import { countScnOccurrences, parseScenarios, parseUntaggedScenarios } from "../parse/scenarios.js";
+import { countScnOccurrences } from "../parse/scenarios.js";
+import { parseScenarios, parseUntaggedScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { evidenceObligations } from "../domain/corpusCounts.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";

@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  countScnOccurrences,
-  parseScenarios,
-  parseUntaggedScenarios,
-} from "./scenarios.js";
+import { countScnOccurrences } from "./scenarios.js";
+import { parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
   let source: string;

@@ -5,9 +5,8 @@ import { afterAll, describe, it, expect } from "vitest";
 
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { parseErrorsIn } from "./gherkinValidation.js";
-import { discoverFeatures } from "./ingestScenarios.js";
-import { corpusReadFault, featureCorpusParseErrors } from "./ingestQualityChecks.js";
+import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
+import { readCorpus } from "./ingestQualityChecks.js";
 
 const made: string[] = [];
 
@@ -28,13 +27,9 @@ function corpusOf(files: Record<string, string>): { features: string; paths: Rec
   return { features, paths };
 }
 
-function refusalOf(features: string): Error {
-  try {
-    discoverFeatures(features);
-  } catch (err) {
-    return err as Error;
-  }
-  throw new Error("the corpus was read, not refused");
+function parserMessageOf(source: string): string {
+  const parse = parseFeatureCorpus([{ file: "a.feature", source }]);
+  return parse.kind === "unparseable" ? parse.faults[0]!.message : "";
 }
 
 const WELL_FORMED = `@AAA
@@ -57,30 +52,10 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
       "target.feature": "not gherkin at all {{{\n",
     });
 
-    expect(corpusReadFault(features)).toBeNull();
-    expect(featureCorpusParseErrors(features).map((e) => e.file)).toEqual([paths["target.feature"]]);
-  });
+    const reading = readCorpus(features);
 
-  it("lays out the refusal as its heading, then each unparseable file's path on its own line above that file's parse failure", () => {
-    const corruptTag = WELL_FORMED.replace("@unit @SCN-AAA-002", "@unit @SCN-AAA-002 x");
-    const corruptKeyword = WELL_FORMED.replace("Scenario: beta works", "Scenari0: beta works");
-    const { features, paths } = corpusOf({
-      "a.feature": corruptTag,
-      "b.feature": WELL_FORMED,
-      "c.feature": corruptKeyword,
-    });
-    const first = paths["a.feature"]!;
-    const second = paths["c.feature"]!;
-
-    expect(refusalOf(features).message).toBe(
-      [
-        APP_MESSAGES[AppMessage.FeatureCorpusUnparseable](),
-        first,
-        parseErrorsIn(first, corruptTag)[0]!.message,
-        second,
-        parseErrorsIn(second, corruptKeyword)[0]!.message,
-      ].join("\n")
-    );
+    expect(reading.kind).toBe("unparseable");
+    expect(reading.kind === "unparseable" ? reading.faults.map(({ file }) => file) : []).toEqual([paths["target.feature"]]);
   });
 
   it("runBalance refuses a corpus holding two unparseable files at exit 2, naming each file in name order above its parse failure, reconciling nothing", () => {
@@ -98,7 +73,7 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
       APP_MESSAGES[AppMessage.CorpusFileUnparseable](
         APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"),
         file,
-        parseErrorsIn(file, source)[0]!.message,
+        parserMessageOf(source),
       );
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci]);
 

@@ -7,7 +7,7 @@ import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js"
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf, type FeatureFileScenarios } from "../domain/scnTags.js";
-import { parseScenarioTags } from "../parse/scenarios.js";
+import type { ParsedFeatureFile } from "../parse/scenarios.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
 import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
@@ -61,7 +61,7 @@ function observationStreams(
 }
 
 export interface EvidenceReconciliationSources {
-  readonly featureSources: readonly string[];
+  readonly features: readonly ParsedFeatureFile[];
   readonly featureFiles?: readonly FeatureFileHeader[];
   readonly untaggedScenarios: readonly string[];
   readonly packageJson: TargetManifest;
@@ -121,7 +121,7 @@ export function evidenceReconciliationFromSources(
 ): EvidenceReconciliation {
   const { packageJson } = input;
   const corpus = readTargetCorpus(
-    input.featureSources,
+    input.features,
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
@@ -167,7 +167,7 @@ function withScenarioCodeErrors(
   const files: FeatureFileScenarios[] = input.featureFiles.map(({ slug, featureCode }, i) => ({
     slug,
     featureCode,
-    scenarios: parseScenarioTags(input.featureSources[i] ?? ""),
+    scenarios: input.features[i]?.scenarios ?? [],
   }));
   return {
     ...reconciliation,

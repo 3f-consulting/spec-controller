@@ -3,9 +3,9 @@ import { parse as parseYaml } from "yaml";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import {
   ciReadFault,
-  corpusReadFault,
   DEFAULT_CI_PATH,
   DEFAULT_PACKAGE_JSON,
+  type CorpusReading,
   type InputReadFault,
 } from "../ingest/ingestQualityChecks.js";
 import {
@@ -186,14 +186,13 @@ export function corpusDirRefusal(fault: InputReadFault): string {
   return pathRefusal(APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), fault);
 }
 
-export function checkInputPaths(args: Record<string, string>, corpusDir: string): string | null {
-  const corpus = corpusReadFault(corpusDir);
-  if (corpus !== null) {
+export function checkInputPaths(args: Record<string, string>, corpusReading: CorpusReading): string | null {
+  if (corpusReading.kind === "read-fault") {
     return pathRefusal(
       args["features"] === undefined
         ? APP_MESSAGES[AppMessage.DefaultFeatureCorpus]()
         : APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"),
-      corpus,
+      corpusReading.fault,
     );
   }
   const ci = ciReadFault(args["ci"]);

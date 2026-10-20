@@ -1,14 +1,17 @@
 import { readFileSync } from "node:fs";
-import { MissingFeatureCorpusError } from "../ingest/gherkinValidation.js";
-import { corpusFeatureFiles, extractFeatureCode, type CorpusFeatureFile } from "../ingest/ingestScenarios.js";
+import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
+import { corpusFeatureFiles, MissingFeatureCorpusError, type CorpusFeatureFile } from "../ingest/ingestScenarios.js";
 import { AppMessage } from "../messages.js";
-import { readOrRefuse, refuse } from "./unreadable.js";
+import { readOrRefuse, refuse, UnparseableFeatureFiles } from "./unreadable.js";
 
 export function readHeaderCodes(featuresDir: string): string[] {
-  return featureFilesIn(featuresDir).flatMap(({ path }) => {
-    const code = extractFeatureCode(readOrRefuse(AppMessage.FeatureFile, path, () => readFileSync(path, "utf8")));
-    return code === null ? [] : [code];
-  });
+  const sources = featureFilesIn(featuresDir).map(({ path }) => ({
+    file: path,
+    source: readOrRefuse(AppMessage.FeatureFile, path, () => readFileSync(path, "utf8")),
+  }));
+  const parse = parseFeatureCorpus(sources);
+  if (parse.kind === "unparseable") throw new UnparseableFeatureFiles(parse.faults);
+  return parse.features.flatMap(({ featureCode }) => (featureCode === null ? [] : [featureCode]));
 }
 
 function featureFilesIn(dir: string): CorpusFeatureFile[] {

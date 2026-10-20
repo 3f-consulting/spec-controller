@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseScenarios, parseVitestEvidenceObservations } from "../packages/core/dist/index.js";
+import { parseFeatureCorpus, parseVitestEvidenceObservations, scenariosOf } from "../packages/core/dist/index.js";
 
 // Our own code: no maintained tool tells a test of a domain rule from a test of an adapter's translation.
 // A proxy: it holds where a rule's tests live, not where the rule's code lives, so review still reads the code.
@@ -22,7 +22,9 @@ let concepts = 0;
 for (const file of readdirSync(join(root, "features")).filter((name) => name.endsWith(".feature"))) {
   if (!existsSync(join(root, domain, `${camelCase(basename(file, ".feature"))}.ts`))) continue;
   concepts += 1;
-  for (const { scnId } of parseScenarios(readFileSync(join(root, "features", file), "utf8"))) {
+  const parse = parseFeatureCorpus([{ file, source: readFileSync(join(root, "features", file), "utf8") }]);
+  if (parse.kind === "unparseable") throw new Error(parse.faults[0].message);
+  for (const { scnId } of parse.features.flatMap((feature) => scenariosOf(feature))) {
     conceptCodes.add(scnId.split("-")[1]);
   }
 }

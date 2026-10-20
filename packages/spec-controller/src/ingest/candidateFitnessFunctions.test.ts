@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { runReconcile } from "./ingestQualityChecks.js";
+import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];

@@ -1,3 +1,4 @@
+import type { FeatureSourceFault } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, type Unreadable } from "../messages.js";
 
 export class UnreadableInput extends Error {
@@ -19,6 +20,20 @@ export class UnreadableInput extends Error {
   }
 }
 
+export class UnparseableFeatureFiles extends Error {
+  override readonly name = "UnparseableFeatureFiles";
+
+  constructor(readonly faults: readonly FeatureSourceFault[]) {
+    super(
+      faults
+        .map(({ file, message }) =>
+          APP_MESSAGES[AppMessage.CorpusFileUnparseable](UNREADABLE_SUBJECTS[AppMessage.FeatureCorpus], file, message),
+        )
+        .join("\n"),
+    );
+  }
+}
+
 export function readOrRefuse<T>(what: Unreadable, path: string, read: () => T): T {
   try {
     return read();
@@ -33,7 +48,7 @@ export function refuse(what: Unreadable, path: string, err: unknown): never {
   throw new UnreadableInput(what, errno.path ?? path, err.message);
 }
 
-export function refusalLine(refusal: UnreadableInput): string {
+export function refusalLine(refusal: UnreadableInput | UnparseableFeatureFiles): string {
   return APP_MESSAGES[AppMessage.UsageError]("allocate", refusal.message);
 }
 

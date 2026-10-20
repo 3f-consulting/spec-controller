@@ -1,9 +1,8 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
-import { SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { headerFeatureCode, SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { scenarioCodesOf, type ScenarioTags } from "../domain/scnTags.js";
-import { FeatureSourceNotGherkin } from "./featureSourceNotGherkin.js";
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
 import type { Scenario } from "../model.js";
@@ -14,28 +13,41 @@ export function countScnOccurrences(source: string): number {
   return (source.match(SCN_OCCURRENCE) ?? []).length;
 }
 
-export function parseUntaggedScenarios(source: string): string[] {
-  return scenariosByScnCodeOf(source).untaggedScenarios;
+export interface FeatureSource {
+  readonly file: string;
+  readonly source: string;
 }
 
-interface TaggedScenario {
-  readonly scnId: string;
-  readonly tags: readonly string[];
-  readonly name: string;
+export interface ParsedFeatureFile {
+  readonly featureCode: string | null;
+  readonly scenarios: readonly ScenarioTags[];
+  readonly scnOccurrences: number;
 }
 
-function parseFeatureDocument(source: string): GherkinDocument {
+export interface FeatureSourceFault {
+  readonly file: string;
+  readonly message: string;
+}
+
+export type FeatureCorpusParse =
+  | { readonly kind: "parsed"; readonly features: readonly ParsedFeatureFile[] }
+  | { readonly kind: "unparseable"; readonly faults: readonly FeatureSourceFault[] };
+
+type SourceParse = { readonly feature: ParsedFeatureFile } | { readonly fault: string };
+
+function parseFeatureSource(source: string): SourceParse {
   const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
+  let document: GherkinDocument;
   try {
-    return parser.parse(source);
+    document = parser.parse(source);
   } catch (err) {
-    throw new FeatureSourceNotGherkin(err as Error);
+    return { fault: (err as Error).message };
   }
+  return { feature: parsedFileOf(document, countScnOccurrences(source)) };
 }
 
-export function parseScenarioTags(source: string): ScenarioTags[] {
-  const { feature } = parseFeatureDocument(source);
-  if (feature === undefined) return [];
+function parsedFileOf({ feature }: GherkinDocument, scnOccurrences: number): ParsedFeatureFile {
+  if (feature === undefined) return { featureCode: null, scenarios: [], scnOccurrences };
 
   const scenarios: ScenarioTags[] = [];
   const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
@@ -51,18 +63,36 @@ export function parseScenarioTags(source: string): ScenarioTags[] {
     }
   };
 
-  collect(feature.children as FeatureChild[], bare(feature.tags));
+  const featureTags = bare(feature.tags);
+  collect(feature.children as FeatureChild[], featureTags);
 
-  return scenarios;
+  return { featureCode: headerFeatureCode(featureTags), scenarios, scnOccurrences };
 }
 
-function scenariosByScnCodeOf(source: string): {
+export function parseFeatureCorpus(sources: readonly FeatureSource[]): FeatureCorpusParse {
+  const features: ParsedFeatureFile[] = [];
+  const faults: FeatureSourceFault[] = [];
+  for (const { file, source } of sources) {
+    const parsed = parseFeatureSource(source);
+    if ("fault" in parsed) faults.push({ file, message: parsed.fault });
+    else features.push(parsed.feature);
+  }
+  return faults.length > 0 ? { kind: "unparseable", faults } : { kind: "parsed", features };
+}
+
+interface TaggedScenario {
+  readonly scnId: string;
+  readonly tags: readonly string[];
+  readonly name: string;
+}
+
+function scenariosByScnCodeOf({ scenarios }: ParsedFeatureFile): {
   taggedScenarios: TaggedScenario[];
   untaggedScenarios: string[];
 } {
   const taggedScenarios: TaggedScenario[] = [];
   const untaggedScenarios: string[] = [];
-  for (const { name, tags } of parseScenarioTags(source)) {
+  for (const { name, tags } of scenarios) {
     const { scnId, severalCodes } = scenarioCodesOf(tags);
     if (severalCodes !== undefined) continue;
     if (scnId === null) untaggedScenarios.push(name);
@@ -71,20 +101,17 @@ function scenariosByScnCodeOf(source: string): {
   return { taggedScenarios, untaggedScenarios };
 }
 
-function parseTaggedScenarios(source: string): TaggedScenario[] {
-  return scenariosByScnCodeOf(source).taggedScenarios;
+export function untaggedScenariosOf(feature: ParsedFeatureFile): string[] {
+  return scenariosByScnCodeOf(feature).untaggedScenarios;
 }
 
-export function parseFeatureCounts(source: string): ParsedFeatureCounts {
-  const { taggedScenarios, untaggedScenarios } = scenariosByScnCodeOf(source);
-  return { rawScnOccurrences: countScnOccurrences(source), taggedScenarios, untaggedScenarios };
+export function featureCountsOf(feature: ParsedFeatureFile): ParsedFeatureCounts {
+  const { taggedScenarios, untaggedScenarios } = scenariosByScnCodeOf(feature);
+  return { rawScnOccurrences: feature.scnOccurrences, taggedScenarios, untaggedScenarios };
 }
 
-export function parseScenarios(
-  source: string,
-  deferralTags: readonly string[] = []
-): Scenario[] {
-  return parseTaggedScenarios(source).map((scenario) => ({
+export function scenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {
+  return scenariosByScnCodeOf(feature).taggedScenarios.map((scenario) => ({
     scnId: scenario.scnId,
     evidenceObligations: obligationsRaisedBy(scenario.tags, deferralTags),
   }));

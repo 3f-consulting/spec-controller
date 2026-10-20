@@ -1,36 +1,16 @@
 import { readFileSync, readdirSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
-import { isFeaturePart } from "@3f-consulting/spec-controller-core";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
-import {
-  MissingFeatureCorpusError,
-  UnreadableFeatureCorpusError,
-  parseErrorsIn,
-} from "./gherkinValidation.js";
+export class MissingFeatureCorpusError extends Error {
+  readonly directory: string;
 
-export interface DiscoveredFeature {
-  slug: string;
-  path: string;
-  featureCode: string | null;
-  source: string;
-}
-
-export function extractFeatureCode(source: string): string | null {
-  const lines = source.split(/\r?\n/);
-  const featureLine = lines.findIndex((line) => line.trim().startsWith("Feature:"));
-  return headerTagsAbove(lines, featureLine).find((bare) => isFeaturePart(bare)) ?? null;
-}
-
-function headerTagsAbove(lines: readonly string[], featureLine: number): string[] {
-  const tags: string[] = [];
-  for (let j = featureLine - 1; j >= 0; j--) {
-    const prev = lines[j]!.trim();
-    if (prev === "") continue;
-    if (!prev.startsWith("@")) break;
-    tags.push(...prev.split(/\s+/).filter((t) => t.startsWith("@")).map((t) => t.slice(1)));
+  constructor(directory: string) {
+    super(APP_MESSAGES[AppMessage.FeatureCorpusDirectoryMissing](directory));
+    this.name = "MissingFeatureCorpusError";
+    this.directory = directory;
   }
-  return tags;
 }
 
 export interface CorpusFeatureFile {
@@ -78,20 +58,16 @@ function readFeatureSource(path: string): string {
   }
 }
 
-export function discoverFeatures(dir: string): DiscoveredFeature[] {
-  const files = corpusFeatureFiles(dir).map(({ path, relativePath }) => ({
-    relativePath,
-    path,
-    source: readFeatureSource(path),
-  }));
+export interface FeatureFileSource {
+  readonly slug: string;
+  readonly path: string;
+  readonly source: string;
+}
 
-  const parseErrors = files.flatMap(({ path, source }) => parseErrorsIn(path, source));
-  if (parseErrors.length > 0) throw new UnreadableFeatureCorpusError(parseErrors);
-
-  return files.map(({ relativePath, path, source }) => ({
+export function readFeatureSources(dir: string): FeatureFileSource[] {
+  return corpusFeatureFiles(dir).map(({ path, relativePath }) => ({
     slug: relativePath.slice(0, -".feature".length),
     path,
-    featureCode: extractFeatureCode(source),
-    source,
+    source: readFeatureSource(path),
   }));
 }

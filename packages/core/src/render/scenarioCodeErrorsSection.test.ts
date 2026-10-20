@@ -8,8 +8,9 @@ import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import * as scnTags from "../domain/scnTags.js";
 import type { FeatureFileScenarios, ScenarioCodeError } from "../domain/scnTags.js";
-import { parseScenarioTags } from "../parse/scenarios.js";
+import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 interface CorpusFile {
   readonly slug: string;
@@ -159,7 +160,7 @@ function codedFeature(code: string): string {
 function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconciliation {
   const plainSlugs = Array.from({ length: plain }, (_, i) => `plain${i + 1}`);
   return evidenceReconciliationFromSources({
-    featureSources: [...codes.map(codedFeature), ...plainSlugs.map((slug) => `Feature: ${slug}\n`)],
+    features: parsedFeatures([...codes.map(codedFeature), ...plainSlugs.map((slug) => `Feature: ${slug}\n`)]),
     featureFiles: [
       ...codes.map((code) => ({ slug: code.toLowerCase(), featureCode: code })),
       ...plainSlugs.map((slug) => ({ slug, featureCode: null })),
@@ -274,7 +275,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
 
   function reconciled(files: readonly CorpusFile[]): EvidenceReconciliation {
     return evidenceReconciliationFromSources({
-      featureSources: files.map((file) => file.source),
+      features: parsedFeatures(files.map((file) => file.source)),
       featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
       untaggedScenarios: [],
       packageJson: {},

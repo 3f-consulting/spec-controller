@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 function reconcile(
   ciSources: readonly string[],
@@ -9,7 +10,7 @@ function reconcile(
   manifest: typeof packageJson = packageJson
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources,

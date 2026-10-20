@@ -6,6 +6,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-verdict-target",
@@ -102,7 +103,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     ];
     const reconciled = (behaviouralObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
       evidenceReconciliationFromSources({
-        featureSources: sources,
+        features: parsedFeatures(sources),
         featureFiles: [
           { slug: "one", featureCode: "ONE" },
           { slug: "two", featureCode: "TWO" },

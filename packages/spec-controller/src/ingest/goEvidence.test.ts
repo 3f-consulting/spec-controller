@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parseJunitEvidenceObservations, renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
 import { parseJunitXml } from "./junitXml.js";
-import { runReconcile } from "./ingestQualityChecks.js";
+import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const TARGET = "tests/fixtures/go";

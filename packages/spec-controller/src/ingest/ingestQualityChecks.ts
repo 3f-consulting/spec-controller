@@ -3,20 +3,17 @@ import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { junitReportPathsOf } from "./junitReportPaths.js";
 import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
-import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
+import { MissingFeatureCorpusError, readFeatureSources, type FeatureFileSource } from "./ingestScenarios.js";
 import {
-  parseFeatureCounts,
+  featureCountsOf,
+  parseFeatureCorpus,
   untaggedScenarioId,
+  type FeatureSourceFault,
+  type ParsedFeatureFile,
 } from "@3f-consulting/spec-controller-core";
-import {
-  MissingFeatureCorpusError,
-  UnreadableFeatureCorpusError,
-  type GherkinParseError,
-} from "./gherkinValidation.js";
 import {
   BUILT_IN_DEFERRAL_TAGS,
   corpusCountsOf,
-  type EvidenceObligations,
 } from "@3f-consulting/spec-controller-core";
 import {
   parseVitestEvidenceObservations,
@@ -88,9 +85,9 @@ function readJunitReportsIfPresent(path: string | undefined): JunitXmlReport | u
   return { testsuites: { testsuite: reports.flatMap((report) => report.testsuites?.testsuite ?? []) } };
 }
 
-function balanceCorpus(featuresDir: string): DiscoveredFeature[] {
+function sourcesOf(featuresDir: string): FeatureFileSource[] {
   try {
-    return discoverFeatures(featuresDir);
+    return readFeatureSources(featuresDir);
   } catch (err) {
     if (err instanceof MissingFeatureCorpusError) return [];
     throw err;
@@ -102,27 +99,37 @@ type ParsedFeature = Parameters<typeof corpusCountsOf>[0][number];
 export interface CorpusFile extends ParsedFeature {
   readonly slug: string;
   readonly featureCode: string | null;
-  readonly source: string;
+  readonly parsed: ParsedFeatureFile;
 }
 
-export function readFeatureCorpus(featuresDir: string): CorpusFile[] {
-  return balanceCorpus(featuresDir).map(({ slug, featureCode, source }) => ({
-    slug,
-    featureCode,
-    source,
-    feature: `${slug}.feature`,
-    ...parseFeatureCounts(source),
-  }));
+type ParsedCorpus =
+  | { readonly kind: "unparseable"; readonly faults: readonly FeatureSourceFault[] }
+  | { readonly kind: "read"; readonly corpus: readonly CorpusFile[] };
+
+export type CorpusReading = ParsedCorpus | { readonly kind: "read-fault"; readonly fault: InputReadFault };
+
+function parsedCorpusOf(files: readonly FeatureFileSource[]): ParsedCorpus {
+  const parse = parseFeatureCorpus(files.map(({ path, source }) => ({ file: path, source })));
+  if (parse.kind === "unparseable") return parse;
+  return {
+    kind: "read",
+    corpus: files.map(({ slug }, i) => {
+      const parsed = parse.features[i]!;
+      return { slug, featureCode: parsed.featureCode, parsed, feature: `${slug}.feature`, ...featureCountsOf(parsed) };
+    }),
+  };
 }
 
-export function featureCorpusParseErrors(featuresDir: string): GherkinParseError[] {
+export function readCorpus(featuresDir: string): CorpusReading {
+  let files: FeatureFileSource[];
   try {
-    balanceCorpus(featuresDir);
-    return [];
+    files = sourcesOf(featuresDir);
   } catch (err) {
-    if (err instanceof UnreadableFeatureCorpusError) return [...err.errors];
-    throw err;
+    const fault = readFaultOf(err, featuresDir);
+    if (fault === null) throw err;
+    return { kind: "read-fault", fault };
   }
+  return parsedCorpusOf(files);
 }
 
 export interface InputReadFault {
@@ -134,18 +141,6 @@ function readFaultOf(err: unknown, path: string): InputReadFault | null {
   const errno = err as NodeJS.ErrnoException;
   if (!(err instanceof Error) || typeof errno.code !== "string") return null;
   return { path: errno.path ?? path, reason: err.message };
-}
-
-export function corpusReadFault(featuresDir: string): InputReadFault | null {
-  try {
-    balanceCorpus(featuresDir);
-    return null;
-  } catch (err) {
-    if (err instanceof UnreadableFeatureCorpusError) return null;
-    const fault = readFaultOf(err, featuresDir);
-    if (fault === null) throw err;
-    return fault;
-  }
 }
 
 export function ciReadFault(ciPath: string | undefined): InputReadFault | null {
@@ -170,16 +165,12 @@ function readCiSource(source: string): void {
   }
 }
 
-export function readFeatureNames(featuresDir: string): Map<string, string> {
+export function featureNamesOf(corpus: readonly CorpusFile[]): Map<string, string> {
   const map = new Map<string, string>();
-  for (const f of balanceCorpus(featuresDir)) {
+  for (const f of corpus) {
     if (f.featureCode !== null) map.set(f.featureCode, f.slug);
   }
   return map;
-}
-
-export function readEvidenceObligations(features: string): EvidenceObligations {
-  return corpusCountsOf(readFeatureCorpus(features));
 }
 
 function parseBehaviouralObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
@@ -210,19 +201,17 @@ type TargetManifest = PackageJsonScripts & {
 export function runReconcile(
   opts: ReconcileOptions & { features: string },
   root: string,
-  corpus?: readonly CorpusFile[],
+  corpus: readonly CorpusFile[],
 ): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
   const ciPath = opts.ci ?? DEFAULT_CI_PATH;
   const ciPaths = ciSourcePathsOf(ciPath);
 
-  const corpusFiles = corpus ?? readFeatureCorpus(opts.features);
-
   return evidenceReconciliationFromSources({
-    featureSources: corpusFiles.map((f) => f.source),
-    featureFiles: corpusFiles.map(({ slug, featureCode }) => ({ slug, featureCode })),
-    untaggedScenarios: corpusFiles.flatMap(({ feature, untaggedScenarios }) =>
+    features: corpus.map((f) => f.parsed),
+    featureFiles: corpus.map(({ slug, featureCode }) => ({ slug, featureCode })),
+    untaggedScenarios: corpus.flatMap(({ feature, untaggedScenarios }) =>
       untaggedScenarios.map((scenario) => untaggedScenarioId({ feature, scenario }))
     ),
     packageJson,

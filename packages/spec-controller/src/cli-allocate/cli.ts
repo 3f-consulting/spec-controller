@@ -6,7 +6,7 @@ import { readHeaderCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
 import { AppMessage } from "../messages.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
-import { readOrRefuse, refusalLine, UnreadableInput } from "./unreadable.js";
+import { readOrRefuse, refusalLine, UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
@@ -31,7 +31,7 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   try {
     answerRequest(request);
   } catch (err) {
-    if (!(err instanceof UnreadableInput)) throw err;
+    if (!(err instanceof UnreadableInput || err instanceof UnparseableFeatureFiles)) throw err;
     refuseUsage(refusalLine(err));
   }
 }

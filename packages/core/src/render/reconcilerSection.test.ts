@@ -5,10 +5,11 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
     ciSources: [ciSource],

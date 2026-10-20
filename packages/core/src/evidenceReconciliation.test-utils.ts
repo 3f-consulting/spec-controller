@@ -2,6 +2,7 @@ import { evidenceReconciliationFromSources } from "./assemble/evidenceReconcilia
 import { summaryOf } from "./domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./domain/evidenceReconciliation.js";
 import type { Ledger } from "./model.js";
+import { parsedFeatures } from "./parse/parsedFeatures.test-utils.js";
 
 export const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, wo, wg),
@@ -158,7 +159,7 @@ const stepAccountingPackageJson = {
 
 export function reconcileStepAccounting(ciSources: readonly string[]): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
-    featureSources: [feature],
+    features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: stepAccountingPackageJson,
     ciSources,

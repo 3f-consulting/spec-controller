@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { runReconcile } from "./ingestQualityChecks.js";
+import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const KOTLIN = "tests/fixtures/kotlin";

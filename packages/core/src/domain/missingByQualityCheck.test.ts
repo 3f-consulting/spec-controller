@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 

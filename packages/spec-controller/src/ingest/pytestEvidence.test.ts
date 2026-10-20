@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
 import { OUTCOME_DESCRIPTION } from "@3f-consulting/spec-controller-core/internal";
-import { runReconcile } from "./ingestQualityChecks.js";
+import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const TARGET = "tests/fixtures/pytest";

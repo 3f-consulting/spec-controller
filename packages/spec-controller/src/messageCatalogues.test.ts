@@ -140,7 +140,6 @@ const SAMPLE_APP_PARAMS: { readonly [C in AppMessage]: Parameters<AppMessages[C]
   [AppMessage.CouldNotBeReadAt]: ["a file in the tree", "features/a.feature", "EISDIR"],
   [AppMessage.UsageError]: ["allocate", "too many arguments"],
   [AppMessage.GitExited]: [["log"], 128, "fatal: not a git repository"],
-  [AppMessage.FeatureCorpusUnparseable]: [],
   [AppMessage.FeatureCorpusDirectoryMissing]: ["features"],
   [AppMessage.StoredRunDirectoryNotCreated]: [],
   [AppMessage.FormatNamesStoredRunManifest]: ["store/t/r1/run.yaml", "store/t/r1/run.yaml", "store/t/r1"],

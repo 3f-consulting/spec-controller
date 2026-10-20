@@ -16,11 +16,13 @@ export type {
 } from "./model.js";
 
 export {
-  parseScenarios,
   countScnOccurrences,
-  parseUntaggedScenarios,
-  parseFeatureCounts,
+  parseFeatureCorpus,
+  scenariosOf,
+  untaggedScenariosOf,
+  featureCountsOf,
 } from "./parse/scenarios.js";
+export type { FeatureCorpusParse, FeatureSource, FeatureSourceFault, ParsedFeatureFile } from "./parse/scenarios.js";
 
 export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./domain/corpusCounts.js";

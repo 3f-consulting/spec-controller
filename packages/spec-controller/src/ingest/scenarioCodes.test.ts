@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.test-utils.js";
-import { readFeatureNames, runReconcile } from "./ingestQualityChecks.js";
-import { extractFeatureCode } from "./ingestScenarios.js";
+import { featureNamesOf } from "./ingestQualityChecks.js";
+import { readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
+import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
@@ -30,7 +31,7 @@ describe("[SCN-CLI-096] a feature part no file's header carries has no file behi
         "  @unit @SCN-THR-002\n  Scenario: foreign\n    Given a thing\n"
     );
 
-    expect(Object.fromEntries(readFeatureNames(features))).toEqual({ ONE: "one", TWO: "two" });
+    expect(Object.fromEntries(featureNamesOf(readFeatureCorpus(features)))).toEqual({ ONE: "one", TWO: "two" });
   });
 });
 
@@ -51,6 +52,7 @@ describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped",
 describe("[SCN-CLI-098] a feature file headed by a code of two or five characters carries that code", () => {
   it("reads the two- and five-character header codes, and not the one- or six-character ones", () => {
     const headed = (code: string) => `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a step\n`;
-    expect(["A", "AB", "FIVEC", "SIXCHR"].map((code) => extractFeatureCode(headed(code)))).toEqual([null, "AB", "FIVEC", null]);
+    const parse = parseFeatureCorpus(["A", "AB", "FIVEC", "SIXCHR"].map((code) => ({ file: `${code}.feature`, source: headed(code) })));
+    expect(parse.kind === "parsed" ? parse.features.map(({ featureCode }) => featureCode) : parse.faults).toEqual([null, "AB", "FIVEC", null]);
   });
 });

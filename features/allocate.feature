@@ -287,3 +287,11 @@ Feature: Allocate the next scenario code for a feature part
         | its object store is not permitted to be read                 |
         | its HEAD is not permitted to be read                         |
         | its .git is a file pointing to a directory that is not there |
+
+    @SCN-ALC-024 @unit @e2e
+    Scenario: a feature file the Gherkin parser rejects is refused, naming the file and the parser's words, and no code is given
+      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      And in that repository features/two.feature is a feature file the Gherkin parser rejects
+      When the author asks for the next code for ONE
+      Then it is refused as a usage error, never as an unknown part, and no code is given
+      And allocate's refusal names features/two.feature and the parser's own words

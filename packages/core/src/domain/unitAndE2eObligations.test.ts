@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { parseScenarios } from "../parse/scenarios.js";
+import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
