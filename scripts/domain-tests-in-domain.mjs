@@ -24,7 +24,7 @@ for (const file of readdirSync(join(root, "features")).filter((name) => name.end
   concepts += 1;
   const parse = parseFeatureCorpus([{ file, source: readFileSync(join(root, "features", file), "utf8") }]);
   if (parse.kind === "unparseable") throw new Error(parse.faults[0].message);
-  for (const { scnId } of parse.features.flatMap((feature) => scenariosOf(feature))) {
+  for (const { scnId } of parse.parsed.flatMap((feature) => scenariosOf(feature))) {
     conceptCodes.add(scnId.split("-")[1]);
   }
 }

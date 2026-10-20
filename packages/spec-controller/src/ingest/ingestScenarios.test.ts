@@ -6,7 +6,7 @@ import { temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { featureNamesOf, readCorpus } from "./ingestQualityChecks.js";
 import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
-import { readFeatureSources } from "./ingestScenarios.js";
+import { readFeatureSources, slugOf } from "./ingestScenarios.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 
 const made: string[] = [];
@@ -63,7 +63,7 @@ function parserWordsFor(source: string): string {
   return parse.kind === "unparseable" ? parse.faults[0]!.message : "";
 }
 
-describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the parser rejects", () => {
+describe("[SCN-GPG-001] the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place", () => {
   it("returns no corpus, and names every file the parser rejects with the parser's own words, in path order", () => {
     const { dir, firstBad, secondBad } = corpusWithTwoUnreadableFiles();
 
@@ -142,7 +142,7 @@ const SAME_NAME_FEATURES = `${SAME_NAME}/features`;
 
 describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path under the corpus, so two files of one name are told apart", () => {
   it("names each feature file by its path under the corpus, without its extension", () => {
-    expect(readFeatureCorpus(SAME_NAME_FEATURES).map(({ slug }) => slug)).toEqual(["alpha/run", "beta/run"]);
+    expect(readFeatureCorpus(SAME_NAME_FEATURES).map(({ file }) => slugOf(file))).toEqual(["alpha/run", "beta/run"]);
   });
 
   it("maps each feature code to the path of its own file", () => {

@@ -17,8 +17,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
     .flatMap(([, { ids }]) => ids)
     .map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" }));
   return evidenceReconciliationFromSources({
-    features: parsedFeatures(sources),
-    featureFiles: entries.map(([slug, { code }]) => ({ slug, featureCode: code })),
+    features: parsedFeatures(sources, entries.map(([slug]) => `${slug}.feature`)),
     untaggedScenarios: [],
     packageJson: {},
     ciWorkflows: [],

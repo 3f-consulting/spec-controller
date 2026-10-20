@@ -19,7 +19,6 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
       },
     },
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

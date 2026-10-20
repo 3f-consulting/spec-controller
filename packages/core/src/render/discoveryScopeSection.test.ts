@@ -11,14 +11,13 @@ import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
 function reconcile(
   workflowSources: readonly string[],
-  ciSourceNames?: readonly string[]
+  workflowNames?: readonly string[]
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson,
-    ciWorkflows: parsedWorkflows(workflowSources),
-    ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
+    ciWorkflows: parsedWorkflows(workflowSources, workflowNames),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -62,7 +61,16 @@ describe("[SCN-RPT-047] the report names the workflows, the jobs and the step co
   });
 
   it("puts the placeholder in the workflow cell of every row when the target gives no workflow names", () => {
-    const reconciliation = reconcile([nightly, ci]);
+    const named = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
+    const reconciliation: EvidenceReconciliation = {
+      ...named,
+      summary: {
+        ...named.summary,
+        discoveryScope: (named.summary.discoveryScope ?? [])
+          .map(({ job, steps, candidates }) => ({ job, steps, candidates }))
+          .sort((a, b) => a.job.localeCompare(b.job)),
+      },
+    };
     const lines = rendered(reconciliation);
     expect(lines).toHaveLength(8);
     expect(lines.slice(4, 7)).toStrictEqual([

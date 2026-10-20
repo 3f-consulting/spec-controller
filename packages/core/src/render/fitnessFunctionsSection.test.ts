@@ -45,7 +45,6 @@ function reconcile(barCitation: string): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci(barCitation)]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

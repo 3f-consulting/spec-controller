@@ -3,19 +3,21 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { unitTestsCi as ci, nightly, feature, discoveryScopePackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
-import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { parsedWorkflows, workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
+import { declaredRunnerTest, discoveryScope, stepDispositions } from "../domain/uncitedFitnessFunctions.js";
+import { shellReading } from "../parse/commandRuns.js";
+import { resolveRunners } from "../parse/targetManifest.js";
 
 function reconcile(
   workflowSources: readonly string[],
-  ciSourceNames?: readonly string[],
+  workflowNames?: readonly string[],
   manifest: typeof packageJson = packageJson
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     untaggedScenarios: [],
     packageJson: manifest,
-    ciWorkflows: parsedWorkflows(workflowSources),
-    ...(ciSourceNames === undefined ? {} : { ciSourceNames }),
+    ciWorkflows: parsedWorkflows(workflowSources, workflowNames),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -44,8 +46,12 @@ describe("[SCN-RMD-012] the report names the workflows, the jobs and the step co
   });
 
   it("names no workflow on any job when the target gives no workflow names", () => {
-    const { summary } = reconcile([nightly, ci]);
-    expect(summary.discoveryScope).toStrictEqual([
+    const dispositionOf = stepDispositions({
+      isReconciler: () => false,
+      isNamedANonCheck: () => false,
+      runsARunner: declaredRunnerTest(packageJson.scripts ?? {}, resolveRunners(packageJson).tiers, shellReading),
+    });
+    expect(discoveryScope(workflowSteps([nightly, ci]), [], dispositionOf)).toStrictEqual([
       { job: "audit", steps: 1, candidates: 1 },
       { job: "quality", steps: 3, candidates: 1 },
       { job: "sweep", steps: 2, candidates: 2 },

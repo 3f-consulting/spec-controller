@@ -14,7 +14,6 @@ function reportLines(ciSource: string): string[] {
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ciSource]),
-    ciSourceNames: ["ci.yml"],
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],
     deferralTags: [],

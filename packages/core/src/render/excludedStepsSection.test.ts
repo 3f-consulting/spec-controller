@@ -23,7 +23,6 @@ function reportLines(notChecks?: readonly string[]): string[] {
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

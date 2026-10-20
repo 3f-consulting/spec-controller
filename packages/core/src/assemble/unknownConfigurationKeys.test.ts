@@ -17,7 +17,6 @@ function reconcile(specController: Record<string, unknown>): EvidenceReconciliat
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

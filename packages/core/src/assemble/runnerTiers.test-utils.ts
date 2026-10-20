@@ -18,7 +18,6 @@ export function runnersReconciler(
       untaggedScenarios: [],
       packageJson,
       ciWorkflows: parsedWorkflows([ci]),
-      ciSourceNames: ["ci.yml"],
       behaviouralObservations: [],
       deferralTags: [],
     });

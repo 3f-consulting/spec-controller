@@ -61,16 +61,16 @@ export interface ScenarioTags {
 }
 
 export interface FeatureFileScenarios {
-  readonly slug: string;
+  readonly file: string;
   readonly featureCode: string | null;
   readonly scenarios: readonly ScenarioTags[];
 }
 
 function headerFilesByCode(features: readonly FeatureFileScenarios[]): Map<string, string[]> {
   const filesByCode = new Map<string, string[]>();
-  for (const file of features) {
-    if (file.featureCode === null) continue;
-    filesByCode.set(file.featureCode, [...(filesByCode.get(file.featureCode) ?? []), `${file.slug}.feature`]);
+  for (const feature of features) {
+    if (feature.featureCode === null) continue;
+    filesByCode.set(feature.featureCode, [...(filesByCode.get(feature.featureCode) ?? []), feature.file]);
   }
   return filesByCode;
 }
@@ -88,8 +88,8 @@ export function duplicateFeatureCodes(features: readonly FeatureFileScenarios[])
   return faults;
 }
 
-function codedScenarioIds(file: FeatureFileScenarios): string[] {
-  return file.scenarios.flatMap(({ tags }) => {
+function codedScenarioIds(feature: FeatureFileScenarios): string[] {
+  return feature.scenarios.flatMap(({ tags }) => {
     const { scnId } = scenarioCodesOf(tags);
     return scnId === null ? [] : [scnId];
   });
@@ -98,16 +98,16 @@ function codedScenarioIds(file: FeatureFileScenarios): string[] {
 export function foreignScenarioCodes(features: readonly FeatureFileScenarios[]): ScenarioCodeError[] {
   const carriersByCode = headerFilesByCode(features);
   const faults: ScenarioCodeError[] = [];
-  for (const file of features) {
-    if (file.featureCode === null) continue;
-    for (const scnId of codedScenarioIds(file)) {
+  for (const feature of features) {
+    if (feature.featureCode === null) continue;
+    for (const scnId of codedScenarioIds(feature)) {
       const named = featureCodeOf(scnId);
-      if (named === null || named === file.featureCode) continue;
+      if (named === null || named === feature.featureCode) continue;
       const carriers = carriersByCode.get(named) ?? [];
       faults.push({
         kind: "foreign-scn-code",
-        files: [`${file.slug}.feature`],
-        featureCode: file.featureCode,
+        files: [feature.file],
+        featureCode: feature.featureCode,
         scnId,
         namedFeatureCode: named,
         namedFeatureFiles: carriers,
@@ -119,22 +119,22 @@ export function foreignScenarioCodes(features: readonly FeatureFileScenarios[]):
 
 function noFeatureCodeFiles(features: readonly FeatureFileScenarios[]): ScenarioCodeError[] {
   return features
-    .filter((file) => file.featureCode === null && codedScenarioIds(file).length > 0)
-    .map((file) => ({
+    .filter((feature) => feature.featureCode === null && codedScenarioIds(feature).length > 0)
+    .map((feature) => ({
       kind: "no-feature-code" as const,
-      files: [`${file.slug}.feature`],
+      files: [feature.file],
     }));
 }
 
 function severalScnCodes(features: readonly FeatureFileScenarios[]): ScenarioCodeError[] {
-  return features.flatMap((file) =>
-    file.scenarios.flatMap(({ name, tags }) => {
+  return features.flatMap((feature) =>
+    feature.scenarios.flatMap(({ name, tags }) => {
       const { severalCodes } = scenarioCodesOf(tags);
       if (severalCodes === undefined) return [];
       return [
         {
           kind: "several-scn-codes" as const,
-          files: [`${file.slug}.feature`],
+          files: [feature.file],
           scenario: name,
           codes: severalCodes,
         },

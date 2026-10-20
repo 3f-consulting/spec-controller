@@ -10,7 +10,7 @@ import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 function file(slug: string, code: string | null, ids: readonly string[]): FeatureFileScenarios {
   const header = code === null ? "" : `@${code}\n`;
   const scenarios = ids.map((id, i) => `  @unit @${id}\n  Scenario: s${i}\n    Given a thing\n`).join("\n");
-  return { slug, featureCode: code, scenarios: parseScenarioTags(`${header}Feature: ${slug}\n\n${scenarios}`) };
+  return { file: `${slug}.feature`, featureCode: code, scenarios: parseScenarioTags(`${header}Feature: ${slug}\n\n${scenarios}`) };
 }
 
 describe("[SCN-STG-011] a scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file", () => {
@@ -100,7 +100,7 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
 
   it("lists nothing for a file whose header and scenario codes are both too long to be codes, and lists the same file once its scenario's feature part is five characters", () => {
     const headedTooLong = (scnId: string): FeatureFileScenarios => ({
-      slug: "long",
+      file: "long.feature",
       featureCode: null,
       scenarios: parseScenarioTags(`@TOOLONGCODE\nFeature: long\n\n  @unit @${scnId}\n  Scenario: s\n    Given a thing\n`),
     });
@@ -111,7 +111,7 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
 
 describe("[SCN-STG-029] a scenario tagged with two scenario codes is listed as a scenario code error naming both", () => {
   const twoCodes = (ids: string): FeatureFileScenarios => ({
-    slug: "two",
+    file: "two.feature",
     featureCode: "TWO",
     scenarios: parseScenarioTags(`@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`),
   });
@@ -140,7 +140,7 @@ describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is o
     Feature: (own: string) => `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
   } as const;
   const underAncestor = (ancestor: keyof typeof sources, own: string): FeatureFileScenarios => ({
-    slug: "alpha",
+    file: "alpha.feature",
     featureCode: "AAA",
     scenarios: parseScenarioTags(sources[ancestor](own)),
   });

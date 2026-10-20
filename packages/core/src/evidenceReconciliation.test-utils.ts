@@ -164,7 +164,6 @@ export function reconcileStepAccounting(workflowSources: readonly string[]): Evi
     untaggedScenarios: [],
     packageJson: stepAccountingPackageJson,
     ciWorkflows: parsedWorkflows(workflowSources),
-    ciSourceNames: workflowSources.map(() => "ci.yml"),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],
     deferralTags: [],

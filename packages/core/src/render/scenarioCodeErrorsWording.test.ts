@@ -20,8 +20,7 @@ function markdownOf(files: readonly File[]): string {
   const codes = files.flatMap((file) => file.scenarios.filter((tags) => !tags.includes(" ")).map((tags) => tags.slice(1)));
   return renderMarkdown(
     evidenceReconciliationFromSources({
-      features: parsedFeatures(files.map(source)),
-      featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
+      features: parsedFeatures(files.map(source), files.map(({ slug }) => `${slug}.feature`)),
       untaggedScenarios: [],
       packageJson: {},
       ciWorkflows: [],

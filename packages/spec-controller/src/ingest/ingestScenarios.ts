@@ -42,10 +42,18 @@ function featureFilesUnder(dir: string, prefix: string, entries: Dirent[]): stri
   });
 }
 
+export function corpusPathOf(dir: string, relativePath: string): string {
+  return join(dir, relativePath);
+}
+
+export function slugOf(relativePath: string): string {
+  return relativePath.slice(0, -".feature".length);
+}
+
 export function corpusFeatureFiles(dir: string): CorpusFeatureFile[] {
   return featureFilesUnder(dir, "", corpusEntries(dir))
     .sort()
-    .map((relativePath) => ({ path: join(dir, relativePath), relativePath }));
+    .map((relativePath) => ({ path: corpusPathOf(dir, relativePath), relativePath }));
 }
 
 function readFeatureSource(path: string): string {
@@ -58,16 +66,10 @@ function readFeatureSource(path: string): string {
   }
 }
 
-export interface FeatureFileSource {
-  readonly slug: string;
-  readonly path: string;
+export interface FeatureFileSource extends CorpusFeatureFile {
   readonly source: string;
 }
 
 export function readFeatureSources(dir: string): FeatureFileSource[] {
-  return corpusFeatureFiles(dir).map(({ path, relativePath }) => ({
-    slug: relativePath.slice(0, -".feature".length),
-    path,
-    source: readFeatureSource(path),
-  }));
+  return corpusFeatureFiles(dir).map(({ path, relativePath }) => ({ path, relativePath, source: readFeatureSource(path) }));
 }

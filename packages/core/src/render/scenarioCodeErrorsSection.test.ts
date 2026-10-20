@@ -19,7 +19,7 @@ interface CorpusFile {
 }
 
 function scenariosOf(files: readonly CorpusFile[]): FeatureFileScenarios[] {
-  return files.map(({ slug, featureCode, source }) => ({ slug, featureCode, scenarios: parseScenarioTags(source) }));
+  return files.map(({ slug, featureCode, source }) => ({ file: `${slug}.feature`, featureCode, scenarios: parseScenarioTags(source) }));
 }
 
 const duplicateFeatureCodes = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
@@ -160,11 +160,10 @@ function codedFeature(code: string): string {
 function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconciliation {
   const plainSlugs = Array.from({ length: plain }, (_, i) => `plain${i + 1}`);
   return evidenceReconciliationFromSources({
-    features: parsedFeatures([...codes.map(codedFeature), ...plainSlugs.map((slug) => `Feature: ${slug}\n`)]),
-    featureFiles: [
-      ...codes.map((code) => ({ slug: code.toLowerCase(), featureCode: code })),
-      ...plainSlugs.map((slug) => ({ slug, featureCode: null })),
-    ],
+    features: parsedFeatures(
+      [...codes.map(codedFeature), ...plainSlugs.map((slug) => `Feature: ${slug}\n`)],
+      [...codes.map((code) => `${code.toLowerCase()}.feature`), ...plainSlugs.map((slug) => `${slug}.feature`)]
+    ),
     untaggedScenarios: [],
     packageJson: {},
     ciWorkflows: [],
@@ -275,8 +274,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
 
   function reconciled(files: readonly CorpusFile[]): EvidenceReconciliation {
     return evidenceReconciliationFromSources({
-      features: parsedFeatures(files.map((file) => file.source)),
-      featureFiles: files.map(({ slug, featureCode }) => ({ slug, featureCode })),
+      features: parsedFeatures(files.map((file) => file.source), files.map(({ slug }) => `${slug}.feature`)),
       untaggedScenarios: [],
       packageJson: {},
       ciWorkflows: [],

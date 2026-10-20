@@ -53,6 +53,6 @@ describe("[SCN-CLI-098] a feature file headed by a code of two or five character
   it("reads the two- and five-character header codes, and not the one- or six-character ones", () => {
     const headed = (code: string) => `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a step\n`;
     const parse = parseFeatureCorpus(["A", "AB", "FIVEC", "SIXCHR"].map((code) => ({ file: `${code}.feature`, source: headed(code) })));
-    expect(parse.kind === "parsed" ? parse.features.map(({ featureCode }) => featureCode) : parse.faults).toEqual([null, "AB", "FIVEC", null]);
+    expect(parse.kind === "parsed" ? parse.parsed.map(({ featureCode }) => featureCode) : parse.faults).toEqual([null, "AB", "FIVEC", null]);
   });
 });

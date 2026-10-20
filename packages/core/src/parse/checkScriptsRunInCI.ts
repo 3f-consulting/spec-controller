@@ -1,27 +1,16 @@
 import { parse } from "yaml";
 import type { PipelineStep, PipelineStepAction, WorkflowStep } from "../domain/pipelineStep.js";
+import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
 }
 
-export interface WorkflowSource {
-  readonly file: string;
-  readonly source: string;
-}
-
-export interface ParsedWorkflow {
+interface WorkflowContent {
   readonly steps: readonly WorkflowStep[];
 }
 
-export interface WorkflowSourceFault {
-  readonly file: string;
-  readonly message: string;
-}
-
-export type WorkflowsParse =
-  | { readonly kind: "parsed"; readonly workflows: readonly ParsedWorkflow[] }
-  | { readonly kind: "unparseable"; readonly faults: readonly WorkflowSourceFault[] };
+export type ParsedWorkflow = Parsed<WorkflowContent>;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
@@ -119,27 +108,12 @@ function stepsOfDocument(doc: unknown): WorkflowStep[] {
   return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
 }
 
-type SourceParse = { readonly workflow: ParsedWorkflow } | { readonly fault: string };
-
-function parseWorkflowSource(source: string): SourceParse {
-  let doc: unknown;
-  try {
-    doc = parse(source);
-  } catch (err) {
-    return { fault: (err as Error).message };
-  }
-  return { workflow: { steps: stepsOfDocument(doc) } };
+function workflowOf(source: string): WorkflowContent {
+  return { steps: stepsOfDocument(parse(source)) };
 }
 
-export function parseWorkflows(sources: readonly WorkflowSource[]): WorkflowsParse {
-  const workflows: ParsedWorkflow[] = [];
-  const faults: WorkflowSourceFault[] = [];
-  for (const { file, source } of sources) {
-    const parsed = parseWorkflowSource(source);
-    if ("fault" in parsed) faults.push({ file, message: parsed.fault });
-    else workflows.push(parsed.workflow);
-  }
-  return faults.length > 0 ? { kind: "unparseable", faults } : { kind: "parsed", workflows };
+export function parseWorkflows(sources: readonly Source[]): SourcesParse<WorkflowContent> {
+  return parseSources(sources, workflowOf);
 }
 
 export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {

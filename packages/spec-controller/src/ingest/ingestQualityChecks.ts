@@ -3,21 +3,22 @@ import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { junitReportPathsOf } from "./junitReportPaths.js";
 import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
-import { MissingFeatureCorpusError, readFeatureSources, type FeatureFileSource } from "./ingestScenarios.js";
+import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, slugOf, type FeatureFileSource } from "./ingestScenarios.js";
 import {
   featureCountsOf,
   parseFeatureCorpus,
+  untaggedScenariosOf,
   parseWorkflows,
   untaggedScenarioId,
-  type FeatureSourceFault,
   type ParsedFeatureFile,
   type ParsedWorkflow,
-  type WorkflowSource,
-  type WorkflowSourceFault,
+  type Source,
+  type SourceFault,
 } from "@3f-consulting/spec-controller-core";
 import {
   BUILT_IN_DEFERRAL_TAGS,
   corpusCountsOf,
+  type EvidenceObligations,
 } from "@3f-consulting/spec-controller-core";
 import {
   parseVitestEvidenceObservations,
@@ -98,29 +99,18 @@ function sourcesOf(featuresDir: string): FeatureFileSource[] {
   }
 }
 
-type ParsedFeature = Parameters<typeof corpusCountsOf>[0][number];
-
-export interface CorpusFile extends ParsedFeature {
-  readonly slug: string;
-  readonly featureCode: string | null;
-  readonly parsed: ParsedFeatureFile;
-}
-
 type ParsedCorpus =
-  | { readonly kind: "unparseable"; readonly faults: readonly FeatureSourceFault[] }
-  | { readonly kind: "read"; readonly corpus: readonly CorpusFile[] };
+  | { readonly kind: "unparseable"; readonly faults: readonly SourceFault[] }
+  | { readonly kind: "read"; readonly corpus: readonly ParsedFeatureFile[] };
 
 export type CorpusReading = ParsedCorpus | { readonly kind: "read-fault"; readonly fault: InputReadFault };
 
-function parsedCorpusOf(files: readonly FeatureFileSource[]): ParsedCorpus {
-  const parse = parseFeatureCorpus(files.map(({ path, source }) => ({ file: path, source })));
-  if (parse.kind === "unparseable") return parse;
+function parsedCorpusOf(featuresDir: string, files: readonly FeatureFileSource[]): ParsedCorpus {
+  const parse = parseFeatureCorpus(files.map(({ relativePath, source }) => ({ file: relativePath, source })));
+  if (parse.kind === "parsed") return { kind: "read", corpus: parse.parsed };
   return {
-    kind: "read",
-    corpus: files.map(({ slug }, i) => {
-      const parsed = parse.features[i]!;
-      return { slug, featureCode: parsed.featureCode, parsed, feature: `${slug}.feature`, ...featureCountsOf(parsed) };
-    }),
+    kind: "unparseable",
+    faults: parse.faults.map(({ file, message }) => ({ file: corpusPathOf(featuresDir, file), message })),
   };
 }
 
@@ -133,7 +123,7 @@ export function readCorpus(featuresDir: string): CorpusReading {
     if (fault === null) throw err;
     return { kind: "read-fault", fault };
   }
-  return parsedCorpusOf(files);
+  return parsedCorpusOf(featuresDir, files);
 }
 
 export interface InputReadFault {
@@ -147,23 +137,18 @@ function readFaultOf(err: unknown, path: string): InputReadFault | null {
   return { path: errno.path ?? path, reason: err.message };
 }
 
-export interface ReadWorkflows {
-  readonly names: readonly string[];
-  readonly workflows: readonly ParsedWorkflow[];
-}
-
 export type WorkflowReading =
   | { readonly kind: "read-fault"; readonly fault: InputReadFault }
-  | { readonly kind: "unparseable"; readonly faults: readonly WorkflowSourceFault[] }
-  | { readonly kind: "read"; readonly workflows: ReadWorkflows };
+  | { readonly kind: "unparseable"; readonly faults: readonly SourceFault[] }
+  | { readonly kind: "read"; readonly workflows: readonly ParsedWorkflow[] };
 
 function readUtf8(path: string): string {
   return readFileSync(path, "utf8");
 }
 
-function readWorkflowSource(path: string, read: (path: string) => string): WorkflowSource {
+function readWorkflowSource(path: string, read: (path: string) => string): Source {
   try {
-    return { file: path, source: read(path) };
+    return { file: basename(path), source: read(path) };
   } catch (err) {
     const errno = err as NodeJS.ErrnoException;
     errno.path ??= path;
@@ -173,28 +158,35 @@ function readWorkflowSource(path: string, read: (path: string) => string): Workf
 
 export function readWorkflows(ciPath: string | undefined, read: (path: string) => string = readUtf8): WorkflowReading {
   const path = ciPath ?? DEFAULT_CI_PATH;
-  let sources: WorkflowSource[];
+  let paths: string[];
+  let sources: Source[];
   try {
-    sources = ciSourcePathsOf(path).map((source) => readWorkflowSource(source, read));
+    paths = ciSourcePathsOf(path);
+    sources = paths.map((source) => readWorkflowSource(source, read));
   } catch (err) {
     const fault = readFaultOf(err, path);
     if (fault === null) throw err;
     return { kind: "read-fault", fault };
   }
   const parse = parseWorkflows(sources);
-  if (parse.kind === "unparseable") return parse;
-  return { kind: "read", workflows: { names: sources.map(({ file }) => basename(file)), workflows: parse.workflows } };
+  if (parse.kind === "parsed") return { kind: "read", workflows: parse.parsed };
+  const pathOf = new Map(paths.map((read) => [basename(read), read]));
+  return { kind: "unparseable", faults: parse.faults.map(({ file, message }) => ({ file: pathOf.get(file) ?? file, message })) };
 }
 
-export function featureNamesOf(corpus: readonly CorpusFile[]): Map<string, string> {
+export function featureNamesOf(corpus: readonly ParsedFeatureFile[]): Map<string, string> {
   const map = new Map<string, string>();
-  for (const f of corpus) {
-    if (f.featureCode !== null) map.set(f.featureCode, f.slug);
+  for (const { featureCode, file } of corpus) {
+    if (featureCode !== null) map.set(featureCode, slugOf(file));
   }
   return map;
 }
 
-function parseBehaviouralObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
+export function evidenceObligationsOf(corpus: readonly ParsedFeatureFile[]): EvidenceObligations {
+  return corpusCountsOf(corpus.map((parsed) => ({ feature: parsed.file, ...featureCountsOf(parsed) })));
+}
+
+function parseBehaviouralObservations(opts: EvidenceReportOptions, root: string | undefined): EvidenceObservation[] {
   const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
   if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
@@ -219,24 +211,24 @@ type TargetManifest = PackageJsonScripts & {
   };
 };
 
+export type EvidenceReportOptions = Omit<ReconcileOptions, "features" | "ci">;
+
 export function runReconcile(
-  opts: ReconcileOptions & { features: string },
+  opts: EvidenceReportOptions,
   root: string,
-  corpus: readonly CorpusFile[],
-  workflows: ReadWorkflows,
+  corpus: readonly ParsedFeatureFile[],
+  workflows: readonly ParsedWorkflow[],
 ): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
 
   return evidenceReconciliationFromSources({
-    features: corpus.map((f) => f.parsed),
-    featureFiles: corpus.map(({ slug, featureCode }) => ({ slug, featureCode })),
-    untaggedScenarios: corpus.flatMap(({ feature, untaggedScenarios }) =>
-      untaggedScenarios.map((scenario) => untaggedScenarioId({ feature, scenario }))
+    features: corpus,
+    untaggedScenarios: corpus.flatMap((parsed) =>
+      untaggedScenariosOf(parsed).map((scenario) => untaggedScenarioId({ feature: parsed.file, scenario }))
     ),
     packageJson,
-    ciWorkflows: workflows.workflows,
-    ciSourceNames: workflows.names,
+    ciWorkflows: workflows,
     ciStepRecord: readJsonIfPresent<StepRecord>(opts.ciSteps),
     behaviouralObservations: parseBehaviouralObservations(opts, root),
     deferralTags: BUILT_IN_DEFERRAL_TAGS,

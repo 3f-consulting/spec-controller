@@ -22,7 +22,6 @@ function reportLines(runners: Record<string, string | null>): string[] {
       },
     },
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

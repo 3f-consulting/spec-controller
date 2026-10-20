@@ -17,7 +17,6 @@ function reconcile(notChecks?: readonly string[]): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

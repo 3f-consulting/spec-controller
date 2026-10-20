@@ -22,7 +22,7 @@ export {
   untaggedScenariosOf,
   featureCountsOf,
 } from "./parse/scenarios.js";
-export type { FeatureCorpusParse, FeatureSource, FeatureSourceFault, ParsedFeatureFile } from "./parse/scenarios.js";
+export type { ParsedFeatureFile } from "./parse/scenarios.js";
 
 export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
 export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./domain/corpusCounts.js";
@@ -54,13 +54,9 @@ export type { CucumberJsonReport } from "./parse/cucumber.js";
 export { runningFitnessFunctions } from "./parse/runningFitnessFunctions.js";
 export type { StepRecord } from "./parse/ciStepRecord.js";
 export { commandInvokesScript, parseWorkflows } from "./parse/checkScriptsRunInCI.js";
-export type {
-  PackageJsonScripts,
-  ParsedWorkflow,
-  WorkflowSource,
-  WorkflowSourceFault,
-  WorkflowsParse,
-} from "./parse/checkScriptsRunInCI.js";
+export type { PackageJsonScripts, ParsedWorkflow } from "./parse/checkScriptsRunInCI.js";
+export type { WorkflowStep } from "./domain/pipelineStep.js";
+export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourceParse.js";
 
 export { assembleRenderInput } from "./assemble/renderInput.js";
 export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames } from "./domain/renderInput.js";

@@ -28,7 +28,7 @@ import {
 // One .feature file's text, and one already-parsed Vitest JSON report.
 const corpus = parseFeatureCorpus([{ file: "features/checkout.feature", source: featureSource }]);
 if (corpus.kind === "unparseable") throw new Error(corpus.faults[0].message);
-const scenarios = corpus.features.flatMap((feature) => scenariosOf(feature));
+const scenarios = corpus.parsed.flatMap((feature) => scenariosOf(feature));
 const observed = parseVitestEvidenceObservations(vitestReport, "unit");
 
 const ledger = reconcile(scenarios, observed);

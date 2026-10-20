@@ -6,6 +6,7 @@ import { scenarioCodesOf, type ScenarioTags } from "../domain/scnTags.js";
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
 import type { Scenario } from "../model.js";
+import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
 const SCN_OCCURRENCE = new RegExp(`@${SCN_ID_SOURCE}`, "g");
 
@@ -13,40 +14,20 @@ export function countScnOccurrences(source: string): number {
   return (source.match(SCN_OCCURRENCE) ?? []).length;
 }
 
-export interface FeatureSource {
-  readonly file: string;
-  readonly source: string;
-}
-
-export interface ParsedFeatureFile {
+interface FeatureFileContent {
   readonly featureCode: string | null;
   readonly scenarios: readonly ScenarioTags[];
   readonly scnOccurrences: number;
 }
 
-export interface FeatureSourceFault {
-  readonly file: string;
-  readonly message: string;
-}
+export type ParsedFeatureFile = Parsed<FeatureFileContent>;
 
-export type FeatureCorpusParse =
-  | { readonly kind: "parsed"; readonly features: readonly ParsedFeatureFile[] }
-  | { readonly kind: "unparseable"; readonly faults: readonly FeatureSourceFault[] };
-
-type SourceParse = { readonly feature: ParsedFeatureFile } | { readonly fault: string };
-
-function parseFeatureSource(source: string): SourceParse {
+function featureFileOf(source: string): FeatureFileContent {
   const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
-  let document: GherkinDocument;
-  try {
-    document = parser.parse(source);
-  } catch (err) {
-    return { fault: (err as Error).message };
-  }
-  return { feature: parsedFileOf(document, countScnOccurrences(source)) };
+  return contentOf(parser.parse(source), countScnOccurrences(source));
 }
 
-function parsedFileOf({ feature }: GherkinDocument, scnOccurrences: number): ParsedFeatureFile {
+function contentOf({ feature }: GherkinDocument, scnOccurrences: number): FeatureFileContent {
   if (feature === undefined) return { featureCode: null, scenarios: [], scnOccurrences };
 
   const scenarios: ScenarioTags[] = [];
@@ -69,15 +50,8 @@ function parsedFileOf({ feature }: GherkinDocument, scnOccurrences: number): Par
   return { featureCode: headerFeatureCode(featureTags), scenarios, scnOccurrences };
 }
 
-export function parseFeatureCorpus(sources: readonly FeatureSource[]): FeatureCorpusParse {
-  const features: ParsedFeatureFile[] = [];
-  const faults: FeatureSourceFault[] = [];
-  for (const { file, source } of sources) {
-    const parsed = parseFeatureSource(source);
-    if ("fault" in parsed) faults.push({ file, message: parsed.fault });
-    else features.push(parsed.feature);
-  }
-  return faults.length > 0 ? { kind: "unparseable", faults } : { kind: "parsed", features };
+export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<FeatureFileContent> {
+  return parseSources(sources, featureFileOf);
 }
 
 interface TaggedScenario {

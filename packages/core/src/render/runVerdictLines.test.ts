@@ -103,11 +103,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     ];
     const reconciled = (behaviouralObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
       evidenceReconciliationFromSources({
-        features: parsedFeatures(sources),
-        featureFiles: [
-          { slug: "one", featureCode: "ONE" },
-          { slug: "two", featureCode: "TWO" },
-        ],
+        features: parsedFeatures(sources, ["one.feature", "two.feature"]),
         untaggedScenarios: [],
         packageJson: {},
         ciWorkflows: [],

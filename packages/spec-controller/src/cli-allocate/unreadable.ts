@@ -1,4 +1,4 @@
-import type { FeatureSourceFault } from "@3f-consulting/spec-controller-core";
+import type { SourceFault } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, type Unreadable } from "../messages.js";
 
 export class UnreadableInput extends Error {
@@ -23,7 +23,7 @@ export class UnreadableInput extends Error {
 export class UnparseableFeatureFiles extends Error {
   override readonly name = "UnparseableFeatureFiles";
 
-  constructor(readonly faults: readonly FeatureSourceFault[]) {
+  constructor(readonly faults: readonly SourceFault[]) {
     super(
       faults
         .map(({ file, message }) =>

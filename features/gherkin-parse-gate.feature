@@ -22,4 +22,4 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
     report refuses: `balance` and `allocate` each end at exit 2, naming every unreadable file.
 
     @unit @SCN-GPG-001
-    Scenario: the shared feature-file discovery refuses a corpus the parser rejects, naming every unreadable file and the parser's own words
+    Scenario: the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place

@@ -18,7 +18,6 @@ function reconcile(runners?: Record<string, string | null>) {
     untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
-    ciSourceNames: ["ci.yml"],
     behaviouralObservations: [],
     deferralTags: [],
   });

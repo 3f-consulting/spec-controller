@@ -143,6 +143,12 @@ describe("[SCN-WFS-020] a workflow that does not parse is refused by the reader,
         { file: "ci.yml", source: "name: CI\non: [push]\n" },
         { file: "empty.yml", source: "" },
       ])
-    ).toStrictEqual({ kind: "parsed", workflows: [{ steps: [] }, { steps: [] }] });
+    ).toStrictEqual({
+      kind: "parsed",
+      parsed: [
+        { file: "ci.yml", steps: [] },
+        { file: "empty.yml", steps: [] },
+      ],
+    });
   });
 });

@@ -11,7 +11,7 @@ export function readHeaderCodes(featuresDir: string): string[] {
   }));
   const parse = parseFeatureCorpus(sources);
   if (parse.kind === "unparseable") throw new UnparseableFeatureFiles(parse.faults);
-  return parse.features.flatMap(({ featureCode }) => (featureCode === null ? [] : [featureCode]));
+  return parse.parsed.flatMap(({ featureCode }) => (featureCode === null ? [] : [featureCode]));
 }
 
 function featureFilesIn(dir: string): CorpusFeatureFile[] {
