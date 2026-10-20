@@ -1,4 +1,3 @@
-import { commandInvokesScript } from "./checkScriptsRunInCI.js";
 import type { ShellReading } from "../domain/uncitedFitnessFunctions.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
@@ -24,6 +23,13 @@ const LAUNCHERS: readonly (readonly string[])[] = [
   ["coverage", "run", "-m"],
   ["bundle", "exec"],
 ];
+const SCRIPT_RUNNERS: readonly (readonly string[])[] = [
+  ["pnpm", "run"],
+  ["pnpm"],
+  ["yarn", "run"],
+  ["yarn"],
+  ["npm", "run"],
+];
 
 type LineTest = (line: string, invocation: string) => boolean;
 
@@ -33,6 +39,18 @@ function wordsOf(text: string): readonly string[] {
 
 function opensWith(words: readonly string[], phrase: string): boolean {
   return words.slice(0, wordsOf(phrase).length).join(" ") === phrase;
+}
+
+function invokesScriptAt(words: readonly string[], at: number, script: string): boolean {
+  const runner = SCRIPT_RUNNERS.find((phrase) => phrase.every((word, k) => words[at + k] === word));
+  return runner !== undefined && words[at + runner.length] === script;
+}
+
+export function commandInvokesScript(command: string, script: string): boolean {
+  return command.split(/\r?\n/).some((line) => {
+    const words = wordsOf(line);
+    return words.some((_, at) => invokesScriptAt(words, at, script));
+  });
 }
 
 const anywhere: LineTest = (line, invocation) => {

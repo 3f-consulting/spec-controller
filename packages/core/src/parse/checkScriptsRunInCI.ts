@@ -119,22 +119,3 @@ export function parseWorkflows(sources: readonly Source[]): SourcesParse<Workflo
 export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {
   return workflows.flatMap(({ steps }, sourceIndex) => steps.map((step) => ({ sourceIndex, ...step })));
 }
-
-function lineInvokesScript(line: string, script: string): boolean {
-  const tokens = line.trim().split(/\s+/);
-  for (const [i, tok] of tokens.entries()) {
-    if (tok === "pnpm" || tok === "yarn") {
-      let j = i + 1;
-      if (tokens[j] === "run") j++;
-      if (tokens[j] === script) return true;
-    }
-    if (tok === "npm" && tokens[i + 1] === "run" && tokens[i + 2] === script) {
-      return true;
-    }
-  }
-  return false;
-}
-
-export function commandInvokesScript(command: string, script: string): boolean {
-  return command.split(/\r?\n/).some((line) => lineInvokesScript(line, script));
-}

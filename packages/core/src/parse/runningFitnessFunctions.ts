@@ -1,7 +1,6 @@
 import type { FitnessEvidenceObservation } from "../model.js";
-import { shellReading } from "./commandRuns.js";
+import { commandInvokesScript, shellReading } from "./commandRuns.js";
 import {
-  commandInvokesScript,
   pipelineStepsOf,
   type PackageJsonScripts,
   type ParsedWorkflow,

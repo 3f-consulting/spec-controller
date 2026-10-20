@@ -103,6 +103,7 @@ describe("[SCN-WFS-010] runningFitnessFunctions observes a CI script matching no
     ["pnpm check", "check"],
     ["pnpm run check", "check"],
     ["yarn check", "check"],
+    ["yarn run check", "check"],
     ["npm run check", "check"],
     ["pnpm  check", "check"],
     ["echo start\npnpm check", "check"],
