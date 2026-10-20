@@ -11,7 +11,8 @@ const unannotatedSteps: PipelineStep[] = [
     identity: "Checkout",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+    plumbing: true,
+    action: { name: "actions/checkout@v4" },
   },
   {
     sourceIndex: 0,
@@ -19,13 +20,14 @@ const unannotatedSteps: PipelineStep[] = [
     identity: "Set up Node",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/setup-node@v4", owner: "actions", repository: "setup-node" },
+    plumbing: true,
+    action: { name: "actions/setup-node@v4" },
   },
-  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, command: "pnpm install --frozen-lockfile" },
-  { sourceIndex: 0, job: "quality", identity: "Build", writesStepRecord: false, abortsJob: true, command: "pnpm build" },
-  { sourceIndex: 0, job: "quality", identity: "Complexity", writesStepRecord: false, abortsJob: true, command: "pnpm lint:alpha" },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, command: "pnpm lint:beta" },
-  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, command: "pnpm typecheck" },
+  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
+  { sourceIndex: 0, job: "quality", identity: "Build", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm build" },
+  { sourceIndex: 0, job: "quality", identity: "Complexity", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:alpha" },
+  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
 const nonChecks: readonly string[] = ["Install", "Build"];

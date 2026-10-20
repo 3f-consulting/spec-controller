@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { PipelineStep, PipelineStepAction, UsedAction, WorkflowStep } from "../domain/pipelineStep.js";
+import type { PipelineStep, PipelineStepAction, WorkflowStep } from "../domain/pipelineStep.js";
 
 export interface PackageJsonScripts {
   readonly scripts?: Record<string, string>;
@@ -51,16 +51,31 @@ function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
   return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
 }
 
-function usedActionOf(name: string): UsedAction {
-  const [owner, repository] = name.split(/[/@]/);
-  return { name, owner: String(owner), repository: String(repository) };
+export interface UsesReading {
+  readonly owner: string;
+  readonly repository: string;
+}
+
+export function readUses(uses: string): UsesReading {
+  const [owner, repository] = uses.split(/[/@]/);
+  return { owner: String(owner), repository: String(repository) };
+}
+
+const PLUMBING_OWNER = "actions";
+const PLUMBING_REPOSITORIES: ReadonlySet<string> = new Set(["checkout", "cache", "upload-artifact", "download-artifact"]);
+const PLUMBING_REPOSITORY_PREFIX = "setup-";
+
+function isPlumbing(action: PipelineStepAction): boolean {
+  if (!("action" in action)) return false;
+  const { owner, repository } = readUses(action.action.name);
+  return owner === PLUMBING_OWNER && (PLUMBING_REPOSITORIES.has(repository) || repository.startsWith(PLUMBING_REPOSITORY_PREFIX));
 }
 
 function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined {
   const command = step["run"];
   if (typeof command === "string") return { command };
   const uses = step["uses"];
-  if (typeof uses === "string") return { action: usedActionOf(uses) };
+  if (typeof uses === "string") return { action: { name: uses } };
   return undefined;
 }
 
@@ -92,6 +107,7 @@ function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
       id: idOf(step["id"]),
       ...action,
       abortsJob: abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
+      plumbing: isPlumbing(action),
     });
   }
   return read;

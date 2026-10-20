@@ -120,9 +120,10 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 |---|---|
 | pipeline step | A step of a CI job, as the pipeline declares it: it runs a command or uses an action. |
 | discovery scope | The CI workflows `--ci` names. Every step of every job in them is read. |
-| candidate | A step in the discovery scope that is not a declared runner, the reconciler or a non-check. Every candidate is a fitness function. |
+| plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing; the report counts them and never names them. |
+| candidate | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step. Every candidate is a fitness function. |
 | uncited fitness function | A candidate whose step cites no scenario. |
-| step accounting | The report's tally of the steps read, by disposition (candidates, runners, the reconciler, excluded), so every step read is accounted for. |
+| step accounting | The report's tally of the steps read, by disposition (candidates, runners, the reconciler, excluded, plumbing), so every step read is accounted for. |
 | check step | The CI step that already runs a check, carrying the check's `@SCN` as its `id:`. |
 | citation | The `@SCN` on a check step's `id:`: a citation of the scenario, never a definition of the check. |
 | converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's `@SCN` as its `id:`, so `balance` credits its result to that scenario. |

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseWorkflows } from "./checkScriptsRunInCI.js";
+import { parseWorkflows, readUses } from "./checkScriptsRunInCI.js";
 import { workflowSteps } from "./parsedWorkflows.test-utils.js";
 
 const usesValues = [
@@ -11,21 +11,17 @@ const usesValues = [
   ["actions/cache", "cache"],
 ] as const;
 
-describe("[SCN-WFS-014] a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it", () => {
+describe("[SCN-WFS-014] a uses: value is read as its owner and repository, whatever ref or sub-path follows", () => {
   it("reads each uses: value as the owner and repository it names, whatever ref or sub-path follows", () => {
-    const ci = `jobs:\n  quality:\n    steps:\n${usesValues.map(([uses]) => `      - uses: ${uses}\n`).join("")}`;
-    const actions = workflowSteps([ci]).map((step) => ("action" in step ? step.action : undefined));
-    expect(actions).toStrictEqual(
-      usesValues.map(([name, repository]) => ({ name, owner: "actions", repository }))
+    expect(usesValues.map(([uses]) => readUses(uses))).toStrictEqual(
+      usesValues.map(([, repository]) => ({ owner: "actions", repository }))
     );
   });
 });
 
-describe("[SCN-WFS-015] an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action", () => {
+describe("[SCN-WFS-015] a local action, a container image and another owner's look-alike are read as owned by someone other than actions", () => {
   it("reads a local action, a container image and another owner's look-alike as owned by someone other than actions", () => {
-    const ci = `jobs:\n  quality:\n    steps:\n      - uses: ./.github/actions/lint\n      - uses: docker://alpine:3\n      - uses: someone/checkout@v1\n`;
-    const owners = workflowSteps([ci]).map((step) => ("action" in step ? step.action.owner : undefined));
-    expect(owners).toHaveLength(3);
+    const owners = ["./.github/actions/lint", "docker://alpine:3", "someone/checkout@v1"].map((uses) => readUses(uses).owner);
     for (const owner of owners) expect(owner).not.toBe("actions");
   });
 });

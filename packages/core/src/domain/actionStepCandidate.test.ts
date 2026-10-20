@@ -2,17 +2,17 @@ import { describe, it, expect } from "vitest";
 import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
-const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, writesStepRecord: false } as const;
+const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const CODEQL: PipelineStep = {
   ...IN_THE_CI_JOB,
   identity: "github/codeql-action/analyze@v3",
-  action: { name: "github/codeql-action/analyze@v3", owner: "github", repository: "codeql-action" },
+  action: { name: "github/codeql-action/analyze@v3" },
 };
 const DEPENDENCY_REVIEW: PipelineStep = {
   ...IN_THE_CI_JOB,
   identity: "Dependency review",
-  action: { name: "actions/dependency-review-action@v4", owner: "actions", repository: "dependency-review-action" },
+  action: { name: "actions/dependency-review-action@v4" },
 };
 const DOMAIN_PURITY: PipelineStep = { ...IN_THE_CI_JOB, identity: "domain-purity", command: "pnpm domain-purity" };
 

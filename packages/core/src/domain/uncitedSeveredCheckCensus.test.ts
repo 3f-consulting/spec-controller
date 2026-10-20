@@ -11,7 +11,8 @@ const uncitedSteps: PipelineStep[] = [
     identity: "Checkout",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+    plumbing: true,
+    action: { name: "actions/checkout@v4" },
   },
   {
     sourceIndex: 0,
@@ -19,6 +20,7 @@ const uncitedSteps: PipelineStep[] = [
     identity: "Advisory analysis",
     writesStepRecord: false,
     abortsJob: false,
+    plumbing: false,
     command: "pnpm lint:advisory",
   },
   {
@@ -27,6 +29,7 @@ const uncitedSteps: PipelineStep[] = [
     identity: "Enforced analysis",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:enforced",
   },
 ];

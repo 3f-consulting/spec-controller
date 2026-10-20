@@ -20,7 +20,8 @@ const severedSteps: PipelineStep[] = [
     identity: "Checkout",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+    plumbing: true,
+    action: { name: "actions/checkout@v4" },
   },
   {
     sourceIndex: 0,
@@ -29,6 +30,7 @@ const severedSteps: PipelineStep[] = [
     id: "SCN-CVT-001",
     writesStepRecord: false,
     abortsJob: false,
+    plumbing: false,
     command: "pnpm lint:alpha",
   },
   {
@@ -38,6 +40,7 @@ const severedSteps: PipelineStep[] = [
     id: "SCN-CVT-003",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:gamma",
   },
   {
@@ -47,6 +50,7 @@ const severedSteps: PipelineStep[] = [
     id: "SCN-CVT-004",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:delta",
   },
   {
@@ -56,6 +60,7 @@ const severedSteps: PipelineStep[] = [
     id: "SCN-CVT-002",
     writesStepRecord: false,
     abortsJob: false,
+    plumbing: false,
     command: "pnpm lint:beta",
   },
   {
@@ -65,6 +70,7 @@ const severedSteps: PipelineStep[] = [
     id: "SCN-CVT-005",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:epsilon",
   },
 ];

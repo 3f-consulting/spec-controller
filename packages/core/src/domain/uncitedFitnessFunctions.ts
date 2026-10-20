@@ -4,19 +4,6 @@ import type { BehaviouralRunner, JobDiscoveryScope, ReconcilerStep, StepAccounti
 export type StepTest = (step: PipelineStep) => boolean;
 type StepName = (step: PipelineStep) => string | undefined;
 
-const PLUMBING_OWNER = "actions";
-const PLUMBING_REPOSITORIES: ReadonlySet<string> = new Set(["checkout", "cache", "upload-artifact", "download-artifact"]);
-const PLUMBING_REPOSITORY_PREFIX = "setup-";
-
-export function isGitHubPlumbingStep(step: PipelineStep): boolean {
-  if (!("action" in step)) return false;
-  return step.action.owner === PLUMBING_OWNER && isPlumbingRepository(step.action.repository);
-}
-
-function isPlumbingRepository(repository: string): boolean {
-  return PLUMBING_REPOSITORIES.has(repository) || repository.startsWith(PLUMBING_REPOSITORY_PREFIX);
-}
-
 export interface ReconcilerSteps {
   readonly steps: readonly ReconcilerStep[];
   readonly isReconciler: StepTest;
@@ -74,7 +61,7 @@ type Exclusion = Extract<StepDisposition, "reconciler" | "nonCheck" | "plumbing"
 function exclusionOf(step: PipelineStep, isReconciler: StepTest, isNamedANonCheck: StepTest): Exclusion | undefined {
   if (isReconciler(step)) return "reconciler";
   if (isNamedANonCheck(step)) return "nonCheck";
-  return isGitHubPlumbingStep(step) ? "plumbing" : undefined;
+  return step.plumbing ? "plumbing" : undefined;
 }
 
 function dispositionOfIncluded(step: PipelineStep, runsARunner: StepTest): Extract<StepDisposition, "runner" | "candidate"> {

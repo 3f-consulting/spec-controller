@@ -2,21 +2,22 @@ import { describe, it, expect } from "vitest";
 import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
-const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false } as const;
+const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const run = (identity: string, command: string): PipelineStep => ({ ...IN_THE_QUALITY_JOB, identity, command });
-const using = (name: string, owner: string, repository: string): PipelineStep => ({
+const using = (name: string, plumbing = false): PipelineStep => ({
   ...IN_THE_QUALITY_JOB,
   identity: name,
-  action: { name, owner, repository },
+  plumbing,
+  action: { name },
 });
 
 const pipeline = (): readonly PipelineStep[] => [
-  using("actions/checkout@v4", "actions", "checkout"),
+  using("actions/checkout@v4", true),
   run("Install", "pnpm install --frozen-lockfile"),
   run("Unit tests", "pnpm test"),
   run("Lint", "pnpm lint"),
-  using("github/codeql-action/analyze@v3", "github", "codeql-action"),
+  using("github/codeql-action/analyze@v3"),
 ];
 
 const SCRIPTS = { test: "vitest run", lint: "eslint ." };

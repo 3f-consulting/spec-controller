@@ -1,7 +1,5 @@
-export interface UsedAction {
+interface UsedAction {
   readonly name: string;
-  readonly owner: string;
-  readonly repository: string;
 }
 
 export type PipelineStepAction =
@@ -14,6 +12,7 @@ export type WorkflowStep = {
   readonly id?: string;
   readonly writesStepRecord: boolean;
   readonly abortsJob: boolean;
+  readonly plumbing: boolean;
 } & PipelineStepAction;
 
 export type PipelineStep = { readonly sourceIndex: number } & WorkflowStep;

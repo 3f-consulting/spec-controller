@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { notChecksApplied } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 
-const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false } as const;
+const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const TYPES: PipelineStep = { ...IN_THE_QUALITY_JOB, identity: "Types", command: "pnpm typecheck" };
 const TESTS: PipelineStep = { ...IN_THE_QUALITY_JOB, identity: "Tests", command: "pnpm test" };

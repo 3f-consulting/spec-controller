@@ -17,7 +17,8 @@ const annotatedSteps: PipelineStep[] = [
     identity: "Checkout",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+    plumbing: true,
+    action: { name: "actions/checkout@v4" },
   },
   {
     sourceIndex: 0,
@@ -26,9 +27,10 @@ const annotatedSteps: PipelineStep[] = [
     id: "SCN-CVT-001",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:alpha",
   },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, command: "pnpm lint:beta" },
+  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
 ];
 
 function reconcileAnnotated() {

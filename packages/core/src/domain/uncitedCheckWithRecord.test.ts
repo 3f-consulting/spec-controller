@@ -16,9 +16,10 @@ const partlyAnnotatedSteps: PipelineStep[] = [
     identity: "Checkout",
     writesStepRecord: false,
     abortsJob: true,
-    action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+    plumbing: true,
+    action: { name: "actions/checkout@v4" },
   },
-  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, command: "pnpm install --frozen-lockfile" },
+  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
   {
     sourceIndex: 0,
     job: "quality",
@@ -26,10 +27,11 @@ const partlyAnnotatedSteps: PipelineStep[] = [
     id: "SCN-AAA-001",
     writesStepRecord: false,
     abortsJob: true,
+    plumbing: false,
     command: "pnpm lint:alpha",
   },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, command: "pnpm lint:beta" },
-  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, command: "pnpm typecheck" },
+  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
 const recorded: RecordedCheckStep[] = [{ citedScn: "SCN-AAA-001", report: "succeeded" }];

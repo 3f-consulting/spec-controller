@@ -5,7 +5,7 @@ import { commandRuns } from "../parse/commandRuns.js";
 
 const INVOCATION = "spec-controller balance";
 
-const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true } as const;
+const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, plumbing: false } as const;
 
 const DUMP: PipelineStep = {
   ...IN_THE_CI_JOB,
@@ -29,7 +29,8 @@ const CHECKOUT: PipelineStep = {
   ...IN_THE_CI_JOB,
   identity: "Check out",
   writesStepRecord: false,
-  action: { name: "actions/checkout@v4", owner: "actions", repository: "checkout" },
+  plumbing: true,
+  action: { name: "actions/checkout@v4" },
 };
 const LINTS: PipelineStep = {
   ...IN_THE_CI_JOB,
