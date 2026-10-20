@@ -72,8 +72,8 @@ importers:
         specifier: 13.1.0
         version: 13.1.0
       spec-controller:
-        specifier: 0.1.50
-        version: 0.1.50
+        specifier: 0.1.57
+        version: 0.1.57
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -126,8 +126,8 @@ importers:
 
 packages:
 
-  '@3f-consulting/spec-controller-core@0.1.50':
-    resolution: {integrity: sha512-jRHNDLIP4OZDTXvqtJ3ZRHOCLAQPTX8Us1UkAjMyS4k7xBum+3jWt7QODUtlH/A3kRD/x1cCfEmFDDihhpdjzg==}
+  '@3f-consulting/spec-controller-core@0.1.57':
+    resolution: {integrity: sha512-BwUGotMUAra60qlFZsa+L0pIt+809t0MpYGrJ4zHfeZMT9DaAn5rT6DzBJyD6tHTw/PXzmhKPFb/3y0bP6xRZw==}
     engines: {node: '>=22'}
 
   '@andrewbranch/untar.js@1.0.4':
@@ -2710,8 +2710,8 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
-  postcss@8.5.30:
-    resolution: {integrity: sha512-zkd+e9S1AQHhmaBKye9zlFHWjOwVgqXl1q3ECYy8561K7qxR2cREf/STLskulBFd78k6AOFeA+ff1TtEzk9bAA==}
+  postcss@8.5.31:
+    resolution: {integrity: sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==}
     engines: {node: ^10 || ^12 || >=14}
 
   prelude-ls@1.2.1:
@@ -2973,8 +2973,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.50:
-    resolution: {integrity: sha512-V2cT+s7/JqdxHkEDuHJpge2JZRNdzGQDlfY8GNiohVMvXemRytXk8WQl0+cOh+7k1uLNL06QjbcaRkyZiOfweQ==}
+  spec-controller@0.1.57:
+    resolution: {integrity: sha512-7QisE8Og7ipMDtWu9JIae2QR1Sbcvt3ElRWBY0McrIUZlvHA1dwS//mKJTSlnr/0ukPu+4yvcB+R3/TCPGXXhg==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -3460,7 +3460,7 @@ packages:
 
 snapshots:
 
-  '@3f-consulting/spec-controller-core@0.1.50':
+  '@3f-consulting/spec-controller-core@0.1.57':
     dependencies:
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
@@ -6122,7 +6122,7 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  postcss@8.5.30:
+  postcss@8.5.31:
     dependencies:
       nanoid: 3.3.20
       picocolors: 1.1.1
@@ -6417,9 +6417,9 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.50:
+  spec-controller@0.1.57:
     dependencies:
-      '@3f-consulting/spec-controller-core': 0.1.50
+      '@3f-consulting/spec-controller-core': 0.1.57
       '@cucumber/gherkin': 41.0.0
       '@cucumber/messages': 34.2.1
       fast-xml-parser: 5.11.2
@@ -6756,7 +6756,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
-      postcss: 8.5.30
+      postcss: 8.5.31
       rolldown: 1.1.5
       tinyglobby: 0.2.17
     optionalDependencies:
