@@ -10,10 +10,11 @@ import type { StepRecord } from "../parse/ciStepRecord.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-integrity-target",
-  inputs: { features: "specs/features", vitest: "vitest-report.json" },
+  inputs: [{ ...FEATURES, path: "specs/features" }, { ...VITEST, path: "vitest-report.json" }, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "specs/features",
   runStart: new Date("2026-10-05T17:00:00.000Z"),
   sourceSha: "4084f00dc0ffeeba110000000000000000deadbe",

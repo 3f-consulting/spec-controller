@@ -4,6 +4,7 @@ import { parseJunitEvidenceObservations, renderMarkdown, verdictCode, type RunCo
 import { parseJunitXml } from "./junitXml.js";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
+import { runInputsOf } from "../cli-balance/evidenceInputs.js";
 
 const TARGET = "tests/fixtures/go";
 
@@ -87,7 +88,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
   });
 
   it("names both codes on the unnamed claim's row, beside the subtest", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
@@ -138,7 +139,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
   });
 
   it("posts the enclosing test's failure to the unnamed claim, under its own name", () => {
-    const ctx: RunContext = { target: TARGET, inputs: {}, corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
     const unnamedClaimRow = renderMarkdown(balance(), ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));

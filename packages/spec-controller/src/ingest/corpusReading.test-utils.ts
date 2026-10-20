@@ -4,8 +4,8 @@ import {
   readCorpus,
   readWorkflows,
   runReconcile as reconcileReadInputs,
-  type ReconcileOptions,
 } from "./ingestQualityChecks.js";
+import { reportsOf, type InputPaths } from "../cli-balance/evidenceInputs.js";
 
 export function readFeatureCorpus(featuresDir: string): ParsedFeatureFile[] {
   const reading = readCorpus(featuresDir);
@@ -23,6 +23,6 @@ function readWorkflowsAt(ciPath: string | undefined): readonly ParsedWorkflow[] 
   return reading.workflows;
 }
 
-export function runReconcile(opts: ReconcileOptions & { features: string }, root: string): EvidenceReconciliation {
-  return reconcileReadInputs(opts, root, readFeatureCorpus(opts.features), readWorkflowsAt(opts.ci));
+export function runReconcile(opts: InputPaths & { features: string }, root: string): EvidenceReconciliation {
+  return reconcileReadInputs(reportsOf(opts), root, readFeatureCorpus(opts.features), readWorkflowsAt(opts.ci));
 }

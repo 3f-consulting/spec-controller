@@ -80,7 +80,7 @@ export { renderReport, renderReportFromJson } from "./render/markdown.js";
 export { provenanceObject } from "./provenance/provenance.js";
 export { projectProvenanceObject } from "./render/provenanceFacts.js";
 export type { ProvenanceFacts, ProvenanceInput } from "./render/provenanceFacts.js";
-export type { RunContext, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";
+export type { RunContext, RunInput, RunInputName, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";
 
 export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";

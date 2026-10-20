@@ -1,11 +1,9 @@
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 export const sampleReportCtx: RunContext = {
   target: "an-adopters-repository",
-  inputs: {
-    features: "../an-adopters-repository/features",
-    vitest: "../an-adopters-repository/vitest-report.json",
-  },
+  inputs: [{ ...FEATURES, path: "../an-adopters-repository/features" }, { ...VITEST, path: "../an-adopters-repository/vitest-report.json" }, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "../an-adopters-repository/features",
   runStart: new Date("2026-06-27T08:17:53.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
@@ -15,7 +13,7 @@ export const sampleReportCtx: RunContext = {
 
 export const sectionCtx: RunContext = {
   target: "fixture",
-  inputs: { features: "features" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-10-04T12:00:00.000Z"),
   sourceSha: null,
@@ -25,7 +23,7 @@ export const sectionCtx: RunContext = {
 
 export const sectionCtxNextDay: RunContext = {
   target: "fixture",
-  inputs: { features: "features" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-10-05T12:00:00.000Z"),
   sourceSha: null,

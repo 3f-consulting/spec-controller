@@ -221,14 +221,14 @@ describe("[SCN-RPT-062] clean scenario codes are stated with the corpus's own co
       const md = renderMarkdown(judged, ctx);
       expect(cleanSectionOf(md)).toEqual([HEADING, "", statement, "", DUPLICATE_LINE, ""]);
       expect(md).not.toContain("**SCENARIO CODE ERRORS**");
-      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx)))).toEqual(cleanSectionOf(md));
+      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx), ctx.inputs))).toEqual(cleanSectionOf(md));
     });
   }
 
   it("states the codes clean with no count when re-rendering a report saved before the population was recorded", () => {
     const { scenarioCodePopulation: _counted, ...saved } = JSON.parse(renderJson(judgedCorpus(["ONE", "TWO"], 1), ctx));
     expect(saved).toHaveProperty("scenarioCodeErrors", []);
-    const md = renderReportFromJson(JSON.stringify(saved));
+    const md = renderReportFromJson(JSON.stringify(saved), ctx.inputs);
     expect(cleanSectionOf(md)).toEqual([
       HEADING,
       "",

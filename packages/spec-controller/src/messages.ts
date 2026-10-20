@@ -223,6 +223,8 @@ interface AppMessageParams {
   [AppMessage.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
 }
 
+export type PlainAppMessage = Exclude<AppMessage, keyof AppMessageParams>;
+
 export type AppMessages = {
   readonly [C in AppMessage]: (...params: C extends keyof AppMessageParams ? AppMessageParams[C] : []) => string;
 };

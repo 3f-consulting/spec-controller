@@ -4,10 +4,11 @@ import { reconcile, summaryOf, type EvidenceReconciliation } from "../domain/evi
 import { evidenceObligations, type UntaggedScenario } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 const ctx: RunContext = {
   target: "by-feature-no-scn-code",
-  inputs: { features: "features" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-27T09:00:00.000Z"),
   sourceSha: null,

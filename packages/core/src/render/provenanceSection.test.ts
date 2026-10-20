@@ -3,7 +3,8 @@ import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { __er as er } from "../evidenceReconciliation.test-utils.js";
-import type { RunContext } from "../domain/runProvenance.js";
+import type { RunContext, RunInputs } from "../domain/runProvenance.js";
+import { handedInputs } from "../runInputs.test-utils.js";
 
 let balance: Ledger;
 beforeEach(() => {
@@ -13,9 +14,9 @@ beforeEach(() => {
   );
 });
 
-const handed = (inputs: RunContext["inputs"]): RunContext => ({
+const handed = (inputs: RunInputs): RunContext => ({
   target: "partly-handed-target",
-  inputs,
+  inputs: handedInputs(inputs),
   corpus: "features",
   runStart: new Date("2026-09-06T15:30:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",

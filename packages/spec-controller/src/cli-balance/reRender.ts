@@ -1,6 +1,7 @@
 import { renderReport, verdictCode } from "@3f-consulting/spec-controller-core";
 import type { RenderInput, VerdictCode } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { INPUT_NAMES } from "./evidenceInputs.js";
 
 export interface ReRendered {
   readonly markdown: string;
@@ -12,7 +13,7 @@ export function reRender(savedJson: string, strictGiven: boolean): ReRendered {
   const strict = saved.runProvenance.strict === true || strictGiven;
   const report: RenderInput = { ...saved, runProvenance: { ...saved.runProvenance, strict } };
   return {
-    markdown: renderReport(report),
+    markdown: renderReport(report, INPUT_NAMES),
     code: verdictCode({ ledger: report.ledger, scenarioCodeErrors: report.scenarioCodeErrors, strict }),
   };
 }

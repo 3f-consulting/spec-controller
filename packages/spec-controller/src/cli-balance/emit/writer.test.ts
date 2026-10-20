@@ -11,7 +11,7 @@ import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 
 const ctx: RunContext = {
   target: "unwritable",
-  inputs: { features: "features" },
+  inputs: [{ name: "features", flag: "--features", path: "features" }],
   corpus: "features",
   runStart: new Date("2026-09-26T00:00:00.000Z"),
   sourceSha: null,

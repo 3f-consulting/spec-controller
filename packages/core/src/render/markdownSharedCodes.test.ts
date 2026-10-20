@@ -10,10 +10,11 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 const ctx: RunContext = {
   target: "stg-017",
-  inputs: { features: "features" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-23T20:00:00.000Z"),
   sourceSha: "0000000000000000000000000000000000000000",

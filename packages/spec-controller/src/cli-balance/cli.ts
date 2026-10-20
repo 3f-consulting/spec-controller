@@ -6,8 +6,8 @@ import {
   readWorkflows,
   featureNamesOf,
   evidenceObligationsOf,
-  type ReconcileOptions,
 } from "../ingest/ingestQualityChecks.js";
+import { EVIDENCE_INPUTS, inputPathsOf, reportsOf, runInputsOf, type InputPaths } from "./evidenceInputs.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
 import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
@@ -65,29 +65,11 @@ export function sourceTarget(args: Record<string, string>): string {
   return args["target"] ?? "unknown-target";
 }
 
-function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
-  return {
-    features: args["features"],
-    vitest: args["vitest"],
-    pytest: args["pytest"],
-    jest: args["jest"],
-    junit: args["junit"],
-    rspec: args["rspec"],
-    cucumber: args["cucumber"],
-    ci: args["ci"],
-    packageJson: args["package-json"],
-    ciSteps: args["ci-steps"],
-  };
-}
-
 export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
 ): string | null {
-  const flags = [
-    "vitest", "pytest", "jest", "junit", "rspec", "cucumber", "features", "ci", "package-json", "ci-steps",
-  ] as const;
-  for (const flag of flags) {
+  for (const { flag } of EVIDENCE_INPUTS) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
       return APP_MESSAGES[AppMessage.InputPathMissing](`--${flag}`, path);
@@ -96,17 +78,13 @@ export function checkInputsExist(
   return null;
 }
 
-const JSON_INPUT_FLAGS = [
-  "vitest", "cucumber", "package-json", "ci-steps",
-] as const;
-
 export function checkInputsParse(
   args: Record<string, string>,
   read: (path: string) => string,
 ): string | null {
-  for (const flag of JSON_INPUT_FLAGS) {
+  for (const { flag, report } of EVIDENCE_INPUTS) {
     const path = args[flag];
-    if (path === undefined) continue;
+    if (path === undefined || report?.format !== "json") continue;
 
     let text: string;
     try {
@@ -178,11 +156,11 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (renderSavedReport(args)) return true;
   const { corpus, workflows } = refuseUnreadableInputs(args);
 
-  const inputs = reconcileInputsOf(args);
+  const inputs = inputPathsOf(args);
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const balance = runReconcile(inputs, root, corpus, workflows);
+  const balance = runReconcile(reportsOf(inputs), root, corpus, workflows);
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
@@ -266,7 +244,7 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
 function runContextOf(
   args: Record<string, string>,
-  inputs: ReconcileOptions,
+  inputs: InputPaths,
   runStart: Date,
   root: string,
 ): RunContext {
@@ -275,7 +253,7 @@ function runContextOf(
   return {
     target: sourceTarget(args),
     ...(targetOrigin !== null ? { targetOrigin } : {}),
-    inputs: { ...inputs },
+    inputs: runInputsOf(inputs),
     corpus: args["features"] ?? DEFAULT_FEATURES_DIR,
     runStart,
     sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),

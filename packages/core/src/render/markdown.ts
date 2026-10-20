@@ -22,6 +22,7 @@ import {
   carriesNoScnCode,
 } from "../domain/claimReconciliation.js";
 import type { RenderInput } from "../domain/renderInput.js";
+import type { RunInputName } from "../domain/runProvenance.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
@@ -116,7 +117,7 @@ function renderRowExceptions(s: ClaimReconciliation): string {
   return groups.length === 0 ? "—" : groups.join("; ");
 }
 
-type SectionEmitter = (report: RenderInput) => readonly string[];
+type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[]) => readonly string[];
 
 const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
@@ -399,10 +400,10 @@ const SECTIONS: readonly SectionEmitter[] = [
   ledgerSection,
 ];
 
-export function renderReport(report: RenderInput): string {
-  return SECTIONS.flatMap((section) => section(report)).join("\n");
+export function renderReport(report: RenderInput, inputNames: readonly RunInputName[]): string {
+  return SECTIONS.flatMap((section) => section(report, inputNames)).join("\n");
 }
 
-export function renderReportFromJson(json: string): string {
-  return renderReport(JSON.parse(json) as RenderInput);
+export function renderReportFromJson(json: string, inputNames: readonly RunInputName[]): string {
+  return renderReport(JSON.parse(json) as RenderInput, inputNames);
 }

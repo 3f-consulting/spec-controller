@@ -1,18 +1,13 @@
-/** Each input path the run read, keyed by the name of the flag that supplied it, in camelCase. */
 export type RunInputs = Readonly<Partial<Record<string, string>>>;
 
-export const INPUT_KEYS: readonly string[] = [
-  "features",
-  "vitest",
-  "pytest",
-  "jest",
-  "junit",
-  "rspec",
-  "cucumber",
-  "ci",
-  "packageJson",
-  "ciSteps",
-];
+export interface RunInputName {
+  readonly name: string;
+  readonly flag: string;
+}
+
+export interface RunInput extends RunInputName {
+  readonly path?: string;
+}
 
 const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/(.+)$/;
 const SCP_REMOTE = /^[^/@:]+@[^/:]+:(.+)$/;
@@ -30,7 +25,7 @@ export function targetOriginName(remote: string): string {
 
 export interface RunContext {
   readonly target: string;
-  readonly inputs: RunInputs;
+  readonly inputs: readonly RunInput[];
   /** The corpus directory the run examined, whether named by flag or by default. */
   readonly corpus: string;
   readonly runStart: Date;

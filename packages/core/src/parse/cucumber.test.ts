@@ -6,6 +6,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { handedInputs } from "../runInputs.test-utils.js";
 
 describe("[SCN-CUC-002] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
@@ -264,7 +265,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
           .find((row) => row.scnId === scnId)
           ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "integration")?.outcome
     );
-    const ctx: RunContext = { target: "several", inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+    const ctx: RunContext = { target: "several", inputs: handedInputs({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
     const unnamedClaimRow = renderMarkdown({ summary: summaryOf(ledger, false, false), ledger }, ctx)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));

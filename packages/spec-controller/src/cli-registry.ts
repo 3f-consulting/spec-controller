@@ -1,5 +1,6 @@
 import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { EVIDENCE_INPUTS } from "./cli-balance/evidenceInputs.js";
 
 export interface FlagSpec {
   name: string;
@@ -36,56 +37,7 @@ export interface CliRegistry {
 }
 
 const balanceFlags: FlagSpec[] = [
-  {
-    name: "--features",
-    arg: "<dir>",
-    description: APP_MESSAGES[AppMessage.FeaturesFlag](),
-  },
-  {
-    name: "--vitest",
-    arg: "<report.json>",
-    description: APP_MESSAGES[AppMessage.VitestFlag](),
-  },
-  {
-    name: "--pytest",
-    arg: "<report.xml>",
-    description: APP_MESSAGES[AppMessage.PytestFlag](),
-  },
-  {
-    name: "--jest",
-    arg: "<report.json>",
-    description: APP_MESSAGES[AppMessage.JestFlag](),
-  },
-  {
-    name: "--junit",
-    arg: "<report.xml>",
-    description: APP_MESSAGES[AppMessage.JunitFlag](),
-  },
-  {
-    name: "--rspec",
-    arg: "<report.json>",
-    description: APP_MESSAGES[AppMessage.RspecFlag](),
-  },
-  {
-    name: "--cucumber",
-    arg: "<report.json>",
-    description: APP_MESSAGES[AppMessage.CucumberFlag](),
-  },
-  {
-    name: "--ci",
-    arg: "<ci.yml>",
-    description: APP_MESSAGES[AppMessage.CiFlag](),
-  },
-  {
-    name: "--package-json",
-    arg: "<path>",
-    description: APP_MESSAGES[AppMessage.PackageJsonFlag](),
-  },
-  {
-    name: "--ci-steps",
-    arg: "<record.json>",
-    description: APP_MESSAGES[AppMessage.CiStepsFlag](),
-  },
+  ...EVIDENCE_INPUTS.map(({ flag, arg, description }) => ({ name: `--${flag}`, arg, description: APP_MESSAGES[description]() })),
   {
     name: "--target",
     arg: "<name>",

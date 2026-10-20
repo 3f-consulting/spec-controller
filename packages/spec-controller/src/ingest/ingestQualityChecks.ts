@@ -54,19 +54,6 @@ const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
 
-export interface ReconcileOptions {
-  features?: string;
-  vitest?: string;
-  pytest?: string;
-  jest?: string;
-  junit?: string;
-  rspec?: string;
-  cucumber?: string;
-  ci?: string;
-  packageJson?: string;
-  ciSteps?: string;
-}
-
 export const DEFAULT_CI_PATH = ".github/workflows";
 
 export const DEFAULT_PACKAGE_JSON = "package.json";
@@ -186,21 +173,44 @@ export function evidenceObligationsOf(corpus: readonly ParsedFeatureFile[]): Evi
   return corpusCountsOf(corpus.map((parsed) => ({ feature: parsed.file, ...featureCountsOf(parsed) })));
 }
 
-function parseBehaviouralObservations(opts: EvidenceReportOptions, root: string | undefined): EvidenceObservation[] {
-  const out: EvidenceObservation[] = [];
-  const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
-  if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
-  const pytestReport = readJunitXmlIfPresent(opts.pytest, parseJunitXml);
-  if (pytestReport) out.push(...parsePytestEvidenceObservations(pytestReport, PYTEST_QUALITY_CHECK));
-  const jestReport = readJsonIfPresent<VitestJsonReport>(opts.jest);
-  if (jestReport) out.push(...parseVitestEvidenceObservations(jestReport, JEST_QUALITY_CHECK, root));
-  const junitReport = readJunitReportsIfPresent(opts.junit);
-  if (junitReport) out.push(...parseJunitEvidenceObservations(junitReport, JUNIT_QUALITY_CHECK));
-  const rspecReport = readJsonIfPresent<RspecJsonReport>(opts.rspec);
-  if (rspecReport) out.push(...parseRspecEvidenceObservations(rspecReport, RSPEC_QUALITY_CHECK, root));
-  const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
-  if (cucumberReport) out.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
-  return out;
+function observedIn<T>(report: T | undefined, parse: (report: T) => EvidenceObservation[]): EvidenceObservation[] {
+  return report === undefined ? [] : parse(report);
+}
+
+const OBSERVATION_READERS = {
+  vitest: (path, root) =>
+    observedIn(readJsonIfPresent<VitestJsonReport>(path), (report) => parseVitestEvidenceObservations(report, VITEST_QUALITY_CHECK, root)),
+  pytest: (path) =>
+    observedIn(readJunitXmlIfPresent(path, parseJunitXml), (report) => parsePytestEvidenceObservations(report, PYTEST_QUALITY_CHECK)),
+  jest: (path, root) =>
+    observedIn(readJsonIfPresent<VitestJsonReport>(path), (report) => parseVitestEvidenceObservations(report, JEST_QUALITY_CHECK, root)),
+  junit: (path) =>
+    observedIn(readJunitReportsIfPresent(path), (report) => parseJunitEvidenceObservations(report, JUNIT_QUALITY_CHECK)),
+  rspec: (path, root) =>
+    observedIn(readJsonIfPresent<RspecJsonReport>(path), (report) => parseRspecEvidenceObservations(report, RSPEC_QUALITY_CHECK, root)),
+  cucumber: (path, root) =>
+    observedIn(readJsonIfPresent<CucumberJsonReport>(path), (report) => parseCucumberEvidenceObservations(report, CUCUMBER_QUALITY_CHECK, root)),
+} satisfies Readonly<Record<string, (path: string, root: string) => EvidenceObservation[]>>;
+
+type ObservationReader = keyof typeof OBSERVATION_READERS;
+
+export type EvidenceReader = ObservationReader | "package-manifest" | "ci-step-record";
+
+export interface EvidenceReport {
+  readonly reader: EvidenceReader;
+  readonly path: string;
+}
+
+function isObservationReader(reader: EvidenceReader): reader is ObservationReader {
+  return Object.hasOwn(OBSERVATION_READERS, reader);
+}
+
+function observationsOf(reports: readonly EvidenceReport[], root: string): EvidenceObservation[] {
+  return reports.flatMap(({ reader, path }) => (isObservationReader(reader) ? OBSERVATION_READERS[reader](path, root) : []));
+}
+
+function pathReadBy(reports: readonly EvidenceReport[], reader: EvidenceReader): string | undefined {
+  return reports.find((report) => report.reader === reader)?.path;
 }
 
 type TargetManifest = PackageJsonScripts & {
@@ -211,16 +221,13 @@ type TargetManifest = PackageJsonScripts & {
   };
 };
 
-export type EvidenceReportOptions = Omit<ReconcileOptions, "features" | "ci">;
-
 export function runReconcile(
-  opts: EvidenceReportOptions,
+  reports: readonly EvidenceReport[],
   root: string,
   corpus: readonly ParsedFeatureFile[],
   workflows: readonly ParsedWorkflow[],
 ): EvidenceReconciliation {
-  const pkgPath = opts.packageJson ?? DEFAULT_PACKAGE_JSON;
-  const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
+  const packageJson = readJsonIfPresent<TargetManifest>(pathReadBy(reports, "package-manifest") ?? DEFAULT_PACKAGE_JSON) ?? {};
 
   return evidenceReconciliationFromSources({
     features: corpus,
@@ -229,10 +236,9 @@ export function runReconcile(
     ),
     packageJson,
     ciWorkflows: workflows,
-    ciStepRecord: readJsonIfPresent<StepRecord>(opts.ciSteps),
-    behaviouralObservations: parseBehaviouralObservations(opts, root),
+    ciStepRecord: readJsonIfPresent<StepRecord>(pathReadBy(reports, "ci-step-record")),
+    behaviouralObservations: observationsOf(reports, root),
     deferralTags: BUILT_IN_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
   });
 }
-

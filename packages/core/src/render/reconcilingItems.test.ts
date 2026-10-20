@@ -7,10 +7,11 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciling-items-target",
-  inputs: { features: "specs/features" },
+  inputs: [{ ...FEATURES, path: "specs/features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "specs/features",
   runStart: new Date("2026-10-05T09:00:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",

@@ -1,9 +1,10 @@
 import type { RenderInput } from "../domain/renderInput.js";
+import type { RunInputName } from "../domain/runProvenance.js";
 import { projectProvenanceObject } from "./provenanceFacts.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-export const provenanceSection = (report: RenderInput): string[] => {
-  const p = projectProvenanceObject(report.runProvenance);
+export const provenanceSection = (report: RenderInput, inputNames: readonly RunInputName[]): string[] => {
+  const p = projectProvenanceObject(report.runProvenance, inputNames);
   const lines = [CORE_MESSAGES[CoreMessage.RunProvenanceHeading], ""];
   const targetRepo = p.targetOrigin === undefined
     ? CORE_MESSAGES[CoreMessage.ProvenanceTargetRepo](p.target)

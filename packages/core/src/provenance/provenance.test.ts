@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import { provenanceObject } from "./provenance.js";
 import { projectProvenance } from "../assemble/composers.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
+import { handedInputs } from "../runInputs.test-utils.js";
 
 describe("[SCN-RPT-001] provenance records input paths portably (relative to the run root)", () => {
   const mk = (inputs: RunInputs, root?: string): RunContext => ({
     target: "demo",
-    inputs,
+    inputs: handedInputs(inputs),
     corpus: "features",
     runStart: new Date("2026-06-27T08:17:53.000Z"),
     sourceSha: "abc123",
@@ -58,7 +59,7 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
 describe("[SCN-RPT-027] the provenance projection names the optional CI step record", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
-    inputs,
+    inputs: handedInputs(inputs),
     corpus: "features",
     runStart: new Date("2026-09-06T15:00:00.000Z"),
     sourceSha: "abc123",
@@ -101,7 +102,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
 describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "partly-handed-target",
-    inputs,
+    inputs: handedInputs(inputs),
     corpus: "features",
     runStart: new Date("2026-09-06T15:30:00.000Z"),
     sourceSha: "abc123",

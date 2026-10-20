@@ -8,10 +8,11 @@ import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciliation-summary-target",
-  inputs: { features: "specs/features" },
+  inputs: [{ ...FEATURES, path: "specs/features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "specs/features",
   runStart: new Date("2026-10-05T18:00:00.000Z"),
   sourceSha: "4085f00dc0ffeeba110000000000000000deadbe",

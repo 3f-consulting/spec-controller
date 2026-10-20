@@ -13,7 +13,7 @@ export function renderMarkdown(
   evidenceObligations?: EvidenceObligations,
   featureNames?: FeatureNames
 ): string {
-  return renderReport(assembleRenderInput(evidenceReconciliation, ctx, evidenceObligations, featureNames));
+  return renderReport(assembleRenderInput(evidenceReconciliation, ctx, evidenceObligations, featureNames), ctx.inputs);
 }
 
 export function renderJson(
@@ -30,5 +30,5 @@ export function renderJson(
 }
 
 export function projectProvenance(ctx: RunContext): ProvenanceFacts {
-  return projectProvenanceObject(provenanceObject(ctx));
+  return projectProvenanceObject(provenanceObject(ctx), ctx.inputs);
 }

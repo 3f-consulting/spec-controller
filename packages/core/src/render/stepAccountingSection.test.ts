@@ -6,6 +6,7 @@ import { assembleRenderInput } from "../assemble/renderInput.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder, cells } from "./renderedSection.test-utils.js";
 import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "../evidenceReconciliation.test-utils.js";
+import { HANDED_INPUT_NAMES } from "../runInputs.test-utils.js";
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
@@ -67,7 +68,7 @@ describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and Gi
         stepAccounting: { stepsRead: 10, candidates: 4, runners: 1, reconciler: 2, excluded: 3, accountedFor: 10 },
       },
     });
-    expect(section(renderReportFromJson(saved).split("\n"))).toStrictEqual([
+    expect(section(renderReportFromJson(saved, HANDED_INPUT_NAMES).split("\n"))).toStrictEqual([
       "### Step accounting",
       "",
       "| Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",

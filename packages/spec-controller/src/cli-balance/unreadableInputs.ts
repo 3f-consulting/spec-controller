@@ -5,21 +5,12 @@ import {
   type InputReadFault,
   type WorkflowReading,
 } from "../ingest/ingestQualityChecks.js";
-import {
-  CI_STEP_RECORD,
-  CUCUMBER_REPORT,
-  JUNIT_REPORT,
-  PACKAGE_MANIFEST,
-  RSPEC_REPORT,
-  SAVED_RECONCILIATION,
-  shapeFaultIn,
-  VITEST_REPORT,
-  type Shape,
-} from "../ingest/inputShapes.js";
+import { SAVED_RECONCILIATION, shapeFaultIn, type Shape } from "../ingest/inputShapes.js";
 import { junitReportPathsOf } from "../ingest/junitReportPaths.js";
 import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "../ingest/junitXml.js";
 import { reRender, type ReRendered } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { EVIDENCE_INPUTS, type ReportFormat, type ReportInput } from "./evidenceInputs.js";
 
 interface Syntax {
   readonly parse: (text: string) => unknown;
@@ -54,77 +45,40 @@ export interface JsonInput {
   readonly syntax: Syntax;
 }
 
-interface ReadShape {
-  readonly subject: (flag: string) => string;
-  readonly writer: string;
-  readonly shape: Shape;
-  readonly syntax: Syntax;
-  readonly readsADirectoryOfReports?: true;
-}
-
-const READ_SHAPES: Readonly<Record<string, ReadShape>> = {
-  vitest: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.VitestReportShape](),
-    shape: VITEST_REPORT,
-    syntax: JSON_SYNTAX,
-  },
-  pytest: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.JunitReportShape](),
-    shape: JUNIT_REPORT,
-    syntax: XML_SYNTAX,
-  },
-  jest: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.JestReportShape](),
-    shape: VITEST_REPORT,
-    syntax: JSON_SYNTAX_NAMING_SHAPE,
-  },
-  rspec: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.RspecReportShape](),
-    shape: RSPEC_REPORT,
-    syntax: JSON_SYNTAX_NAMING_SHAPE,
-  },
-  junit: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.JunitXmlReportShape](),
-    shape: JUNIT_REPORT,
-    syntax: XML_SYNTAX_LIFTING_BARE_SUITE,
-    readsADirectoryOfReports: true,
-  },
-  cucumber: {
-    subject: APP_MESSAGES[AppMessage.FlaggedReport],
-    writer: APP_MESSAGES[AppMessage.CucumberReportShape](),
-    shape: CUCUMBER_REPORT,
-    syntax: JSON_SYNTAX,
-  },
-  "ci-steps": {
-    subject: APP_MESSAGES[AppMessage.FlaggedRecord],
-    writer: APP_MESSAGES[AppMessage.CiStepRecordShape](),
-    shape: CI_STEP_RECORD,
-    syntax: JSON_SYNTAX,
-  },
-  "package-json": {
-    subject: APP_MESSAGES[AppMessage.FlaggedManifest],
-    writer: APP_MESSAGES[AppMessage.PackageManifestShape](),
-    shape: PACKAGE_MANIFEST,
-    syntax: JSON_SYNTAX,
-  },
+const SYNTAX_OF: Readonly<Record<ReportFormat, Syntax>> = {
+  json: JSON_SYNTAX,
+  "json-naming-its-shape": JSON_SYNTAX_NAMING_SHAPE,
+  "junit-xml": XML_SYNTAX,
+  "junit-xml-or-one-suite": XML_SYNTAX_LIFTING_BARE_SUITE,
 };
 
+function jsonInputOf(report: ReportInput, subject: string, path: string): JsonInput {
+  return {
+    subject,
+    path,
+    shape: report.shape,
+    writer: APP_MESSAGES[report.writer](),
+    syntax: SYNTAX_OF[report.format],
+  };
+}
+
 export function jsonInputsOf(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
-  const given = Object.entries(READ_SHAPES).flatMap(([flag, read]) => {
+  const given = EVIDENCE_INPUTS.flatMap(({ flag, report }) => {
     const path = args[flag];
-    if (path === undefined) return [];
-    const paths = read.readsADirectoryOfReports === true && isDirectory(path) ? reportFilesIn(path) : [path];
-    const subject = read.subject(`--${flag}`);
-    return paths.map((file) => ({ subject, path: file, shape: read.shape, writer: read.writer, syntax: read.syntax }));
+    if (report === undefined || path === undefined) return [];
+    const paths = report.takesADirectory === true && isDirectory(path) ? reportFilesIn(path) : [path];
+    const subject = APP_MESSAGES[report.subject](`--${flag}`);
+    return paths.map((file) => jsonInputOf(report, subject, file));
   });
-  if (args["package-json"] !== undefined || !exists(DEFAULT_PACKAGE_JSON)) return given;
-  const { shape, writer, syntax } = READ_SHAPES["package-json"]!;
-  return [...given, { subject: APP_MESSAGES[AppMessage.DefaultPackageJson](), path: DEFAULT_PACKAGE_JSON, shape, writer, syntax }];
+  return [...given, ...manifestReadByDefault(args, exists)];
+}
+
+function manifestReadByDefault(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
+  return EVIDENCE_INPUTS.flatMap(({ flag, report }) =>
+    report?.reader === "package-manifest" && args[flag] === undefined && exists(DEFAULT_PACKAGE_JSON)
+      ? [jsonInputOf(report, APP_MESSAGES[AppMessage.DefaultPackageJson](), DEFAULT_PACKAGE_JSON)]
+      : [],
+  );
 }
 
 function isDirectory(path: string): boolean {

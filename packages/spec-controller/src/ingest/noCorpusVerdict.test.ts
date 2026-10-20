@@ -7,6 +7,7 @@ import { CORPUS_DIR, EMPTY_CORPUS, targetIn, type Shape } from "./corpusFixtures
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
+import { runInputsOf } from "../cli-balance/evidenceInputs.js";
 
 const made: string[] = [];
 
@@ -25,7 +26,7 @@ function verdictFor(target: Shape): string {
   }, resolveTargetRoot({ features: join(root, CORPUS_DIR) }));
   const ctx: RunContext = {
     target: root,
-    inputs: {},
+    inputs: runInputsOf({}),
     corpus: DEFAULT_FEATURES_DIR,
     runStart: new Date("2026-09-12T09:00:00.000Z"),
     sourceSha: null,

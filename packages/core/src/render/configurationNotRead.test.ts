@@ -4,6 +4,7 @@ import type { Ledger } from "../model.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 let ledger: Ledger;
 beforeEach(() => {
@@ -15,7 +16,7 @@ beforeEach(() => {
 
 const ctx: RunContext = {
   target: "config-target",
-  inputs: { features: "features", packageJson: "package.json" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, { ...PACKAGE_JSON, path: "package.json" }, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-28T12:00:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",

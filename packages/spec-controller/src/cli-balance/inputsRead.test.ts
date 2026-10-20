@@ -24,8 +24,8 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
     expect(inputsReadBy(args, reader)).toEqual([
       { subject: "the --vitest report", path: "v.json" },
       { subject: "the --cucumber report", path: "c.json" },
-      { subject: "the --ci-steps record", path: "s.json" },
       { subject: "the --package-json manifest", path: "p.json" },
+      { subject: "the --ci-steps record", path: "s.json" },
       { subject: "a feature file of the --features corpus", path: "f/a.feature" },
       { subject: "the --ci workflow", path: "w.yml" },
     ]);

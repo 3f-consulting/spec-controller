@@ -4,6 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
+import { handedInputs } from "../runInputs.test-utils.js";
 
 describe("[SCN-VIT-006] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
   const report: VitestJsonReport = {
@@ -247,7 +248,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     });
 
     it("words both codes on the unnamed claim's row in the catalogue's words", () => {
-      const ctx: RunContext = { target: "several", inputs: {}, corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
+      const ctx: RunContext = { target: "several", inputs: handedInputs({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
       const reconciled = ledger();
       const unnamedClaimRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx)
         .split("\n")

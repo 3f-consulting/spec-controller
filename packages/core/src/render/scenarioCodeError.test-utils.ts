@@ -1,9 +1,10 @@
 import type { ScenarioCodeError } from "../domain/scnTags.js";
 import type { RunContext } from "../domain/runProvenance.js";
+import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 export const codeErrorsCtx: RunContext = {
   target: "scenario-code-errors-target",
-  inputs: { features: "features" },
+  inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-24T09:00:00.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",

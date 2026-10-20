@@ -10,6 +10,7 @@ import type {
   ClaimReconciliation,
 } from "../model.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { HANDED_INPUT_NAMES } from "../runInputs.test-utils.js";
 
 describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one account, never to none", () => {
   const namedScenarios: Scenario[] = [
@@ -41,7 +42,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOfBalance agreeing with the verdict", () => {
   const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
     ledger.claimReconciliations.find((r) => r.scnId === scnId);
-  const ctx: RunContext = { target: "obligations-only", inputs: {}, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
+  const ctx: RunContext = { target: "obligations-only", inputs: HANDED_INPUT_NAMES, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
   it("a satisfied citation-routed check as the only evidence observation → balanced, no unnamed claim, summary.outOfBalance 0", () => {
     const fitness: Scenario[] = [
