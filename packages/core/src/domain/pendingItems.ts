@@ -4,5 +4,5 @@ export function deferralTagsExtendedBy(
   starterTags: readonly string[],
   configuredTags: readonly string[]
 ): readonly string[] {
-  return [...new Set([...starterTags, ...configuredTags])];
+  return [...new Set([...starterTags, ...configuredTags.filter((tag) => tag !== "")])];
 }

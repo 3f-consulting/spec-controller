@@ -98,6 +98,14 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
+
+  it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a scenario code", () => {
+    expect(
+      parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }), "unit")
+    ).toEqual([
+      { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+    ]);
+  });
 });
 
 describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for a testcase carrying two scn properties", () => {

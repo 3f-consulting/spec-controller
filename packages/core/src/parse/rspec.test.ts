@@ -176,6 +176,33 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     ]);
   });
 
+  it("posts the run's extra broken item with no message when RSpec gives none beside the files it names", () => {
+    const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 2 }, messages: [syntaxError] };
+
+    const observations = parseRspecEvidenceObservations(report, "unit");
+
+    expect(observations).toEqual([
+      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: undefined },
+    ]);
+    expect(observations[1]?.message).toBeUndefined();
+  });
+
+  it("posts the run's extra broken item with every other message, each on its own line, when RSpec gives several", () => {
+    const hookA = "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"a\"\n";
+    const hookB = "\nAn error occurred in an `after(:suite)` hook.\nFailure/Error: raise \"b\"\n";
+    const report: RspecJsonReport = {
+      examples: [],
+      summary: { errors_outside_of_examples_count: 3 },
+      messages: [syntaxError, hookA, hookB],
+    };
+
+    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
+    ]);
+  });
+
   it.each([
     ["an empty run's message", { examples: [], summary: { errors_outside_of_examples_count: 0 }, messages: ["No examples found."] }],
     ["a summary with no count", { examples: [], summary: {}, messages: ["No examples found."] }],
