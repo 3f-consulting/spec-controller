@@ -120,7 +120,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 |---|---|
 | pipeline step | A step of a CI job, as the pipeline declares it: it runs a command or uses an action. |
 | discovery scope | The CI workflows `--ci` names. Every step of every job in them is read. |
-| plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing; the report counts them and never names them. |
+| plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing; the report counts them and never names them. A plumbing step the manifest also names a non-check is a non-check: it is counted and named with the non-checks. |
 | candidate | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step. Every candidate is a fitness function. |
 | uncited fitness function | A candidate whose step cites no scenario. |
 | step accounting | The report's tally of the steps read, by disposition (candidates, runners, the reconciler, excluded, plumbing), so every step read is accounted for. |
