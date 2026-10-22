@@ -12,9 +12,8 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson,
-    ciWorkflows: parsedWorkflows([ciSource]),
+    ciWorkflows: parsedWorkflows([ciSource], ["ci.yml"]),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],
     deferralTags: [],

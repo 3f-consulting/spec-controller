@@ -29,7 +29,6 @@ const vitestResult: VitestJsonReport = {
 function assembled(): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson: { scripts: {} },
     ciWorkflows: [],
     behaviouralObservations: parseVitestEvidenceObservations(vitestResult, "unit", "/repo"),

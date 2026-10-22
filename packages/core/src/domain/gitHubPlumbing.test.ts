@@ -4,7 +4,7 @@ import type { PipelineStep } from "./pipelineStep.js";
 import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 
-const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
+const IN_THE_QUALITY_JOB = { workflow: "ci.yml", job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const NO_RECONCILER = { isReconciler: () => false };
 const RUNS_NO_RUNNER = (): boolean => false;

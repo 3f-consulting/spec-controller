@@ -14,7 +14,6 @@ function reconcile(specController: unknown): EvidenceReconciliation {
   >[0]["packageJson"];
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
     behaviouralObservations: [],

@@ -1,6 +1,5 @@
-import type { EvidenceObligations, EvidenceReconciliation, ParsedFeatureFile, ParsedWorkflow } from "@3f-consulting/spec-controller-core";
+import { corpusCountsOfFeatures, type EvidenceObligations, type EvidenceReconciliation, type ParsedFeatureFile, type ParsedWorkflow } from "@3f-consulting/spec-controller-core";
 import {
-  evidenceObligationsOf,
   type EvidenceReport,
   readCorpus,
   readWorkflows,
@@ -17,7 +16,7 @@ export function readFeatureCorpus(featuresDir: string): ParsedFeatureFile[] {
 }
 
 export function readEvidenceObligations(featuresDir: string): EvidenceObligations {
-  return evidenceObligationsOf(readFeatureCorpus(featuresDir));
+  return corpusCountsOfFeatures(readFeatureCorpus(featuresDir));
 }
 
 function readWorkflowsAt(ciPath: string | undefined): readonly ParsedWorkflow[] {

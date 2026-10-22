@@ -3,8 +3,8 @@ import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type She
 import type { PipelineStep } from "./pipelineStep.js";
 import { runsAsCommand } from "./shellReading.test-utils.js";
 
-const IN_CI_YML = { sourceIndex: 0, job: "ci", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
-const IN_NIGHTLY_YML = { sourceIndex: 1, job: "nightly", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
+const IN_CI_YML = { workflow: "ci.yml", job: "ci", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
+const IN_NIGHTLY_YML = { workflow: "nightly.yml", job: "nightly", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const run = (workflow: typeof IN_CI_YML | typeof IN_NIGHTLY_YML, script: string): PipelineStep => ({
   ...workflow,

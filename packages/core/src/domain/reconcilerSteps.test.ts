@@ -6,7 +6,7 @@ import { commandRuns } from "../parse/commandRuns.js";
 
 const INVOCATION = "spec-controller balance";
 
-const IN_THE_CI_JOB = { sourceIndex: 0, job: "ci", abortsJob: true, plumbing: false } as const;
+const IN_THE_CI_JOB = { workflow: "ci.yml", job: "ci", abortsJob: true, plumbing: false } as const;
 
 const DUMP: PipelineStep = {
   ...IN_THE_CI_JOB,
@@ -42,7 +42,6 @@ const LINTS: PipelineStep = {
 const STEPS = [CHECKOUT, DUMP, BALANCE, SWEEP];
 
 const runsTheReconciler = (command: string): boolean => command.includes(INVOCATION);
-const givenNoName = (): undefined => undefined;
 const noInvocationKnown = (command: string): boolean => commandRuns(command, "", {});
 
 describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
@@ -59,13 +58,6 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
     expect(isReconciler(DUMP)).toBe(true);
     expect(isReconciler(SWEEP)).toBe(false);
     expect(isReconciler(CHECKOUT)).toBe(false);
-  });
-
-  it("names a step by its identity when its source has no name", () => {
-    expect(reconcilerSteps(STEPS, givenNoName, runsTheReconciler).steps).toStrictEqual([
-      { step: "Dump this run's step record", role: "records" },
-      { step: "Self-reconciliation balance", role: "reconciles" },
-    ]);
   });
 
   it("finds no reconciler in a pipeline that does not run it", () => {

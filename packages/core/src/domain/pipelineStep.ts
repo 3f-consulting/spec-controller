@@ -15,4 +15,4 @@ export type WorkflowStep = {
   readonly plumbing: boolean;
 } & PipelineStepAction;
 
-export type PipelineStep = { readonly sourceIndex: number } & WorkflowStep;
+export type PipelineStep = { readonly workflow: string } & WorkflowStep;

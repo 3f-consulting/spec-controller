@@ -12,7 +12,7 @@ const scenarios: Scenario[] = [
 
 const annotatedSteps: PipelineStep[] = [
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Checkout",
     writesStepRecord: false,
@@ -21,7 +21,7 @@ const annotatedSteps: PipelineStep[] = [
     action: { name: "actions/checkout@v4" },
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Complexity",
     id: "SCN-CVT-001",
@@ -30,7 +30,7 @@ const annotatedSteps: PipelineStep[] = [
     plumbing: false,
     command: "pnpm lint:alpha",
   },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  { workflow: "ci.yml", job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
 ];
 
 function reconcileAnnotated() {

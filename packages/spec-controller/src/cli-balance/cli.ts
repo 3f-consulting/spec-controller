@@ -5,7 +5,6 @@ import {
   readCorpus,
   readWorkflows,
   featureNamesOf,
-  evidenceObligationsOf,
   type EvidenceReport,
 } from "../ingest/ingestQualityChecks.js";
 import { EVIDENCE_INPUTS, inputPathsOf, runInputsOf, type InputPaths } from "./evidenceInputs.js";
@@ -33,6 +32,7 @@ import { readDocument } from "../ingest/reportReading.js";
 import { exitCodeOf } from "./exitStatus.js";
 import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
 import {
+  corpusCountsOfFeatures,
   runVerdict,
   type ParsedFeatureFile,
   type ParsedWorkflow,
@@ -135,7 +135,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 
   const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
   if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations: evidenceObligationsOf(corpus), featureNames: featureNamesOf(corpus) };
+  const payloads = { balance, ctx, evidenceObligations: corpusCountsOfFeatures(corpus), featureNames: featureNamesOf(corpus) };
   writeOutputs(
     planResult.plan,
     payloads,

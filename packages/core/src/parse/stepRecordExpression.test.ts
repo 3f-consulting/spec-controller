@@ -9,12 +9,12 @@ const INVOCATION = "spec-controller balance";
 
 const NAMES = ["ci.yml"];
 
-const nameOf = (step: PipelineStep) => qualifiedStepName(step, NAMES);
+const nameOf = (step: PipelineStep) => qualifiedStepName(step);
 
 const runsTheReconciler = (command: string) => commandRuns(command, INVOCATION, {});
 
 function stepNamed(ci: string, identity: string) {
-  const step = workflowSteps([ci]).find((s) => s.identity === identity);
+  const step = workflowSteps([ci], NAMES).find((s) => s.identity === identity);
   if (step === undefined) throw new Error(`no step named "${identity}" in the fixture`);
   return step;
 }
@@ -22,7 +22,7 @@ function stepNamed(ci: string, identity: string) {
 describe("[SCN-WFS-013] reconcilerSteps — how the step-record expression is read", () => {
   const dumpWith = (env: string): unknown[] => [
     ...reconcilerSteps(
-      workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        env:\n          J: ${env}\n        run: echo done`]),
+      workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        env:\n          J: ${env}\n        run: echo done`], NAMES),
       nameOf,
       runsTheReconciler
     ).steps,
@@ -47,7 +47,7 @@ jobs:
           STEPS_JSON: \${{ toJSON(steps) }}
         run: echo done
 `;
-    const { steps, isReconciler } = reconcilerSteps(workflowSteps([ci]), nameOf, runsTheReconciler);
+    const { steps, isReconciler } = reconcilerSteps(workflowSteps([ci], NAMES), nameOf, runsTheReconciler);
     expect(steps).toEqual([{ step: "ci.yml:ci:Dump", role: "records" }]);
     expect(isReconciler(stepNamed(ci, "Dump"))).toBe(true);
   });
@@ -56,7 +56,7 @@ jobs:
     expect(
       [
         ...reconcilerSteps(
-          workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        run: echo '\${{ toJSON(steps) }}' > r.json`]),
+          workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        run: echo '\${{ toJSON(steps) }}' > r.json`], NAMES),
           nameOf,
           runsTheReconciler
         ).steps,

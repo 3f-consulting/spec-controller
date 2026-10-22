@@ -7,7 +7,8 @@ import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js"
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../domain/scnTags.js";
-import type { ParsedFeatureFile } from "../parse/scenarios.js";
+import { untaggedScenariosOf, type ParsedFeatureFile } from "../parse/scenarios.js";
+import { untaggedScenarioId } from "../domain/corpusCounts.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
 import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
@@ -62,7 +63,6 @@ function observationStreams(
 
 export interface EvidenceReconciliationSources {
   readonly features: readonly ParsedFeatureFile[];
-  readonly untaggedScenarios: readonly string[];
   readonly packageJson: TargetManifest;
   readonly ciWorkflows: readonly ParsedWorkflow[];
   readonly reconcilerInvocation?: string;
@@ -73,7 +73,6 @@ export interface EvidenceReconciliationSources {
 
 interface PipelineReadings {
   readonly steps: readonly PipelineStep[];
-  readonly workflowNames: readonly string[];
   readonly runners: ResolvedRunners;
   readonly exclusions: StepExclusions;
   readonly reconciler: ReconcilerSteps;
@@ -83,15 +82,13 @@ interface PipelineReadings {
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
   const { packageJson } = input;
   const steps = pipelineStepsOf(input.ciWorkflows);
-  const workflowNames = input.ciWorkflows.map(({ file }) => file);
-  const nameOf = (step: PipelineStep): string | undefined => qualifiedStepName(step, workflowNames);
-  const exclusions = nonChecksApplied(steps, nameOf, resolveNotChecks(packageJson));
+  const exclusions = nonChecksApplied(steps, qualifiedStepName, resolveNotChecks(packageJson));
 
   const runners = resolveRunners(packageJson);
 
   const invocation = input.reconcilerInvocation ?? "";
   const scripts = packageJson.scripts ?? {};
-  const reconciler = reconcilerSteps(steps, nameOf, (command) =>
+  const reconciler = reconcilerSteps(steps, qualifiedStepName, (command) =>
     commandRuns(command, invocation, scripts)
   );
 
@@ -99,7 +96,6 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
 
   return {
     steps,
-    workflowNames,
     runners,
     exclusions,
     reconciler,
@@ -111,6 +107,12 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   };
 }
 
+function untaggedScenariosAmong(features: readonly ParsedFeatureFile[]): string[] {
+  return features.flatMap((parsed) =>
+    untaggedScenariosOf(parsed).map((scenario) => untaggedScenarioId({ feature: parsed.file, scenario }))
+  );
+}
+
 export function evidenceReconciliationFromSources(
   input: EvidenceReconciliationSources
 ): EvidenceReconciliation {
@@ -120,19 +122,19 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { steps, workflowNames, runners, exclusions, reconciler, dispositionOf } = pipelineReadings(input);
+  const { steps, runners, exclusions, reconciler, dispositionOf } = pipelineReadings(input);
   const isCandidate: StepTest = (step) => dispositionOf(step) === "candidate";
 
   const reconciliation = evidenceReconciliationOf(
     corpus.scenarios,
     observationStreams(input, steps, corpus, packageJson, isCandidate),
-    [...input.untaggedScenarios],
+    untaggedScenariosAmong(input.features),
     true,
     true
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, steps, workflowNames, packageJson, runners, exclusions, reconciler, dispositionOf),
+      withReaderAccounts(reconciliation, steps, packageJson, runners, exclusions, reconciler, dispositionOf),
       packageJson
     ),
     input
@@ -168,7 +170,6 @@ function withScenarioCodeErrors(
 function withReaderAccounts(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
-  workflowNames: readonly string[],
   packageJson: TargetManifest,
   runners: ResolvedRunners,
   exclusions: StepExclusions,
@@ -185,7 +186,6 @@ function withReaderAccounts(
         exclusions
       ),
       steps,
-      workflowNames,
       dispositionOf
     ),
     steps,
@@ -209,10 +209,9 @@ function withStepAccounting(
 function withScopeAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
-  workflowNames: readonly string[],
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
-  const scope = discoveryScope(steps, workflowNames, dispositionOf);
+  const scope = discoveryScope(steps, dispositionOf);
   if (scope.length === 0) return reconciliation;
   return { ...reconciliation, summary: { ...reconciliation.summary, discoveryScope: scope } };
 }

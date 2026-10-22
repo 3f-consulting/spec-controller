@@ -15,7 +15,7 @@ const scenarios: Scenario[] = [
 
 const severedSteps: PipelineStep[] = [
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Checkout",
     writesStepRecord: false,
@@ -24,7 +24,7 @@ const severedSteps: PipelineStep[] = [
     action: { name: "actions/checkout@v4" },
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Complexity",
     id: "SCN-CVT-001",
@@ -34,7 +34,7 @@ const severedSteps: PipelineStep[] = [
     command: "pnpm lint:alpha",
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Anemic domain",
     id: "SCN-CVT-003",
@@ -44,7 +44,7 @@ const severedSteps: PipelineStep[] = [
     command: "pnpm lint:gamma",
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Module size",
     id: "SCN-CVT-004",
@@ -54,7 +54,7 @@ const severedSteps: PipelineStep[] = [
     command: "pnpm lint:delta",
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "advisory",
     identity: "Scenario sub-issue match",
     id: "SCN-CVT-002",
@@ -64,7 +64,7 @@ const severedSteps: PipelineStep[] = [
     command: "pnpm lint:beta",
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "allowlist",
     identity: "Dependency allowlist",
     id: "SCN-CVT-005",

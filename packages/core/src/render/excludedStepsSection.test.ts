@@ -21,9 +21,8 @@ function reportLines(notChecks?: readonly string[]): string[] {
   >[0]["packageJson"];
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson,
-    ciWorkflows: parsedWorkflows([ci]),
+    ciWorkflows: parsedWorkflows([ci], ["ci.yml"]),
     behaviouralObservations: [],
     deferralTags: [],
   });

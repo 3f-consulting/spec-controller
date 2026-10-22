@@ -28,7 +28,6 @@ const observations: EvidenceObservation[] = [
 const reconcile = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({
     features: parsedFeatures([corpus]),
-    untaggedScenarios: [],
     packageJson: {},
     ciWorkflows: [],
     behaviouralObservations: observations,

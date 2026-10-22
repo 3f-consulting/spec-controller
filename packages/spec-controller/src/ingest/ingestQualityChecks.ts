@@ -3,21 +3,14 @@ import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { readingOf, readUtf8, type ReadFault } from "./inputReading.js";
 import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, slugOf, type FeatureFileSource } from "./ingestScenarios.js";
 import {
-  featureCountsOf,
   parseFeatureCorpus,
-  untaggedScenariosOf,
   parseWorkflows,
-  untaggedScenarioId,
   type ParsedFeatureFile,
   type ParsedWorkflow,
   type Source,
   type SourceFault,
 } from "@3f-consulting/spec-controller-core";
-import {
-  BUILT_IN_DEFERRAL_TAGS,
-  corpusCountsOf,
-  type EvidenceObligations,
-} from "@3f-consulting/spec-controller-core";
+import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
@@ -130,10 +123,6 @@ export function featureNamesOf(corpus: readonly ParsedFeatureFile[]): Map<string
   return map;
 }
 
-export function evidenceObligationsOf(corpus: readonly ParsedFeatureFile[]): EvidenceObligations {
-  return corpusCountsOf(corpus.map((parsed) => ({ feature: parsed.file, ...featureCountsOf(parsed) })));
-}
-
 const OBSERVATION_READERS = {
   vitest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, VITEST_QUALITY_CHECK, root),
   pytest: (report) => parsePytestEvidenceObservations(report as JunitXmlReport, PYTEST_QUALITY_CHECK),
@@ -182,9 +171,6 @@ export function runReconcile(
 
   return evidenceReconciliationFromSources({
     features: corpus,
-    untaggedScenarios: corpus.flatMap((parsed) =>
-      untaggedScenariosOf(parsed).map((scenario) => untaggedScenarioId({ feature: parsed.file, scenario }))
-    ),
     packageJson,
     ciWorkflows: workflows,
     ciStepRecord: documentReadBy(reports, "ci-step-record") as StepRecord | undefined,

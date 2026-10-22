@@ -117,5 +117,5 @@ export function parseWorkflows(sources: readonly Source[]): SourcesParse<Workflo
 }
 
 export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {
-  return workflows.flatMap(({ steps }, sourceIndex) => steps.map((step) => ({ sourceIndex, ...step })));
+  return workflows.flatMap(({ file, steps }) => steps.map((step) => ({ workflow: file, ...step })));
 }

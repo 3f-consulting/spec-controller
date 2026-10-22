@@ -3,7 +3,7 @@ import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/
 import { bareTerm } from "../lib/bareTerm.js";
 import { headerFeatureCode, SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { scenarioCodesOf, type ScenarioTags } from "../domain/scnTags.js";
-import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
+import { corpusCountsOf, type EvidenceObligations, type ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
 import type { Scenario } from "../model.js";
 import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
@@ -82,6 +82,10 @@ export function untaggedScenariosOf(feature: ParsedFeatureFile): string[] {
 export function featureCountsOf(feature: ParsedFeatureFile): ParsedFeatureCounts {
   const { taggedScenarios, untaggedScenarios } = scenariosByScnCodeOf(feature);
   return { rawScnOccurrences: feature.scnOccurrences, taggedScenarios, untaggedScenarios };
+}
+
+export function corpusCountsOfFeatures(features: readonly ParsedFeatureFile[]): EvidenceObligations {
+  return corpusCountsOf(features.map((parsed) => ({ feature: parsed.file, ...featureCountsOf(parsed) })));
 }
 
 export function scenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {

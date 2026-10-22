@@ -22,7 +22,6 @@ function markdownOf(files: readonly File[]): string {
   return renderMarkdown(
     evidenceReconciliationFromSources({
       features: parsedFeatures(files.map(source), files.map(({ slug }) => `${slug}.feature`)),
-      untaggedScenarios: [],
       packageJson: {},
       ciWorkflows: [],
       behaviouralObservations: codes.map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" })),

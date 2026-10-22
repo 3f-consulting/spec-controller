@@ -2,7 +2,7 @@ import type { PipelineStep } from "./pipelineStep.js";
 import type { BehaviouralRunner, JobDiscoveryScope, ReconcilerStep, StepAccounting } from "./evidenceReconciliation.js";
 
 export type StepTest = (step: PipelineStep) => boolean;
-type StepName = (step: PipelineStep) => string | undefined;
+type StepName = (step: PipelineStep) => string;
 
 export interface ReconcilerSteps {
   readonly steps: readonly ReconcilerStep[];
@@ -25,7 +25,7 @@ export function reconcilerSteps(
   return {
     steps: steps.flatMap((step) => {
       const role = reconcilerRoleOf(step, runsTheReconciler);
-      return role === undefined ? [] : [{ step: nameOf(step) ?? step.identity, role }];
+      return role === undefined ? [] : [{ step: nameOf(step), role }];
     }),
     isReconciler: (step) => reconcilerRoleOf(step, runsTheReconciler) !== undefined,
   };
@@ -108,30 +108,19 @@ export function everyStepAccountedFor({ stepsRead, accountedFor }: StepAccountin
   return accountedFor === stepsRead;
 }
 
-type Tally = { readonly source?: string; readonly job: string; readonly steps: number; readonly candidates: number };
-
-const jobKeyOf = (step: PipelineStep): string => `${step.sourceIndex}:${step.job}`;
+const jobKeyOf = (step: PipelineStep): string => `${step.workflow}:${step.job}`;
 
 export function discoveryScope(
   steps: readonly PipelineStep[],
-  ciSourceNames: readonly string[],
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): readonly JobDiscoveryScope[] {
-  const tallies = new Map<string, Tally>();
+  const tallies = new Map<string, JobDiscoveryScope>();
   for (const step of steps) {
-    const source = ciSourceNames[step.sourceIndex];
-    const tally = tallies.get(jobKeyOf(step)) ?? {
-      ...(source !== undefined ? { source } : {}),
-      job: step.job,
-      steps: 0,
-      candidates: 0,
-    };
+    const tally = tallies.get(jobKeyOf(step)) ?? { source: step.workflow, job: step.job, steps: 0, candidates: 0 };
     const candidate = dispositionOf(step) === "candidate" ? 1 : 0;
     tallies.set(jobKeyOf(step), { ...tally, steps: tally.steps + 1, candidates: tally.candidates + candidate });
   }
-  return [...tallies.values()].sort(
-    (a, b) => (a.source ?? "").localeCompare(b.source ?? "") || a.job.localeCompare(b.job)
-  );
+  return [...tallies.values()].sort((a, b) => a.source.localeCompare(b.source) || a.job.localeCompare(b.job));
 }
 
 export function isExcludedFromDiscovery(

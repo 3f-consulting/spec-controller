@@ -284,7 +284,7 @@ export interface WrongKindEntry {
 }
 
 export interface JobDiscoveryScope {
-  readonly source?: string;
+  readonly source: string;
   readonly job: string;
   readonly steps: number;
   readonly candidates: number;

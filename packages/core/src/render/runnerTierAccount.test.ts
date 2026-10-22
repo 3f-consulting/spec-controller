@@ -16,7 +16,6 @@ function reconcile(runners?: Record<string, string | null>) {
   >[0]["packageJson"];
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci]),
     behaviouralObservations: [],

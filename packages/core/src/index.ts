@@ -21,6 +21,7 @@ export {
   scenariosOf,
   untaggedScenariosOf,
   featureCountsOf,
+  corpusCountsOfFeatures,
 } from "./parse/scenarios.js";
 export type { ParsedFeatureFile } from "./parse/scenarios.js";
 

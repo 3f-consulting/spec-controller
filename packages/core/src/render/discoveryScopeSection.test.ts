@@ -12,13 +12,12 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 function reconcile(
   workflowSources: readonly string[],
-  workflowNames?: readonly string[]
+  files?: readonly string[]
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson,
-    ciWorkflows: parsedWorkflows(workflowSources, workflowNames),
+    ciWorkflows: parsedWorkflows(workflowSources, files),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -58,27 +57,6 @@ describe("[SCN-RPT-047] the report names the workflows, the jobs and the step co
     expect(lines.slice(4, 7).map(cells)).toStrictEqual(
       scope!.map(({ source, job, steps, candidates }) => [source, job, String(steps), String(candidates)])
     );
-    expect(lines.at(-1)).toBe("");
-  });
-
-  it("puts the placeholder in the workflow cell of every row when the target gives no workflow names", () => {
-    const named = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
-    const reconciliation: EvidenceReconciliation = {
-      ...named,
-      summary: {
-        ...named.summary,
-        discoveryScope: (named.summary.discoveryScope ?? [])
-          .map(({ job, steps, candidates }) => ({ job, steps, candidates }))
-          .sort((a, b) => a.job.localeCompare(b.job)),
-      },
-    };
-    const lines = rendered(reconciliation);
-    expect(lines).toHaveLength(8);
-    expect(lines.slice(4, 7)).toStrictEqual([
-      "| — | audit | 1 | 1 |",
-      "| — | quality | 3 | 1 |",
-      "| — | sweep | 2 | 2 |",
-    ]);
     expect(lines.at(-1)).toBe("");
   });
 

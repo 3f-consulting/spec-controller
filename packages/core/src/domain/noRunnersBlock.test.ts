@@ -3,7 +3,7 @@ import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type She
 import type { PipelineStep } from "./pipelineStep.js";
 import { runsAsCommand } from "./shellReading.test-utils.js";
 
-const IN_THE_QUALITY_JOB = { sourceIndex: 0, job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
+const IN_THE_QUALITY_JOB = { workflow: "ci.yml", job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const run = (identity: string, command: string): PipelineStep => ({ ...IN_THE_QUALITY_JOB, identity, command });
 const using = (name: string, plumbing = false): PipelineStep => ({

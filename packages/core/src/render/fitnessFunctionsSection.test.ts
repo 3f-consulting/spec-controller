@@ -40,7 +40,6 @@ jobs:
 function reconcile(barCitation: string): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([corpus]),
-    untaggedScenarios: [],
     packageJson,
     ciWorkflows: parsedWorkflows([ci(barCitation)]),
     behaviouralObservations: [],

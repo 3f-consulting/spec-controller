@@ -27,7 +27,6 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
         ["@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"],
         ["one.feature", "plain.feature"]
       ),
-      untaggedScenarios: [],
       packageJson: {},
       ciWorkflows: [],
       behaviouralObservations: [],

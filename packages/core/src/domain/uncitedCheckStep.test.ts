@@ -6,7 +6,7 @@ import { stepDispositions } from "./uncitedFitnessFunctions.js";
 
 const unannotatedSteps: PipelineStep[] = [
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Checkout",
     writesStepRecord: false,
@@ -15,7 +15,7 @@ const unannotatedSteps: PipelineStep[] = [
     action: { name: "actions/checkout@v4" },
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Set up Node",
     writesStepRecord: false,
@@ -23,11 +23,11 @@ const unannotatedSteps: PipelineStep[] = [
     plumbing: true,
     action: { name: "actions/setup-node@v4" },
   },
-  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
-  { sourceIndex: 0, job: "quality", identity: "Build", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm build" },
-  { sourceIndex: 0, job: "quality", identity: "Complexity", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:alpha" },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
-  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
+  { workflow: "ci.yml", job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
+  { workflow: "ci.yml", job: "quality", identity: "Build", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm build" },
+  { workflow: "ci.yml", job: "quality", identity: "Complexity", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:alpha" },
+  { workflow: "ci.yml", job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  { workflow: "ci.yml", job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
 const nonChecks: readonly string[] = ["Install", "Build"];

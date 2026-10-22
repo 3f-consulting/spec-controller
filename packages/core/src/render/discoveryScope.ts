@@ -11,7 +11,7 @@ export const discoveryScopeSection = (report: RenderInput): string[] => {
     "| --- | --- | --- | --- |",
     ...scope.map(
       ({ source, job, steps, candidates }) =>
-        `| ${source ?? "—"} | ${job} | ${steps} | ${candidates} |`
+        `| ${source} | ${job} | ${steps} | ${candidates} |`
     ),
     "",
   ];

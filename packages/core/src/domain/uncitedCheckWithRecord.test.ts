@@ -11,7 +11,7 @@ const scenarios: Scenario[] = [
 
 const partlyAnnotatedSteps: PipelineStep[] = [
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Checkout",
     writesStepRecord: false,
@@ -19,9 +19,9 @@ const partlyAnnotatedSteps: PipelineStep[] = [
     plumbing: true,
     action: { name: "actions/checkout@v4" },
   },
-  { sourceIndex: 0, job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
+  { workflow: "ci.yml", job: "quality", identity: "Install", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm install --frozen-lockfile" },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Complexity",
     id: "SCN-AAA-001",
@@ -30,8 +30,8 @@ const partlyAnnotatedSteps: PipelineStep[] = [
     plumbing: false,
     command: "pnpm lint:alpha",
   },
-  { sourceIndex: 0, job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
-  { sourceIndex: 0, job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
+  { workflow: "ci.yml", job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  { workflow: "ci.yml", job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
 const recorded: RecordedCheckStep[] = [{ citedScn: "SCN-AAA-001", report: "succeeded" }];

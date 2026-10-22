@@ -6,7 +6,7 @@ import { stepDispositions } from "./uncitedFitnessFunctions.js";
 
 const uncitedSteps: PipelineStep[] = [
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Checkout",
     writesStepRecord: false,
@@ -15,7 +15,7 @@ const uncitedSteps: PipelineStep[] = [
     action: { name: "actions/checkout@v4" },
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Advisory analysis",
     writesStepRecord: false,
@@ -24,7 +24,7 @@ const uncitedSteps: PipelineStep[] = [
     command: "pnpm lint:advisory",
   },
   {
-    sourceIndex: 0,
+    workflow: "ci.yml",
     job: "quality",
     identity: "Enforced analysis",
     writesStepRecord: false,

@@ -161,9 +161,8 @@ const stepAccountingPackageJson = {
 export function reconcileStepAccounting(workflowSources: readonly string[]): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson: stepAccountingPackageJson,
-    ciWorkflows: parsedWorkflows(workflowSources),
+    ciWorkflows: parsedWorkflows(workflowSources, ["ci.yml"]),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],
     deferralTags: [],

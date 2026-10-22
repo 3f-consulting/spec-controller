@@ -10,7 +10,6 @@ const scripts = { test: "vitest run", lint: "eslint ." };
 function reconcile(runners: Record<string, string | null>): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson: {
       scripts,
       specController: {
@@ -18,7 +17,7 @@ function reconcile(runners: Record<string, string | null>): EvidenceReconciliati
         notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
       },
     },
-    ciWorkflows: parsedWorkflows([ci]),
+    ciWorkflows: parsedWorkflows([ci], ["ci.yml"]),
     behaviouralObservations: [],
     deferralTags: [],
   });

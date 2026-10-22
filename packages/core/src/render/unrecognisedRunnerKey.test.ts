@@ -14,7 +14,6 @@ const tiers = ["unit", "integration", "e2e", "performance"];
 function reportLines(runners: Record<string, string | null>): string[] {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    untaggedScenarios: [],
     packageJson: {
       scripts: { test: "vitest run", lint: "eslint ." },
       specController: {
