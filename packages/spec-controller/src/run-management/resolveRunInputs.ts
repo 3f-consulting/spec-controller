@@ -15,18 +15,19 @@ export function resolveTargetOrigin(targetDir: string | undefined): string | nul
   return remote === null ? null : targetOriginName(remote);
 }
 
-const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/(.+)$/;
-const SCP_REMOTE = /^[^/@:]+@[^/:]+:(.+)$/;
-const URL_USERINFO = /^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/i;
+const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/([^?#]+)/;
+const SCP_REMOTE = /^[^/]+@[^/@:]+:([^?#]+)/;
+const URL_USERINFO = /(:\/\/)[^/?#]*@/;
+const SCP_BARE = /^(?:[^/]*@)?([^/@:]+:[^?#]*).*/;
 
 /**
  * Names a remote URL by its last two path segments, owner/repo. A remote of any other
- * shape is named as given, less any user and password, which the report must not print.
+ * shape is named as given, less any user, password, query and fragment, which the report must not print.
  */
 function targetOriginName(remote: string): string {
   const path = (URL_REMOTE.exec(remote) ?? SCP_REMOTE.exec(remote))?.[1];
   const segments = path === undefined ? [] : (path.endsWith(".git") ? path.slice(0, -".git".length) : path).split("/");
-  return segments.length >= 2 ? segments.slice(-2).join("/") : remote.replace(URL_USERINFO, "$1");
+  return segments.length >= 2 ? segments.slice(-2).join("/") : remote.replace(URL_USERINFO, "$1").replace(SCP_BARE, "$1");
 }
 
 function targetDirOf(targetDir: string | undefined): string | undefined {

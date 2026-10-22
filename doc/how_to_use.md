@@ -88,7 +88,7 @@ npx spec-controller --store "$STORE" balance \
 
 - **Leave out any input you don't have.**
 - **`STORE` is optional.** It sits outside the repository on purpose. A kept run lists a codebase's gaps, so it belongs in a store you chose, not under version control beside the code it describes. See [Storing a run](#storing-a-run----store----run-id).
-- **`--target` names the project in the report.** Without it the report reads `unknown-target`. When the project is a git checkout with an `origin` remote, the report adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`.
+- **`--target` names the project in the report.** Without it the report reads `unknown-target`. When the project is a git checkout with an `origin` remote, the report adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`. The origin is named without any user, password, token, query or fragment its remote carries.
 
 For the smallest form of the command and every flag, see [Command reference](#command-reference--balance).
 

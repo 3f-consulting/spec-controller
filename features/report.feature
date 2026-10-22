@@ -17,7 +17,8 @@ Feature: The report renders the ledger as sectioned facts
 
     The "Target repo:" line is the --target value verbatim, never resolved and never guessed
     from a path. Without --target it reads "unknown-target" and names the target's git origin
-    beside it, never in place of it.
+    beside it, never in place of it. The origin's name carries no user, password, query or
+    fragment from the remote.
 
     @unit @SCN-RPT-001
     Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target and naming the git origin beside it

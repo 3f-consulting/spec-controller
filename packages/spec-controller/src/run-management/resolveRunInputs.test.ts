@@ -1,11 +1,16 @@
-import { beforeEach, describe, it, expect, vi } from "vitest";
+import { afterAll, beforeEach, describe, it, expect, vi } from "vitest";
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/corpusReading.test-utils.js";
-import { runBalance } from "../cli-balance/cli.js";
+import { runReconcile as reconcileReadInputs } from "../ingest/ingestQualityChecks.js";
+import { runBalance, sourceTarget } from "../cli-balance/cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { renderJson, renderMarkdown, type EvidenceReconciliation, type RunContext } from "@3f-consulting/spec-controller-core";
+import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
+import { reRender } from "../cli-balance/reRender.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
@@ -466,33 +471,106 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     return { md, json: JSON.parse(readFileSync(saved, "utf8")).runProvenance, saved };
   }
 
+  // One checkout serves every row, each row setting its origin's URL: a checkout per row costs more than a unit test may take.
+  // The header is all a row reads, so the report renders an empty reconciliation.
+  let shared: { dir: string; balance: EvidenceReconciliation } | undefined;
+  beforeEach(() => {
+    if (shared !== undefined) return;
+    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-origins-"));
+    execFileSync("git", ["init", "-q", dir]);
+    shared = { dir, balance: reconcileReadInputs([], dir, [], []) };
+  });
+  afterAll(() => {
+    if (shared !== undefined) rmSync(shared.dir, { recursive: true, force: true });
+  });
+
+  function withOrigin(origin: string, use: (dir: string, balance: EvidenceReconciliation) => void): void {
+    const { dir, balance } = shared!;
+    execFileSync("git", ["-C", dir, "config", "remote.origin.url", origin]);
+    use(dir, balance);
+  }
+
+  // The run's context as balance assembles it with no --target, rendered by the report's own renderers.
+  function reportOf(dir: string, balance: EvidenceReconciliation): { md: string; json: string; rerendered: string } {
+    const targetOrigin = resolveTargetOrigin(dir);
+    const ctx: RunContext = {
+      target: sourceTarget({}),
+      ...(targetOrigin !== null ? { targetOrigin } : {}),
+      inputs: runInputsOf({}),
+      corpus: "features",
+      runStart: new Date("2026-10-22T09:00:00.000Z"),
+      sourceSha: null,
+    };
+    const json = renderJson(balance, ctx);
+    return { md: renderMarkdown(balance, ctx, reportedExitCodeOf), json, rerendered: reRender(JSON.parse(json), false).markdown };
+  }
+
   it.each([
-    ["https://github.com/ekino/veggies.git", "ekino/veggies"],
-    ["https://github.com/ekino/veggies", "ekino/veggies"],
-    ["ssh://git@github.com/ekino/veggies.git", "ekino/veggies"],
-    ["ssh://git@github.com:22/ekino/veggies", "ekino/veggies"],
-    ["git@github.com:ekino/veggies.git", "ekino/veggies"],
-    ["git@github.com:ekino/veggies", "ekino/veggies"],
-    ["/srv/git/veggies.git", "/srv/git/veggies.git"],
-    ["file:///srv/git/veggies.git", "file:///srv/git/veggies.git"],
-    ["https://github.com/veggies.git", "https://github.com/veggies.git"],
-    ["http://deploy:s3cret@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies"],
-    ["https://x-token:s3cret@github.com/veggies.git", "https://github.com/veggies.git"],
-    ["https://gitlab.com/ekino/greens/veggies.git", "greens/veggies"],
-    ["git+ssh://git@github.com/ekino/veggies.git", "git+ssh://github.com/ekino/veggies.git"],
-    ["http://deploy@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies"],
-  ])("names the target's origin %s as %s", (origin, shown) => {
-    withCheckout(origin, (dir) => {
-      expect(resolveTargetOrigin(dir)).toBe(shown);
+    ["https://github.com/ekino/veggies.git", "ekino/veggies", []],
+    ["https://github.com/ekino/veggies", "ekino/veggies", []],
+    ["ssh://git@github.com/ekino/veggies.git", "ekino/veggies", ["git@"]],
+    ["ssh://git@github.com:22/ekino/veggies", "ekino/veggies", ["git@"]],
+    ["git@github.com:ekino/veggies.git", "ekino/veggies", ["git@"]],
+    ["git@github.com:ekino/veggies", "ekino/veggies", ["git@"]],
+    ["/srv/git/veggies.git", "/srv/git/veggies.git", []],
+    ["file:///srv/git/veggies.git", "file:///srv/git/veggies.git", []],
+    ["https://github.com/veggies.git", "https://github.com/veggies.git", []],
+    ["http://deploy:s3cret@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies", ["deploy", "s3cret"]],
+    ["https://x-token:s3cret@github.com/veggies.git", "https://github.com/veggies.git", ["x-token", "s3cret"]],
+    ["https://gitlab.com/ekino/greens/veggies.git", "greens/veggies", []],
+    ["git+ssh://git@github.com/ekino/veggies.git", "git+ssh://github.com/ekino/veggies.git", ["git@"]],
+    ["http://deploy@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies", ["deploy"]],
+    ["https://x-token:s3cret@github.com/ekino/veggies.git", "ekino/veggies", ["x-token", "s3cret"]],
+    ["https://deploy@github.com/ekino/veggies.git", "ekino/veggies", ["deploy"]],
+    ["https://deploy:p@ss@github.com/ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
+    ["https://host/ekino/veggies.git?private_token=abc", "ekino/veggies", ["private_token", "abc"]],
+    ["https://github.com/ekino/veggies.git#s3cret", "ekino/veggies", ["s3cret"]],
+    ["https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", "ekino/veggies", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
+    ["ssh://deploy:s3cret@host/ekino/veggies.git", "ekino/veggies", ["deploy", "s3cret"]],
+    ["ssh://deploy:p@ss@host/ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
+    ["ssh://host/ekino/veggies.git?private_token=abc", "ekino/veggies", ["private_token", "abc"]],
+    ["ssh://host/ekino/veggies.git#s3cret", "ekino/veggies", ["s3cret"]],
+    ["deploy:s3cret@host:ekino/veggies.git", "ekino/veggies", ["deploy", "s3cret"]],
+    ["deploy:p@ss@host:ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
+    ["deploy@host:ekino/veggies.git?private_token=abc", "ekino/veggies", ["deploy", "private_token", "abc"]],
+    ["deploy@host:ekino/veggies.git#s3cret", "ekino/veggies", ["deploy", "s3cret"]],
+    ["deploy@host:veggies.git", "host:veggies.git", ["deploy"]],
+    ["deploy:s3cret@host:veggies.git", "host:veggies.git", ["deploy", "s3cret"]],
+    ["https://deploy@github.com/veggies.git", "https://github.com/veggies.git", ["deploy"]],
+    ["https://deploy:p@ss@github.com/veggies.git", "https://github.com/veggies.git", ["deploy", "p@ss", "ss@"]],
+    ["https://github.com/veggies.git?private_token=abc", "https://github.com/veggies.git", ["private_token", "abc"]],
+    ["https://github.com/veggies.git#s3cret", "https://github.com/veggies.git", ["s3cret"]],
+    ["http://deploy:p@ss@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies", ["deploy", "p@ss", "ss@"]],
+    ["http://git.example.com/ekino/veggies?private_token=abc", "http://git.example.com/ekino/veggies", ["private_token", "abc"]],
+    ["git+ssh://deploy:p@ss@host/ekino/veggies.git?private_token=abc#s3cret", "git+ssh://host/ekino/veggies.git", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
+    ["host:ekino/veggies.git?private_token=abc", "host:ekino/veggies.git", ["private_token", "abc"]],
+    ["persistent-https::https://deploy:s3cret@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["deploy", "s3cret"]],
+    ["persistent-https::https://deploy:p@ss@host/ekino/veggies.git?private_token=abc#s3cret", "persistent-https::https://host/ekino/veggies.git", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
+    ["/srv/git/veggies@2024:archive.git", "/srv/git/veggies@2024:archive.git", []],
+  ])("names the target's origin %s as %s, and none of %j reaches the report, its JSON or a re-render", (origin, shown, secrets) => {
+    withOrigin(origin, (dir, balance) => {
+      const { md, json, rerendered } = reportOf(dir, balance);
+      for (const [surface, text] of [["markdown", md], ["JSON", json], ["re-render", rerendered]]) {
+        for (const secret of secrets) expect(text, `${secret} in the ${surface}`).not.toContain(secret);
+      }
+      const named = (JSON.parse(json) as { runProvenance: { targetOrigin?: unknown } }).runProvenance.targetOrigin;
+      expect(String(named)).not.toMatch(/[?#]/);
+      expect(named).toBe(shown);
+      expect(targetRepo(md)).toBe(`- Target repo: unknown-target (no --target given; origin is ${shown})`);
+      expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });
 
-  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same", () => {
-    withCheckout("https://github.com/ekino/veggies.git", (dir) => {
+  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same, with none of the remote's credentials in any of them", () => {
+    withCheckout("https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", (dir) => {
       const { md, json, saved } = report(dir);
+      const rerendered = runBalanceCaptured(["--render-from-json", saved]).stdout;
+      for (const text of [md, readFileSync(saved, "utf8"), rerendered]) {
+        for (const secret of ["deploy", "p@ss", "private_token", "abc", "s3cret"]) expect(text.replaceAll(dir, "")).not.toContain(secret);
+      }
       expect(targetRepo(md)).toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
       expect({ target: json["target"], targetOrigin: json["targetOrigin"] }).toEqual({ target: "unknown-target", targetOrigin: "ekino/veggies" });
-      expect(targetRepo(runBalanceCaptured(["--render-from-json", saved]).stdout)).toBe(targetRepo(md));
+      expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });
 
