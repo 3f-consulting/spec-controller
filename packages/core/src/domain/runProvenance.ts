@@ -9,20 +9,6 @@ export interface RunInput extends RunInputName {
   readonly path?: string;
 }
 
-const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/(.+)$/;
-const SCP_REMOTE = /^[^/@:]+@[^/:]+:(.+)$/;
-const URL_USERINFO = /^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/i;
-
-/**
- * Names a remote URL by its last two path segments, owner/repo. A remote of any other
- * shape is named as given, less any user and password, which the report must not print.
- */
-export function targetOriginName(remote: string): string {
-  const path = (URL_REMOTE.exec(remote) ?? SCP_REMOTE.exec(remote))?.[1];
-  const segments = path === undefined ? [] : (path.endsWith(".git") ? path.slice(0, -".git".length) : path).split("/");
-  return segments.length >= 2 ? segments.slice(-2).join("/") : remote.replace(URL_USERINFO, "$1");
-}
-
 export interface RunContext {
   readonly target: string;
   readonly inputs: readonly RunInput[];
@@ -30,7 +16,7 @@ export interface RunContext {
   readonly corpus: string;
   readonly runStart: Date;
   readonly sourceSha: string | null;
-  /** The target's origin remote URL as git returns it, read only when no --target was given. */
+  /** The name of the target's origin, read only when no --target was given. */
   readonly targetOrigin?: string;
   readonly toolSha?: string | null;
   readonly toolVersion?: string;

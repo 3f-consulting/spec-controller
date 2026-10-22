@@ -11,7 +11,22 @@ export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string 
 }
 
 export function resolveTargetOrigin(targetDir: string | undefined): string | null {
-  return readGit(targetDirOf(targetDir), ["remote", "get-url", "origin"]);
+  const remote = readGit(targetDirOf(targetDir), ["remote", "get-url", "origin"]);
+  return remote === null ? null : targetOriginName(remote);
+}
+
+const URL_REMOTE = /^(?:https|ssh):\/\/[^/]+\/(.+)$/;
+const SCP_REMOTE = /^[^/@:]+@[^/:]+:(.+)$/;
+const URL_USERINFO = /^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/i;
+
+/**
+ * Names a remote URL by its last two path segments, owner/repo. A remote of any other
+ * shape is named as given, less any user and password, which the report must not print.
+ */
+function targetOriginName(remote: string): string {
+  const path = (URL_REMOTE.exec(remote) ?? SCP_REMOTE.exec(remote))?.[1];
+  const segments = path === undefined ? [] : (path.endsWith(".git") ? path.slice(0, -".git".length) : path).split("/");
+  return segments.length >= 2 ? segments.slice(-2).join("/") : remote.replace(URL_USERINFO, "$1");
 }
 
 function targetDirOf(targetDir: string | undefined): string | undefined {

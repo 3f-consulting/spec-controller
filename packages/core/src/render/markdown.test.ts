@@ -32,7 +32,7 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
   it("names the target's git origin beside unknown-target when the run read one, and the bare target when it read none", () => {
     const targetRepo = (md: string) => md.split("\n").find((line) => line.startsWith("- Target repo:"));
     const untargeted = { ...ctx, target: "unknown-target" };
-    expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "git@github.com:ekino/veggies.git" })))
+    expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "ekino/veggies" })))
       .toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
     expect(targetRepo(renderMarkdown(__er(balance), untargeted))).toBe("- Target repo: unknown-target");
   });

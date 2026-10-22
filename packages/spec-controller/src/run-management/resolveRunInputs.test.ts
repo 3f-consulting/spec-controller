@@ -6,7 +6,7 @@ import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/corpusReading.test-utils.js";
 import { runBalance } from "../cli-balance/cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
+import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
@@ -465,6 +465,27 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     const md = runBalanceCaptured(["--features", join(dir, "features"), ...extra, "--format", "md", "--format", `json:${saved}`]).stdout;
     return { md, json: JSON.parse(readFileSync(saved, "utf8")).runProvenance, saved };
   }
+
+  it.each([
+    ["https://github.com/ekino/veggies.git", "ekino/veggies"],
+    ["https://github.com/ekino/veggies", "ekino/veggies"],
+    ["ssh://git@github.com/ekino/veggies.git", "ekino/veggies"],
+    ["ssh://git@github.com:22/ekino/veggies", "ekino/veggies"],
+    ["git@github.com:ekino/veggies.git", "ekino/veggies"],
+    ["git@github.com:ekino/veggies", "ekino/veggies"],
+    ["/srv/git/veggies.git", "/srv/git/veggies.git"],
+    ["file:///srv/git/veggies.git", "file:///srv/git/veggies.git"],
+    ["https://github.com/veggies.git", "https://github.com/veggies.git"],
+    ["http://deploy:s3cret@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies"],
+    ["https://x-token:s3cret@github.com/veggies.git", "https://github.com/veggies.git"],
+    ["https://gitlab.com/ekino/greens/veggies.git", "greens/veggies"],
+    ["git+ssh://git@github.com/ekino/veggies.git", "git+ssh://github.com/ekino/veggies.git"],
+    ["http://deploy@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies"],
+  ])("names the target's origin %s as %s", (origin, shown) => {
+    withCheckout(origin, (dir) => {
+      expect(resolveTargetOrigin(dir)).toBe(shown);
+    });
+  });
 
   it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same", () => {
     withCheckout("https://github.com/ekino/veggies.git", (dir) => {
