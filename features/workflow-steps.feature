@@ -13,6 +13,39 @@ Feature: balance reads a workflow's steps
     @unit @SCN-WFS-001
     Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest
 
+  Rule: a step runs a package script when it invokes it in a form its package manager documents
+
+    npm runs a script through run, or its aliases run-script, rum and urn, and runs the test
+    script through its test shortcut, test, t or tst. pnpm runs a script through run or by its
+    bare name, and runs the test script through test, t or tst, after any of the selections
+    --filter with its selector, -F with its selector, -r and --recursive. yarn runs a script
+    through run or by its bare name, after workspace and a workspace name, and through run after
+    workspaces foreach and its options. An option written after the script name is not read.
+
+    @unit @SCN-WFS-021
+    Scenario: a step running npm's test shortcut, as `npm test`, `npm t` or `npm tst`, is the unit runner when the manifest's `test` script runs it
+
+    @unit @SCN-WFS-022
+    Scenario: a step running a script through `npm run-script`, `npm rum` or `npm urn` runs that script, as `npm run` does
+
+    @unit @SCN-WFS-023
+    Scenario: a step running `pnpm t` or `pnpm tst` runs the manifest's `test` script
+
+    @unit @SCN-WFS-024
+    Scenario: a step running a script after a pnpm selection, `--filter`, `-F` or `-r`, runs that script
+
+    @unit @SCN-WFS-025
+    Scenario: a step running a script in a yarn workspace, through `yarn workspace <name>` or `yarn workspaces foreach … run`, runs that script
+
+  Rule: a script is run only where a command runs, so a step whose text only names a script runs nothing
+
+    A script is run where a command opens with its invocation: at the start of a line, or after
+    &&, ||, ; or |, past any NAME=value assignments and the launchers a runner is read through.
+    A script named anywhere else, as another command's argument, runs nothing.
+
+    @unit @SCN-WFS-026
+    Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
+
   Rule: a runner is recognised only as the command a step runs, and named anywhere else it leaves the step a candidate
 
     A runner is recognised only as the command word of a simple command in the last stage of a
