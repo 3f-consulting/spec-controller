@@ -10,6 +10,8 @@ A **real catch** is a red on a commit that was meant to pass. A red the method m
 
 Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and three more on 20 October, after the window. For them, a zero says little yet.
 
+**Technical conformance:** checks on the code, tests included.
+
 ## Readability, structure, complexity
 
 | Check | Real catches |
@@ -29,6 +31,14 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | Only one module imports the Gherkin parser | 0 |
 | Only the workflow module and the run store import the YAML parser | 0 |
 
+## Duplication and unused code
+
+| Check | Real catches |
+|---|---|
+| Duplication: no clone touches a changed production file | 0 |
+| Unused code: no changed file carries an unused file, export or dependency | 8 |
+| Test helpers written once: no helper in a changed test file copies one in another | 0 |
+
 ## Tests missing or weak
 
 | Check | Real catches |
@@ -37,35 +47,7 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | No comment disables a mutant | 0 |
 | Test code stays within the declared ceiling ratio to production code | 0 |
 | No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
-| No test leaves an entry in its temporary directory | 0 |
-
-## Duplication and unused code
-
-| Check | Real catches |
-|---|---|
-| Duplication: no clone touches a changed production file | 0 |
-| Unused code: no changed file carries an unused file, export or dependency | 8 |
-| Test helpers written once: no helper in a changed test file copies one in another | 0 |
-| No unused step definition | 0 |
-
-## Comments and docs
-
-| Check | Real catches |
-|---|---|
-| Comment share: no file over its comment-line ceiling | 5 |
-| No ticket ID in a comment, description or document | 0 |
-| No scenario code in a comment, description or document | 2 |
-| No narrated history in a comment, description or document | 1 |
-| No title or description names a code identifier or a source file | 1 |
-
-## Scenarios a reader can trust
-
-| Check | Real catches |
-|---|---|
-| No step on a scenario Cucumber does not run | 0 |
-| Every scenario takes its steps from one step-definition file | 0 |
-| No Given, When or Then names an interface mechanic | 0 |
-| Evidence layers cross a seam | 0 |
+| Every production source file is in a mutation scope or on the recorded list | 0 |
 
 ## Correctness the compiler and the packaging can see
 
@@ -90,6 +72,28 @@ The three published and workflow checks share their one catch: a single pull req
 
 Workflow security's catch is the same pull request as the three checks above.
 
+**Process conformance:** checks on how the work is done and recorded.
+
+## Comments and docs
+
+| Check | Real catches |
+|---|---|
+| Comment share: no file over its comment-line ceiling | 5 |
+| No ticket ID in a comment, description or document | 0 |
+| No scenario code in a comment, description or document | 2 |
+| No narrated history in a comment, description or document | 1 |
+| No title or description names a code identifier or a source file | 1 |
+
+## Scenarios a reader can trust
+
+| Check | Real catches |
+|---|---|
+| No step on a scenario Cucumber does not run | 0 |
+| Every scenario takes its steps from one step-definition file | 0 |
+| No Given, When or Then names an interface mechanic | 0 |
+| Evidence layers cross a seam | 0 |
+| No unused step definition | 0 |
+
 ## Guards on the method
 
 These checks don't replace a review comment. They keep the pipeline's own evidence honest.
@@ -102,7 +106,7 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | A red proof of an integration or e2e scenario runs exactly that scenario | 0 |
 | A red proof that selects no test fails, saying no test was selected | 0 |
 | A red proof in which no selected test reported a result fails as not a red | 0 |
-| Every production source file is in a mutation scope or on the recorded list | 0 |
 | A pull request's mutation run selects exactly the scopes its production files are in | 0 |
+| No test leaves an entry in its temporary directory | 0 |
 
 The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit.
