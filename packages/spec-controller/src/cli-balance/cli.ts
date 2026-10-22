@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   runReconcile,
@@ -6,8 +6,9 @@ import {
   readWorkflows,
   featureNamesOf,
   evidenceObligationsOf,
+  type EvidenceReport,
 } from "../ingest/ingestQualityChecks.js";
-import { EVIDENCE_INPUTS, inputPathsOf, reportsOf, runInputsOf, type InputPaths } from "./evidenceInputs.js";
+import { EVIDENCE_INPUTS, inputPathsOf, runInputsOf, type InputPaths } from "./evidenceInputs.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
 import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
@@ -22,9 +23,13 @@ import {
   corpusDirRefusal,
   checkSavedReconciliation,
   jsonInputsOf,
-  reasonOf,
+  readReports,
+  reportRefusal,
   reRenderOrRefusal,
+  savedReportRefusal,
+  type ReportsReading,
 } from "./unreadableInputs.js";
+import { readDocument } from "../ingest/reportReading.js";
 import { statusFor } from "./exitStatus.js";
 import {
   verdictCode,
@@ -48,10 +53,6 @@ import { APP_MESSAGES, AppMessage } from "../messages.js";
 function collectFormatSpecs(argv: string[]): string[] {
   // checkMissingValues has already refused a --format given no value.
   return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
-}
-
-function readText(path: string): string {
-  return readFileSync(path, "utf8");
 }
 
 export function checkLegacyJson(args: Record<string, string>): string | null {
@@ -78,44 +79,11 @@ export function checkInputsExist(
   return null;
 }
 
-export function checkInputsParse(
-  args: Record<string, string>,
-  read: (path: string) => string,
-): string | null {
-  for (const { flag, report } of EVIDENCE_INPUTS) {
-    const path = args[flag];
-    if (path === undefined || report?.format !== "json") continue;
-
-    let text: string;
-    try {
-      text = read(path);
-    } catch (err) {
-      return APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedFile](`--${flag}`), path, reasonOf(err));
-    }
-    try {
-      JSON.parse(text);
-    } catch (err) {
-      return APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[AppMessage.FlaggedReport](`--${flag}`), path, reasonOf(err));
-    }
-  }
-  return null;
-}
-
-function checkRenderFromJson(
-  args: Record<string, string>,
-  read: (path: string) => string,
-): string | null {
-  const path = args["render-from-json"];
-  if (path === undefined) return null;
-
-  try {
-    JSON.parse(read(path));
-  } catch (err) {
-    return APP_MESSAGES[AppMessage.CouldNotBeReadAt](
-      APP_MESSAGES[AppMessage.FlaggedSavedReport]("--render-from-json"),
-      path,
-      reasonOf(err),
-    );
+export function checkInputsParse(reports: ReportsReading): string | null {
+  for (const file of reports.files) {
+    const { reading } = file;
+    if (!file.flagged || file.report.format !== "json") continue;
+    if (reading.kind === "read-fault" || reading.kind === "unparseable") return reportRefusal({ ...file, reading });
   }
   return null;
 }
@@ -154,13 +122,13 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (missingValueError) refuse(missingValueError);
 
   if (renderSavedReport(args)) return true;
-  const { corpus, workflows } = refuseUnreadableInputs(args);
+  const { corpus, workflows, reports } = refuseUnreadableInputs(args);
 
   const inputs = inputPathsOf(args);
 
   const root = resolveTargetRoot({ features: inputs.features });
 
-  const balance = runReconcile(reportsOf(inputs), root, corpus, workflows);
+  const balance = runReconcile(reports, root, corpus, workflows);
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
@@ -184,15 +152,14 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
 function renderSavedReport(args: Record<string, string>): boolean {
   const ignoredFlagError = checkReRenderFlags(args);
   if (ignoredFlagError) refuse(ignoredFlagError);
-  const unreadableSavedReportError = checkRenderFromJson(args, readText);
-  if (unreadableSavedReportError) refuse(unreadableSavedReportError);
 
   const rehydratePath = args["render-from-json"];
   if (rehydratePath === undefined) return false;
-  const savedJson = readText(rehydratePath);
-  const notSavedError = checkSavedReconciliation(rehydratePath, savedJson);
+  const savedReading = readDocument(rehydratePath, "json");
+  if (savedReading.kind !== "parsed") refuse(savedReportRefusal(rehydratePath, savedReading));
+  const notSavedError = checkSavedReconciliation(rehydratePath, savedReading.document);
   if (notSavedError) refuse(notSavedError);
-  const saved = reRenderOrRefusal(rehydratePath, savedJson, args["strict"] !== undefined);
+  const saved = reRenderOrRefusal(rehydratePath, savedReading.document, args["strict"] !== undefined);
   if (typeof saved === "string") refuse(saved);
   process.stdout.write(saved.markdown + "\n");
   const code = statusFor(saved.code, args["exit-zero"] !== undefined);
@@ -203,13 +170,15 @@ function renderSavedReport(args: Record<string, string>): boolean {
 interface ReadInputs {
   readonly corpus: readonly ParsedFeatureFile[];
   readonly workflows: readonly ParsedWorkflow[];
+  readonly reports: readonly EvidenceReport[];
 }
 
 function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) refuse(missingInputError);
 
-  const unparseableInputError = checkInputsParse(args, readText);
+  const reportsReading = readReports(jsonInputsOf(args, existsSync));
+  const unparseableInputError = checkInputsParse(reportsReading);
   if (unparseableInputError) refuse(unparseableInputError);
 
   const corpusDir = corpusDirOf(args);
@@ -217,14 +186,11 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
   const corpusReading = readCorpus(corpusDir);
   const workflowReading = readWorkflows(args["ci"]);
-  const unreadablePathError = checkInputPaths(args, corpusReading, workflowReading);
-  if (unreadablePathError) refuse(unreadablePathError);
+  if (corpusReading.kind === "read-fault") refuse(checkInputPaths(args, corpusReading, workflowReading));
+  if (workflowReading.kind === "read-fault") refuse(checkInputPaths(args, corpusReading, workflowReading));
+  if (workflowReading.kind === "unparseable") refuse(checkWorkflowsParse(args, workflowReading));
 
-  const unparseableWorkflowError = checkWorkflowsParse(args, workflowReading);
-  if (unparseableWorkflowError) refuse(unparseableWorkflowError);
-
-  const misshapenInputError = checkInputShapes(jsonInputsOf(args, existsSync), readText);
-  if (misshapenInputError) refuse(misshapenInputError);
+  if (reportsReading.kind === "faulty") refuse(checkInputShapes(reportsReading));
 
   if (corpusReading.kind === "unparseable") {
     refuse(
@@ -235,11 +201,7 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
         .join("\n"),
     );
   }
-  // A read fault was refused by checkInputPaths above, and a parse fault by the checks after it, so both were read.
-  return {
-    corpus: corpusReading.kind === "read" ? corpusReading.corpus : [],
-    workflows: workflowReading.kind === "read" ? workflowReading.workflows : [],
-  };
+  return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
 }
 
 function runContextOf(

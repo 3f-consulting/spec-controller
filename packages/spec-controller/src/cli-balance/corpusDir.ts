@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
-import type { InputReadFault } from "../ingest/ingestQualityChecks.js";
+import type { InputReadFault } from "../ingest/inputReading.js";
 
 export function corpusDirOf(args: Record<string, string>): string | InputReadFault {
   const given = args["features"];

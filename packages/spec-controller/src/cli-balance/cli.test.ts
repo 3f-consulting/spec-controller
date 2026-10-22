@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkInputsExist, checkInputsParse } from "./cli.js";
+import { jsonInputsOf, readReports } from "./unreadableInputs.js";
 import { cliRegistry } from "../cli-registry.js";
 import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
@@ -32,7 +33,21 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
 });
 
 describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
-  const jsonFlags = ["vitest", "cucumber", "package-json"] as const;
+  const jsonInputs = [
+    ["vitest", AppMessage.FlaggedReport],
+    ["cucumber", AppMessage.FlaggedReport],
+    ["package-json", AppMessage.FlaggedManifest],
+    ["ci-steps", AppMessage.FlaggedRecord],
+  ] as const;
+
+  function reasonOf(text: string): string {
+    try {
+      JSON.parse(text);
+    } catch (err) {
+      return (err as Error).message;
+    }
+    throw new Error("the text parsed");
+  }
 
   it("runBalance refuses a --vitest report that exists but is not JSON at exit 2, with the parse refusal alone naming it and the parser's own reason, reconciling nothing", () => {
     const dir = mkdtempSync(join(tmpdir(), "vitest-unparseable-"));
@@ -55,16 +70,13 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
     });
   });
 
-  it.each(jsonFlags)(
-    "returns a typed error naming --%s, the path and the parse failure when the report is not valid JSON",
-    (flag) => {
+  it.each(jsonInputs)(
+    "names --%s as its declaration names it, with the path and the parser's reason, when it is not valid JSON",
+    (flag, subject) => {
       const path = `reports/${flag}.json`;
-      const error = checkInputsParse({ [flag]: path }, () => "not valid json at all {{{");
+      const error = checkInputsParse(readReports(jsonInputsOf({ [flag]: path }, () => false), () => "not valid json at all {{{"));
 
-      expect(error).not.toBeNull();
-      expect(error).toContain(`--${flag}`);
-      expect(error).toContain(path);
-      expect(error).toMatch(/JSON/i);
+      expect(error).toBe(APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[subject](`--${flag}`), path, reasonOf("not valid json at all {{{")));
     },
   );
 });

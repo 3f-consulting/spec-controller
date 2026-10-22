@@ -9,6 +9,7 @@ import {
   checkSavedReconciliation,
   checkWorkflowsParse,
   jsonInputsOf,
+  readReports,
   reRenderOrRefusal,
 } from "./unreadableInputs.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
@@ -23,7 +24,7 @@ const reading = (content: string) => (): string => content;
 describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the reporter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
     const inputs = jsonInputsOf({ vitest: "reports/vitest.json" }, nothingByDefault);
-    const error = checkInputShapes(inputs, reading('{"testResults":"x"}'));
+    const error = checkInputShapes(readReports(inputs, reading('{"testResults":"x"}')));
 
     expect(error).toContain("--vitest");
     expect(error).toContain("reports/vitest.json");
@@ -32,7 +33,7 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
 
   it("passes a report in the reporter's shape, so the run goes on to reconcile", () => {
     const report = JSON.stringify({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [] }] });
-    expect(checkInputShapes(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading(report))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading(report)))).toBeNull();
   });
 
   function reportsOnDisk(files: Record<string, string>): string {
@@ -73,13 +74,13 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
     ];
 
     expect(manifestFirst.map((input) => input.path)).toEqual([join(dir, "package.json"), join(dir, "vitest.json")]);
-    expect(checkInputShapes(manifestFirst, (path) => readFileSync(path, "utf8"))).toBe(misshapenAt(join(dir, "vitest.json")));
+    expect(checkInputShapes(readReports(manifestFirst, (path) => readFileSync(path, "utf8")))).toBe(misshapenAt(join(dir, "vitest.json")));
   });
 });
 
 describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the formatter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
-    const error = checkInputShapes(jsonInputsOf({ cucumber: "reports/cucumber.json" }, nothingByDefault), reading("{}"));
+    const error = checkInputShapes(readReports(jsonInputsOf({ cucumber: "reports/cucumber.json" }, nothingByDefault), reading("{}")));
 
     expect(error).toContain("--cucumber");
     expect(error).toContain("reports/cucumber.json");
@@ -90,7 +91,7 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
 describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
   const PYTEST_SHAPE = "the JUnit XML report pytest --junitxml writes";
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content));
+    checkInputShapes(readReports(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content)));
 
   it.each([
     ["text that is not XML", "collected 3 items\n3 passed\n", "is not valid XML"],
@@ -108,7 +109,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
   it("passes the report a real pytest run wrote, so the run goes on to reconcile", () => {
     const real = readFileSync("tests/fixtures/pytest/report.xml", "utf8");
-    expect(checkInputShapes(jsonInputsOf({ pytest: "report.xml" }, nothingByDefault), reading(real))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ pytest: "report.xml" }, nothingByDefault), reading(real)))).toBeNull();
   });
 
   it("runBalance refuses a --pytest file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
@@ -126,7 +127,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
   const JEST_SHAPE = "the JSON report jest --json writes";
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content));
+    checkInputShapes(readReports(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content)));
 
   it.each([
     ["text that is not JSON", "PASS src/a.test.ts\nTests: 3 passed, 3 total\n", "is not valid JSON"],
@@ -143,7 +144,7 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 
   it("passes the report a real Jest run wrote, so the run goes on to reconcile", () => {
     const real = readFileSync("tests/fixtures/jest/report.json", "utf8");
-    expect(checkInputShapes(jsonInputsOf({ jest: "report.json" }, nothingByDefault), reading(real))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ jest: "report.json" }, nothingByDefault), reading(real)))).toBeNull();
   });
 
   it("runBalance refuses a --jest file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
@@ -161,7 +162,7 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
   const RSPEC_SHAPE = "the JSON report rspec --format json writes";
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content));
+    checkInputShapes(readReports(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content)));
 
   it.each([
     ["text that is not JSON", "Finished in 0.01 seconds\n3 examples, 0 failures\n", "is not valid JSON"],
@@ -195,7 +196,7 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 
   it("passes the report a real RSpec run wrote, so the run goes on to reconcile", () => {
     const real = readFileSync("tests/fixtures/rspec/report.json", "utf8");
-    expect(checkInputShapes(jsonInputsOf({ rspec: "report.json" }, nothingByDefault), reading(real))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ rspec: "report.json" }, nothingByDefault), reading(real)))).toBeNull();
   });
 
   it("runBalance refuses an --rspec file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
@@ -213,7 +214,7 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
   const JUNIT_SHAPE = "in the shape of a JUnit XML report";
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content));
+    checkInputShapes(readReports(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content)));
 
   it.each([
     ["text that is not XML", "=== RUN   TestCited\n--- PASS: TestCited (0.00s)\nok\n", "is not valid XML"],
@@ -231,7 +232,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
   it("passes the report a real gotestsum run wrote, so the run goes on to reconcile", () => {
     const real = readFileSync("tests/fixtures/go/report.xml", "utf8");
-    expect(checkInputShapes(jsonInputsOf({ junit: "report.xml" }, nothingByDefault), reading(real))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ junit: "report.xml" }, nothingByDefault), reading(real)))).toBeNull();
   });
 
   it("runBalance refuses a --junit file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
@@ -248,10 +249,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
 describe("[SCN-JAV-010] checkInputShapes passes a single Surefire report file whose root is one test suite under --junit", () => {
   const shapeFaultUnder = (flag: string): string | null =>
-    checkInputShapes(
-      jsonInputsOf({ [flag]: "TEST-measure.CitedTest.xml" }, nothingByDefault),
-      reading(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8")),
-    );
+    checkInputShapes(readReports(jsonInputsOf({ [flag]: "TEST-measure.CitedTest.xml" }, nothingByDefault), reading(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8"))));
 
   it("passes the report a real Surefire run wrote, so the run goes on to reconcile", () => {
     expect(shapeFaultUnder("junit")).toBeNull();
@@ -264,10 +262,7 @@ describe("[SCN-JAV-010] checkInputShapes passes a single Surefire report file wh
 
 describe("[SCN-JAV-001] checkInputShapes passes the directory of reports Maven Surefire wrote under --junit", () => {
   it("passes the directory, so the run goes on to read the reports in it", () => {
-    const fault = checkInputShapes(
-      jsonInputsOf({ junit: "tests/fixtures/java/surefire-reports" }, existsSync),
-      (path) => readFileSync(path, "utf8"),
-    );
+    const fault = checkInputShapes(readReports(jsonInputsOf({ junit: "tests/fixtures/java/surefire-reports" }, existsSync), (path) => readFileSync(path, "utf8")));
 
     expect(fault).toBeNull();
   });
@@ -290,7 +285,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
     ["XML that holds no test suites", "<html><body/></html>", "testsuites is missing"],
   ])("refuses a report file holding %s, naming the flag, that file, the shape of a JUnit XML report and what is wrong", (_, content, fault) => {
     const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", content);
-    const error = checkInputShapes(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8")) ?? "";
+    const error = checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))) ?? "";
 
     expect(error).toContain("--junit");
     expect(error).toContain(notAReport);
@@ -301,7 +296,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
   it("leaves a file in the directory that is not named as a Surefire report unread", () => {
     const { reports } = surefireReportsBeside("example.NotAReport.txt", "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n");
 
-    expect(checkInputShapes(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8")))).toBeNull();
   });
 
   it("runBalance refuses the directory at exit 2, naming that file and the shape, reconciling nothing", () => {
@@ -318,7 +313,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
-    const error = checkInputShapes(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json"));
+    const error = checkInputShapes(readReports(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json")));
     expect(error).toContain("package.json read by default is not valid JSON");
   });
 });
@@ -342,7 +337,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
     ["cucumber", "[]"],
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
-    expect(checkInputShapes(jsonInputsOf({ [flag]: "empty.json" }, nothingByDefault), reading(content))).toBeNull();
+    expect(checkInputShapes(readReports(jsonInputsOf({ [flag]: "empty.json" }, nothingByDefault), reading(content)))).toBeNull();
   });
 
   function directoryHoldingNoReport(): string {
@@ -356,7 +351,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
     const inputs = jsonInputsOf({ junit: reports }, nothingByDefault);
 
     expect(inputs).toEqual([]);
-    expect(checkInputShapes(inputs, (path) => readFileSync(path, "utf8"))).toBeNull();
+    expect(checkInputShapes(readReports(inputs, (path) => readFileSync(path, "utf8")))).toBeNull();
   });
 
   it("runBalance reads a --junit directory holding no report as an empty report, reaching the verdict of the same run given no report", () => {
@@ -434,7 +429,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
     const dir = mkdtempSync(join(tmpdir(), "junit-directory-named-as-report-"));
     made.push(dir);
     mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
-    const error = checkInputShapes(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8"));
+    const error = checkInputShapes(readReports(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8")));
 
     expect(error).toContain("--junit");
     expect(error).toContain(join(dir, "TEST-example.NestedTest.xml"));
@@ -496,7 +491,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     });
   });
 
-  it("runBalance refuses a given --vitest report it may not read at exit 2, calling the file unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
+  it("runBalance refuses a given --vitest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
     const dir = mkdtempSync(join(tmpdir(), "vitest-not-permitted-"));
     made.push(dir);
@@ -507,10 +502,33 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
     expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path])).toEqual({
       report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedFile]("--vitest"), path, reason) + "\n",
+      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--vitest"), path, reason) + "\n",
       exitCode: 2,
     });
   });
+
+  it.each([
+    ["cucumber", "cucumber.json", "[]", AppMessage.FlaggedReport],
+    ["package-json", "package.json", "{}", AppMessage.FlaggedManifest],
+    ["ci-steps", "ci-steps.json", "{}", AppMessage.FlaggedRecord],
+  ] as const)(
+    "runBalance refuses a given --%s it may not read at exit 2, naming it as its declaration names it, reconciling nothing",
+    (flag, file, text, subject) => {
+      if (runsAsRoot()) return;
+      const dir = mkdtempSync(join(tmpdir(), `${flag}-not-permitted-`));
+      made.push(dir);
+      const path = join(dir, file);
+      writeFileSync(path, text);
+      lock(path);
+      const reason = osReasonFor(() => readFileSync(path, "utf8"));
+
+      expect(balancing(["--features", "tests/fixtures/evidence-observation/features", `--${flag}`, path])).toEqual({
+        report: "",
+        stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[subject](`--${flag}`), path, reason) + "\n",
+        exitCode: 2,
+      });
+    },
+  );
 
   it("runBalance refuses a given --pytest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
@@ -600,7 +618,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     const reports = lock(dir);
     const reason = osReasonFor(() => readFileSync(reports, "utf8"));
 
-    expect(checkInputShapes(jsonInputsOf({ junit: reports }, () => false), (path) => readFileSync(path, "utf8"))).toBe(
+    expect(checkInputShapes(readReports(jsonInputsOf({ junit: reports }, () => false), (path) => readFileSync(path, "utf8")))).toBe(
       APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), reports, reason),
     );
   });
@@ -619,9 +637,9 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("refuses the package.json read by default when it cannot be read", () => {
     const read = (): string => {
-      throw new Error("EACCES: permission denied, open 'package.json'");
+      throw Object.assign(new Error("EACCES: permission denied, open 'package.json'"), { code: "EACCES" });
     };
-    expect(checkInputShapes(jsonInputsOf({}, () => true), read)).toContain("package.json read by default could not be read");
+    expect(checkInputShapes(readReports(jsonInputsOf({}, () => true), read))).toContain("package.json read by default could not be read");
   });
 });
 
@@ -739,7 +757,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [{ ...SAVED, scenarioCodeErrors: "x" }, "scenarioCodeErrors is a string, not a list"],
     [{ ...SAVED, runProvenance: { ...SAVED.runProvenance, corpus: undefined } }, "runProvenance.corpus is missing"],
   ])("names where %j departs from a saved reconciliation", (document, fault) => {
-    const error = checkSavedReconciliation("saved.json", JSON.stringify(document));
+    const error = checkSavedReconciliation("saved.json", document);
 
     expect(error).toContain("--render-from-json");
     expect(error).toContain("saved.json");
@@ -748,12 +766,12 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   });
 
   it("passes a reconciliation this tool saved", () => {
-    expect(checkSavedReconciliation("saved.json", JSON.stringify(SAVED))).toBeNull();
+    expect(checkSavedReconciliation("saved.json", SAVED)).toBeNull();
   });
 
   it("refuses, naming the file, a saved reconciliation the renderer cannot read below its top", () => {
     const broken = { ...SAVED, ledger: { claimReconciliations: [null] } };
-    const rendered = reRenderOrRefusal("saved.json", JSON.stringify(broken), false);
+    const rendered = reRenderOrRefusal("saved.json", broken, false);
 
     expect(typeof rendered).toBe("string");
     expect(rendered).toContain("--render-from-json");
@@ -761,7 +779,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   });
 
   it("renders a reconciliation this tool saved", () => {
-    const rendered = reRenderOrRefusal("saved.json", JSON.stringify(SAVED), false);
+    const rendered = reRenderOrRefusal("saved.json", SAVED, false);
     expect(typeof rendered).toBe("object");
   });
 
@@ -795,7 +813,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     const broken = { ...SAVED, ledger: { claimReconciliations: [null] } };
     let reason = "";
     try {
-      reRender(JSON.stringify(broken), false);
+      reRender(broken, false);
     } catch (e) {
       reason = (e as Error).message;
     }

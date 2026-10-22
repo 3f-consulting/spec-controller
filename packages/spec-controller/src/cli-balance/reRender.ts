@@ -8,8 +8,8 @@ export interface ReRendered {
   readonly code: VerdictCode;
 }
 
-export function reRender(savedJson: string, strictGiven: boolean): ReRendered {
-  const saved = JSON.parse(savedJson) as RenderInput;
+export function reRender(document: unknown, strictGiven: boolean): ReRendered {
+  const saved = document as RenderInput;
   const strict = saved.runProvenance.strict === true || strictGiven;
   const report: RenderInput = { ...saved, runProvenance: { ...saved.runProvenance, strict } };
   return {

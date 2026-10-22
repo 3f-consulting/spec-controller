@@ -8,10 +8,9 @@ import {
   VITEST_REPORT,
   type Shape,
 } from "../ingest/inputShapes.js";
-import type { EvidenceReader, EvidenceReport } from "../ingest/ingestQualityChecks.js";
+import type { EvidenceReader } from "../ingest/ingestQualityChecks.js";
+import type { ReportFormat } from "../ingest/reportReading.js";
 import type { RunInput, RunInputName } from "@3f-consulting/spec-controller-core";
-
-export type ReportFormat = "json" | "json-naming-its-shape" | "junit-xml" | "junit-xml-or-one-suite";
 
 export interface ReportInput {
   readonly reader: EvidenceReader;
@@ -159,12 +158,5 @@ export function runInputsOf(paths: InputPaths): RunInput[] {
   return INPUT_NAMES.map((input) => {
     const path = paths[input.name as InputKey];
     return path === undefined ? input : { ...input, path };
-  });
-}
-
-export function reportsOf(paths: InputPaths): EvidenceReport[] {
-  return EVIDENCE_INPUTS.flatMap((input) => {
-    const path = paths[input.key as InputKey];
-    return input.report === undefined || path === undefined ? [] : [{ reader: input.report.reader, path }];
   });
 }

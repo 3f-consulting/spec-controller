@@ -27,7 +27,7 @@ describe("[SCN-RPT-028] a run names the canonical inputs it did not receive, in 
       handed({ features: "features", ciSteps: "ci-steps.json" }),
     );
 
-    expect(reRender(saved, false).markdown.split("\n").filter((line) => line.startsWith("- Not supplied:"))).toEqual([
+    expect(reRender(JSON.parse(saved), false).markdown.split("\n").filter((line) => line.startsWith("- Not supplied:"))).toEqual([
       "- Not supplied: `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`",
     ]);
   });
