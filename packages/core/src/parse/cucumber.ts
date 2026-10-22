@@ -1,5 +1,6 @@
 import type { BehaviouralQualityCheck, EvidenceObservation, ObservationNote } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
+import { withoutSigil } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
 import { evidenceOfRunResult, qualityChecksPostedAt, type RunResult } from "../domain/journal.js";
@@ -19,7 +20,7 @@ export type CucumberJsonReport = ReadonlyArray<{
   }>;
 }>;
 
-const SCN_TAG = new RegExp(`^@?(${SCN_ID_SOURCE})$`);
+const SCN_TAG = new RegExp(`^(${SCN_ID_SOURCE})$`);
 
 function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNote {
   const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
@@ -44,9 +45,9 @@ export function parseCucumberEvidenceObservations(
 
 type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
 
-function citedCodesOf(tags: readonly { readonly name?: string }[]): string[] {
-  return tags
-    .map((t) => SCN_TAG.exec(t.name ?? ""))
+function citedCodesOf(tagNames: readonly string[]): string[] {
+  return tagNames
+    .map((name) => SCN_TAG.exec(name))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => m[1]!);
 }
@@ -56,9 +57,8 @@ function scenarioObservations(
   locator: string | undefined,
   fallbackQualityCheck: BehaviouralQualityCheck
 ): EvidenceObservation[] {
-  const tags = scenario.tags ?? [];
-  const tagNames = tags.map((t) => t.name ?? "");
-  const { scnId, severalCodes } = attributionOf(citedCodesOf(tags));
+  const tagNames = (scenario.tags ?? []).map((t) => withoutSigil(t.name ?? ""));
+  const { scnId, severalCodes } = attributionOf(citedCodesOf(tagNames));
   const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
   const evidence = evidenceOfRunResult(runResultOf(steps));

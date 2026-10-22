@@ -1,4 +1,4 @@
-import { bareTerm } from "../lib/bareTerm.js";
+import { bareTerms } from "../lib/bareTerm.js";
 import { deferralTagsExtendedBy } from "../domain/pendingItems.js";
 import {
   targetConfigurationOf,
@@ -32,7 +32,7 @@ export function resolveDeferralTags(
   },
   starterTags: readonly string[]
 ): readonly string[] {
-  return deferralTagsExtendedBy(starterTags, configured(packageJson).deferralTerms.map(bareTerm));
+  return deferralTagsExtendedBy(starterTags, bareTerms(configured(packageJson).deferralTerms));
 }
 
 export type ResolvedRunners = RunnerTiers;

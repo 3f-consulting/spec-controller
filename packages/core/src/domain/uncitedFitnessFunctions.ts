@@ -37,16 +37,16 @@ export interface StepExclusions {
   readonly isExcluded: StepTest;
 }
 
-export function notChecksApplied(
+export function nonChecksApplied(
   steps: readonly PipelineStep[],
   nameOf: StepName,
-  notChecks: readonly string[]
+  nonChecks: readonly string[]
 ): StepExclusions {
   const named = new Set(steps.map(nameOf));
-  const excluded = notChecks.filter((entry) => named.has(entry));
+  const excluded = nonChecks.filter((entry) => named.has(entry));
   return {
     excluded,
-    unmatchedEntries: notChecks.filter((entry) => !named.has(entry)),
+    unmatchedEntries: nonChecks.filter((entry) => !named.has(entry)),
     isExcluded: (step) => {
       const name = nameOf(step);
       return excluded.some((entry) => entry === name);
@@ -137,9 +137,9 @@ export function discoveryScope(
 export function isExcludedFromDiscovery(
   step: PipelineStep,
   reconciler: Pick<ReconcilerSteps, "isReconciler">,
-  notChecks: Pick<StepExclusions, "isExcluded">
+  nonChecks: Pick<StepExclusions, "isExcluded">
 ): boolean {
-  return exclusionOf(step, reconciler.isReconciler, notChecks.isExcluded) !== undefined;
+  return exclusionOf(step, reconciler.isReconciler, nonChecks.isExcluded) !== undefined;
 }
 
 export function isCandidateStep(

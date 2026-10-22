@@ -13,7 +13,7 @@ import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
   declaredRunnerTest,
   discoveryScope,
-  notChecksApplied,
+  nonChecksApplied,
   recognisedRunners,
   reconcilerSteps,
   stepAccounting,
@@ -85,7 +85,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   const steps = pipelineStepsOf(input.ciWorkflows);
   const workflowNames = input.ciWorkflows.map(({ file }) => file);
   const nameOf = (step: PipelineStep): string | undefined => qualifiedStepName(step, workflowNames);
-  const exclusions = notChecksApplied(steps, nameOf, resolveNotChecks(packageJson));
+  const exclusions = nonChecksApplied(steps, nameOf, resolveNotChecks(packageJson));
 
   const runners = resolveRunners(packageJson);
 

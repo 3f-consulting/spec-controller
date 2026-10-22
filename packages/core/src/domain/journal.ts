@@ -13,8 +13,7 @@ export function qualityChecksPostedAt(
   fallbackQualityCheck: BehaviouralQualityCheck
 ): BehaviouralQualityCheck[] {
   const qualityChecks: BehaviouralQualityCheck[] = [];
-  for (const tagName of tagNames) {
-    const name = tagName.startsWith("@") ? tagName.slice(1) : tagName;
+  for (const name of tagNames) {
     if (TIERS.has(name) && !qualityChecks.includes(name as BehaviouralQualityCheck)) {
       qualityChecks.push(name as BehaviouralQualityCheck);
     }

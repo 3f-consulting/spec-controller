@@ -202,10 +202,13 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-045
     Scenario: a pull request's mutation run selects exactly the gated scopes whose production files it changes, matched as the mutation runner matches them
 
-  Rule: core's domain speaks its own language: no record in it is named for another tool's format
+  Rule: core's domain speaks its own language: it names no tool, format, flag or syntax
 
     @fitness @SCN-FIT-049
-    Scenario: a type or field in core's domain named for an external tool or format reds the build
+    Scenario: a type, field, function, variable or parameter in core's domain named for an external tool or format reds the build
+
+    @fitness @SCN-FIT-064
+    Scenario: a string literal, template part or regular expression in core's domain that names an external tool, format, flag or syntax reds the build
 
   Rule: core's domain says what happened as a typed value, and holds no sentence for a reader
 

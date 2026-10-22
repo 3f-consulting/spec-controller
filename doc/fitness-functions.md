@@ -8,7 +8,7 @@ Each table below gives, for each check:
 
 A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
 
-Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and three more on 20 October, after the window. For them, a zero says little yet.
+Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and four more after the window, from 20 October. For them, a zero says little yet.
 
 **Technical conformance:** checks on the code, tests included.
 
@@ -24,7 +24,8 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | Check | Real catches |
 |---|---|
 | Import boundaries | 4 |
-| No type or field in core's domain is named for an external tool or format | 0 |
+| No type, field, function, variable or parameter in core's domain is named for an external tool or format | 0 |
+| No string, template part or regular expression in core's domain names an external tool, format, flag or syntax | 0 |
 | No sentence for a reader is written in core's domain | 0 |
 | A unit test citing a domain concept's scenario lives in core's domain | 0 |
 | No production source file writes message prose outside its package's catalogue | 1 |

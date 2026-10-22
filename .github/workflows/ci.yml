@@ -373,10 +373,15 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.collection.js packages
 
-      - name: No type or field in core's domain is named for an external tool or format
+      - name: No type, field, function, variable or parameter in core's domain is named for an external tool or format
         id: SCN-FIT-049
         if: always()
         run: pnpm exec eslint --config eslint.domain.js packages/core/src/domain
+
+      - name: No string, template part or regular expression in core's domain names an external tool, format, flag or syntax
+        id: SCN-FIT-064
+        if: always()
+        run: pnpm exec eslint --config eslint.domainLiterals.js packages/core/src/domain
 
       - name: No sentence for a reader is written in core's domain
         id: SCN-FIT-050

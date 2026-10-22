@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isCandidateStep, isExcludedFromDiscovery, notChecksApplied, stepDispositions } from "./uncitedFitnessFunctions.js";
+import { isCandidateStep, isExcludedFromDiscovery, nonChecksApplied, stepDispositions } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
@@ -104,7 +104,7 @@ const NAMED_A_NON_CHECK = "ci.yml:quality:Set up Node";
 
 describe("[SCN-USG-032] a plumbing step the manifest names a non-check is excluded as the manifest says, and its entry is not stale", () => {
   it("names the plumbing step excluded, and reports no entry matching no step", () => {
-    const { excluded, unmatchedEntries } = notChecksApplied(
+    const { excluded, unmatchedEntries } = nonChecksApplied(
       [SET_UP_NODE, UNNAMED_CHECKOUT],
       namedInItsWorkflow,
       [NAMED_A_NON_CHECK]
@@ -114,12 +114,12 @@ describe("[SCN-USG-032] a plumbing step the manifest names a non-check is exclud
   });
 
   it("leaves the named plumbing step no candidate", () => {
-    const notChecks = notChecksApplied([SET_UP_NODE, UNNAMED_CHECKOUT], namedInItsWorkflow, [NAMED_A_NON_CHECK]);
-    expect(isCandidateStep(SET_UP_NODE, (s) => isExcludedFromDiscovery(s, NO_RECONCILER, notChecks), RUNS_NO_RUNNER)).toBe(false);
+    const nonChecks = nonChecksApplied([SET_UP_NODE, UNNAMED_CHECKOUT], namedInItsWorkflow, [NAMED_A_NON_CHECK]);
+    expect(isCandidateStep(SET_UP_NODE, (s) => isExcludedFromDiscovery(s, NO_RECONCILER, nonChecks), RUNS_NO_RUNNER)).toBe(false);
   });
 
   it("holds the unnamed checkout as plumbing, not as a step the manifest excludes", () => {
-    const { isExcluded } = notChecksApplied([SET_UP_NODE, UNNAMED_CHECKOUT], namedInItsWorkflow, [NAMED_A_NON_CHECK]);
+    const { isExcluded } = nonChecksApplied([SET_UP_NODE, UNNAMED_CHECKOUT], namedInItsWorkflow, [NAMED_A_NON_CHECK]);
     expect(stepDispositions({ ...NO_RECONCILER, isNamedANonCheck: isExcluded, runsARunner: RUNS_NO_RUNNER })(UNNAMED_CHECKOUT)).toBe("plumbing");
     expect(isExcluded(UNNAMED_CHECKOUT)).toBe(false);
   });

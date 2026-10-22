@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { notChecksApplied } from "./uncitedFitnessFunctions.js";
+import { nonChecksApplied } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { namedInItsWorkflow } from "./stepNaming.test-utils.js";
 
@@ -14,23 +14,23 @@ const STRAY_ENTRY = "ci.yml:quality:Lint";
 
 describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
   it("excludes the step an entry names, and reports it as excluded", () => {
-    const { excluded, isExcluded } = notChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
+    const { excluded, isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(excluded).toStrictEqual([EXCLUDED_STEP]);
     expect(isExcluded(TYPES)).toBe(true);
   });
 
   it("reports an entry that names no step as matching no step", () => {
-    const { unmatchedEntries } = notChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
+    const { unmatchedEntries } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(unmatchedEntries).toStrictEqual([STRAY_ENTRY]);
   });
 
   it("does not exclude a step that no entry names", () => {
-    const { isExcluded } = notChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
+    const { isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(isExcluded(TESTS)).toBe(false);
   });
 
   it("carries nothing in either account when the manifest names no step a non-check", () => {
-    const { excluded, unmatchedEntries, isExcluded } = notChecksApplied(STEPS, namedInItsWorkflow, []);
+    const { excluded, unmatchedEntries, isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, []);
     expect(excluded).toStrictEqual([]);
     expect(unmatchedEntries).toStrictEqual([]);
     expect(isExcluded(TYPES)).toBe(false);
