@@ -4,6 +4,7 @@ import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 function rowOf(md: string, rowName: string): string {
   const row = md.split("\n").find((line) => line.startsWith(`| ${rowName} |`));
@@ -25,12 +26,12 @@ describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on
   });
 
   it("shows the test that failed as failed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
     expect(row).toContain("unit: Evidence Observation cites an unknown Scenario (src/broken-spawn.test.ts) — failed");
   });
 
   it("shows the test that passed as passed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
     expect(row).toContain("unit: Evidence Observation cites an unknown Scenario (src/sound.test.ts) — passed");
   });
 });
@@ -48,12 +49,12 @@ describe("[SCN-RPT-035] a test observed at a check its scenario holds no obligat
   });
 
   it("shows the test that failed as failed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx), "SCN-NOS-001");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
     expect(row).toContain("unit: Evidence Observation cites a Scenario with no matching Evidence Obligation (src/broken-spawn.test.ts) — failed");
   });
 
   it("shows the test that passed as passed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx), "SCN-NOS-001");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
     expect(row).toContain("unit: Evidence Observation cites a Scenario with no matching Evidence Obligation (src/sound.test.ts) — passed");
   });
 });

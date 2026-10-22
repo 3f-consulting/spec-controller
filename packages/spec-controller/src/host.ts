@@ -10,6 +10,7 @@ import {
 } from "./cli-args.js";
 import { cliRegistry, type CommandSpec, type FlagSpec } from "./cli-registry.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { USAGE_EXIT_CODE } from "./exitCode.js";
 
 export interface HostInvocation {
   store?: string;
@@ -144,7 +145,7 @@ export interface UnknownCommandAnswer {
 
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {
-    exitCode: 2,
+    exitCode: USAGE_EXIT_CODE,
     stderr: `spec-controller: ${APP_MESSAGES[AppMessage.UnknownCommand](command)}\n\n${help}\n`,
   };
 }

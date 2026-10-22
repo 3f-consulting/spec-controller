@@ -8,6 +8,7 @@ import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 
 const made: string[] = [];
 
@@ -31,7 +32,7 @@ function verdictFor(target: Shape): string {
     runStart: new Date("2026-09-12T09:00:00.000Z"),
     sourceSha: null,
   };
-  const line = renderMarkdown(balance, ctx).match(/^\*\*.+\*\* — .*\(exit \d+\)$/m)?.[0];
+  const line = renderMarkdown(balance, ctx, reportedExitCodeOf).match(/^\*\*.+\*\* — .*\(exit \d+\)$/m)?.[0];
   expect(line, `expected a run-verdict headline for the target with ${target.shape}`).toBeTypeOf(
     "string"
   );

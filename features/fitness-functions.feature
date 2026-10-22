@@ -257,3 +257,13 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-062
     Scenario: the build reds when a helper in a changed test file has the same name and the same body as one in another test file
+
+  Rule: core's domain names a run's verdict, and no number stands for one
+
+    @fitness @SCN-FIT-063
+    Scenario: a numeric literal type in core's domain reds the build
+
+  Rule: one function sets the process's exit code
+
+    @fitness @SCN-FIT-065
+    Scenario: a production file that assigns the process's exit code outside the exit-code module reds the build

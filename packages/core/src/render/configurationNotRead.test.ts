@@ -5,6 +5,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 let ledger: Ledger;
 beforeEach(() => {
@@ -26,7 +27,7 @@ const ctx: RunContext = {
 
 const render = (extra: Partial<Summary>): string => {
   const er: EvidenceReconciliation = { summary: { ...summaryOf(ledger, false, false), ...extra }, ledger };
-  return renderMarkdown(er, ctx);
+  return renderMarkdown(er, ctx, publishedExitCodeOf);
 };
 
 const section = (md: string): string[] => {

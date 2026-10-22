@@ -1,13 +1,5 @@
+import { endRunOn, forgetRunEnding, UNEXPECTED_ERROR, usageRefusalSet, type ExitCodeHolder } from "./exitCode.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
-
-// A process outcome, not a verdict: the ledger was never finished, so no verdict code may stand for it.
-const UNEXPECTED_ERROR_EXIT_CODE = 6;
-
-const USAGE_EXIT_CODE = 2;
-
-interface ExitCodeHolder {
-  exitCode?: number | string | null | undefined;
-}
 
 interface LineWriter {
   write(chunk: string): unknown;
@@ -32,6 +24,7 @@ let run: RunState = { finished: false, lineWritten: false };
 
 export function beginRun(): void {
   run = { finished: false, lineWritten: false };
+  forgetRunEnding();
 }
 
 export function markRunFinished(): void {
@@ -92,8 +85,8 @@ export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr
 }
 
 function settleExitCode(proc: ExitCodeHolder): void {
-  if (run.finished || proc.exitCode === USAGE_EXIT_CODE) return;
-  proc.exitCode = UNEXPECTED_ERROR_EXIT_CODE;
+  if (run.finished || usageRefusalSet()) return;
+  endRunOn(UNEXPECTED_ERROR, proc);
 }
 
 function unexpectedErrorLine(err: unknown, afterVerdict: boolean): string {

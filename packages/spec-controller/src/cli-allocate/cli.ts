@@ -10,6 +10,7 @@ import { readOrRefuse, refusalLine, UnparseableFeatureFiles, UnreadableInput } f
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
+import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
 
 export function runAllocate(argv: string[]): void {
   if (asksForHelp(argv)) {
@@ -38,7 +39,7 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
 
 function refuseUsage(line: string): void {
   process.stderr.write(line + "\n");
-  process.exitCode = 2;
+  endRunOn(USAGE_REFUSAL);
 }
 
 function answerRequest({ part, isNew }: AllocateRequest): void {

@@ -3,6 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in one run: exit 1, both reported", () => {
   let outOfBalance: EvidenceReconciliation;
@@ -22,7 +23,7 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
       ),
       scenarioCodeErrors: [FOREIGN],
     };
-    md = renderMarkdown(outOfBalance, ctx);
+    md = renderMarkdown(outOfBalance, ctx, publishedExitCodeOf);
     headline = md.split("\n").find((line) => line.startsWith("**SCENARIO CODE ERRORS**")) ?? "";
   });
 

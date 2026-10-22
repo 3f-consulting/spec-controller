@@ -8,6 +8,7 @@ import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-verdict-target",
@@ -56,12 +57,12 @@ beforeEach(() => {
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   it("a balanced ledger: the heading, a blank line, the verdict naming exit 0, and one blank line", () => {
-    const md = renderMarkdown(evidenceReconciliation(reconcile([scenario], [passed])), ctx);
+    const md = renderMarkdown(evidenceReconciliation(reconcile([scenario], [passed])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([HEADING, "", BALANCED_LINE, ""]);
   });
 
   it("a balanced ledger with Pending Items: the verdict still names exit 0, then a blank line and the outstanding note, then one blank line", () => {
-    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), ctx);
+    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
       HEADING,
       "",
@@ -74,7 +75,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   });
 
   it("the same Pending Items under --strict: the verdict names exit 3 and carries no outstanding note", () => {
-    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), strictCtx);
+    const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), strictCtx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
       HEADING,
       "",
@@ -84,7 +85,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   });
 
   it("an empty corpus: the verdict names exit 5 and the corpus directory the run examined", () => {
-    const md = renderMarkdown(evidenceReconciliation(reconcile([], [])), ctx);
+    const md = renderMarkdown(evidenceReconciliation(reconcile([], [])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
       HEADING,
       "",
@@ -117,7 +118,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     ];
 
     it("with every account balanced: the scenario-code-error verdict names exit 1 and adds nothing about the accounts", () => {
-      const md = renderMarkdown(reconciled(bothPassed), ctx);
+      const md = renderMarkdown(reconciled(bothPassed), ctx, publishedExitCodeOf);
       expect(verdictSectionOf(md)).toEqual([
         HEADING,
         "",

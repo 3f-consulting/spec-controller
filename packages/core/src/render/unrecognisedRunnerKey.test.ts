@@ -7,6 +7,7 @@ import { behaviouralRunnersSection as section } from "./renderedSection.test-uti
 import { unitTestsAndLintCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const tiers = ["unit", "integration", "e2e", "performance"];
 
@@ -25,7 +26,7 @@ function reportLines(runners: Record<string, string | null>): string[] {
     behaviouralObservations: [],
     deferralTags: [],
   });
-  return renderMarkdown(reconciliation, ctx).split("\n");
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
 const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];

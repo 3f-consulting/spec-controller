@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseJunitEvidenceObservations, renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
+import { parseJunitEvidenceObservations, renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
 import { parseJunitXml } from "./junitXml.js";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 
 const TARGET = "tests/fixtures/go";
 
@@ -89,7 +90,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
 
   it("names both codes on the unnamed claim's row, beside the subtest", () => {
     const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx, reportedExitCodeOf)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
@@ -140,7 +141,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
 
   it("posts the enclosing test's failure to the unnamed claim, under its own name", () => {
     const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx, reportedExitCodeOf)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
@@ -170,7 +171,7 @@ describe("[SCN-GOT-007] runReconcile reads a Go package that failed to compile a
   });
 
   it("stamps the run unsound", () => {
-    expect(verdictCode({ ledger: balance().ledger, strict: false })).toBe(4);
+    expect(runVerdict({ ledger: balance().ledger, strict: false })).toBe("unsound");
   });
 });
 

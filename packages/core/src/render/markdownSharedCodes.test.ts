@@ -11,6 +11,7 @@ import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "stg-017",
@@ -86,6 +87,7 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   const md = renderMarkdown(
     er(reconcile(scenarios, [])),
     ctx,
+    publishedExitCodeOf,
     evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus.map(({ feature, source }) => ({ feature, ...parseFeatureCounts(source) }))))
   );
   const lines = md.split("\n");
@@ -106,7 +108,7 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
     ],
   ])("%s", (_title, line) => {
-    const md = renderMarkdown(er(ledger), ctx, census);
+    const md = renderMarkdown(er(ledger), ctx, publishedExitCodeOf, census);
     expect(md).toContain(line);
   });
 
@@ -115,7 +117,7 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
     expect(shared.evidenceObligations.sharedScnCodes).toEqual(census.sharedScnCodes);
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
     expect(clean.evidenceObligations).not.toHaveProperty("sharedScnCodes");
-    expect(renderMarkdown(er(ledger), ctx, evidenceObligations(3, 3))).not.toContain("The corpus holds");
+    expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 
   it("renders an account whose sharers name no quality check by its outcome alone, never an undefined subject", () => {
@@ -126,7 +128,7 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       ],
       []
     );
-    const row = renderMarkdown(er(bare), ctx).split("\n").find((line) => line.startsWith("| SCN-ONE-001 "));
+    const row = renderMarkdown(er(bare), ctx, publishedExitCodeOf).split("\n").find((line) => line.startsWith("| SCN-ONE-001 "));
     expect(row).toContain("| out-of-balance | Evidence Obligation's @SCN code is carried by another Scenario");
     expect(row).not.toContain("undefined");
   });

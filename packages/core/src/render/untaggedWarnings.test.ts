@@ -7,6 +7,7 @@ import { evidenceObligations } from "../domain/corpusCounts.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "fixture",
@@ -49,6 +50,7 @@ function renderCorpus(corpus: readonly { feature: string; source: string }[]): s
   return renderMarkdown(
     { summary: summaryOf(ledger, false, false), ledger },
     ctx,
+    publishedExitCodeOf,
     evidenceObligations(raw, scenarios.length, untagged)
   );
 }

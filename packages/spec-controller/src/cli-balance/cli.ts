@@ -30,9 +30,10 @@ import {
   type ReportsReading,
 } from "./unreadableInputs.js";
 import { readDocument } from "../ingest/reportReading.js";
-import { statusFor } from "./exitStatus.js";
+import { exitCodeOf } from "./exitStatus.js";
+import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
 import {
-  verdictCode,
+  runVerdict,
   type ParsedFeatureFile,
   type ParsedWorkflow,
 } from "@3f-consulting/spec-controller-core";
@@ -114,7 +115,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
-    process.exitCode = 2;
+    endRunOn(USAGE_REFUSAL);
     return false;
   }
 
@@ -143,9 +144,8 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
     (path) => earlierStoredRunDirOf(path, ownRunDir),
   );
 
-  const verdict = verdictCode({ ...balance, strict: ctx.strict === true });
-  const code = statusFor(verdict, args["exit-zero"] !== undefined);
-  process.exitCode = code;
+  const verdict = runVerdict({ ...balance, strict: ctx.strict === true });
+  endRunOn({ kind: "verdict", code: exitCodeOf(verdict, args["exit-zero"] !== undefined) });
   return true;
 }
 
@@ -162,8 +162,7 @@ function renderSavedReport(args: Record<string, string>): boolean {
   const saved = reRenderOrRefusal(rehydratePath, savedReading.document, args["strict"] !== undefined);
   if (typeof saved === "string") refuse(saved);
   process.stdout.write(saved.markdown + "\n");
-  const code = statusFor(saved.code, args["exit-zero"] !== undefined);
-  process.exitCode = code;
+  endRunOn({ kind: "verdict", code: exitCodeOf(saved.verdict, args["exit-zero"] !== undefined) });
   return true;
 }
 

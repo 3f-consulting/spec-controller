@@ -7,6 +7,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario, BehaviouralQualityCheck } from "../model.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 function qcr(
   fields: Parameters<typeof makeQualityCheckReconciliation>[0],
@@ -82,7 +83,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
   it("stamps each run unsound, above the summary views", () => {
     for (const balance of [vitestBroken, cucumberBroken]) {
-      const md = renderMarkdown(__er(balance), ctx);
+      const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
       expect(md).toContain("## Run integrity: unsound");
       const iProvenance = md.indexOf("## Run provenance");
       const iStamp = md.indexOf("## Run integrity: unsound");
@@ -94,7 +95,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   });
 
   it("carries the locator on the unnamed claim's broken item — a broken proof, not an absent one", () => {
-    const vitestMd = renderMarkdown(__er(vitestBroken), ctx);
+    const vitestMd = renderMarkdown(__er(vitestBroken), ctx, publishedExitCodeOf);
     const unnamedClaimRow = rowFor(vitestMd, "(unnamed claim)");
     expect(unnamedClaimRow).toContain(`unit: ${OUTCOME_DESCRIPTION.broken}`);
     expect(unnamedClaimRow).toContain(VITEST_LOCATOR);
@@ -104,7 +105,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(namedRow).toContain(`unit: ${OUTCOME_DESCRIPTION.missing}`);
     expect(namedRow).not.toContain(OUTCOME_DESCRIPTION.broken);
 
-    const cucumberUnnamedClaimRow = rowFor(renderMarkdown(__er(cucumberBroken), ctx), "(unnamed claim)");
+    const cucumberUnnamedClaimRow = rowFor(renderMarkdown(__er(cucumberBroken), ctx, publishedExitCodeOf), "(unnamed claim)");
     expect(cucumberUnnamedClaimRow).toContain(`integration: ${OUTCOME_DESCRIPTION.broken}`);
     expect(cucumberUnnamedClaimRow).toContain(CUCUMBER_LOCATOR);
     expect(cucumberUnnamedClaimRow).toContain("is ambiguous");
@@ -141,11 +142,11 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   });
 
   it("notes exit 3 under --strict conditionally when a balanced run carries Pending Items — and never asserts it", () => {
-    const opening = summaryOpening(renderMarkdown(__er(balancedWithPending), ctx));
+    const opening = summaryOpening(renderMarkdown(__er(balancedWithPending), ctx, publishedExitCodeOf));
     expect(opening).toContain("**BALANCED**");
     expect(opening).toContain("exit 0");
     expect(opening).toMatch(/exit 3 under `--strict`/);
-    expect(summaryOpening(renderMarkdown(__er(balanced), ctx))).not.toContain("exit 3");
+    expect(summaryOpening(renderMarkdown(__er(balanced), ctx, publishedExitCodeOf))).not.toContain("exit 3");
   });
 });
 
@@ -163,12 +164,12 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
   });
 
   it('names the collection "Claim Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
-    const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx);
+    const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx, publishedExitCodeOf);
     expect(md).toContain("| Claim Reconciliation |");
   });
 
   it('names no row "Scenario Reconciliation" anywhere in a report holding a scenario, a phantom claim and the unnamed claim', () => {
-    const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx);
+    const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx, publishedExitCodeOf);
     expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
     expect(md.match(/Claim Reconciliation\(s\) for /g)).toHaveLength(4);
     expect(md).not.toMatch(/scenario reconciliation/i);

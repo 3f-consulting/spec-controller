@@ -1,7 +1,7 @@
 import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync, unlinkSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 
-const USAGE_EXIT_CODE = 2;
+import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "./exitCode.js";
 
 class UsageRefusal extends Error {
   override readonly name = "UsageRefusal";
@@ -31,7 +31,7 @@ export function settlingRefusal<T>(run: () => T, refused: T): T {
     return run();
   } catch (err) {
     if (!(err instanceof UsageRefusal)) throw err;
-    process.exitCode = err.exitCode;
+    endRunOn(USAGE_REFUSAL);
     return refused;
   }
 }

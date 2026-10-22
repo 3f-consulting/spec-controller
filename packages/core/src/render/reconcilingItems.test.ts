@@ -8,6 +8,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciling-items-target",
@@ -28,7 +29,7 @@ function render(
 ): string {
   const ledger = reconcile(scenarios, observations, untagged);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx);
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
 function ledgerRows(md: string): string[] {

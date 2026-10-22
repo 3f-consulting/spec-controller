@@ -5,6 +5,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 let balance: Ledger;
 beforeEach(() => {
@@ -29,7 +30,7 @@ const notSuppliedLine = (md: string): string | null =>
 
 describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run did not receive", () => {
   it("names the flags with no value on a line of their own, beneath the Inputs list", () => {
-    const md = renderMarkdown(er(balance), handed({ features: "features", ciSteps: "ci-steps.json" }));
+    const md = renderMarkdown(er(balance), handed({ features: "features", ciSteps: "ci-steps.json" }), publishedExitCodeOf);
     expect(notSuppliedLine(md)).toBe("- Not supplied: `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`");
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeGreaterThan(-1);
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeLessThan(md.indexOf("- Not supplied:"));
@@ -50,13 +51,14 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
         ci: ".github/workflows",
         packageJson: "package.json",
         ciSteps: "ci-steps.json",
-      })
+      }),
+      publishedExitCodeOf
     );
     expect(notSuppliedLine(md)).toBeNull();
   });
 
   it("keeps the none-specified Inputs branch reachable, and names every canonical flag beside it", () => {
-    const md = renderMarkdown(er(balance), handed({}));
+    const md = renderMarkdown(er(balance), handed({}), publishedExitCodeOf);
     expect(md.split("\n")).toContain("- Inputs: none specified");
     expect(notSuppliedLine(md)).toBe(
       "- Not supplied: `--features`, `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"

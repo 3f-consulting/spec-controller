@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced, hasPendingItems, hasBrokenEvidence, hasNothingToReconcile } from "./ledger.js";
-import { verdictCode } from "./verdictCode.js";
+import { runVerdict } from "./runVerdict.js";
 import type {
   Ledger,
   Scenario,
@@ -14,16 +14,16 @@ const unitObservation = (scnId: string): EvidenceObservation => ({ qualityCheck:
 
 describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanced run is not reded", () => {
 
-  it("maps a balanced reconciliation to NO non-zero exit code (the gate does not over-fire)", () => {
+  it("names a balanced reconciliation's verdict balanced (the gate does not over-fire)", () => {
     const reconciliation: Ledger = reconcile(
       [unitScenario("SCN-TGT-001"), unitScenario("SCN-TGT-002")],
       [unitObservation("SCN-TGT-001"), unitObservation("SCN-TGT-002")],
     );
-    expect(verdictCode({ ledger: reconciliation, strict: false })).toBe(0);
+    expect(runVerdict({ ledger: reconciliation, strict: false })).toBe("balanced");
   });
 });
 
-describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () => {
+describe("[SCN-CLI-011] hasPendingItems + the --strict pending escalation", () => {
   it("hasPendingItems is true when any row carries a Pending Item (real reconcile output)", () => {
     const balance = reconcile(
       [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
@@ -40,7 +40,7 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
     expect(hasPendingItems(balance)).toBe(false);
   });
 
-  it("out-of-balance DOMINATES: an out-of-balance run carrying Pending Items exits 1 under --strict, never 3", () => {
+  it("out-of-balance DOMINATES: an out-of-balance run carrying Pending Items is named out-of-balance under --strict, never pending", () => {
     const balance = reconcile(
       [
         { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration" }] },
@@ -50,7 +50,7 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
     );
     expect(isBalanced(balance)).toBe(false);
     expect(hasPendingItems(balance)).toBe(true);
-    expect(verdictCode({ ledger: balance, strict: true })).toBe(1);
+    expect(runVerdict({ ledger: balance, strict: true })).toBe("out-of-balance");
   });
 });
 

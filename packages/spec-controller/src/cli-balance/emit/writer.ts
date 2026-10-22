@@ -8,6 +8,7 @@ import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
 import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { reportedExitCodeOf } from "../exitStatus.js";
 
 export interface OutputPayloads {
   readonly balance: EvidenceReconciliation;
@@ -19,7 +20,7 @@ export interface OutputPayloads {
 function render(fmt: OutputFormat, p: OutputPayloads): string {
   return fmt === "json"
     ? renderJson(p.balance, p.ctx, p.evidenceObligations, p.featureNames)
-    : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, p.featureNames);
+    : renderMarkdown(p.balance, p.ctx, reportedExitCodeOf, p.evidenceObligations, p.featureNames);
 }
 
 export function writeOutputs(

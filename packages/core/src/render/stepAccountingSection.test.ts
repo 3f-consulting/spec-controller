@@ -7,6 +7,7 @@ import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder, cells } from "./renderedSection.test-utils.js";
 import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "../evidenceReconciliation.test-utils.js";
 import { HANDED_INPUT_NAMES } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
@@ -25,7 +26,7 @@ describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and Gi
       plumbing: 5,
       accountedFor: 15,
     });
-    const lines = section(renderMarkdown(reconciliation, ctx).split("\n"));
+    const lines = section(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
     expect(lines).toHaveLength(8);
     expect(lines[0]).toBe(heading);
     expect(lines[1]).toBe("");
@@ -68,7 +69,7 @@ describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and Gi
         stepAccounting: { stepsRead: 10, candidates: 4, runners: 1, reconciler: 2, excluded: 3, accountedFor: 10 },
       },
     });
-    expect(section(renderReportFromJson(saved, HANDED_INPUT_NAMES).split("\n"))).toStrictEqual([
+    expect(section(renderReportFromJson(saved, HANDED_INPUT_NAMES, publishedExitCodeOf).split("\n"))).toStrictEqual([
       "### Step accounting",
       "",
       "| Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
@@ -81,7 +82,7 @@ describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and Gi
   });
 
   it("renders no section, and nothing in its place, where the run read no CI configuration", () => {
-    const lines = renderMarkdown(reconcile([]), ctx).split("\n");
+    const lines = renderMarkdown(reconcile([]), ctx, publishedExitCodeOf).split("\n");
     expect(lines).not.toContain(heading);
     expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
     expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);

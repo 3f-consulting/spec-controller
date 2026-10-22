@@ -5,6 +5,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
@@ -13,7 +14,7 @@ function reportOf(observations: readonly EvidenceObservation[]): string {
     [{ scnId: "SCN-SGR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
     [{ qualityCheck: "unit", scnId: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
   );
-  return renderMarkdown(__er(ledger), ctx);
+  return renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 }
 
 function rowCells(md: string, rowName: string): string[] {

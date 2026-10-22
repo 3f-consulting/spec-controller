@@ -6,6 +6,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { symbolCharactersIn } from "./symbolCharacter.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const DEFERRAL_TAG = "deferred";
 
@@ -44,7 +45,7 @@ const OBSERVATIONS: EvidenceObservation[] = [
 function render(scenarios: Scenario[], observations: EvidenceObservation[], untagged: string[] = []): string {
   const ledger = reconcile(scenarios, observations, untagged);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx);
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
 const unsoundWithEveryOutcome = (): string =>

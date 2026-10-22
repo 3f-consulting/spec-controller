@@ -7,6 +7,7 @@ import { behaviouralRunnersSection as section } from "./renderedSection.test-uti
 import { unitTestsCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 function reconcile(runners?: Record<string, string | null>) {
   const specController = runners === undefined ? {} : { runners };
@@ -26,7 +27,7 @@ function reconcile(runners?: Record<string, string | null>) {
 const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
 
 function reportLines(runners?: Record<string, string | null>): string[] {
-  return renderMarkdown(reconcile(runners), ctx).split("\n");
+  return renderMarkdown(reconcile(runners), ctx, publishedExitCodeOf).split("\n");
 }
 
 const accountLines = (lines: readonly string[]): string[] => lines.filter((line) => line.startsWith("- "));

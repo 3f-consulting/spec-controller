@@ -10,6 +10,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "fitness-section-target",
@@ -43,7 +44,7 @@ const UNIT: EvidenceObservation = {
 function render(feature: string, ciSteps: StepRecord): string[] {
   const ledger = reconcile(parseScenarios(feature), [...ciStepRecordObservations(ciSteps), UNIT]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx).split("\n");
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
 function fitnessLines(lines: string[]): string[] {

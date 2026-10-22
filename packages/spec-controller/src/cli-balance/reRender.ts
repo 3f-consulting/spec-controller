@@ -1,11 +1,12 @@
-import { renderReport, verdictCode } from "@3f-consulting/spec-controller-core";
-import type { RenderInput, VerdictCode } from "@3f-consulting/spec-controller-core";
+import { renderReport, runVerdict } from "@3f-consulting/spec-controller-core";
+import type { RenderInput, RunVerdict } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { reportedExitCodeOf } from "./exitStatus.js";
 import { INPUT_NAMES } from "./evidenceInputs.js";
 
 export interface ReRendered {
   readonly markdown: string;
-  readonly code: VerdictCode;
+  readonly verdict: RunVerdict;
 }
 
 export function reRender(document: unknown, strictGiven: boolean): ReRendered {
@@ -13,8 +14,8 @@ export function reRender(document: unknown, strictGiven: boolean): ReRendered {
   const strict = saved.runProvenance.strict === true || strictGiven;
   const report: RenderInput = { ...saved, runProvenance: { ...saved.runProvenance, strict } };
   return {
-    markdown: renderReport(report, INPUT_NAMES),
-    code: verdictCode({ ledger: report.ledger, scenarioCodeErrors: report.scenarioCodeErrors, strict }),
+    markdown: renderReport(report, INPUT_NAMES, reportedExitCodeOf),
+    verdict: runVerdict({ ledger: report.ledger, scenarioCodeErrors: report.scenarioCodeErrors, strict }),
   };
 }
 

@@ -388,6 +388,16 @@ jobs:
         if: always()
         run: pnpm exec eslint --config eslint.domainProse.js packages/core/src/domain
 
+      - name: No number stands as a type in core's domain
+        id: SCN-FIT-063
+        if: always()
+        run: pnpm exec eslint --config eslint.domainNumbers.js packages/core/src/domain
+
+      - name: Only the exit-code module sets the process's exit code
+        id: SCN-FIT-065
+        if: always()
+        run: pnpm exec eslint --config eslint.exitCode.js packages/core/src packages/spec-controller/src
+
       - name: A unit test citing a domain concept's scenario lives in core's domain
         id: SCN-FIT-055
         if: always()

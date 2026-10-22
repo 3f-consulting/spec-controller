@@ -5,6 +5,7 @@ import type { Ledger } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const KEY = [
   "Key: each evidence cell reads *obligation*/*observations*.",
@@ -32,7 +33,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
   };
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
-    const section = sectionOf(renderMarkdown(__er(ledger, true), ctx));
+    const section = sectionOf(renderMarkdown(__er(ledger, true), ctx, publishedExitCodeOf));
     const header = "| Claim | Unit | Verdict | Reconciling items |";
     expect(section.slice(0, 12)).toEqual([
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
@@ -46,7 +47,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
   });
 
   it("renders no line of the key when the table carries no evidence column", () => {
-    const md = renderMarkdown(__er(ledger, false), ctx);
+    const md = renderMarkdown(__er(ledger, false), ctx, publishedExitCodeOf);
     expect(sectionOf(md)[4]).toBe("| Claim | Verdict | Reconciling items |");
     for (const line of KEY) expect(md).not.toContain(line);
   });

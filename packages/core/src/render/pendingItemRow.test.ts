@@ -8,6 +8,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "pending-item-row-target",
@@ -47,7 +48,7 @@ const OBSERVATIONS: EvidenceObservation[] = [
 function render(): string {
   const ledger = reconcile(parseScenarios(FEATURE, [DEFERRAL_TAG.slice(1)]), OBSERVATIONS);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx);
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
 function rowFor(md: string, scnId: string): { verdict: string; items: string } {

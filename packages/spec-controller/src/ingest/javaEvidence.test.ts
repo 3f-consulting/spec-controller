@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
+import { renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 
 const SINGLE_REPORT = "tests/fixtures/surefire-single-report";
 
@@ -85,7 +86,7 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
 
   it("names both codes on the unnamed claim's row, beside the test", () => {
     const ctx: RunContext = { target: JAVA, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx, reportedExitCodeOf)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
@@ -216,6 +217,6 @@ describe("[SCN-JAV-009] runReconcile reads a JUnit 5 class whose setup before al
   });
 
   it("stamps the run unsound", () => {
-    expect(verdictCode({ ledger: balance().ledger, strict: false })).toBe(4);
+    expect(runVerdict({ ledger: balance().ledger, strict: false })).toBe("unsound");
   });
 });

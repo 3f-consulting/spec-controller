@@ -5,6 +5,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the bare handle", () => {
   let rich: Ledger;
@@ -25,7 +26,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
   });
 
   it("renders every summary cause row as the outcome's sentence alone, and no bare handle", () => {
-    const md = renderMarkdown(__er(rich), ctx);
+    const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
     expect(md).toContain("\n| Evidence Observation is missing |");
     expect(md).toContain("\n| Evidence Observation is failing |");
     expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.watermelon} |`);
@@ -49,7 +50,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
   });
 
   it("renders the fitness table's Outcome column with the outcome's sentence", () => {
-    const md = renderMarkdown(__er(rich), ctx);
+    const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
     expect(md).toContain(`| SCN-A | ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 });

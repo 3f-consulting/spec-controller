@@ -4,6 +4,7 @@ import type { Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
   const evidenceReconciliationSection = (md: string): string => {
@@ -32,7 +33,7 @@ describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately fr
   });
 
   it("renders the Pending Items tally (3) in the Evidence reconciliation view, on a line that opens with its count", () => {
-    const md = renderMarkdown(__er(pendingBalance), ctx);
+    const md = renderMarkdown(__er(pendingBalance), ctx, publishedExitCodeOf);
     const section = evidenceReconciliationSection(md);
     expect(section).toMatch(/^3 Pending Item\(s\) — deferred, tallied apart from balanced and out-of-balance\.$/m);
   });
@@ -58,7 +59,7 @@ describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished fro
   });
 
   it("makes the two balanced rows read differently at a glance — the pending cell is not the clean em-dash", () => {
-    const md = renderMarkdown(__er(contrastBalance), ctx);
+    const md = renderMarkdown(__er(contrastBalance), ctx, publishedExitCodeOf);
     const cleanCell = exceptionsCell(rowFor(md, "SCN-PDD-001"));
     const pendingCell = exceptionsCell(rowFor(md, "SCN-PDD-002"));
     expect(cleanCell).toBe("—");

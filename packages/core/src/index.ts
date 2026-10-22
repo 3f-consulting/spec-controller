@@ -37,8 +37,8 @@ export {
   hasNothingToReconcile,
 } from "./domain/ledger.js";
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
-export { isFailingVerdict, verdictCode } from "./domain/verdictCode.js";
-export type { VerdictCode, VerdictInputs } from "./domain/verdictCode.js";
+export { runVerdict } from "./domain/runVerdict.js";
+export type { RunVerdict, VerdictInputs } from "./domain/runVerdict.js";
 
 export { nextScnCode } from "./domain/scnAllocation.js";
 export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart } from "./domain/scnAllocation.js";
@@ -60,7 +60,7 @@ export type { WorkflowStep } from "./domain/pipelineStep.js";
 export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourceParse.js";
 
 export { assembleRenderInput } from "./assemble/renderInput.js";
-export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames } from "./domain/renderInput.js";
+export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames, ExitCodeOf } from "./domain/renderInput.js";
 export type {
   EvidenceReconciliation,
   Summary,

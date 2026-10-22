@@ -1,11 +1,11 @@
-import type { RenderInput } from "../domain/renderInput.js";
+import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags.js";
-import { verdictCode, type VerdictCode } from "../domain/verdictCode.js";
+import { runVerdict, type RunVerdict } from "../domain/runVerdict.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-type RunVerdict = { readonly headline: string; readonly exit: string; readonly gloss: string };
+type VerdictLine = { readonly headline: string; readonly gloss: string };
 
 function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
   switch (scenarioCodeErrorsAre(errors)) {
@@ -18,72 +18,69 @@ function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOf
   }
 }
 
-function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): RunVerdict {
+function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ScenarioCodeError[]): VerdictLine {
   const alsoOutOfBalance = isBalanced(ledger) ? "" : CORE_MESSAGES[CoreMessage.AlsoOutOfBalance];
   return {
     headline: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline],
-    exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
     gloss: scenarioCodeErrorsGloss(errors, alsoOutOfBalance),
   };
 }
 
-const OUT_OF_BALANCE: RunVerdict = {
+const OUT_OF_BALANCE: VerdictLine = {
   headline: CORE_MESSAGES[CoreMessage.OutOfBalanceHeadline],
-  exit: CORE_MESSAGES[CoreMessage.VerdictExit](1),
   gloss: CORE_MESSAGES[CoreMessage.OutOfBalanceGloss],
 };
 
-const UNSOUND: RunVerdict = {
+const UNSOUND: VerdictLine = {
   headline: CORE_MESSAGES[CoreMessage.UnsoundHeadline],
-  exit: CORE_MESSAGES[CoreMessage.VerdictExit](4),
   gloss: CORE_MESSAGES[CoreMessage.UnsoundGloss],
 };
 
-const PENDING: RunVerdict = {
+const PENDING: VerdictLine = {
   headline: CORE_MESSAGES[CoreMessage.PendingHeadline],
-  exit: CORE_MESSAGES[CoreMessage.VerdictExit](3),
   gloss: CORE_MESSAGES[CoreMessage.PendingGloss],
 };
 
-const BALANCED: RunVerdict = {
+const BALANCED: VerdictLine = {
   headline: CORE_MESSAGES[CoreMessage.BalancedHeadline],
-  exit: CORE_MESSAGES[CoreMessage.VerdictExit](0),
   gloss: CORE_MESSAGES[CoreMessage.BalancedGloss],
 };
 
-function nothingToReconcile(corpusDir: string): RunVerdict {
+function nothingToReconcile(corpusDir: string): VerdictLine {
   return {
     headline: CORE_MESSAGES[CoreMessage.NothingToReconcileHeadline],
-    exit: CORE_MESSAGES[CoreMessage.VerdictExit](5),
     gloss: CORE_MESSAGES[CoreMessage.NothingToReconcileGloss](corpusDir),
   };
 }
 
-function verdictFor(code: VerdictCode, ledger: Ledger, corpusDir: string, codeErrors: readonly ScenarioCodeError[]): RunVerdict {
-  switch (code) {
-    case 5:
+function verdictFor(verdict: RunVerdict, ledger: Ledger, corpusDir: string, codeErrors: readonly ScenarioCodeError[]): VerdictLine {
+  switch (verdict) {
+    case "nothing-to-reconcile":
       return nothingToReconcile(corpusDir);
-    case 4:
+    case "unsound":
       return UNSOUND;
-    case 1:
-      return codeErrors.length > 0 ? scenarioCodeErrorsVerdict(ledger, codeErrors) : OUT_OF_BALANCE;
-    case 3:
+    case "scenario-code-errors":
+      return scenarioCodeErrorsVerdict(ledger, codeErrors);
+    case "out-of-balance":
+      return OUT_OF_BALANCE;
+    case "pending":
       return PENDING;
-    case 0:
+    case "balanced":
       return BALANCED;
   }
 }
 
-export const runVerdictSection = (report: RenderInput): string[] => {
+export const runVerdictSection = (report: RenderInput, exitCodeOf: ExitCodeOf): string[] => {
   const reconciliation = { claimReconciliations: report.ledger.claimReconciliations };
-  const code = verdictCode({
+  const verdict = runVerdict({
     ledger: reconciliation,
     scenarioCodeErrors: report.scenarioCodeErrors,
     strict: report.runProvenance.strict === true,
   });
-  const verdict = verdictFor(code, reconciliation, report.runProvenance.corpus, report.scenarioCodeErrors ?? []);
-  const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`];
-  if (code === 0 && hasPendingItems(reconciliation)) {
+  const line = verdictFor(verdict, reconciliation, report.runProvenance.corpus, report.scenarioCodeErrors ?? []);
+  const exit = CORE_MESSAGES[CoreMessage.VerdictExit](exitCodeOf(verdict));
+  const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${line.headline} — ${line.gloss} (${exit})`];
+  if (verdict === "balanced" && hasPendingItems(reconciliation)) {
     lines.push("");
     lines.push(CORE_MESSAGES[CoreMessage.PendingItemsOutstanding]);
   }

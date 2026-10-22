@@ -11,6 +11,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-integrity-target",
@@ -48,7 +49,7 @@ function render(vitest: VitestJsonReport, ciSteps?: StepRecord): string {
     ...ciStepRecordObservations(ciSteps),
   ]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx);
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
 function runIntegrityLines(md: string): string[] {

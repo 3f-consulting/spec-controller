@@ -25,6 +25,7 @@ import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { settlingRefusal } from "./outputLocation.js";
 import { beginRun, markRunFinished, settleUnexpectedError } from "./crashGuards.js";
+import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
 
 function runCommand(command: string, argv: string[], ownRunDir?: string): boolean {
   switch (command) {
@@ -36,7 +37,7 @@ function runCommand(command: string, argv: string[], ownRunDir?: string): boolea
     default: {
       const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
       process.stderr.write(answer.stderr);
-      process.exitCode = answer.exitCode;
+      endRunOn({ kind: "answer", code: answer.exitCode });
       return false;
     }
   }
@@ -46,7 +47,7 @@ function refuseLeadingFaults(inv: HostInvocation): boolean {
   const refusal = leadingRefusal(inv);
   if (refusal === undefined) return false;
   process.stderr.write(refusal + "\n");
-  process.exitCode = 2;
+  endRunOn(USAGE_REFUSAL);
   return true;
 }
 

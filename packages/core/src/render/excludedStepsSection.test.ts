@@ -7,6 +7,7 @@ import { sectionUnder } from "./renderedSection.test-utils.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
 
@@ -26,7 +27,7 @@ function reportLines(notChecks?: readonly string[]): string[] {
     behaviouralObservations: [],
     deferralTags: [],
   });
-  return renderMarkdown(reconciliation, ctx).split("\n");
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
 const heading = CORE_MESSAGES[CoreMessage.ExcludedStepsHeading];

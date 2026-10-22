@@ -4,6 +4,7 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { codeErrorsCtx as ctx } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 interface File {
   readonly slug: string;
@@ -27,7 +28,8 @@ function markdownOf(files: readonly File[]): string {
       behaviouralObservations: codes.map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" })),
       deferralTags: [],
     }),
-    ctx
+    ctx,
+    publishedExitCodeOf
   );
 }
 

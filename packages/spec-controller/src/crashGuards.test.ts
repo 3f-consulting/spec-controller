@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { installCrashGuards, markRunFinished } from "./crashGuards.js";
+import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
 import { closedPipe, FIRST_LINE } from "./crashGuards.test-utils.js";
 
 type Happening = { stderr: string } | { exit: unknown };
@@ -43,6 +44,12 @@ function guarded(exitCode?: number): Guarded {
   const stderr = standInStream((chunk) => happened.push({ stderr: chunk }));
   installCrashGuards(proc, stdout, stderr);
   return { proc, stdout, stderr, happened };
+}
+
+function refused(): Guarded {
+  const g = guarded();
+  endRunOn(USAGE_REFUSAL, g.proc);
+  return g;
 }
 
 const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
@@ -100,13 +107,13 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
 
   describe.each(ARRIVALS)("$arrival after a refusal's 2", ({ raise }) => {
     it("keeps 2", () => {
-      const g = guarded(2);
+      const g = refused();
       raise(g);
       expect(g.proc.exitCode).toBe(2);
     });
 
     it("writes the no-verdict line once, even when a second error follows", () => {
-      const g = guarded(2);
+      const g = refused();
       raise(g);
       raise(g);
       expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
@@ -154,7 +161,7 @@ describe("[SCN-CLI-108] an uncaught error ends the process once its line is writ
   });
 
   it("after a refusal's 2, ends the process on 2, once, after the no-verdict line", () => {
-    const g = guarded(2);
+    const g = refused();
     uncaught(g);
     expect(g.happened).toEqual([{ stderr: NO_VERDICT_LINE }, { exit: 2 }]);
   });

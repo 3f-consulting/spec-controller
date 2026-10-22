@@ -11,6 +11,7 @@ import type { FeatureFileScenarios, ScenarioCodeError } from "../domain/scnTags.
 import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 interface CorpusFile {
   readonly slug: string;
@@ -49,7 +50,7 @@ function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): Evidenc
 describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
   let md: string;
   beforeEach(() => {
-    md = renderMarkdown(balancedWith([FOREIGN]), ctx);
+    md = renderMarkdown(balancedWith([FOREIGN]), ctx, publishedExitCodeOf);
   });
 
   it("lists the error by its handle, in a section of its own", () => {
@@ -58,7 +59,7 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
   });
 
   function foreignLines(files: readonly CorpusFile[]): string[] {
-    return renderMarkdown(balancedWith(foreignScenarioCodes(files)), ctx)
+    return renderMarkdown(balancedWith(foreignScenarioCodes(files)), ctx, publishedExitCodeOf)
       .split("\n")
       .filter((line) => line.startsWith("- `foreign-scn-code` — "));
   }
@@ -98,7 +99,7 @@ describe("[SCN-RPT-056] a duplicate-feature-code is worded from the shared code 
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
       { slug: "one-b", featureCode: "ONE", source: "@ONE\nFeature: one-b\n" },
     ]);
-    const md = renderMarkdown(balancedWith([duplicate!]), ctx);
+    const md = renderMarkdown(balancedWith([duplicate!]), ctx, publishedExitCodeOf);
     expect(md.split("\n").filter((line) => line.startsWith("- `duplicate-feature-code` — "))).toEqual([
       `- \`duplicate-feature-code\` — ${CORE_MESSAGES[CoreMessage.DuplicateFeatureCode]("ONE", 2, "one.feature, one-b.feature")}`,
     ]);
@@ -107,7 +108,7 @@ describe("[SCN-RPT-056] a duplicate-feature-code is worded from the shared code 
 
 describe("[SCN-RPT-057] a no-feature-code is worded from the file that carries no feature code", () => {
   it("lists the error by its handle and the catalogue's words for its file", () => {
-    const md = renderMarkdown(balancedWith([{ kind: "no-feature-code", files: ["unc.feature"] }]), ctx);
+    const md = renderMarkdown(balancedWith([{ kind: "no-feature-code", files: ["unc.feature"] }]), ctx, publishedExitCodeOf);
     expect(md.split("\n").filter((line) => line.startsWith("- `no-feature-code` — "))).toEqual([
       `- \`no-feature-code\` — ${CORE_MESSAGES[CoreMessage.NoFeatureCode]("unc.feature")}`,
     ]);
@@ -120,7 +121,7 @@ describe("[SCN-RPT-058] a foreign-scn-code whose named code no file carries is w
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
       { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-THR-002\n  Scenario: s\n    Given a thing\n" },
     ]);
-    const lines = renderMarkdown(balancedWith(errors), ctx)
+    const lines = renderMarkdown(balancedWith(errors), ctx, publishedExitCodeOf)
       .split("\n")
       .filter((line) => line.startsWith("- `foreign-scn-code` — "));
     expect(lines).toEqual([
@@ -142,7 +143,7 @@ describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its s
         source: "@TWO\nFeature: two\n\n  @unit @SCN-TWO-002 @SCN-TWO-003\n  Scenario: carries codes\n    Given a thing\n",
       },
     ]);
-    const md = renderMarkdown(balancedWith(errors), ctx);
+    const md = renderMarkdown(balancedWith(errors), ctx, publishedExitCodeOf);
     expect(md.split("\n").filter((line) => line.startsWith("- `several-scn-codes` — "))).toEqual([
       `- \`several-scn-codes\` — ${CORE_MESSAGES[CoreMessage.ScenarioSeveralScnCodes]("two.feature", "carries codes", ["SCN-TWO-002", "SCN-TWO-003"])}`,
     ]);
@@ -218,17 +219,17 @@ describe("[SCN-RPT-062] clean scenario codes are stated with the corpus's own co
       const judged = judgedCorpus(codes, plain);
       expect(judged.scenarioCodeErrors).toEqual([]);
       expect(judged.scenarioCodePopulation).toEqual({ featureFiles: files, featureCodes: codes.length });
-      const md = renderMarkdown(judged, ctx);
+      const md = renderMarkdown(judged, ctx, publishedExitCodeOf);
       expect(cleanSectionOf(md)).toEqual([HEADING, "", statement, "", DUPLICATE_LINE, ""]);
       expect(md).not.toContain("**SCENARIO CODE ERRORS**");
-      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx), ctx.inputs))).toEqual(cleanSectionOf(md));
+      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx), ctx.inputs, publishedExitCodeOf))).toEqual(cleanSectionOf(md));
     });
   }
 
   it("states the codes clean with no count when re-rendering a report saved before the population was recorded", () => {
     const { scenarioCodePopulation: _counted, ...saved } = JSON.parse(renderJson(judgedCorpus(["ONE", "TWO"], 1), ctx));
     expect(saved).toHaveProperty("scenarioCodeErrors", []);
-    const md = renderReportFromJson(JSON.stringify(saved), ctx.inputs);
+    const md = renderReportFromJson(JSON.stringify(saved), ctx.inputs, publishedExitCodeOf);
     expect(cleanSectionOf(md)).toEqual([
       HEADING,
       "",
@@ -241,7 +242,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated with the corpus's own co
 
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
-    expect(renderMarkdown(unjudged, ctx)).not.toContain("## Scenario code errors");
+    expect(renderMarkdown(unjudged, ctx, publishedExitCodeOf)).not.toContain("## Scenario code errors");
   });
 });
 
@@ -260,7 +261,7 @@ describe("[SCN-RPT-063] a corpus with no feature file is never stated clean", ()
   ];
 
   it("says no feature file was judged, in place of any clean statement", () => {
-    const section = cleanSectionOf(renderMarkdown(empty, ctx));
+    const section = cleanSectionOf(renderMarkdown(empty, ctx, publishedExitCodeOf));
     expect(section).toEqual(noFileSection);
     expect(section).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodesClean]);
   });
@@ -296,7 +297,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
   describe("a file headed @TWO holding a scenario coded @SCN-ONE-002, beside a file headed @ONE", () => {
     let md: string;
     beforeEach(() => {
-      md = renderMarkdown(reconciled([featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])]), ctx);
+      md = renderMarkdown(reconciled([featureFile("one", "ONE", ["SCN-ONE-001"]), featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"])]), ctx, publishedExitCodeOf);
     });
 
     it("counts one error in the singular, then lists it on one line by its kind and the catalogue's words for it", () => {
@@ -327,7 +328,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
         featureFile("uno", "ONE", ["SCN-ONE-003"]),
       ];
       parsed = [...duplicateFeatureCodes(files), ...foreignScenarioCodes(files)];
-      md = renderMarkdown(reconciled(files), ctx);
+      md = renderMarkdown(reconciled(files), ctx, publishedExitCodeOf);
     });
 
     it("is judged one duplicate-feature-code and one foreign-scn-code", () => {

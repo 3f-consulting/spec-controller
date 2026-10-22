@@ -6,6 +6,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { symbolCharactersIn } from "./symbolCharacter.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"];
 const UNTAGGED = "features/checkout.feature : a scenario with no code";
@@ -60,7 +61,7 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("holds every outcome but satisfied among its reconciling items, so every item shape prints", () => {
-    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx)).flatMap((row) => row.at(-1)!.split("; "));
+    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.at(-1)!.split("; "));
     const outcomes = Object.keys(OUTCOME_DESCRIPTION) as Outcome[];
     for (const outcome of outcomes.filter((o) => o !== "satisfied")) {
       expect(items.some((item) => item.includes(OUTCOME_DESCRIPTION[outcome])), outcome).toBe(true);
@@ -68,12 +69,12 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("shows each Verdict cell as balanced or out-of-balance, and nothing else", () => {
-    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx)).map((row) => row.at(-2));
+    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).map((row) => row.at(-2));
     expect(new Set(verdicts)).toEqual(new Set(["balanced", "out-of-balance"]));
   });
 
   it("reads each reconciling item as its quality check and its outcome's sentence, or the sentence alone", () => {
-    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx))
+    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf))
       .map((row) => row.at(-1)!)
       .filter((cell) => cell !== "—")
       .flatMap((cell) => cell.split("; "));
@@ -85,13 +86,13 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("shows each fitness evidence obligation's Outcome cell as its sentence alone", () => {
-    const md = renderMarkdown(__er(everyOutcome), ctx);
+    const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
     expect(md).toContain(`| SCN-NGL-001 | ${OUTCOME_DESCRIPTION.satisfied} |`);
     expect(md).toContain(`| SCN-NGL-003 | ${OUTCOME_DESCRIPTION.watermelon} |`);
   });
 
   it("holds no symbol character in any cell of the claim table, judged by what a symbol is, not by a list of known ones", () => {
-    const cells = ledgerRows(renderMarkdown(__er(everyOutcome), ctx)).flat();
+    const cells = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flat();
     expect(cells.length).toBeGreaterThan(0);
     expect(symbolCharactersIn(cells.join("\n"))).toEqual([]);
   });

@@ -21,7 +21,7 @@ import {
   outOfBalanceCountOf,
   carriesNoScnCode,
 } from "../domain/claimReconciliation.js";
-import type { RenderInput } from "../domain/renderInput.js";
+import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
@@ -117,7 +117,7 @@ function renderRowExceptions(s: ClaimReconciliation): string {
   return groups.length === 0 ? "—" : groups.join("; ");
 }
 
-type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[]) => readonly string[];
+type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf) => readonly string[];
 
 const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
@@ -386,7 +386,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   runIntegritySection,
   scenarioCodeErrorsSection,
   summaryViewsSection,
-  runVerdictSection,
+  (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   evidenceReconciliationSection,
   testVolumeSection,
   discoveryScopeSection,
@@ -400,10 +400,10 @@ const SECTIONS: readonly SectionEmitter[] = [
   ledgerSection,
 ];
 
-export function renderReport(report: RenderInput, inputNames: readonly RunInputName[]): string {
-  return SECTIONS.flatMap((section) => section(report, inputNames)).join("\n");
+export function renderReport(report: RenderInput, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf): string {
+  return SECTIONS.flatMap((section) => section(report, inputNames, exitCodeOf)).join("\n");
 }
 
-export function renderReportFromJson(json: string, inputNames: readonly RunInputName[]): string {
-  return renderReport(JSON.parse(json) as RenderInput, inputNames);
+export function renderReportFromJson(json: string, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf): string {
+  return renderReport(JSON.parse(json) as RenderInput, inputNames, exitCodeOf);
 }

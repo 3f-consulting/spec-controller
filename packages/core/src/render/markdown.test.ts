@@ -5,6 +5,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 let balance: Ledger;
 beforeEach(() => {
@@ -16,7 +17,7 @@ beforeEach(() => {
 
 describe("[SCN-RPT-001] the markdown report opens with a Run provenance header", () => {
   it("renders all four provenance facts: target repo, inputs used, UTC timestamp, source SHA", () => {
-    const md = renderMarkdown(__er(balance), ctx);
+    const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
 
     expect(md).toContain("## Run provenance");
     expect(md).toContain("an-adopters-repository");
@@ -32,19 +33,19 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
   it("names the target's git origin beside unknown-target when the run read one, and the bare target when it read none", () => {
     const targetRepo = (md: string) => md.split("\n").find((line) => line.startsWith("- Target repo:"));
     const untargeted = { ...ctx, target: "unknown-target" };
-    expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "ekino/veggies" })))
+    expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "ekino/veggies" }, publishedExitCodeOf)))
       .toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
-    expect(targetRepo(renderMarkdown(__er(balance), untargeted))).toBe("- Target repo: unknown-target");
+    expect(targetRepo(renderMarkdown(__er(balance), untargeted, publishedExitCodeOf))).toBe("- Target repo: unknown-target");
   });
 
   it("positions the provenance header above the claim table (sectioned-renderer order)", () => {
-    const md = renderMarkdown(__er(balance), ctx);
+    const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
     expect(md.indexOf("# Evidence Reconciliation")).toBeLessThan(md.indexOf("## Run provenance"));
     expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("| Claim | Verdict | Reconciling items |"));
   });
 
   it("keeps the existing claim table byte-green (the Scenario-CRUD Read regression guard)", () => {
-    const md = renderMarkdown(__er(balance), ctx);
+    const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
     expect(md).toContain("| Claim | Verdict | Reconciling items |");
     expect(md).toContain("| --- | --- | --- |");
     expect(md).toContain("| SCN-RPT-001 | balanced | — |");
@@ -70,7 +71,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
   });
 
   it("renders a '### Evidence reconciliation' table with subjects as rows and balanced / out-of-balance as columns", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
+    const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     expect(md).toContain("### Evidence reconciliation");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
@@ -79,7 +80,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
   });
 
   it("decomposes the Quality Check Reconciliation out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
+    const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain("1 unit + 1 integration");
     expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.failing} |`);
@@ -96,7 +97,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
       ],
       []
     );
-    const md = renderMarkdown(__er(lintAndBehavioural), ctx);
+    const md = renderMarkdown(__er(lintAndBehavioural), ctx, publishedExitCodeOf);
     expect(md).toContain("1 fitness + 1 integration");
     const missingCause = `\n| ${OUTCOME_DESCRIPTION.missing} |`;
     const afterMissingCause = md.slice(md.indexOf(missingCause) + missingCause.length);
@@ -123,7 +124,7 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
   });
 
   it("counts the unnamed claim's reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
-    const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx);
+    const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx, publishedExitCodeOf);
     expect(md).toContain("| Claim Reconciliation | 4 | 3 | 1 |");
     expect(md).not.toContain("| Claim Reconciliation | 3 | 3 | 0 |");
   });
@@ -157,7 +158,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
   });
 
   it("renders a '### Fitness evidence obligations' table with each fitness row's scenario and its outcome's sentence — including the watermelon", () => {
-    const md = renderMarkdown(__er(spanning), ctx);
+    const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
 
     expect(md).toContain("### Fitness evidence obligations");
     expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
@@ -172,7 +173,7 @@ describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligatio
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
     );
-    const md = renderMarkdown(__er(behaviouralOnly), ctx);
+    const md = renderMarkdown(__er(behaviouralOnly), ctx, publishedExitCodeOf);
     expect(md).not.toContain("### Fitness evidence obligations");
     expect(md).not.toContain("fitness evidence obligations reconcile satisfied");
   });

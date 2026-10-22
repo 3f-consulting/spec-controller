@@ -7,6 +7,7 @@ import { sectionUnder } from "./renderedSection.test-utils.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 function reportLines(ciSource: string): string[] {
   const reconciliation = evidenceReconciliationFromSources({
@@ -18,7 +19,7 @@ function reportLines(ciSource: string): string[] {
     behaviouralObservations: [],
     deferralTags: [],
   });
-  return renderMarkdown(reconciliation, ctx).split("\n");
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
 const heading = CORE_MESSAGES[CoreMessage.ReconcilerHeading];

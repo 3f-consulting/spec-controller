@@ -5,6 +5,7 @@ import { evidenceObligations, type UntaggedScenario } from "../domain/corpusCoun
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "by-feature-no-scn-code",
@@ -41,7 +42,7 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
 
   it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
     const { reconciliation, census } = noScnCodeCorpus(checkout);
-    const rows = byFeatureRows(renderMarkdown(reconciliation, ctx, census));
+    const rows = byFeatureRows(renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census));
     expect(rows).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
   });
 });
@@ -52,7 +53,7 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       { feature: "one.feature", scenario: "a no-scn-code scenario" },
       { feature: "one.feature", scenario: "an over-long code" },
     ]);
-    const md = renderMarkdown(reconciliation, ctx, census, new Map([["ONE", "one"]]));
+    const md = renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census, new Map([["ONE", "one"]]));
     expect(byFeatureRows(md)).toEqual([["one (ONE)", "2", "2 with no `@SCN` code"]]);
   });
 
@@ -66,7 +67,7 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       [],
       untagged.map((u) => `${u.feature} : ${u.scenario}`),
     );
-    const md = renderMarkdown(reconciliationOf(ledger), ctx, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
+    const md = renderMarkdown(reconciliationOf(ledger), ctx, publishedExitCodeOf, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
     expect(byFeatureRows(md)).toEqual([["sample (UNT)", "3", "SCN-UNT-001 and 2 with no `@SCN` code"]]);
   });
 });

@@ -9,6 +9,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciliation-summary-target",
@@ -53,7 +54,7 @@ const DEFERRED_OBSERVATIONS: EvidenceObservation[] = [
 function render(feature: string, observations: EvidenceObservation[] = OBSERVATIONS): string {
   const ledger = reconcile(parseScenarios(feature), observations);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
-  return renderMarkdown(reconciliation, ctx);
+  return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
 function sectionLines(md: string): string[] {

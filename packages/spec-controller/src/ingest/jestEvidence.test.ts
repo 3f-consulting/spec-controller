@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown, verdictCode, type RunContext } from "@3f-consulting/spec-controller-core";
+import { renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 
 const TARGET = "tests/fixtures/jest";
 
@@ -102,7 +103,7 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
 
   it("names both codes on the unnamed claim's row, beside the test's file", () => {
     const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown(balance(), ctx)
+    const unnamedClaimRow = renderMarkdown(balance(), ctx, reportedExitCodeOf)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("cases.test.js: 2 scenario codes"));
 
@@ -175,6 +176,6 @@ describe("[SCN-JST-007] runReconcile reads a Jest test file that failed to run a
   });
 
   it("stamps the run unsound", () => {
-    expect(verdictCode({ ledger: balance().ledger, strict: false })).toBe(4);
+    expect(runVerdict({ ledger: balance().ledger, strict: false })).toBe("unsound");
   });
 });
