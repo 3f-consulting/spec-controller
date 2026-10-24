@@ -27,11 +27,11 @@ No check holds it. spec-controller declares no performance claim, so it runs no 
 
 ## Compatibility
 
-No check holds it.
+No fitness function holds it. Interoperability with each runner's report format is held by the behavioural scenarios of that format's reader. Co-existence has no check.
 
 ## Interaction capability
 
-No check holds it.
+No fitness function holds it. The wording of the report and the help is held by behavioural scenarios over their text.
 
 ## Reliability
 
