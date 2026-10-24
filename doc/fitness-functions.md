@@ -51,16 +51,9 @@ Workflow security's catch is the same pull request as the published-package chec
 
 ## Maintainability
 
-Its headings are the kinds of comment a technical lead makes in review.
+Its headings are the standard's sub-characteristics of maintainability.
 
-### Readability, structure, complexity
-
-| Check | Real catches |
-|---|---|
-| Complexity: cognitive complexity and function length | 13 |
-| CRAP: complex code must be tested | 0 |
-
-### Design and architecture
+### Modularity
 
 | Check | Real catches |
 |---|---|
@@ -75,15 +68,28 @@ Its headings are the kinds of comment a technical lead makes in review.
 | Only one module imports the Gherkin parser | 0 |
 | Only the workflow module and the run store import the YAML parser | 0 |
 
-### Duplication and unused code
+### Reusability
+
+No check holds it. Core is published as a package of its own, and its front door is held under *Modularity*.
+
+### Analysability
+
+| Check | Real catches |
+|---|---|
+| Complexity: cognitive complexity and function length | 13 |
+
+Supportability and observability sit here. No check holds them yet. It is the comment that an error should tell its reader something stable to search for or report.
+
+### Modifiability
 
 | Check | Real catches |
 |---|---|
 | Duplication: no clone touches a changed production file | 0 |
 | Unused code: no changed file carries an unused file, export or dependency | 8 |
 | Test helpers written once: no helper in a changed test file copies one in another | 0 |
+| CRAP: complex code must be tested | 0 |
 
-### Tests missing or weak
+### Testability
 
 | Check | Real catches |
 |---|---|
@@ -92,10 +98,6 @@ Its headings are the kinds of comment a technical lead makes in review.
 | Test code stays within the declared ceiling ratio to production code | 0 |
 | No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
 | Every production source file is in a mutation scope or on the recorded list | 0 |
-
-### Supportability and observability
-
-No check holds this yet. It is the comment that an error should tell its reader something stable to search for or report.
 
 ## Flexibility
 
