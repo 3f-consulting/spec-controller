@@ -16,12 +16,7 @@ Quality checks fall into three categories: product, technical and process confor
 
 ## Functional suitability
 
-The behavioural tests hold it: the unit, integration and end-to-end suites. Two fitness functions hold what the compiler and the pipeline can see.
-
-| Check | Real catches |
-|---|---|
-| Typecheck | 8 |
-| Workflow correctness | 1 |
+Only the behavioural tests hold it: the unit, integration and end-to-end suites. No fitness function holds it.
 
 **Technical conformance:** the code's other qualities, tests included.
 
@@ -92,6 +87,7 @@ Supportability and observability sit here. No check holds them yet. It is the co
 | Unused code: no changed file carries an unused file, export or dependency | 8 |
 | Test helpers written once: no helper in a changed test file copies one in another | 0 |
 | CRAP: complex code must be tested | 0 |
+| Typecheck | 8 |
 
 ### Testability
 
@@ -154,5 +150,6 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | A red proof in which no selected test reported a result fails as not a red | 0 |
 | A pull request's mutation run selects exactly the scopes its production files are in | 0 |
 | No test leaves an entry in its temporary directory | 0 |
+| Workflow correctness | 1 |
 
 The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit.
