@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/corpusReading.test-utils.js";
 import { runReconcile as reconcileReadInputs } from "../ingest/ingestQualityChecks.js";
-import { runBalance, sourceTarget } from "../cli-balance/cli.js";
+import { runBalance, runContextOf } from "../cli-balance/cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-import { renderJson, renderMarkdown, type EvidenceReconciliation, type RunContext } from "@3f-consulting/spec-controller-core";
-import { runInputsOf } from "../cli-balance/evidenceInputs.js";
+import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import { inputPathsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 import { reRender } from "../cli-balance/reRender.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
@@ -475,37 +475,51 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
   }
 
   // One checkout serves every row, each row setting its origin's URL: a checkout per row costs more than a unit test may take.
-  // The header is all a row reads, so the report renders an empty reconciliation.
-  let shared: { dir: string; balance: EvidenceReconciliation } | undefined;
+  // The origin's name is the only text a remote puts into the report, so most rows read the name from the reader, and a few
+  // run the context balance assembles through the report's renderers. The header is all those rows read, so the report
+  // renders an empty reconciliation.
+  let shared: { dir: string; root: string; balance: EvidenceReconciliation } | undefined;
   beforeEach(() => {
     if (shared !== undefined) return;
     const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-origins-"));
     execFileSync("git", ["init", "-q", dir]);
-    shared = { dir, balance: reconcileReadInputs([], dir, [], []) };
+    shared = { dir, root: resolveTargetRoot({ features: join(dir, "features") }), balance: reconcileReadInputs([], dir, [], []) };
   });
   afterAll(() => {
     if (shared !== undefined) rmSync(shared.dir, { recursive: true, force: true });
   });
 
-  function withOrigin(origin: string, use: (dir: string, balance: EvidenceReconciliation) => void): void {
-    const { dir, balance } = shared!;
+  function withOrigin(origin: string, use: (dir: string, root: string, balance: EvidenceReconciliation) => void): void {
+    const { dir, root, balance } = shared!;
     execFileSync("git", ["-C", dir, "config", "remote.origin.url", origin]);
-    use(dir, balance);
+    use(dir, root, balance);
   }
 
-  // The run's context as balance assembles it with no --target, rendered by the report's own renderers.
-  function reportOf(dir: string, balance: EvidenceReconciliation): { md: string; json: string; rerendered: string } {
-    const targetOrigin = resolveTargetOrigin(dir);
-    const ctx: RunContext = {
-      target: sourceTarget({}),
-      ...(targetOrigin !== null ? { targetOrigin } : {}),
-      inputs: runInputsOf({}),
-      corpus: "features",
-      runStart: new Date("2026-10-22T09:00:00.000Z"),
-      sourceSha: null,
-    };
+  // The run's context as balance assembles it with no --target, rendered by the report's own renderers. The root is the
+  // checkout's, read once, since every row shares the checkout.
+  // The checkout's path, as created and as resolved, and the tool's own commit are run facts the remote does not supply, so a
+  // leak is read with them removed.
+  function reportOf(dir: string, root: string, balance: EvidenceReconciliation): { md: string; json: string; rerendered: string; leaked: (secret: string) => string | undefined } {
+    const args = { features: join(dir, "features") };
+    const ctx = runContextOf(args, inputPathsOf(args), new Date("2026-10-22T09:00:00.000Z"), root);
     const json = renderJson(balance, ctx);
-    return { md: renderMarkdown(balance, ctx, reportedExitCodeOf), json, rerendered: reRender(JSON.parse(json), false).markdown };
+    const md = renderMarkdown(balance, ctx, reportedExitCodeOf);
+    const rerendered = reRender(JSON.parse(json), false).markdown;
+    const runFacts = [realpathSync(dir), dir, ctx.toolSha].filter((fact): fact is string => typeof fact === "string" && fact !== "");
+    const surfaces = { markdown: md, JSON: json, "re-render": rerendered };
+    const leaked = (secret: string): string | undefined =>
+      Object.entries(surfaces).find(([, text]) => runFacts.reduce((t, fact) => t.replaceAll(fact, ""), text).includes(secret))?.[0];
+    return { md, json, rerendered, leaked };
+  }
+
+  function nameOf(origin: string): string | null {
+    const { dir } = shared!;
+    execFileSync("git", ["-C", dir, "config", "remote.origin.url", origin]);
+    return resolveTargetOrigin(dir);
+  }
+
+  function namedOrigin(json: string): unknown {
+    return (JSON.parse(json) as { runProvenance: { targetOrigin?: unknown } }).runProvenance.targetOrigin;
   }
 
   it.each([
@@ -550,16 +564,80 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["persistent-https::https://deploy:s3cret@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["deploy", "s3cret"]],
     ["persistent-https::https://deploy:p@ss@host/ekino/veggies.git?private_token=abc#s3cret", "persistent-https::https://host/ekino/veggies.git", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
     ["/srv/git/veggies@2024:archive.git", "/srv/git/veggies@2024:archive.git", []],
-  ])("names the target's origin %s as %s, and none of %j reaches the report, its JSON or a re-render", (origin, shown, secrets) => {
-    withOrigin(origin, (dir, balance) => {
-      const { md, json, rerendered } = reportOf(dir, balance);
-      for (const [surface, text] of [["markdown", md], ["JSON", json], ["re-render", rerendered]]) {
-        for (const secret of secrets) expect(text, `${secret} in the ${surface}`).not.toContain(secret);
-      }
-      const named = (JSON.parse(json) as { runProvenance: { targetOrigin?: unknown } }).runProvenance.targetOrigin;
-      expect(String(named)).not.toMatch(/[?#]/);
-      expect(named).toBe(shown);
-      expect(targetRepo(md)).toBe(`- Target repo: unknown-target (no --target given; origin is ${shown})`);
+  ])("names the target's origin %s as %s, and none of %j reaches the name", (origin, shown, secrets) => {
+    const named = nameOf(origin);
+    for (const secret of secrets) expect(named, `${secret} reached the name`).not.toContain(secret);
+    expect(named).not.toMatch(/[?#]/);
+    expect(named).toBe(shown);
+  });
+
+  const everyDelimiter = ["@", ":", "/", "?", "#", "%40", " ", "&", "="];
+  describe.each([
+    ["https://usrK7:{password}@github.com/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"]],
+    ["https://usrK7:{password}@github.com/veggies.git", "https://github.com/veggies.git", ["/", "?", "#"]],
+    ["http://usrK7:{password}@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies", ["/", "?", "#"]],
+    ["ssh://usrK7:{password}@host/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"]],
+    ["git+ssh://usrK7:{password}@host/ekino/veggies.git", "git+ssh://host/ekino/veggies.git", ["/", "?", "#"]],
+    ["persistent-https::https://usrK7:{password}@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["/", "?", "#"]],
+    ["usrK7:{password}@host:ekino/veggies.git", "ekino/veggies", []],
+    ["usrK7:{password}@host:veggies.git", "host:veggies.git", []],
+    ["https://usrK7:{password}@github.com/ekino/veggies.git?private_token=Tk3#Fr4", "ekino/veggies", ["/", "?", "#"]],
+  ])("a remote of the form %s, named %s unless its password holds one of %j", (form, shown, unread) => {
+    it.each(everyDelimiter)("with %j in its password, names what it reads and puts no part of its user, password or token in the name", (delimiter) => {
+      const named = nameOf(form.replace("{password}", `Zq1${delimiter}Xw9`));
+      for (const secret of ["usrK7", "Zq1", "Xw9", "Tk3", "Fr4"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
+      expect(named).toBe(unread.includes(delimiter) ? null : shown);
+    });
+  });
+
+  describe.each([
+    ["file://usrK7:{password}@host/srv/x"],
+    ["usrK7::{password}@host:veggies.git"],
+  ])("a remote of the form %s", (form) => {
+    it.each(everyDelimiter)("with %j in its password, names no origin and puts no part of its user or password in the name", (delimiter) => {
+      const named = nameOf(form.replace("{password}", `Zq1${delimiter}Xw9`));
+      for (const secret of ["usrK7", "Zq1", "Xw9"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
+      expect(named).toBeNull();
+    });
+  });
+
+  it.each([
+    ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git"],
+    ["https://usrK7:Zq1?Xw9@github.com/veggies.git"],
+    ["https://usrK7:Zq1#Xw9@github.com/veggies.git"],
+    ["ssh://usrK7:Zq1/Xw9@host/ekino/veggies.git"],
+    ["https://host/ekino/veggies.git?e=a@b.example"],
+    ["https://usrK7:Zq1Xw9@/ekino/veggies.git"],
+    ["git@host:repo@v2.git"],
+    ["file://usrK7@localhost/srv/x"],
+    ["ext::sshpass -p Zq1Xw9 ssh usrK7@host %S repo"],
+    ["ext::ssh -l usrK7 host %S /srv/repo"],
+  ])("names no origin for %s, which is not read as a URL, an scp remote or a local path without guessing", (origin) => {
+    const named = nameOf(origin);
+    for (const secret of ["usrK7", "Zq1", "Xw9", "a@b"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
+    expect(named).toBeNull();
+  });
+
+  it.each([
+    ["file:///srv/git/veg#gies.git"],
+    ["file:///srv/git/veg?gies.git"],
+    ["/srv/git/veg#gies.git"],
+    ["/srv/git/veg?gies.git"],
+    ["veggies.git"],
+  ])("names the local origin %s as given, since git sends it to no server", (origin) => {
+    expect(nameOf(origin)).toBe(origin);
+  });
+
+  it.each<[string, string | null, string[]]>([
+    ["https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", "ekino/veggies", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
+    ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git", null, ["usrK7", "Zq1", "Xw9"]],
+    ["file:///srv/git/veg#gies.git", "file:///srv/git/veg#gies.git", []],
+  ])("in the run balance assembles, carries the origin %s's name, %s, into the markdown, the JSON and a re-render, with none of %j in any of them", (origin, shown, secrets) => {
+    withOrigin(origin, (dir, root, balance) => {
+      const { md, json, rerendered, leaked } = reportOf(dir, root, balance);
+      for (const secret of secrets) expect(leaked(secret), `${secret} reached a surface`).toBeUndefined();
+      expect(namedOrigin(json)).toBe(shown ?? undefined);
+      expect(targetRepo(md)).toBe(shown === null ? "- Target repo: unknown-target" : `- Target repo: unknown-target (no --target given; origin is ${shown})`);
       expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });

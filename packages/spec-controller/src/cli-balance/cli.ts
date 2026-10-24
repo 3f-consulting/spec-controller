@@ -203,7 +203,7 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
 }
 
-function runContextOf(
+export function runContextOf(
   args: Record<string, string>,
   inputs: InputPaths,
   runStart: Date,
