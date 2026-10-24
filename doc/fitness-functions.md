@@ -10,7 +10,9 @@ A **real catch** is a red on a commit that was meant to pass. A red the method m
 
 Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and six more after the window, from 20 October. For them, a zero says little yet.
 
-**Technical conformance:** checks on the code, tests included. Its headings are the product quality characteristics of ISO/IEC 25010:2023, in the standard's order. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
+Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order; process conformance is 3F's extension of it. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
+
+**Product conformance:** what the product does.
 
 ## Functional suitability
 
@@ -20,6 +22,8 @@ The behavioural tests hold it: the unit, integration and end-to-end suites. Two 
 |---|---|
 | Typecheck | 8 |
 | Workflow correctness | 1 |
+
+**Technical conformance:** the code's other qualities, tests included.
 
 ## Performance efficiency
 
