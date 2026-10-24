@@ -75,6 +75,10 @@ The three published and workflow checks share their one catch: a single pull req
 
 Workflow security's catch is the same pull request as the three checks above.
 
+## Supportability and operability
+
+No check holds this yet. It is the comment that an error should tell its reader something stable to search for or report.
+
 **Process conformance:** checks on how the work is done and recorded.
 
 ## Comments and docs
