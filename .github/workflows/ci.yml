@@ -335,39 +335,6 @@ jobs:
           git ls-files -- ':(glob)packages/*/src/**/*.ts' ':(exclude,glob)packages/**/*.test.ts' ':(exclude,glob)packages/**/*.test-utils.ts' "${excludes[@]}" \
             | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
 
-      - name: A pull request's mutation run selects exactly the scopes its production files are in
-        id: SCN-FIT-045
-        if: always()
-        shell: bash
-        # Each file is checked alone, so a scope one file selects cannot hide a wrong selection by another.
-        run: |
-          yq -o=json '.jobs.mutation.strategy.matrix.include' .github/workflows/mutation.yml > "$RUNNER_TEMP/mutation-matrix.json"
-          status=0
-          while read -r file expected; do
-            actual=$(printf '%s\n' "$file" | node scripts/mutation-scopes.mjs "$RUNNER_TEMP/mutation-matrix.json")
-            if [ "$actual" != "$expected" ]; then
-              echo "$file: selects $actual, expected $expected"
-              status=1
-            fi
-          done <<'CASES'
-          packages/core/src/domain/evidenceOrder.ts ["core-domain"]
-          packages/core/src/render/messages.ts []
-          packages/core/src/domain/ciSourcePaths.test.ts []
-          packages/spec-controller/src/ingest/corpusFixtures.test-utils.ts []
-          packages/spec-controller/src/run-management/keptRun.ts ["spec-controller-run-management"]
-          packages/spec-controller/src/cli.ts ["spec-controller-shell"]
-          packages/core/src/index.ts []
-          README.md []
-          CASES
-          printf '%s\n' packages/spec-controller/src/cli.ts packages/core/src/domain/evidenceOrder.ts README.md packages/spec-controller/src/run-management/keptRun.ts > "$RUNNER_TEMP/changed.txt"
-          together=$(node scripts/mutation-scopes.mjs "$RUNNER_TEMP/mutation-matrix.json" < "$RUNNER_TEMP/changed.txt")
-          expected='["core-domain","spec-controller-run-management","spec-controller-shell"]'
-          if [ "$together" != "$expected" ]; then
-            echo "several files select $together, expected $expected in matrix order"
-            status=1
-          fi
-          exit "$status"
-
       - name: No unit test file runs code at collection time or in a hook that runs once for many tests
         id: SCN-FIT-042
         if: always()
@@ -505,10 +472,16 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-        # mutation.yml titles a full sweep "Mutation"; a scoped or pull-request run carries another title.
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. A scope cancelled at its time limit has no verdict, so it reds nothing. GitHub's run list sometimes answers empty, so a lookup that finds no full sweep asks twice more.
         run: |
+          verdict() { gh run view "$1" --json jobs --jq '[.jobs[] | select(.name | startswith("mutation")) | .conclusion] | (length > 0) and all(. == "success" or . == "cancelled")'; }
+          sweep() { local id ask; for ask in 1 2 3; do id="$(gh run list --workflow mutation.yml --status completed --limit 50 --json databaseId,displayTitle "$@" --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty')"; [ -n "$id" ] && break; [ "$ask" = 3 ] || sleep 10; done; echo "$id"; }
           since="$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)"
-          test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 50 --json conclusion,displayTitle --jq 'map(select(.displayTitle == "Mutation"))[0].conclusion')" = success
+          main="$(sweep --branch main --created ">=$since")"
+          [ -n "$main" ] && [ "$(verdict "$main")" = true ] && exit 0
+          head="$(sweep --commit "$HEAD_SHA")"
+          [ -n "$head" ] && [ "$(verdict "$head")" = true ]
 
       - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023

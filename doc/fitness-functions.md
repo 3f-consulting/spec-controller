@@ -148,7 +148,6 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | A red proof of an integration or e2e scenario runs exactly that scenario | 0 |
 | A red proof that selects no test fails, saying no test was selected | 0 |
 | A red proof in which no selected test reported a result fails as not a red | 0 |
-| A pull request's mutation run selects exactly the scopes its production files are in | 0 |
 | No test leaves an entry in its temporary directory | 0 |
 | Workflow correctness | 1 |
 

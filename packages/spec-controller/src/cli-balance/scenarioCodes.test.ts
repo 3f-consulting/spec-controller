@@ -46,7 +46,10 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
     return rows.find((r) => r.scnId === "SCN-DUP-002");
   }
 
-  it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", () => {
+  // A whole balance run takes longer than Vitest's default limit.
+  const wholeRun = { timeout: 30_000 };
+
+  it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", wholeRun, () => {
     const dir = duplicateTarget();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
       "--features", join(dir, "features"),

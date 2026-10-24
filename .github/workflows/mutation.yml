@@ -1,6 +1,6 @@
 name: Mutation
 # The title "Mutation" marks a full sweep; ci.yml's Mutation score step reads only runs titled so.
-run-name: ${{ github.event_name == 'pull_request' && format('Mutation of pull request {0}', github.event.number) || inputs.scope && format('Mutation of scope {0}', inputs.scope) || 'Mutation' }}
+run-name: ${{ inputs.scope && format('Mutation of scope {0}', inputs.scope) || 'Mutation' }}
 
 on:
   schedule:
@@ -17,9 +17,6 @@ on:
         type: boolean
         required: false
         default: false
-  # Once per ready, never per push: a push to an open pull request starts nothing.
-  pull_request:
-    types: [opened, ready_for_review]
 
 env:
   # Production files no scope mutates. These re-export only, so there is no mutant to raise.
@@ -29,46 +26,7 @@ env:
     packages/core/src/model.ts
 
 jobs:
-  scopes:
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 5
-    outputs:
-      scopes: ${{ steps.select.outputs.scopes }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
-
-      - name: Enable corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Select the scopes the pull request's changed files are in
-        id: select
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          yq -o=json '.jobs.mutation.strategy.matrix.include' .github/workflows/mutation.yml > "$RUNNER_TEMP/mutation-matrix.json"
-          scopes=$(git diff --name-only --no-renames "$BASE_SHA...$HEAD_SHA" | node scripts/mutation-scopes.mjs "$RUNNER_TEMP/mutation-matrix.json")
-          echo "Selected: $scopes"
-          echo "scopes=$scopes" >> "$GITHUB_OUTPUT"
-
   mutation:
-    needs: scopes
-    # Without a status function the condition would imply success(), and scopes is skipped on a schedule or a dispatch.
-    if: ${{ !cancelled() && (github.event_name != 'pull_request' || (needs.scopes.result == 'success' && needs.scopes.outputs.scopes != '[]')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -94,7 +52,7 @@ jobs:
             timeout: 60
           - scope: spec-controller-run-management
             mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts,!packages/spec-controller/src/run-management/**/*.test-utils.ts"
-            timeout: 6
+            timeout: 18
           - scope: spec-controller-shell
             mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.test-utils.ts,!packages/spec-controller/src/messages.ts"
             timeout: 36
@@ -103,7 +61,7 @@ jobs:
             timeout: 19
           - scope: spec-controller-cli-balance
             mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts,!packages/spec-controller/src/cli-balance/**/*.test-utils.ts"
-            timeout: 21
+            timeout: 60
           - scope: core-parse
             mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.test-utils.ts"
             timeout: 53
@@ -111,7 +69,7 @@ jobs:
             mutate: "packages/core/src/lib/**/*.ts,!packages/core/src/lib/**/*.test.ts,!packages/core/src/lib/**/*.test-utils.ts"
             timeout: 6
     env:
-      SELECTED: ${{ github.event_name == 'pull_request' && contains(fromJSON(needs.scopes.outputs.scopes || '[]'), matrix.scope) || github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope) }}
+      SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}
       INCREMENTAL_FILE: reports/stryker-incremental-${{ matrix.scope }}.json
     steps:

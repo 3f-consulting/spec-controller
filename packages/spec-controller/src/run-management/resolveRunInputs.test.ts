@@ -452,6 +452,9 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     return md.split("\n").find((line) => line.startsWith("- Target repo:"));
   }
 
+  // A whole balance run under the mutation runner's per-test coverage takes longer than Vitest's default limit.
+  const wholeRun = { timeout: 30_000 };
+
   function withCheckout(origin: string | null, use: (dir: string) => void): void {
     const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-unit-"));
     try {
@@ -561,7 +564,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     });
   });
 
-  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same, with none of the remote's credentials in any of them", () => {
+  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same, with none of the remote's credentials in any of them", wholeRun, () => {
     withCheckout("https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", (dir) => {
       const { md, json, saved } = report(dir);
       const rerendered = runBalanceCaptured(["--render-from-json", saved]).stdout;
@@ -574,7 +577,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     });
   });
 
-  it("reads unknown-target alone, with no origin in the JSON, when the target has no origin remote", () => {
+  it("reads unknown-target alone, with no origin in the JSON, when the target has no origin remote", wholeRun, () => {
     withCheckout(null, (dir) => {
       const { md, json } = report(dir);
       expect(targetRepo(md)).toBe("- Target repo: unknown-target");
@@ -582,7 +585,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     });
   });
 
-  it("reads the --target value alone, with no origin in the JSON, when --target is given", () => {
+  it("reads the --target value alone, with no origin in the JSON, when --target is given", wholeRun, () => {
     withCheckout("git@github.com:ekino/veggies.git", (dir) => {
       const { md, json } = report(dir, ["--target", "veggies"]);
       expect(targetRepo(md)).toBe("- Target repo: veggies");

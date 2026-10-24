@@ -89,7 +89,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Scenario: the behavioural suite finishes inside the limit its step runs it under
 
   @fitness @SCN-FIT-002
-  Scenario: the newest full mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
+  Scenario: every scope the newest full mutation sweep of the gated branch finished inside its window passed, or every scope a full sweep of the change's own head commit finished passed
 
   @fitness @SCN-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve
@@ -196,11 +196,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
-
-  Rule: a pull request marked ready measures the gated scopes its production changes reach
-
-    @fitness @SCN-FIT-045
-    Scenario: a pull request's mutation run selects exactly the gated scopes whose production files it changes, matched as the mutation runner matches them
 
   Rule: core's domain speaks its own language: it names no tool, format, flag or syntax
 
