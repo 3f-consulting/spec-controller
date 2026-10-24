@@ -10,16 +10,57 @@ A **real catch** is a red on a commit that was meant to pass. A red the method m
 
 Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and six more after the window, from 20 October. For them, a zero says little yet.
 
-**Technical conformance:** checks on the code, tests included.
+**Technical conformance:** checks on the code, tests included. Its headings are the product quality characteristics of ISO/IEC 25010:2023, in the standard's order. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
 
-## Readability, structure, complexity
+## Functional suitability
+
+The behavioural tests hold it: the unit, integration and end-to-end suites. Two fitness functions hold what the compiler and the pipeline can see.
+
+| Check | Real catches |
+|---|---|
+| Typecheck | 8 |
+| Workflow correctness | 1 |
+
+## Performance efficiency
+
+No check holds it. spec-controller declares no performance claim, so it runs no `@performance` scenario. Running cost does not apply: spec-controller has no deployment of its own, and each run uses its adopter's CI minutes.
+
+## Compatibility
+
+No check holds it.
+
+## Interaction capability
+
+No check holds it.
+
+## Reliability
+
+No check holds it. Availability and recoverability do not apply: spec-controller has no deployment, and each run is one process in its adopter's CI. Operability has no check.
+
+## Security
+
+| Check | Real catches |
+|---|---|
+| Workflow security | 1 |
+| No child process runs through a shell | 0 |
+| No code is built from a string while the program runs | 0 |
+| No regular expression is built from a value the program receives | 0 |
+| A file is written only where its location has been checked | 0 |
+
+Workflow security's catch is the same pull request as the published-package checks under *Flexibility*.
+
+## Maintainability
+
+Its headings are the kinds of comment a technical lead makes in review.
+
+### Readability, structure, complexity
 
 | Check | Real catches |
 |---|---|
 | Complexity: cognitive complexity and function length | 13 |
 | CRAP: complex code must be tested | 0 |
 
-## Design and architecture
+### Design and architecture
 
 | Check | Real catches |
 |---|---|
@@ -34,7 +75,7 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | Only one module imports the Gherkin parser | 0 |
 | Only the workflow module and the run store import the YAML parser | 0 |
 
-## Duplication and unused code
+### Duplication and unused code
 
 | Check | Real catches |
 |---|---|
@@ -42,7 +83,7 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | Unused code: no changed file carries an unused file, export or dependency | 8 |
 | Test helpers written once: no helper in a changed test file copies one in another | 0 |
 
-## Tests missing or weak
+### Tests missing or weak
 
 | Check | Real catches |
 |---|---|
@@ -52,32 +93,24 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 | No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
 | Every production source file is in a mutation scope or on the recorded list | 0 |
 
-## Correctness the compiler and the packaging can see
-
-| Check | Real catches |
-|---|---|
-| Typecheck | 8 |
-| Published packages | 1 |
-| Published types | 1 |
-| Workflow correctness | 1 |
-
-The three published and workflow checks share their one catch: a single pull request reddened all three.
-
-## Security
-
-| Check | Real catches |
-|---|---|
-| Workflow security | 1 |
-| No child process runs through a shell | 0 |
-| No code is built from a string while the program runs | 0 |
-| No regular expression is built from a value the program receives | 0 |
-| A file is written only where its location has been checked | 0 |
-
-Workflow security's catch is the same pull request as the three checks above.
-
-## Supportability and operability
+### Supportability and observability
 
 No check holds this yet. It is the comment that an error should tell its reader something stable to search for or report.
+
+## Flexibility
+
+Installability is held by the published packages and types. Scalability does not apply to a command-line tool run once per CI run.
+
+| Check | Real catches |
+|---|---|
+| Published packages | 1 |
+| Published types | 1 |
+
+The two published checks and workflow correctness share their one catch: a single pull request reddened all three.
+
+## Safety
+
+No check holds it. spec-controller carries no safety concern.
 
 **Process conformance:** checks on how the work is done and recorded.
 
