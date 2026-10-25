@@ -93,7 +93,7 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 | Check | Real catches |
 |---|---|
-| Mutation score | 7 |
+| Mutation verdict recorded | 7 |
 | No comment disables a mutant | 0 |
 | Test code stays within the declared ceiling ratio to production code | 0 |
 | No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |

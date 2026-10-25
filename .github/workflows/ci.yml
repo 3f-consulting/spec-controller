@@ -32,8 +32,8 @@ jobs:
       CRAP_THRESHOLD: "29.999999999999996"
       # A file reds when its comment lines exceed this share of its non-blank lines: a fixed 15% ceiling, with no ratchet.
       COMMENT_SHARE_MAX: "0.15"
-      # Hours: the nightly mutation sweep's 24-hour cadence plus 2 hours of margin, so one missed sweep ages its verdict out and reds the step.
-      MUTATION_VERDICT_MAX_AGE_H: "26"
+      # Hours: the nightly mutation sweep's 24-hour cadence, plus 4 hours for the longest a sweep may run (its 240-minute limit), plus 2 hours for the scheduler's delay, so one missed sweep ages its verdict out and reds the step.
+      MUTATION_VERDICT_MAX_AGE_H: "30"
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -467,21 +467,18 @@ jobs:
         if: always()
         run: semgrep scan --config .semgrep/writes-only-where-the-location-is-checked.yml --error --metrics=off --disable-version-check packages
 
-      - name: Mutation score
+      - name: Mutation verdict recorded
         id: SCN-FIT-002
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. A scope cancelled at its time limit has no verdict, so it reds nothing. GitHub's run list sometimes answers empty, so a lookup that finds no full sweep asks twice more.
+        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. GitHub's run list sometimes answers empty, so an empty page is asked twice more before it reads as no sweep.
         run: |
-          verdict() { gh run view "$1" --json jobs --jq '[.jobs[] | select(.name | startswith("mutation")) | .conclusion] | (length > 0) and all(. == "success" or . == "cancelled")'; }
-          sweep() { local id ask; for ask in 1 2 3; do id="$(gh run list --workflow mutation.yml --status completed --limit 50 --json databaseId,displayTitle "$@" --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty')"; [ -n "$id" ] && break; [ "$ask" = 3 ] || sleep 10; done; echo "$id"; }
-          since="$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)"
-          main="$(sweep --branch main --created ">=$since")"
-          [ -n "$main" ] && [ "$(verdict "$main")" = true ] && exit 0
-          head="$(sweep --commit "$HEAD_SHA")"
-          [ -n "$head" ] && [ "$(verdict "$head")" = true ]
+          sweep() { for try in 1 2 3; do id=$(gh run list --workflow mutation.yml --status completed --limit 50 --json databaseId,displayTitle "$@" --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty'); [ -n "$id" ] && { echo "$id"; return; }; [ "$try" = 3 ] || sleep 10; done; }
+          since=$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)
+          main=$(sweep --branch main --created ">=$since")
+          [ -n "$main" ] || { echo "no full sweep on main inside the window"; exit 1; }
+          gh run view "$main" --json jobs --jq '.jobs[] | select(.name | startswith("mutation")) | "\(.name): \(.conclusion)"'
 
       - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023

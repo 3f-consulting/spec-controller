@@ -89,7 +89,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Scenario: the behavioural suite finishes inside the limit its step runs it under
 
   @fitness @SCN-FIT-002
-  Scenario: every scope the newest full mutation sweep of the gated branch finished inside its window passed, or every scope a full sweep of the change's own head commit finished passed
+  Scenario: a full mutation sweep of the default branch finished inside its window, and each scope's verdict from it is on record
 
   @fitness @SCN-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve

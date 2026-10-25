@@ -1,5 +1,5 @@
 name: Mutation
-# The title "Mutation" marks a full sweep; ci.yml's Mutation score step reads only runs titled so.
+# The title "Mutation" marks a full sweep; ci.yml's Mutation verdict recorded step reads only runs titled so.
 run-name: ${{ inputs.scope && format('Mutation of scope {0}', inputs.scope) || 'Mutation' }}
 
 on:

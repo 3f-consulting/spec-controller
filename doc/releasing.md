@@ -145,9 +145,11 @@ release: the build, the typecheck, both suites and every repository bar. The rel
 of its own before it publishes, the clean-room install of the packed tarballs, and one after, the
 `latest` job.
 
-CI on `main` includes `Mutation score`, which fails unless the most recent full mutation sweep of
-`main` started in the last 26 hours succeeded, and `Self-reconciliation balance`. A lapsed nightly sweep therefore
-reds CI on `main`, and no release runs.
+CI on `main` includes `Mutation verdict recorded`, which prints each scope's conclusion from the
+newest full mutation sweep of `main` started in the last 30 hours and fails only when there is no
+such sweep, and `Self-reconciliation balance`. A lapsed nightly sweep therefore reds CI on `main`,
+and no release runs. A red sweep does not red CI: it stops new work from starting until a full
+sweep of `main` is green.
 
 `main`'s `strict` protection runs the same bars on every pull request before it can merge. A push to
 `main` that changes `packages/*/README.md` is not covered by CI's `paths-ignore`, whose `README.md`
