@@ -22,15 +22,13 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json --noEmit && node bundle.mjs"
-  },
-  "dependencies": {
-    "@3f-consulting/spec-controller-core": "workspace:*",
-    "fast-xml-parser": "^5.11.2",
-    "yaml": "^2.9.0"
+    "build": "node bundle.mjs"
   },
   "devDependencies": {
-    "esbuild": "0.28.1"
+    "@3f-consulting/spec-controller-core": "workspace:*",
+    "esbuild": "0.28.1",
+    "fast-xml-parser": "^5.11.2",
+    "yaml": "^2.9.0"
   },
   "publishConfig": {
     "access": "public"

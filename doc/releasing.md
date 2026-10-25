@@ -1,7 +1,7 @@
 # Releasing spec-controller
 
 Two packages are released together: `@3f-consulting/spec-controller-core`, the pure engine, and
-`spec-controller`, the command that resolves it. **Nobody cuts a release.** Every push to `main`
+`spec-controller`, the command that carries it compiled into its bundle. **Nobody cuts a release.** Every push to `main`
 that passes CI and changes a published package since the last release publishes both, core first,
 in the run of `.github/workflows/release.yml` that follows that push's CI run, at the next counter
 version, and then tags what it published.
@@ -21,18 +21,32 @@ error whose cause is not authentication.
 and only then. `release.yml` runs when the `CI` workflow completes on `main`. Its first job,
 `changes`, goes on only if that CI run succeeded and was started by a `push`. It checks out the
 commit CI ran on and diffs these paths between that commit and the nearest `v*` tag reachable from it
-(`git describe --tags --match 'v*' --abbrev=0`). The `release` job runs only if one of them changed:
+(`git describe --tags --match 'v*' --abbrev=0`). The `release` job runs if one of them changed:
 
 | Path | Why it is in the tarball |
 |---|---|
 | `packages/*/src/**`, except `*.test.ts` and `*.test-utils.ts` | compiled into `dist`, the one entry in `files` |
 | `packages/*/package.json`, `packages/*/README.md` | npm always packs both |
-| `packages/*/tsconfig.build.json`, the root `tsconfig.json`, `packages/spec-controller/bundle.mjs` | decide what `dist` compiles to |
+| `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what core's `dist` compiles to, which the CLI's bundle carries |
+| `packages/spec-controller/bundle.mjs` | decides what the CLI's `dist/cli.js` bundles |
+
+**When none of them changed, the job compares the bin CI built with the last release's.** The
+lockfile fixes the exact versions of `yaml`, `fast-xml-parser` and the other packages compiled into
+`dist/cli.js`, so a lockfile-only bump of one of them changes the bin and no path above. The job
+downloads CI's `built-packages` artifact and runs `scripts/bin-changed.sh` over its `dist/cli.js`
+and the version in the tag's name. The script fetches that version's tarball with `npm pack` and
+compares the two `dist/cli.js` files with `cmp`. It exits 0 when they differ, and the `release` job
+runs; 1 when they are identical, and nothing publishes; and 2 when either cannot be read, which
+fails the job, because a release decision that cannot be measured is never read as "no change".
+The job's log says which way it went. The comparison works because the bundle is deterministic: a
+rebuild of a release's commit gives that release's `dist/cli.js` byte for byte.
 
 A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run
-CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `doc/`,
-`features/`, `tests/`, `.github/`, the root `package.json` or the lockfile publishes nothing while the
-last release is tagged, because no published path changed since that tag.
+CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `features/`,
+`tests/`, `.github/` or the root `package.json` builds the same bin as the last release, and
+publishes nothing while that release is tagged. A merge that touches the lockfile publishes when the
+bin it builds differs from the last release's: a bump of a bundled dependency does, and a bump of a
+dev-only one does not.
 
 `release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so no published version exists that
@@ -61,9 +75,9 @@ Two jobs then run on what was published:
   that can write to the repository never shares a runner with the build. It starts no other
   workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
 
-Core publishes first because between the two publishes there is a window in which
-`npm i spec-controller` would resolve an engine nobody can fetch. Sending core first keeps that
-window on the harmless side.
+The CLI's tarball names no runtime dependency, so `npm i spec-controller` installs that one
+package and fetches nothing from core's publish. Core still publishes first, and the recovery under
+*If the run fails* follows from that order.
 
 ### Two merges close together
 
@@ -81,12 +95,13 @@ gh run watch <run-id>
 
 npm view spec-controller dist-tags
 npm view @3f-consulting/spec-controller-core dist-tags
-npm view spec-controller@<version> dependencies
+npm view spec-controller@<version> dependencies devDependencies
 git ls-remote --tags origin "v<version>"
 ```
 
-The `dependencies` line is the check that the two packages went out in lockstep: the CLI's packed
-manifest names core by a **concrete** version. Nothing is owed after the run goes green.
+The last `npm view` is the check on the CLI's manifest: it prints no `dependencies`, so a consumer
+installs no copy of a bundled package, and its `devDependencies` name core by the **concrete**
+version published beside it. Nothing is owed after the run goes green.
 
 ---
 
@@ -109,10 +124,12 @@ so the run publishes exactly what you wrote, and the next merge counts on from t
 
 ### Lockstep, `0.x` and what is published
 
-- The two packages are released **in lockstep at the same version**. In this tree the CLI's
-  dependency on core is written `workspace:*`; `pnpm pack` rewrites it to that exact version. A
-  release that sent one package without the other would leave a package naming an engine the
-  registry does not have.
+- The two packages are released **in lockstep at the same version**, so one number names one
+  engine: the core on the registry is the core compiled into that CLI. In this tree the CLI's
+  devDependency on core is written `workspace:*`; `pnpm pack` rewrites it to that exact version.
+- **The CLI declares no runtime dependency.** Core, `yaml` and `fast-xml-parser` are compiled into
+  `dist/cli.js`, so they are devDependencies, and a consumer's `npm audit` or `overrides` never acts
+  on a copy that does not run.
 - **`0.x` says the surface may still move.** A minor bump on `0.x` may carry a breaking change. A
   consumer who cannot absorb one should pin exactly rather than by caret.
 - **The `./internal` subpath is never published.** The workspace offers it and `publishConfig`
@@ -206,7 +223,9 @@ first only until somebody edits one of them.
 included.** `.github/dependabot.yml` lets Dependabot move exactly this one dependency, and keeps it
 exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green. The PR touches the root
 `package.json` and the lockfile, neither of which is a published path, so the release's `changes`
-job finds no published path changed since the last tag. Its merge publishes nothing and cannot loop.
+job finds no published path changed since the last tag. Its merge publishes only when the lockfile's
+re-resolution (below) moved a package the bin bundles, and then once: the next pin PR moves that
+package no further, so the loop stops.
 
 **The schedule.** `interval: cron` with `cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven
 days. `daily` is not used because it runs Monday to Friday only. Once a day is as often as GitHub
@@ -361,7 +380,8 @@ so the next push to `main` that runs CI and passes publishes it.
   number higher and the spent core version is never named by a CLI.
 - **After both published and the `latest` job failed.** Re-run that job alone (*Re-run failed
   jobs*). If the `tag` job succeeded, re-running the whole workflow publishes nothing: its `changes`
-  job diffs against the new `v<version>` tag and finds no published path changed. If the `tag` job
+  job diffs against the new `v<version>` tag and finds no published path changed and the bin
+  identical to that version's. If the `tag` job
   failed too, re-running the whole workflow publishes the next number. If the `latest` job fails
   again with time to spare, read `npm view <pkg> dist-tags`: a `latest` that is not the published
   version is the fault the job exists to catch.

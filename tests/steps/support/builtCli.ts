@@ -28,6 +28,28 @@ function newestMtime(dir: string): number {
   return newest;
 }
 
+// cli.js carries core compiled in, so a core-only rebuild passes the per-package check
+// while the suite would still spawn the old core.
+function refuseBundleOlderThanItsInputs(): void {
+  const binAt = statSync(SPEC_CONTROLLER_BIN).mtimeMs;
+  const bundleInputs = [
+    join("packages", "core", "src"),
+    join("packages", "core", "dist"),
+    join("packages", "spec-controller", "src"),
+  ];
+  for (const input of bundleInputs) {
+    const inputAt = newestMtime(join(repoRoot, input));
+    if (inputAt > binAt) {
+      throw new Error(
+        `packages/spec-controller/dist/cli.js is OLDER than ${input}, which it is bundled from, so ` +
+          `this run would spawn a binary that does not carry the code here.\n  ${input} newest: ` +
+          `${new Date(inputAt).toISOString()}\n  cli.js:  ${new Date(binAt).toISOString()}\n` +
+          `Run \`pnpm build\` first (CI does).`,
+      );
+    }
+  }
+}
+
 BeforeAll(function () {
   if (!existsSync(SPEC_CONTROLLER_BIN)) {
     throw new Error(
@@ -55,4 +77,5 @@ BeforeAll(function () {
       );
     }
   }
+  refuseBundleOlderThanItsInputs();
 });
