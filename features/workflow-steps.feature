@@ -20,7 +20,9 @@ Feature: balance reads a workflow's steps
     bare name, and runs the test script through test, t or tst, after any of the selections
     --filter with its selector, -F with its selector, -r and --recursive. yarn runs a script
     through run or by its bare name, after workspace and a workspace name, and through run after
-    workspaces foreach and its options. An option written after the script name is not read.
+    workspaces foreach and its options. After workspaces foreach, its options and the value of
+    --from, --include, --exclude, -j or --jobs, exec runs the command that follows it, never a
+    script by that command's name. An option written after the script name is not read.
 
     @unit @SCN-WFS-021
     Scenario: a step running npm's test shortcut, as `npm test`, `npm t` or `npm tst`, is the unit runner when the manifest's `test` script runs it
@@ -40,11 +42,25 @@ Feature: balance reads a workflow's steps
   Rule: a script is run only where a command runs, so a step whose text only names a script runs nothing
 
     A script is run where a command opens with its invocation: at the start of a line, or after
-    &&, ||, ; or |, past any NAME=value assignments and the launchers a runner is read through.
-    A script named anywhere else, as another command's argument, runs nothing.
+    &&, ||, ;, |, a background & or |&, past any NAME=value assignments, any shell word that
+    opens a command and any command that runs the command after it. The shell words are !, a
+    subshell's (, a group's {, and the if, then, elif, else, while, until and do that open the
+    condition and the body of an if and of a while, until or for loop; a redirection's >& is no
+    background &. The commands that run the command after them are the launchers a runner is
+    read through, env, nice, nohup, time, command, exec, xargs, timeout, stdbuf, sudo, yarn exec,
+    yarn dlx, cross-env, dotenv, xvfb-run, nyc, c8 and flock, each read past its options, the
+    value of an option that takes one, and the operands it takes before the command, such as
+    timeout's duration or flock's lock file. A script named anywhere else, as another command's
+    argument, runs nothing.
 
     @unit @SCN-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
+
+    @unit @SCN-WFS-027
+    Scenario: a step running a script behind a command that runs the command after it, such as `env`, `sudo`, `xargs` or `timeout`, past that command's options, runs that script
+
+    @unit @SCN-WFS-028
+    Scenario: a step running a script after a background `&`, in a subshell or a group, or in the body of an `if`, `while`, `until` or `for`, runs that script
 
   Rule: a runner is recognised only as the command a step runs, and named anywhere else it leaves the step a candidate
 
