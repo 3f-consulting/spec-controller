@@ -93,11 +93,13 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 | Check | Real catches |
 |---|---|
-| Mutation verdict recorded | 7 |
+| Mutation verdict recorded | 0 |
 | No comment disables a mutant | 0 |
 | Test code stays within the declared ceiling ratio to production code | 0 |
 | No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
 | Every production source file is in a mutation scope or on the recorded list | 0 |
+
+Mutation verdict recorded fails only when no sweep started inside its window, never on a red sweep, so it catches a lapsed schedule and nothing else.
 
 ## Flexibility
 
