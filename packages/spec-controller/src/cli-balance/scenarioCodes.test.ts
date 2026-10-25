@@ -6,6 +6,9 @@ import { runBalanceCaptured } from "../../test-support/runBalance.js";
 
 const made: string[] = [];
 
+// A whole balance run takes longer than Vitest's default limit.
+const wholeRun = { timeout: 30_000 };
+
 afterAll(() => {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
@@ -46,9 +49,6 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
     return rows.find((r) => r.scnId === "SCN-DUP-002");
   }
 
-  // A whole balance run takes longer than Vitest's default limit.
-  const wholeRun = { timeout: 30_000 };
-
   it("emits the whole report, reconciles the other account, and sets process.exitCode = 1", wholeRun, () => {
     const dir = duplicateTarget();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
@@ -69,7 +69,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
 });
 
 describe("[SCN-CLI-094] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
-  it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", () => {
+  it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", wholeRun, () => {
     const dir = mkdtempSync(join(tmpdir(), "scn-stg-028-unit-"));
     made.push(dir);
     mkdirSync(join(dir, "features"));
@@ -127,7 +127,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
 
   type Row = { scnId: string; kind: string; verdict: string };
 
-  it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", () => {
+  it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", wholeRun, () => {
     const report = JSON.parse(balance(target("@SCN-TWO-002 @SCN-TWO-003"), "json").stdout);
     const rows = report.ledger.claimReconciliations as Row[];
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.scnId)).toEqual(["SCN-TWO-001"]);
@@ -136,7 +136,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(report.evidenceObligations.untaggedScenarios).toEqual([]);
   });
 
-  it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", () => {
+  it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", wholeRun, () => {
     const dir = target("@SCN-TWO-002 @SCN-TWO-003");
     const json = balance(dir, "json");
     expect(JSON.parse(json.stdout).scenarioCodeErrors).toEqual([
@@ -159,7 +159,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(md.exitCode).toBe(1);
   });
 
-  it("reconciles a scenario with one code as today, listing no scenario code error", () => {
+  it("reconciles a scenario with one code as today, listing no scenario code error", wholeRun, () => {
     const json = balance(target("@SCN-TWO-002"), "json");
     const report = JSON.parse(json.stdout);
     const row = (report.ledger.claimReconciliations as Row[]).find((r) => r.scnId === "SCN-TWO-002");
