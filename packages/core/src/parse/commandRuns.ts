@@ -127,6 +127,9 @@ function opensWith(words: readonly string[], phrase: string): boolean {
   return words.slice(0, wordsOf(phrase).length).join(" ") === phrase;
 }
 
+const opensWithWords = (words: readonly string[], prefix: readonly string[]): boolean =>
+  prefix.every((word, at) => words[at] === word);
+
 const anywhere: LineTest = (line, invocation) => {
   const words = wordsOf(line);
   return words.some((_, at) => opensWith(words.slice(at), invocation));
@@ -140,7 +143,7 @@ function commandHeads(line: string): readonly (readonly string[])[] {
 }
 
 function handedOn(words: readonly string[]): readonly string[] | undefined {
-  const prefix = LAUNCHERS.find((row) => opensWith(words, row.words.join(" ")));
+  const prefix = LAUNCHERS.find((row) => opensWithWords(words, row.words));
   return prefix === undefined ? undefined : words.slice(prefix.words.length + prefix.operands);
 }
 
@@ -181,7 +184,7 @@ function pastOptions(words: readonly string[], at: number, prefix: CommandPrefix
 }
 
 function passedOn(words: readonly string[]): readonly string[] | undefined {
-  const prefix = COMMAND_PREFIXES.find((row) => opensWith(words, row.words.join(" ")));
+  const prefix = COMMAND_PREFIXES.find((row) => opensWithWords(words, row.words));
   return prefix === undefined ? undefined : words.slice(pastOptions(words, prefix.words.length, prefix) + prefix.operands);
 }
 
