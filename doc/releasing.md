@@ -27,7 +27,7 @@ commit CI ran on and diffs these paths between that commit and the nearest `v*` 
 |---|---|
 | `packages/*/src/**`, except `*.test.ts` and `*.test-utils.ts` | compiled into `dist`, the one entry in `files` |
 | `packages/*/package.json`, `packages/*/README.md` | npm always packs both |
-| `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what `dist` compiles to |
+| `packages/*/tsconfig.build.json`, the root `tsconfig.json`, `packages/spec-controller/bundle.mjs` | decide what `dist` compiles to |
 
 A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run
 CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `doc/`,

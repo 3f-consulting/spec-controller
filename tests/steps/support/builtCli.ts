@@ -1,7 +1,7 @@
 import { BeforeAll } from "@cucumber/cucumber";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -9,11 +9,7 @@ export const NODE = process.execPath;
 
 export const SPEC_CONTROLLER_BIN = join(repoRoot, "packages", "spec-controller", "dist", "cli.js");
 
-export const SPEC_CONTROLLER_ARGV: readonly string[] = [
-  "--import",
-  pathToFileURL(join(repoRoot, "tests", "steps", "support", "coreFromDist.register.js")).href,
-  SPEC_CONTROLLER_BIN,
-];
+export const SPEC_CONTROLLER_ARGV: readonly string[] = [SPEC_CONTROLLER_BIN];
 
 const BUILT_PACKAGES = ["core", "spec-controller"] as const;
 
