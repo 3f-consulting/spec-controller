@@ -17,6 +17,18 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["inside a command substitution", "$(pnpm test)", "test"],
     ["inside a string bash runs", 'bash -c "pnpm test"', "test"],
     ["after an option outside the documented forms", "pnpm --dir packages/core test", "test"],
+    ["after a background & inside a double-quoted argument", 'echo "lint & pnpm test now"', "test"],
+    ["after && inside a double-quoted argument", 'echo "lint && pnpm test"', "test"],
+    ["after || inside a double-quoted argument", 'echo "lint || pnpm test"', "test"],
+    ["after ; inside a double-quoted argument", 'echo "lint; pnpm test"', "test"],
+    ["after | inside a double-quoted argument", 'echo "lint | pnpm test"', "test"],
+    ["after a background & inside a single-quoted argument", "echo 'lint & pnpm test now'", "test"],
+    ["after && inside a single-quoted argument", "echo 'lint && pnpm test'", "test"],
+    ["after && inside a double-quoted argument that goes on", 'echo "lint && pnpm test now"', "test"],
+    ["after || inside a double-quoted argument that goes on", 'echo "lint || pnpm test now"', "test"],
+    ["after ; inside a double-quoted argument that goes on", 'echo "lint; pnpm test now"', "test"],
+    ["after | inside a double-quoted argument that goes on", 'echo "lint | pnpm test now"', "test"],
+    ["after && inside a single-quoted argument that goes on", "echo 'lint && pnpm test now'", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -32,6 +44,9 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["through timeout and its duration", 'timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --maxWorkers="$(nproc)" --reporter=json || status=$?', "test"],
     ["through a launcher", "CI=1 timeout 10m npx pnpm test", "test"],
     ["on a later line", "pnpm install\necho done\npnpm test", "test"],
+    ["after && that follows a quoted argument", 'echo "done" && pnpm test', "test"],
+    ["after a background &", "pnpm start & pnpm test", "test"],
+    ["after && behind a quote that never closes", 'echo "unclosed && pnpm test', "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
   });
@@ -270,10 +285,15 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     ["after bash's |&", "pnpm build |& pnpm check", "check"],
     ["after !", "! pnpm test", "test"],
     ["in a subshell", "( pnpm test )", "test"],
+    ["in a subshell written against its command", "(pnpm test)", "test"],
+    ["in a subshell written against its command and spaced from its )", "(pnpm test )", "test"],
+    ["after && in a subshell written against its first command", "(cd packages/core && pnpm test)", "test"],
+    ["in a subshell written against its command and followed by another command", "(pnpm test) && echo ok", "test"],
     ["in a group", "{ pnpm test; }", "test"],
     ["as an if's condition", "if pnpm test; then echo ok; fi", "test"],
     ["as an if's negated condition", "if ! pnpm test; then exit 1; fi", "test"],
     ["as an if's negated condition spaced from its ;", "if ! pnpm test ; then exit 1; fi", "test"],
+    ["as an if's negated condition in a subshell written against it", "if ! (pnpm test); then exit 1; fi", "test"],
     ["in an if's then", "if true; then pnpm test; fi", "test"],
     ["as an elif's condition", "if false; then :; elif pnpm test; then :; fi", "test"],
     ["in an if's else", "if false; then :; else pnpm test; fi", "test"],
@@ -293,11 +313,19 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     ["a shell word as echo's argument", "echo if pnpm test", "test"],
     ["! as grep's argument", "grep ! pnpm test", "test"],
     ["do as echo's argument", "echo do pnpm test", "test"],
+    ["a command substitution as echo's argument", "echo $(pnpm test)", "test"],
+    ["a command substitution as an assignment's value", "x=$(pnpm test)", "test"],
+    ["a process substitution as diff's argument", "diff <(pnpm test) out", "test"],
   ] as const)("never reads %s as a command run", (_word, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
 
-  it.each([["( cd packages/core && pnpm test )"], ["if ! pnpm test; then exit 1; fi"], ["pnpm start & pnpm test"]] as const)(
+  it.each([
+    ["( cd packages/core && pnpm test )"],
+    ["(cd packages/core && pnpm test)"],
+    ["if ! pnpm test; then exit 1; fi"],
+    ["pnpm start & pnpm test"],
+  ] as const)(
     "recognises the unit runner at a step running the test script as %s",
     (command) => {
       const ci = [stepRunning(command)];
@@ -459,6 +487,24 @@ describe("[SCN-WFS-025] commandInvokesScript — a script run in a yarn workspac
     ["yarn workspaces foreach exec vitest", "vitest"],
     ["yarn workspaces foreach --all --parallel exec eslint .", "."],
   ] as const)("never reads %s as running a script %s, since exec runs a binary", (command, script) => {
+    expect(commandInvokesScript(command, script)).toBe(false);
+  });
+
+  it.each([
+    ["yarn workspaces foreach --include run run build"],
+    ["yarn workspaces foreach --exclude run run build"],
+    ["yarn workspaces foreach --from run run build"],
+    ["yarn workspaces foreach -j run run build"],
+    ["yarn workspaces foreach --jobs run run build"],
+  ] as const)("reads %s as running build, past an option whose value is run", (command) => {
+    expect(commandInvokesScript(command, "build")).toBe(true);
+    expect(commandInvokesScript(command, "run")).toBe(false);
+  });
+
+  it.each([
+    ["yarn workspaces foreach -A exec cargo run test", "test"],
+    ["yarn workspaces foreach -A exec make run lint", "lint"],
+  ] as const)("never reads %s as running a script %s, since run is an argument of the binary exec runs", (command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
 

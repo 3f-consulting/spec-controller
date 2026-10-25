@@ -6,28 +6,39 @@ const UP_TO_LAST_PIPE = /^.*(?<!\|)\|(?!\|)/;
 const COMMAND_SEPARATOR = /&&|;|\|/;
 const BACKGROUND = /(?<!>)&/;
 const ASSIGNMENT = /^[A-Za-z_]\w*=/;
+type Words = readonly [string, ...(readonly string[])];
+
+type Whitespace = " " | "\t" | "\n" | "\r" | "\v" | "\f";
+
+type OneWord<Word> = Word extends "" | `${string}${Whitespace}${string}` ? never : Word;
+
+// A row's words are matched one per command word: an empty word or one holding whitespace could never match, and a row with no words would match every command.
+type OneWordEach<T extends Words> = { readonly [At in keyof T]: OneWord<T[At]> };
+
 interface CommandPrefix {
-  readonly words: readonly string[];
+  readonly words: Words;
   readonly launcher: boolean;
   readonly operands: number;
   readonly valued: readonly string[];
 }
 
-const launcher = (words: readonly string[], ...valued: readonly string[]): CommandPrefix => ({
+const launcher = <const T extends Words>(words: T & OneWordEach<T>, ...valued: readonly string[]): CommandPrefix => ({
   words,
   launcher: true,
   operands: 0,
   valued,
 });
 
-const runsNext = (words: readonly string[], ...valued: readonly string[]): CommandPrefix => ({
+const runsNext = <const T extends Words>(words: T & OneWordEach<T>, ...valued: readonly string[]): CommandPrefix => ({
   words,
   launcher: false,
   operands: 0,
   valued,
 });
 
-const SHELL_WORDS = ["!", "(", "{", "if", "then", "elif", "else", "while", "until", "do"];
+const YARN_FOREACH = runsNext(["yarn", "workspaces", "foreach"], "--from", "--include", "--exclude", "-j", "--jobs");
+
+const SHELL_WORDS = ["!", "(", "{", "if", "then", "elif", "else", "while", "until", "do"] as const;
 
 // Each row's options that take the next word as their value, from the command's own documentation.
 // A row matches a command opening with its words; the first row to match is read, so a longer phrase comes before its first word.
@@ -40,7 +51,7 @@ const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   launcher(["pnpm"]),
   runsNext(["yarn", "exec"]),
   runsNext(["yarn", "dlx"], "-p", "--package"),
-  runsNext(["yarn", "workspaces", "foreach"], "--from", "--include", "--exclude", "-j", "--jobs"),
+  YARN_FOREACH,
   launcher(["yarn"]),
   launcher(["bunx"], "-p", "--package"),
   launcher(["python", "-m"]),
@@ -83,7 +94,7 @@ interface ScriptInvocations {
   readonly runsBareName: boolean;
   readonly testShortcuts?: readonly string[];
   readonly selections?: ReadonlyMap<string | undefined, number>;
-  readonly optionsUpToRun?: string;
+  readonly eachWorkspace?: CommandPrefix;
 }
 
 const SCRIPT_INVOCATIONS = new Map<string | undefined, ScriptInvocations>([
@@ -112,38 +123,39 @@ const SCRIPT_INVOCATIONS = new Map<string | undefined, ScriptInvocations>([
       runWords: ["run"],
       runsBareName: true,
       selections: new Map([["workspace", 1]]),
-      optionsUpToRun: "workspaces foreach",
+      eachWorkspace: YARN_FOREACH,
     },
   ],
 ]);
 
-type LineTest = (line: string, invocation: string) => boolean;
+type LineTest = (line: string, invocation: readonly string[]) => boolean;
 
 function wordsOf(text: string): readonly string[] {
   return text.trim().split(/\s+/);
 }
 
-function opensWith(words: readonly string[], phrase: string): boolean {
-  return words.slice(0, wordsOf(phrase).length).join(" ") === phrase;
-}
+const opensAt = (words: readonly string[], prefix: readonly string[], from: number): boolean =>
+  prefix.every((word, at) => words[from + at] === word);
 
-const opensWithWords = (words: readonly string[], prefix: readonly string[]): boolean =>
-  prefix.every((word, at) => words[at] === word);
+const opensWith = (words: readonly string[], prefix: readonly string[]): boolean => opensAt(words, prefix, 0);
 
 const anywhere: LineTest = (line, invocation) => {
   const words = wordsOf(line);
-  return words.some((_, at) => opensWith(words.slice(at), invocation));
+  return words.some((_, at) => opensAt(words, invocation, at));
 };
 
+// A ( that opens a word opens a subshell, and a ) that ends one closes it; a ( after $, <, > or = opens a substitution, left as it is.
+const subshellsSpaced = (line: string): string => line.replace(/(^|\s)\(/g, "$1( ").replace(/\)(?=[\s;&|]|$)/g, " )");
+
 function commandHeads(line: string): readonly (readonly string[])[] {
-  return line.split(COMMAND_SEPARATOR).map((command) => {
+  return subshellsSpaced(line).split(COMMAND_SEPARATOR).map((command) => {
     const words = wordsOf(command);
     return words.slice(words.findIndex((word) => !ASSIGNMENT.test(word)));
   });
 }
 
 function handedOn(words: readonly string[]): readonly string[] | undefined {
-  const prefix = LAUNCHERS.find((row) => opensWithWords(words, row.words));
+  const prefix = LAUNCHERS.find((row) => opensWith(words, row.words));
   return prefix === undefined ? undefined : words.slice(prefix.words.length + prefix.operands);
 }
 
@@ -162,17 +174,15 @@ function afterSelections(head: readonly string[], at: number, invocations: Scrip
   return afterSelections(head, at + (option === head[at] ? 1 + valueWords : 1), invocations);
 }
 
-function fromRun(words: readonly string[]): readonly string[] {
-  const at = words.indexOf("run");
-  return at === -1 ? [] : words.slice(at);
-}
-
 function scriptsNamedBy(head: readonly string[]): readonly (string | undefined)[] | undefined {
   const invocations = SCRIPT_INVOCATIONS.get(head[0]);
   if (invocations === undefined) return undefined;
-  const command = head.slice(afterSelections(head, 1, invocations));
-  const foreach = invocations.optionsUpToRun !== undefined && opensWith(command, invocations.optionsUpToRun);
-  const [word, next] = foreach ? fromRun(command) : command;
+  const each = invocations.eachWorkspace;
+  if (each !== undefined && opensWith(head, each.words)) {
+    const [word, next] = head.slice(pastOptions(head, each.words.length, each));
+    return isOneOf(invocations.runWords, word) ? [next] : undefined;
+  }
+  const [word, next] = head.slice(afterSelections(head, 1, invocations));
   if (isOneOf(invocations.runWords, word)) return [next];
   return [isOneOf(invocations.testShortcuts, word) ? "test" : undefined, invocations.runsBareName ? word : undefined];
 }
@@ -184,7 +194,7 @@ function pastOptions(words: readonly string[], at: number, prefix: CommandPrefix
 }
 
 function passedOn(words: readonly string[]): readonly string[] | undefined {
-  const prefix = COMMAND_PREFIXES.find((row) => opensWithWords(words, row.words));
+  const prefix = COMMAND_PREFIXES.find((row) => opensWith(words, row.words));
   return prefix === undefined ? undefined : words.slice(pastOptions(words, prefix.words.length, prefix) + prefix.operands);
 }
 
@@ -194,10 +204,19 @@ function runsScript(head: readonly string[], script: string): boolean {
   return next !== undefined && runsScript(next, script);
 }
 
-export function commandInvokesScript(command: string, script: string): boolean {
+const QUOTED = /"[^"]*"|'[^']*'/g;
+
+const quotedSeparatorsBlanked = (line: string): string =>
+  line.replace(QUOTED, (quoted) => quoted.replace(/[&;|]/g, " "));
+
+function headsOf(command: string): readonly (readonly string[])[] {
   return command
     .split(/\r?\n/)
-    .some((line) => line.split(BACKGROUND).some((list) => commandHeads(list).some((head) => runsScript(head, script))));
+    .flatMap((line) => quotedSeparatorsBlanked(line).split(BACKGROUND).flatMap(commandHeads));
+}
+
+export function commandInvokesScript(command: string, script: string): boolean {
+  return headsOf(command).some((head) => runsScript(head, script));
 }
 
 const asCommand: LineTest = (line, invocation) =>
@@ -205,16 +224,18 @@ const asCommand: LineTest = (line, invocation) =>
 
 function runs(
   command: string,
-  invocation: string,
+  invocation: readonly string[],
   scripts: Readonly<Record<string, string>>,
   depth: number,
   lineRuns: LineTest
 ): boolean {
   if (command.split(/\r?\n/).some((line) => lineRuns(line, invocation))) return true;
-  if (depth === 0) return false;
-  return Object.entries(scripts).some(
+  const entries = Object.entries(scripts);
+  if (depth === 0 || entries.length === 0) return false;
+  const heads = headsOf(command);
+  return entries.some(
     ([name, body]) =>
-      commandInvokesScript(command, name) && runs(body, invocation, scripts, depth - 1, lineRuns)
+      heads.some((head) => runsScript(head, name)) && runs(body, invocation, scripts, depth - 1, lineRuns)
   );
 }
 
@@ -222,8 +243,8 @@ function runsBy(
   lineRuns: LineTest
 ): (command: string, invocation: string, scripts: Readonly<Record<string, string>>) => boolean {
   return (command, invocation, scripts) => {
-    const text = wordsOf(invocation).join(" ");
-    return text !== "" && runs(command, text, scripts, SCRIPT_CHAIN_DEPTH, lineRuns);
+    const words = wordsOf(invocation);
+    return words.join(" ") !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, lineRuns);
   };
 }
 

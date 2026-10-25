@@ -51,7 +51,8 @@ Feature: balance reads a workflow's steps
     yarn dlx, cross-env, dotenv, xvfb-run, nyc, c8 and flock, each read past its options, the
     value of an option that takes one, and the operands it takes before the command, such as
     timeout's duration or flock's lock file. A script named anywhere else, as another command's
-    argument, runs nothing.
+    argument, runs nothing. A separator inside a single- or double-quoted argument is part of
+    that argument and separates no command.
 
     @unit @SCN-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
