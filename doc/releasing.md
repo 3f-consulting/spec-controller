@@ -45,8 +45,9 @@ A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `L
 CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `features/`,
 `tests/`, `.github/` or the root `package.json` builds the same bin as the last release, and
 publishes nothing while that release is tagged. A merge that touches the lockfile publishes when the
-bin it builds differs from the last release's: a bump of a bundled dependency does, and a bump of a
-dev-only one does not.
+bin it builds differs from the last release's: a bump of a bundled dependency does, and so can a
+bump of a build tool such as esbuild or TypeScript that changes the bundle's bytes. A bump of a
+dependency that never reaches the bundle does not.
 
 `release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so no published version exists that
