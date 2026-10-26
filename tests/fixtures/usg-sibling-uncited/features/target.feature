@@ -8,10 +8,7 @@ Feature: a fixture target whose uncited fitness function runs in a sibling workf
 
   THE HANDLE ANSWERS NO CONFIGURED ROW AND NO SCENARIO CARRIES ITS TAG, which is what leaves it
   uncited: no `specController.fitnessChecks` row names sweep's scenario and no CI step
-  states a row's code, so the seam that would resolve a citation has nothing to resolve. This
-  manifest once also carried a `checkRegistry` entry making the same claim over the now-retired
-  registry route; it changed nothing observable then either, since nothing in the
-  corpus below ever carried the tag it would have resolved.
+  states a row's code, so the seam that would resolve a citation has nothing to resolve.
 
   The mirror of the usg-sibling fixture, and kept separate from it: that one's check IS
   cited, so it reconciles balanced, and adding an uncited check to it would fold the

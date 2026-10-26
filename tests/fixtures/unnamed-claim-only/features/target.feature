@@ -18,9 +18,8 @@ Feature: a fixture target whose ONLY out-of-balance row is the unnamed claim's r
   every Claim Reconciliation (@SCN-RMD-001), so the tally reads 3 | 2 | 1 and all three
   views name the same outcome.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @SUS / @SCN-SUS-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @SUS / @SCN-SUS-NNN.
 
   Rule: the fixture target names two satisfied unit-level scenarios and no fitness function
 

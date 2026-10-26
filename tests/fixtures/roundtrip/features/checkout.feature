@@ -10,9 +10,8 @@ Feature: a round-trip fixture target with a coded out-of-balance feature
   round-trip teeth: without the feature titles on the JSON (@SCN-RMD-006) the regenerated
   by-feature cut would name the bare code and DIVERGE from the direct render.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario-sub-issue gate sees @CHK / @SCN-CHK-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @CHK / @SCN-CHK-NNN.
 
   Rule: the fixture target names a balanced unit scenario and an out-of-balance integration scenario
 

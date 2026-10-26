@@ -21,20 +21,14 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       obligation, so it posts as a no-evidence-obligation row → its Unit cell reads `-/1`, beside
       its pending item.
 
-  A FIFTH SCENARIO ONCE STOOD HERE — SCN-CEL-005, two bare checks on one row, both wired and
-  discharged, pinning the `L2/2` left-count path. It carried no corpus obligation of its own (it
-  existed only to plant a `specController.checkRegistry` collision) and went with the rest of the
-  registry route. It has no replacement because a Quality Check is the check ITSELF as a
-  scenario, and several checks
-  of one kind are several SCENARIOS, told apart by `@SCN` —
-  one scenario is one fitness function BY CONSTRUCTION. A row naming two checks has no
-  expression in the target model this fixture exercises, so there is nothing left to plant it
-  with. The `L2`/`L3` rendering branch this scenario was the only producer of went too:
-  the Fitness cell's left is the single `F`.
+  No scenario here puts two checks on one row. A Quality Check is the check ITSELF as a
+  scenario, so several checks of one kind are several SCENARIOS, told apart by `@SCN`, and one
+  scenario is one fitness function BY CONSTRUCTION. A row naming two checks has no expression
+  in the target model this fixture exercises, so the Fitness cell's left is the single `F`.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
-  lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature
-  only. cucumber.js runs features/** only, so it is never executed as a scenario.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @CEL / @SCN-CEL-NNN. cucumber.js runs
+  features/** only, so it is never executed as a scenario.
 
   Rule: the fixture target spans every cell case
 

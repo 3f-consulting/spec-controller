@@ -11,10 +11,10 @@ Feature: an only-Pending-Items reconciliation fixture target
   exits 0 when `--strict` is NOT given (the lenient default, planted, never a real scanned
   deferral).
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario-to-sub-issue gate sees @PDO or its scenario ids — they
-  scan features/*.feature only. cucumber.js runs features/** only, so it is never executed
-  as a scenario; it is fed to the real binary as a --features target dir.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @PDO or its scenario ids. cucumber.js runs
+  features/** only, so it is never executed as a scenario; it is fed to the real binary as a
+  --features target dir.
 
   Rule: the fixture target names only deferred-pending scenarios
 

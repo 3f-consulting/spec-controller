@@ -9,9 +9,8 @@ Feature: an all-balanced reconciliation fixture target
   reconciling items anywhere. The all-balanced target the exit-code gate (@SCN-CLI-004
   / @SCN-CLI-005) exits 0 over.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @BAL / @SCN-BAL-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @BAL / @SCN-BAL-NNN.
 
   Rule: the fixture target names two satisfied unit-level scenarios
 

@@ -164,10 +164,10 @@ of its own before it publishes, the clean-room install of the packed tarballs, a
 `latest` job.
 
 CI on `main` includes `Mutation verdict recorded`, which prints each scope's conclusion from the
-newest full mutation sweep of `main` created in the last 30 hours, and `Self-reconciliation
-balance`. When there is no such sweep the step prints a `LAPSED:` line, and when the newest ran no
-scope job a `NO SCOPE MEASURED:` line; either way it passes, so neither a lapsed nightly sweep, nor
-one that measured nothing, nor a red one holds a release. Each stops new work from starting until a
+newest full mutation sweep of `main` created in the last 30 hours, and `Reconciliation`. When there
+is no such sweep the step prints a `LAPSED:` line, and when the newest ran no scope job a
+`NO SCOPE MEASURED:` line; either way it passes, so neither a lapsed nightly sweep, nor one that
+measured nothing, nor a red one holds a release. Each stops new work from starting until a
 full sweep of `main` is green.
 
 `main`'s `strict` protection runs the same bars on every pull request before it can merge. A push to
@@ -211,7 +211,7 @@ falls through to `node_modules/.bin/spec-controller` and runs the *installed* pa
 no such script: the report's own provenance reads `Tool version: 0.1.0-alpha.3` and
 `Tool SHA: unknown (not a git checkout)`, against `0.1.0-alpha.4` and this checkout's HEAD for the
 workspace build run over the same argv. The `ci.yml` step that invokes the tool
-(`Self-reconciliation balance`) goes through it, so this repository is an ordinary adopter of its
+(`Reconciliation`) goes through it, so this repository is an ordinary adopter of its
 own product, not a special case.
 
 **That pin is the single declaration of which reader judges this tree.** No second "minimum
@@ -321,7 +321,7 @@ off.
 
 The reader that judges this tree is the **pinned published** spec-controller, so a change to the
 model it reads cannot land in one merge: on the branch that makes the change, the pinned reader is
-still the old one and `Self-reconciliation balance` reds. Nothing publishes from a branch, so such a
+still the old one and `Reconciliation` reds. Nothing publishes from a branch, so such a
 change lands as a **parallel change** (*expand–migrate–contract*) over two merges and a bot PR:
 
 1. **Expand.** The reader accepts both the old shape and the new one. That merge touches a package,

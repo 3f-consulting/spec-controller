@@ -65,7 +65,7 @@ jobs:
         env:
           STEPS_JSON: \${{ toJSON(steps) }}
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
-      - name: Self-reconciliation balance
+      - name: Reconciliation
         run: pnpm exec spec-controller balance --features features --ci .github/workflows
       - name: Sweep check
         run: pnpm lint:sweep
@@ -113,7 +113,7 @@ jobs:
         env:
           STEPS_JSON: \${{ toJSON(steps) }}
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
-      - name: Self-reconciliation balance
+      - name: Reconciliation
         run: pnpm exec spec-controller balance --features features --ci .github/workflows
 `;
 

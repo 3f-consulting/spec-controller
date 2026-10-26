@@ -241,8 +241,8 @@ Feature: The report renders the ledger as sectioned facts
     absolute paths.
 
     The root is the git top level of the parent of the --features path when the target is a
-    git repository; else that parent directory itself; else, for a self-reconcile with no
-    --features, the run's working directory.
+    git repository; else that parent directory itself; else, with no --features, the run's
+    working directory.
 
     @unit @integration @SCN-RPT-016
     Scenario: a cross-repo reconcile run from a foreign cwd yields zero absolute paths on both surfaces

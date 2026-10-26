@@ -13,9 +13,8 @@ Feature: an unsound reconciliation fixture target
   checking `hasBrokenEvidence` FIRST, this run exits 1 and the collection failure is
   masked as an honest disagreement.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @BRK / @SCN-BRK-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @BRK / @SCN-BRK-NNN.
 
   Rule: the fixture target names one unit-level scenario whose proving suite is broken
 

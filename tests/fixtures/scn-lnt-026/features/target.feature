@@ -20,8 +20,8 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
   accident — a command that is not a script matched no prefix — and an accident is not a
   guarantee.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
-  check nor the scenario-to-sub-issue gate sees the CVT code — they scan features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see the CVT code.
 
   Rule: the tree stays inside its thresholds
 
@@ -29,7 +29,7 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
     Scenario: the codebase stays under its complexity threshold
 
     @fitness @SCN-CVT-002
-    Scenario: every scenario in the corpus is traceable to its own sub-issue
+    Scenario: every scenario in the corpus is traceable to its own commit
 
     @fitness @SCN-CVT-003
     Scenario: the codebase carries no duplicated block above its threshold

@@ -19,7 +19,7 @@ Feature: a corpus whose only fitness evidence observation is one satisfied citat
 
     # STEPLESS, and carrying ONLY the @fitness tag — no behavioural (@unit/@integration/…) tier. A
     # behavioural tier would raise a behavioural obligation with no evidence observation (there is no vitest/cucumber
-    # report here) → missing → out-of-balance, and the fitness evidence observation would no longer ALONE
+    # report here) → missing → out-of-balance, and the fitness evidence observation would not ALONE
     # determine the verdict. The configured row alone raises the target's whole obligation set: one
     # fitness function, which its CI runs green.
     @fitness @SCN-DEM-001

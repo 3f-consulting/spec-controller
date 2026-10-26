@@ -20,7 +20,7 @@ Feature: fixture fitness corpus
 `;
 
 const packageJson = {
-  scripts: { "lint:foo": "eslint", "lint:bar": "scn-subissues" },
+  scripts: { "lint:foo": "eslint", "lint:bar": "trace-commits" },
   specController: { notChecks: ["ci.yml:quality:Checkout"] },
 };
 

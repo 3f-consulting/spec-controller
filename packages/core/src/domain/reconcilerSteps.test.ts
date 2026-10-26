@@ -16,7 +16,7 @@ const DUMP: PipelineStep = {
 };
 const BALANCE: PipelineStep = {
   ...IN_THE_CI_JOB,
-  identity: "Self-reconciliation balance",
+  identity: "Reconciliation",
   writesStepRecord: false,
   command: "pnpm exec spec-controller balance --features features",
 };
@@ -48,7 +48,7 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
   it("gives the step that runs the reconciler's invocation the role reconciles, and the step that writes the step record the role records", () => {
     expect(reconcilerSteps(STEPS, namedInItsWorkflow, runsTheReconciler).steps).toStrictEqual([
       { step: "ci.yml:ci:Dump this run's step record", role: "records" },
-      { step: "ci.yml:ci:Self-reconciliation balance", role: "reconciles" },
+      { step: "ci.yml:ci:Reconciliation", role: "reconciles" },
     ]);
   });
 

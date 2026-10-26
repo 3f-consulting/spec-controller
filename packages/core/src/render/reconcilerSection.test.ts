@@ -33,7 +33,7 @@ describe("[SCN-RPT-050] the balance step and its step-record dump are not candid
   it("names each reconciler step on its own list line, with what that step does, under a heading and a blank line", () => {
     const lines = section(reportLines(ci));
     const dump = "ci.yml:ci:Dump this run's step record";
-    const balance = "ci.yml:ci:Self-reconciliation balance";
+    const balance = "ci.yml:ci:Reconciliation";
 
     expect(reconciles).not.toBe(records);
     expect(lines.slice(0, 2)).toStrictEqual([heading, ""]);

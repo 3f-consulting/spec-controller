@@ -9,9 +9,8 @@ Feature: an @e2e-via-cucumber evidence-observation fixture target
   caller-named integration fallback — so the report's evidence-observation views (Test
   volume, attributed, the E2e cell) agree with the reconciler.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @TGT / @SCN-TGT-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @TGT / @SCN-TGT-NNN.
 
   Rule: the fixture target names a single e2e scenario
 

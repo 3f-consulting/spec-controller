@@ -25,7 +25,7 @@ describe("[SCN-RMD-014] the balance step and its step-record dump are not candid
     const { summary } = reconcile([ci], ["ci.yml"]);
     expect(summary.reconcilerSteps).toStrictEqual([
       { step: "ci.yml:ci:Dump this run's step record", role: "records" },
-      { step: "ci.yml:ci:Self-reconciliation balance", role: "reconciles" },
+      { step: "ci.yml:ci:Reconciliation", role: "reconciles" },
     ]);
   });
 

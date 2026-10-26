@@ -56,7 +56,7 @@ const severedSteps: PipelineStep[] = [
   {
     workflow: "ci.yml",
     job: "advisory",
-    identity: "Scenario sub-issue match",
+    identity: "Changelog entry match",
     id: "SCN-CVT-002",
     writesStepRecord: false,
     abortsJob: false,

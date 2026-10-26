@@ -12,8 +12,8 @@ Feature: a converted target's fitness corpus, two checks run by the pipeline who
   self-consistent with the one optional stream they name — the ci-steps.json record beside this
   corpus — so the run exits clean and their assertions are about the provenance block alone.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
-  check nor the scenario-to-sub-issue gate sees the CVT code — they scan features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see the CVT code.
 
   Rule: the tree stays inside its thresholds
 

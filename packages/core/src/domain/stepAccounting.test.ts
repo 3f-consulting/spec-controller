@@ -22,7 +22,7 @@ const ciYml = (): string =>
     "        env:",
     "          STEPS_JSON: ${{ toJSON(steps) }}",
     "        run: pnpm lint:dump",
-    "      - name: Self-reconciliation balance",
+    "      - name: Reconciliation",
     "        run: pnpm lint:reconcile",
   ].join("\n");
 
@@ -36,7 +36,7 @@ const NONE: StepTest = () => false;
 describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
   it("counts each disposition and adds them back up to the steps it read", () => {
     const dispositionOf = stepDispositions({
-      isReconciler: named("Dump this run's step record", "Self-reconciliation balance"),
+      isReconciler: named("Dump this run's step record", "Reconciliation"),
       isNamedANonCheck: named("actions/checkout@v4", "Install"),
       runsARunner: named("Unit tests"),
     });

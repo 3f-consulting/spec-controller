@@ -50,13 +50,13 @@ describe("[SCN-CLI-090] the balance step and its step-record dump are not candid
     const ci = join(root, "ci.yml");
     writeFileSync(
       ci,
-      "jobs:\n  ci:\n    steps:\n      - name: Self-reconciliation balance\n        run: pnpm lint:reconcile\n"
+      "jobs:\n  ci:\n    steps:\n      - name: Reconciliation\n        run: pnpm lint:reconcile\n"
     );
 
     const balance = runReconcile({ features, packageJson, ci }, resolveTargetRoot({ features }));
 
     expect(balance.summary.reconcilerSteps).toStrictEqual([
-      { step: "ci.yml:ci:Self-reconciliation balance", role: "reconciles" },
+      { step: "ci.yml:ci:Reconciliation", role: "reconciles" },
     ]);
   });
 });

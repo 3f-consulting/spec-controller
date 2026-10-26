@@ -8,9 +8,8 @@ Feature: a fixture target whose evidence still cites a scenario whose feature fi
   while its tests still cite it — so the run carries one phantom claim's row, which is
   always out of balance and names no feature to be grouped under.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @BFP / @SCN-BFP-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @BFP / @SCN-BFP-NNN.
 
   Rule: the fixture target names a proven scenario and an unproven one
 

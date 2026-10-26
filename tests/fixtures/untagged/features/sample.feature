@@ -6,8 +6,8 @@ Feature: an untagged-scenario fixture target
   `@SCN-tagged` and untagged scenarios so readEvidenceObligations's parse + file-pairing can
   be exercised over real files: the untagged ones surface in the report's Warnings.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @UNT / @SCN-UNT-NNN.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @UNT / @SCN-UNT-NNN.
 
   Rule: a mix of tagged and untagged scenarios
 

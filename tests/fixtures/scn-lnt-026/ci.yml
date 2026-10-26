@@ -21,7 +21,7 @@ jobs:
       - name: Traceability
         id: SCN-CVT-002
         if: always()
-        run: scn-subissues
+        run: trace-commits
       - name: Duplication
         id: SCN-CVT-003
         if: always()

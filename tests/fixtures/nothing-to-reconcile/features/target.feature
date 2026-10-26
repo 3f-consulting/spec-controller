@@ -16,6 +16,5 @@ Feature: a fixture target that carried no scenario and produced nothing
   The file deliberately carries NO scenario. That absence IS the fixture — adding one
   here would give the run a row and destroy the shape under test.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario-to-sub-issue gate sees @NTR — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @NTR.

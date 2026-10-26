@@ -7,9 +7,8 @@ Feature: a evidence observation-reconciliation fixture target
   scenario, alongside a phantom claim's id (an @SCN no scenario here names) and cites-no-scenario evidence observation
   results — the spanning partition the @integration arm asserts balances.
 
-  This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @TGT / @SCN-TGT-NNN — they scan
-  features/*.feature only.
+  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
+  which scan features/*.feature only, never see @TGT / @SCN-TGT-NNN.
 
   Rule: the fixture target names scenarios at two levels
 

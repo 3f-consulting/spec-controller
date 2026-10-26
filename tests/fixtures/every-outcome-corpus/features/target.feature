@@ -5,8 +5,8 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
   # wiring in package.json / ci.yml) is chosen so the real `balance` pipeline emits one of the
   # Outcome members, and together they emit all of them. The @integration arm of @SCN-LDG-030 spawns the real binary over this
   # directory and asserts every emitted Quality Check Reconciliation's side-presence against
-  # OUTCOME_SIDE_PROFILE. This fixture lives under tests/fixtures/, so the feature-code lint and
-  # the scenario↔sub-issue gate ignore it.
+  # OUTCOME_SIDE_PROFILE. This fixture lives under tests/fixtures/, so this repository's own
+  # checks, which scan features/*.feature only, never see it.
 
   @unit @SCN-TOC-001
   Scenario: satisfied — a passing unit obligation discharged by a passing unit observation
@@ -27,9 +27,9 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
     Then it reconciles missing
 
   # STEPLESS and configuring one row — SCN-TOC-004 — whose CI step carries that
-  # row's code as its own `id:` AND `continue-on-error: true`. The step RUNS (unlike the retired
-  # registry-only route), but its red does not gate the job, so the running-check observer reads it
-  # exists-and-unenforced: the watermelon by the SEVERED-STEP route (@SCN-LNT-032), not the registry.
+  # row's code as its own `id:` AND `continue-on-error: true`. The step RUNS, but its red does not
+  # gate the job, so the running-check observer reads it exists-and-unenforced: the watermelon by
+  # the SEVERED-STEP route (@SCN-LNT-032).
   @fitness @SCN-TOC-004
   Scenario: watermelon — a fitness function whose step runs but whose red the job swallows
 
