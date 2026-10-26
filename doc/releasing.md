@@ -39,8 +39,9 @@ tag's name. For each package, core and then the CLI, the script fetches that ver
 `npm pack` and compares the tarball's whole `dist` with the `dist` CI built, every file, with
 `diff -r`. A changed file, an added one and a removed one are each a difference, a changed `.d.ts`
 alone included. It exits 0 when either package differs, and the `release` job publishes both; 1
-when neither differs, and nothing publishes; and 2 only when its own input is missing, such as no
-built `dist`, which fails the job. The job's log names each package and says which way it went,
+when neither differs, and nothing publishes; and 2 when it cannot do its job, which fails the job:
+a missing input or setting, such as no built `dist` or an unset `RELEASE_COMPARE_TRIES`, or a
+comparison it could not make. The job's log names each package and says which way it went,
 with the first paths that differ. The comparison works because the build is deterministic: a
 rebuild of a release's commit gives both packages' `dist` byte for byte.
 
@@ -49,9 +50,10 @@ times, 20 seconds apart, as the step's `RELEASE_COMPARE_TRIES` and `RELEASE_COMP
 So an npm outage, a rate limit, or a release the registry does not serve yet never reds a push. A
 difference in the package it could read still publishes both. When the other package
 shows no difference, the job publishes nothing and ends green, with a warning on the run naming each
-package it could not compare and npm's reason. Nothing is lost: the comparison is always against
-the last release's tag, never the previous push, so a change missed while the registry could not be
-read is still a difference on the next push that reads it, and publishes then.
+package it could not compare and npm's reason. The comparison is always against the last
+release's tag, never the previous push, so a change missed while the registry could not be read is
+still a difference on the next push that runs CI and reads it, and publishes then. Until such a push
+comes, it is unpublished.
 
 A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run
 CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `features/`,
