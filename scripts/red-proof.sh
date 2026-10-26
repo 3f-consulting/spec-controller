@@ -75,7 +75,7 @@ prove_unit() {
 
 # Both layers run through Cucumber's one ci.yml step, under the default profile, so the profile's tag filter is ANDed with the code's.
 prove_cucumber() {
-  pnpm exec cucumber-js --dry-run --tags "@$code" --format json:"$out/selection.json" > /dev/null
+  node_modules/.bin/cucumber-js --dry-run --tags "@$code" --format json:"$out/selection.json" > /dev/null
   selected=$(jq '[.[].elements[]] | length' "$out/selection.json")
   refuse_empty "$selected"
 

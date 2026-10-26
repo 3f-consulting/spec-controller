@@ -22,7 +22,8 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Minutes: a five-minute ceiling on the whole job.
+    timeout-minutes: 5
     env:
       # Seconds: a one-minute CI ceiling for a unit suite, times its 1.25 variance margin.
       UNIT_SUITE_TIMEOUT_S: "75"
@@ -52,7 +53,7 @@ jobs:
       - name: Resolve the evidence root
         run: |
           echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber"
+          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber" "$RUNNER_TEMP/lint-reports"
 
       # The docs: package scripts run Vale. Its version and checksum move together; the checksum is the Linux_64-bit line of the release's vale_<version>_checksums.txt.
       - name: Install dependencies
@@ -71,13 +72,40 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # A venv runs only on the interpreter that built it, so the Python version is part of the cache key.
+      - name: Read the Python Semgrep runs on
+        if: always()
+        run: echo "SEMGREP_PYTHON=$(python3 -c 'import platform; print(platform.python_version())')" >> "$GITHUB_ENV"
+
+      # A cache a pull request writes is scoped to that pull request, so only main's own runs fill the cache main restores.
+      - name: Restore Semgrep
+        if: always()
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/semgrep
+          key: semgrep-${{ runner.os }}-python-${{ env.SEMGREP_PYTHON }}-${{ hashFiles('.semgrep/requirements.txt') }}
+
       # From a hash-checked lock, never an image: a registry pull can fail the job before any check runs.
+      # A venv records its absolute path, so it is built and restored at the same fixed one.
       - name: Install Semgrep
         if: always()
         run: |
-          python3 -m venv "$RUNNER_TEMP/semgrep"
-          "$RUNNER_TEMP/semgrep/bin/pip" install --quiet --require-hashes --no-deps -r .semgrep/requirements.txt
+          if [ ! -x "$RUNNER_TEMP/semgrep/bin/semgrep" ]; then
+            python3 -m venv "$RUNNER_TEMP/semgrep"
+            "$RUNNER_TEMP/semgrep/bin/pip" install --quiet --require-hashes --no-deps -r .semgrep/requirements.txt
+          fi
+          "$RUNNER_TEMP/semgrep/bin/semgrep" --version
           echo "$RUNNER_TEMP/semgrep/bin" >> "$GITHUB_PATH"
+
+      # Only content-keyed caches: each tool relints or rechecks a file whose content or config changed, so a warm entry never passes a file a cold run fails.
+      # The lockfile is in the key because no tool's cache notices a plugin's own code changing. A key is written once, so each run saves its own and restores the newest.
+      - name: Restore the tools' own caches
+        if: always()
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tool-cache
+          key: tools-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.run_id }}
+          restore-keys: tools-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       # A report for review, not a check: it never reds, and package.json declares it a non-check.
       - name: New names this change introduces
@@ -245,21 +273,25 @@ jobs:
           left="$(find . -mindepth 2 -maxdepth 2 | sed -E 's|^\./||; s/-?[0-9A-Za-z]{6}$//' | sort | uniq -c)"
           [ -z "$left" ] || { printf 'left behind, by suite and prefix:\n%s\n' "$left"; exit 1; }
 
+      # Every ESLint check lints in one process, which writes one report; each check's own step reads only its entry.
+      - name: Lint every ESLint check into one report
+        if: always()
+        run: node scripts/eslint-report.mjs "$RUNNER_TEMP/lint-reports/eslint.json" "$RUNNER_TEMP/tool-cache/eslint"
+
       - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
         id: SCN-FIT-001
         if: always()
         shell: bash
-        run: |
-          pnpm exec eslint
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r pnpm exec eslint --max-warnings 0 --no-warn-ignored
+        # An error anywhere fails it; a warning fails it only in a file this change touches.
+        run: git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | jq -e -r --arg check complexity --rawfile warnIn /dev/stdin -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: CRAP — complex code must be tested
         id: SCN-FIT-022
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
         shell: bash
         run: |
-          pnpm exec crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r pnpm exec crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
+          node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
       - name: Duplication — no clone touches a changed production file
         id: SCN-FIT-032
@@ -271,7 +303,7 @@ jobs:
         # absolute names each file by its full path, so the report can be matched against the changed set.
         # The first command reports every production clone and exits 0; the second reds on a clone with a fragment in a changed file.
         run: |
-          pnpm exec jscpd --output "$RUNNER_TEMP/jscpd"
+          node_modules/.bin/jscpd --output "$RUNNER_TEMP/jscpd"
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --arg root "$PWD/" --slurpfile report "$RUNNER_TEMP/jscpd/jscpd-report.json" '. as $changed | $report[0].duplicates[] | select([.firstFile.name, .secondFile.name] | map(ltrimstr($root)) | any(IN($changed[]))) | "\(.firstFile.name | ltrimstr($root)):\(.firstFile.start)-\(.firstFile.end) = \(.secondFile.name | ltrimstr($root)):\(.secondFile.start)-\(.secondFile.end)"' | awk '{ print } END { exit NR > 0 }'
 
       - name: Unused code — no changed file carries an unused file, export or dependency
@@ -282,8 +314,8 @@ jobs:
         # Default mode: an export a test imports is used. Exported types count as exports.
         # The first command reports every finding and exits 0; the second reds on a finding in a file the change touches.
         run: |
-          pnpm exec knip --include files,exports,types,dependencies --no-exit-code
-          pnpm exec knip --include files,exports,types,dependencies --reporter json --no-exit-code > "$RUNNER_TEMP/knip.json"
+          node_modules/.bin/knip --include files,exports,types,dependencies --no-exit-code
+          node_modules/.bin/knip --include files,exports,types,dependencies --reporter json --no-exit-code > "$RUNNER_TEMP/knip.json"
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --slurpfile report "$RUNNER_TEMP/knip.json" '. as $changed | $report[0].issues[] | select(.file as $f | $changed | index($f)) | . as $i | ([(if (.files | length) > 0 then "unused file" else empty end)] + [.exports[]?, .types[]?, .dependencies[]?, .devDependencies[]?, .optionalPeerDependencies[]? | .name]) | map("\($i.file): \(.)")[]' | awk '{ print } END { exit NR > 0 }'
 
       - name: A test helper is written once, in a test-utils file
@@ -294,32 +326,34 @@ jobs:
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()
-        run: pnpm lint:boundaries
+        run: |
+          node_modules/.bin/depcruise --config config/.dependency-cruiser.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
+          jq -e -r --arg check boundaries -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: Gherkin is parsed by one module
         id: SCN-FIT-060
         if: always()
-        run: pnpm exec depcruise --config .dependency-cruiser.gherkin.js packages
+        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.gherkin.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/gherkin" --cache-strategy content
 
       - name: Workflow YAML is parsed by one module
         id: SCN-FIT-061
         if: always()
-        run: pnpm exec depcruise --config .dependency-cruiser.yaml.js packages
+        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.yaml.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/yaml" --cache-strategy content
 
       - name: Evidence layers cross a seam
         id: SCN-FIT-027
         if: always()
-        run: pnpm lint:seam
+        run: jq -e -r --arg check seam -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No comment disables a mutant
         id: SCN-FIT-039
         if: always()
-        run: pnpm exec eslint --config eslint.mutation.js packages
+        run: jq -e -r --arg check mutation -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No production source file writes message prose outside its package's catalogue
         id: SCN-FIT-041
         if: always()
-        run: pnpm exec eslint --config eslint.messages.js packages
+        run: jq -e -r --arg check messages -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: Every production source file is in a mutation scope or on the recorded list
         id: SCN-FIT-040
@@ -338,39 +372,39 @@ jobs:
       - name: No unit test file runs code at collection time or in a hook that runs once for many tests
         id: SCN-FIT-042
         if: always()
-        run: pnpm exec eslint --config eslint.collection.js packages
+        run: jq -e -r --arg check collection -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No type, field, function, variable or parameter in core's domain is named for an external tool or format
         id: SCN-FIT-049
         if: always()
-        run: pnpm exec eslint --config eslint.domain.js packages/core/src/domain
+        run: jq -e -r --arg check domain -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No string, template part or regular expression in core's domain names an external tool, format, flag or syntax
         id: SCN-FIT-064
         if: always()
-        run: pnpm exec eslint --config eslint.domainLiterals.js packages/core/src/domain
+        run: jq -e -r --arg check domainLiterals -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No sentence for a reader is written in core's domain
         id: SCN-FIT-050
         if: always()
-        run: pnpm exec eslint --config eslint.domainProse.js packages/core/src/domain
+        run: jq -e -r --arg check domainProse -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: No number stands as a type in core's domain
         id: SCN-FIT-063
         if: always()
-        run: pnpm exec eslint --config eslint.domainNumbers.js packages/core/src/domain
+        run: jq -e -r --arg check domainNumbers -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: Only the exit-code module sets the process's exit code
         id: SCN-FIT-065
         if: always()
-        run: pnpm exec eslint --config eslint.exitCode.js packages/core/src packages/spec-controller/src
+        run: jq -e -r --arg check exitCode -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: A unit test citing a domain concept's scenario lives in core's domain
         id: SCN-FIT-055
         if: always()
         run: node scripts/domain-tests-in-domain.mjs "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
 
-      # The ceiling and the sets it counts live in cloc.ratio.js.
+      # The ceiling and the sets it counts live in config/cloc.ratio.js.
       - name: Test code stays within the declared ceiling ratio to production code
         id: SCN-FIT-043
         if: always()
@@ -388,26 +422,26 @@ jobs:
         if: always()
         shell: bash
         run: |
-          pnpm exec cucumber-js --profile outside --dry-run --format message | jq -rn '[inputs] | (map(.testCase.pickleId // empty)) as $run | .[] | .pickle // empty | select((.steps | length) > 0 and (.id | IN($run[]))) | "\(.uri): \(.name) carries \(.steps | length) step(s)"' | awk '{ print } END { exit NR > 0 }'
+          node_modules/.bin/cucumber-js --profile outside --dry-run --format message | jq -rn '[inputs] | (map(.testCase.pickleId // empty)) as $run | .[] | .pickle // empty | select((.steps | length) > 0 and (.id | IN($run[]))) | "\(.uri): \(.name) carries \(.steps | length) step(s)"' | awk '{ print } END { exit NR > 0 }'
 
       - name: No unused step definition
         id: SCN-FIT-029
         if: always()
         shell: bash
         run: |
-          pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[] | select((.matches | length) == 0) | "\(.uri):\(.line): \(.pattern) matches no step Cucumber runs"' | awk '{ print } END { exit NR > 0 }'
+          node_modules/.bin/cucumber-js --dry-run --format usage-json | jq -r '.[] | select((.matches | length) == 0) | "\(.uri):\(.line): \(.pattern) matches no step Cucumber runs"' | awk '{ print } END { exit NR > 0 }'
 
       - name: Every scenario takes its steps from one step-definition file
         id: SCN-FIT-044
         if: always()
         shell: bash
         run: |
-          pnpm exec cucumber-js --dry-run --format message | jq -rn '[inputs] | (map(.stepDefinition // empty | {key: .id, value: .sourceReference.uri}) | from_entries) as $file | (map(.pickle // empty | {key: .id, value: "\(.uri): \(.name)"}) | from_entries) as $name | .[] | .testCase // empty | ([.testSteps[].stepDefinitionIds[]? | $file[.]] | unique) as $files | select(($files | length) > 1) | "\($name[.pickleId]) takes steps from \($files | join(", "))"' | awk '{ print } END { exit NR > 0 }'
+          node_modules/.bin/cucumber-js --dry-run --format message | jq -rn '[inputs] | (map(.stepDefinition // empty | {key: .id, value: .sourceReference.uri}) | from_entries) as $file | (map(.pickle // empty | {key: .id, value: "\(.uri): \(.name)"}) | from_entries) as $name | .[] | .testCase // empty | ([.testSteps[].stepDefinitionIds[]? | $file[.]] | unique) as $files | select(($files | length) > 1) | "\($name[.pickleId]) takes steps from \($files | join(", "))"' | awk '{ print } END { exit NR > 0 }'
 
       - name: Typecheck
         id: SCN-FIT-011
         if: always()
-        run: pnpm typecheck
+        run: pnpm typecheck --incremental --tsBuildInfoFile "$RUNNER_TEMP/tool-cache/tsc/typecheck.tsbuildinfo"
 
       - name: Published packages
         id: SCN-FIT-018
@@ -447,39 +481,43 @@ jobs:
           advanced-security: false
           online-audits: false
 
+      # Every Semgrep rule runs in one scan, which writes one report; each rule's own step reads only its findings.
+      - name: Scan every Semgrep rule into one report
+        if: always()
+        run: bash scripts/semgrep-report.sh "$RUNNER_TEMP/lint-reports/semgrep.json"
+
       - name: No child process runs through a shell
         id: SCN-FIT-051
         if: always()
-        run: semgrep scan --config .semgrep/no-shell-child-process.yml --error --metrics=off --disable-version-check packages
+        run: jq -e -r --arg rule no-shell-child-process -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
 
       - name: No code is built from a string while the program runs
         id: SCN-FIT-052
         if: always()
-        run: semgrep scan --config .semgrep/no-code-from-strings.yml --error --metrics=off --disable-version-check packages
+        run: jq -e -r --arg rule no-code-from-strings -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
 
       - name: No regular expression is built from a value the program receives
         id: SCN-FIT-053
         if: always()
-        run: semgrep scan --config .semgrep/no-regexp-from-an-argument.yml --error --metrics=off --disable-version-check packages
+        run: jq -e -r --arg rule no-regexp-from-an-argument -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
 
       - name: A file is written only where its location has been checked
         id: SCN-FIT-054
         if: always()
-        run: semgrep scan --config .semgrep/writes-only-where-the-location-is-checked.yml --error --metrics=off --disable-version-check packages
+        run: jq -e -r --arg rule writes-only-where-the-location-is-checked -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
 
       - name: Mutation verdict recorded
         id: SCN-FIT-002
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. GitHub's API sometimes answers empty or with an error, so each call is asked twice more before its answer stands. A lapse (no sweep inside the window) and a sweep that ran no scope job are each recorded and pass; the step fails only when the sweep it found could not be read.
+        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. GitHub's API sometimes errors or answers empty, so ask tries each read three times: three errors fail the step as UNREAD, and only three empty answers are a state, LAPSED for the run list or NO SCOPE MEASURED for the jobs. A lapse and a sweep that ran no scope job are each recorded and pass.
         run: |
-          sweep() { local try id; for try in 1 2 3; do id=$(gh run list --workflow mutation.yml --status completed --limit 50 --json databaseId,displayTitle "$@" --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty'); [ -n "$id" ] && { echo "$id"; return; }; [ "$try" = 3 ] || sleep 10; done; }
-          scopes() { local try out; for try in 1 2 3; do out=$(gh run view "$1" --json jobs --jq '.jobs[] | select(.name | startswith("mutation")) | "\(.name): \(.conclusion)"') && { printf '%s\n' "$out"; return 0; }; [ "$try" = 3 ] || sleep 10; done; return 1; }
+          ask() { ok=0; for try in 1 2 3; do if out=$("$@"); then ok=1; [ -n "$out" ] && { printf '%s\n' "$out"; return 0; }; fi; [ "$try" = 3 ] || sleep 10; done; [ "$ok" = 1 ]; }
           since=$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)
-          main=$(sweep --branch main --created ">=$since")
+          main=$(ask gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 50 --json databaseId,displayTitle --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty') || { echo "UNREAD: the run list could not be read after three tries"; exit 1; }
           [ -n "$main" ] || { echo "LAPSED: no full sweep on main inside the window — the line is stopped until one runs"; exit 0; }
-          verdicts=$(scopes "$main") || { echo "UNREAD: sweep $main could not be read after three tries"; exit 1; }
+          verdicts=$(ask gh run view "$main" --json jobs --jq '.jobs[] | select(.name | startswith("mutation")) | "\(.name): \(.conclusion)"') || { echo "UNREAD: sweep $main could not be read after three tries"; exit 1; }
           [ -n "$verdicts" ] || { echo "NO SCOPE MEASURED: sweep $main ran no scope job — the line is stopped until a sweep measures"; exit 0; }
           printf '%s\n' "$verdicts"
 
@@ -489,7 +527,7 @@ jobs:
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
         run: |
-          pnpm exec cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+          node_modules/.bin/cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
       - name: No ticket ID in a comment, description or document
         id: SCN-FIT-024

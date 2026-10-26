@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import * as config from "../cloc.ratio.js";
+import * as config from "../config/cloc.ratio.js";
 
 const scratch = mkdtempSync(join(tmpdir(), "test-ratio-"));
 
@@ -20,7 +20,7 @@ const codeLines = (name, files) => {
   const list = join(scratch, `${name}.txt`);
   writeFileSync(list, files.join("\n") + "\n");
   const report = JSON.parse(
-    execFileSync("pnpm", ["exec", "cloc", "--json", "--quiet", `--list-file=${list}`], { encoding: "utf8" }),
+    execFileSync("node_modules/.bin/cloc", ["--json", "--quiet", `--list-file=${list}`], { encoding: "utf8" }),
   );
   const code = report.SUM?.code;
   if (!(code > 0)) throw new Error(`cloc counted no code in the ${name} set's ${files.length} files`);

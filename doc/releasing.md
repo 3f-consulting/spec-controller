@@ -168,7 +168,8 @@ newest full mutation sweep of `main` created in the last 30 hours, and `Reconcil
 is no such sweep the step prints a `LAPSED:` line, and when the newest ran no scope job a
 `NO SCOPE MEASURED:` line; either way it passes, so neither a lapsed nightly sweep, nor one that
 measured nothing, nor a red one holds a release. Each stops new work from starting until a
-full sweep of `main` is green.
+full sweep of `main` is green. The step fails, and so holds the release, only when a read of
+GitHub's API errors on all three of its tries, printing an `UNREAD:` line.
 
 `main`'s `strict` protection runs the same bars on every pull request before it can merge. A push to
 `main` that changes `packages/*/README.md` is not covered by CI's `paths-ignore`, whose `README.md`
@@ -312,8 +313,10 @@ Semgrep is not an action either. `Install Semgrep` installs it with `pip --requi
 from `.semgrep/requirements.txt`, a lock of `semgrep==<version>` and every dependency, each with its
 hashes. Its first line is the `pip-compile` command that wrote it. Dependabot does not move it, so a
 person regenerates the lock with that command, under the runner's `python3`, to move the version.
-Each rule is its own file in `.semgrep/`, run by its own step with no registry ruleset and metrics
-off.
+The installed venv is cached under a key of the runner's OS, its `python3` version and the lock's
+hash: a run whose key is cached restores it and installs nothing, and a new lock installs afresh.
+Each rule is its own file in `.semgrep/`, with no registry ruleset and metrics off. One scan runs
+every rule and writes a JSON report, and each rule's own step reads only that rule's findings.
 
 ---
 
