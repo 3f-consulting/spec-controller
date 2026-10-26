@@ -8,7 +8,7 @@ Each table below gives, for each check:
 
 A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
 
-Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and six more after the window, from 20 October. For them, a zero says little yet.
+Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and twelve more after the window, from 20 October. For them, a zero says little yet.
 
 Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order; process conformance is 3F's extension of it. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
 
@@ -103,12 +103,15 @@ Mutation verdict recorded never fails on a red sweep or on a lapsed schedule. It
 
 ## Flexibility
 
-Installability is held by the published packages and types. Scalability does not apply to a command-line tool run once per CI run.
+Installability is held by the published packages and types, by the packed command declaring no runtime dependency, by it carrying the repository's licence and a notice for every package its bundle carries, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
 
 | Check | Real catches |
 |---|---|
 | Published packages | 1 |
 | Published types | 1 |
+| The packed command declares no runtime dependency | 0 |
+| The packed command carries the repository's licence and a notice for every package its bundle carries | 0 |
+| Building the command fails, naming the import, when it imports an engine entry point the bundle does not map | 0 |
 
 The two published checks and workflow correctness share their one catch: a single pull request reddened all three.
 

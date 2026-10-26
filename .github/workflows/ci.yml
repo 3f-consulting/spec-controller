@@ -478,6 +478,61 @@ jobs:
         if: always()
         run: pnpm lint:published-types
 
+      - name: The packed command declares no runtime dependency
+        id: SCN-FIT-069
+        if: always()
+        shell: bash
+        # It packs as the release does, because pnpm pack rewrites the manifest it publishes.
+        env:
+          PACKED: ${{ runner.temp }}/packed-dependencies
+        run: |
+          start=$SECONDS
+          mkdir -p "$PACKED"
+          tarball="$(pnpm --dir packages/spec-controller pack --pack-destination "$PACKED" | tail -1)"
+          tar -xzf "$tarball" -C "$PACKED" package/package.json
+          declared="$(jq -r '["dependencies", "optionalDependencies", "peerDependencies", "bundleDependencies", "bundledDependencies"][] as $field | .[$field] // empty | if type == "object" then keys[] elif type == "array" then .[] elif . == false then empty else tostring end | "\($field): \(.)"' "$PACKED/package/package.json")"
+          echo "the step took $((SECONDS - start)) s"
+          if [ -n "$declared" ]; then
+            printf 'the packed command declares, so installing it installs:\n%s\n' "$declared"
+            exit 1
+          fi
+          echo "the packed command declares no runtime dependency"
+
+      - name: The packed command carries the repository's licence and a notice for every package its bundle carries
+        id: SCN-FIT-070
+        if: always()
+        shell: bash
+        # pnpm pack leaves the repository's LICENSE out when another file in the package is named as a licence.
+        env:
+          PACKED: ${{ runner.temp }}/packed-licences
+        run: |
+          start=$SECONDS
+          failed=0
+          mkdir -p "$PACKED"
+          tarball="$(pnpm --dir packages/spec-controller pack --pack-destination "$PACKED" | tail -1)"
+          listed="$(tar -tzf "$tarball")"
+          for entry in package/LICENSE package/dist/THIRD-PARTY-NOTICES.txt; do
+            grep -qxF "$entry" <<<"$listed" || { echo "the packed command carries no $entry"; failed=1; }
+          done
+          if [ "$failed" -eq 0 ]; then
+            tar -xzf "$tarball" -C "$PACKED" package/dist/THIRD-PARTY-NOTICES.txt
+            node scripts/bundled-notices.mjs packages/spec-controller/build-meta/metafile.json "$PACKED/package/dist/THIRD-PARTY-NOTICES.txt" || failed=1
+          fi
+          echo "the step took $((SECONDS - start)) s"
+          exit "$failed"
+
+      - name: Building the command fails, naming the import, when it imports an engine entry point the bundle does not map
+        id: SCN-FIT-071
+        if: always()
+        shell: bash
+        # The stand-in engine exports the entry, so only the bundle's own plugin can refuse it.
+        run: |
+          start=$SECONDS
+          failed=0
+          node scripts/bundle-refuses-unmapped-entry.mjs || failed=1
+          echo "the step took $((SECONDS - start)) s"
+          exit "$failed"
+
       - name: A release compares each package's whole built dist with the last release's
         id: SCN-FIT-066
         if: always()
