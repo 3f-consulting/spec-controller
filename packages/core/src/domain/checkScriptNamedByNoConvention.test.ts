@@ -15,7 +15,7 @@ const SCRIPTS = {
 };
 const RUNNERS = { unit: "vitest", integration: "cucumber-js" };
 
-const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
+const SHELL: ShellReading = { runsAsCommand };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] =>
   pipeline.filter((step) =>

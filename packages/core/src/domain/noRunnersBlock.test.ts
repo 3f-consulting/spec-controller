@@ -24,7 +24,7 @@ const pipeline = (): readonly PipelineStep[] => [
 const SCRIPTS = { test: "vitest run", lint: "eslint ." };
 const NO_RUNNERS = {};
 
-const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
+const SHELL: ShellReading = { runsAsCommand };
 
 const candidates = (runners: Readonly<Record<string, string | null>>): string[] =>
   pipeline().filter((step) =>

@@ -117,6 +117,8 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
     ["as what pnpm add installs", "pnpm add -D vitest"],
     ["in a sentence echo prints", "echo cucumber-js is wired"],
     ["after a command whose name holds an =", "./set-FOO=1 vitest run"],
+    ["after a separator inside a double-quoted argument", 'echo "lint && vitest run"'],
+    ["after a pipe inside a single-quoted argument", "echo 'x | vitest run'"],
   ] as const;
 
   it.each(namings)("leaves a step naming the runner %s in its own command a candidate", (_naming, line) => {
@@ -134,6 +136,19 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
     expect(runningFitnessFunctions(parsedWorkflows(ci), manifest, runners).map((found) => found.fitnessFunction)).toEqual([
       "check",
     ]);
+  });
+
+  it("still recognises the runner run after a separator outside quotes — the control", () => {
+    expect(recognisedRunners(workflowSteps([stepRunning("echo lint && vitest run")]), {}, runners, shellReading)).toEqual([
+      { tier: "unit", runner: "vitest", step: "Check" },
+    ]);
+  });
+
+  it.each([
+    ["a pipe", "vitest run | tee log"],
+    ["a pipe that carries its errors too", "vitest run |& tee log"],
+  ] as const)("still leaves a runner whose output %s reads a candidate — the control", (_pipe, line) => {
+    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, runners, shellReading)).toEqual([]);
   });
 });
 

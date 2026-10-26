@@ -12,7 +12,7 @@ const pipeline = (): readonly PipelineStep[] => [run("pnpm lint:foo"), run("pnpm
 const SCRIPTS = { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" };
 const RUNNERS = { unit: "vitest", integration: "cucumber-js" };
 
-const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
+const SHELL: ShellReading = { runsAsCommand };
 
 const candidates = (): string[] =>
   pipeline().filter((step) =>

@@ -19,10 +19,11 @@ Feature: balance reads a workflow's steps
     script through its test shortcut, test, t or tst. pnpm runs a script through run or by its
     bare name, and runs the test script through test, t or tst, after any of the selections
     --filter with its selector, -F with its selector, -r and --recursive. yarn runs a script
-    through run or by its bare name, after workspace and a workspace name, and through run after
-    workspaces foreach and its options. After workspaces foreach, its options and the value of
-    --from, --include, --exclude, -j or --jobs, exec runs the command that follows it, never a
-    script by that command's name. An option written after the script name is not read.
+    through run or by its bare name, after workspace and a workspace name, and after workspaces
+    foreach and its options. After workspaces foreach, its options and the value of --from,
+    --include, --exclude, -j or --jobs, the rest is read as a yarn command: run or a bare name
+    runs a script, and exec runs the command that follows it, never a script by that command's
+    name. An option written after the script name is not read.
 
     @unit @SCN-WFS-021
     Scenario: a step running npm's test shortcut, as `npm test`, `npm t` or `npm tst`, is the unit runner when the manifest's `test` script runs it
@@ -37,7 +38,7 @@ Feature: balance reads a workflow's steps
     Scenario: a step running a script after a pnpm selection, `--filter`, `-F` or `-r`, runs that script
 
     @unit @SCN-WFS-025
-    Scenario: a step running a script in a yarn workspace, through `yarn workspace <name>` or `yarn workspaces foreach … run`, runs that script
+    Scenario: a step running a script in a yarn workspace, through `yarn workspace <name>` or `yarn workspaces foreach`, runs that script
 
   Rule: a script is run only where a command runs, so a step whose text only names a script runs nothing
 
@@ -51,8 +52,10 @@ Feature: balance reads a workflow's steps
     yarn dlx, cross-env, dotenv, xvfb-run, nyc, c8 and flock, each read past its options, the
     value of an option that takes one, and the operands it takes before the command, such as
     timeout's duration or flock's lock file. A script named anywhere else, as another command's
-    argument, runs nothing. A separator inside a single- or double-quoted argument is part of
-    that argument and separates no command.
+    argument, runs nothing. Quotes are read as the shell reads them. A separator inside a
+    single- or double-quoted argument is part of that argument and separates no command, even
+    when the argument runs on to the next line. An apostrophe opens a quote as a single quote
+    does, and a quote escaped with a backslash opens none.
 
     @unit @SCN-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
@@ -76,7 +79,7 @@ Feature: balance reads a workflow's steps
     declared with a launcher's words matches no command. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
     it follows. A line ending in a backslash joins the next line with a space before it is read, so a
-    launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, inside a path, a flag or an
+    launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, a quoted argument included, inside a path, a flag or an
     =-joined value, leaves the step a candidate.
 
     @unit @SCN-WFS-002

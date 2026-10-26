@@ -2,9 +2,6 @@ import type { ShellReading } from "../domain/uncitedFitnessFunctions.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
 
-const UP_TO_LAST_PIPE = /^.*(?<!\|)\|(?!\|)/;
-const COMMAND_SEPARATOR = /&&|;|\|/;
-const BACKGROUND = /(?<!>)&/;
 const ASSIGNMENT = /^[A-Za-z_]\w*=/;
 type Words = readonly [string, ...(readonly string[])];
 
@@ -128,8 +125,6 @@ const SCRIPT_INVOCATIONS = new Map<string | undefined, ScriptInvocations>([
   ],
 ]);
 
-type LineTest = (line: string, invocation: readonly string[]) => boolean;
-
 function wordsOf(text: string): readonly string[] {
   return text.trim().split(/\s+/);
 }
@@ -139,19 +134,207 @@ const opensAt = (words: readonly string[], prefix: readonly string[], from: numb
 
 const opensWith = (words: readonly string[], prefix: readonly string[]): boolean => opensAt(words, prefix, 0);
 
-const anywhere: LineTest = (line, invocation) => {
+const namedOnLine = (line: string, invocation: readonly string[]): boolean => {
   const words = wordsOf(line);
   return words.some((_, at) => opensAt(words, invocation, at));
 };
 
-// A ( that opens a word opens a subshell, and a ) that ends one closes it; a ( after $, <, > or = opens a substitution, left as it is.
-const subshellsSpaced = (line: string): string => line.replace(/(^|\s)\(/g, "$1( ").replace(/\)(?=[\s;&|]|$)/g, " )");
+const pastAssignments = (words: readonly string[]): readonly string[] =>
+  words.slice(words.findIndex((word) => !ASSIGNMENT.test(word)));
 
-function commandHeads(line: string): readonly (readonly string[])[] {
-  return subshellsSpaced(line).split(COMMAND_SEPARATOR).map((command) => {
-    const words = wordsOf(command);
-    return words.slice(words.findIndex((word) => !ASSIGNMENT.test(word)));
-  });
+const JOINED_LINE = /\\\r?\n/g;
+const SEPARATORS = "&|;()\n";
+const REDIRECTION = /&>|[<>]&|>>|[<>]/y;
+const FILE_DESCRIPTOR = /^\d+$/;
+const PLAIN = /[^\s&|;()<>'"\\`$]+/y;
+const ESCAPED_IN_DOUBLE_QUOTES = '"\\$`';
+const EXPANSIONS = ["$(", "${", "<(", ">("];
+const EXPANSIONS_IN_DOUBLE_QUOTES = ["$(", "${"];
+
+function pastQuote(text: string, from: number, quote: string): number {
+  const end = text.indexOf(quote, from);
+  return end === -1 ? text.length : end + 1;
+}
+
+function pastBalanced(text: string, from: number, open: string, close: string): number {
+  let depth = 1;
+  let at = from;
+  while (at < text.length && depth > 0) {
+    const char = text[at];
+    if (char === "\\") at += 2;
+    else if (char === "'" || char === "`") at = pastQuote(text, at + 1, char);
+    else if (char === '"') at = doubleQuoted(text, at + 1)[1];
+    else {
+      if (char === open) depth += 1;
+      if (char === close) depth -= 1;
+      at += 1;
+    }
+  }
+  return Math.min(at, text.length);
+}
+
+// A substitution or parameter is held whole inside the word it opens, so no command inside it is read.
+function expansionEnd(text: string, at: number, openers: readonly string[]): number | undefined {
+  if (text[at] === "`") return pastQuote(text, at + 1, "`");
+  const opener = openers.find((each) => text.startsWith(each, at));
+  if (opener === undefined) return undefined;
+  const open = opener.slice(-1);
+  return pastBalanced(text, at + opener.length, open, open === "{" ? "}" : ")");
+}
+
+function doubleQuotedPart(text: string, at: number): readonly [string, number] {
+  const char = text.charAt(at);
+  if (char === "\\") {
+    const next = text.charAt(at + 1);
+    return [ESCAPED_IN_DOUBLE_QUOTES.includes(next) ? next : char + next, at + 2];
+  }
+  const end = expansionEnd(text, at, EXPANSIONS_IN_DOUBLE_QUOTES);
+  return end === undefined ? [char, at + 1] : [text.slice(at, end), end];
+}
+
+function doubleQuoted(text: string, from: number): readonly [string, number] {
+  let value = "";
+  let at = from;
+  while (at < text.length && text[at] !== '"') {
+    const [part, next] = doubleQuotedPart(text, at);
+    value += part;
+    at = next;
+  }
+  return [value, Math.min(at + 1, text.length)];
+}
+
+interface WordPart {
+  readonly kind: "part";
+  readonly value: string;
+  readonly quoted: boolean;
+  readonly end: number;
+}
+
+interface Mark {
+  readonly kind: "break" | "redirection";
+  readonly end: number;
+}
+
+interface Separator {
+  readonly kind: "separator";
+  readonly pipe: boolean;
+  readonly end: number;
+}
+
+type Token = WordPart | Mark | Separator;
+
+type ReadToken = (text: string, at: number, word: string | undefined) => Token | undefined;
+
+const part = (value: string, quoted: boolean, end: number): WordPart => ({ kind: "part", value, quoted, end });
+
+const blank: ReadToken = (text, at) => {
+  const char = text.charAt(at);
+  return char !== "\n" && /\s/.test(char) ? { kind: "break", end: at + 1 } : undefined;
+};
+
+const comment: ReadToken = (text, at, word) => {
+  if (text[at] !== "#" || word !== undefined) return undefined;
+  const end = text.indexOf("\n", at);
+  return { kind: "break", end: end === -1 ? text.length : end };
+};
+
+const escaped: ReadToken = (text, at) => (text[at] === "\\" ? part(text.charAt(at + 1), true, at + 2) : undefined);
+
+const singleQuoted: ReadToken = (text, at) => {
+  if (text[at] !== "'") return undefined;
+  const close = text.indexOf("'", at + 1);
+  const end = close === -1 ? text.length : close;
+  return part(text.slice(at + 1, end), true, end + 1);
+};
+
+const doubleQuotedWord: ReadToken = (text, at) => {
+  if (text[at] !== '"') return undefined;
+  const [value, end] = doubleQuoted(text, at + 1);
+  return part(value, true, end);
+};
+
+const expansion: ReadToken = (text, at, word) => {
+  const end =
+    text[at] === "(" && word?.endsWith("=") === true
+      ? pastBalanced(text, at + 1, "(", ")")
+      : expansionEnd(text, at, EXPANSIONS);
+  return end === undefined ? undefined : part(text.slice(at, end), false, end);
+};
+
+const redirection: ReadToken = (text, at) => {
+  REDIRECTION.lastIndex = at;
+  const operator = REDIRECTION.exec(text)?.[0];
+  return operator === undefined ? undefined : { kind: "redirection", end: at + operator.length };
+};
+
+// A | hands the command's output to the next, and |& its errors too; || runs the next only if the command fails.
+// The second character of || or |& is read as a separator of its own, which ends no command, since none has begun.
+const separator: ReadToken = (text, at) => {
+  const char = text.charAt(at);
+  if (!SEPARATORS.includes(char)) return undefined;
+  return { kind: "separator", pipe: char === "|" && text.charAt(at + 1) !== "|", end: at + 1 };
+};
+
+function plain(text: string, at: number): WordPart {
+  PLAIN.lastIndex = at;
+  const run = PLAIN.exec(text)?.[0] ?? text.charAt(at);
+  return part(run, false, at + run.length);
+}
+
+const READS: readonly ReadToken[] = [blank, comment, escaped, singleQuoted, doubleQuotedWord, expansion, redirection, separator];
+
+function nextToken(text: string, at: number, word: string | undefined): Token {
+  for (const read of READS) {
+    const token = read(text, at, word);
+    if (token !== undefined) return token;
+  }
+  return plain(text, at);
+}
+
+interface SimpleCommand {
+  readonly words: readonly string[];
+  readonly piped: boolean;
+}
+
+// The simple commands the shell runs from the text, each as its words with their quotes removed, and whether a pipe reads its output.
+// A redirection's target word is dropped, and a quote that never closes runs to the end of the text, as the shell reads up to its syntax error.
+function simpleCommands(text: string): readonly SimpleCommand[] {
+  const source = text.replace(JOINED_LINE, " ");
+  const commands: SimpleCommand[] = [];
+  let words: string[] = [];
+  let word: string | undefined;
+  let quoted = false;
+  let target = false;
+  const endWord = (): void => {
+    if (word !== undefined) {
+      if (!target) words.push(word);
+      target = false;
+    }
+    word = undefined;
+    quoted = false;
+  };
+  const endCommand = (piped: boolean): void => {
+    endWord();
+    target = false;
+    if (words.length > 0) commands.push({ words, piped });
+    words = [];
+  };
+  let at = 0;
+  while (at < source.length) {
+    const token = nextToken(source, at, word);
+    if (token.kind === "part") {
+      word = (word ?? "") + token.value;
+      quoted ||= token.quoted;
+    } else if (token.kind === "separator") endCommand(token.pipe);
+    else {
+      if (token.kind === "redirection" && !quoted && FILE_DESCRIPTOR.test(word ?? "")) word = undefined;
+      endWord();
+      target ||= token.kind === "redirection";
+    }
+    at = token.end;
+  }
+  endCommand(false);
+  return commands;
 }
 
 function handedOn(words: readonly string[]): readonly string[] | undefined {
@@ -179,8 +362,7 @@ function scriptsNamedBy(head: readonly string[]): readonly (string | undefined)[
   if (invocations === undefined) return undefined;
   const each = invocations.eachWorkspace;
   if (each !== undefined && opensWith(head, each.words)) {
-    const [word, next] = head.slice(pastOptions(head, each.words.length, each));
-    return isOneOf(invocations.runWords, word) ? [next] : undefined;
+    return scriptsNamedBy([each.words[0], ...head.slice(pastOptions(head, each.words.length, each))]);
   }
   const [word, next] = head.slice(afterSelections(head, 1, invocations));
   if (isOneOf(invocations.runWords, word)) return [next];
@@ -198,69 +380,66 @@ function passedOn(words: readonly string[]): readonly string[] | undefined {
   return prefix === undefined ? undefined : words.slice(pastOptions(words, prefix.words.length, prefix) + prefix.operands);
 }
 
-function runsScript(head: readonly string[], script: string): boolean {
-  if (scriptsNamedBy(head)?.includes(script) === true) return true;
+// The scripts a command runs: those its own words name, then those of each command it hands on to.
+function scriptsRunBy(head: readonly string[]): readonly (string | undefined)[] {
   const next = passedOn(head);
-  return next !== undefined && runsScript(next, script);
+  return [scriptsNamedBy(head), next === undefined ? undefined : scriptsRunBy(next)].flat();
 }
 
-const QUOTED = /"[^"]*"|'[^']*'/g;
+type Heads = (command: string) => readonly (readonly string[])[];
 
-const quotedSeparatorsBlanked = (line: string): string =>
-  line.replace(QUOTED, (quoted) => quoted.replace(/[&;|]/g, " "));
+const headsOf: Heads = (command) => simpleCommands(command).map(({ words }) => pastAssignments(words));
 
-function headsOf(command: string): readonly (readonly string[])[] {
-  return command
-    .split(/\r?\n/)
-    .flatMap((line) => quotedSeparatorsBlanked(line).split(BACKGROUND).flatMap(commandHeads));
-}
+// Only a pipeline's last stage is read as the command a step runs: what a pipe reads is another command's output.
+const lastStageHeadsOf: Heads = (command) =>
+  simpleCommands(command)
+    .filter(({ piped }) => !piped)
+    .map(({ words }) => pastAssignments(words));
 
 export function commandInvokesScript(command: string, script: string): boolean {
-  return headsOf(command).some((head) => runsScript(head, script));
+  return headsOf(command).some((head) => scriptsRunBy(head).includes(script));
 }
 
-const asCommand: LineTest = (line, invocation) =>
-  commandHeads(line).some((head) => opensWith(launched(head), invocation));
+interface Reading {
+  readonly names: (command: string, invocation: readonly string[]) => boolean;
+  readonly heads: Heads;
+}
+
+const anywhere: Reading = {
+  names: (command, invocation) => command.split(/\r?\n/).some((line) => namedOnLine(line, invocation)),
+  heads: headsOf,
+};
+
+const asCommand: Reading = {
+  names: (command, invocation) => lastStageHeadsOf(command).some((head) => opensWith(launched(head), invocation)),
+  heads: lastStageHeadsOf,
+};
 
 function runs(
   command: string,
   invocation: readonly string[],
   scripts: Readonly<Record<string, string>>,
   depth: number,
-  lineRuns: LineTest
+  reading: Reading
 ): boolean {
-  if (command.split(/\r?\n/).some((line) => lineRuns(line, invocation))) return true;
+  if (reading.names(command, invocation)) return true;
   const entries = Object.entries(scripts);
   if (depth === 0 || entries.length === 0) return false;
-  const heads = headsOf(command);
-  return entries.some(
-    ([name, body]) =>
-      heads.some((head) => runsScript(head, name)) && runs(body, invocation, scripts, depth - 1, lineRuns)
-  );
+  const run = reading.heads(command).flatMap(scriptsRunBy);
+  return entries.some(([name, body]) => run.includes(name) && runs(body, invocation, scripts, depth - 1, reading));
 }
 
 function runsBy(
-  lineRuns: LineTest
+  reading: Reading
 ): (command: string, invocation: string, scripts: Readonly<Record<string, string>>) => boolean {
   return (command, invocation, scripts) => {
     const words = wordsOf(invocation);
-    return words.join(" ") !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, lineRuns);
+    return words.join(" ") !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, reading);
   };
 }
 
 export const commandRuns = runsBy(anywhere);
 
-const commandRunsAsCommand = runsBy(asCommand);
-
-function finalStages(command: string): string {
-  return command
-    .replace(/\\\r?\n/g, " ")
-    .split(/\r?\n/)
-    .map((line) => line.replace(UP_TO_LAST_PIPE, ""))
-    .join("\n");
-}
-
 export const shellReading: ShellReading = {
-  lastStagesOf: finalStages,
-  runsAsCommand: commandRunsAsCommand,
+  runsAsCommand: runsBy(asCommand),
 };

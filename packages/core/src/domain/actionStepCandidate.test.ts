@@ -20,7 +20,7 @@ const DOMAIN_PURITY: PipelineStep = { ...IN_THE_CI_JOB, identity: "domain-purity
 const SCRIPTS = { "domain-purity": "echo domain-purity", test: "vitest run" };
 const RUNNERS = { unit: "vitest" };
 
-const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
+const SHELL: ShellReading = { runsAsCommand };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] =>
   pipeline.filter((step) =>

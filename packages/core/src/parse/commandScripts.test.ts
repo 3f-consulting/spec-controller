@@ -29,6 +29,28 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["after ; inside a double-quoted argument that goes on", 'echo "lint; pnpm test now"', "test"],
     ["after | inside a double-quoted argument that goes on", 'echo "lint | pnpm test now"', "test"],
     ["after && inside a single-quoted argument that goes on", "echo 'lint && pnpm test now'", "test"],
+    ["after && inside a double-quoted argument that runs on to the next line", 'echo "first\nsecond && pnpm test now"', "test"],
+    ["after && inside a single-quoted argument that runs on to the next line", "echo 'first\nsecond && pnpm test now'", "test"],
+    ["between two apostrophes, which quote what lies between them", "echo don't && pnpm test && echo won't", "test"],
+    ["after && inside a double-quoted argument, past a quote escaped inside it", 'echo "a\\" && pnpm test"', "test"],
+    ["after && behind a quote that never closes", 'echo "unclosed && pnpm test', "test"],
+    ["on a line after a quote that never closes", "echo 'unclosed\npnpm test", "test"],
+    ["after ; escaped with a backslash", "echo a\\;pnpm test", "test"],
+    ["after && in a comment", "echo x # && pnpm test", "test"],
+    ["after ; inside a parameter's default value", "echo ${X:-x; pnpm test }", "test"],
+    ["inside a backquoted command substitution", "echo `pnpm test`", "test"],
+    ["inside a process substitution an output is written to", "tee >(pnpm test)", "test"],
+    ["as an array's elements", "arr=(pnpm test)", "test"],
+    ["after an empty quoted argument", 'pnpm "" test', "test"],
+    ["with a backslash the double quotes keep", 'pnpm "\\test"', "test"],
+    ["after a quoted number before a redirection, which is an argument", 'pnpm "2">log test', "test"],
+    ["after a single-quoted number before a redirection, which is an argument", "pnpm '2'>log test", "test"],
+    ["after a number escaped with a backslash before a redirection, which is an argument", "pnpm \\2>log test", "test"],
+    ["inside a command substitution that never closes", "echo $(pnpm test", "test"],
+    ["after ; inside a command substitution holding a quote that never closes", "echo $(echo 'a; pnpm test", "test"],
+    ["after ; inside a command substitution, past a subshell inside it", "echo $( (true) ; pnpm test )", "test"],
+    ["after ; inside a backquoted command substitution", "echo `x;pnpm test `", "test"],
+    ["as an array's element after a command substitution in the array", "arr=( $(git ls-files) pnpm test )", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -46,9 +68,51 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["on a later line", "pnpm install\necho done\npnpm test", "test"],
     ["after && that follows a quoted argument", 'echo "done" && pnpm test', "test"],
     ["after a background &", "pnpm start & pnpm test", "test"],
-    ["after && behind a quote that never closes", 'echo "unclosed && pnpm test', "test"],
+    ["after && behind a quote escaped with a backslash", 'echo \\"start && pnpm test && echo end\\"', "test"],
+    ["on the line after a comment", "pnpm lint # quick\npnpm test", "test"],
+    ["after && behind a # inside a word", "echo a#b && pnpm test", "test"],
+    ["after && behind an apostrophe inside a double-quoted argument", 'echo "don\'t panic" && pnpm test', "test"],
+    ["between a double-quoted apostrophe and a single-quoted argument", "echo \"it's\" && pnpm test && echo 'x'", "test"],
+    ["named in quotes, which the shell removes", 'pnpm "test"', "test"],
+    ["named across a line ending in a backslash", "pnpm \\\n  test", "test"],
+    ["after && behind a parameter", "echo $HOME && pnpm test", "test"],
+    ["after && behind a single-quoted argument", "echo 'a' && pnpm test", "test"],
+    ["after && behind a # written against a quoted argument", 'echo "a"#b && pnpm test', "test"],
+    ["after && behind a command substitution holding a single-quoted argument", "x=$(echo 'a') && pnpm test", "test"],
+    ["after && behind a command substitution holding a quoted )", "x=$(echo ')') && pnpm test", "test"],
+    ["after && behind a command substitution holding a double-quoted )", 'x=$(echo ")") && pnpm test', "test"],
+    ["after && behind a command substitution holding a backquoted )", "x=$(echo `)`) && pnpm test", "test"],
+    ["after && behind a command substitution holding an escaped quote", "x=$(echo \\') && pnpm test", "test"],
+    ["after && behind a double-quoted command substitution holding a double quote", `echo "$(echo '"')" && pnpm test`, "test"],
+    ["after && behind an empty backquoted command substitution", "``&& pnpm test", "test"],
+    ["after && behind a command substitution assigned to a variable", "X=$(date) && pnpm test", "test"],
+    ["after && behind an array", "arr=(a b) && pnpm test", "test"],
+    ["in a function the step defines and then calls", "f() { pnpm test; }; f", "test"],
+    ["after a redirection from a descriptor numbered past 9", "pnpm 12>log test", "test"],
+    ["after a redirection at the start of the command", "2>log pnpm test", "test"],
+    ["named with a backslash, which the shell removes", "pnpm \\test", "test"],
+    ["named in single quotes, which the shell removes", "pnpm 'test'", "test"],
+    ["named by a word ending in a digit, written against a redirection", "pnpm build2>log", "build2"],
+    ["named by a word opening with a digit, written against a redirection", "pnpm 2d>log", "2d"],
+    ["named with a backslash the double quotes remove before a backslash", 'pnpm "a\\\\b"', "a\\b"],
+    ["named with a backslash the double quotes keep", 'pnpm "\\test"', "\\test"],
+    ["named by a parameter in double quotes, read as written and never expanded", 'pnpm "${SCRIPT}"', "${SCRIPT}"],
+    ["named by a parameter, read as written and never expanded", "pnpm ${SCRIPT}", "${SCRIPT}"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
+  });
+
+  it.each([
+    ["pnpm >log test"],
+    ["pnpm >>log test"],
+    ["pnpm <in test"],
+    ["pnpm 2>log test"],
+    ["pnpm 2> log test"],
+    ["pnpm 2>&1 test"],
+    ["pnpm &>log test"],
+    ["pnpm <&0 test"],
+  ] as const)("reads %s as running test, past the redirection and the file it names", (command) => {
+    expect(commandInvokesScript(command, "test")).toBe(true);
   });
 
   it("leaves a step that echoes a script's name a candidate under its own name, never the runner the script runs", () => {
@@ -289,6 +353,11 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     ["in a subshell written against its command and spaced from its )", "(pnpm test )", "test"],
     ["after && in a subshell written against its first command", "(cd packages/core && pnpm test)", "test"],
     ["in a subshell written against its command and followed by another command", "(pnpm test) && echo ok", "test"],
+    ["in a subshell written against a redirection", "(pnpm test)>out.log", "test"],
+    ["in a subshell nested in a subshell", "( (pnpm test))", "test"],
+    ["in a subshell written against the ; before it", "cd x;(pnpm test)", "test"],
+    ["in a subshell written against the | before it", "lint|(pnpm test)", "test"],
+    ["in a subshell written against a trailing background &", "(pnpm test)&", "test"],
     ["in a group", "{ pnpm test; }", "test"],
     ["as an if's condition", "if pnpm test; then echo ok; fi", "test"],
     ["as an if's negated condition", "if ! pnpm test; then exit 1; fi", "test"],
@@ -335,7 +404,13 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     }
   );
 
-  it.each([["( vitest run )"], ["if ! vitest run; then exit 1; fi"]] as const)(
+  it("recognises the runner run in a subshell, as script reading reads the subshell", () => {
+    expect(recognisedRunners(workflowSteps([stepRunning("( vitest run )")]), {}, { unit: "vitest" }, shellReading)).toEqual([
+      { tier: "unit", runner: "vitest", step: "Check" },
+    ]);
+  });
+
+  it.each([["if ! vitest run; then exit 1; fi"]] as const)(
     "still leaves a step running %s a candidate, since a runner is read through the launchers alone",
     (command) => {
       expect(recognisedRunners(workflowSteps([stepRunning(command)]), {}, { unit: "vitest" }, shellReading)).toEqual([]);
@@ -464,6 +539,8 @@ describe("[SCN-WFS-025] commandInvokesScript — a script run in a yarn workspac
     ["yarn workspaces foreach -A run test", "test"],
     ["yarn workspaces foreach --all --parallel run build", "build"],
     ["yarn workspaces foreach -A run test --verbose", "test"],
+    ["yarn workspaces foreach -A build", "build"],
+    ["yarn workspaces foreach --all --parallel test", "test"],
     ["yarn test", "test"],
     ["yarn run test", "test"],
   ] as const)("reads %s as running %s", (command, script) => {
@@ -480,6 +557,11 @@ describe("[SCN-WFS-025] commandInvokesScript — a script run in a yarn workspac
   it("never reads the workspace's name as the script it runs", () => {
     expect(commandInvokesScript("yarn workspace web test", "web")).toBe(false);
     expect(commandInvokesScript("yarn workspace web run test", "web")).toBe(false);
+  });
+
+  it("never reads workspaces or foreach as the script a foreach runs", () => {
+    expect(commandInvokesScript("yarn workspaces foreach -A build", "workspaces")).toBe(false);
+    expect(commandInvokesScript("yarn workspaces foreach -A build", "foreach")).toBe(false);
   });
 
   it.each([

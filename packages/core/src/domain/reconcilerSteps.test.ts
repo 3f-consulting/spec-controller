@@ -66,6 +66,11 @@ describe("[SCN-USG-014] the balance step and its step-record dump are not candid
     expect(isReconciler(SWEEP)).toBe(false);
   });
 
+  it("reads the reconciler's invocation on any line of a step's command, never across two lines", () => {
+    expect(commandRuns("pnpm build\nspec-controller balance", INVOCATION, {})).toBe(true);
+    expect(commandRuns("spec-controller\nbalance", INVOCATION, {})).toBe(false);
+  });
+
   it("finds no reconciler when no reconciler invocation is known, even a step whose command holds a blank line", () => {
     const { steps, isReconciler } = reconcilerSteps([BALANCE, LINTS], namedInItsWorkflow, noInvocationKnown);
     expect(steps).toStrictEqual([]);

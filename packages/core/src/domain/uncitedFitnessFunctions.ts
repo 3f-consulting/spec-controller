@@ -143,22 +143,17 @@ type Scripts = Readonly<Record<string, string>>;
 export type RunnerTiers = Readonly<Record<string, string | null>>;
 
 export interface ShellReading {
-  readonly lastStagesOf: (commandText: string) => string;
   readonly runsAsCommand: (commandText: string, invocation: string, scripts: Scripts) => boolean;
 }
 
 type RunnersRunBy = (step: PipelineStep) => readonly (readonly [string, string])[];
 
 function declaredRunnersRunBy(scripts: Scripts, runners: RunnerTiers, shell: ShellReading): RunnersRunBy {
-  const lastStages = Object.fromEntries(
-    Object.entries(scripts).map(([name, body]) => [name, shell.lastStagesOf(body)])
-  );
   return (step) => {
     if (!("command" in step)) return [];
-    const command = shell.lastStagesOf(step.command);
     return Object.entries(runners).filter(
       (entry): entry is [string, string] =>
-        entry[1] !== null && shell.runsAsCommand(command, entry[1], lastStages)
+        entry[1] !== null && shell.runsAsCommand(step.command, entry[1], scripts)
     );
   };
 }

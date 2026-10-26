@@ -15,7 +15,7 @@ const run = (workflow: typeof IN_CI_YML | typeof IN_NIGHTLY_YML, script: string)
 const SCRIPTS = { "lint:sweep": "echo sweep", test: "vitest run" };
 const RUNNERS = { unit: "vitest" };
 
-const SHELL: ShellReading = { lastStagesOf: (commandText) => commandText, runsAsCommand };
+const SHELL: ShellReading = { runsAsCommand };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] =>
   pipeline.filter((step) =>
