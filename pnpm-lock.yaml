@@ -72,8 +72,8 @@ importers:
         specifier: 13.1.0
         version: 13.1.0
       spec-controller:
-        specifier: 0.1.74
-        version: 0.1.74
+        specifier: 0.1.78
+        version: 0.1.78
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -122,10 +122,6 @@ importers:
         version: 2.9.0
 
 packages:
-
-  '@3f-consulting/spec-controller-core@0.1.74':
-    resolution: {integrity: sha512-QriPi2xD0qoJn67CTSqUAmP5x5HdCNO9LyZa5appEoLHvo21rLK1djlaQxmR9kJNjZuB756FyEDkKduJ77SoQQ==}
-    engines: {node: '>=22'}
 
   '@andrewbranch/untar.js@1.0.4':
     resolution: {integrity: sha512-pVXSwPsLuw8IGLo2Di0EaOfsk+ntVvpkk942J/sHYIkwvtKUakEcPh7HBgZ6tuimgzKSEHgCvO4XgQ05DEbwDw==}
@@ -361,9 +357,6 @@ packages:
 
   '@cucumber/messages@34.0.1':
     resolution: {integrity: sha512-Mvh8CkZD4TGykvXqM9qpnYVGy9cqMxYkImtghl2cF1hEuBtuDGU716zQk7KviLh0ssidM/phh9kdbJL/73dHpg==}
-
-  '@cucumber/messages@34.2.1':
-    resolution: {integrity: sha512-aj2iCAG9ZOpMVcMxcgShifv5fbR96b7SMgdWcPXXh2QbFp7OEcAnQ5MC5YfWUDSDasmw7FU5NJEsOrXdTQOU1A==}
 
   '@cucumber/pretty-formatter@1.0.1':
     resolution: {integrity: sha512-A1lU4VVP0aUWdOTmpdzvXOyEYuPtBDI0xYwYJnmoMDplzxMdhcHk86lyyvYDoMoPzzq6OkOE3isuosvUU4X7IQ==}
@@ -772,12 +765,12 @@ packages:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
 
-  '@napi-rs/wasm-runtime@1.2.5':
-    resolution: {integrity: sha512-HshSvXzmBxNzqejd3k/KemgQ3hdREUYFRRrgxOZ+gPljDIsO2SDZrVZMd4Z/HsxudQbE62OVyVFE8z9BCurfjA==}
+  '@napi-rs/wasm-runtime@1.2.6':
+    resolution: {integrity: sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
     peerDependencies:
-      '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
-      '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
+      '@emnapi/core': ^1.7.1 || 2.0.0-beta.2
+      '@emnapi/runtime': ^1.7.1 || 2.0.0-beta.2
 
   '@nodable/entities@3.1.0':
     resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
@@ -2970,8 +2963,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.74:
-    resolution: {integrity: sha512-YXJL2vgE0rgsdzPVw2Q2H77yT6HefGVfoQQjaR9ehkkNFgiCWN2JHVnDGpfRy3fJa+LCYeOs/6SOyPD5lahJmA==}
+  spec-controller@0.1.78:
+    resolution: {integrity: sha512-E6DDY/juVKWsHh4RKNoBNDlwEFho8+poPWViBVmU+ay+YAtYuXFWNL6GLJfLlCtVSO4d/tEuVbCj3EOad1EipA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -3457,12 +3450,6 @@ packages:
 
 snapshots:
 
-  '@3f-consulting/spec-controller-core@0.1.74':
-    dependencies:
-      '@cucumber/gherkin': 41.0.0
-      '@cucumber/messages': 34.2.1
-      yaml: 2.9.1
-
   '@andrewbranch/untar.js@1.0.4': {}
 
   '@arethetypeswrong/cli@0.18.5':
@@ -3815,8 +3802,6 @@ snapshots:
 
   '@cucumber/messages@34.0.1': {}
 
-  '@cucumber/messages@34.2.1': {}
-
   '@cucumber/pretty-formatter@1.0.1(@cucumber/cucumber@12.9.0)(@cucumber/messages@32.3.1)':
     dependencies:
       '@cucumber/cucumber': 12.9.0
@@ -4159,7 +4144,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
-  '@napi-rs/wasm-runtime@1.2.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
+  '@napi-rs/wasm-runtime@1.2.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
@@ -4389,7 +4374,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
-      '@napi-rs/wasm-runtime': 1.2.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime': 1.2.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
     optional: true
 
   '@rolldown/binding-win32-arm64-msvc@1.1.5':
@@ -6414,11 +6399,7 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.74:
-    dependencies:
-      '@3f-consulting/spec-controller-core': 0.1.74
-      fast-xml-parser: 5.11.2
-      yaml: 2.9.1
+  spec-controller@0.1.78: {}
 
   stackback@0.0.2: {}
 
