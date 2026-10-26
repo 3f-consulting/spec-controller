@@ -643,11 +643,11 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
   });
 
   it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same, with none of the remote's credentials in any of them", wholeRun, () => {
-    withCheckout("https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", (dir) => {
+    withCheckout("https://deploy:p@ss@github.com/ekino/veggies.git?private_token=qwz#s3cret", (dir) => {
       const { md, json, saved } = report(dir);
       const rerendered = runBalanceCaptured(["--render-from-json", saved]).stdout;
       for (const text of [md, readFileSync(saved, "utf8"), rerendered]) {
-        for (const secret of ["deploy", "p@ss", "private_token", "abc", "s3cret"]) expect(text.replaceAll(dir, "")).not.toContain(secret);
+        for (const secret of ["deploy", "p@ss", "private_token", "qwz", "s3cret"]) expect(text.replaceAll(dir, "")).not.toContain(secret);
       }
       expect(targetRepo(md)).toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
       expect({ target: json["target"], targetOrigin: json["targetOrigin"] }).toEqual({ target: "unknown-target", targetOrigin: "ekino/veggies" });
