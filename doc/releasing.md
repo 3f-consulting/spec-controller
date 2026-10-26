@@ -30,24 +30,36 @@ commit CI ran on and diffs these paths between that commit and the nearest `v*` 
 | `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what core's `dist` compiles to, which the CLI's bundle carries |
 | `packages/spec-controller/bundle.mjs` | decides what the CLI's `dist/cli.js` bundles |
 
-**When none of them changed, the job compares the bin CI built with the last release's.** The
-lockfile fixes the exact versions of `yaml`, `fast-xml-parser` and the other packages compiled into
-`dist/cli.js`, so a lockfile-only bump of one of them changes the bin and no path above. The job
-downloads CI's `built-packages` artifact and runs `scripts/bin-changed.sh` over its `dist/cli.js`
-and the version in the tag's name. The script fetches that version's tarball with `npm pack` and
-compares the two `dist/cli.js` files with `cmp`. It exits 0 when they differ, and the `release` job
-runs; 1 when they are identical, and nothing publishes; and 2 when either cannot be read, which
-fails the job, because a release decision that cannot be measured is never read as "no change".
-The job's log says which way it went. The comparison works because the bundle is deterministic: a
-rebuild of a release's commit gives that release's `dist/cli.js` byte for byte.
+**When none of them changed, the job compares what CI built with the last release's tarballs.**
+The lockfile fixes the exact versions of `yaml`, `fast-xml-parser` and the other packages compiled
+into `dist/cli.js`, and of the TypeScript that writes core's `.js` and `.d.ts` files, so a
+lockfile-only bump can change either package's `dist` and no path above. The job downloads CI's
+`built-packages` artifact and runs `scripts/release-changed.sh` over it and the version in the
+tag's name. For each package, core and then the CLI, the script fetches that version's tarball with
+`npm pack` and compares the tarball's whole `dist` with the `dist` CI built, every file, with
+`diff -r`. A changed file, an added one and a removed one are each a difference, a changed `.d.ts`
+alone included. It exits 0 when either package differs, and the `release` job publishes both; 1
+when neither differs, and nothing publishes; and 2 only when its own input is missing, such as no
+built `dist`, which fails the job. The job's log names each package and says which way it went,
+with the first paths that differ. The comparison works because the build is deterministic: a
+rebuild of a release's commit gives both packages' `dist` byte for byte.
+
+**A tarball the registry cannot serve never fails the job.** The script tries each download three
+times, 20 seconds apart, as the step's `RELEASE_COMPARE_TRIES` and `RELEASE_COMPARE_WAIT_S` set.
+So an npm outage, a rate limit, or a release the registry does not serve yet never reds a push. A
+difference in the package it could read still publishes both. When the other package
+shows no difference, the job publishes nothing and ends green, with a warning on the run naming each
+package it could not compare and npm's reason. Nothing is lost: the comparison is always against
+the last release's tag, never the previous push, so a change missed while the registry could not be
+read is still a difference on the next push that reads it, and publishes then.
 
 A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run
 CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `features/`,
-`tests/`, `.github/` or the root `package.json` builds the same bin as the last release, and
-publishes nothing while that release is tagged. A merge that touches the lockfile publishes when the
-bin it builds differs from the last release's: a bump of a bundled dependency does, and so can a
-bump of a build tool such as esbuild or TypeScript that changes the bundle's bytes. A bump of a
-dependency that never reaches the bundle does not.
+`tests/`, `.github/` or the root `package.json` builds the same packages as the last release, and
+publishes nothing while that release is tagged. A merge that touches the lockfile publishes when
+either package it builds differs from the last release's: a bump of a bundled dependency does, and
+so can a bump of a build tool such as esbuild or TypeScript that changes the bundle's bytes or
+core's type declarations. A bump of a dependency that never reaches either `dist` does not.
 
 `release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so no published version exists that
@@ -384,8 +396,8 @@ so the next push to `main` that runs CI and passes publishes it.
   number higher and the spent core version is never named by a CLI.
 - **After both published and the `latest` job failed.** Re-run that job alone (*Re-run failed
   jobs*). If the `tag` job succeeded, re-running the whole workflow publishes nothing: its `changes`
-  job diffs against the new `v<version>` tag and finds no published path changed and the bin
-  identical to that version's. If the `tag` job
+  job diffs against the new `v<version>` tag and finds no published path changed and both
+  packages identical to that version's. If the `tag` job
   failed too, re-running the whole workflow publishes the next number. If the `latest` job fails
   again with time to spare, read `npm view <pkg> dist-tags`: a `latest` that is not the published
   version is the fault the job exists to catch.

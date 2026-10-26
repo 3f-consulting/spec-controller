@@ -273,6 +273,31 @@ jobs:
           left="$(find . -mindepth 2 -maxdepth 2 | sed -E 's|^\./||; s/-?[0-9A-Za-z]{6}$//' | sort | uniq -c)"
           [ -z "$left" ] || { printf 'left behind, by suite and prefix:\n%s\n' "$left"; exit 1; }
 
+      - name: The behavioural suite refuses a command bundle older than the lockfile
+        id: SCN-FIT-068
+        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        shell: bash
+        # The Cucumber step's pass on the fresh tree is the control. The lockfile's time is put back however the step ends, so no later step sees a stale bundle.
+        env:
+          TMPDIR: ${{ runner.temp }}/freshness/tmp
+          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
+        run: |
+          start=$SECONDS
+          mkdir -p "$TMPDIR"
+          kept="$TMPDIR/lockfile-time"
+          touch -r pnpm-lock.yaml "$kept"
+          trap 'touch -r "$kept" pnpm-lock.yaml' EXIT
+          touch pnpm-lock.yaml
+          status=0
+          said="$(pnpm cucumber --tags @SCN-USG-002 2>&1)" || status=$?
+          echo "the step took $((SECONDS - start)) s"
+          if [ "$status" -eq 0 ] || ! grep -qF "OLDER than pnpm-lock.yaml" <<< "$said"; then
+            printf 'the suite exited %s on a bundle older than the lockfile, without refusing it\n' "$status"
+            tail -20 <<< "$said"
+            exit 1
+          fi
+          echo "the suite refused to start: the bundle is older than pnpm-lock.yaml"
+
       # Every ESLint check lints in one process, which writes one report; each check's own step reads only its entry.
       - name: Lint every ESLint check into one report
         if: always()
@@ -452,6 +477,152 @@ jobs:
         id: SCN-FIT-019
         if: always()
         run: pnpm lint:published-types
+
+      - name: A release compares each package's whole built dist with the last release's
+        id: SCN-FIT-066
+        if: always()
+        shell: bash
+        # The stand-in npm serves tarballs packed from this run's own build, so the control reads identical and each case changes one served file.
+        # The script's output is indented when printed, so no workflow command in it reaches the run's annotations.
+        env:
+          FAKE_NPM_DIR: ${{ runner.temp }}/release-compare/registry
+          STAGE: ${{ runner.temp }}/release-compare/stage
+          RELEASE_COMPARE_TRIES: "1"
+          RELEASE_COMPARE_WAIT_S: "0"
+        run: |
+          start=$SECONDS
+          failed=0
+          stage() {
+            [ ! -d "$STAGE" ] || rm -r "$STAGE"
+            mkdir -p "$FAKE_NPM_DIR"
+            for package in core spec-controller; do
+              mkdir -p "$STAGE/$package/package"
+              cp -R "packages/$package/dist" "$STAGE/$package/package/dist"
+            done
+          }
+          serve() {
+            for package in core spec-controller; do
+              tar -czf "$FAKE_NPM_DIR/$package.tgz" -C "$STAGE/$package" package
+            done
+          }
+          expect() {
+            local want=$1 case=$2 status=0 out line
+            shift 2
+            out=$(PATH="$PWD/tests/fixtures/release-compare:$PATH" scripts/release-changed.sh packages 0.0.0 2>&1) || status=$?
+            local missing=()
+            for line in "$@"; do grep -qxF -- "$line" <<< "$out" || missing+=("$line"); done
+            if [ "$status" -eq "$want" ] && [ ${#missing[@]} -eq 0 ]; then
+              echo "ok: $case"
+            else
+              echo "FAILED: $case: exit $status, wanted $want"
+              for line in "${missing[@]}"; do echo "  no line: $line"; done
+              failed=1
+            fi
+            while IFS= read -r line; do printf '    | %s\n' "$line"; done <<< "$out"
+          }
+          core='@3f-consulting/spec-controller-core'
+          cli='spec-controller'
+
+          stage; serve
+          expect 1 "both served unchanged" \
+            "$core: the built dist is identical to $core@0.0.0's" \
+            "$cli: the built dist is identical to $cli@0.0.0's"
+
+          stage; echo "export {};" >> "$STAGE/core/package/dist/index.d.ts"; serve
+          expect 0 "a line appended to core's index.d.ts" \
+            "$core: the built dist differs from $core@0.0.0's:" \
+            "$cli: the built dist is identical to $cli@0.0.0's"
+
+          stage; rm "$STAGE/core/package/dist/index.js.map"; serve
+          expect 0 "a file removed from core's dist" \
+            "$core: the built dist differs from $core@0.0.0's:"
+
+          stage
+          cli_js="$STAGE/spec-controller/package/dist/cli.js"
+          [ "$(dd if="$cli_js" bs=1 skip=200 count=1 2> /dev/null)" = x ] && byte=y || byte=x
+          printf '%s' "$byte" | dd of="$cli_js" bs=1 seek=200 conv=notrunc 2> /dev/null
+          serve
+          expect 0 "a byte changed in the CLI's cli.js" \
+            "$core: the built dist is identical to $core@0.0.0's" \
+            "$cli: the built dist differs from $cli@0.0.0's:"
+
+          echo "the release comparison's cases took $((SECONDS - start)) s"
+          exit "$failed"
+
+      - name: A release whose comparison cannot read the last release publishes nothing and warns
+        id: SCN-FIT-067
+        if: always()
+        shell: bash
+        # Port 9 refuses connections, so the real npm fails as it does when the registry is down.
+        # The script's output is indented when printed, so no workflow command in it reaches the run's annotations.
+        env:
+          FAKE_NPM_DIR: ${{ runner.temp }}/release-unread/registry
+          STAGE: ${{ runner.temp }}/release-unread/stage
+          RELEASE_COMPARE_TRIES: "3"
+          RELEASE_COMPARE_WAIT_S: "0"
+        run: |
+          start=$SECONDS
+          failed=0
+          stage() {
+            for path in "$STAGE" "$FAKE_NPM_DIR"; do [ ! -d "$path" ] || rm -r "$path"; done
+            mkdir -p "$FAKE_NPM_DIR"
+            for package in core spec-controller; do
+              mkdir -p "$STAGE/$package/package"
+              cp -R "packages/$package/dist" "$STAGE/$package/package/dist"
+            done
+          }
+          serve() {
+            for package in "$@"; do
+              tar -czf "$FAKE_NPM_DIR/$package.tgz" -C "$STAGE/$package" package
+            done
+          }
+          # Each wanted line is a prefix, since npm's own words end the could-not-compare lines.
+          expect() {
+            local want=$1 case=$2 status=0 out line wanted found
+            shift 2
+            out=$("${run[@]}" scripts/release-changed.sh packages 0.0.0 2>&1) || status=$?
+            local missing=()
+            for wanted in "$@"; do
+              found=0
+              while IFS= read -r line; do [[ $line == "$wanted"* ]] && found=1; done <<< "$out"
+              [ "$found" -eq 1 ] || missing+=("$wanted")
+            done
+            if [ "$status" -eq "$want" ] && [ ${#missing[@]} -eq 0 ]; then
+              echo "ok: $case"
+            else
+              echo "FAILED: $case: exit $status, wanted $want"
+              for line in "${missing[@]}"; do echo "  no line: $line"; done
+              failed=1
+            fi
+            while IFS= read -r line; do printf '    | %s\n' "$line"; done <<< "$out"
+          }
+          core='@3f-consulting/spec-controller-core'
+          cli='spec-controller'
+          stand_in=(env "PATH=$PWD/tests/fixtures/release-compare:$PATH")
+
+          run=(env npm_config_registry=http://127.0.0.1:9/)
+          expect 1 "the registry refuses every connection" \
+            "::warning::could not compare $core@0.0.0: " \
+            "::warning::could not compare $cli@0.0.0: "
+
+          run=("${stand_in[@]}")
+          stage; serve core spec-controller; echo 1 > "$FAKE_NPM_DIR/core.fail"
+          expect 1 "core's first download fails, both unchanged" \
+            "$core: try 1 of 3 could not download $core@0.0.0" \
+            "$core: the built dist is identical to $core@0.0.0's" \
+            "$cli: the built dist is identical to $cli@0.0.0's"
+
+          stage
+          cli_js="$STAGE/spec-controller/package/dist/cli.js"
+          [ "$(dd if="$cli_js" bs=1 skip=200 count=1 2> /dev/null)" = x ] && byte=y || byte=x
+          printf '%s' "$byte" | dd of="$cli_js" bs=1 seek=200 conv=notrunc 2> /dev/null
+          serve spec-controller
+          expect 0 "core cannot be read, the CLI changed" \
+            "$core: could not download $core@0.0.0 in 3 tries: " \
+            "$cli: the built dist differs from $cli@0.0.0's:"
+
+          echo "the unreadable-release cases took $((SECONDS - start)) s"
+          exit "$failed"
 
       - name: Workflow correctness
         id: SCN-FIT-020

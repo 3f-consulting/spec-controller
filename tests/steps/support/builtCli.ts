@@ -13,11 +13,13 @@ export const SPEC_CONTROLLER_ARGV: readonly string[] = [SPEC_CONTROLLER_BIN];
 
 const BUILT_PACKAGES = ["core", "spec-controller"] as const;
 
-function newestMtime(dir: string): number {
-  if (!existsSync(dir)) return 0;
+function newestMtime(path: string): number {
+  if (!existsSync(path)) return 0;
+  const stat = statSync(path);
+  if (!stat.isDirectory()) return stat.mtimeMs;
   let newest = 0;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const full = join(path, entry.name);
     if (entry.isDirectory()) {
       newest = Math.max(newest, newestMtime(full));
       continue;
@@ -36,12 +38,13 @@ function refuseBundleOlderThanItsInputs(): void {
     join("packages", "core", "src"),
     join("packages", "core", "dist"),
     join("packages", "spec-controller", "src"),
+    "pnpm-lock.yaml",
   ];
   for (const input of bundleInputs) {
     const inputAt = newestMtime(join(repoRoot, input));
     if (inputAt > binAt) {
       throw new Error(
-        `packages/spec-controller/dist/cli.js is OLDER than ${input}, which it is bundled from, so ` +
+        `packages/spec-controller/dist/cli.js is OLDER than ${input}, one of its inputs, so ` +
           `this run would spawn a binary that does not carry the code here.\n  ${input} newest: ` +
           `${new Date(inputAt).toISOString()}\n  cli.js:  ${new Date(binAt).toISOString()}\n` +
           `Run \`pnpm build\` first (CI does).`,

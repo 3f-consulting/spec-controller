@@ -1,7 +1,7 @@
 name: Release
 
 # Publishes only what CI built and passed: on a push to main whose CI run succeeded,
-# when a published path or the bundled bin changed since the last version tag. The tests are CI's alone.
+# when a published path or a package's built contents changed since the last version tag. The tests are CI's alone.
 on: # zizmor: ignore[dangerous-triggers] main only, a push run only, a successful run only, its own head commit on main, and its artifact from that push run, never a pull_request run
   workflow_run:
     workflows: [CI]
@@ -22,8 +22,8 @@ jobs:
       contents: read
       actions: read
     outputs:
-      changed: ${{ steps.bin.outputs.changed || steps.diff.outputs.changed }}
-    timeout-minutes: 5
+      changed: ${{ steps.built.outputs.changed || steps.diff.outputs.changed }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,8 +48,8 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # A lockfile-only bump of a bundled dependency changes the bin and no path above.
-      - name: Take the bin CI built
+      # A lockfile-only bump of a bundled dependency or a build tool changes a built dist and no path above.
+      - name: Take the packages CI built
         if: steps.diff.outputs.changed == 'false'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -58,14 +58,18 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
-      - name: Did the bin CI built change since the last version tag
-        id: bin
+      - name: Did a package CI built change since the last version tag
+        id: built
         if: steps.diff.outputs.changed == 'false'
         env:
           TAG: ${{ steps.diff.outputs.tag }}
+          # Tries per package: npm can take 20 to 40 minutes to serve a publish, and three tries ride out a brief outage without holding the job that long.
+          RELEASE_COMPARE_TRIES: "3"
+          # Seconds between tries.
+          RELEASE_COMPARE_WAIT_S: "20"
         run: |
           status=0
-          scripts/bin-changed.sh "$RUNNER_TEMP/built/spec-controller/dist/cli.js" "${TAG#v}" || status=$?
+          scripts/release-changed.sh "$RUNNER_TEMP/built" "${TAG#v}" || status=$?
           case "$status" in
             0) echo "changed=true" >> "$GITHUB_OUTPUT" ;;
             1) echo "changed=false" >> "$GITHUB_OUTPUT" ;;
