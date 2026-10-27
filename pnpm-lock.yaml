@@ -72,8 +72,8 @@ importers:
         specifier: 13.1.0
         version: 13.1.0
       spec-controller:
-        specifier: 0.1.78
-        version: 0.1.78
+        specifier: 0.1.80
+        version: 0.1.80
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -2963,8 +2963,8 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
-  spec-controller@0.1.78:
-    resolution: {integrity: sha512-E6DDY/juVKWsHh4RKNoBNDlwEFho8+poPWViBVmU+ay+YAtYuXFWNL6GLJfLlCtVSO4d/tEuVbCj3EOad1EipA==}
+  spec-controller@0.1.80:
+    resolution: {integrity: sha512-ndIF76wA0WX19sBHU4VMS1kyjZPYA1BDTQLh2NjmP3ZgsJmmQgmVM7U4jUF0D/txV/eqlIo2/x1XS5lz2whmSw==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -6399,7 +6399,7 @@ snapshots:
 
   spdx-license-ids@3.0.23: {}
 
-  spec-controller@0.1.78: {}
+  spec-controller@0.1.80: {}
 
   stackback@0.0.2: {}
 
