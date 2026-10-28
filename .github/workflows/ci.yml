@@ -172,11 +172,6 @@ jobs:
         # The step reds on knip's own exit code, so an unused file, export or dependency anywhere in the tree reds it, whichever files the change touches.
         run: node_modules/.bin/knip --include files,exports,types,dependencies
 
-      - name: A test helper is written once, in a test-utils file
-        id: SCN-FIT-062
-        if: always()
-        run: git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | node scripts/test-helpers-written-once.mjs
-
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()

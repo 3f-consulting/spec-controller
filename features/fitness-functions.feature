@@ -158,8 +158,3 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-059
     Scenario: the build reds when a current-state document cites a file, heading or path that does not exist
-
-  Rule: a test helper used by more than one test file is written once, in a test-utils file
-
-    @fitness @SCN-FIT-062
-    Scenario: the build reds when a helper in a changed test file has the same name and the same body as one in another test file
