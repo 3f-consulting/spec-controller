@@ -137,6 +137,9 @@ export default {
     tsConfig: { fileName: "tsconfig.json" },
     tsPreCompilationDeps: true,
 
+    // The content cache hashes only the extensions it scans, so without .json a tsconfig.json change is served the cached result.
+    extraExtensionsToScan: [".json"],
+
     enhancedResolveOptions: {
       exportsFields: ["exports"],
       conditionNames: ["import", "require", "node", "default"],
