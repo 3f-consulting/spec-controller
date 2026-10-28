@@ -153,11 +153,14 @@ jobs:
         id: SCN-FIT-073
         if: always()
         shell: bash
-        # The first line reds on an error anywhere, a dead suppression included; the second on any warning in a touched file.
-        # Each line keeps its own cache: --quiet runs no warn rule, so a result it cached would hide a warning from the second.
+        # The first line reds when the configuration resolves no rule for a core source file; ESLint lints the tree green with none.
+        # The tree line runs without --quiet: --quiet skips warn rules, and with them the dead-suppression reports for those rules and for a blanket directive.
+        # So it reds on an error anywhere, a dead suppression included, and prints every warning, which exits 0, before an error ends the step.
+        # The last line reds on a warning in a touched file. Both ESLint lines run every rule, so what either caches serves the other: one cache.
         run: |
-          node_modules/.bin/eslint --quiet --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/tree/" .
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r node_modules/.bin/eslint --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/changed/"
+          node_modules/.bin/eslint --print-config packages/core/src/index.ts | jq -e '.rules | length > 0' > /dev/null
+          node_modules/.bin/eslint --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/" .
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r node_modules/.bin/eslint --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/"
 
       - name: CRAP — complex code must be tested
         id: SCN-FIT-022

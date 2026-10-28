@@ -66,7 +66,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   in the direction that matters.
 
   @fitness @SCN-FIT-073
-  Scenario: the code keeps every review rule this repository writes down for it, carries no dead suppression, and no file the push touches carries a warning
+  Scenario: the source code follows this repository's design rules for its structure, its domain's language and its tests, and no file the push touches breaks a readability limit
 
   @fitness @SCN-FIT-022
   Scenario: every function in a file the push touches scores under the external change-risk standard
