@@ -176,9 +176,21 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
 
   it.each([
     ["in a here-document fed to bash past its options", "bash -s <<'EOF'\nvitest run\nEOF"],
+    ["in a here-document fed to bash on descriptor 0", "bash 0<<EOF\nvitest run\nEOF"],
+    ["in a here-document fed to bash after a redirection of stdin it replaces", "bash </dev/null <<EOF\nvitest run\nEOF"],
+    ["in a here-document fed to bash on another descriptor that stdin duplicates", "bash 3<<EOF 0<&3\nvitest run\nEOF"],
     ["on the line after an arithmetic command's left shift", "(( x = 1 << 2 ))\nvitest run"],
   ] as const)("reads a runner run %s as the command the step runs", (_where, command) => {
     expect(shellReading.runsAsCommand(command, "vitest run", {})).toBe(true);
+  });
+
+  it.each([
+    ["fed to bash on another descriptor", "bash 3<<EOF\nvitest run\nEOF"],
+    ["fed to sh on another descriptor", "sh 3<<EOF\nvitest run\nEOF"],
+    ["fed to bash whose stdin a later redirection replaces", "bash <<EOF 0</dev/null\nvitest run\nEOF"],
+    ["fed to bash whose stdin a later redirection closes", "bash <<EOF 0<&-\nvitest run\nEOF"],
+  ] as const)("reads a runner in a here-document %s as running nothing", (_where, command) => {
+    expect(shellReading.runsAsCommand(command, "vitest run", {})).toBe(false);
   });
 
   it.fails("reads a script run after a command substitution holding a parameter that removes a <<, though unbash 6.0.1 does not yet read it so", () => {
@@ -404,7 +416,7 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
   );
 });
 
-describe("[SCN-WFS-028] commandInvokesScript — a script run after a background &, in a subshell or a group, or in the body of an if or a loop is run", () => {
+describe("[SCN-WFS-028] commandInvokesScript — a script run after a background &, in a subshell or a group, in the body of an if, a loop or a select, or as a coproc is run", () => {
   it.each([
     ["after a background &", "pnpm start & pnpm test", "test"],
     ["after a background & glued to both commands", "pnpm start&pnpm test", "test"],
@@ -435,6 +447,10 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     ["in a for's body spaced from its ;", "for p in a b; do pnpm test ; done", "test"],
     ["in a for's body with an argument", "for p in a b; do pnpm test --run; done", "test"],
     ["in a while's body", "while true; do pnpm test; done", "test"],
+    ["in a C-style for's body", "for ((i=0;i<3;i++)); do npm run lint; done", "lint"],
+    ["in a select's body", "select x in a; do npm run lint; done", "lint"],
+    ["as a coproc", "coproc npm run lint", "lint"],
+    ["in a named coproc's group", "coproc NAME { npm run lint; }", "lint"],
     ["through shell words and a command that runs the command after it", "if ! ( env CI=1 pnpm test ); then exit 1; fi", "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
@@ -464,6 +480,13 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
       expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
         { tier: "unit", runner: "vitest", step: "Check" },
       ]);
+    }
+  );
+
+  it.each([["for ((i=0;i<1;i++)); do vitest run; done"], ["select x in a; do vitest run; done"]] as const)(
+    "reads the runner run in the body of %s as run",
+    (command) => {
+      expect(shellReading.runsAsCommand(command, "vitest run", {})).toBe(true);
     }
   );
 

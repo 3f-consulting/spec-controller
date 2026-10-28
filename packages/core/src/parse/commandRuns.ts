@@ -1,5 +1,5 @@
-import { parse } from "unbash";
-import type { AndOr, Command, CompoundList, Pipeline, PipelineNode, Redirect, Redirected, Redirection, Script, Word } from "unbash";
+import { forEachChild, parse } from "unbash";
+import type { Command, HereDoc, Pipeline, Redirect, Redirection, SyntaxNode, Word } from "unbash";
 import type { ShellReading } from "../domain/uncitedFitnessFunctions.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
@@ -143,16 +143,16 @@ interface SimpleCommand {
   readonly piped: boolean;
 }
 
-type Node = PipelineNode | AndOr | CompoundList | Script;
-
 const NOTHING: readonly SimpleCommand[] = [];
 
 const SHELLS = new Set(["bash", "sh"]);
 
 const isWord = (part: Command["suffix"][number]): part is Word => part.type === "Word";
 
+type Descriptors<Held> = ReadonlyMap<number, Held>;
+
 // Each descriptor a command writes to, and whether a pipe another command reads takes what it writes there.
-type Outputs = ReadonlyMap<number, boolean>;
+type Outputs = Descriptors<boolean>;
 
 const UNPIPED: Outputs = new Map();
 
@@ -161,23 +161,48 @@ const ONTO_STDOUT = new Set([">", ">>", ">|", ">&", "&>", "&>>"]);
 const duplicates = (redirection: Redirection): redirection is Redirect =>
   redirection.operator === ">&" || redirection.operator === "<&";
 
-const pointing = (outputs: Outputs, descriptor: number, piped: boolean): Outputs => new Map([...outputs, [descriptor, piped]]);
+const pointing = <Held>(held: Descriptors<Held>, descriptor: number, value: Held): Descriptors<Held> =>
+  new Map([...held, [descriptor, value]]);
 
-// Each redirection points one descriptor at a file, or at where the descriptor it duplicates points; a {var}> allocation moves none of the standard ones.
-function redirectedOnce(outputs: Outputs, redirection: Redirection): Outputs {
+const DESCRIPTOR_OR_CLOSE = /^(\d+-?|-)$/;
+
+// &>, &>> and a >& with no descriptor whose word is no descriptor number and not - send both stdout and stderr to the file.
+const toFileWithErrors = (redirection: Redirection): boolean =>
+  redirection.operator === "&>" ||
+  redirection.operator === "&>>" ||
+  (redirection.operator === ">&" &&
+    redirection.descriptor === undefined &&
+    !DESCRIPTOR_OR_CLOSE.test(redirection.target?.value ?? ""));
+
+// Each redirection points one descriptor at what it opens, or at what the descriptor it duplicates holds; a {var}> allocation moves none of the standard ones.
+function redirectedOnce<Held>(held: Descriptors<Held>, redirection: Redirection, opened: Held): Descriptors<Held> {
   const { descriptor } = redirection;
-  if (descriptor?.type === "FileDescriptorVariable") return outputs;
+  if (descriptor?.type === "FileDescriptorVariable") return held;
+  if (toFileWithErrors(redirection)) return pointing(pointing(held, 1, opened), 2, opened);
   const number = descriptor?.value ?? (ONTO_STDOUT.has(redirection.operator) ? 1 : 0);
   const source = duplicates(redirection) ? Number.parseInt(redirection.target?.value ?? "", 10) : Number.NaN;
-  return pointing(outputs, number, outputs.get(source) ?? false);
+  return pointing(held, number, held.get(source) ?? opened);
 }
 
-const redirected = (outputs: Outputs, redirections: readonly Redirection[]): Outputs => redirections.reduce(redirectedOnce, outputs);
+const redirected = (outputs: Outputs, redirections: readonly Redirection[]): Outputs =>
+  redirections.reduce((held, redirection) => redirectedOnce(held, redirection, false), outputs);
 
-// A here-document fed to bash or sh, given only options, is that shell's script.
+const NO_HERE_DOCUMENTS: Descriptors<HereDoc | undefined> = new Map();
+
+// The here-document a command's stdin holds once its redirections apply, if any.
+const stdinHereDocument = (redirections: readonly Redirection[]): HereDoc | undefined =>
+  redirections
+    .reduce(
+      (held, redirection) => redirectedOnce(held, redirection, redirection.type === "HereDoc" ? redirection : undefined),
+      NO_HERE_DOCUMENTS,
+    )
+    .get(0);
+
+// A here-document fed to bash or sh, given only options, is that shell's script when it is the shell's stdin.
 function shellScripts(command: Command, [name, ...args]: readonly [string, ...string[]], outputs: Outputs): readonly SimpleCommand[] {
   if (!SHELLS.has(name) || !args.every((arg) => arg.startsWith("-"))) return NOTHING;
-  return command.redirects.flatMap((redirect) => (redirect.type === "HereDoc" ? walk(parse(redirect.body.text), outputs) : NOTHING));
+  const script = stdinHereDocument(command.redirects);
+  return script === undefined ? NOTHING : walk(parse(script.body.text), outputs);
 }
 
 // A command's words are its name and arguments, quotes removed; its assignments and redirections are not words.
@@ -188,27 +213,83 @@ function simple(command: Command, inherited: Outputs): readonly SimpleCommand[] 
   return [{ words, piped: outputs.get(1) ?? false }, ...shellScripts(command, words, outputs)];
 }
 
-type Parent = Exclude<Node, Command | Pipeline | Redirected>;
+// Whether the walk enters each kind of node: those that hold commands. A word, an assignment, a redirection or an expression holds
+// commands only inside a substitution, and no command inside one is run as the step's. A new kind of node fails the build until it is decided.
+const ENTERED = {
+  Script: true,
+  Statement: true,
+  CompoundList: true,
+  AndOr: true,
+  Pipeline: true,
+  Command: true,
+  Redirected: true,
+  If: true,
+  Elif: true,
+  For: true,
+  ArithmeticFor: true,
+  Select: true,
+  While: true,
+  Case: true,
+  CaseItem: true,
+  Subshell: true,
+  BraceGroup: true,
+  Function: true,
+  Coproc: true,
+  Time: false,
+  Negation: false,
+  Word: false,
+  Literal: false,
+  Glob: false,
+  SingleQuoted: false,
+  DoubleQuoted: false,
+  AnsiCQuoted: false,
+  LocaleString: false,
+  SimpleExpansion: false,
+  ParameterExpansion: false,
+  CommandExpansion: false,
+  ArithmeticExpansion: false,
+  ProcessSubstitution: false,
+  ExtendedGlob: false,
+  BraceExpansion: false,
+  Assignment: false,
+  ArrayValue: false,
+  Redirect: false,
+  HereString: false,
+  HereDoc: false,
+  FileDescriptor: false,
+  FileDescriptorVariable: false,
+  HereDocDelimiter: false,
+  HereDocBody: false,
+  ArithmeticBinary: false,
+  ArithmeticUnary: false,
+  ArithmeticTernary: false,
+  ArithmeticGroup: false,
+  ArithmeticWord: false,
+  ArithmeticCommandExpansion: false,
+  ArithmeticCommand: false,
+  TestCommand: false,
+  TestUnary: false,
+  TestBinary: false,
+  TestLogical: false,
+  TestNot: false,
+  TestGroup: false,
+  Default: false,
+  Remove: false,
+  Replace: false,
+  Slice: false,
+  CaseModification: false,
+  Transform: false,
+  Names: false,
+  Unknown: false,
+} as const satisfies Record<SyntaxNode["type"], boolean>;
 
-type Children = { readonly [Type in Parent["type"]]?: (node: Extract<Parent, { readonly type: Type }>) => readonly (Node | undefined)[] };
-
-const commandsOf = (node: CompoundList | Script): readonly Node[] => node.commands.map((statement) => statement.command);
-
-const CHILDREN: Children = {
-  Script: commandsOf,
-  CompoundList: commandsOf,
-  AndOr: (node) => node.commands,
-  Function: (node) => [node.body],
-  If: (node) => [node.clause, node.then, ...node.elif.flatMap((elif) => [elif.clause, elif.then]), node.else],
-  For: (node) => [node.body],
-  While: (node) => [node.clause, node.body],
-  Subshell: (node) => [node.body],
-  BraceGroup: (node) => [node.body],
-  Case: (node) => node.items.map((item) => item.body),
-};
-
-const childrenOf = (node: Parent): readonly (Node | undefined)[] =>
-  (CHILDREN[node.type] as ((parent: Parent) => readonly (Node | undefined)[]) | undefined)?.(node) ?? [];
+function childrenOf(node: SyntaxNode): readonly SyntaxNode[] {
+  const children: SyntaxNode[] = [];
+  forEachChild(node, (child) => {
+    if (ENTERED[child.type]) children.push(child);
+  });
+  return children;
+}
 
 // Every stage of a pipeline but the last writes its stdout to a pipe before its own redirections apply; |& joins stderr to it only after them.
 function pipeline(node: Pipeline, outputs: Outputs): readonly SimpleCommand[] {
@@ -217,11 +298,13 @@ function pipeline(node: Pipeline, outputs: Outputs): readonly SimpleCommand[] {
 }
 
 // A command or process substitution is held inside the word it opens, so no command inside it is read.
-function walk(node: Node, outputs: Outputs): readonly SimpleCommand[] {
+// A coprocess writes its stdout to a pipe the shell reads, before its own redirections apply.
+function walk(node: SyntaxNode, outputs: Outputs): readonly SimpleCommand[] {
   if (node.type === "Command") return simple(node, outputs);
   if (node.type === "Pipeline") return pipeline(node, outputs);
+  if (node.type === "Coproc") return walk(node.body, pointing(outputs, 1, true));
   if (node.type === "Redirected") return walk(node.command, redirected(outputs, node.redirects));
-  return childrenOf(node).flatMap((child) => (child === undefined ? NOTHING : walk(child, outputs)));
+  return childrenOf(node).flatMap((child) => walk(child, outputs));
 }
 
 const READ = new Map<string, readonly SimpleCommand[]>();

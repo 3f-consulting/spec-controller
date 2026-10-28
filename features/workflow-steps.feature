@@ -45,9 +45,11 @@ Feature: balance reads a workflow's steps
     A script is run where a command opens with its invocation: at the start of a line, or after
     &&, ||, ;, |, a background & or |&, past any NAME=value assignments, any shell word that
     opens a command and any command that runs the command after it. The shell words are !, a
-    subshell's (, a group's {, and the if, then, elif, else, while, until and do that open the
-    condition and the body of an if and of a while, until or for loop; a redirection's >& is no
-    background &. A shell word is the shell's own and no word of the command it opens, so in if
+    subshell's (, a group's {, coproc and the name before its group, and the if, then, elif,
+    else, while, until and do that open the condition and the body of an if and of a while,
+    until, for, C-style for (( … )) or select loop; a redirection's >& is no background &. A
+    select's body is read as run, as a while's is, though bash runs it once for each line of
+    input. A shell word is the shell's own and no word of the command it opens, so in if
     ! vitest run; then exit 1; fi the command is vitest run, and vitest is the step's runner.
     The commands that run the command after them are the launchers a runner is read through,
     env, nice, nohup, time, command, exec, xargs, timeout, stdbuf, sudo, yarn exec, yarn dlx,
@@ -63,7 +65,9 @@ Feature: balance reads a workflow's steps
     opens none. A here-document opened inside a command or process substitution is read the
     same way, and there its body also ends at a line that opens with its delimiter and holds a
     ), read on from after the delimiter. A here-document fed to bash or sh, given only options,
-    is instead that shell's script. A << inside (( … )), inside ${ … } or in a comment opens no
+    is instead that shell's script when it is the shell's stdin once the command's redirections
+    apply, so a here-document on another descriptor, or one a later redirection of stdin
+    replaces, runs nothing. A << inside (( … )), inside ${ … } or in a comment opens no
     here-document. A substitution's contents are read by the same rules as the top level,
     though no command inside one is read as run. A comment runs to the end of its line: a
     backslash at its end joins no lines, so the command on the next line runs.
@@ -75,7 +79,7 @@ Feature: balance reads a workflow's steps
     Scenario: a step running a script behind a command that runs the command after it, such as `env`, `sudo`, `xargs` or `timeout`, past that command's options, runs that script
 
     @unit @SCN-WFS-028
-    Scenario: a step running a script after a background `&`, in a subshell or a group, or in the body of an `if`, `while`, `until` or `for`, runs that script
+    Scenario: a step running a script after a background `&`, in a subshell or a group, in the body of an `if`, `while`, `until`, `for` or `select`, or as a `coproc`, runs that script
 
   Rule: a runner is recognised only as the command a step runs, and named anywhere else it leaves the step a candidate
 
@@ -115,7 +119,8 @@ Feature: balance reads a workflow's steps
     and in any manifest script it follows. A step that pipes a runner's output into another command
     is a candidate, and so is one that pipes the output of a subshell that runs it. A stage's stdout
     reaches the pipe unless its own redirection sends it elsewhere, so 2>&1 keeps it on the pipe and
-    > out takes it off.
+    > out takes it off. &> and >& to a file send stderr there as well as stdout. A coprocess's stdout
+    is a pipe the shell reads, so a runner run as a coprocess leaves the step a candidate.
 
     @unit @SCN-WFS-007
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner

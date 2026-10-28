@@ -242,6 +242,9 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ["vitest run {fd}> x | tee log"],
     ["vitest run 3>&1 > out 1<&3 | tee log"],
     ["vitest run 3>&1 > out 1>&3- | tee log"],
+    ["vitest run 2>&1 > out 1>&2 | tee log"],
+    ["coproc vitest run"],
+    ["coproc NAME { vitest run; }"],
   ] as const)("reads %s as piping the runner's stdout, so the step is a candidate", (line) => {
     expect(shellReading.runsAsCommand(line, "vitest run", {})).toBe(false);
   });
@@ -263,6 +266,11 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ["(vitest run > out) | tee log"],
     ["vitest run >&- | tee log"],
     ["vitest run 3>&1 > 3 | tee log"],
+    ["vitest run 2>&1 &> out 1>&2 | tee log"],
+    ["vitest run 2>&1 &>> out 1>&2 | tee log"],
+    ["vitest run 2>&1 >& out 1>&2 | tee log"],
+    ["vitest run &> out 2>&1 | tee log"],
+    ["coproc vitest run > out"],
   ] as const)("reads %s as sending the runner's stdout off the pipe, so the step runs the runner", (line) => {
     expect(shellReading.runsAsCommand(line, "vitest run", {})).toBe(true);
   });
