@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,8 +32,6 @@ jobs:
       CRAP_THRESHOLD: "29.999999999999996"
       # A file reds when its comment lines exceed this share of its non-blank lines: a fixed 15% ceiling, with no ratchet.
       COMMENT_SHARE_MAX: "0.15"
-      # Hours: the nightly mutation sweep's 24-hour cadence, plus 4 hours for the longest a sweep may run (its 240-minute limit), plus 2 hours for the scheduler's delay, so one missed sweep ages its verdict out and the step records the schedule as lapsed.
-      MUTATION_VERDICT_MAX_AGE_H: "30"
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -452,21 +449,6 @@ jobs:
         id: SCN-FIT-074
         if: always()
         run: semgrep scan --config .semgrep/ --error --metrics=off --disable-version-check packages
-
-      - name: Mutation verdict recorded
-        id: SCN-FIT-002
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        # mutation.yml titles a full sweep "Mutation"; a scoped run carries another title. GitHub's API sometimes errors or answers empty, so ask tries each read three times: three errors fail the step as UNREAD, and only three empty answers are a state, LAPSED for the run list or NO SCOPE MEASURED for the jobs. A lapse and a sweep that ran no scope job are each recorded and pass.
-        run: |
-          ask() { ok=0; for try in 1 2 3; do if out=$("$@"); then ok=1; [ -n "$out" ] && { printf '%s\n' "$out"; return 0; }; fi; [ "$try" = 3 ] || sleep 10; done; [ "$ok" = 1 ]; }
-          since=$(date -u -d "${MUTATION_VERDICT_MAX_AGE_H:?} hours ago" +%FT%TZ)
-          main=$(ask gh run list --workflow mutation.yml --branch main --status completed --created ">=$since" --limit 50 --json databaseId,displayTitle --jq 'map(select(.displayTitle == "Mutation"))[0].databaseId // empty') || { echo "UNREAD: the run list could not be read after three tries"; exit 1; }
-          [ -n "$main" ] || { echo "LAPSED: no full sweep on main inside the window — the line is stopped until one runs"; exit 0; }
-          verdicts=$(ask gh run view "$main" --json jobs --jq '.jobs[] | select(.name | startswith("mutation")) | "\(.name): \(.conclusion)"') || { echo "UNREAD: sweep $main could not be read after three tries"; exit 1; }
-          [ -n "$verdicts" ] || { echo "NO SCOPE MEASURED: sweep $main ran no scope job — the line is stopped until a sweep measures"; exit 0; }
-          printf '%s\n' "$verdicts"
 
       - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023

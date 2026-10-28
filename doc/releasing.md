@@ -138,13 +138,8 @@ release: the build, the typecheck, both suites and every repository bar. The rel
 of its own before it publishes, the clean-room install of the packed tarballs, and one after, the
 `latest` job.
 
-CI on `main` includes `Mutation verdict recorded`, which prints each scope's conclusion from the
-newest full mutation sweep of `main` created in the last 30 hours, and `Reconciliation`. When there
-is no such sweep the step prints a `LAPSED:` line, and when the newest ran no scope job a
-`NO SCOPE MEASURED:` line; either way it passes, so neither a lapsed nightly sweep, nor one that
-measured nothing, nor a red one holds a release. Each stops new work from starting until a
-full sweep of `main` is green. The step fails, and so holds the release, only when a read of
-GitHub's API errors on all three of its tries, printing an `UNREAD:` line.
+The nightly mutation sweep's verdict holds no release: a red, lapsed or unmeasured sweep stops new
+work from starting until a full sweep of `main` is green, and a fix merges on its own CI.
 
 `main`'s `strict` protection runs the same bars on every pull request before it can merge. A push to
 `main` that changes `packages/*/README.md` is not covered by CI's `paths-ignore`, whose `README.md`

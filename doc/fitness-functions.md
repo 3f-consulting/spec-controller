@@ -120,13 +120,10 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 | Check | Real catches |
 |---|---|
-| Mutation verdict recorded | 0 |
 | ESLint: no comment disables a mutant | 0 |
 | Test code stays within the declared ceiling ratio to production code | 0 |
 | ESLint: no unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
 | Every production source file is in a mutation scope or on the recorded list | 0 |
-
-Mutation verdict recorded never fails on a red sweep or on a lapsed schedule. It prints each scope's result from the newest full sweep, a `LAPSED:` line when no full sweep falls inside its window, or a `NO SCOPE MEASURED:` line when the newest ran no scope job. Each read is tried three times, whether `gh` errors or answers empty, so an empty page from the API is not taken for a lapse or for a sweep with no scope. The step fails, with an `UNREAD:` line, only when a read errors on all three tries.
 
 ## Flexibility
 
