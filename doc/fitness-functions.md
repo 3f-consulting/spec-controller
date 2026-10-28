@@ -1,6 +1,6 @@
 # What each fitness function catches
 
-Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most of them automate a kind of comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the mutation scopes and the suite time limits honest.
+Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most of them automate a kind of comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the suite time limits, the test runs and the workflows honest.
 
 Each table below gives, for each check:
 - the comment it automates;
