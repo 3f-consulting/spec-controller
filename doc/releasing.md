@@ -2,7 +2,7 @@
 
 Two packages are released together: `@3f-consulting/spec-controller-core`, the pure engine, and
 `spec-controller`, the command that carries it compiled into its bundle. **Nobody cuts a release.** Every push to `main`
-that passes CI and changes a published package since the last release publishes both, core first,
+that passes CI publishes both, core first,
 in the run of `.github/workflows/release.yml` that follows that push's CI run, at the next counter
 version, and then tags what it published.
 No credential is stored anywhere. There is no release PR, nothing to promote afterwards and nothing
@@ -17,62 +17,12 @@ error whose cause is not authentication.
 
 ### Which merges publish
 
-**A push to `main` publishes when what a tarball is made of has changed since the last release**,
-and only then. `release.yml` runs when the `CI` workflow completes on `main`. Its first job,
-`changes`, goes on only if that CI run succeeded and was started by a `push`. It checks out the
-commit CI ran on and diffs these paths between that commit and the nearest `v*` tag reachable from it
-(`git describe --tags --match 'v*' --abbrev=0`). The `release` job runs if one of them changed:
-
-| Path | Why it is in the tarball |
-|---|---|
-| `packages/*/src/**`, except `*.test.ts` and `*.test-utils.ts` | compiled into `dist`, the one entry in `files` |
-| `packages/*/package.json`, `packages/*/README.md` | npm always packs both |
-| `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what core's `dist` compiles to, which the CLI's bundle carries |
-| `packages/spec-controller/bundle.mjs` | decides what the CLI's `dist/cli.js` bundles |
-
-**When none of them changed, the job compares what CI built with the last release's tarballs.**
-The lockfile fixes the exact versions of `yaml`, `fast-xml-parser` and the other packages compiled
-into `dist/cli.js`, and of the TypeScript that writes core's `.js` and `.d.ts` files, so a
-lockfile-only bump can change either package's `dist` and no path above. The job downloads CI's
-`built-packages` artifact and runs `scripts/release-changed.sh` over it and the version in the
-tag's name. For each package, core and then the CLI, the script fetches that version's tarball with
-`npm pack` and compares the tarball's whole `dist` with the `dist` CI built, every file, with
-`diff -r`. A changed file, an added one and a removed one are each a difference, a changed `.d.ts`
-alone included. It exits 0 when either package differs, and the `release` job publishes both; 1
-when neither differs, and nothing publishes; and 2 when it cannot do its job, which fails the job:
-a missing input or setting, such as no built `dist` or an unset `RELEASE_COMPARE_TRIES`, a
-comparison it could not make, or a release npm still does not serve after the wait below. The
-job's log names each package and says which way it went, with the first paths that differ. The
-comparison works because the build is deterministic: a rebuild of a release's commit gives both
-packages' `dist` byte for byte.
-
-**A release npm does not serve yet is waited for.** The tag is made only after both packages
-publish, so when npm answers E404 for the tag's version, it has not served that publish yet; npm can
-take 20 to 40 minutes. The script first reads every package it can, and a difference in one of them
-publishes both at once, without waiting. Only when nothing it read differs does it keep asking for
-each package npm answered E404 for, every `RELEASE_COMPARE_WAIT_S` seconds, for up to 2400 seconds,
-the step's `RELEASE_SERVED_WAIT_S` and the same window the `latest` job waits. Once npm serves it, the
-script compares it as usual, and a difference publishes. A release still not served after the wait
-fails the job, naming the package and the version; re-running Release once npm serves it publishes.
-The `changes` job's limit, 45 minutes, covers the wait.
-
-**A registry that cannot be reached never fails the job.** The script tries each download three
-times, 20 seconds apart, as the step's `RELEASE_COMPARE_TRIES` and `RELEASE_COMPARE_WAIT_S` set.
-So a refused connection, a timeout, a server error or a download with no `dist` never reds a push. A
-difference in the package it could read still publishes both. When the other package
-shows no difference, the job publishes nothing and ends green, with a warning on the run naming each
-package it could not compare and npm's reason. The comparison is always against the last
-release's tag, never the previous push, so a change missed while the registry could not be reached is
-still a difference on the next push that runs CI and reads it, and publishes then. Until such a push
-comes, it is unpublished.
-
-A push that changes only `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run
-CI at all (`paths-ignore` in `ci.yml`), so it cannot release. A merge that touches only `features/`,
-`tests/`, `.github/` or the root `package.json` builds the same packages as the last release, and
-publishes nothing while that release is tagged. A merge that touches the lockfile publishes when
-either package it builds differs from the last release's: a bump of a bundled dependency does, and
-so can a bump of a build tool such as esbuild or TypeScript that changes the bundle's bytes or
-core's type declarations. A bump of a dependency that never reaches either `dist` does not.
+**Every push to `main` whose CI run succeeds publishes.** `release.yml` runs when the `CI` workflow
+completes on `main`, and its `release` job goes on when that CI run succeeded and was started by a
+`push`, with no other condition. Every such merge publishes the next counter version, a merge that
+touches only `features/`, `tests/`, `.github/` or the lockfile included. A push that changes only
+`doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run CI at all
+(`paths-ignore` in `ci.yml`), so it publishes nothing.
 
 `release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so no published version exists that
@@ -248,11 +198,14 @@ first only until somebody edits one of them.
 
 **The pin follows the registry by bot PR, within a day of a release publishing, weekends
 included.** `.github/dependabot.yml` lets Dependabot move exactly this one dependency, and keeps it
-exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green. The PR touches the root
-`package.json` and the lockfile, neither of which is a published path, so the release's `changes`
-job finds no published path changed since the last tag. Its merge publishes only when the lockfile's
-re-resolution (below) moved a package the bin bundles, and then once: the next pin PR moves that
-package no further, so the loop stops.
+exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green.
+
+**The pin's merge starts no CI and no release, and that is the loop guard.** Auto-merge pushes the
+merge with the workflow's own `GITHUB_TOKEN`, and by GitHub's design a push made with that token
+starts no workflow. So the pin's merge runs no CI, and the release, which follows CI, never runs.
+Merging the pin with any other token would publish again, and the next pin would follow it, without
+end. Measured: the self-pin merges `510f4601`, `360300b2` and `4d36eba3` have no `push` run of any
+workflow.
 
 **The schedule.** `interval: cron` with `cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven
 days. `daily` is not used because it runs Monday to Friday only. Once a day is as often as GitHub
@@ -352,8 +305,8 @@ model it reads cannot land in one merge: on the branch that makes the change, th
 still the old one and `Reconciliation` reds. Nothing publishes from a branch, so such a
 change lands as a **parallel change** (*expand–migrate–contract*) over two merges and a bot PR:
 
-1. **Expand.** The reader accepts both the old shape and the new one. That merge touches a package,
-   so it publishes.
+1. **Expand.** The reader accepts both the old shape and the new one. That merge publishes, as
+   every merge that passes CI does.
 2. **The bot moves the pin.** Dependabot's PR moves the root `devDependencies["spec-controller"]` to
    the release step 1 published, and `dependabot-auto-merge.yml` merges it on green, with no human
    act. The bot runs once a day (see *Dependabot moves it*), so this lags the publish by up
@@ -408,17 +361,13 @@ so the next push to `main` that runs CI and passes publishes it.
   on the registry and takes the **next** number for both, so the two packages go out in lockstep one
   number higher and the spent core version is never named by a CLI.
 - **After both published and the `latest` job failed.** Re-run that job alone (*Re-run failed
-  jobs*). If the `tag` job succeeded, re-running the whole workflow publishes nothing: its `changes`
-  job diffs against the new `v<version>` tag and finds no published path changed and both
-  packages identical to that version's. If the `tag` job
-  failed too, re-running the whole workflow publishes the next number. If the `latest` job fails
+  jobs*). Re-running the whole workflow publishes the next number, not nothing. If the `latest` job fails
   again with time to spare, read `npm view <pkg> dist-tags`: a `latest` that is not the published
   version is the fault the job exists to catch.
 - **After both published and the `tag` job failed.** The release happened, but the newest `v*` tag
-  is still the one before it. The next push to `main` that passes CI diffs against that older tag,
-  finds published paths changed, and publishes again at a new number, even if it touches only
-  `tests/` or `.github/`, and so does the bot's pin PR. Create the tag by hand on the commit the run
-  built: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
+  is still the one before it. The counter still reads the registry, so no number is reused, and the
+  next push to `main` that passes CI publishes the number after it. Create the tag by hand on the
+  commit the run built: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
 
 ### When a publish returns `E401`, read it as the trusted publisher
 

@@ -156,17 +156,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-037
     Scenario: a red proof in which no selected test reported a result fails as not a red
 
-  Rule: a push to the default branch publishes exactly when what a package ships has changed since the last release
-
-    @fitness @SCN-FIT-066
-    Scenario: a push publishes both packages when either one's built contents differ from the last release's, a changed type declaration alone included
-
-    @fitness @SCN-FIT-067
-    Scenario: a push whose release comparison cannot reach the registry publishes nothing, fails nothing, and says it could not compare
-
-    @fitness @SCN-FIT-072
-    Scenario: a push whose last release the registry does not serve yet waits for it, publishes a change once it can compare, and fails when the release is still not served
-
   Rule: the behavioural suite runs only on a command bundle built from the tree it is in
 
     @fitness @SCN-FIT-068
