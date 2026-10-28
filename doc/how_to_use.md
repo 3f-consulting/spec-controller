@@ -518,7 +518,7 @@ That is all.
 
 ### A converted check is still a command you can run
 
-Converting a check does not move it inside anything. Many of the converted checks in spec-controller's own pipeline are commands you can paste into a terminal, such as `pnpm typecheck` or `pnpm lint:boundaries`: exit 0 is the check passing, with no Cucumber and no `spec-controller` involved. The rest read what an earlier step, or a scheduled sweep, already left behind: a number, or the findings one ESLint or Semgrep run wrote for every check.
+Converting a check does not move it inside anything. Many of the converted checks in spec-controller's own pipeline are commands you can paste into a terminal, such as `pnpm typecheck`: exit 0 is the check passing, with no Cucumber and no `spec-controller` involved. The rest read what an earlier step, or a scheduled sweep, already left behind: a number, or the findings one Semgrep scan wrote for every rule.
 
 The scenario and the `id:` make the run **observable**: the ledger can say the check ran, and against what.
 

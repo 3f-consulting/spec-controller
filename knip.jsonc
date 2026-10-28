@@ -1,21 +1,6 @@
 {
   // Cucumber step files and their support are test code; knip checks what ships.
   "ignore": ["tests/**"],
-  // The per-check ESLint configs: scripts/eslint-report.mjs names them as strings, which knip's ESLint plugin does not read; a config no check names is still reported unused.
-  "eslint": {
-    "config": [
-      "eslint.config.js",
-      "config/eslint.boundaries.js",
-      "config/eslint.mutation.js",
-      "config/eslint.messages.js",
-      "config/eslint.collection.js",
-      "config/eslint.domain.js",
-      "config/eslint.domainLiterals.js",
-      "config/eslint.domainProse.js",
-      "config/eslint.domainNumbers.js",
-      "config/eslint.exitCode.js"
-    ]
-  },
   // tsx: loaded through the requireModule string in cucumber.js, which knip's Cucumber plugin does not read.
   // remark-cli, remark-validate-links: run from a package script behind xargs, which knip does not read through.
   "ignoreDependencies": ["tsx", "remark-cli", "remark-validate-links"]

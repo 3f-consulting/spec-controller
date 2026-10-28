@@ -298,17 +298,15 @@ jobs:
           fi
           echo "the suite refused to start: the bundle is older than pnpm-lock.yaml"
 
-      # Every ESLint check lints in one process, which writes one report; each check's own step reads only its entry.
-      - name: Lint every ESLint check into one report
-        if: always()
-        run: node scripts/eslint-report.mjs "$RUNNER_TEMP/lint-reports/eslint.json" "$RUNNER_TEMP/tool-cache/eslint"
-
-      - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
-        id: SCN-FIT-001
+      - name: ESLint — every rule of eslint.config.js over the tree, and its warnings in the files the push touches
+        id: SCN-FIT-073
         if: always()
         shell: bash
-        # An error anywhere fails it; a warning fails it only in a file this change touches.
-        run: git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | jq -e -r --arg check complexity --rawfile warnIn /dev/stdin -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
+        # The first line reds on an error anywhere, a dead suppression included; the second on any warning in a touched file.
+        # Each line keeps its own cache: --quiet runs no warn rule, so a result it cached would hide a warning from the second.
+        run: |
+          node_modules/.bin/eslint --quiet --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/tree/" .
+          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r node_modules/.bin/eslint --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/changed/"
 
       - name: CRAP — complex code must be tested
         id: SCN-FIT-022
@@ -351,9 +349,7 @@ jobs:
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()
-        run: |
-          node_modules/.bin/depcruise --config config/.dependency-cruiser.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
-          jq -e -r --arg check boundaries -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
+        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
 
       - name: Gherkin is parsed by one module
         id: SCN-FIT-060
@@ -364,21 +360,6 @@ jobs:
         id: SCN-FIT-061
         if: always()
         run: node_modules/.bin/depcruise --config config/.dependency-cruiser.yaml.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/yaml" --cache-strategy content
-
-      - name: Evidence layers cross a seam
-        id: SCN-FIT-027
-        if: always()
-        run: jq -e -r --arg check seam -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No comment disables a mutant
-        id: SCN-FIT-039
-        if: always()
-        run: jq -e -r --arg check mutation -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No production source file writes message prose outside its package's catalogue
-        id: SCN-FIT-041
-        if: always()
-        run: jq -e -r --arg check messages -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: Every production source file is in a mutation scope or on the recorded list
         id: SCN-FIT-040
@@ -393,36 +374,6 @@ jobs:
           done < <(yq -r '(.jobs.mutation.strategy.matrix.include[].mutate | split(",") | .[] | select(test("^!") | not)), .env.UNSCOPED' .github/workflows/mutation.yml)
           git ls-files -- ':(glob)packages/*/src/**/*.ts' ':(exclude,glob)packages/**/*.test.ts' ':(exclude,glob)packages/**/*.test-utils.ts' "${excludes[@]}" \
             | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
-
-      - name: No unit test file runs code at collection time or in a hook that runs once for many tests
-        id: SCN-FIT-042
-        if: always()
-        run: jq -e -r --arg check collection -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No type, field, function, variable or parameter in core's domain is named for an external tool or format
-        id: SCN-FIT-049
-        if: always()
-        run: jq -e -r --arg check domain -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No string, template part or regular expression in core's domain names an external tool, format, flag or syntax
-        id: SCN-FIT-064
-        if: always()
-        run: jq -e -r --arg check domainLiterals -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No sentence for a reader is written in core's domain
-        id: SCN-FIT-050
-        if: always()
-        run: jq -e -r --arg check domainProse -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: No number stands as a type in core's domain
-        id: SCN-FIT-063
-        if: always()
-        run: jq -e -r --arg check domainNumbers -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
-
-      - name: Only the exit-code module sets the process's exit code
-        id: SCN-FIT-065
-        if: always()
-        run: jq -e -r --arg check exitCode -f scripts/eslint-findings.jq "$RUNNER_TEMP/lint-reports/eslint.json"
 
       - name: A unit test citing a domain concept's scenario lives in core's domain
         id: SCN-FIT-055

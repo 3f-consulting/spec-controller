@@ -65,14 +65,14 @@ Feature: The fitness functions this repository carries, one scenario per check
   never re-baselines down; a fixed bar obeys it by standing still, which is why it cannot go stale
   in the direction that matters.
 
-  @fitness @SCN-FIT-001
-  Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
+  @fitness @SCN-FIT-073
+  Scenario: the tree breaks no rule of the repository's ESLint configuration and keeps no dead suppression, and no file the push touches carries one of its warnings
 
   @fitness @SCN-FIT-022
   Scenario: every function in a file the push touches scores under the external change-risk standard
 
   @fitness @SCN-FIT-009
-  Scenario: every architectural boundary this repository draws holds, and no dead suppression survives
+  Scenario: every import boundary this repository draws holds
 
     The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
     through the domain, a driven module of the command-line app never reaches into another, and a
@@ -116,11 +116,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-026
     Scenario: no comment, description or current-state document in the tree narrates how the product used to be
-
-  Rule: a second evidence layer reaches the product only through a seam
-
-    @fitness @SCN-FIT-027
-    Scenario: no step definition imports the product's own modules, by a path into its packages or by its core package's name
 
   Rule: every Given, When and Then in the corpus is one Cucumber runs
 
@@ -201,43 +196,15 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-033
     Scenario: no file the change touches carries an unused file, export or dependency
 
-  Rule: a mutant is killed or removed at its source, never hidden from the mutation run
-
-    @fitness @SCN-FIT-039
-    Scenario: no source or test file in the packages carries a comment that disables a mutant
-
   Rule: mutation reaches every production source file, or the repository records which it leaves out and why
 
     @fitness @SCN-FIT-040
     Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates
 
-  Rule: a human-facing message is read from its package's catalogue, never written in production code
-
-    @fitness @SCN-FIT-041
-    Scenario: no production source file in the packages writes human-facing message prose outside its package's catalogue
-
-  Rule: a unit test does its work inside the test, so mutation reads each mutant against the tests that cover it
-
-    @fitness @SCN-FIT-042
-    Scenario: no unit test file runs code at collection time or in a hook that runs once for many tests
-
   Rule: the test estate stays within the ceiling the product declares
 
     @fitness @SCN-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
-
-  Rule: core's domain speaks its own language: it names no tool, format, flag or syntax
-
-    @fitness @SCN-FIT-049
-    Scenario: a type, field, function, variable or parameter in core's domain named for an external tool or format reds the build
-
-    @fitness @SCN-FIT-064
-    Scenario: a string literal, template part or regular expression in core's domain that names an external tool, format, flag or syntax reds the build
-
-  Rule: core's domain says what happened as a typed value, and holds no sentence for a reader
-
-    @fitness @SCN-FIT-050
-    Scenario: a sentence for a reader written in core's domain reds the build
 
   Rule: no child process runs through a shell
 
@@ -281,13 +248,3 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-062
     Scenario: the build reds when a helper in a changed test file has the same name and the same body as one in another test file
-
-  Rule: core's domain names a run's verdict, and no number stands for one
-
-    @fitness @SCN-FIT-063
-    Scenario: a numeric literal type in core's domain reds the build
-
-  Rule: one function sets the process's exit code
-
-    @fitness @SCN-FIT-065
-    Scenario: a production file that assigns the process's exit code outside the exit-code module reds the build

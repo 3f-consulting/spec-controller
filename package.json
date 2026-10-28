@@ -15,8 +15,6 @@
     "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
-    "lint:boundaries": "depcruise --config config/.dependency-cruiser.js packages && eslint --config config/eslint.boundaries.js --rule 'no-restricted-imports: off' .",
-    "lint:seam": "eslint --config config/eslint.boundaries.js --rule 'no-restricted-syntax: off' tests/steps",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
     "lint:published-types": "attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\"",
     "docs:check": "node scripts/docs-check.mjs",
@@ -42,7 +40,6 @@
       "ci.yml:ci:Read the Python Semgrep runs on",
       "ci.yml:ci:Install Semgrep",
       "ci.yml:ci:New names this change introduces",
-      "ci.yml:ci:Lint every ESLint check into one report",
       "ci.yml:ci:Scan every Semgrep rule into one report",
       "ci.yml:ci:Hand the built packages to the release"
     ]

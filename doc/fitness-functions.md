@@ -12,6 +12,27 @@ Twenty-three of these checks first ran on `main` between 30 September and 14 Oct
 
 Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order; process conformance is 3F's extension of it. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
 
+## One check, many rules: ESLint
+
+One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the repository's one ESLint configuration. It fails on any error in the tree, and on any warning in a file the push touches. ESLint's output names the rule that failed, so its rules need no scenario each. They are listed here with the characteristic each holds, and each characteristic's table below carries one row for its rules.
+
+| Rule | Characteristic | Real catches |
+|---|---|---|
+| The engine's idiom: no host global, random number or class in core, no decorator or `…Deps` type, no operations-layer file name, no mutable core record, no sandbox name | Modularity | counted under Import boundaries |
+| No type, field, function, variable or parameter in core's domain is named for an external tool or format | Modularity | 0 |
+| No string, template part or regular expression in core's domain names an external tool, format, flag or syntax | Modularity | 0 |
+| No numeric literal type in core's domain | Modularity | 0 |
+| Only the exit-code module sets the process's exit code | Modularity | 0 |
+| No sentence for a reader is written in core's domain | Modularity | 0 |
+| No production source file writes message prose outside its package's catalogue | Modularity | 1 |
+| Complexity: cognitive complexity and function length | Analysability | 13 |
+| No suppression comment that suppresses nothing | Analysability | 0 |
+| No comment disables a mutant | Testability | 0 |
+| No unit test file runs code at collection time or in a hook that runs once for many tests | Testability | 3 |
+| Evidence layers cross a seam | Scenarios a reader can trust | 0 |
+
+In the counting window each rule was a check of its own, except two. Import boundaries held the engine's idiom with its import rules, so its catches are not split between them. The complexity check held the dead suppressions, so they are counted with complexity.
+
 **Product conformance:** what the product does.
 
 ## Functional suitability
@@ -57,13 +78,8 @@ Its headings are the standard's sub-characteristics of maintainability.
 | Check | Real catches |
 |---|---|
 | Import boundaries | 4 |
-| No type, field, function, variable or parameter in core's domain is named for an external tool or format | 0 |
-| No string, template part or regular expression in core's domain names an external tool, format, flag or syntax | 0 |
-| No numeric literal type in core's domain | 0 |
-| Only the exit-code module sets the process's exit code | 0 |
-| No sentence for a reader is written in core's domain | 0 |
+| ESLint: the engine's idiom and core's domain language, seven rules | 1 |
 | A unit test citing a domain concept's scenario lives in core's domain | 0 |
-| No production source file writes message prose outside its package's catalogue | 1 |
 | Only one module imports the Gherkin parser | 0 |
 | Only the workflow module and the run store import the YAML parser | 0 |
 
@@ -75,7 +91,7 @@ No check holds it. Core is published as a package of its own, and its front door
 
 | Check | Real catches |
 |---|---|
-| Complexity: cognitive complexity and function length | 13 |
+| ESLint: complexity and function length, and no dead suppression | 13 |
 
 Supportability and observability sit here. No check holds them yet. It is the comment that an error should tell its reader something stable to search for or report.
 
@@ -94,9 +110,9 @@ Supportability and observability sit here. No check holds them yet. It is the co
 | Check | Real catches |
 |---|---|
 | Mutation verdict recorded | 0 |
-| No comment disables a mutant | 0 |
+| ESLint: no comment disables a mutant | 0 |
 | Test code stays within the declared ceiling ratio to production code | 0 |
-| No unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
+| ESLint: no unit test file runs code at collection time or in a hook that runs once for many tests | 3 |
 | Every production source file is in a mutation scope or on the recorded list | 0 |
 
 Mutation verdict recorded never fails on a red sweep or on a lapsed schedule. It prints each scope's result from the newest full sweep, a `LAPSED:` line when no full sweep falls inside its window, or a `NO SCOPE MEASURED:` line when the newest ran no scope job. Each read is tried three times, whether `gh` errors or answers empty, so an empty page from the API is not taken for a lapse or for a sweep with no scope. The step fails, with an `UNREAD:` line, only when a read errors on all three tries.
@@ -138,7 +154,7 @@ No check holds it. spec-controller carries no safety concern.
 | No step on a scenario Cucumber does not run | 0 |
 | Every scenario takes its steps from one step-definition file | 0 |
 | No Given, When or Then names an interface mechanic | 0 |
-| Evidence layers cross a seam | 0 |
+| ESLint: evidence layers cross a seam | 0 |
 | No unused step definition | 0 |
 
 ## Guards on the method
