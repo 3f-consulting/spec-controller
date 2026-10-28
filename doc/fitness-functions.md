@@ -24,7 +24,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | No numeric literal type in core's domain | Modularity | 0 |
 | Only the exit-code module sets the process's exit code | Modularity | 0 |
 | No production source file writes message prose outside its package's catalogue, so core's domain holds no sentence for a reader | Modularity | 1 |
-| A unit test citing a domain concept's scenario lives in core's domain | Modularity | 0 |
+| A unit test citing a domain concept's scenario lives in core's domain. A feature is a domain concept when core's `domain/` folder holds a module named for it | Modularity | 0 |
 | Complexity: cognitive complexity and function length | Analysability | 13 |
 | No suppression comment that suppresses nothing | Analysability | 0 |
 | No comment disables a mutant | Testability | 0 |
