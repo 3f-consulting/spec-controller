@@ -179,7 +179,6 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | The unit suite runs inside its time limit | 55 |
 | The behavioural suite runs inside its time limit | 34 |
 | No test leaves an entry in its temporary directory | 0 |
-| The behavioural suite refuses a command bundle older than the lockfile | 0 |
 | Workflow correctness | 1 |
 
 The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit.

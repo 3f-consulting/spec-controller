@@ -139,11 +139,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-031
     Scenario: neither suite leaves an entry in the temporary directory it ran in
 
-  Rule: the behavioural suite runs only on a command bundle built from the tree it is in
-
-    @fitness @SCN-FIT-068
-    Scenario: the behavioural suite refuses to start on a command bundle older than the lockfile that fixes what it bundles
-
   Rule: the command's bundle carries one copy of the engine, taken from the engine's own build
 
     @fitness @SCN-FIT-071

@@ -6,7 +6,6 @@ You need Node ≥ 22 and pnpm.
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm build
 pnpm typecheck
 pnpm test        # unit tests (Vitest)
 pnpm cucumber    # integration and end-to-end scenarios (Cucumber)

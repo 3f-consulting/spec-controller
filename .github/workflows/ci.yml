@@ -66,9 +66,6 @@ jobs:
           tar -xzf "$RUNNER_TEMP/vale.tar.gz" -C "$RUNNER_TEMP/vale" vale
           echo "$RUNNER_TEMP/vale" >> "$GITHUB_PATH"
 
-      - name: Build
-        run: pnpm build
-
       # A venv runs only on the interpreter that built it, so the Python version is part of the cache key.
       - name: Read the Python Semgrep runs on
         if: always()
@@ -135,6 +132,7 @@ jobs:
           TMPDIR: ${{ runner.temp }}/suite-tmp/cucumber
           NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
           TSX_DISABLE_CACHE: "1"
+        # `pnpm cucumber` builds the packages first, the run's one build; the steps after it that pack or hand on dist use it.
         run: |
           start=$SECONDS
           status=0
@@ -150,31 +148,6 @@ jobs:
           cd "$RUNNER_TEMP/suite-tmp"
           left="$(find . -mindepth 2 -maxdepth 2 | sed -E 's|^\./||; s/-?[0-9A-Za-z]{6}$//' | sort | uniq -c)"
           [ -z "$left" ] || { printf 'left behind, by suite and prefix:\n%s\n' "$left"; exit 1; }
-
-      - name: The behavioural suite refuses a command bundle older than the lockfile
-        id: SCN-FIT-068
-        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
-        shell: bash
-        # The Cucumber step's pass on the fresh tree is the control. The lockfile's time is put back however the step ends, so no later step sees a stale bundle.
-        env:
-          TMPDIR: ${{ runner.temp }}/freshness/tmp
-          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
-        run: |
-          start=$SECONDS
-          mkdir -p "$TMPDIR"
-          kept="$TMPDIR/lockfile-time"
-          touch -r pnpm-lock.yaml "$kept"
-          trap 'touch -r "$kept" pnpm-lock.yaml' EXIT
-          touch pnpm-lock.yaml
-          status=0
-          said="$(pnpm cucumber --tags @SCN-USG-002 2>&1)" || status=$?
-          echo "the step took $((SECONDS - start)) s"
-          if [ "$status" -eq 0 ] || ! grep -qF "OLDER than pnpm-lock.yaml" <<< "$said"; then
-            printf 'the suite exited %s on a bundle older than the lockfile, without refusing it\n' "$status"
-            tail -20 <<< "$said"
-            exit 1
-          fi
-          echo "the suite refused to start: the bundle is older than pnpm-lock.yaml"
 
       - name: ESLint — every rule of eslint.config.js over the tree, and its warnings in the files the push touches
         id: SCN-FIT-073
