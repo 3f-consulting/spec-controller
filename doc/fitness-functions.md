@@ -1,6 +1,6 @@
 # What each fitness function catches
 
-Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most of them automate a kind of comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the red proofs, the mutation scopes and the suite time limits honest.
+Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most of them automate a kind of comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the mutation scopes and the suite time limits honest.
 
 Each table below gives, for each check:
 - the comment it automates;
@@ -178,10 +178,6 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 |---|---|
 | The unit suite runs inside its time limit | 55 |
 | The behavioural suite runs inside its time limit | 34 |
-| A red proof of a unit scenario runs exactly the tests whose titles carry its code | 0 |
-| A red proof of an integration or e2e scenario runs exactly that scenario | 0 |
-| A red proof that selects no test fails, saying no test was selected | 0 |
-| A red proof in which no selected test reported a result fails as not a red | 0 |
 | No test leaves an entry in its temporary directory | 0 |
 | The behavioural suite refuses a command bundle older than the lockfile | 0 |
 | Workflow correctness | 1 |
