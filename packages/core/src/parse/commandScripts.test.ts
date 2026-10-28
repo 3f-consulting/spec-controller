@@ -58,6 +58,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["after a here-document whose unquoted delimiter follows a body line ending in a backslash, which joins them", "cat <<EOF > f\nfoo \\\nEOF\npnpm test", "test"],
     ["across a line ending in a backslash after a # inside a word, which opens no comment", "echo a#b \\\npnpm test", "test"],
     ["in a here-document's body inside a command substitution", "x=$(cat <<EOF\npnpm test\nEOF\n)", "test"],
+    ["after a # a joined line puts inside a word, across a later line ending in a backslash", "echo a\\\n#b \\\npnpm test", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -128,6 +129,12 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["after a here-document inside a command substitution whose body ends at a line opening with its delimiter and holding the )", "x=$(cat <<EOF\nIt's\nEOF)\npnpm test", "test"],
     ["after a here-document inside a command substitution whose body holds a line opening with its delimiter and no )", "x=$(cat <<EOF\nEOFX\nIt's\nEOF\n)\npnpm test", "test"],
     ["after an arithmetic left shift inside a command substitution", "x=$(echo $((1<<2)))\npnpm test", "test"],
+    ["in a here-document fed to bash", "bash <<EOF\npnpm test\nEOF", "test"],
+    ["after a here-document with a quoted delimiter inside a command substitution, whose body line ends in a backslash", "x=$(cat <<'EOF'\nfoo \\\nEOF\n)\npnpm test", "test"],
+    ["after a command substitution whose comment holds a <<", "x=$(echo hi # see <<here\n)\npnpm test", "test"],
+    ["after a command substitution holding an arithmetic command's left shift", "x=$( ((n<<1))\necho hi\n)\npnpm test", "test"],
+    ["after a here-document inside a command substitution inside a parameter's default value", "x=${y:-$(cat <<EOF\nIt's\nEOF\n)}\npnpm test", "test"],
+    ["after a command substitution whose comment holds an apostrophe", "x=$(echo a # it's\n)\npnpm test", "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
   });
@@ -166,6 +173,17 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
   it("recognises the runner of a script run on the line after a comment ending in a backslash", () => {
     expect(shellReading.runsAsCommand("pnpm lint # quick \\\npnpm test", "vitest", { test: "vitest run" })).toBe(true);
   });
+
+  it.each([
+    ["in a here-document fed to bash past its options", "bash -s <<'EOF'\nvitest run\nEOF"],
+    ["on the line after an arithmetic command's left shift", "(( x = 1 << 2 ))\nvitest run"],
+  ] as const)("reads a runner run %s as the command the step runs", (_where, command) => {
+    expect(shellReading.runsAsCommand(command, "vitest run", {})).toBe(true);
+  });
+
+  it.fails("reads a script run after a command substitution holding a parameter that removes a <<, though unbash 6.0.1 does not yet read it so", () => {
+    expect(commandInvokesScript("x=$(echo ${x#<<}\necho hi\n)\npnpm test", "test")).toBe(true);
+  });
 });
 
 describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command that runs the command after it is run", () => {
@@ -174,7 +192,8 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
     ["nice past its adjustment", "nice -n 10 pnpm test", "test"],
     ["nice past a long adjustment", "nice --adjustment 5 pnpm test", "test"],
     ["nohup", "nohup pnpm test", "test"],
-    ["time past its format", "time -p -f %e -o time.log pnpm test", "test"],
+    ["the time keyword", "time pnpm test", "test"],
+    ["the time keyword past its -p", "time -p pnpm test", "test"],
     ["command", "command -p pnpm test", "test"],
     ["exec past its name", "exec -c -l -a tests pnpm test", "test"],
     ["xargs past its counts", "xargs -n 1 -P 4 -s 4096 -L 2 pnpm test", "test"],
@@ -251,10 +270,10 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
     ["env --split-string v pnpm test"],
     ["nice -n v pnpm test"],
     ["nice --adjustment v pnpm test"],
-    ["time -f v pnpm test"],
-    ["time --format v pnpm test"],
-    ["time -o v pnpm test"],
-    ["time --output v pnpm test"],
+    ["env time -f v pnpm test"],
+    ["env time --format v pnpm test"],
+    ["env time -o v pnpm test"],
+    ["env time --output v pnpm test"],
     ["exec -a v pnpm test"],
     ["xargs -a v pnpm test"],
     ["xargs --arg-file v pnpm test"],
@@ -360,6 +379,16 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
     expect(commandInvokesScript(command, script)).toBe(false);
   });
 
+  it.each([
+    ["time -p -f %e -o time.log pnpm test"],
+    ["time -f v pnpm test"],
+    ["time --format v pnpm test"],
+    ["time -o v pnpm test"],
+    ["time --output v pnpm test"],
+  ] as const)("reads %s as the time keyword timing a command named by its first option, which runs no test", (command) => {
+    expect(commandInvokesScript(command, "test")).toBe(false);
+  });
+
   it("recognises the unit runner at a step running the test script behind env", () => {
     const ci = [stepRunning("env CI=1 pnpm test")];
     expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
@@ -444,10 +473,12 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
     ]);
   });
 
-  it.each([["if ! vitest run; then exit 1; fi"]] as const)(
-    "still leaves a step running %s a candidate, since a runner is read through the launchers alone",
+  it.each([["if ! vitest run; then exit 1; fi"], ["! vitest run"]] as const)(
+    "recognises the runner at a step running %s, as a ! before a pipeline is the shell's and no word of its command",
     (command) => {
-      expect(recognisedRunners(workflowSteps([stepRunning(command)]), {}, { unit: "vitest" }, shellReading)).toEqual([]);
+      expect(recognisedRunners(workflowSteps([stepRunning(command)]), {}, { unit: "vitest" }, shellReading)).toEqual([
+        { tier: "unit", runner: "vitest", step: "Check" },
+      ]);
     }
   );
 });

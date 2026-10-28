@@ -229,6 +229,44 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ]);
   });
 
+  it.each([
+    ["(cd x && vitest run) 2>&1 | tee log"],
+    ["(vitest run) 2>&1 | tee log"],
+    ["( case x in a) echo;; esac; vitest run ) | tee log"],
+    ["arr=(a b); (vitest run) | tee log"],
+    ["vitest run 2> err | tee log"],
+    ["vitest run 2>&1 | tee log"],
+    ["vitest run 3>&1 > out 1>&3 | tee log"],
+    ["{ vitest run; } 2>&1 | tee log"],
+    ["vitest run < /dev/null | tee log"],
+    ["vitest run {fd}> x | tee log"],
+    ["vitest run 3>&1 > out 1<&3 | tee log"],
+    ["vitest run 3>&1 > out 1>&3- | tee log"],
+  ] as const)("reads %s as piping the runner's stdout, so the step is a candidate", (line) => {
+    expect(shellReading.runsAsCommand(line, "vitest run", {})).toBe(false);
+  });
+
+  it.each([
+    ["(vitest run) > out | tee log"],
+    ["vitest run > out | tee log"],
+    ["vitest run >> out | tee log"],
+    ["vitest run >| out | tee log"],
+    ["vitest run &> out | tee log"],
+    ["vitest run &>> out | tee log"],
+    ["vitest run >& out | tee log"],
+    ["vitest run 1> out | tee log"],
+    ["vitest run >&2 | tee log"],
+    ["vitest run >&2 |& tee log"],
+    ["vitest run 2>&1 > out | tee log"],
+    ["vitest run > out 2>&1 | tee log"],
+    ["{ vitest run; } > out | tee log"],
+    ["(vitest run > out) | tee log"],
+    ["vitest run >&- | tee log"],
+    ["vitest run 3>&1 > 3 | tee log"],
+  ] as const)("reads %s as sending the runner's stdout off the pipe, so the step runs the runner", (line) => {
+    expect(shellReading.runsAsCommand(line, "vitest run", {})).toBe(true);
+  });
+
   it("leaves a check a candidate where every line pipes, the runner's output piped on a later line", () => {
     const piped = [stepRunning("git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'")];
     expect(recognisedRunners(workflowSteps(piped), noScripts.scripts, integration, shellReading)).toEqual([]);
@@ -272,7 +310,7 @@ describe("[SCN-WFS-003] recognisedRunners — a runner started through a launche
     ["as the later command of a ; list", "pnpm build; vitest run"],
     ["as the first command of an && list", "vitest run && echo done"],
     ["through a launcher in a list", "pnpm build && timeout 60 npx vitest run"],
-    ["through a launcher across a line continuation", "npx\\\nvitest run"],
+    ["through a launcher continued onto the next line after a blank", "npx \\\nvitest run"],
   ] as const;
 
   it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
@@ -281,6 +319,16 @@ describe("[SCN-WFS-003] recognisedRunners — a runner started through a launche
 
   it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
     expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
+  });
+
+  const joined = [["a launcher continued onto the next line with no blank, which joins the two into one name", "npx\\\nvitest run"]] as const;
+
+  it.each(joined)("reads no runner in the step's own command through %s", (_form, line) => {
+    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, unit, shellReading)).toEqual([]);
+  });
+
+  it.each(joined)("reads no runner in a manifest script the step follows through %s", (_form, test) => {
+    expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual([]);
   });
 });
 

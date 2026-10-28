@@ -1,3 +1,5 @@
+import { parse } from "unbash";
+import type { AndOr, Command, CompoundList, Pipeline, PipelineNode, Redirect, Redirected, Redirection, Script, Word } from "unbash";
 import type { ShellReading } from "../domain/uncitedFitnessFunctions.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
@@ -34,8 +36,6 @@ const runsNext = <const T extends Words>(words: T & OneWordEach<T>, ...valued: r
 });
 
 const YARN_FOREACH = runsNext(["yarn", "workspaces", "foreach"], "--from", "--include", "--exclude", "-j", "--jobs");
-
-const SHELL_WORDS = ["!", "(", "{", "if", "then", "elif", "else", "while", "until", "do"] as const;
 
 // Each row's options that take the next word as their value, from the command's own documentation.
 // A row matches a command opening with its words; the first row to match is read, so a longer phrase comes before its first word.
@@ -81,7 +81,6 @@ const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   runsNext(["nyc"], "-r", "--reporter", "--report-dir", "-t", "--temp-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "-i", "--require", "--cwd", "--nycrc-path"),
   runsNext(["c8"], "-r", "--reporter", "-o", "--reports-dir", "--report-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "--temp-directory", "--src"),
   { ...runsNext(["flock"], "-E", "--conflict-exit-code", "-w", "--wait", "--timeout"), operands: 1 },
-  ...SHELL_WORDS.map((word) => runsNext([word])),
 ];
 
 const LAUNCHERS = COMMAND_PREFIXES.filter((prefix) => prefix.launcher);
@@ -139,301 +138,100 @@ const namedOnLine = (line: string, invocation: readonly string[]): boolean => {
   return words.some((_, at) => opensAt(words, invocation, at));
 };
 
-const pastAssignments = (words: readonly string[]): readonly string[] =>
-  words.slice(words.findIndex((word) => !ASSIGNMENT.test(word)));
-
-// A backslash before a newline joins the lines unless another backslash escapes it, so only an odd run of them joins.
-const JOINED_LINE = /(?<!\\)((?:\\\\)*)\\\r?\n/g;
-const SEPARATORS = "&|;()\n";
-const REDIRECTION = /<<<|<<-?|&>|[<>]&|>>|[<>]/y;
-const FILE_DESCRIPTOR = /^\d+$/;
-const PLAIN = /[^\s&|;()<>'"\\`$]+/y;
-const ESCAPED_IN_DOUBLE_QUOTES = '"\\$`';
-const EXPANSIONS = ["$(", "${", "<(", ">("];
-const EXPANSIONS_IN_DOUBLE_QUOTES = ["$(", "${"];
-
-function pastQuote(text: string, from: number, quote: string): number {
-  const end = text.indexOf(quote, from);
-  return end === -1 ? text.length : end + 1;
-}
-
-function pastQuoted(text: string, at: number): number | undefined {
-  const char = text.charAt(at);
-  if (char === "\\") return at + 2;
-  if (char === "'" || char === "`") return pastQuote(text, at + 1, char);
-  return char === '"' ? doubleQuoted(text, at + 1)[1] : undefined;
-}
-
-const pastNoCommand = (): undefined => undefined;
-
-// Where the span holds commands, a here-document opened in it is skipped as it is at the top level.
-function pastBalanced(text: string, from: number, open: string, close: string, commands = false): number {
-  let depth = 1;
-  let at = from;
-  const bodies: Body[] = [];
-  const pastPart = commands ? pastCommandPart : pastNoCommand;
-  while (at < text.length && depth > 0) {
-    const char = text[at];
-    const skipped = pastPart(text, at, bodies) ?? pastQuoted(text, at);
-    if (skipped === undefined) {
-      if (char === open) depth += 1;
-      if (char === close) depth -= 1;
-    }
-    at = skipped ?? at + 1;
-  }
-  return Math.min(at, text.length);
-}
-
-// A substitution or parameter is held whole inside the word it opens, so no command inside it is read.
-function expansionEnd(text: string, at: number, openers: readonly string[]): number | undefined {
-  if (text[at] === "`") return pastQuote(text, at + 1, "`");
-  const opener = openers.find((each) => text.startsWith(each, at));
-  if (opener === undefined) return undefined;
-  const open = opener.slice(-1);
-  const commands = open === "(" && !text.startsWith("$((", at);
-  return pastBalanced(text, at + opener.length, open, open === "{" ? "}" : ")", commands);
-}
-
-function doubleQuotedPart(text: string, at: number): readonly [string, number] {
-  const char = text.charAt(at);
-  if (char === "\\") {
-    const next = text.charAt(at + 1);
-    return [ESCAPED_IN_DOUBLE_QUOTES.includes(next) ? next : char + next, at + 2];
-  }
-  const end = expansionEnd(text, at, EXPANSIONS_IN_DOUBLE_QUOTES);
-  return end === undefined ? [char, at + 1] : [text.slice(at, end), end];
-}
-
-function doubleQuoted(text: string, from: number): readonly [string, number] {
-  let value = "";
-  let at = from;
-  while (at < text.length && text[at] !== '"') {
-    const [part, next] = doubleQuotedPart(text, at);
-    value += part;
-    at = next;
-  }
-  return [value, Math.min(at + 1, text.length)];
-}
-
-interface WordPart {
-  readonly kind: "part";
-  readonly value: string;
-  readonly quoted: boolean;
-  readonly end: number;
-}
-
-interface Mark {
-  readonly kind: "break" | "redirection";
-  readonly end: number;
-}
-
-interface Separator {
-  readonly kind: "separator";
-  readonly pipe: boolean;
-  readonly end: number;
-}
-
-// << or <<- opens a here-document, whose body runs from the next line; <<< is a here-string, a redirection of one word.
-interface HereDocument {
-  readonly kind: "heredoc";
-  readonly tabs: boolean;
-  readonly end: number;
-}
-
-type Token = WordPart | Mark | Separator | HereDocument;
-
-type ReadToken = (text: string, at: number, word: string | undefined) => Token | undefined;
-
-const part = (value: string, quoted: boolean, end: number): WordPart => ({ kind: "part", value, quoted, end });
-
-const blank: ReadToken = (text, at) => {
-  const char = text.charAt(at);
-  return char !== "\n" && /\s/.test(char) ? { kind: "break", end: at + 1 } : undefined;
-};
-
-const comment: ReadToken = (text, at, word) => {
-  if (text[at] !== "#" || word !== undefined) return undefined;
-  const end = text.indexOf("\n", at);
-  return { kind: "break", end: end === -1 ? text.length : end };
-};
-
-const escaped: ReadToken = (text, at) => (text[at] === "\\" ? part(text.charAt(at + 1), true, at + 2) : undefined);
-
-const singleQuoted: ReadToken = (text, at) => {
-  if (text[at] !== "'") return undefined;
-  const close = text.indexOf("'", at + 1);
-  const end = close === -1 ? text.length : close;
-  return part(text.slice(at + 1, end), true, end + 1);
-};
-
-const doubleQuotedWord: ReadToken = (text, at) => {
-  if (text[at] !== '"') return undefined;
-  const [value, end] = doubleQuoted(text, at + 1);
-  return part(value, true, end);
-};
-
-const expansion: ReadToken = (text, at, word) => {
-  const end =
-    text[at] === "(" && word?.endsWith("=") === true
-      ? pastBalanced(text, at + 1, "(", ")")
-      : expansionEnd(text, at, EXPANSIONS);
-  return end === undefined ? undefined : part(text.slice(at, end), false, end);
-};
-
-const redirection: ReadToken = (text, at) => {
-  REDIRECTION.lastIndex = at;
-  const operator = REDIRECTION.exec(text)?.[0];
-  if (operator === undefined) return undefined;
-  const end = at + operator.length;
-  return operator === "<<" || operator === "<<-" ? { kind: "heredoc", tabs: operator === "<<-", end } : { kind: "redirection", end };
-};
-
-// A | hands the command's output to the next, and |& its errors too; || runs the next only if the command fails.
-// The second character of || or |& is read as a separator of its own, which ends no command, since none has begun.
-const separator: ReadToken = (text, at) => {
-  const char = text.charAt(at);
-  if (!SEPARATORS.includes(char)) return undefined;
-  return { kind: "separator", pipe: char === "|" && text.charAt(at + 1) !== "|", end: at + 1 };
-};
-
-function plain(text: string, at: number): WordPart {
-  PLAIN.lastIndex = at;
-  const run = PLAIN.exec(text)?.[0] ?? text.charAt(at);
-  return part(run, false, at + run.length);
-}
-
-const READS: readonly ReadToken[] = [blank, comment, escaped, singleQuoted, doubleQuotedWord, expansion, redirection, separator];
-
-function nextToken(text: string, at: number, word: string | undefined): Token {
-  for (const read of READS) {
-    const token = read(text, at, word);
-    if (token !== undefined) return token;
-  }
-  return plain(text, at);
-}
-
-interface Body {
-  readonly delimiter: string;
-  readonly tabs: boolean;
-  readonly quoted: boolean;
-}
-
-// A here-document's body is whole lines up to the first that is its delimiter, after <<- strips its leading tabs, or the end of the text.
-// Inside a substitution, bash 5 also ends it at a line that opens with the delimiter and holds a ), and reads on from after the delimiter.
-function pastBody(text: string, from: number, { delimiter, tabs }: Body, inSubstitution = false): number {
-  let start = from;
-  for (const line of text.slice(from).split("\n")) {
-    const stripped = tabs ? line.replace(/^\t*/, "") : line;
-    if (stripped === delimiter) return start + line.length;
-    if (inSubstitution && stripped.startsWith(delimiter) && stripped.includes(")", delimiter.length)) {
-      return start + line.length - stripped.length + delimiter.length;
-    }
-    start += line.length + 1;
-  }
-  return text.length;
-}
-
-function delimiterWord(text: string, from: number): readonly [string, number] {
-  let at = from;
-  while (blank(text, at, undefined) !== undefined) at += 1;
-  let word = "";
-  for (let token = nextToken(text, at, word); token.kind === "part"; token = nextToken(text, at, word)) {
-    word += token.value;
-    at = token.end;
-  }
-  return [word, at];
-}
-
-// Inside a substitution: $(( opens arithmetic, whose << is a shift; << or <<- opens a here-document whose body is skipped at the next newline.
-function pastCommandPart(text: string, at: number, bodies: Body[]): number | undefined {
-  if (text.startsWith("$((", at)) return pastBalanced(text, at + 2, "(", ")");
-  if (text[at] === "\n" && bodies.length > 0) {
-    return bodies.splice(0).reduce((from, body) => pastBody(text, from, body, true), at + 1);
-  }
-  const token = redirection(text, at, undefined);
-  if (token?.kind !== "heredoc") return token?.end;
-  const [delimiter, end] = delimiterWord(text, token.end);
-  bodies.push({ delimiter, tabs: token.tabs, quoted: false });
-  return end;
-}
-
 interface SimpleCommand {
   readonly words: readonly string[];
   readonly piped: boolean;
 }
 
-interface CommandList {
-  readonly commands: readonly SimpleCommand[];
-  readonly push: (command: SimpleCommand) => void;
-  readonly read: (token: Token, char: string) => void;
+type Node = PipelineNode | AndOr | CompoundList | Script;
+
+const NOTHING: readonly SimpleCommand[] = [];
+
+const SHELLS = new Set(["bash", "sh"]);
+
+const isWord = (part: Command["suffix"][number]): part is Word => part.type === "Word";
+
+// Each descriptor a command writes to, and whether a pipe another command reads takes what it writes there.
+type Outputs = ReadonlyMap<number, boolean>;
+
+const UNPIPED: Outputs = new Map();
+
+const ONTO_STDOUT = new Set([">", ">>", ">|", ">&", "&>", "&>>"]);
+
+const duplicates = (redirection: Redirection): redirection is Redirect =>
+  redirection.operator === ">&" || redirection.operator === "<&";
+
+const pointing = (outputs: Outputs, descriptor: number, piped: boolean): Outputs => new Map([...outputs, [descriptor, piped]]);
+
+// Each redirection points one descriptor at a file, or at where the descriptor it duplicates points; a {var}> allocation moves none of the standard ones.
+function redirectedOnce(outputs: Outputs, redirection: Redirection): Outputs {
+  const { descriptor } = redirection;
+  if (descriptor?.type === "FileDescriptorVariable") return outputs;
+  const number = descriptor?.value ?? (ONTO_STDOUT.has(redirection.operator) ? 1 : 0);
+  const source = duplicates(redirection) ? Number.parseInt(redirection.target?.value ?? "", 10) : Number.NaN;
+  return pointing(outputs, number, outputs.get(source) ?? false);
 }
 
-// The commands read so far, and each token after them. A subshell's commands start where its ( was read,
-// and a pipe after its ), with only blanks between, reads the output of every one of them.
-function commandList(): CommandList {
-  const commands: SimpleCommand[] = [];
-  const opens: number[] = [];
-  let closed: number | undefined;
-  const read = (token: Token, char: string): void => {
-    if (token.kind === "break") return;
-    if (token.kind === "separator" && token.pipe && closed !== undefined) {
-      commands.splice(closed, Infinity, ...commands.slice(closed).map((command) => ({ ...command, piped: true })));
-    }
-    if (char === "(") opens.push(commands.length);
-    closed = char === ")" ? opens.pop() : undefined;
-  };
-  return { commands, push: (command) => commands.push(command), read };
+const redirected = (outputs: Outputs, redirections: readonly Redirection[]): Outputs => redirections.reduce(redirectedOnce, outputs);
+
+// A here-document fed to bash or sh, given only options, is that shell's script.
+function shellScripts(command: Command, [name, ...args]: readonly [string, ...string[]], outputs: Outputs): readonly SimpleCommand[] {
+  if (!SHELLS.has(name) || !args.every((arg) => arg.startsWith("-"))) return NOTHING;
+  return command.redirects.flatMap((redirect) => (redirect.type === "HereDoc" ? walk(parse(redirect.body.text), outputs) : NOTHING));
 }
 
-// A comment ends at its newline as written, so a newline the join blanked at a comment's end is put back.
-function commentLineEnd(text: string, source: string, at: number, word: string | undefined): string {
-  if (comment(source, at, word) === undefined) return source;
-  const end = text.indexOf("\n", at);
-  return source[end] === text[end] ? source : `${source.slice(0, end)}\n${source.slice(end + 1)}`;
+// A command's words are its name and arguments, quotes removed; its assignments and redirections are not words.
+function simple(command: Command, inherited: Outputs): readonly SimpleCommand[] {
+  if (command.name === undefined) return NOTHING;
+  const outputs = redirected(inherited, command.redirects);
+  const words: [string, ...string[]] = [command.name.value, ...command.suffix.filter(isWord).map((word) => word.value)];
+  return [{ words, piped: outputs.get(1) ?? false }, ...shellScripts(command, words, outputs)];
 }
 
-// The simple commands the shell runs from the text, each as its words with their quotes removed, and whether a pipe reads its output.
-// A redirection's target word is dropped, and a quote that never closes runs to the end of the text, as the shell reads up to its syntax error.
-// A here-document's delimiter is dropped as a target is, and its body, skipped at the line's end, is text in which nothing is read.
-// A backslash-newline is joined as blanks of its own length, so a body whose delimiter is quoted, where the shell joins no lines, is read from the text as written.
+type Parent = Exclude<Node, Command | Pipeline | Redirected>;
+
+type Children = { readonly [Type in Parent["type"]]?: (node: Extract<Parent, { readonly type: Type }>) => readonly (Node | undefined)[] };
+
+const commandsOf = (node: CompoundList | Script): readonly Node[] => node.commands.map((statement) => statement.command);
+
+const CHILDREN: Children = {
+  Script: commandsOf,
+  CompoundList: commandsOf,
+  AndOr: (node) => node.commands,
+  Function: (node) => [node.body],
+  If: (node) => [node.clause, node.then, ...node.elif.flatMap((elif) => [elif.clause, elif.then]), node.else],
+  For: (node) => [node.body],
+  While: (node) => [node.clause, node.body],
+  Subshell: (node) => [node.body],
+  BraceGroup: (node) => [node.body],
+  Case: (node) => node.items.map((item) => item.body),
+};
+
+const childrenOf = (node: Parent): readonly (Node | undefined)[] =>
+  (CHILDREN[node.type] as ((parent: Parent) => readonly (Node | undefined)[]) | undefined)?.(node) ?? [];
+
+// Every stage of a pipeline but the last writes its stdout to a pipe before its own redirections apply; |& joins stderr to it only after them.
+function pipeline(node: Pipeline, outputs: Outputs): readonly SimpleCommand[] {
+  const last = node.commands.length - 1;
+  return node.commands.flatMap((stage, at) => walk(stage, at < last ? pointing(outputs, 1, true) : outputs));
+}
+
+// A command or process substitution is held inside the word it opens, so no command inside it is read.
+function walk(node: Node, outputs: Outputs): readonly SimpleCommand[] {
+  if (node.type === "Command") return simple(node, outputs);
+  if (node.type === "Pipeline") return pipeline(node, outputs);
+  if (node.type === "Redirected") return walk(node.command, redirected(outputs, node.redirects));
+  return childrenOf(node).flatMap((child) => (child === undefined ? NOTHING : walk(child, outputs)));
+}
+
+const READ = new Map<string, readonly SimpleCommand[]>();
+
+// The simple commands the shell runs from the text, each as its words, and whether a pipe reads its output. Each distinct text is parsed once.
 function simpleCommands(text: string): readonly SimpleCommand[] {
-  let source = text.replace(JOINED_LINE, (joined, pairs: string) => pairs.padEnd(joined.length));
-  const { commands, push, read } = commandList();
-  const bodies: Body[] = [];
-  let words: string[] = [];
-  let word: string | undefined;
-  let quoted = false;
-  let target: Mark | HereDocument | undefined;
-  const endWord = (): void => {
-    if (word === undefined) return;
-    if (target === undefined) words.push(word);
-    else if (target.kind === "heredoc") bodies.push({ delimiter: word, tabs: target.tabs, quoted });
-    target = undefined;
-    word = undefined;
-    quoted = false;
-  };
-  const endCommand = (piped: boolean): void => {
-    endWord();
-    target = undefined;
-    if (words.length > 0) push({ words, piped });
-    words = [];
-  };
-  for (let at = 0; at < source.length; ) {
-    source = commentLineEnd(text, source, at, word);
-    const token = nextToken(source, at, word);
-    if (token.kind === "part") {
-      word = (word ?? "") + token.value;
-      quoted ||= token.quoted;
-    } else if (token.kind === "separator") endCommand(token.pipe);
-    else {
-      if (token.kind !== "break" && !quoted && FILE_DESCRIPTOR.test(word ?? "")) word = undefined;
-      endWord();
-      if (token.kind !== "break") target = token;
-    }
-    read(token, source.charAt(at));
-    at = source[at] === "\n" ? bodies.splice(0).reduce((from, body) => pastBody(body.quoted ? text : source, from, body), token.end) : token.end;
-  }
-  endCommand(false);
+  const known = READ.get(text);
+  if (known !== undefined) return known;
+  const commands = walk(parse(text), UNPIPED);
+  READ.set(text, commands);
   return commands;
 }
 
@@ -488,13 +286,13 @@ function scriptsRunBy(head: readonly string[]): readonly (string | undefined)[] 
 
 type Heads = (command: string) => readonly (readonly string[])[];
 
-const headsOf: Heads = (command) => simpleCommands(command).map(({ words }) => pastAssignments(words));
+const headsOf: Heads = (command) => simpleCommands(command).map(({ words }) => words);
 
 // Only a pipeline's last stage is read as the command a step runs: what a pipe reads is another command's output.
 const lastStageHeadsOf: Heads = (command) =>
   simpleCommands(command)
     .filter(({ piped }) => !piped)
-    .map(({ words }) => pastAssignments(words));
+    .map(({ words }) => words);
 
 export function commandInvokesScript(command: string, script: string): boolean {
   return headsOf(command).some((head) => scriptsRunBy(head).includes(script));
