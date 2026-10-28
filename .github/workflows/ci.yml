@@ -53,7 +53,7 @@ jobs:
       - name: Resolve the evidence root
         run: |
           echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber" "$RUNNER_TEMP/lint-reports"
+          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber"
 
       # The docs: package scripts run Vale. Its version and checksum move together; the checksum is the Linux_64-bit line of the release's vale_<version>_checksums.txt.
       - name: Install dependencies
@@ -730,30 +730,10 @@ jobs:
           advanced-security: false
           online-audits: false
 
-      # Every Semgrep rule runs in one scan, which writes one report; each rule's own step reads only its findings.
-      - name: Scan every Semgrep rule into one report
+      - name: Semgrep — every rule under .semgrep/ over the packages
+        id: SCN-FIT-074
         if: always()
-        run: bash scripts/semgrep-report.sh "$RUNNER_TEMP/lint-reports/semgrep.json"
-
-      - name: No child process runs through a shell
-        id: SCN-FIT-051
-        if: always()
-        run: jq -e -r --arg rule no-shell-child-process -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
-
-      - name: No code is built from a string while the program runs
-        id: SCN-FIT-052
-        if: always()
-        run: jq -e -r --arg rule no-code-from-strings -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
-
-      - name: No regular expression is built from a value the program receives
-        id: SCN-FIT-053
-        if: always()
-        run: jq -e -r --arg rule no-regexp-from-an-argument -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
-
-      - name: A file is written only where its location has been checked
-        id: SCN-FIT-054
-        if: always()
-        run: jq -e -r --arg rule writes-only-where-the-location-is-checked -f scripts/semgrep-findings.jq "$RUNNER_TEMP/lint-reports/semgrep.json"
+        run: semgrep scan --config .semgrep/ --error --metrics=off --disable-version-check packages
 
       - name: Mutation verdict recorded
         id: SCN-FIT-002

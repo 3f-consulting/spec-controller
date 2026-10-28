@@ -340,8 +340,8 @@ hashes. Its first line is the `pip-compile` command that wrote it. Dependabot do
 person regenerates the lock with that command, under the runner's `python3`, to move the version.
 The installed venv is cached under a key of the runner's OS, its `python3` version and the lock's
 hash: a run whose key is cached restores it and installs nothing, and a new lock installs afresh.
-Each rule is its own file in `.semgrep/`, with no registry ruleset and metrics off. One scan runs
-every rule and writes a JSON report, and each rule's own step reads only that rule's findings.
+Each rule is its own file in `.semgrep/`, with no registry ruleset and metrics off. One step scans
+the packages with every rule in that directory, and Semgrep names the rule in each finding.
 
 ---
 

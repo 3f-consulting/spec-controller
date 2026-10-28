@@ -40,7 +40,6 @@
       "ci.yml:ci:Read the Python Semgrep runs on",
       "ci.yml:ci:Install Semgrep",
       "ci.yml:ci:New names this change introduces",
-      "ci.yml:ci:Scan every Semgrep rule into one report",
       "ci.yml:ci:Hand the built packages to the release"
     ]
   },

@@ -61,6 +61,12 @@ No check holds it. Availability and recoverability do not apply: spec-controller
 | Check | Real catches |
 |---|---|
 | Workflow security | 1 |
+| Semgrep: four security patterns | 0 |
+
+Semgrep runs this repository's four rules, one file each under [`.semgrep/`](../.semgrep/), over the packages, and its output names the rule that failed. In the counting window each was a check of its own, so each keeps its own count:
+
+| Rule | Real catches |
+|---|---|
 | No child process runs through a shell | 0 |
 | No code is built from a string while the program runs | 0 |
 | No regular expression is built from a value the program receives | 0 |

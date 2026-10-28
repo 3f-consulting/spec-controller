@@ -81,6 +81,9 @@ Feature: The fitness functions this repository carries, one scenario per check
     only core's workflow module and the run store import the YAML parser. Every break fails the
     check; there is no list of tolerated breaks.
 
+  @fitness @SCN-FIT-074
+  Scenario: the packages contain none of the patterns this repository forbids for security: a child process started through a shell, code built from a string, a regular expression built from an argument, or a file written outside the modules that check its location
+
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
 
@@ -207,26 +210,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
-
-  Rule: no child process runs through a shell
-
-    @fitness @SCN-FIT-051
-    Scenario: a child process started through a shell reds the build
-
-  Rule: no code is built from a string while the program runs
-
-    @fitness @SCN-FIT-052
-    Scenario: code evaluated from a string reds the build
-
-  Rule: no regular expression is built from a value the program receives
-
-    @fitness @SCN-FIT-053
-    Scenario: a regular expression built from a function's argument reds the build
-
-  Rule: a file is written only where its location has been checked
-
-    @fitness @SCN-FIT-054
-    Scenario: a file written outside the modules that check the output location reds the build
 
   Rule: a unit test citing a domain concept's scenario lives in core's domain, never in an adapter, and a feature is a domain concept when core's domain has a module named for it
 
