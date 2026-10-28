@@ -121,9 +121,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-029
     Scenario: every step definition matches a step in a scenario Cucumber runs
 
-    @fitness @SCN-FIT-044
-    Scenario: every scenario Cucumber runs takes all its steps from one step-definition file
-
   Rule: a Given, When or Then states the rule it checks, never the interface it is observed through
 
     @fitness @SCN-FIT-030

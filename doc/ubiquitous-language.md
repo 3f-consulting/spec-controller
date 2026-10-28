@@ -100,6 +100,8 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | `allocate` | The command that prints the next `@SCN` code for a feature part: one past the highest code the repository has ever carried. |
 | host modifier | A flag that goes before the command (`--store`, `--run-id`). A command, or `--help`, must follow it. |
 | re-render | `--render-from-json`: Markdown rebuilt from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. |
+| evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report, each named by its own flag. |
+| report destination | Where a `--format` sends its report: standard output, or the file named after the colon. |
 | `--exit-zero` | The same report, but exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never changes the exit code of a run that could not judge (unsound, nothing to reconcile, or an unexpected error before the verdict). The on-ramp before gating. |
 | run verdict | The whole run's headline and its exit code: BALANCED, OUT-OF-BALANCE, UNSOUND, PENDING, NOTHING TO RECONCILE or SCENARIO CODE ERRORS. |
 | verdict ladder | The order that decides the run verdict: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). An unexpected error before any verdict (`6`) is not on the ladder. A run that reaches its verdict keeps it. |

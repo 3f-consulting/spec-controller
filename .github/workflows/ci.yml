@@ -229,13 +229,6 @@ jobs:
         run: |
           node_modules/.bin/cucumber-js --dry-run --format usage-json | jq -r '.[] | select((.matches | length) == 0) | "\(.uri):\(.line): \(.pattern) matches no step Cucumber runs"' | awk '{ print } END { exit NR > 0 }'
 
-      - name: Every scenario takes its steps from one step-definition file
-        id: SCN-FIT-044
-        if: always()
-        shell: bash
-        run: |
-          node_modules/.bin/cucumber-js --dry-run --format message | jq -rn '[inputs] | (map(.stepDefinition // empty | {key: .id, value: .sourceReference.uri}) | from_entries) as $file | (map(.pickle // empty | {key: .id, value: "\(.uri): \(.name)"}) | from_entries) as $name | .[] | .testCase // empty | ([.testSteps[].stepDefinitionIds[]? | $file[.]] | unique) as $files | select(($files | length) > 1) | "\($name[.pickleId]) takes steps from \($files | join(", "))"' | awk '{ print } END { exit NR > 0 }'
-
       - name: Typecheck
         id: SCN-FIT-011
         if: always()

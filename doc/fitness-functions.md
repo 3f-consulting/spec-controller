@@ -164,7 +164,6 @@ Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tra
 | Check | Real catches |
 |---|---|
 | No step on a scenario Cucumber does not run | 0 |
-| Every scenario takes its steps from one step-definition file | 0 |
 | No Given, When or Then names an interface mechanic | 0 |
 | ESLint: evidence layers cross a seam | 0 |
 | No unused step definition | 0 |

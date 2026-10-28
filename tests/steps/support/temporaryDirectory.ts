@@ -2,19 +2,18 @@ import { After } from "@cucumber/cucumber";
 import { chmodSync, lstatSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { SpecControllerWorld } from "./world.js";
 
-const made: string[] = [];
-
-export function temporaryDirectory(prefix: string): string {
+export function temporaryDirectory(world: SpecControllerWorld, prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
+  world.temporaryDirectories.push(dir);
   return dir;
 }
 
 // Every step file that makes a directory imports this module before it registers its own hooks, and Cucumber runs
 // After hooks in reverse order of registration, so this removal runs after each file's own hooks have restored modes.
-After(function () {
-  for (const dir of made.splice(0)) {
+After(function (this: SpecControllerWorld) {
+  for (const dir of this.temporaryDirectories.splice(0)) {
     giveOwnerAccessBack(dir);
     rmSync(dir, { recursive: true, force: true });
   }

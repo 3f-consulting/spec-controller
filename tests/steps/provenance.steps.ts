@@ -1,19 +1,13 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  realpathSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { constants } from "node:os";
-import path from "node:path";
+import path, { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
+import type { Provenance, Room, RoomCommand, SpecControllerWorld } from "./support/world.js";
 
 interface FinishedCommand {
   readonly status: number | null;
@@ -35,11 +29,13 @@ const PACKAGE_DIRS = ["packages/core", "packages/spec-controller"] as const;
 const ASK = ["balance", "--features", "features"] as const;
 
 const TOOL_SHA_LINE = "- Tool SHA: ";
+
 const TOOL_VERSION_LINE = "- Tool version: ";
+
 const NO_CHECKOUT = "unknown (not a git checkout)";
 
-function scratch(purpose: string): string {
-  return realpathSync(temporaryDirectory(`spec-controller-rpt029-${purpose}-`));
+function scratch(world: SpecControllerWorld, purpose: string): string {
+  return realpathSync(temporaryDirectory(world, `spec-controller-rpt029-${purpose}-`));
 }
 
 type Ran = FinishedCommand & { stdout: string; stderr: string };
@@ -68,8 +64,8 @@ function repositoryAt(dir: string, subject: string): string {
   return inDir("rev-parse", "HEAD");
 }
 
-function consumerRoom(purpose: string): string {
-  const dir = scratch(purpose);
+function consumerRoom(world: SpecControllerWorld, purpose: string): string {
+  const dir = scratch(world, purpose);
   assert.ok(!dir.startsWith(repoRoot), `a consumer room must stand outside this repository, and ${dir} does not`);
   writeFileSync(
     path.join(dir, "package.json"),
@@ -99,12 +95,6 @@ interface PackedPackage {
   readonly name: string;
   readonly version: string;
   readonly bin?: string;
-}
-
-interface RoomCommand {
-  readonly command: string;
-  readonly args: readonly string[];
-  readonly cwd: string;
 }
 
 function packedPackageAt(packageDir: string): PackedPackage {
@@ -151,28 +141,6 @@ function pack(packageDir: string, packDir: string): void {
   );
 }
 
-interface Room {
-  readonly where: string;
-  readonly start: RoomCommand;
-  readonly ownHead: string | null;
-}
-
-interface Provenance {
-  readonly toolSha: string;
-  readonly toolVersion: string;
-}
-
-interface Arrangement {
-  readonly insideARepository: Room;
-  readonly outsideEveryRepository: Room;
-  readonly throughASymlink: Room;
-  readonly toolCheckoutHead: string;
-  readonly packedVersion: string;
-}
-
-let arranged: Arrangement;
-let reported: { insideARepository: Provenance; outsideEveryRepository: Provenance; throughASymlink: Provenance };
-
 interface LinkedRoom {
   readonly toolCheckoutHead: string;
   readonly linkingConsumer: string;
@@ -184,13 +152,13 @@ function copyInstall(installedModules: string, into: string): void {
   cpSync(installedModules, path.join(into, "node_modules"), { recursive: true, verbatimSymlinks: true });
 }
 
-function linkedRoom(installedModules: string, cliName: string): LinkedRoom {
-  const toolCheckout = scratch("tool-checkout");
+function linkedRoom(world: SpecControllerWorld, installedModules: string, cliName: string): LinkedRoom {
+  const toolCheckout = scratch(world, "tool-checkout");
   cpSync(path.join(installedModules, cliName), toolCheckout, { recursive: true, verbatimSymlinks: true });
   const toolCheckoutHead = repositoryAt(toolCheckout, "the tool's own commit");
   copyInstall(installedModules, toolCheckout);
 
-  const linkingConsumer = consumerRoom("linked");
+  const linkingConsumer = consumerRoom(world, "linked");
   const linkingConsumerHead = repositoryAt(linkingConsumer, "the linking consumer's own commit");
   mkdirSync(path.join(linkingConsumer, "node_modules"), { recursive: true });
   const linked = path.join(linkingConsumer, "node_modules", cliName);
@@ -205,8 +173,8 @@ function linkedRoom(installedModules: string, cliName: string): LinkedRoom {
 
 Given(
   "this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool",
-  function () {
-    const packDir = scratch("pack");
+  function (this: SpecControllerWorld) {
+    const packDir = scratch(this, "pack");
     const packages: PackedPackage[] = PACKAGE_DIRS.map((dir) => {
       const packageDir = path.join(repoRoot, dir);
       pack(packageDir, packDir);
@@ -215,23 +183,23 @@ Given(
     const cli = packages.find((packed): packed is PackedPackage & { bin: string } => packed.bin !== undefined);
     assert.ok(cli !== undefined, "one of the packed packages installs the command these rooms run");
 
-    const gitRoom = consumerRoom("in-repo");
+    const gitRoom = consumerRoom(this, "in-repo");
     const gitRoomHead = repositoryAt(gitRoom, "the consumer's own commit");
     const installed = roomPlan(packages, packDir, gitRoom, cli.bin);
     const install = finish(installed.install.command, installed.install.args, installed.install.cwd);
     assert.equal(exitCodeOf(install), 0, `the packed tarballs must install into ${gitRoom}. It said:\n${install.stderr}`);
     const installedModules = path.join(gitRoom, "node_modules");
 
-    const plainRoom = consumerRoom("no-repo");
+    const plainRoom = consumerRoom(this, "no-repo");
     assert.ok(
       !existsSync(path.join(plainRoom, ".git")),
       "the second room must not be a git repository — that is what makes it the control",
     );
     copyInstall(installedModules, plainRoom);
 
-    const { toolCheckoutHead, linkingConsumer, linkingConsumerHead, linked } = linkedRoom(installedModules, cli.name);
+    const { toolCheckoutHead, linkingConsumer, linkingConsumerHead, linked } = linkedRoom(this, installedModules, cli.name);
 
-    arranged = {
+    this.arranged = {
       insideARepository: { where: "the room that is a git repository", start: installed.run, ownHead: gitRoomHead },
       outsideEveryRepository: {
         where: "the room that is not a git repository",
@@ -249,7 +217,7 @@ Given(
   },
 );
 
-When("each one runs a reconcile and the provenance it renders is read", function () {
+When("each one runs a reconcile and the provenance it renders is read", function (this: SpecControllerWorld) {
   const read = (room: Room): Provenance => {
     const ran = finish(room.start.command, room.start.args, room.start.cwd);
     assert.ok(
@@ -259,10 +227,10 @@ When("each one runs a reconcile and the provenance it renders is read", function
     return { toolSha: factOf(ran.stdout, TOOL_SHA_LINE, room), toolVersion: factOf(ran.stdout, TOOL_VERSION_LINE, room) };
   };
 
-  reported = {
-    insideARepository: read(arranged.insideARepository),
-    outsideEveryRepository: read(arranged.outsideEveryRepository),
-    throughASymlink: read(arranged.throughASymlink),
+  this.reported = {
+    insideARepository: read(this.arranged.insideARepository),
+    outsideEveryRepository: read(this.arranged.outsideEveryRepository),
+    throughASymlink: read(this.arranged.throughASymlink),
   };
 });
 
@@ -275,50 +243,184 @@ function factOf(report: string, prefix: string, room: Room): string {
   return line.slice(prefix.length).trim();
 }
 
-Then("the one installed inside a git repository reports no tool SHA, and does not name that repository's commit", function () {
+Then("the one installed inside a git repository reports no tool SHA, and does not name that repository's commit", function (this: SpecControllerWorld) {
   assert.equal(
-    reported.insideARepository.toolSha,
+    this.reported.insideARepository.toolSha,
     NO_CHECKOUT,
     "an installed tool has no checkout of its own, whatever repository it is sitting inside",
   );
   assert.notEqual(
-    reported.insideARepository.toolSha,
-    arranged.insideARepository.ownHead,
+    this.reported.insideARepository.toolSha,
+    this.arranged.insideARepository.ownHead,
     "the reported tool SHA must not be the consumer's own commit",
   );
 });
 
-Then("the one installed outside any repository reports no tool SHA", function () {
+Then("the one installed outside any repository reports no tool SHA", function (this: SpecControllerWorld) {
   assert.equal(
-    reported.outsideEveryRepository.toolSha,
+    this.reported.outsideEveryRepository.toolSha,
     NO_CHECKOUT,
     "the arm that was already right must stay right",
   );
 });
 
-Then("the one reached from a checkout of the tool reports that checkout's commit, not the consumer's", function () {
+Then("the one reached from a checkout of the tool reports that checkout's commit, not the consumer's", function (this: SpecControllerWorld) {
   assert.equal(
-    reported.throughASymlink.toolSha,
-    arranged.toolCheckoutHead,
+    this.reported.throughASymlink.toolSha,
+    this.arranged.toolCheckoutHead,
     "a tool reached through a node_modules symlink to a checkout of itself is still a checkout of itself",
   );
   assert.notEqual(
-    reported.throughASymlink.toolSha,
-    arranged.throughASymlink.ownHead,
+    this.reported.throughASymlink.toolSha,
+    this.arranged.throughASymlink.ownHead,
     "and the commit it reports is its own, never the consumer's",
   );
 });
 
-Then("all three still report the tool's version", function () {
+Then("all three still report the tool's version", function (this: SpecControllerWorld) {
   for (const [room, provenance] of [
-    [arranged.insideARepository, reported.insideARepository],
-    [arranged.outsideEveryRepository, reported.outsideEveryRepository],
-    [arranged.throughASymlink, reported.throughASymlink],
+    [this.arranged.insideARepository, this.reported.insideARepository],
+    [this.arranged.outsideEveryRepository, this.reported.outsideEveryRepository],
+    [this.arranged.throughASymlink, this.reported.throughASymlink],
   ] as const) {
     assert.equal(
       provenance.toolVersion,
-      arranged.packedVersion,
+      this.arranged.packedVersion,
       `a run stays attributable by version even where no SHA can be read, and ${room.where} lost it`,
     );
   }
 });
+
+function writeTargetReports(repo: string): void {
+  const vitestLocator = join(repo, "src", "widget.test.ts");
+  writeFileSync(
+    join(repo, "vitest.json"),
+    JSON.stringify({
+      testResults: [
+        {
+          name: vitestLocator,
+          assertionResults: [
+            { fullName: "[SCN-TGT-001] the target unit scenario is proven", status: "passed" },
+            { fullName: "an ordinary unit test carrying no @SCN id", status: "passed" },
+          ],
+        },
+      ],
+    })
+  );
+
+  const cucumberLocator = join(repo, "features", "sample.feature");
+  writeFileSync(
+    join(repo, "cucumber.json"),
+    JSON.stringify([
+      {
+        uri: cucumberLocator,
+        elements: [{ tags: [{ name: "@smoke" }], steps: [{ result: { status: "passed" } }] }],
+      },
+    ])
+  );
+}
+
+Given(
+  "a target repo outside the run's working directory whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
+  function (this: SpecControllerWorld) {
+    this.targetRepo = realpathSync(temporaryDirectory(this, "spec-controller-rpt016-target-"));
+    mkdirSync(join(this.targetRepo, "features"), { recursive: true });
+
+    writeFileSync(
+      join(this.targetRepo, "features", "sample.feature"),
+      [
+        "@TGT",
+        "Feature: a portable-paths fixture target",
+        "",
+        "  Rule: the target names a unit scenario",
+        "",
+        "    @unit @SCN-TGT-001",
+        "    Scenario: the target names a unit-level scenario",
+        "      Given the target repo's source",
+        "",
+      ].join("\n")
+    );
+
+    writeTargetReports(this.targetRepo);
+
+    this.foreignCwd = realpathSync(temporaryDirectory(this, "spec-controller-rpt016-cwd-"));
+    this.outDir = realpathSync(temporaryDirectory(this, "spec-controller-rpt016-out-"));
+  }
+);
+
+When(
+  "balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON",
+  function (this: SpecControllerWorld) {
+    const mdPath = join(this.outDir, "spec-reconciliation.md");
+    const jsonPath = join(this.outDir, "spec-reconciliation.json");
+    const argv = [
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
+      "--features", join(this.targetRepo, "features"),
+      "--vitest", join(this.targetRepo, "vitest.json"),
+      "--cucumber", join(this.targetRepo, "cucumber.json"),
+      "--target", "cross-repo-target",
+      "--format", `md:${mdPath}`,
+      "--format", `json:${jsonPath}`,
+    ];
+    const result = spawnSync(NODE, argv, {
+      cwd: this.foreignCwd,
+      encoding: "utf8",
+    });
+    assert.equal(
+      result.error,
+      undefined,
+      `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
+    );
+    assert.equal(
+      result.status,
+      1,
+      `expected the CLI to exit 1 (out-of-balance); got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+    assert.ok(existsSync(mdPath) && existsSync(jsonPath), `expected both reports persisted in ${this.outDir}`);
+    this.markdown = readFileSync(mdPath, "utf8");
+    this.jsonText = readFileSync(jsonPath, "utf8");
+  }
+);
+
+Then(
+  "the saved reconciliation, in both markdown and JSON, carries none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root",
+  function (this: SpecControllerWorld) {
+    assert.ok(
+      !this.markdown.includes(this.targetRepo),
+      `expected the persisted markdown to carry NONE of the target's absolute paths "${this.targetRepo}"; got:\n${this.markdown}`
+    );
+    assert.ok(
+      !this.jsonText.includes(this.targetRepo),
+      `expected the persisted JSON to carry NONE of the target's absolute paths "${this.targetRepo}"; got:\n${this.jsonText}`
+    );
+
+    assert.ok(
+      this.markdown.includes("src/widget.test.ts"),
+      `expected the markdown to carry the repo-relative locator "src/widget.test.ts"; got:\n${this.markdown}`
+    );
+    const parsed = JSON.parse(this.jsonText) as {
+      runProvenance?: { inputs?: Record<string, string> };
+      ledger?: { claimReconciliations: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }> };
+    };
+    assert.equal(
+      parsed.runProvenance?.inputs?.features,
+      "features",
+      `expected runProvenance.inputs.features "features" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
+    );
+    assert.equal(
+      parsed.runProvenance?.inputs?.vitest,
+      "vitest.json",
+      `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
+    );
+    const unnamedClaimRow = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
+    assert.ok(unnamedClaimRow, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${this.jsonText}`);
+    const locators = unnamedClaimRow!.qualityCheckReconciliations
+      .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
+      .map((o) => o.locator!);
+    assert.ok(
+      locators.length > 0 && locators.every((l) => !l.startsWith("/")),
+      `expected the unnamed claim's evidence observation locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`
+    );
+  }
+);

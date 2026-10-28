@@ -1,44 +1,35 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
+import type { FitnessTarget, SpecControllerWorld } from "./support/world.js";
 
 const WATERMELON = "Evidence Observation is passing but its check could not fail its job";
 
-interface UsgFixture {
-  features: string;
-  ci: string;
-  packageJson: string;
-}
-
-const USG_FIXTURE: UsgFixture = {
+const LINT_CHECKS_TARGET: FitnessTarget = {
   features: "tests/fixtures/usg/features",
   ci: "tests/fixtures/usg/ci.yml",
   packageJson: "tests/fixtures/usg/package.json",
 };
 
-const USG_SIBLING_FIXTURE: UsgFixture = {
+const NIGHTLY_LINT_TARGET: FitnessTarget = {
   features: "tests/fixtures/usg-sibling/features",
   ci: "tests/fixtures/usg-sibling/workflows",
   packageJson: "tests/fixtures/usg-sibling/package.json",
 };
 
-let activeFixture: UsgFixture;
-let activeDir: string;
-let activeMd: string;
-
-Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
-  activeFixture = USG_FIXTURE;
-  activeDir = temporaryDirectory("spec-controller-usg001-");
+Given("a target whose CI runs the lint:foo and lint:bar checks", function (this: SpecControllerWorld) {
+  this.fitnessTarget = LINT_CHECKS_TARGET;
+  this.outDir = temporaryDirectory(this, "spec-controller-usg001-");
 });
 
-Given("only lint:foo is cited by a scenario", function () {
+Given("only lint:foo is cited by a scenario", function (this: SpecControllerWorld) {
 });
 
-function renderReportFor(fixture: UsgFixture, dir: string): string {
+function renderReportFor(fixture: FitnessTarget, dir: string): string {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   const reportPath = join(dir, "spec-reconciliation.md");
@@ -64,77 +55,75 @@ function renderReportFor(fixture: UsgFixture, dir: string): string {
   return readFileSync(reportPath, "utf8");
 }
 
-When("the reconciliation report is rendered for the target", function () {
-  activeMd = renderReportFor(activeFixture, activeDir);
+When("the reconciliation report is rendered for the target", function (this: SpecControllerWorld) {
+  this.markdown = renderReportFor(this.fitnessTarget, this.outDir);
 });
 
 Then(
   "lint:foo is attributed to the scenario citing it, not reported uncited",
-  function () {
+  function (this: SpecControllerWorld) {
     assert.ok(
-      activeMd.includes(
+      this.markdown.includes(
         "| SCN-TGT-001 | Evidence Observation satisfies its Evidence Obligation |"
       ),
       `expected lint:foo's evidence observation posted to SCN-TGT-001, satisfied — the ` +
         `attribution the citation seam produces. Asserting only that no uncited evidence observation names ` +
         `lint:foo is the weaker claim, and a reader posting the evidence observation to a scenario the corpus ` +
-        `never wrote satisfies it too. Got:\n${activeMd}`
+        `never wrote satisfies it too. Got:\n${this.markdown}`
     );
-    const unnamedClaimRow = activeMd.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
+    const unnamedClaimRow = this.markdown.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
     assert.ok(
       !unnamedClaimRow?.includes("lint:foo"),
       `a scenario cites lint:foo; the unnamed claim's row must not name it at all; got:\n${unnamedClaimRow}`
     );
     assert.ok(
-      activeMd.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 uncited fitness function(s)); got:\n${activeMd}`
+      this.markdown.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
+      `expected lint:foo folded into the running volume (2 run, 1 uncited fitness function(s)); got:\n${this.markdown}`
     );
   }
 );
 
-let siblingStatus: number | null;
-
 Given(
   "a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly",
-  function () {
-    activeFixture = USG_SIBLING_FIXTURE;
-    activeDir = temporaryDirectory("spec-controller-usg006-");
+  function (this: SpecControllerWorld) {
+    this.fitnessTarget = NIGHTLY_LINT_TARGET;
+    this.outDir = temporaryDirectory(this, "spec-controller-usg006-");
   },
 );
 
-Given("a scenario cites lint:nightly", function () {
+Given("a scenario cites lint:nightly", function (this: SpecControllerWorld) {
 });
 
 When(
   "the reconciliation report is rendered over the target's workflow directory",
-  function () {
+  function (this: SpecControllerWorld) {
     const repoRoot = process.cwd();
     const abs = (p: string): string => join(repoRoot, p);
-    const reportPath = join(activeDir, "spec-reconciliation.md");
+    const reportPath = join(this.outDir, "spec-reconciliation.md");
     const result = spawnSync(
       NODE,
       [
         ...SPEC_CONTROLLER_ARGV,
         "balance",
-        "--features", abs(activeFixture.features),
-        "--ci", abs(activeFixture.ci),
-        "--package-json", abs(activeFixture.packageJson),
+        "--features", abs(this.fitnessTarget.features),
+        "--ci", abs(this.fitnessTarget.ci),
+        "--package-json", abs(this.fitnessTarget.packageJson),
         "--target", "usg-sibling-fixture",
         "--format", `md:${reportPath}`,
       ],
-      { cwd: activeDir, encoding: "utf8" },
+      { cwd: this.outDir, encoding: "utf8" },
     );
     assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
     assert.ok(
       existsSync(reportPath),
       `expected a report to be written; stderr:\n${result.stderr}`,
     );
-    siblingStatus = result.status;
-    activeMd = readFileSync(reportPath, "utf8");
+    this.siblingStatus = result.status;
+    this.markdown = readFileSync(reportPath, "utf8");
   },
 );
 
-const USG_SIBLING_UNCITED_FIXTURE: UsgFixture = {
+const NIGHTLY_SWEEP_TARGET: FitnessTarget = {
   features: "tests/fixtures/usg-sibling-uncited/features",
   ci: "tests/fixtures/usg-sibling-uncited/workflows",
   packageJson: "tests/fixtures/usg-sibling-uncited/package.json",
@@ -142,80 +131,80 @@ const USG_SIBLING_UNCITED_FIXTURE: UsgFixture = {
 
 Given(
   "a target whose nightly.yml runs lint:sweep and whose ci.yml does not",
-  function () {
-    activeFixture = USG_SIBLING_UNCITED_FIXTURE;
-    activeDir = temporaryDirectory("spec-controller-usg007-");
+  function (this: SpecControllerWorld) {
+    this.fitnessTarget = NIGHTLY_SWEEP_TARGET;
+    this.outDir = temporaryDirectory(this, "spec-controller-usg007-");
   },
 );
 
-When("the reconciliation report is rendered for that target's ci.yml alone", function () {
+When("the reconciliation report is rendered for that target's ci.yml alone", function (this: SpecControllerWorld) {
   const repoRoot = process.cwd();
-  const reportPath = join(activeDir, "spec-reconciliation.md");
+  const reportPath = join(this.outDir, "spec-reconciliation.md");
   const result = spawnSync(
     NODE,
     [
       ...SPEC_CONTROLLER_ARGV,
       "balance",
-      "--features", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.features),
-      "--ci", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.ci, "ci.yml"),
-      "--package-json", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.packageJson),
+      "--features", join(repoRoot, NIGHTLY_SWEEP_TARGET.features),
+      "--ci", join(repoRoot, NIGHTLY_SWEEP_TARGET.ci, "ci.yml"),
+      "--package-json", join(repoRoot, NIGHTLY_SWEEP_TARGET.packageJson),
       "--target", "usg-narrowed-fixture",
       "--format", `md:${reportPath}`,
     ],
-    { cwd: activeDir, encoding: "utf8" },
+    { cwd: this.outDir, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
   assert.ok(existsSync(reportPath), `expected a report; stderr:\n${result.stderr}`);
-  activeMd = readFileSync(reportPath, "utf8");
+  this.markdown = readFileSync(reportPath, "utf8");
 });
 
-Then("lint:sweep is not counted among the running fitness functions", function () {
+Then("lint:sweep is not counted among the running fitness functions", function (this: SpecControllerWorld) {
   assert.ok(
-    activeMd.includes("0 fitness function(s) run, 0 uncited fitness function(s)"),
+    this.markdown.includes("0 fitness function(s) run, 0 uncited fitness function(s)"),
     `expected NOTHING observed: the caller named one workflow, and lint:sweep runs in ` +
       `another. Sweeping the parent directory off a file argument would widen a scope ` +
-      `the caller chose deliberately. Got:\n${activeMd}`,
+      `the caller chose deliberately. Got:\n${this.markdown}`,
   );
   assert.ok(
-    !activeMd.includes("lint:sweep"),
-    `expected lint:sweep absent from the report entirely; got:\n${activeMd}`,
+    !this.markdown.includes("lint:sweep"),
+    `expected lint:sweep absent from the report entirely; got:\n${this.markdown}`,
   );
 });
 
 Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
-  function () {
+  function (this: SpecControllerWorld) {
     assert.ok(
-      activeMd.includes("| SCN-TGS-001 | Evidence Observation satisfies its Evidence Obligation |"),
+      this.markdown.includes("| SCN-TGS-001 | Evidence Observation satisfies its Evidence Obligation |"),
       `expected the nightly check SATISFIED — lint:nightly is invoked by nightly.yml, so the ` +
         `scenario citing it is telling the truth. Reading ci.yml alone is what makes the tool ` +
-        `disagree. Report:\n${activeMd}`,
+        `disagree. Report:\n${this.markdown}`,
     );
-    const watermelonRow = activeMd.split("\n").find((line) => line.startsWith(`| ${WATERMELON} |`));
+    const watermelonRow = this.markdown.split("\n").find((line) => line.startsWith(`| ${WATERMELON} |`));
     assert.ok(
       watermelonRow,
       `expected the Evidence reconciliation summary's watermelon row, which is printed even at ` +
-        `zero; without it this check cannot tell no watermelon from a reworded one. Report:\n${activeMd}`,
+        `zero; without it this check cannot tell no watermelon from a reworded one. Report:\n${this.markdown}`,
     );
     const outOfBalance = watermelonRow.split("|").map((cell) => cell.trim())[4];
     assert.equal(
       outOfBalance,
       "0",
       `expected NO watermelon in the summary: a watermelon says a cited check is passing but ` +
-        `fabricated, and this one genuinely runs. Report:\n${activeMd}`,
+        `fabricated, and this one genuinely runs. Report:\n${this.markdown}`,
     );
     assert.ok(
-      !activeMd.split("\n").some((line) => line.startsWith("| SCN-") && line.includes(WATERMELON)),
+      !this.markdown.split("\n").some((line) => line.startsWith("| SCN-") && line.includes(WATERMELON)),
       `expected NO watermelon on any scenario's row: a watermelon says a cited check is passing but ` +
         `fabricated, and this one genuinely runs. Accusing a real gate of being fake is ` +
-        `worse than missing it. Report:\n${activeMd}`,
+        `worse than missing it. Report:\n${this.markdown}`,
     );
     assert.equal(
-      siblingStatus,
+      this.siblingStatus,
       0,
       `expected the target to reconcile BALANCED once both workflows are read — its only ` +
-        `obligation is the fitness one, and it is settled. Got exit ${siblingStatus}. ` +
-        `Report:\n${activeMd}`,
+        `obligation is the fitness one, and it is settled. Got exit ${this.siblingStatus}. ` +
+        `Report:\n${this.markdown}`,
     );
   },
 );

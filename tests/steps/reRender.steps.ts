@@ -1,12 +1,53 @@
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
+import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { exitOn, RUN_OUTCOME } from "./support/runExit.js";
+import { RUN_ID, specController, USAGE } from "./support/specControllerRun.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
+import type { SpecControllerWorld } from "./support/world.js";
+
+When("balance is asked to re-render that saved report", function (this: SpecControllerWorld) {
+  this.balanceResult = spawnBalance(this, this.invocationArgs);
+});
+
+Given(
+  "the re-render option pointing at a saved report that is {word}",
+  function (this: SpecControllerWorld, defect: string) {
+    if (defect === "missing") {
+      this.unreadableSavedReport = join(temporaryDirectory(this, "scn-cli-015-"), "missing-saved-report.json");
+      assert.ok(
+        !existsSync(this.unreadableSavedReport),
+        "the missing-path fixture must NOT exist on disk",
+      );
+    } else {
+      this.unreadableSavedReport = join(temporaryDirectory(this, "scn-cli-015-"), "bad-saved-report.json");
+      writeFileSync(this.unreadableSavedReport, "not a saved report at all {{{");
+      assert.ok(existsSync(this.unreadableSavedReport), "the unparseable fixture must EXIST");
+    }
+    this.invocationArgs = ["--render-from-json", this.unreadableSavedReport];
+  },
+);
+
+Then("the refusal names the unreadable saved report", function (this: SpecControllerWorld) {
+  assert.ok(
+    this.balanceResult.stderr.includes(this.unreadableSavedReport),
+    `expected stderr to NAME the unreadable saved report ${this.unreadableSavedReport}; got:\n${this.balanceResult.stderr}`,
+  );
+  assert.doesNotMatch(
+    this.balanceResult.stderr,
+    /^\s+at .*:\d+:\d+\)?$/m,
+    `expected a TYPED usage error, but the process crashed with a stack trace:\n${this.balanceResult.stderr}`,
+  );
+});
+
+Then("nothing is rendered", function (this: SpecControllerWorld) {
+  assert.doesNotMatch(this.balanceResult.stdout, /Evidence Reconciliation/);
+});
 
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "all-balanced": { fixture: "balanced", flags: [] },
@@ -16,10 +57,6 @@ const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "nothing to reconcile": { fixture: "nothing-to-reconcile", flags: [] },
   "only-Pending-Items under the strict option": { fixture: "pending-only", flags: ["--strict"] },
 };
-
-let scratch: string | undefined;
-let savedReport = "";
-let reRendered: SpawnSyncReturns<string>;
 
 function spawnController(args: string[], cwd: string): SpawnSyncReturns<string> {
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...args], { cwd, encoding: "utf8" });
@@ -35,10 +72,10 @@ function fixtureInputs(dir: string): string[] {
   return args;
 }
 
-function saveLiveRun(fixture: string, flags: string[]): string {
+function saveLiveRun(world: SpecControllerWorld, fixture: string, flags: string[]): string {
   const dir = join(process.cwd(), "tests", "fixtures", fixture);
-  scratch ??= temporaryDirectory("spec-controller-rerender-");
-  const path = join(scratch, `${fixture}${flags.join("")}.json`);
+  world.scratch ??= temporaryDirectory(world, "spec-controller-rerender-");
+  const path = join(world.scratch, `${fixture}${flags.join("")}.json`);
   const live = spawnController([...fixtureInputs(dir), ...flags, "--format", `json:${path}`], dir);
   assert.ok(existsSync(path), `the live run saved no report (exit ${live.status}):\n${live.stderr}`);
   return path;
@@ -52,10 +89,10 @@ function headlineExit(stdout: string): number {
   return Number(match[1]);
 }
 
-Given(/^a saved reconciliation of a target that reconciles (.+)$/, function (verdict: string) {
+Given(/^a saved reconciliation of a target that reconciles (.+)$/, function (this: SpecControllerWorld, verdict: string) {
   const target = SAVED_VERDICTS[verdict];
   assert.ok(target, `no fixture reconciles "${verdict}"`);
-  savedReport = saveLiveRun(target.fixture, target.flags);
+  this.savedReport = saveLiveRun(this, target.fixture, target.flags);
 });
 
 function withoutStrictRecord(path: string): string {
@@ -69,68 +106,64 @@ function withoutStrictRecord(path: string): string {
 
 Given(
   /^a saved reconciliation of a target whose only exception is Pending Items, saved (under the strict option|without the strict option|before strictness was recorded)$/,
-  function (saved: string) {
+  function (this: SpecControllerWorld, saved: string) {
     const strict = saved === "under the strict option" ? ["--strict"] : [];
-    const path = saveLiveRun("pending-only", strict);
-    savedReport = saved === "before strictness was recorded" ? withoutStrictRecord(path) : path;
+    const path = saveLiveRun(this, "pending-only", strict);
+    this.savedReport = saved === "before strictness was recorded" ? withoutStrictRecord(path) : path;
   },
 );
 
 When(
   /^balance is asked to re-render the saved reconciliation (with no options|under the strict option)$/,
-  function (given: string) {
+  function (this: SpecControllerWorld, given: string) {
     const flags = given === "under the strict option" ? ["--strict"] : [];
-    reRendered = spawnController(["--render-from-json", savedReport, ...flags], process.cwd());
+    this.reRendered = spawnController(["--render-from-json", this.savedReport, ...flags], process.cwd());
   },
 );
 
 When(
   "balance is asked to re-render the saved reconciliation",
-  function () {
-    reRendered = spawnController(["--render-from-json", savedReport], process.cwd());
+  function (this: SpecControllerWorld) {
+    this.reRendered = spawnController(["--render-from-json", this.savedReport], process.cwd());
   },
 );
 
-Then(new RegExp(`^the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
+Then(new RegExp(`^the re-render ends on (${RUN_OUTCOME})$`), function (this: SpecControllerWorld, outcome: string) {
   const code = exitOn(outcome);
-  assert.equal(reRendered.status, code, `expected the re-render to exit ${code}; got ${reRendered.status}:\n${reRendered.stderr}`);
+  assert.equal(this.reRendered.status, code, `expected the re-render to exit ${code}; got ${this.reRendered.status}:\n${this.reRendered.stderr}`);
 });
 
-Then("the re-render is refused as a usage error", function () {
+Then("the re-render is refused as a usage error", function (this: SpecControllerWorld) {
   const code = exitOn("a usage error");
-  assert.equal(reRendered.status, code, `expected the re-render to exit ${code}; got ${reRendered.status}:\n${reRendered.stderr}`);
+  assert.equal(this.reRendered.status, code, `expected the re-render to exit ${code}; got ${this.reRendered.status}:\n${this.reRendered.stderr}`);
 });
 
-Then(new RegExp(`^the re-render's verdict headline names the exit for (${RUN_OUTCOME})$`), function (outcome: string) {
-  assert.equal(headlineExit(reRendered.stdout), exitOn(outcome));
+Then(new RegExp(`^the re-render's verdict headline names the exit for (${RUN_OUTCOME})$`), function (this: SpecControllerWorld, outcome: string) {
+  assert.equal(headlineExit(this.reRendered.stdout), exitOn(outcome));
 });
-
-let exitZeroPair: { without: SpawnSyncReturns<string>; with: SpawnSyncReturns<string> } | undefined;
 
 When(
   "balance is asked to re-render the saved reconciliation, once without the report-only option and once under it",
-  function () {
-    exitZeroPair = {
-      without: spawnController(["--render-from-json", savedReport], process.cwd()),
-      with: spawnController(["--render-from-json", savedReport, "--exit-zero"], process.cwd()),
+  function (this: SpecControllerWorld) {
+    this.exitZeroPair = {
+      without: spawnController(["--render-from-json", this.savedReport], process.cwd()),
+      with: spawnController(["--render-from-json", this.savedReport, "--exit-zero"], process.cwd()),
     };
   },
 );
 
-Then(new RegExp(`^without the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
-  assert.equal(exitZeroPair?.without.status, exitOn(outcome), `without --exit-zero:\n${exitZeroPair?.without.stderr}`);
+Then(new RegExp(`^without the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (this: SpecControllerWorld, outcome: string) {
+  assert.equal(this.exitZeroPair?.without.status, exitOn(outcome), `without --exit-zero:\n${this.exitZeroPair?.without.stderr}`);
 });
 
-Then(new RegExp(`^under the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (outcome: string) {
-  assert.equal(exitZeroPair?.with.status, exitOn(outcome), `with --exit-zero:\n${exitZeroPair?.with.stderr}`);
+Then(new RegExp(`^under the report-only option the re-render ends on (${RUN_OUTCOME})$`), function (this: SpecControllerWorld, outcome: string) {
+  assert.equal(this.exitZeroPair?.with.status, exitOn(outcome), `with --exit-zero:\n${this.exitZeroPair?.with.stderr}`);
 });
 
-Then("the two re-renders report the same, byte for byte", function () {
-  assert.ok(exitZeroPair && exitZeroPair.without.stdout.includes("### Run verdict"), "the re-render printed no report");
-  assert.equal(exitZeroPair.with.stdout, exitZeroPair.without.stdout);
+Then("the two re-renders report the same, byte for byte", function (this: SpecControllerWorld) {
+  assert.ok(this.exitZeroPair && this.exitZeroPair.without.stdout.includes("### Run verdict"), "the re-render printed no report");
+  assert.equal(this.exitZeroPair.with.stdout, this.exitZeroPair.without.stdout);
 });
-
-let refusalCwd = "";
 
 const OPTION_VALUE: Record<string, string> = {
   "the json report in a file": "json:out.json",
@@ -138,24 +171,61 @@ const OPTION_VALUE: Record<string, string> = {
 
 When(
   /^balance is asked to re-render the saved reconciliation with the (.+ option) given (.+)$/,
-  function (option: string, given: string) {
+  function (this: SpecControllerWorld, option: string, given: string) {
     const flag = optionFlag(option);
     const value = OPTION_VALUE[given] ?? given;
-    refusalCwd = temporaryDirectory("spec-controller-rerender-cwd-");
-    reRendered = spawnController(["--render-from-json", savedReport, flag, value], refusalCwd);
+    this.refusalCwd = temporaryDirectory(this, "spec-controller-rerender-cwd-");
+    this.reRendered = spawnController(["--render-from-json", this.savedReport, flag, value], this.refusalCwd);
   },
 );
 
-Then(/^the refusal names the (.+ option)$/, function (option: string) {
+Then(/^the refusal names the (.+ option)$/, function (this: SpecControllerWorld, option: string) {
   const flag = optionFlag(option);
-  assert.ok(reRendered.stderr.includes(flag), `expected stderr to name ${flag}; got:\n${reRendered.stderr}`);
+  assert.ok(this.reRendered.stderr.includes(flag), `expected stderr to name ${flag}; got:\n${this.reRendered.stderr}`);
 });
 
-Then("nothing is re-rendered", function () {
-  assert.equal(reRendered.stdout, "", `expected no report on stdout; got:\n${reRendered.stdout}`);
-  assert.equal(existsSync(join(refusalCwd, "out.json")), false, "a refused re-render wrote a report file");
+Then("nothing is re-rendered", function (this: SpecControllerWorld) {
+  assert.equal(this.reRendered.stdout, "", `expected no report on stdout; got:\n${this.reRendered.stdout}`);
+  assert.equal(existsSync(join(this.refusalCwd, "out.json")), false, "a refused re-render wrote a report file");
 });
 
-After(function () {
-  scratch = undefined;
+const BESIDE: Readonly<Record<string, readonly string[]>> = {
+  "with nothing else": [],
+  strictly: ["--strict"],
+  "with a failing verdict zeroed": ["--exit-zero"],
+};
+
+Given(/^a saved reconciliation that is (of an out-of-balance run|at a path that is missing)$/, function (this: SpecControllerWorld, saved: string) {
+  const scratch = temporaryDirectory(this, "spec-controller-stored-rerender-");
+  this.storeRoot = join(scratch, "store");
+  this.savedReport = join(scratch, "saved.json");
+  if (saved === "at a path that is missing") return;
+  const live = specController(["balance", "--features", "tests/fixtures/balanced/features", "--format", `json:${this.savedReport}`]);
+  assert.equal(live.status, 1, `expected the saved run out of balance; got ${live.status}\n${live.stderr}`);
+});
+
+When(/^the operator asks for it to be re-rendered under a run store (.+)$/, function (this: SpecControllerWorld, beside: string) {
+  const flags = BESIDE[beside];
+  assert.ok(flags !== undefined, `no flags for "${beside}"`);
+  this.invocation = ["--store", this.storeRoot, "--run-id", RUN_ID, "balance", "--render-from-json", this.savedReport, ...flags];
+  this.run = specController(this.invocation);
+});
+
+Then("the re-render is refused as a usage error, naming the store as what it cannot take", function (this: SpecControllerWorld) {
+  assert.equal(this.run.status, USAGE, `expected the usage code; got ${this.run.status}\n${this.run.stderr}`);
+  assert.match(this.run.stderr, /--store\b/, `the refusal does not name --store:\n${this.run.stderr}`);
+});
+
+Then("the refusal names no flag the operator did not give", function (this: SpecControllerWorld) {
+  const named = this.run.stderr.match(/--[a-z][a-z-]*/g) ?? [];
+  const notGiven = named.filter((flag) => !this.invocation.includes(flag));
+  assert.deepEqual(notGiven, [], `the refusal names flags the operator did not give:\n${this.run.stderr}`);
+});
+
+Then("the stored re-render produces no report", function (this: SpecControllerWorld) {
+  assert.equal(this.run.stdout, "", `a report reached stdout:\n${this.run.stdout.slice(0, 400)}`);
+});
+
+Then("no run store is made", function (this: SpecControllerWorld) {
+  assert.ok(!existsSync(this.storeRoot), `the store root was made: ${this.storeRoot}`);
 });
