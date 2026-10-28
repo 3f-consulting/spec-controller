@@ -8,7 +8,7 @@ Each table below gives, for each check:
 
 A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
 
-Twenty-three of these checks first ran on `main` between 30 September and 14 October 2026, and twelve more after the window, from 20 October. For them, a zero says little yet.
+Many of these checks and rules first ran on `main` between 30 September and 14 October 2026, near the end of the window, and more after it, from 20 October. For them, a zero says little yet.
 
 Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order; process conformance is 3F's extension of it. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
 
@@ -23,8 +23,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | No string, template part or regular expression in core's domain names an external tool, format, flag or syntax | Modularity | 0 |
 | No numeric literal type in core's domain | Modularity | 0 |
 | Only the exit-code module sets the process's exit code | Modularity | 0 |
-| No sentence for a reader is written in core's domain | Modularity | 0 |
-| No production source file writes message prose outside its package's catalogue | Modularity | 1 |
+| No production source file writes message prose outside its package's catalogue, so core's domain holds no sentence for a reader | Modularity | 1 |
 | Complexity: cognitive complexity and function length | Analysability | 13 |
 | No suppression comment that suppresses nothing | Analysability | 0 |
 | No comment disables a mutant | Testability | 0 |
