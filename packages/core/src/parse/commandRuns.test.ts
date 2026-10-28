@@ -199,6 +199,36 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ).toEqual(asTheRunner);
   });
 
+  const unit = { unit: "vitest" };
+
+  it.each([
+    ["a subshell", ["(vitest run) | tee log"]],
+    ["a subshell that changes directory first", ["(cd x && vitest run) | tee log"]],
+    ["a subshell, errors too", ["(vitest run) |& tee log"]],
+    ["a subshell inside another", ["( (vitest run) ) | tee log"]],
+    ["a subshell that runs another command after it", ["(vitest run && echo done) | tee log"]],
+  ] as const)("leaves a check piping the output of %s that runs the runner a candidate", (_form, lines) => {
+    expect(recognisedRunners(workflowSteps([stepRunning(...lines)]), noScripts.scripts, unit, shellReading)).toEqual([]);
+  });
+
+  it("leaves a check a candidate where the runner is only a line of a here-document's body", () => {
+    expect(
+      recognisedRunners(workflowSteps([stepRunning("cat <<EOF > f", "vitest run", "EOF")]), noScripts.scripts, unit, shellReading)
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["a subshell nothing reads", "(vitest run)"],
+    ["a subshell whose failure falls through", "(vitest run) || true"],
+    ["a subshell whose output is redirected before the pipe", "(vitest run) > out | tee log"],
+    ["a pipeline's last stage after a piped subshell", "(echo a) | vitest run"],
+    ["a subshell followed by a list whose last command pipes", "(vitest run) && echo done | tee log"],
+  ] as const)("still recognises the runner in %s — the control", (_form, line) => {
+    expect(recognisedRunners(workflowSteps([stepRunning(line)]), noScripts.scripts, unit, shellReading)).toEqual([
+      { tier: "unit", runner: "vitest", step: "Gate" },
+    ]);
+  });
+
   it("leaves a check a candidate where every line pipes, the runner's output piped on a later line", () => {
     const piped = [stepRunning("git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'")];
     expect(recognisedRunners(workflowSteps(piped), noScripts.scripts, integration, shellReading)).toEqual([]);

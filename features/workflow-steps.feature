@@ -55,7 +55,8 @@ Feature: balance reads a workflow's steps
     argument, runs nothing. Quotes are read as the shell reads them. A separator inside a
     single- or double-quoted argument is part of that argument and separates no command, even
     when the argument runs on to the next line. An apostrophe opens a quote as a single quote
-    does, and a quote escaped with a backslash opens none.
+    does, and a quote escaped with a backslash opens none. The body of a here-document, up to the
+    line that ends it, is text: nothing in it runs, and a quote in it opens none.
 
     @unit @SCN-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
@@ -78,8 +79,8 @@ Feature: balance reads a workflow's steps
     launchers, opens with all of those words; the launchers are set aside first, so a runner
     declared with a launcher's words matches no command. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
-    it follows. A line ending in a backslash joins the next line with a space before it is read, so a
-    launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, a quoted argument included, inside a path, a flag or an
+    it follows. A line ending in a backslash that no other backslash escapes joins the next line with a space
+    before it is read, so a launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, a quoted argument included, inside a path, a flag or an
     =-joined value, leaves the step a candidate.
 
     @unit @SCN-WFS-002
@@ -101,7 +102,7 @@ Feature: balance reads a workflow's steps
 
     A runner is recognised only in the last stage of a shell pipeline, in the step's own command
     and in any manifest script it follows. A step that pipes a runner's output into another command
-    is a candidate.
+    is a candidate, and so is one that pipes the output of a subshell that runs it.
 
     @unit @SCN-WFS-007
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner

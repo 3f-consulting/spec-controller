@@ -142,9 +142,10 @@ const namedOnLine = (line: string, invocation: readonly string[]): boolean => {
 const pastAssignments = (words: readonly string[]): readonly string[] =>
   words.slice(words.findIndex((word) => !ASSIGNMENT.test(word)));
 
-const JOINED_LINE = /\\\r?\n/g;
+// A backslash before a newline joins the lines unless another backslash escapes it, so only an odd run of them joins.
+const JOINED_LINE = /(?<!\\)((?:\\\\)*)\\\r?\n/g;
 const SEPARATORS = "&|;()\n";
-const REDIRECTION = /&>|[<>]&|>>|[<>]/y;
+const REDIRECTION = /<<<|<<-?|&>|[<>]&|>>|[<>]/y;
 const FILE_DESCRIPTOR = /^\d+$/;
 const PLAIN = /[^\s&|;()<>'"\\`$]+/y;
 const ESCAPED_IN_DOUBLE_QUOTES = '"\\$`';
@@ -221,7 +222,14 @@ interface Separator {
   readonly end: number;
 }
 
-type Token = WordPart | Mark | Separator;
+// << or <<- opens a here-document, whose body runs from the next line; <<< is a here-string, a redirection of one word.
+interface HereDocument {
+  readonly kind: "heredoc";
+  readonly tabs: boolean;
+  readonly end: number;
+}
+
+type Token = WordPart | Mark | Separator | HereDocument;
 
 type ReadToken = (text: string, at: number, word: string | undefined) => Token | undefined;
 
@@ -264,7 +272,9 @@ const expansion: ReadToken = (text, at, word) => {
 const redirection: ReadToken = (text, at) => {
   REDIRECTION.lastIndex = at;
   const operator = REDIRECTION.exec(text)?.[0];
-  return operator === undefined ? undefined : { kind: "redirection", end: at + operator.length };
+  if (operator === undefined) return undefined;
+  const end = at + operator.length;
+  return operator === "<<" || operator === "<<-" ? { kind: "heredoc", tabs: operator === "<<-", end } : { kind: "redirection", end };
 };
 
 // A | hands the command's output to the next, and |& its errors too; || runs the next only if the command fails.
@@ -291,47 +301,87 @@ function nextToken(text: string, at: number, word: string | undefined): Token {
   return plain(text, at);
 }
 
+interface Body {
+  readonly delimiter: string;
+  readonly tabs: boolean;
+  readonly quoted: boolean;
+}
+
+// A here-document's body is whole lines up to the first that is its delimiter, after <<- strips its leading tabs, or the end of the text.
+function pastBody(text: string, from: number, { delimiter, tabs }: Body): number {
+  const lines = text.slice(from).split("\n");
+  const last = lines.findIndex((line) => (tabs ? line.replace(/^\t*/, "") : line) === delimiter);
+  return last === -1 ? text.length : from + lines.slice(0, last + 1).join("\n").length;
+}
+
 interface SimpleCommand {
   readonly words: readonly string[];
   readonly piped: boolean;
 }
 
+interface CommandList {
+  readonly commands: readonly SimpleCommand[];
+  readonly push: (command: SimpleCommand) => void;
+  readonly read: (token: Token, char: string) => void;
+}
+
+// The commands read so far, and each token after them. A subshell's commands start where its ( was read,
+// and a pipe after its ), with only blanks between, reads the output of every one of them.
+function commandList(): CommandList {
+  const commands: SimpleCommand[] = [];
+  const opens: number[] = [];
+  let closed: number | undefined;
+  const read = (token: Token, char: string): void => {
+    if (token.kind === "break") return;
+    if (token.kind === "separator" && token.pipe && closed !== undefined) {
+      commands.splice(closed, Infinity, ...commands.slice(closed).map((command) => ({ ...command, piped: true })));
+    }
+    if (char === "(") opens.push(commands.length);
+    closed = char === ")" ? opens.pop() : undefined;
+  };
+  return { commands, push: (command) => commands.push(command), read };
+}
+
 // The simple commands the shell runs from the text, each as its words with their quotes removed, and whether a pipe reads its output.
 // A redirection's target word is dropped, and a quote that never closes runs to the end of the text, as the shell reads up to its syntax error.
+// A here-document's delimiter is dropped as a target is, and its body, skipped at the line's end, is text in which nothing is read.
+// A backslash-newline is joined as blanks of its own length, so a body whose delimiter is quoted, where the shell joins no lines, is read from the text as written.
 function simpleCommands(text: string): readonly SimpleCommand[] {
-  const source = text.replace(JOINED_LINE, " ");
-  const commands: SimpleCommand[] = [];
+  const source = text.replace(JOINED_LINE, (joined, pairs: string) => pairs.padEnd(joined.length));
+  const { commands, push, read } = commandList();
+  const bodies: Body[] = [];
   let words: string[] = [];
   let word: string | undefined;
   let quoted = false;
-  let target = false;
+  let target: Mark | HereDocument | undefined;
   const endWord = (): void => {
     if (word !== undefined) {
-      if (!target) words.push(word);
-      target = false;
+      if (target === undefined) words.push(word);
+      else if (target.kind === "heredoc") bodies.push({ delimiter: word, tabs: target.tabs, quoted });
+      target = undefined;
     }
     word = undefined;
     quoted = false;
   };
   const endCommand = (piped: boolean): void => {
     endWord();
-    target = false;
-    if (words.length > 0) commands.push({ words, piped });
+    target = undefined;
+    if (words.length > 0) push({ words, piped });
     words = [];
   };
-  let at = 0;
-  while (at < source.length) {
+  for (let at = 0; at < source.length; ) {
     const token = nextToken(source, at, word);
     if (token.kind === "part") {
       word = (word ?? "") + token.value;
       quoted ||= token.quoted;
     } else if (token.kind === "separator") endCommand(token.pipe);
     else {
-      if (token.kind === "redirection" && !quoted && FILE_DESCRIPTOR.test(word ?? "")) word = undefined;
+      if (token.kind !== "break" && !quoted && FILE_DESCRIPTOR.test(word ?? "")) word = undefined;
       endWord();
-      target ||= token.kind === "redirection";
+      if (token.kind !== "break") target = token;
     }
-    at = token.end;
+    read(token, source.charAt(at));
+    at = source[at] === "\n" ? bodies.splice(0).reduce((from, body) => pastBody(body.quoted ? text : source, from, body), token.end) : token.end;
   }
   endCommand(false);
   return commands;

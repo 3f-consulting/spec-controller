@@ -51,6 +51,11 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["after ; inside a command substitution, past a subshell inside it", "echo $( (true) ; pnpm test )", "test"],
     ["after ; inside a backquoted command substitution", "echo `x;pnpm test `", "test"],
     ["as an array's element after a command substitution in the array", "arr=( $(git ls-files) pnpm test )", "test"],
+    ["as a line of a here-document's body", "cat <<EOF > f\npnpm test\nEOF", "test"],
+    ["as a later line of a here-document's body", "cat <<EOF > f\nfirst\npnpm test\nEOF", "test"],
+    ["in a here-document's body that never ends", "cat <<EOF > f\npnpm test", "test"],
+    ["in a here-document's body, past a line that is its delimiter only once <<- strips its tabs", "cat <<EOF > f\n\tEOF\npnpm test\nEOF", "test"],
+    ["after a here-document whose unquoted delimiter follows a body line ending in a backslash, which joins them", "cat <<EOF > f\nfoo \\\nEOF\npnpm test", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -98,6 +103,17 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["named with a backslash the double quotes keep", 'pnpm "\\test"', "\\test"],
     ["named by a parameter in double quotes, read as written and never expanded", 'pnpm "${SCRIPT}"', "${SCRIPT}"],
     ["named by a parameter, read as written and never expanded", "pnpm ${SCRIPT}", "${SCRIPT}"],
+    ["after a here-document whose body holds an apostrophe", "cat <<EOF >> $GITHUB_STEP_SUMMARY\nIt's done\nEOF\npnpm test", "test"],
+    ["after a here-document with a single-quoted delimiter", "cat <<'EOF' > f\nIt's\nEOF\npnpm test", "test"],
+    ["after a here-document with a double-quoted delimiter", 'cat <<"EOF" > f\nIt\'s\nEOF\npnpm test', "test"],
+    ["after a here-document whose body and delimiter are indented with tabs", "cat <<-EOF > f\n\tIt's\n\tEOF\npnpm test", "test"],
+    ["after && on a here-document's own line", "cat <<EOF && pnpm test\nIt's\nEOF", "test"],
+    ["after && behind a here-string holding an apostrophe", 'cat <<< "it\'s" && pnpm test', "test"],
+    ["on the line after a backslash another backslash escapes", "echo foo \\\\\npnpm test", "test"],
+    ["on the line after a redirection to a file", "echo a > out\npnpm test", "test"],
+    ["after a here-document whose body and delimiter are indented with more than one tab", "cat <<-EOF > f\n\t\tIt's\n\t\tEOF\npnpm test", "test"],
+    ["after a here-document whose quoted delimiter holds an apostrophe", `cat <<"it's" > f\na\nb\nit's\npnpm test`, "test"],
+    ["after a here-document whose quoted delimiter follows a body line ending in a backslash", "cat <<'EOF' > f\nfoo \\\nEOF\npnpm test", "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
   });
