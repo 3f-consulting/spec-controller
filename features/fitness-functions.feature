@@ -76,8 +76,10 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
     through the domain, a driven module of the command-line app never reaches into another, and a
-    test of the app reaches the engine only through its front door or its internal seam. Every
-    break fails the check; there is no list of tolerated breaks.
+    test of the app reaches the engine only through its front door or its internal seam. Each input
+    format's parser stays in its homes: only core's Gherkin module imports the Gherkin parser, and
+    only core's workflow module and the run store import the YAML parser. Every break fails the
+    check; there is no list of tolerated breaks.
 
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
