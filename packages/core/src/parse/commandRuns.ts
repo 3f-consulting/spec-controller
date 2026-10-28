@@ -342,12 +342,19 @@ function commandList(): CommandList {
   return { commands, push: (command) => commands.push(command), read };
 }
 
+// A comment ends at its newline as written, so a newline the join blanked at a comment's end is put back.
+function commentLineEnd(text: string, source: string, at: number, word: string | undefined): string {
+  if (comment(source, at, word) === undefined) return source;
+  const end = text.indexOf("\n", at);
+  return source[end] === text[end] ? source : `${source.slice(0, end)}\n${source.slice(end + 1)}`;
+}
+
 // The simple commands the shell runs from the text, each as its words with their quotes removed, and whether a pipe reads its output.
 // A redirection's target word is dropped, and a quote that never closes runs to the end of the text, as the shell reads up to its syntax error.
 // A here-document's delimiter is dropped as a target is, and its body, skipped at the line's end, is text in which nothing is read.
 // A backslash-newline is joined as blanks of its own length, so a body whose delimiter is quoted, where the shell joins no lines, is read from the text as written.
 function simpleCommands(text: string): readonly SimpleCommand[] {
-  const source = text.replace(JOINED_LINE, (joined, pairs: string) => pairs.padEnd(joined.length));
+  let source = text.replace(JOINED_LINE, (joined, pairs: string) => pairs.padEnd(joined.length));
   const { commands, push, read } = commandList();
   const bodies: Body[] = [];
   let words: string[] = [];
@@ -355,11 +362,10 @@ function simpleCommands(text: string): readonly SimpleCommand[] {
   let quoted = false;
   let target: Mark | HereDocument | undefined;
   const endWord = (): void => {
-    if (word !== undefined) {
-      if (target === undefined) words.push(word);
-      else if (target.kind === "heredoc") bodies.push({ delimiter: word, tabs: target.tabs, quoted });
-      target = undefined;
-    }
+    if (word === undefined) return;
+    if (target === undefined) words.push(word);
+    else if (target.kind === "heredoc") bodies.push({ delimiter: word, tabs: target.tabs, quoted });
+    target = undefined;
     word = undefined;
     quoted = false;
   };
@@ -370,6 +376,7 @@ function simpleCommands(text: string): readonly SimpleCommand[] {
     words = [];
   };
   for (let at = 0; at < source.length; ) {
+    source = commentLineEnd(text, source, at, word);
     const token = nextToken(source, at, word);
     if (token.kind === "part") {
       word = (word ?? "") + token.value;

@@ -56,6 +56,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["in a here-document's body that never ends", "cat <<EOF > f\npnpm test", "test"],
     ["in a here-document's body, past a line that is its delimiter only once <<- strips its tabs", "cat <<EOF > f\n\tEOF\npnpm test\nEOF", "test"],
     ["after a here-document whose unquoted delimiter follows a body line ending in a backslash, which joins them", "cat <<EOF > f\nfoo \\\nEOF\npnpm test", "test"],
+    ["across a line ending in a backslash after a # inside a word, which opens no comment", "echo a#b \\\npnpm test", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -114,6 +115,12 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["after a here-document whose body and delimiter are indented with more than one tab", "cat <<-EOF > f\n\t\tIt's\n\t\tEOF\npnpm test", "test"],
     ["after a here-document whose quoted delimiter holds an apostrophe", `cat <<"it's" > f\na\nb\nit's\npnpm test`, "test"],
     ["after a here-document whose quoted delimiter follows a body line ending in a backslash", "cat <<'EOF' > f\nfoo \\\nEOF\npnpm test", "test"],
+    ["on the line after a comment ending in a backslash", "pnpm lint # quick \\\npnpm test", "test"],
+    ["on the line after a comment ending in a backslash before a carriage return", "pnpm lint # quick \\\r\npnpm test", "test"],
+    ["on the line after a comment ending in three backslashes", "pnpm lint # quick \\\\\\\npnpm test", "test"],
+    ["on the line after a line that is only a comment ending in a backslash", "# setup \\\npnpm test", "test"],
+    ["after a here-document opened on a line whose comment ends in a backslash", "cat <<EOF > f # note \\\nIt's\nEOF\npnpm test", "test"],
+    ["after an empty here-document opened on a line whose comment ends in a backslash", "cat <<EOF > f # note \\\nEOF\npnpm test", "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
   });
@@ -147,6 +154,10 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     expect(recognisedRunners(workflowSteps(ci), manifest.scripts, { unit: "vitest" }, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "Check" },
     ]);
+  });
+
+  it("recognises the runner of a script run on the line after a comment ending in a backslash", () => {
+    expect(shellReading.runsAsCommand("pnpm lint # quick \\\npnpm test", "vitest", { test: "vitest run" })).toBe(true);
   });
 });
 
