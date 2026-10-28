@@ -174,9 +174,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
   Rule: the published command installs as one package, carrying the licence of everything it bundles
 
-    @fitness @SCN-FIT-069
-    Scenario: the packed command declares no runtime dependency, so installing it installs no package its bundle already carries
-
     @fitness @SCN-FIT-070
     Scenario: the packed command carries the repository's licence and a notice for every package its bundle carries, the engine's included
 

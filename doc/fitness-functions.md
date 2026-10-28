@@ -29,6 +29,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | No suppression comment that suppresses nothing | Analysability | 0 |
 | No comment disables a mutant | Testability | 0 |
 | No unit test file runs code at collection time or in a hook that runs once for many tests | Testability | 3 |
+| The command's manifest declares no runtime dependency | Flexibility | 0 |
 | Evidence layers cross a seam | Scenarios a reader can trust | 0 |
 
 In the counting window each rule was a check of its own, except two. Import boundaries held the engine's idiom with its import rules, so its catches are not split between them. The complexity check held the dead suppressions, so they are counted with complexity.
@@ -129,13 +130,13 @@ Mutation verdict recorded never fails on a red sweep or on a lapsed schedule. It
 
 ## Flexibility
 
-Installability is held by the published packages and types, by the packed command declaring no runtime dependency, by it carrying the repository's licence and a notice for every package its bundle carries, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
+Installability is held by the published packages and types, by the ESLint rule that refuses a runtime dependency in the command's manifest, by the packed command carrying the repository's licence and a notice for every package its bundle carries, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
 
 | Check | Real catches |
 |---|---|
 | Published packages | 1 |
 | Published types | 1 |
-| The packed command declares no runtime dependency | 0 |
+| ESLint: the command's manifest declares no runtime dependency | 0 |
 | The packed command carries the repository's licence and a notice for every package its bundle carries | 0 |
 | Building the command fails, naming the import, when it imports an engine entry point the bundle does not map | 0 |
 

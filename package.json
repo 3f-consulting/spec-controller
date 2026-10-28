@@ -45,6 +45,7 @@
     "@arethetypeswrong/cli": "0.18.5",
     "@barney-media/crap-typescript": "1.0.0",
     "@cucumber/cucumber": "^12.9.0",
+    "@eslint/json": "2.1.1",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",

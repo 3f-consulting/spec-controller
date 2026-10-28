@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
+import json from "@eslint/json";
 import checkFile from "eslint-plugin-check-file";
 import i18next from "eslint-plugin-i18next";
 import sonarjs from "eslint-plugin-sonarjs";
@@ -432,6 +433,24 @@ export default [
     languageOptions: tsLanguageOptions,
     rules: {
       "domainTests/no-restricted-syntax": ["error", ...DOMAIN_TEST_SELECTORS],
+    },
+  },
+
+  {
+    files: ["packages/spec-controller/package.json"],
+    plugins: { json },
+    language: "json/json",
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Document > Object > Member[name.value=/^(dependencies|peerDependencies|optionalDependencies|bundleDependencies|bundledDependencies)$/]",
+          message:
+            "The command declares no runtime dependency. Its bundle carries what it uses, " +
+            "so a runtime dependency makes installing the command install another package.",
+        },
+      ],
     },
   },
 ];
