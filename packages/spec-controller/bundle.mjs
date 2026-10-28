@@ -1,30 +1,13 @@
 // The published bin is one file: a spawn that resolved and loaded the ~290 modules of an unbundled build spent most of its
-// start-up there. Core is taken from its own build, the code its published package carries.
+// start-up there. Core is taken from its own build, the code its published package carries, through the condition core's
+// exports name for it.
 import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "dist");
-const coreDist = resolve(here, "../core/dist");
-
-const CORE_BUILD = new Map([
-  ["@3f-consulting/spec-controller-core", join(coreDist, "index.js")],
-  ["@3f-consulting/spec-controller-core/internal", join(coreDist, "internal.js")],
-]);
-
-export const coreFromItsBuild = {
-  name: "core-from-its-build",
-  setup(bundler) {
-    // An unmapped entry would otherwise resolve through core's exports to its source, and bundle a second core.
-    bundler.onResolve({ filter: /^@3f-consulting\/spec-controller-core(\/.*)?$/ }, (args) =>
-      CORE_BUILD.has(args.path)
-        ? { path: CORE_BUILD.get(args.path) }
-        : { errors: [{ text: `${args.path} is not an entry the bundle maps to core's build; it maps ${[...CORE_BUILD.keys()].join(", ")}` }] },
-    );
-  },
-};
 
 const bundleTheCommand = async () => {
   rmSync(dist, { recursive: true, force: true });
@@ -37,7 +20,7 @@ const bundleTheCommand = async () => {
     target: "node22",
     metafile: true,
     legalComments: "none",
-    plugins: [coreFromItsBuild],
+    conditions: ["spec-controller-build"],
     // A bundled CommonJS dependency that requires a Node built-in needs a require in an ES module.
     banner: { js: 'import { createRequire as __bundleRequire } from "node:module";\nconst require = __bundleRequire(import.meta.url);' },
     logLevel: "warning",
@@ -81,5 +64,4 @@ const bundleTheCommand = async () => {
   writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n");
 };
 
-const runAsTheBuild = process.argv[1] !== undefined && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
-if (runAsTheBuild) await bundleTheCommand();
+await bundleTheCommand();

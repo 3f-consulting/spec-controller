@@ -127,14 +127,13 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 ## Flexibility
 
-Installability is held by the published packages and types, by the ESLint rule that refuses a runtime dependency in the command's manifest, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
+Installability is held by the published packages and types, and by the ESLint rule that refuses a runtime dependency in the command's manifest. Scalability does not apply to a command-line tool run once per CI run.
 
 | Check | Real catches |
 |---|---|
 | Published packages | 1 |
 | Published types | 1 |
 | ESLint: the command's manifest declares no runtime dependency | 0 |
-| Building the command fails, naming the import, when it imports an engine entry point the bundle does not map | 0 |
 
 The two published checks and workflow correctness share their one catch: a single pull request reddened all three.
 

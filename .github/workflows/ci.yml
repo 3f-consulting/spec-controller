@@ -259,18 +259,6 @@ jobs:
         if: always()
         run: pnpm lint:published-types
 
-      - name: Building the command fails, naming the import, when it imports an engine entry point the bundle does not map
-        id: SCN-FIT-071
-        if: always()
-        shell: bash
-        # The stand-in engine exports the entry, so only the bundle's own plugin can refuse it.
-        run: |
-          start=$SECONDS
-          failed=0
-          node scripts/bundle-refuses-unmapped-entry.mjs || failed=1
-          echo "the step took $((SECONDS - start)) s"
-          exit "$failed"
-
       - name: Workflow correctness
         id: SCN-FIT-020
         if: always()

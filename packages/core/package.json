@@ -16,8 +16,14 @@
     "node": ">=22"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./internal": "./src/internal.ts"
+    ".": {
+      "spec-controller-build": "./dist/index.js",
+      "default": "./src/index.ts"
+    },
+    "./internal": {
+      "spec-controller-build": "./dist/internal.js",
+      "default": "./src/internal.ts"
+    }
   },
   "files": [
     "dist"
