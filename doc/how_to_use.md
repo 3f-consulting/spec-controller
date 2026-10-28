@@ -503,7 +503,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 That is all.
 
 - **One `@fitness` scenario is one check.** Its `@SCN` identifies the check and its title describes it. Nothing else says what the check is about.
-- **Nothing names a bar.** The mutation bar, for example, is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict (see [Wiring into CI](#wiring-into-ci)).
+- **Nothing names a bar.** The bar is in the tool's own configuration or its step's `env:`, such as a suite's `timeout`, and the step fails below it. A check run on a schedule, such as a mutation sweep with Stryker's own `thresholds.break`, holds its bar in its own run and has no step here (see [Wiring into CI](#wiring-into-ci)).
 - **The check's evidence observation is its step's `outcome`.** Whatever the tool measures, its exit code on its own CI step is the verdict.
 
 **Neither artefact is derived from the other, on purpose.** That lets the two disagree, and the run reports each disagreement as a fault:

@@ -53,8 +53,8 @@ Feature: The fitness functions this repository carries, one scenario per check
   record.
 
   NOTHING HERE STATES A BAR, AND NEITHER DOES THIS FILE. Every obligation is answered by its
-  step's outcome: a check that measures something holds its own bar — Stryker's
-  `thresholds.break`, `timeout` around a suite — and fails its step below it. Whether
+  step's outcome: a check that measures something holds its own bar — `timeout` around a
+  suite, the ratio check's declared ceiling — and fails its step below it. Whether
   the step succeeded is the ledger's sentence, never this file's — a scenario comparing its own
   measurement would be grading its own homework.
 
