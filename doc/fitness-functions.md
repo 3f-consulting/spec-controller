@@ -109,8 +109,8 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 | Check | Real catches |
 |---|---|
-| Duplication: no clone touches a changed production file | 0 |
-| Unused code: no changed file carries an unused file, export or dependency | 8 |
+| Duplication: no clone in production code | 0 |
+| Unused code: no unused file, export or dependency | 8 |
 | Test helpers written once: no helper in a changed test file copies one in another | 0 |
 | CRAP: complex code must be tested | 0 |
 | Typecheck | 8 |

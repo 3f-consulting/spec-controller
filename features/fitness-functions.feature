@@ -188,12 +188,12 @@ Feature: The fitness functions this repository carries, one scenario per check
   Rule: production logic is written once
 
     @fitness @SCN-FIT-032
-    Scenario: no clone in production code touches a file the change touches
+    Scenario: no clone exists anywhere in the production code
 
   Rule: nothing ships that nothing uses
 
     @fitness @SCN-FIT-033
-    Scenario: no file the change touches carries an unused file, export or dependency
+    Scenario: nothing in the tree carries an unused file, export or dependency
 
   Rule: mutation reaches every production source file, or the repository records which it leaves out and why
 

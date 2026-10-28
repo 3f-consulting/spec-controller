@@ -316,30 +316,24 @@ jobs:
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
-      - name: Duplication — no clone touches a changed production file
+      - name: Duplication — no clone in production code
         id: SCN-FIT-032
         if: always()
         shell: bash
         # jscpd, pinned in package.json, reads its settings from .jscpd.json, which takes no comments, so their reasons are here.
         # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
-        # absolute names each file by its full path, so the report can be matched against the changed set.
-        # The first command reports every production clone and exits 0; the second reds on a clone with a fragment in a changed file.
-        run: |
-          node_modules/.bin/jscpd --output "$RUNNER_TEMP/jscpd"
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --arg root "$PWD/" --slurpfile report "$RUNNER_TEMP/jscpd/jscpd-report.json" '. as $changed | $report[0].duplicates[] | select([.firstFile.name, .secondFile.name] | map(ltrimstr($root)) | any(IN($changed[]))) | "\(.firstFile.name | ltrimstr($root)):\(.firstFile.start)-\(.firstFile.end) = \(.secondFile.name | ltrimstr($root)):\(.secondFile.start)-\(.secondFile.end)"' | awk '{ print } END { exit NR > 0 }'
+        # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
+        run: node_modules/.bin/jscpd --exit-code
 
-      - name: Unused code — no changed file carries an unused file, export or dependency
+      - name: Unused code — no unused file, export or dependency
         id: SCN-FIT-033
         if: always()
         shell: bash
         # knip, pinned in package.json and configured in knip.jsonc, where each setting carries its reason.
         # Default mode: an export a test imports is used. Exported types count as exports.
-        # The first command reports every finding and exits 0; the second reds on a finding in a file the change touches.
-        run: |
-          node_modules/.bin/knip --include files,exports,types,dependencies --no-exit-code
-          node_modules/.bin/knip --include files,exports,types,dependencies --reporter json --no-exit-code > "$RUNNER_TEMP/knip.json"
-          git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | tr '\0' '\n' | jq -R . | jq -s -r --slurpfile report "$RUNNER_TEMP/knip.json" '. as $changed | $report[0].issues[] | select(.file as $f | $changed | index($f)) | . as $i | ([(if (.files | length) > 0 then "unused file" else empty end)] + [.exports[]?, .types[]?, .dependencies[]?, .devDependencies[]?, .optionalPeerDependencies[]? | .name]) | map("\($i.file): \(.)")[]' | awk '{ print } END { exit NR > 0 }'
+        # The step reds on knip's own exit code, so an unused file, export or dependency anywhere in the tree reds it, whichever files the change touches.
+        run: node_modules/.bin/knip --include files,exports,types,dependencies
 
       - name: A test helper is written once, in a test-utils file
         id: SCN-FIT-062
