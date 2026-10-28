@@ -21,8 +21,8 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    # Minutes: a five-minute ceiling on the whole job.
-    timeout-minutes: 5
+    # Minutes: a ceiling against a hung job only, so a slow run still finishes.
+    timeout-minutes: 20
     env:
       # Seconds: a one-minute CI ceiling for a unit suite, times its 1.25 variance margin.
       UNIT_SUITE_TIMEOUT_S: "75"
