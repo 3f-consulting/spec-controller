@@ -82,7 +82,7 @@ Feature: balance reads a workflow's steps
     declared with a launcher's words matches no command. Each command of an
     &&, || or ; list is read the same way, in the step's own command and in any manifest script
     it follows. A line ending in a backslash that no other backslash escapes joins the next line with a space
-    before it is read, so a launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, a quoted argument included, inside a path, a flag or an
+    before it is read, unless the line ends in a comment, so a launcher continued onto the next line still hands on to the runner. A runner named anywhere else, as an argument, a quoted argument included, inside a path, a flag or an
     =-joined value, leaves the step a candidate.
 
     @unit @SCN-WFS-002
