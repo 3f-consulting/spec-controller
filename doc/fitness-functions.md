@@ -130,14 +130,13 @@ Mutation verdict recorded never fails on a red sweep or on a lapsed schedule. It
 
 ## Flexibility
 
-Installability is held by the published packages and types, by the ESLint rule that refuses a runtime dependency in the command's manifest, by the packed command carrying the repository's licence and a notice for every package its bundle carries, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
+Installability is held by the published packages and types, by the ESLint rule that refuses a runtime dependency in the command's manifest, and by its build refusing an engine entry point the bundle does not map, so the command carries one copy of the engine. Scalability does not apply to a command-line tool run once per CI run.
 
 | Check | Real catches |
 |---|---|
 | Published packages | 1 |
 | Published types | 1 |
 | ESLint: the command's manifest declares no runtime dependency | 0 |
-| The packed command carries the repository's licence and a notice for every package its bundle carries | 0 |
 | Building the command fails, naming the import, when it imports an engine entry point the bundle does not map | 0 |
 
 The two published checks and workflow correctness share their one catch: a single pull request reddened all three.

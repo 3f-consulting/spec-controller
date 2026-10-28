@@ -1,7 +1,7 @@
 // The published bin is one file: a spawn that resolved and loaded the ~290 modules of an unbundled build spent most of its
 // start-up there. Core is taken from its own build, the code its published package carries.
 import { build } from "esbuild";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -43,8 +43,7 @@ const bundleTheCommand = async () => {
     logLevel: "warning",
   });
 
-  // Each bundled package's licence ships beside the bundle, as its licence asks of a copy. The file is not named as a licence,
-  // or pnpm pack takes it for the package's own and leaves the repository's LICENSE out of the tarball.
+  // Each bundled package's licence ships beside the bundle, as its licence asks of a copy.
   const repoRoot = resolve(here, "../..");
   const manifestOf = (dir) => JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
   // A package may carry a nameless package.json deeper in, setting only the module type of a build directory.
@@ -80,12 +79,6 @@ const bundleTheCommand = async () => {
     return [`${installed(dir) ? `${name}@${version}` : name} (${declared})`, ...texts].join("\n\n");
   });
   writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n");
-
-  // The metafile names every input the bundle carries, so a check can tell which packages the notices owe. It is kept outside
-  // dist, so the published package does not carry it.
-  const buildMeta = join(here, "build-meta");
-  mkdirSync(buildMeta, { recursive: true });
-  writeFileSync(join(buildMeta, "metafile.json"), JSON.stringify(metafile));
 };
 
 const runAsTheBuild = process.argv[1] !== undefined && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;

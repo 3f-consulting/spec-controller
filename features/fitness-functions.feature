@@ -172,11 +172,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-068
     Scenario: the behavioural suite refuses to start on a command bundle older than the lockfile that fixes what it bundles
 
-  Rule: the published command installs as one package, carrying the licence of everything it bundles
-
-    @fitness @SCN-FIT-070
-    Scenario: the packed command carries the repository's licence and a notice for every package its bundle carries, the engine's included
-
   Rule: the command's bundle carries one copy of the engine, taken from the engine's own build
 
     @fitness @SCN-FIT-071

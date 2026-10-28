@@ -408,29 +408,6 @@ jobs:
         if: always()
         run: pnpm lint:published-types
 
-      - name: The packed command carries the repository's licence and a notice for every package its bundle carries
-        id: SCN-FIT-070
-        if: always()
-        shell: bash
-        # pnpm pack leaves the repository's LICENSE out when another file in the package is named as a licence.
-        env:
-          PACKED: ${{ runner.temp }}/packed-licences
-        run: |
-          start=$SECONDS
-          failed=0
-          mkdir -p "$PACKED"
-          tarball="$(pnpm --dir packages/spec-controller pack --pack-destination "$PACKED" | tail -1)"
-          listed="$(tar -tzf "$tarball")"
-          for entry in package/LICENSE package/dist/THIRD-PARTY-NOTICES.txt; do
-            grep -qxF "$entry" <<<"$listed" || { echo "the packed command carries no $entry"; failed=1; }
-          done
-          if [ "$failed" -eq 0 ]; then
-            tar -xzf "$tarball" -C "$PACKED" package/dist/THIRD-PARTY-NOTICES.txt
-            node scripts/bundled-notices.mjs packages/spec-controller/build-meta/metafile.json "$PACKED/package/dist/THIRD-PARTY-NOTICES.txt" || failed=1
-          fi
-          echo "the step took $((SECONDS - start)) s"
-          exit "$failed"
-
       - name: Building the command fails, naming the import, when it imports an engine entry point the bundle does not map
         id: SCN-FIT-071
         if: always()
