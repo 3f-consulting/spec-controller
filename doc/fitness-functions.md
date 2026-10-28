@@ -152,10 +152,16 @@ No check holds it. spec-controller carries no safety concern.
 | Check | Real catches |
 |---|---|
 | Comment share: no file over its comment-line ceiling | 5 |
+| Vale: no ticket ID, scenario code or narrated history in a comment, description or document | 3 |
+| No title or description names a code identifier or a source file | 1 |
+
+Vale runs the three rules [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, and its output names the rule that failed. In the counting window each was a check of its own, so each keeps its own count:
+
+| Rule | Real catches |
+|---|---|
 | No ticket ID in a comment, description or document | 0 |
 | No scenario code in a comment, description or document | 2 |
 | No narrated history in a comment, description or document | 1 |
-| No title or description names a code identifier or a source file | 1 |
 
 ## Scenarios a reader can trust
 

@@ -758,20 +758,10 @@ jobs:
         run: |
           node_modules/.bin/cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
-      - name: No ticket ID in a comment, description or document
-        id: SCN-FIT-024
+      - name: No ticket ID, scenario code or narrated history in a comment, description or document
+        id: SCN-FIT-075
         if: always()
-        run: pnpm docs:ticket-id
-
-      - name: No scenario code in a comment, description or document
-        id: SCN-FIT-025
-        if: always()
-        run: pnpm docs:scenario-code
-
-      - name: No narrated history in a comment, description or document
-        id: SCN-FIT-026
-        if: always()
-        run: pnpm docs:narrated-history
+        run: pnpm docs:current-state
 
       - name: No title or description names a code identifier or a source file
         id: SCN-FIT-038
