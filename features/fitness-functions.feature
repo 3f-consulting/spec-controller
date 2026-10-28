@@ -66,7 +66,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   in the direction that matters.
 
   @fitness @SCN-FIT-073
-  Scenario: the tree breaks no rule of the repository's ESLint configuration and keeps no dead suppression, and no file the push touches carries one of its warnings
+  Scenario: the code keeps every review rule this repository writes down for it, carries no dead suppression, and no file the push touches carries a warning
 
   @fitness @SCN-FIT-022
   Scenario: every function in a file the push touches scores under the external change-risk standard
@@ -204,11 +204,6 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
-
-  Rule: a unit test citing a domain concept's scenario lives in core's domain, never in an adapter, and a feature is a domain concept when core's domain has a module named for it
-
-    @fitness @SCN-FIT-055
-    Scenario: a unit test citing a domain concept's scenario placed outside core's domain reds the build
 
   Rule: every reference in a current-state document resolves
 

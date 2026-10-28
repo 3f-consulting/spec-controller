@@ -24,6 +24,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | No numeric literal type in core's domain | Modularity | 0 |
 | Only the exit-code module sets the process's exit code | Modularity | 0 |
 | No production source file writes message prose outside its package's catalogue, so core's domain holds no sentence for a reader | Modularity | 1 |
+| A unit test citing a domain concept's scenario lives in core's domain | Modularity | 0 |
 | Complexity: cognitive complexity and function length | Analysability | 13 |
 | No suppression comment that suppresses nothing | Analysability | 0 |
 | No comment disables a mutant | Testability | 0 |
@@ -83,8 +84,7 @@ Its headings are the standard's sub-characteristics of maintainability.
 | Check | Real catches |
 |---|---|
 | Import boundaries | 4 |
-| ESLint: the engine's idiom and core's domain language, seven rules | 1 |
-| A unit test citing a domain concept's scenario lives in core's domain | 0 |
+| ESLint: the engine's idiom, core's domain language and where a domain rule's unit test lives, seven rules | 1 |
 
 Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`](../config/.dependency-cruiser.js), and its output names the rule that failed. Two of its rules keep each input format's parser in its homes. In the counting window each was a check of its own, so each keeps its own count:
 

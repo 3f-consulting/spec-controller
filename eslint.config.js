@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { basename } from "node:path";
 import checkFile from "eslint-plugin-check-file";
 import i18next from "eslint-plugin-i18next";
 import sonarjs from "eslint-plugin-sonarjs";
@@ -9,7 +11,15 @@ import tseslint from "typescript-eslint";
 // options replace the earlier ones. So each concern registers ESLint's own core rule under its own plugin name, and
 // reports under that name. builtinRules comes from eslint/use-at-your-own-risk, ESLint's semi-public entry: if a later
 // ESLint drops it, this configuration fails to load and the lint step reds.
-const CONCERNS_RESTRICTING_SYNTAX = ["collection", "domain", "domainLiterals", "domainNumbers", "messages", "exitCode"];
+const CONCERNS_RESTRICTING_SYNTAX = [
+  "collection",
+  "domain",
+  "domainLiterals",
+  "domainNumbers",
+  "messages",
+  "exitCode",
+  "domainTests",
+];
 const restrictedSyntaxUnder = (concern) => [
   concern,
   { rules: { "no-restricted-syntax": builtinRules.get("no-restricted-syntax") } },
@@ -116,6 +126,37 @@ const NAME_TRANSLATE =
 const LITERAL_TRANSLATE =
   "names another tool, its format, a flag or a syntax, and core's domain speaks its own language. Let the adapter " +
   "that reads the format translate it into the term doc/ubiquitous-language.md gives.";
+
+// A feature is a domain concept when core's domain has a module named for it; its scenarios carry the concept's code.
+const FEATURES = new URL("features/", import.meta.url);
+const DOMAIN = new URL("packages/core/src/domain/", import.meta.url);
+const camelCase = (slug) => slug.replace(/-([a-z0-9])/g, (_, letter) => letter.toUpperCase());
+const CONCEPT_CODES = [
+  ...new Set(
+    readdirSync(FEATURES)
+      .filter((file) => file.endsWith(".feature"))
+      .filter((file) => existsSync(new URL(`${camelCase(basename(file, ".feature"))}.ts`, DOMAIN)))
+      .flatMap((file) => [...readFileSync(new URL(file, FEATURES), "utf8").matchAll(/@SCN-([A-Z0-9]+)-\d+/g)])
+      .map(([, code]) => code),
+  ),
+].sort();
+
+const TEST_TITLE =
+  "CallExpression:matches([callee.name=/^(describe|it|test)$/], [callee.object.name=/^(describe|it|test)$/], " +
+  "[callee.callee.object.name=/^(describe|it|test)$/])";
+const CONCEPT_CITATION = `/\\[SCN-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
+const MISPLACED_TEST =
+  "A test citing a domain concept's scenario tests a rule of core's domain. Move it to packages/core/src/domain/.";
+const DOMAIN_TEST_SELECTORS =
+  CONCEPT_CODES.length === 0
+    ? []
+    : [
+        { selector: `${TEST_TITLE} > Literal.arguments:first-child[value=${CONCEPT_CITATION}]`, message: MISPLACED_TEST },
+        {
+          selector: `${TEST_TITLE} > TemplateLiteral.arguments:first-child > TemplateElement[value.raw=${CONCEPT_CITATION}]`,
+          message: MISPLACED_TEST,
+        },
+      ];
 
 const PROSE = ["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"];
 
@@ -382,6 +423,15 @@ export default [
             "so the crash guard reads what this run set.",
         },
       ],
+    },
+  },
+
+  {
+    files: ["packages/**/*.test.ts"],
+    ignores: ["packages/core/src/domain/**"],
+    languageOptions: tsLanguageOptions,
+    rules: {
+      "domainTests/no-restricted-syntax": ["error", ...DOMAIN_TEST_SELECTORS],
     },
   },
 ];
