@@ -6,7 +6,7 @@ import { runsAsCommand } from "./shellReading.test-utils.js";
 const IN_THE_QUALITY_JOB = { workflow: "ci.yml", job: "quality", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const run = (identity: string, command: string): PipelineStep => ({ ...IN_THE_QUALITY_JOB, identity, command });
-const using = (name: string, plumbing = false): PipelineStep => ({
+const uses = (name: string, plumbing = false): PipelineStep => ({
   ...IN_THE_QUALITY_JOB,
   identity: name,
   plumbing,
@@ -14,11 +14,11 @@ const using = (name: string, plumbing = false): PipelineStep => ({
 });
 
 const pipeline = (): readonly PipelineStep[] => [
-  using("actions/checkout@v4", true),
+  uses("actions/checkout@v4", true),
   run("Install", "pnpm install --frozen-lockfile"),
   run("Unit tests", "pnpm test"),
   run("Lint", "pnpm lint"),
-  using("github/codeql-action/analyze@v3"),
+  uses("github/codeql-action/analyze@v3"),
 ];
 
 const SCRIPTS = { test: "vitest run", lint: "eslint ." };

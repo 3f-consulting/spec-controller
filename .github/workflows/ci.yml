@@ -272,10 +272,13 @@ jobs:
           advanced-security: false
           online-audits: false
 
+      # --verbose names each file Semgrep could not read in full; a one-entry log list folds its list of rule ids.
       - name: Semgrep — every rule under .semgrep/ over the packages
         id: SCN-FIT-074
         if: always()
-        run: semgrep scan --config .semgrep/ --error --metrics=off --disable-version-check packages
+        run: |
+          semgrep scan --config .semgrep/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep.json" packages
+          jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
       - name: Comment share — no file over its comment-line ceiling
         id: SCN-FIT-023
