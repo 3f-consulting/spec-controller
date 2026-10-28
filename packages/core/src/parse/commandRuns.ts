@@ -157,19 +157,29 @@ function pastQuote(text: string, from: number, quote: string): number {
   return end === -1 ? text.length : end + 1;
 }
 
-function pastBalanced(text: string, from: number, open: string, close: string): number {
+function pastQuoted(text: string, at: number): number | undefined {
+  const char = text.charAt(at);
+  if (char === "\\") return at + 2;
+  if (char === "'" || char === "`") return pastQuote(text, at + 1, char);
+  return char === '"' ? doubleQuoted(text, at + 1)[1] : undefined;
+}
+
+const pastNoCommand = (): undefined => undefined;
+
+// Where the span holds commands, a here-document opened in it is skipped as it is at the top level.
+function pastBalanced(text: string, from: number, open: string, close: string, commands = false): number {
   let depth = 1;
   let at = from;
+  const bodies: Body[] = [];
+  const pastPart = commands ? pastCommandPart : pastNoCommand;
   while (at < text.length && depth > 0) {
     const char = text[at];
-    if (char === "\\") at += 2;
-    else if (char === "'" || char === "`") at = pastQuote(text, at + 1, char);
-    else if (char === '"') at = doubleQuoted(text, at + 1)[1];
-    else {
+    const skipped = pastPart(text, at, bodies) ?? pastQuoted(text, at);
+    if (skipped === undefined) {
       if (char === open) depth += 1;
       if (char === close) depth -= 1;
-      at += 1;
     }
+    at = skipped ?? at + 1;
   }
   return Math.min(at, text.length);
 }
@@ -180,7 +190,8 @@ function expansionEnd(text: string, at: number, openers: readonly string[]): num
   const opener = openers.find((each) => text.startsWith(each, at));
   if (opener === undefined) return undefined;
   const open = opener.slice(-1);
-  return pastBalanced(text, at + opener.length, open, open === "{" ? "}" : ")");
+  const commands = open === "(" && !text.startsWith("$((", at);
+  return pastBalanced(text, at + opener.length, open, open === "{" ? "}" : ")", commands);
 }
 
 function doubleQuotedPart(text: string, at: number): readonly [string, number] {
@@ -308,10 +319,42 @@ interface Body {
 }
 
 // A here-document's body is whole lines up to the first that is its delimiter, after <<- strips its leading tabs, or the end of the text.
-function pastBody(text: string, from: number, { delimiter, tabs }: Body): number {
-  const lines = text.slice(from).split("\n");
-  const last = lines.findIndex((line) => (tabs ? line.replace(/^\t*/, "") : line) === delimiter);
-  return last === -1 ? text.length : from + lines.slice(0, last + 1).join("\n").length;
+// Inside a substitution, bash 5 also ends it at a line that opens with the delimiter and holds a ), and reads on from after the delimiter.
+function pastBody(text: string, from: number, { delimiter, tabs }: Body, inSubstitution = false): number {
+  let start = from;
+  for (const line of text.slice(from).split("\n")) {
+    const stripped = tabs ? line.replace(/^\t*/, "") : line;
+    if (stripped === delimiter) return start + line.length;
+    if (inSubstitution && stripped.startsWith(delimiter) && stripped.includes(")", delimiter.length)) {
+      return start + line.length - stripped.length + delimiter.length;
+    }
+    start += line.length + 1;
+  }
+  return text.length;
+}
+
+function delimiterWord(text: string, from: number): readonly [string, number] {
+  let at = from;
+  while (blank(text, at, undefined) !== undefined) at += 1;
+  let word = "";
+  for (let token = nextToken(text, at, word); token.kind === "part"; token = nextToken(text, at, word)) {
+    word += token.value;
+    at = token.end;
+  }
+  return [word, at];
+}
+
+// Inside a substitution: $(( opens arithmetic, whose << is a shift; << or <<- opens a here-document whose body is skipped at the next newline.
+function pastCommandPart(text: string, at: number, bodies: Body[]): number | undefined {
+  if (text.startsWith("$((", at)) return pastBalanced(text, at + 2, "(", ")");
+  if (text[at] === "\n" && bodies.length > 0) {
+    return bodies.splice(0).reduce((from, body) => pastBody(text, from, body, true), at + 1);
+  }
+  const token = redirection(text, at, undefined);
+  if (token?.kind !== "heredoc") return token?.end;
+  const [delimiter, end] = delimiterWord(text, token.end);
+  bodies.push({ delimiter, tabs: token.tabs, quoted: false });
+  return end;
 }
 
 interface SimpleCommand {

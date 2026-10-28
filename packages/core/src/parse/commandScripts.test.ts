@@ -57,6 +57,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["in a here-document's body, past a line that is its delimiter only once <<- strips its tabs", "cat <<EOF > f\n\tEOF\npnpm test\nEOF", "test"],
     ["after a here-document whose unquoted delimiter follows a body line ending in a backslash, which joins them", "cat <<EOF > f\nfoo \\\nEOF\npnpm test", "test"],
     ["across a line ending in a backslash after a # inside a word, which opens no comment", "echo a#b \\\npnpm test", "test"],
+    ["in a here-document's body inside a command substitution", "x=$(cat <<EOF\npnpm test\nEOF\n)", "test"],
   ] as const)("does not read a script named %s as run", (_naming, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(false);
   });
@@ -121,6 +122,12 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["on the line after a line that is only a comment ending in a backslash", "# setup \\\npnpm test", "test"],
     ["after a here-document opened on a line whose comment ends in a backslash", "cat <<EOF > f # note \\\nIt's\nEOF\npnpm test", "test"],
     ["after an empty here-document opened on a line whose comment ends in a backslash", "cat <<EOF > f # note \\\nEOF\npnpm test", "test"],
+    ["after a here-document opened inside a command substitution whose body holds an apostrophe", "x=$(cat <<EOF\nIt's\nEOF\n)\npnpm test", "test"],
+    ["after a here-document opened inside a double-quoted command substitution", 'x="$(cat <<EOF\nIt\'s\nEOF\n)"\npnpm test', "test"],
+    ["after a here-document opened inside a process substitution", "diff <(cat <<EOF\nIt's\nEOF\n) f\npnpm test", "test"],
+    ["after a here-document inside a command substitution whose body ends at a line opening with its delimiter and holding the )", "x=$(cat <<EOF\nIt's\nEOF)\npnpm test", "test"],
+    ["after a here-document inside a command substitution whose body holds a line opening with its delimiter and no )", "x=$(cat <<EOF\nEOFX\nIt's\nEOF\n)\npnpm test", "test"],
+    ["after an arithmetic left shift inside a command substitution", "x=$(echo $((1<<2)))\npnpm test", "test"],
   ] as const)("reads a script run %s as run", (_where, command, script) => {
     expect(commandInvokesScript(command, script)).toBe(true);
   });

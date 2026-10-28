@@ -56,9 +56,11 @@ Feature: balance reads a workflow's steps
     single- or double-quoted argument is part of that argument and separates no command, even
     when the argument runs on to the next line. An apostrophe opens a quote as a single quote
     does, and a quote escaped with a backslash opens none. The body of a here-document, up to the
-    line that ends it, is text: nothing in it runs, and a quote in it opens none. A comment runs
-    to the end of its line: a backslash at its end joins no lines, so the command on the next
-    line runs.
+    line that ends it, is text: nothing in it runs, and a quote in it opens none. A here-document
+    opened inside a command or process substitution is read the same way, and there its body
+    also ends at a line that opens with its delimiter and holds a ), read on from after the
+    delimiter. A comment runs to the end of its line: a backslash at its end joins no lines, so
+    the command on the next line runs.
 
     @unit @SCN-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
