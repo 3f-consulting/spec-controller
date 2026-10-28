@@ -1,5 +1,5 @@
-import { renderReport, runVerdict } from "@3f-consulting/spec-controller-core";
-import type { RenderInput, RunVerdict } from "@3f-consulting/spec-controller-core";
+import { assembleSavedReport, renderReport } from "@3f-consulting/spec-controller-core";
+import type { RunVerdict, SavedReport } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { reportedExitCodeOf } from "./exitStatus.js";
 import { INPUT_NAMES } from "./evidenceInputs.js";
@@ -10,12 +10,10 @@ export interface ReRendered {
 }
 
 export function reRender(document: unknown, strictGiven: boolean): ReRendered {
-  const saved = document as RenderInput;
-  const strict = saved.runProvenance.strict === true || strictGiven;
-  const report: RenderInput = { ...saved, runProvenance: { ...saved.runProvenance, strict } };
+  const report = assembleSavedReport(document as SavedReport, strictGiven);
   return {
     markdown: renderReport(report, INPUT_NAMES, reportedExitCodeOf),
-    verdict: runVerdict({ ledger: report.ledger, scenarioCodeErrors: report.scenarioCodeErrors, strict }),
+    verdict: report.summary.runVerdict,
   };
 }
 

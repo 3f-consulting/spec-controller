@@ -1,10 +1,10 @@
 import type { RenderInput } from "../domain/renderInput.js";
-import type { StepAccounting } from "../domain/evidenceReconciliation.js";
-import { everyStepAccountedFor } from "../domain/uncitedFitnessFunctions.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-const verdictOf = (accounting: StepAccounting): string =>
-  everyStepAccountedFor(accounting)
+type ConcludedAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
+
+const verdictOf = (accounting: ConcludedAccounting): string =>
+  accounting.everyStepAccountedFor
     ? `- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`
     : `- ${CORE_MESSAGES[CoreMessage.StepsNotAccountedFor](accounting.stepsRead, accounting.accountedFor)}`;
 

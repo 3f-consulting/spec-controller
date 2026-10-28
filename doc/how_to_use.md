@@ -744,7 +744,7 @@ Two limits:
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
 - **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into per-quality-check **Quality Check Reconciliations**. Each of those carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` sub-rows are the **reconciling items**. A **Summary** gives the totals.
-- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top.
+- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `scenario-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger. On a run that read CI configuration, `summary.stepAccounting.everyStepAccountedFor` states whether every step the run read is accounted for, as the Markdown's step accounting does.
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 

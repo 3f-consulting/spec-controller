@@ -2,7 +2,7 @@ import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags.js";
-import { runVerdict, type RunVerdict } from "../domain/runVerdict.js";
+import type { RunVerdict } from "../domain/runVerdict.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 type VerdictLine = { readonly headline: string; readonly gloss: string };
@@ -72,11 +72,7 @@ function verdictFor(verdict: RunVerdict, ledger: Ledger, corpusDir: string, code
 
 export const runVerdictSection = (report: RenderInput, exitCodeOf: ExitCodeOf): string[] => {
   const reconciliation = { claimReconciliations: report.ledger.claimReconciliations };
-  const verdict = runVerdict({
-    ledger: reconciliation,
-    scenarioCodeErrors: report.scenarioCodeErrors,
-    strict: report.runProvenance.strict === true,
-  });
+  const verdict = report.summary.runVerdict;
   const line = verdictFor(verdict, reconciliation, report.runProvenance.corpus, report.scenarioCodeErrors ?? []);
   const exit = CORE_MESSAGES[CoreMessage.VerdictExit](exitCodeOf(verdict));
   const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${line.headline} — ${line.gloss} (${exit})`];

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
+import { assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
@@ -217,6 +217,7 @@ describe("[SCN-JAV-009] runReconcile reads a JUnit 5 class whose setup before al
   });
 
   it("stamps the run unsound", () => {
-    expect(runVerdict({ ledger: balance().ledger, strict: false })).toBe("unsound");
+    const ctx: RunContext = { target: JAVA, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    expect(assembleRenderInput(balance(), ctx).summary.runVerdict).toBe("unsound");
   });
 });

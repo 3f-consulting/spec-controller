@@ -32,8 +32,8 @@ import { readDocument } from "../ingest/reportReading.js";
 import { exitCodeOf } from "./exitStatus.js";
 import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
 import {
+  assembleRenderInput,
   corpusCountsOfFeatures,
-  runVerdict,
   type ParsedFeatureFile,
   type ParsedWorkflow,
 } from "@3f-consulting/spec-controller-core";
@@ -144,7 +144,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
     (path) => earlierStoredRunDirOf(path, ownRunDir),
   );
 
-  const verdict = runVerdict({ ...balance, strict: ctx.strict === true });
+  const verdict = assembleRenderInput(balance, ctx).summary.runVerdict;
   endRunOn({ kind: "verdict", code: exitCodeOf(verdict, args["exit-zero"] !== undefined) });
   return true;
 }

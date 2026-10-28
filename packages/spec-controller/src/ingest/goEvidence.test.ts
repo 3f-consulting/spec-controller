@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseJunitEvidenceObservations, renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
+import { parseJunitEvidenceObservations, assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 import { parseJunitXml } from "./junitXml.js";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -171,7 +171,8 @@ describe("[SCN-GOT-007] runReconcile reads a Go package that failed to compile a
   });
 
   it("stamps the run unsound", () => {
-    expect(runVerdict({ ledger: balance().ledger, strict: false })).toBe("unsound");
+    const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    expect(assembleRenderInput(balance(), ctx).summary.runVerdict).toBe("unsound");
   });
 });
 

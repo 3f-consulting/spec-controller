@@ -198,3 +198,24 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-016
     Scenario: a corpus with a misfiled code reconciles to the same ledger and summary as its correctly filed twin, and differs only in its scenario code errors
+
+  Rule: the JSON report carries the run's conclusions as the Markdown states them
+
+    The JSON report is the run's result, so it names the run verdict and says whether every
+    step the run read is accounted for. A machine reading it never works either out from the
+    ledger.
+
+    @unit @SCN-RMD-017
+    Scenario Outline: the JSON report's summary names the <verdict> run verdict, the one the Markdown's verdict headline states
+
+      Examples:
+        | verdict              |
+        | balanced             |
+        | out-of-balance       |
+        | unsound              |
+        | pending              |
+        | nothing-to-reconcile |
+        | scenario-code-errors |
+
+    @unit @SCN-RMD-018
+    Scenario: the JSON report's step accounting states whether every step the run read is accounted for, as the Markdown's step accounting does

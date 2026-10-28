@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
-import { renderReportFromJson } from "./markdown.js";
+import { renderReportFromJson } from "../assemble/composers.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder, cells } from "./renderedSection.test-utils.js";

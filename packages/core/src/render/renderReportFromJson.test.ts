@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderJson } from "../assemble/composers.js";
 import { renderMarkdown } from "../assemble/composers.js";
-import { renderReportFromJson } from "./markdown.js";
+import { renderReportFromJson } from "../assemble/composers.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";

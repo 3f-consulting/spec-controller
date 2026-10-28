@@ -53,8 +53,8 @@ The package publishes exactly one entrypoint: a barrel that exports the followin
 
   The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing observation, and `parsePytestEvidenceObservations` reads it as broken, as pytest's setup error.
 - **Reconcile**: `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over the parsed feature files, the parsed workflows and the other sources you have already read.
-- **Ask the ledger**: `isBalanced`, `hasPendingItems`, `hasBrokenEvidence` and `hasNothingToReconcile`. These are the four questions a caller decides on. The CLI builds its balanced, out-of-balance, unsound, pending-under-strict and nothing-to-reconcile verdicts from these four and nothing else.
-- **Render**: `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string.
+- **Ask the ledger**: `isBalanced`, `hasPendingItems`, `hasBrokenEvidence` and `hasNothingToReconcile`. These are the four questions a caller decides on. The run verdict itself is on the report: `assembleRenderInput` names it at `summary.runVerdict`, and the CLI's exit code is read from there.
+- **Render**: `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string. `assembleSavedReport` makes a saved JSON report a report again, working its run verdict out afresh, so a report saved without one, or re-rendered under `--strict`, states the verdict a run would.
 - **Provenance**: the pure subset, which records what a run was without asking the filesystem what it is.
 
 The types these functions take and return are exported alongside them, so a consumer can name any value it holds.

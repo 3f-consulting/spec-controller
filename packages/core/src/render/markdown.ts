@@ -403,7 +403,3 @@ const SECTIONS: readonly SectionEmitter[] = [
 export function renderReport(report: RenderInput, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf): string {
   return SECTIONS.flatMap((section) => section(report, inputNames, exitCodeOf)).join("\n");
 }
-
-export function renderReportFromJson(json: string, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf): string {
-  return renderReport(JSON.parse(json) as RenderInput, inputNames, exitCodeOf);
-}

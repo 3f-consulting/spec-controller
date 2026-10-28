@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderMarkdown, runVerdict, type RunContext } from "@3f-consulting/spec-controller-core";
+import { assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
@@ -194,12 +194,13 @@ describe("[SCN-RSP-008] runReconcile reads a real RSpec run with a spec file tha
   });
 
   it("stamps the run unsound, though the other file's examples ran", () => {
-    const ledger = balance().ledger;
-    const unit = ledger.claimReconciliations
+    const run = balance();
+    const unit = run.ledger.claimReconciliations
       .find((s) => s.scnId === "SCN-RSF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("satisfied");
-    expect(runVerdict({ ledger, strict: false })).toBe("unsound");
+    const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-15T09:00:00.000Z"), sourceSha: null };
+    expect(assembleRenderInput(run, ctx).summary.runVerdict).toBe("unsound");
   });
 });
