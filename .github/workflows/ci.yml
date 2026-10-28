@@ -219,12 +219,23 @@ jobs:
         if: always()
         run: node scripts/test-ratio.mjs
 
-      # remark-validate-links checks each relative link and its anchor; scripts/doc-references.mjs checks what no tool reads.
+      # remark-validate-links checks each relative link and its anchor. The Vale rule refuses a backticked token naming a
+      # repository file, so every such reference is a link remark checks.
+      # The probe reds the step unless Vale raises on a line naming a repository file: exit 0 means the rule is gone, 2 that Vale failed.
+      # Both scripts run whatever the first returns, so one run prints every broken reference.
       # A doc-only push to main skips this step and the Vale steps; pnpm docs:check runs them all before such a push.
       - name: Every reference in a current-state document resolves
         id: SCN-FIT-059
         if: always()
-        run: pnpm docs:references
+        shell: bash
+        run: |
+          probe=0
+          printf '\x60CONTRIBUTING.md\x60\n' | vale --config=.vale/references.ini --ext=.md > /dev/null || probe=$?
+          [ "$probe" -eq 1 ] || { echo "The reference rule did not fire on a line naming a repository file: Vale exited $probe"; exit 1; }
+          status=0
+          pnpm docs:references || status=1
+          pnpm docs:file-links || status=1
+          exit "$status"
 
       - name: No step on a scenario Cucumber does not run
         id: SCN-FIT-028

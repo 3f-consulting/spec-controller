@@ -1,0 +1,8 @@
+# Raw scope, as Vale skips code spans otherwise; (?<!\[) skips link text; the list is the repository's top-level entries, less four names the adopter documents use for the adopter's own files.
+extends: existence
+message: "'%s' names a file of this repository: write it as a link"
+level: error
+scope: raw
+nonword: true
+tokens:
+  - '(?<!\[)`(?:(?:\.semgrep|\.vale|config|doc|packages|scripts|tests)/[^`*?{}\s]*|\.github/(?!workflows`)[^`*?{}\s]*|features/[^`*?{}\s]+|CONTRIBUTING\.md|LICENSE|pnpm-lock\.yaml|pnpm-workspace\.yaml|eslint\.config\.js|cucumber\.js|stryker\.config\.js|tsconfig\.json|vitest\.config\.ts|knip\.jsonc|\.jscpd\.json|\.vale\.ini)`'

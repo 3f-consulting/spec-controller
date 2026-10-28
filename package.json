@@ -21,7 +21,8 @@
     "docs:current-state": "git ls-files -z --cached --others --exclude-standard | xargs -0 vale --glob='!.vale/styles/**'",
     "docs:code-identifier": "vale --config=.vale/descriptions.ini --filter='.Name == \"Descriptions.CodeIdentifier\"' features",
     "docs:interface-mechanic": "vale --config=.vale/steps.ini features",
-    "docs:references": "status=0; node scripts/doc-references.mjs --list | xargs -0 remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links || status=1; node scripts/doc-references.mjs || status=1; exit $status"
+    "docs:references": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links'",
+    "docs:file-links": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 vale --config=.vale/references.ini'"
   },
   "specController": {
     "runners": {
@@ -58,9 +59,7 @@
     "globals": "17.12.0",
     "jscpd": "5.4.0",
     "knip": "6.39.0",
-    "minimatch": "10.2.5",
     "publint": "0.3.24",
-    "remark": "15.0.1",
     "remark-cli": "12.0.1",
     "remark-validate-links": "13.1.0",
     "spec-controller": "0.1.81",

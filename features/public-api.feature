@@ -8,7 +8,7 @@ Feature: The public core exposes its reconciliation for reading, not for constru
   job is a generated `api-extractor` report, and it is adopted at the 1.0
   boundary, where a stability promise exists again. Before 1.0 a symbol quietly
   added to the barrel, or quietly dropped from it, reds nothing — which is what
-  `0.x` already says out loud in `doc/compatibility.md`.
+  `0.x` already says out loud in [`doc/compatibility.md`](../doc/compatibility.md).
 
   What is held here is narrower, and is not about the surface's SHAPE.
   One symbol the barrel exports is exported for READING and cannot be

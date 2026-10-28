@@ -67,4 +67,4 @@ Source, issues and history: [github.com/3f-consulting/spec-controller](https://g
 
 ## Licence
 
-MIT — see `LICENSE` in the repository. © 2026 3F Consulting Ltd.
+MIT — see [`LICENSE`](https://github.com/3f-consulting/spec-controller/blob/main/LICENSE) in the repository. © 2026 3F Consulting Ltd.

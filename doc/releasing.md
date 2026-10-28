@@ -3,7 +3,7 @@
 Two packages are released together: `@3f-consulting/spec-controller-core`, the pure engine, and
 `spec-controller`, the command that carries it compiled into its bundle. **Nobody cuts a release.** Every push to `main`
 that passes CI publishes both, core first,
-in the run of `.github/workflows/release.yml` that follows that push's CI run, at the next counter
+in the run of [`.github/workflows/release.yml`](../.github/workflows/release.yml) that follows that push's CI run, at the next counter
 version, and then tags what it published.
 No credential is stored anywhere. There is no release PR, nothing to promote afterwards and nothing
 to rotate.
@@ -20,8 +20,8 @@ error whose cause is not authentication.
 **Every push to `main` whose CI run succeeds publishes.** `release.yml` runs when the `CI` workflow
 completes on `main`, and its `release` job goes on when that CI run succeeded and was started by a
 `push`, with no other condition. Every such merge's run publishes the next counter version, unless a
-newer pending run cancels it (*Two merges close together*, below), a merge that touches only `features/`, `tests/`, `.github/` or the lockfile included. A push that changes only
-`doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run CI at all
+newer pending run cancels it (*Two merges close together*, below), a merge that touches only [`features/`](../features/), [`tests/`](../tests/), [`.github/`](../.github/) or the lockfile included. A push that changes only
+`doc/**`, the root [`README.md`](../README.md), [`CONTRIBUTING.md`](../CONTRIBUTING.md) or [`LICENSE`](../LICENSE) does not run CI at all
 (`paths-ignore` in `ci.yml`), so it publishes nothing.
 
 `release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
@@ -44,7 +44,7 @@ The `release` job:
 
 Two jobs then run on what was published:
 
-- The `latest` job runs `scripts/latest-is.sh` for each package. It reds unless the `latest`
+- The `latest` job runs [`scripts/latest-is.sh`](../scripts/latest-is.sh) for each package. It reds unless the `latest`
   dist-tag is the version just published, waiting up to `LATEST_WAIT_S` for the registry to serve it.
 - The `tag` job creates `v<version>` on the commit that was built, and a GitHub release for that tag
   with notes generated from the merged pull requests. It is a separate job so that the only token
@@ -176,7 +176,7 @@ edit here.
 
 ### The pin decides which reader judges this tree
 
-The workspace root `package.json` carries `spec-controller` in `devDependencies` as an **exact
+The workspace root [`package.json`](../package.json) carries `spec-controller` in `devDependencies` as an **exact
 published version**, and there is no root script of that name. `pnpm spec-controller …` therefore
 falls through to `node_modules/.bin/spec-controller` and runs the *installed* package. Measured with
 no such script: the report's own provenance reads `Tool version: 0.1.0-alpha.3` and
@@ -192,7 +192,7 @@ first only until somebody edits one of them.
 ### Dependabot moves it, with no human act
 
 **The pin follows the registry by bot PR, within a day of a release publishing, weekends
-included.** `.github/dependabot.yml` lets Dependabot move exactly this one dependency, and keeps it
+included.** [`.github/dependabot.yml`](../.github/dependabot.yml) lets Dependabot move exactly this one dependency, and keeps it
 exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green.
 
 **The pin's merge starts no CI and no release, and that is the loop guard.** Auto-merge pushes the
@@ -207,16 +207,16 @@ days. `daily` is not used because it runs Monday to Friday only. Once a day is a
 allows: its config check rejects any `cronjob` that fires more often than every 24 hours. A pin
 therefore lags a publish by up to 24 hours. That lag is accepted because only step 3 of an
 expand/contract waits on the pin, and an adopter's own Dependabot lags the same way. A merge to
-`main` that changes `.github/dependabot.yml` also starts a run at once. *Check for updates* under
+`main` that changes [`.github/dependabot.yml`](../.github/dependabot.yml) also starts a run at once. *Check for updates* under
 Insights → Dependency graph → Dependabot runs one early, but the loop never needs it, and neither is
 a hand move of the pin.
 
-**The bot sees the root pin only because `packages/spec-controller` is excluded from its view.**
+**The bot sees the root pin only because [`packages/spec-controller`](../packages/spec-controller) is excluded from its view.**
 Dependabot's npm parser drops every manifest requirement whose name is also the name of a workspace
 package, and the workspace package here is named `spec-controller`, the name the root pins from the
-registry. `exclude-paths: [packages/spec-controller]` in `.github/dependabot.yml` fixes that.
+registry. `exclude-paths: [packages/spec-controller]` in [`.github/dependabot.yml`](../.github/dependabot.yml) fixes that.
 Measured with the Dependabot CLI over this tree: without the exclusion, the job rewrites
-`pnpm-lock.yaml` alone and leaves the root pin unmoved; with it, the root pin moves by one exact
+[`pnpm-lock.yaml`](../pnpm-lock.yaml) alone and leaves the root pin unmoved; with it, the root pin moves by one exact
 line, and core and the CLI move together in the lockfile.
 
 **The PR's lockfile carries more than the pin, and auto-merge accepts that only when the pin really
@@ -225,10 +225,10 @@ which also re-resolves in-range transitive packages. The same command under this
 reproduces the same churn, and no Dependabot key turns it off. So `dependabot-auto-merge.yml` reads
 what the PR changes before it arms anything, and refuses unless all of these hold:
 
-- the changed files are exactly the root `package.json` and `pnpm-lock.yaml`;
+- the changed files are exactly the root [`package.json`](../package.json) and [`pnpm-lock.yaml`](../pnpm-lock.yaml);
 - the root pin differs from the merge base's;
 - the new pin is an exact version;
-- nothing else in the root `package.json` changes.
+- nothing else in the root [`package.json`](../package.json) changes.
 
 A refused PR fails that job with the reason and is left disarmed. On a PR that passes, `ci` still
 gates the churn.
@@ -238,11 +238,11 @@ gates the churn.
 `allow:` limits the bot to spec-controller, so a cooldown would only delay our own releases, and
 each of those was judged by this repository's `ci` before `release.yml` published it.
 
-- **Dependabot's cooldown.** `.github/dependabot.yml` exempts spec-controller with
+- **Dependabot's cooldown.** [`.github/dependabot.yml`](../.github/dependabot.yml) exempts spec-controller with
   `cooldown: exclude:`. Leaving `cooldown:` out would not do it, because GitHub then applies a
   default of three days.
 - **pnpm's `minimumReleaseAge`.** pnpm 11 refuses a lockfile entry younger than its
-  `minimumReleaseAge`, 1440 minutes by default, and CI enforces it. `pnpm-workspace.yaml`'s
+  `minimumReleaseAge`, 1440 minutes by default, and CI enforces it. [`pnpm-workspace.yaml`](../pnpm-workspace.yaml)'s
   `minimumReleaseAgeExclude` names `spec-controller` and `@3f-consulting/spec-controller-core`, and
   nothing else. Measured over a Dependabot CLI dry run that pinned `0.1.0-alpha.12` three hours after
   it published: with no exemption the frozen install reds with
@@ -266,13 +266,13 @@ widens the specifier.
 
 ### The workflows' actions move monthly, and a person merges them
 
-Every action in `.github/workflows/` is pinned by SHA with its version in a trailing comment
-(`@<sha> # vX.Y.Z`). A `github-actions` entry in `.github/dependabot.yml` moves those pins: once a
+Every action in [`.github/workflows/`](../.github/workflows/) is pinned by SHA with its version in a trailing comment
+(`@<sha> # vX.Y.Z`). A `github-actions` entry in [`.github/dependabot.yml`](../.github/dependabot.yml) moves those pins: once a
 month, every action bump in one grouped PR, and a release only after a 7-day cooldown. Dependabot
 moves the SHA and rewrites the version comment with it.
 
 `dependabot-auto-merge.yml` refuses that PR, because it changes workflow files and not exactly
-`package.json` and `pnpm-lock.yaml`. Auto-merge is never armed, and a person merges it once `ci` is
+[`package.json`](../package.json) and [`pnpm-lock.yaml`](../pnpm-lock.yaml). Auto-merge is never armed, and a person merges it once `ci` is
 green. A green `ci` proves only the bump in `ci.yml`:
 
 - before merging a bump that touches `mutation.yml`, dispatch `mutation.yml` on the PR's branch;
@@ -283,12 +283,12 @@ a SHA-256 pinned beside its version in the step's `env:`. Dependabot does not mo
 moves the version and checksum together.
 
 Semgrep is not an action either. `Install Semgrep` installs it with `pip --require-hashes --no-deps`
-from `.semgrep/requirements.txt`, a lock of `semgrep==<version>` and every dependency, each with its
+from [`.semgrep/requirements.txt`](../.semgrep/requirements.txt), a lock of `semgrep==<version>` and every dependency, each with its
 hashes. Its first line is the `pip-compile` command that wrote it. Dependabot does not move it, so a
 person regenerates the lock with that command, under the runner's `python3`, to move the version.
 The installed venv is cached under a key of the runner's OS, its `python3` version and the lock's
 hash: a run whose key is cached restores it and installs nothing, and a new lock installs afresh.
-Each rule is its own file in `.semgrep/`, with no registry ruleset and metrics off. One step scans
+Each rule is its own file in [`.semgrep/`](../.semgrep/), with no registry ruleset and metrics off. One step scans
 the packages with every rule in that directory, and Semgrep names the rule in each finding.
 
 ---
@@ -306,10 +306,10 @@ change lands as a **parallel change** (*expand–migrate–contract*) over two m
    the release step 1 published, and `dependabot-auto-merge.yml` merges it on green, with no human
    act. The bot runs once a day (see *Dependabot moves it*), so this lags the publish by up
    to 24 hours and nothing shortens that but waiting. The name-scoped `minimumReleaseAgeExclude` in
-   `pnpm-workspace.yaml` is what lets its `Install dependencies` accept a release hours old.
+   [`pnpm-workspace.yaml`](../pnpm-workspace.yaml) is what lets its `Install dependencies` accept a release hours old.
 3. **Migrate.** With the new reader pinned, the tree drops the old shape.
 4. **Contract.** The reader stops accepting the old shape **only once no adopter still writes it**,
-   and `doc/how_to_use.md` says so in the same merge.
+   and [`doc/how_to_use.md`](how_to_use.md) says so in the same merge.
 
 **Step 4 is a deliberate step, never a consequence of step 3.** The reader dropping a shape is what
 breaks an adopter's next pin bump, and adopters move on their own clock. The tree can be clean of
@@ -323,7 +323,7 @@ publishing by hand.
 **Worked example: retiring `specController.fitnessChecks`.** The expand merge taught the reader to
 raise a fitness obligation from the `@fitness` tag alone, and to accept a manifest still carrying
 `specController.fitnessChecks` by naming it as a retired key. Its migrate step deleted that key
-from this repository's own `package.json`, and it waited, because the pinned reader could not read a
+from this repository's own [`package.json`](../package.json), and it waited, because the pinned reader could not read a
 tree with no list at all until the bot's PR moved the pin to the expand merge's release. That
 condition is written *at or after* that release, never as an equality: the pin lags and jumps. The
 current reader names that key as one the `specController` block does not read, and reads nothing
