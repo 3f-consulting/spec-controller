@@ -154,7 +154,8 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | A red proof that selects no test fails, saying no test was selected | 0 |
 | A red proof in which no selected test reported a result fails as not a red | 0 |
 | A release compares each package's whole built `dist` with the last release's | 0 |
-| A release whose comparison cannot read the last release publishes nothing and warns | 0 |
+| A release whose comparison cannot reach the registry publishes nothing and warns | 0 |
+| A release npm does not serve yet is waited for, then compared or failed | 0 |
 | No test leaves an entry in its temporary directory | 0 |
 | The behavioural suite refuses a command bundle older than the lockfile | 0 |
 | Workflow correctness | 1 |

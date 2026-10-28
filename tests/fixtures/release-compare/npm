@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stands in for npm pack: serves $FAKE_NPM_DIR/<package dir>.tgz, fails as npm does when it is absent,
-# and fails the first N tries while $FAKE_NPM_DIR/<package dir>.fail holds N.
+# fails the first N tries while $FAKE_NPM_DIR/<package dir>.fail holds N, and answers E404 to the first N
+# while $FAKE_NPM_DIR/<package dir>.unserved holds N.
 set -uo pipefail
 
 [ "${1:-}" = pack ] || { echo "the stand-in npm runs pack alone" >&2; exit 1; }
@@ -29,7 +30,12 @@ if [ -f "$failures" ] && [ "$(cat "$failures")" -gt 0 ]; then
   exit 1
 fi
 
+unserved="$FAKE_NPM_DIR/$package.unserved"
 served="$FAKE_NPM_DIR/$package.tgz"
+if [ -f "$unserved" ] && [ "$(cat "$unserved")" -gt 0 ]; then
+  echo $(($(cat "$unserved") - 1)) > "$unserved"
+  served=
+fi
 if [ ! -f "$served" ]; then
   echo "npm error code E404" >&2
   echo "npm error 404 Not Found - GET https://registry.npmjs.org/$name - Not found" >&2

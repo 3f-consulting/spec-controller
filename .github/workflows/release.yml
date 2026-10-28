@@ -23,7 +23,7 @@ jobs:
       actions: read
     outputs:
       changed: ${{ steps.built.outputs.changed || steps.diff.outputs.changed }}
-    timeout-minutes: 10
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,10 +63,12 @@ jobs:
         if: steps.diff.outputs.changed == 'false'
         env:
           TAG: ${{ steps.diff.outputs.tag }}
-          # Tries per package: npm can take 20 to 40 minutes to serve a publish, and three tries ride out a brief outage without holding the job that long.
+          # Tries per package before a registry that cannot be reached is warned about: three ride out a brief outage.
           RELEASE_COMPARE_TRIES: "3"
-          # Seconds between tries.
+          # Seconds between tries, and between asks for a release npm does not serve yet.
           RELEASE_COMPARE_WAIT_S: "20"
+          # How long a release npm answers E404 for is waited for: npm can take 20 to 40 minutes to serve a publish it has acknowledged, the window the latest job waits too.
+          RELEASE_SERVED_WAIT_S: "2400"
         run: |
           status=0
           scripts/release-changed.sh "$RUNNER_TEMP/built" "${TAG#v}" || status=$?

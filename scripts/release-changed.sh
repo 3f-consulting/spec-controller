@@ -5,6 +5,7 @@ usage() {
   echo "usage: release-changed.sh <built packages dir> <version>" >&2
   echo "       exits 0 when either package's built dist differs from its dist at <version>," >&2
   echo "       1 when neither differs, warning for each that could not be read, and 2 when its own input is missing" >&2
+  echo "       or a release npm does not serve yet is still not served after RELEASE_SERVED_WAIT_S seconds" >&2
   exit 2
 }
 
@@ -19,8 +20,10 @@ version=$2
 # An unset setting exits 2, never 1, which the release would read as "publish nothing".
 [ -n "${RELEASE_COMPARE_TRIES:-}" ] || fail "RELEASE_COMPARE_TRIES is not set"
 [ -n "${RELEASE_COMPARE_WAIT_S:-}" ] || fail "RELEASE_COMPARE_WAIT_S is not set"
+[ -n "${RELEASE_SERVED_WAIT_S:-}" ] || fail "RELEASE_SERVED_WAIT_S is not set"
 tries=$RELEASE_COMPARE_TRIES
 wait_s=$RELEASE_COMPARE_WAIT_S
+served_wait_s=$RELEASE_SERVED_WAIT_S
 
 packages=(core spec-controller)
 
@@ -61,36 +64,94 @@ fetch() {
   tar -xzf "${tarballs[0]}" -C "$into" package/dist 2>> "$dir/$package.err"
 }
 
+# Only the tag job, which runs after both publishes, makes a version tag, so npm's E404 for it means npm
+# has not served that publish yet, never that it is absent.
+not_served_yet() {
+  [[ $(reason_of "$1") == E404* ]]
+}
+
+# Returns 0 when the dist differs, 1 when it is identical.
+compare() {
+  local package=$1 name=$2 said
+  said=$(cd "$dir/$package/package" && diff -r -q dist "$built/$package/dist" 2>&1)
+  case $? in
+    0) echo "$name: the built dist is identical to $name@$version's"; return 1 ;;
+    1)
+      echo "$name: the built dist differs from $name@$version's:"
+      head -n 5 <<< "$said"
+      return 0
+      ;;
+    *) fail "cannot compare with $name@$version's dist: $said" ;;
+  esac
+}
+
+warn_unread() {
+  for line in "${unread[@]+"${unread[@]}"}"; do echo "$line"; done
+}
+
 changed=1
 unread=()
+unserved=()
 for package in "${packages[@]}"; do
   name=$(name_of "$package")
   try=1
+  every_try_e404=1
   until fetch "$package" "$name"; do
+    not_served_yet "$dir/$package.err" || every_try_e404=0
     if [ "$try" -ge "$tries" ]; then
       reason=$(reason_of "$dir/$package.err")
       echo "$name: could not download $name@$version in $tries tries: $reason"
-      unread+=("::warning::could not compare $name@$version: $reason; nothing publishes from this push")
+      if [ "$every_try_e404" -eq 1 ]; then
+        unserved+=("$package")
+      else
+        unread+=("::warning::could not compare $name@$version: $reason; nothing publishes from this push")
+      fi
       continue 2
     fi
     echo "$name: try $try of $tries could not download $name@$version"
     try=$((try + 1))
     sleep "$wait_s"
   done
-
-  said=$(cd "$dir/$package/package" && diff -r -q dist "$built/$package/dist" 2>&1)
-  case $? in
-    0) echo "$name: the built dist is identical to $name@$version's" ;;
-    1)
-      echo "$name: the built dist differs from $name@$version's:"
-      head -n 5 <<< "$said"
-      changed=0
-      ;;
-    *) fail "cannot compare with $name@$version's dist: $said" ;;
-  esac
+  compare "$package" "$name" && changed=0
 done
 
-if [ "$changed" -eq 1 ]; then
-  for line in "${unread[@]+"${unread[@]}"}"; do echo "$line"; done
+[ "$changed" -eq 1 ] || exit 0
+if [ ${#unserved[@]} -eq 0 ]; then
+  warn_unread
+  exit 1
 fi
-exit "$changed"
+
+# The wait is bounded because an E404 that outlasts npm's serving lag is no longer lag, and a red job can be re-run.
+started=$SECONDS
+for package in "${unserved[@]}"; do
+  echo "$(name_of "$package"): $(name_of "$package")@$version is not served yet; asking every $wait_s s for up to $served_wait_s s"
+done
+while :; do
+  waiting=()
+  for package in "${unserved[@]}"; do
+    name=$(name_of "$package")
+    if fetch "$package" "$name"; then
+      echo "$name: $name@$version is served after $((SECONDS - started)) s"
+      if compare "$package" "$name"; then exit 0; fi
+    elif not_served_yet "$dir/$package.err"; then
+      waiting+=("$package")
+    else
+      reason=$(reason_of "$dir/$package.err")
+      echo "$name: could not download $name@$version while waiting for it: $reason"
+      unread+=("::warning::could not compare $name@$version: $reason; nothing publishes from this push")
+    fi
+  done
+  unserved=("${waiting[@]+"${waiting[@]}"}")
+  [ ${#unserved[@]} -gt 0 ] || break
+  if [ $((SECONDS - started)) -ge "$served_wait_s" ]; then
+    warn_unread
+    for package in "${unserved[@]}"; do
+      echo "$(name_of "$package")@$version is still not served after $((SECONDS - started)) s" >&2
+    done
+    exit 2
+  fi
+  sleep "$wait_s"
+done
+
+warn_unread
+exit 1

@@ -168,7 +168,10 @@ Feature: The fitness functions this repository carries, one scenario per check
     Scenario: a push publishes both packages when either one's built contents differ from the last release's, a changed type declaration alone included
 
     @fitness @SCN-FIT-067
-    Scenario: a push whose release comparison cannot read the last release publishes nothing, fails nothing, and says it could not compare
+    Scenario: a push whose release comparison cannot reach the registry publishes nothing, fails nothing, and says it could not compare
+
+    @fitness @SCN-FIT-072
+    Scenario: a push whose last release the registry does not serve yet waits for it, publishes a change once it can compare, and fails when the release is still not served
 
   Rule: the behavioural suite runs only on a command bundle built from the tree it is in
 

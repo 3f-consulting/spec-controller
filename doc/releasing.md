@@ -40,18 +40,29 @@ tag's name. For each package, core and then the CLI, the script fetches that ver
 `diff -r`. A changed file, an added one and a removed one are each a difference, a changed `.d.ts`
 alone included. It exits 0 when either package differs, and the `release` job publishes both; 1
 when neither differs, and nothing publishes; and 2 when it cannot do its job, which fails the job:
-a missing input or setting, such as no built `dist` or an unset `RELEASE_COMPARE_TRIES`, or a
-comparison it could not make. The job's log names each package and says which way it went,
-with the first paths that differ. The comparison works because the build is deterministic: a
-rebuild of a release's commit gives both packages' `dist` byte for byte.
+a missing input or setting, such as no built `dist` or an unset `RELEASE_COMPARE_TRIES`, a
+comparison it could not make, or a release npm still does not serve after the wait below. The
+job's log names each package and says which way it went, with the first paths that differ. The
+comparison works because the build is deterministic: a rebuild of a release's commit gives both
+packages' `dist` byte for byte.
 
-**A tarball the registry cannot serve never fails the job.** The script tries each download three
+**A release npm does not serve yet is waited for.** The tag is made only after both packages
+publish, so when npm answers E404 for the tag's version, it has not served that publish yet; npm can
+take 20 to 40 minutes. The script first reads every package it can, and a difference in one of them
+publishes both at once, without waiting. Only when nothing it read differs does it keep asking for
+each package npm answered E404 for, every `RELEASE_COMPARE_WAIT_S` seconds, for up to 2400 seconds,
+the step's `RELEASE_SERVED_WAIT_S` and the same window the `latest` job waits. Once npm serves it, the
+script compares it as usual, and a difference publishes. A release still not served after the wait
+fails the job, naming the package and the version; re-running Release once npm serves it publishes.
+The `changes` job's limit, 45 minutes, covers the wait.
+
+**A registry that cannot be reached never fails the job.** The script tries each download three
 times, 20 seconds apart, as the step's `RELEASE_COMPARE_TRIES` and `RELEASE_COMPARE_WAIT_S` set.
-So an npm outage, a rate limit, or a release the registry does not serve yet never reds a push. A
+So a refused connection, a timeout, a server error or a download with no `dist` never reds a push. A
 difference in the package it could read still publishes both. When the other package
 shows no difference, the job publishes nothing and ends green, with a warning on the run naming each
 package it could not compare and npm's reason. The comparison is always against the last
-release's tag, never the previous push, so a change missed while the registry could not be read is
+release's tag, never the previous push, so a change missed while the registry could not be reached is
 still a difference on the next push that runs CI and reads it, and publishes then. Until such a push
 comes, it is unpublished.
 
