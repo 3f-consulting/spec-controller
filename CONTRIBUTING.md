@@ -17,6 +17,8 @@ CI runs more than these, including mutation testing, the lint gates and the reco
 
 Open a pull request against `main`. It merges when CI is green.
 
+A helper shared by more than one unit test file goes in a `*.test-utils.ts` file beside them, never copied into each. No check finds a copied helper; review does.
+
 A push to `main` that changes only [`doc/`](doc/), [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) or [`LICENSE`](LICENSE) runs no CI, so run `pnpm docs:check` before making one. It runs every documentation check CI runs, each from the same package script, and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installs.
 
 ## Report a problem
