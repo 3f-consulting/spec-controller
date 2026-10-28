@@ -19,8 +19,8 @@ error whose cause is not authentication.
 
 **Every push to `main` whose CI run succeeds publishes.** `release.yml` runs when the `CI` workflow
 completes on `main`, and its `release` job goes on when that CI run succeeded and was started by a
-`push`, with no other condition. Every such merge publishes the next counter version, a merge that
-touches only `features/`, `tests/`, `.github/` or the lockfile included. A push that changes only
+`push`, with no other condition. Every such merge's run publishes the next counter version, unless a
+newer pending run cancels it (*Two merges close together*, below), a merge that touches only `features/`, `tests/`, `.github/` or the lockfile included. A push that changes only
 `doc/**`, the root `README.md`, `CONTRIBUTING.md` or `LICENSE` does not run CI at all
 (`paths-ignore` in `ci.yml`), so it publishes nothing.
 
@@ -204,8 +204,8 @@ exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green.
 merge with the workflow's own `GITHUB_TOKEN`, and by GitHub's design a push made with that token
 starts no workflow. So the pin's merge runs no CI, and the release, which follows CI, never runs.
 Merging the pin with any other token would publish again, and the next pin would follow it, without
-end. Measured: the self-pin merges `510f4601`, `360300b2` and `4d36eba3` have no `push` run of any
-workflow.
+end. Measured on 2026-10-28, on GitHub-hosted Actions: the self-pin merges `510f4601`, `360300b2` and
+`4d36eba3` have no `push` run of any workflow. Re-check it if GitHub changes how `GITHUB_TOKEN` pushes start workflows.
 
 **The schedule.** `interval: cron` with `cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven
 days. `daily` is not used because it runs Monday to Friday only. Once a day is as often as GitHub
@@ -281,7 +281,7 @@ moves the SHA and rewrites the version comment with it.
 green. A green `ci` proves only the bump in `ci.yml`:
 
 - before merging a bump that touches `mutation.yml`, dispatch `mutation.yml` on the PR's branch;
-- a bump in `release.yml` is first exercised by the next package release, so read that run.
+- a bump in `release.yml` is exercised by the Release run of its own merge, so read that run.
 
 actionlint is not an action. Its step downloads the official release binary and verifies it against
 a SHA-256 pinned beside its version in the step's `env:`. Dependabot does not move it, so a person
@@ -365,8 +365,9 @@ so the next push to `main` that runs CI and passes publishes it.
   again with time to spare, read `npm view <pkg> dist-tags`: a `latest` that is not the published
   version is the fault the job exists to catch.
 - **After both published and the `tag` job failed.** The release happened, but the newest `v*` tag
-  is still the one before it. The counter still reads the registry, so no number is reused, and the
-  next push to `main` that passes CI publishes the number after it. Create the tag by hand on the
+  is still the one before it. The counter reads the registry, so no number is reused once npm serves
+  the version, which can take 20 to 40 minutes; a push inside that window can mint the same number and
+  fail with E403. The next push to `main` that passes CI publishes the number after it. Create the tag by hand on the
   commit the run built: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
 
 ### When a publish returns `E401`, read it as the trusted publisher
