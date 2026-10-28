@@ -181,4 +181,4 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 | No test leaves an entry in its temporary directory | 0 |
 | Workflow correctness | 1 |
 
-The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit.
+The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit. The behavioural suite builds the packages before it starts, so its step also reds on a failed build, and its time limit includes the build.
