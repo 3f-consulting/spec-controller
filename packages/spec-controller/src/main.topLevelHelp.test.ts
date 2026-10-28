@@ -1,9 +1,8 @@
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readdirSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { main } from "./main.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   stdout: string;
@@ -34,18 +33,14 @@ afterEach(() => {
 });
 
 function inTemporaryStore(argvAt: (storeRoot: string) => string[]): Answered {
-  const storeRoot = mkdtempSync(join(tmpdir(), "main-top-level-help-"));
-  try {
-    main(argvAt(storeRoot));
-    return {
-      stdout: stdout.join(""),
-      stderr: stderr.join(""),
-      exitCode: process.exitCode,
-      storeEntries: readdirSync(storeRoot),
-    };
-  } finally {
-    rmSync(storeRoot, { recursive: true, force: true });
-  }
+  const storeRoot = temporaryDirectory("main-top-level-help-");
+  main(argvAt(storeRoot));
+  return {
+    stdout: stdout.join(""),
+    stderr: stderr.join(""),
+    exitCode: process.exitCode,
+    storeEntries: readdirSync(storeRoot),
+  };
 }
 
 const REQUESTS: { request: string; argvAt: (storeRoot: string) => string[] }[] = [

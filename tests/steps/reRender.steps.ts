@@ -1,12 +1,12 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { exitOn, RUN_OUTCOME } from "./support/runExit.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "all-balanced": { fixture: "balanced", flags: [] },
@@ -37,7 +37,7 @@ function fixtureInputs(dir: string): string[] {
 
 function saveLiveRun(fixture: string, flags: string[]): string {
   const dir = join(process.cwd(), "tests", "fixtures", fixture);
-  scratch ??= mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
+  scratch ??= temporaryDirectory("spec-controller-rerender-");
   const path = join(scratch, `${fixture}${flags.join("")}.json`);
   const live = spawnController([...fixtureInputs(dir), ...flags, "--format", `json:${path}`], dir);
   assert.ok(existsSync(path), `the live run saved no report (exit ${live.status}):\n${live.stderr}`);
@@ -141,7 +141,7 @@ When(
   function (option: string, given: string) {
     const flag = optionFlag(option);
     const value = OPTION_VALUE[given] ?? given;
-    refusalCwd = mkdtempSync(join(scratch ?? tmpdir(), "cwd-"));
+    refusalCwd = temporaryDirectory("spec-controller-rerender-cwd-");
     reRendered = spawnController(["--render-from-json", savedReport, flag, value], refusalCwd);
   },
 );
@@ -157,6 +157,5 @@ Then("nothing is re-rendered", function () {
 });
 
 After(function () {
-  if (scratch !== undefined) rmSync(scratch, { recursive: true, force: true });
   scratch = undefined;
 });

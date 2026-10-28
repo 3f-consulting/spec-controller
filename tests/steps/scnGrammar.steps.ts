@@ -1,10 +1,10 @@
-import { After, Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const OUTSIDE = ["SCN-A-001", "SCN-SIXCHR-001"] as const;
 const INSIDE = ["SCN-AB-001", "SCN-FIVEC-001"] as const;
@@ -22,12 +22,6 @@ interface GrammarRun {
 
 let target: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
 let grammarRun: GrammarRun;
-const temporaryDirectories: string[] = [];
-
-After(function () {
-  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
-});
-
 function scenarioFile(scnId: string): string {
   const code = scnId.split("-")[1]!;
   const header = /^[A-Z0-9]{2,5}$/.test(code) ? `@${code}\n` : "";
@@ -35,8 +29,7 @@ function scenarioFile(scnId: string): string {
 }
 
 function balanceGrammarTarget(): GrammarRun {
-  const dir = mkdtempSync(join(tmpdir(), "scn-grammar-"));
-  temporaryDirectories.push(dir);
+  const dir = temporaryDirectory("scn-grammar-");
   mkdirSync(join(dir, "features"));
   for (const [name, source] of Object.entries(target.features)) writeFileSync(join(dir, "features", name), source);
   writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");

@@ -1,5 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +7,7 @@ import { modifiersNotTakenRefusal, parseHostInvocation } from "./host.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   stdout: string;
@@ -28,7 +28,7 @@ beforeEach(() => {
     "--vitest", join(outOfBalance, "vitest.json"),
     "--ci", outOfBalance,
   ];
-  savedDir = mkdtempSync(join(tmpdir(), "main-run-id-without-store-saved-"));
+  savedDir = temporaryDirectory("main-run-id-without-store-saved-");
   savedReport = join(savedDir, "saved.json");
   const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
   try {
@@ -38,10 +38,6 @@ beforeEach(() => {
     process.exitCode = undefined;
   }
   if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
-});
-
-afterEach(() => {
-  rmSync(savedDir, { recursive: true, force: true });
 });
 
 let stdout: string[];
@@ -72,22 +68,18 @@ const refusedAsReRender: Refusal = (argv) => storedReRenderRefusal(parseHostInvo
 const refusedAsModifiersNotTaken: Refusal = (argv) => modifiersNotTakenRefusal(parseHostInvocation(argv));
 
 function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal: Refusal): Answered {
-  const cwd = mkdtempSync(join(tmpdir(), "main-run-id-without-store-"));
-  try {
-    vi.spyOn(process, "cwd").mockReturnValue(cwd);
-    const argv = argvAt(cwd);
-    main(argv);
-    const expected = refusal(argv);
-    return {
-      stdout: stdout.join(""),
-      stderr: stderr.join(""),
-      exitCode: process.exitCode,
-      expectedStderr: expected === undefined ? undefined : expected + "\n",
-      workingEntries: readdirSync(cwd),
-    };
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
-  }
+  const cwd = temporaryDirectory("main-run-id-without-store-");
+  vi.spyOn(process, "cwd").mockReturnValue(cwd);
+  const argv = argvAt(cwd);
+  main(argv);
+  const expected = refusal(argv);
+  return {
+    stdout: stdout.join(""),
+    stderr: stderr.join(""),
+    exitCode: process.exitCode,
+    expectedStderr: expected === undefined ? undefined : expected + "\n",
+    workingEntries: readdirSync(cwd),
+  };
 }
 
 const balance = (): string[] => ["balance", ...target];

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const TARGET = "shared";
 const RUN_ID = "r1";
@@ -23,7 +23,7 @@ let runYaml: string;
 let stderr: string[];
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-kept-shared-"));
+  scratch = temporaryDirectory("spec-controller-kept-shared-");
   storeRoot = join(scratch, "store");
   runDir = join(storeRoot, TARGET, RUN_ID);
   runYaml = join(runDir, "run.yaml");
@@ -36,7 +36,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own run.yaml, before the command runs", () => {

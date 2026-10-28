@@ -26,6 +26,14 @@ const restrictedSyntaxUnder = (concern) => [
   { rules: { "no-restricted-syntax": builtinRules.get("no-restricted-syntax") } },
 ];
 
+// The seam rule sets no-restricted-imports over the step files, so the temporary-directory rule takes its core rules under its own name too.
+const temporaryDirectoryPlugin = {
+  rules: {
+    "no-restricted-imports": builtinRules.get("no-restricted-imports"),
+    "no-restricted-properties": builtinRules.get("no-restricted-properties"),
+  },
+};
+
 const PRODUCTION_THRESHOLD = {
   cognitiveComplexity: 15,
   maxLinesPerFunction: 40,
@@ -97,6 +105,27 @@ const SEAM_PATTERNS = [
   { regex: "^(\\.\\.?/)+packages(/|$)", message: SEAM_MESSAGE },
   { regex: "^@3f-consulting/spec-controller-core(/|$)", message: SEAM_MESSAGE },
 ];
+const UNIT_TEMPORARY_DIRECTORY_HELPER = "packages/spec-controller/src/temporaryDirectory.test-utils.ts";
+const STEP_TEMPORARY_DIRECTORY_HELPER = "tests/steps/support/temporaryDirectory.ts";
+const temporaryDirectoryRules = (helper) => {
+  const message = `make a temporary directory with temporaryDirectory from ${helper}, whose cleanup removes it whatever the test's outcome`;
+  return {
+    "temporaryDirectory/no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          ...["node:fs", "fs"].map((name) => ({ name, importNames: ["mkdtemp", "mkdtempSync"], message })),
+          ...["node:fs/promises", "fs/promises"].map((name) => ({ name, importNames: ["mkdtemp"], message })),
+        ],
+      },
+    ],
+    "temporaryDirectory/no-restricted-properties": [
+      "error",
+      { property: "mkdtemp", message },
+      { property: "mkdtempSync", message },
+    ],
+  };
+};
 const HOST_GLOBAL_MESSAGE = "the engine reaches nothing of its host — what it needs arrives as an argument";
 const HOST_GLOBALS = [
   "globalThis",
@@ -110,7 +139,9 @@ const DESCRIBE_BODY = `:is(${DESCRIBE}) > :function > BlockStatement`;
 const TABLE = 'CallExpression[callee.object.name=/^(describe|it|test)$/][callee.property.name=/^(each|for)$/]';
 
 // A call inside a function in the declaration runs only when that function is called, so only calls with no function between them and the declarator are flagged.
-const collectedCall = (declarator) => `${declarator} CallExpression:not(${declarator} :function CallExpression)`;
+// A runner's extend registers fixtures, whose setup runs only when a test asks for them, so it is not flagged either.
+const collectedCall = (declarator) =>
+  `${declarator} CallExpression:not(${declarator} :function CallExpression):not([callee.property.name="extend"][callee.object.name=${HARNESS}])`;
 
 const STATIC =
   "runs while Vitest collects the tests, outside any test, so mutation testing reads every mutant it reaches as static " +
@@ -169,6 +200,7 @@ export default [
       sonarjs,
       i18next,
       "check-file": checkFile,
+      temporaryDirectory: temporaryDirectoryPlugin,
       ...Object.fromEntries(CONCERNS_RESTRICTING_SYNTAX.map(restrictedSyntaxUnder)),
     },
   },
@@ -273,6 +305,20 @@ export default [
     rules: {
       "no-restricted-imports": ["error", { patterns: SEAM_PATTERNS }],
     },
+  },
+
+  {
+    files: TEST_FILES,
+    ignores: [UNIT_TEMPORARY_DIRECTORY_HELPER],
+    languageOptions: tsLanguageOptions,
+    rules: temporaryDirectoryRules(UNIT_TEMPORARY_DIRECTORY_HELPER),
+  },
+
+  {
+    files: [`tests/**/*.${SOURCE_FILES}`],
+    ignores: [STEP_TEMPORARY_DIRECTORY_HELPER],
+    languageOptions: tsLanguageOptions,
+    rules: temporaryDirectoryRules(STEP_TEMPORARY_DIRECTORY_HELPER),
   },
 
   {

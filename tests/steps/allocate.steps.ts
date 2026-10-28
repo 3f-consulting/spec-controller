@@ -1,10 +1,10 @@
 import { After, Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { basename, dirname, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 function git(repo: string, args: readonly string[]): string {
   const result = spawnSync(
@@ -14,14 +14,6 @@ function git(repo: string, args: readonly string[]): string {
   );
   assert.equal(result.status, 0, `git ${args.join(" ")} failed in the fixture: ${result.stderr}`);
   return result.stdout;
-}
-
-const temporaryDirectories: string[] = [];
-
-function temporaryDirectory(prefix: string): string {
-  const directory = mkdtempSync(join(tmpdir(), prefix));
-  temporaryDirectories.push(directory);
-  return directory;
 }
 
 function newRepository(): string {
@@ -433,7 +425,6 @@ function withhold(path: string, mode: number): void {
 
 After(function () {
   while (permissionsTaken.length > 0) permissionsTaken.pop()?.();
-  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
 
 function copyWithoutGit(): string {

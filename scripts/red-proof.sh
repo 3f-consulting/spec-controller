@@ -81,7 +81,7 @@ prove_cucumber() {
 
   limit="$(suite_limit CUCUMBER_SUITE_TIMEOUT_S)"
   status=0
-  TSX_DISABLE_CACHE=1 timeout "$limit" pnpm cucumber --format json:"$out/cucumber.json" --tags "@$code" || status=$?
+  timeout "$limit" pnpm cucumber --format json:"$out/cucumber.json" --tags "@$code" || status=$?
   report=$out/cucumber.json
 }
 

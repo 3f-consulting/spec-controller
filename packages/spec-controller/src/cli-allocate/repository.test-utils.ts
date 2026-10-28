@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, realpathSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, mkdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 export function git(cwd: string, args: readonly string[]): string {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
@@ -56,19 +56,12 @@ export function scenarioBlock(code: string, n: number): string {
   return `  @${code} @unit\n  Scenario: scenario ${n}\n    Given a step\n`;
 }
 
-// The test file that makes directories here removes them in its own hook.
-export const made: string[] = [];
-
 export function freshDirectory(prefix: string): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-  made.push(dir);
-  return dir;
+  return realpathSync(temporaryDirectory(prefix));
 }
 
 export function freshUnresolvedDirectory(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
+  return temporaryDirectory(prefix);
 }
 
 // The test file that withholds modes here restores them in its own hook.

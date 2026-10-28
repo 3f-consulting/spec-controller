@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
 import { writeOutputs, type OutputPayloads } from "./writer.js";
@@ -9,6 +8,7 @@ import { stdoutIdentity as processStdout } from "../../outputLocation.js";
 import { earlierStoredRunDirOf, planRunManifest, serialiseRunManifest } from "../../run-management/keptRun.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 import { noOwnRun } from "./earlierStoredRun.test-utils.js";
+import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
 
 const ctx: RunContext = {
   target: "later",
@@ -48,7 +48,7 @@ beforeEach(() => {
     planRunManifest({ runId: "r0", target: "earlier", sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.0.0", mode: "balance", date: "2026-10-10T00:00:00.000Z" }),
   );
   payloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-earlier-run-"));
+  scratch = temporaryDirectory("spec-controller-earlier-run-");
   earlierRunDir = join(scratch, "store", "earlier", "r0");
   storeAnEarlierRun(earlierRunDir);
   stderr = [];
@@ -61,7 +61,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run is refused naming the file, and that run keeps its files", () => {

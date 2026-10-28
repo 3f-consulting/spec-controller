@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fstatSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { fstatSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { probeDestination, settlingRefusal } from "./outputLocation.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 let scratch: string;
 let stderr: string[];
@@ -22,7 +22,7 @@ function descriptorsOpenOn(path: string): number {
 }
 
 beforeEach(() => {
-  scratch = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-unwritable-")));
+  scratch = realpathSync(temporaryDirectory("spec-controller-unwritable-"));
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(String(chunk));
@@ -33,7 +33,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {

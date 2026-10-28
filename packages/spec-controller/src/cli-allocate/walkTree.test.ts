@@ -1,24 +1,17 @@
-import { afterAll, afterEach, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterEach, describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { walkTree } from "./readTree.js";
 import { taken, withholdDirectory as withhold } from "./repository.test-utils.js";
 import { thrownBy } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
-
-const made: string[] = [];
-
 function tree(): string {
-  const root = mkdtempSync(join(tmpdir(), "allocate-walk-"));
-  made.push(root);
+  const root = temporaryDirectory("allocate-walk-");
   mkdirSync(join(root, "docs"));
   writeFileSync(join(root, "docs", "notes.md"), "Cites SCN-ONE-004.\n");
   return root;

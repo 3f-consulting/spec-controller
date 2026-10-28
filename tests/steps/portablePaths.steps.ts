@@ -1,10 +1,10 @@
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 let targetRepo: string;
 let foreignCwd: string;
@@ -44,7 +44,7 @@ function writeTargetReports(repo: string): void {
 Given(
   "a target repo outside the run's working directory whose Vitest and Cucumber reports carry absolute test-file locators under that repo",
   function () {
-    targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-target-")));
+    targetRepo = realpathSync(temporaryDirectory("spec-controller-rpt016-target-"));
     mkdirSync(join(targetRepo, "features"), { recursive: true });
 
     writeFileSync(
@@ -64,8 +64,8 @@ Given(
 
     writeTargetReports(targetRepo);
 
-    foreignCwd = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-cwd-")));
-    outDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-out-")));
+    foreignCwd = realpathSync(temporaryDirectory("spec-controller-rpt016-cwd-"));
+    outDir = realpathSync(temporaryDirectory("spec-controller-rpt016-out-"));
   }
 );
 
@@ -145,9 +145,3 @@ Then(
     );
   }
 );
-
-After({ tags: "@SCN-RPT-016" }, function () {
-  for (const d of [targetRepo, foreignCwd, outDir]) {
-    if (d && existsSync(d)) rmSync(d, { recursive: true, force: true });
-  }
-});

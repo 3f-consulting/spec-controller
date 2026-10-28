@@ -1,15 +1,12 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { existsSync, realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, lines } from "./repository.test-utils.js";
 import { allocateInGuarded as allocateIn } from "./answered.test-utils.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-uncommitted-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-uncommitted-"));
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
@@ -17,10 +14,6 @@ function newRepository(): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {

@@ -1,10 +1,10 @@
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const WATERMELON = "Evidence Observation is passing but its check could not fail its job";
 
@@ -32,7 +32,7 @@ let activeMd: string;
 
 Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
   activeFixture = USG_FIXTURE;
-  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
+  activeDir = temporaryDirectory("spec-controller-usg001-");
 });
 
 Given("only lint:foo is cited by a scenario", function () {
@@ -98,7 +98,7 @@ Given(
   "a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly",
   function () {
     activeFixture = USG_SIBLING_FIXTURE;
-    activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg006-"));
+    activeDir = temporaryDirectory("spec-controller-usg006-");
   },
 );
 
@@ -144,7 +144,7 @@ Given(
   "a target whose nightly.yml runs lint:sweep and whose ci.yml does not",
   function () {
     activeFixture = USG_SIBLING_UNCITED_FIXTURE;
-    activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg007-"));
+    activeDir = temporaryDirectory("spec-controller-usg007-");
   },
 );
 
@@ -219,7 +219,3 @@ Then(
     );
   },
 );
-
-After({ tags: "@USG" }, function () {
-  if (activeDir && existsSync(activeDir)) rmSync(activeDir, { recursive: true, force: true });
-});

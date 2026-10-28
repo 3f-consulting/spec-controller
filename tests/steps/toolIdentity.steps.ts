@@ -1,20 +1,19 @@
-import { After, Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
   mkdirSync,
-  mkdtempSync,
   readFileSync,
   realpathSync,
-  rmSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { constants, tmpdir } from "node:os";
+import { constants } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 interface FinishedCommand {
   readonly status: number | null;
@@ -39,17 +38,9 @@ const TOOL_SHA_LINE = "- Tool SHA: ";
 const TOOL_VERSION_LINE = "- Tool version: ";
 const NO_CHECKOUT = "unknown (not a git checkout)";
 
-const planted: string[] = [];
-
 function scratch(purpose: string): string {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), `spec-controller-rpt029-${purpose}-`)));
-  planted.push(dir);
-  return dir;
+  return realpathSync(temporaryDirectory(`spec-controller-rpt029-${purpose}-`));
 }
-
-After(function () {
-  for (const dir of planted.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
 
 type Ran = FinishedCommand & { stdout: string; stderr: string };
 

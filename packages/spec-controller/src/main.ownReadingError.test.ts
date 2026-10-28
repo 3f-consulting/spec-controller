@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 const PLANTED = "planted: the reading of this file throws";
 
@@ -54,7 +54,7 @@ let target: string;
 let stderr: string[];
 
 beforeEach(() => {
-  target = mkdtempSync(join(tmpdir(), "spec-controller-own-reading-"));
+  target = temporaryDirectory("spec-controller-own-reading-");
   mkdirSync(join(target, "features"));
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
@@ -67,7 +67,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-  rmSync(target, { recursive: true, force: true });
 });
 
 function writeTarget(feature: string, workflow: string): void {

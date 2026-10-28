@@ -1,22 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-const made: string[] = [];
-
-function temporaryDirectory(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "allocate-unopenable-repository-")));
-  made.push(dir);
-  return dir;
+function resolvedTemporaryDirectory(): string {
+  return realpathSync(temporaryDirectory("allocate-unopenable-repository-"));
 }
 
 function repositoryCarryingOneCode(): string {
-  const repo = temporaryDirectory();
+  const repo = resolvedTemporaryDirectory();
   git(repo, ["init", "-q", "-b", "main"]);
   writeInto(repo, "features/one.feature", "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario SCN-ONE-003\n    Given a step\n");
   writeInto(repo, "docs/readme.md", "a directory below the top\n");
@@ -27,7 +23,6 @@ function repositoryCarryingOneCode(): string {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-  while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });

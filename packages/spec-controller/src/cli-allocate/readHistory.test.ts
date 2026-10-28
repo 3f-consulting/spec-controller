@@ -1,8 +1,8 @@
-import { afterAll, afterEach, beforeEach, describe, it, expect } from "vitest";
-import { mkdirSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
+import { mkdirSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { diffLineOccurrences, readHistory, repositoryTop } from "./readHistory.js";
-import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.test-utils.js";
+import { runGit as git, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.test-utils.js";
 import { thrownBy } from "./answered.test-utils.js";
 
 describe("[SCN-ALC-015] a code that appears only in a commit message is not retired", () => {
@@ -47,10 +47,6 @@ function repositoryWithHistory(): string {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {

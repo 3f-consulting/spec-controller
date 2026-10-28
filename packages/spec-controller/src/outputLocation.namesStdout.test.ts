@@ -1,17 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, realpathSync, rmSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { beforeEach, describe, expect, it } from "vitest";
+import { realpathSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { namesStdout } from "./outputLocation.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 let scratch: string;
 
 beforeEach(() => {
-  scratch = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-names-stdout-")));
-});
-
-afterEach(() => {
-  rmSync(scratch, { recursive: true, force: true });
+  scratch = realpathSync(temporaryDirectory("spec-controller-names-stdout-"));
 });
 
 describe("[SCN-FMT-011] a path names standard output when it spells file descriptor 1, directly or through links", () => {

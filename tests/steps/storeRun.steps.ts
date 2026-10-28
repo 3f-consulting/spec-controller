@@ -1,11 +1,11 @@
-import { After, Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -17,18 +17,11 @@ const RUN_ID = "r1";
 let storeRoot: string;
 let storeResult: SpawnSyncReturns<string>;
 let runDir: string;
-const temporaryDirectories: string[] = [];
-
-After(function () {
-  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
-});
-
 Given("a reconcilable target and a run store outside the repo", function () {
   const root = process.cwd();
   assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
   assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
-  storeRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmg004-"));
-  temporaryDirectories.push(storeRoot);
+  storeRoot = temporaryDirectory("spec-controller-rmg004-");
 });
 
 When("the operator runs balance under the store modifier and the run-name modifier", function () {

@@ -1,10 +1,10 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 import { main } from "./main.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   stdout: string;
@@ -51,22 +51,18 @@ beforeEach(() => {
 });
 
 function ranIn(hostArgvAt: (storeRoot: string) => string[], inspect: (answered: Answered) => void): void {
-  const cwd = mkdtempSync(join(tmpdir(), "main-stored-run-"));
-  try {
-    vi.spyOn(process, "cwd").mockReturnValue(cwd);
-    const storeRoot = join(cwd, "store");
-    main(hostArgvAt(storeRoot));
-    inspect({
-      stdout: stdout.join(""),
-      stderr: stderr.join(""),
-      exitCode: process.exitCode,
-      runDir: join(storeRoot, TARGET, RUN_ID),
-      storeMade: existsSync(storeRoot),
-      cwdEntries: readdirSync(cwd),
-    });
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
-  }
+  const cwd = temporaryDirectory("main-stored-run-");
+  vi.spyOn(process, "cwd").mockReturnValue(cwd);
+  const storeRoot = join(cwd, "store");
+  main(hostArgvAt(storeRoot));
+  inspect({
+    stdout: stdout.join(""),
+    stderr: stderr.join(""),
+    exitCode: process.exitCode,
+    runDir: join(storeRoot, TARGET, RUN_ID),
+    storeMade: existsSync(storeRoot),
+    cwdEntries: readdirSync(cwd),
+  });
 }
 
 const STORED = (storeRoot: string): string[] => ["--store", storeRoot, "--run-id", RUN_ID, "balance", ...balanceArgs];

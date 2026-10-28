@@ -1,12 +1,12 @@
-import { After, Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { exitNamedBy, exitOn, RUN_OUTCOME } from "./support/runExit.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -43,12 +43,6 @@ let invocationArgs: string[] = [];
 let missingPath = "";
 let invocationCwd: string | undefined;
 let cliResult: SpawnSyncReturns<string>;
-
-const temporaryPaths: string[] = [];
-
-After(function () {
-  for (const path of temporaryPaths.splice(0)) rmSync(path, { recursive: true, force: true });
-});
 
 function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
@@ -239,12 +233,8 @@ When("it is asked for {}", function (request: string) {
     controllerResult = spawnController(known.argv);
     return;
   }
-  const storeRoot = mkdtempSync(join(tmpdir(), "scn-cli-056-"));
-  try {
-    controllerResult = spawnController(["--store", storeRoot, ...known.argv]);
-  } finally {
-    rmSync(storeRoot, { recursive: true, force: true });
-  }
+  const storeRoot = temporaryDirectory("scn-cli-056-");
+  controllerResult = spawnController(["--store", storeRoot, ...known.argv]);
 });
 
 Then("the invocation is refused as a usage error", function () {
@@ -440,8 +430,7 @@ Given(
   "a target, and the Vitest report option pointing at a report that exists but is not valid JSON",
   function () {
     const root = process.cwd();
-    unparseablePath = join(tmpdir(), `scn-cli-014-${process.pid}.json`);
-    temporaryPaths.push(unparseablePath);
+    unparseablePath = join(temporaryDirectory("scn-cli-014-"), "unparseable-report.json");
     writeFileSync(unparseablePath, "not valid json at all {{{");
 
     assert.ok(existsSync(unparseablePath), "the fixture report must EXIST — this is not the missing-path case");
@@ -484,8 +473,7 @@ Given(
 );
 
 function writeCorruptFeature(featureSource: string): void {
-  const dir = mkdtempSync(join(tmpdir(), `scn-cli-016-${process.pid}-`));
-  temporaryPaths.push(dir);
+  const dir = temporaryDirectory(`scn-cli-016-${process.pid}-`);
   mkdirSync(join(dir, "features"), { recursive: true });
   unparseableFeature = join(dir, "features", "target.feature");
   writeFileSync(unparseableFeature, featureSource);
@@ -540,14 +528,13 @@ Given(
   "the re-render option pointing at a saved report that is {word}",
   function (defect: string) {
     if (defect === "missing") {
-      unreadableSavedReport = join(tmpdir(), `scn-cli-015-missing-${process.pid}.json`);
+      unreadableSavedReport = join(temporaryDirectory("scn-cli-015-"), "missing-saved-report.json");
       assert.ok(
         !existsSync(unreadableSavedReport),
         "the missing-path fixture must NOT exist on disk",
       );
     } else {
-      unreadableSavedReport = join(tmpdir(), `scn-cli-015-bad-${process.pid}.json`);
-      temporaryPaths.push(unreadableSavedReport);
+      unreadableSavedReport = join(temporaryDirectory("scn-cli-015-"), "bad-saved-report.json");
       writeFileSync(unreadableSavedReport, "not a saved report at all {{{");
       assert.ok(existsSync(unreadableSavedReport), "the unparseable fixture must EXIST");
     }
@@ -630,8 +617,7 @@ Then("the verdict headline says the run had nothing to reconcile, never that it 
 const ENUMERATED_STATUSES = [0, 1, 2, 3, 4, 5];
 
 Given("a target with no Gherkin corpus at all — no features directory on disk", function () {
-  const dir = mkdtempSync(join(tmpdir(), `scn-cli-017-${process.pid}-`));
-  temporaryPaths.push(dir);
+  const dir = temporaryDirectory(`scn-cli-017-${process.pid}-`);
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "new-client-target", private: true, scripts: { test: "vitest run" } }),
@@ -679,8 +665,7 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
     `fixture invariant: ${join(dir, "features")} must NOT exist — an EMPTY corpus directory is a
      different shape and would sit green through the very shortcut this scenario guards`,
   );
-  const outDir = mkdtempSync(join(tmpdir(), "spec-controller-uncited-"));
-  temporaryPaths.push(outDir);
+  const outDir = temporaryDirectory("spec-controller-uncited-");
   uncitedJsonPath = join(outDir, "spec-reconciliation.json");
   invocationArgs = ["--vitest", "vitest.json", "--format", "md", "--format", `json:${uncitedJsonPath}`];
   invocationCwd = dir;
@@ -734,8 +719,7 @@ function noCorpusRun(index: number): { shape: string; stdout: string } {
 Given(
   "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus carries no scenario",
   function () {
-    const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
-    temporaryPaths.push(root);
+    const root = temporaryDirectory(`scn-cli-018-${process.pid}-`);
     const manifest = JSON.stringify({ name: "new-client-target", private: true, scripts: {} });
     const shapes: { shape: string; build: (dir: string) => void }[] = [
       { shape: "no corpus directory", build: () => {} },
@@ -937,7 +921,7 @@ function withoutFlag(args: readonly string[], flag: string): string[] {
 
 function standBesideAFileNamedTrue(args: readonly string[]): string[] {
   const root = process.cwd();
-  const dir = mkdtempSync(join(tmpdir(), "scn-cli-058-"));
+  const dir = temporaryDirectory("scn-cli-058-");
   writeFileSync(join(dir, "true"), readFileSync(join(root, FIXTURE.vitest), "utf8"));
   invocationCwd = dir;
   return args.map((arg) => (arg.startsWith("--") ? arg : join(root, arg)));
@@ -958,12 +942,7 @@ When(/^balance is asked to run with (.+) given no value, (.+)$/, function (optio
   const shapeOf = MISSING_VALUE_SHAPES[shape];
   assert.ok(shapeOf !== undefined, `no missing-value shape named "${shape}"`);
   const args = shapeOf(withoutFlag(invocationArgs, flag), flag);
-  const cwd = invocationCwd;
-  try {
-    cliResult = spawnBalance(args);
-  } finally {
-    if (cwd !== undefined) rmSync(cwd, { recursive: true, force: true });
-  }
+  cliResult = spawnBalance(args);
 });
 
 Then("balance refuses the run as a usage fault, with nothing reconciled", function () {
@@ -990,7 +969,7 @@ let storedRunDir = "";
 let storedRunRoot = "";
 
 Given("a target that reconciles out-of-balance, and an empty run store", function () {
-  storedRunDir = mkdtempSync(join(tmpdir(), "scn-cli-059-"));
+  storedRunDir = temporaryDirectory("scn-cli-059-");
   storedRunRoot = join(storedRunDir, "store");
   mkdirSync(storedRunRoot);
   const root = process.cwd();
@@ -1024,12 +1003,8 @@ When(/^a stored balance run is asked for with (.+) given no value, (.+)$/, funct
 });
 
 Then("nothing is written to the run store or the working directory", function () {
-  try {
-    assert.deepEqual(readdirSync(storedRunRoot), [], "expected the store root to stay empty");
-    assert.deepEqual(readdirSync(storedRunDir), ["store"], "expected nothing beside the store root");
-  } finally {
-    rmSync(storedRunDir, { recursive: true, force: true });
-  }
+  assert.deepEqual(readdirSync(storedRunRoot), [], "expected the store root to stay empty");
+  assert.deepEqual(readdirSync(storedRunDir), ["store"], "expected nothing beside the store root");
 });
 
 const FLAG_BEFORE_COMMAND: Record<string, { before: string[]; command: string }> = {
@@ -1121,14 +1096,10 @@ Then("the refusal names that argument as one balance does not take", function ()
 });
 
 Then("the run store holds no record of a run", function () {
-  try {
-    const manifests = readdirSync(storedRunRoot, { recursive: true }).filter((entry) =>
-      String(entry).endsWith("run.yaml"),
-    );
-    assert.deepEqual(manifests, [], `expected no run.yaml under the store root; found ${manifests.join(", ")}`);
-  } finally {
-    rmSync(storedRunDir, { recursive: true, force: true });
-  }
+  const manifests = readdirSync(storedRunRoot, { recursive: true }).filter((entry) =>
+    String(entry).endsWith("run.yaml"),
+  );
+  assert.deepEqual(manifests, [], `expected no run.yaml under the store root; found ${manifests.join(", ")}`);
 });
 
 const VALUE_TO_A_FLAG_THAT_TAKES_NONE: Record<string, (store: string, target: string[], given: string[]) => string[]> = {
@@ -1172,7 +1143,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
     "balance",
     ...withoutFlag(target, "--features"),
     "--features",
-    join(tmpdir(), "scn-cli-064-no-such-dir"),
+    join(temporaryDirectory("scn-cli-064-"), "no-such-dir"),
     "--features",
     target[target.indexOf("--features") + 1] ?? "",
     "--exit-zero",
@@ -1193,7 +1164,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[]) => string[]>
   ],
   "the store modifier before the command, the second time at the run store": (store, target) => [
     "--store",
-    join(tmpdir(), "scn-cli-064-other-store"),
+    join(temporaryDirectory("scn-cli-064-"), "other-store"),
     "--store",
     store,
     "balance",
@@ -1453,11 +1424,8 @@ const RUN_ID_WITHOUT_STORE: Record<string, (target: string[]) => string[]> = {
   ],
 };
 
-let savedReportDir: string | undefined;
-
 function savedReportOf(target: string[]): string {
-  savedReportDir = mkdtempSync(join(tmpdir(), "scn-cli-083-saved-"));
-  const saved = join(savedReportDir, "saved.json");
+  const saved = join(temporaryDirectory("scn-cli-083-saved-"), "saved.json");
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...target, "--format", `json:${saved}`], {
     encoding: "utf8",
   });
@@ -1469,14 +1437,9 @@ function savedReportOf(target: string[]): string {
 When("a run is named with the run-name modifier and given no store modifier, {}", function (shape: string) {
   const argvOf = RUN_ID_WITHOUT_STORE[shape];
   assert.ok(argvOf !== undefined, `no row for ${shape}`);
-  try {
-    const result = spawnBesideStore(argvOf(invocationArgs));
-    controllerResult = result;
-    cliResult = result;
-  } finally {
-    if (savedReportDir !== undefined) rmSync(savedReportDir, { recursive: true, force: true });
-    savedReportDir = undefined;
-  }
+  const result = spawnBesideStore(argvOf(invocationArgs));
+  controllerResult = result;
+  cliResult = result;
 });
 
 Then("the refusal names the run-name modifier as naming a run that is not kept", function () {

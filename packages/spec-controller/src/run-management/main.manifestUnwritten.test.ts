@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { main } from "../main.js";
 import { RUN_MANIFEST } from "./keptRun.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const TARGET = "every-outcome";
 const RUN_ID = "r1";
@@ -21,7 +21,7 @@ let scratch: string;
 let stderr: string[];
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-manifest-unwritten-"));
+  scratch = temporaryDirectory("spec-controller-manifest-unwritten-");
   stderr = [];
   vi.spyOn(process.stdout, "write").mockImplementation(() => true);
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
@@ -33,7 +33,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 function keptRunWithManifestAsDirectory(): Answered {

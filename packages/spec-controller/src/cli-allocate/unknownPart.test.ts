@@ -1,23 +1,19 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { realpathSync } from "node:fs";
 import { git, writeInto, commitAll } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function featureFile(part: string, codes: readonly string[]): string {
   const scenarios = codes.map((code, i) => `  @${code} @unit\n  Scenario: scenario ${i + 1}\n    Given a step\n`);
   return `@${part}\nFeature: part ${part}\n\n${scenarios.join("\n")}`;
 }
 
-const made: string[] = [];
-
 // Beside the two headed files: a feature file with no header code, and a file
 // that is not a feature file but reads like one headed SIX. Neither may add a
 // part to the refusal's list.
 function headedOneAndTwo(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-unknown-part-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-unknown-part-"));
   git(repo, ["init", "-q", "-b", "main"]);
   writeInto(repo, "features/one.feature", featureFile("ONE", ["SCN-ONE-001"]));
   writeInto(repo, "features/two.feature", featureFile("TWO", ["SCN-TWO-001"]));
@@ -50,10 +46,6 @@ const WHERE: readonly (readonly [where: string, arrange: (repo: string) => void]
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-010] a part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else", () => {

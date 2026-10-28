@@ -1,15 +1,12 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, commitAllReturningHash as commitAll, lines } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-highest-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-highest-"));
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
@@ -23,10 +20,6 @@ const SCENARIO_5 = ["  @SCN-ONE-005 @unit", "  Scenario: scenario 5", "    Given
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {

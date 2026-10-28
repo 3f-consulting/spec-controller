@@ -1,11 +1,11 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, closeSync, existsSync, linkSync, lstatSync, readlinkSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { STORED_RUN_FILE_INTENT, storedRunFile } from "./support/storedRunFile.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const RUN_ID = "r1";
 const TARGET = "unwritable";
@@ -115,33 +115,15 @@ function assertTargetOutOfBalance(): void {
   assert.equal(targetStatus, OUT_OF_BALANCE, "the target must reconcile out of balance on its own");
 }
 
-function restoreWritable(dir: string): void {
-  chmodSync(dir, 0o755);
-  for (const entry of readdirSync(dir)) {
-    const path = join(dir, entry);
-    const kind = lstatSync(path);
-    if (kind.isSymbolicLink()) continue;
-    if (kind.isDirectory()) restoreWritable(path);
-    else chmodSync(path, 0o644);
-  }
-}
-
 After({ tags: "@SCN-FMT-008 or @SCN-FMT-009 or @SCN-FMT-010 or @SCN-FMT-011 or @SCN-FMT-012 or @SCN-RMG-008 or @SCN-RMG-009 or @SCN-RMG-010 or @SCN-RMG-012 or @SCN-RMG-014" }, function () {
-  if (scratch === undefined) return;
-  const dir = scratch;
   scratch = undefined;
-  try {
-    restoreWritable(dir);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
 });
 
 Given(/^an out-of-balance target and a report destination that is (.+)$/, function (location: string) {
   assertTargetOutOfBalance();
   const arrange = DESTINATION[location];
   assert.ok(arrange, `no destination is arranged for "${location}"`);
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-unwritable-"));
+  scratch = temporaryDirectory("spec-controller-unwritable-");
   destination = arrange(scratch);
 });
 
@@ -171,7 +153,7 @@ Then("no report is produced", function () {
 
 Given("an out-of-balance target and a json report destination under a regular file", function () {
   assertTargetOutOfBalance();
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-unwritable-"));
+  scratch = temporaryDirectory("spec-controller-unwritable-");
   destination = DESTINATION["a path under a regular file"]!(scratch);
 });
 
@@ -206,7 +188,7 @@ Given(/^an out-of-balance target and a run store that is (.+)$/, function (locat
   assertTargetOutOfBalance();
   const arrange = STORE_ROOT[location];
   assert.ok(arrange, `no store root is arranged for "${location}"`);
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-unwritable-"));
+  scratch = temporaryDirectory("spec-controller-unwritable-");
   storeRoot = arrange(scratch);
 });
 
@@ -230,7 +212,7 @@ Given(/^an out-of-balance target and a run store whose run directory already hol
   assertTargetOutOfBalance();
   const arrange = RUN_DIRECTORY_OBSTACLE[obstacle];
   assert.ok(arrange, `no obstacle is arranged for "${obstacle}"`);
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-unwritable-"));
+  scratch = temporaryDirectory("spec-controller-unwritable-");
   storeRoot = join(scratch, "store");
   const runDir = join(storeRoot, TARGET, RUN_ID);
   mkdirSync(runDir, { recursive: true });
@@ -278,7 +260,7 @@ const SECOND_PATH: Readonly<Record<string, (file: string, dir: string) => { firs
 
 Given(/^an out-of-balance target and a report file that (does not exist|holds an earlier run)$/, function (state: string) {
   assertTargetOutOfBalance();
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-shared-"));
+  scratch = temporaryDirectory("spec-controller-shared-");
   mkdirSync(join(scratch, "dir"));
   sharedFile = join(scratch, "dir", "shared.out");
   thirdPath = join(scratch, "dir", "third.json");
@@ -335,7 +317,7 @@ let stdoutFile: string | undefined;
 
 Given(/^an out-of-balance target whose default report destination is (a pipe|a file)$/, function (connectedTo: string) {
   assertTargetOutOfBalance();
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-stdout-path-"));
+  scratch = temporaryDirectory("spec-controller-stdout-path-");
   stdoutFile = connectedTo === "a file" ? join(scratch, "stdout.txt") : undefined;
 });
 
@@ -386,7 +368,7 @@ let linkPath: string;
 let linkTargetPath: string;
 
 Given("a balanced target and a link to a report file that does not exist yet", function () {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-link-"));
+  scratch = temporaryDirectory("spec-controller-link-");
   linkTargetPath = join(scratch, "report.json");
   linkPath = join(scratch, "link.json");
   symlinkSync(linkTargetPath, linkPath);
@@ -422,7 +404,7 @@ function filesUnder(root: string): Map<string, string> {
 
 Given(/^an out-of-balance target and a run store holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
   assertTargetOutOfBalance();
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-store-shared-"));
+  scratch = temporaryDirectory("spec-controller-store-shared-");
   storeRoot = join(scratch, "store");
   if (earlier !== "nothing yet") {
     const kept = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS]);
@@ -451,7 +433,7 @@ const EARLIER_RUN_ID = "r0";
 
 Given("an out-of-balance target and a run store holding an earlier stored run of a balanced target", function () {
   assertTargetOutOfBalance();
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-store-earlier-"));
+  scratch = temporaryDirectory("spec-controller-store-earlier-");
   storeRoot = join(scratch, "store");
   const earlier = specController(["--store", storeRoot, "--run-id", EARLIER_RUN_ID, "balance", ...BALANCED_ARGS, "--target", EARLIER_TARGET]);
   assert.equal(earlier.status, BALANCED, `the earlier stored run did not complete:\n${earlier.stderr}`);

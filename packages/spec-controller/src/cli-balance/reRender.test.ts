@@ -1,21 +1,19 @@
-import { afterEach, beforeEach, describe, it, expect } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { beforeEach, describe, it, expect } from "vitest";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { balanceCommand } from "../cli-registry.js";
 import { headlineExit } from "./balanceRun.test-utils.js";
 import { liveSaver, runPinned } from "./savedRun.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 let scratch: string;
 let saveLive: ReturnType<typeof liveSaver>;
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-"));
+  scratch = temporaryDirectory("spec-controller-rerender-");
   saveLive = liveSaver(scratch);
 });
-
-afterEach(() => rmSync(scratch, { recursive: true, force: true }));
 
 function fixtureArgv(fixture: string): string[] {
   const dir = `tests/fixtures/${fixture}`;

@@ -1,7 +1,6 @@
-import { afterAll, beforeEach, describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, realpathSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/corpusReading.test-utils.js";
 import { runReconcile as reconcileReadInputs } from "../ingest/ingestQualityChecks.js";
@@ -12,6 +11,7 @@ import { inputPathsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 import { reRender } from "../cli-balance/reRender.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
+import { temporaryDirectory, test } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
@@ -28,45 +28,33 @@ describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it i
   });
 
   it("falls back to a NULL sha with the version still present when the tool is not a git checkout", () => {
-    const nonGitDir = mkdtempSync(join(tmpdir(), "spec-controller-tool-nogit-"));
+    const nonGitDir = temporaryDirectory("spec-controller-tool-nogit-");
     const pkgPath = join(nonGitDir, "package.json");
     writeFileSync(pkgPath, JSON.stringify({ name: "spec-controller", version: "9.9.9-fixture" }));
-    try {
-      const identity = resolveToolIdentity({ toolDir: nonGitDir, packageJsonPath: pkgPath });
+    const identity = resolveToolIdentity({ toolDir: nonGitDir, packageJsonPath: pkgPath });
 
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("9.9.9-fixture");
-    } finally {
-      rmSync(nonGitDir, { recursive: true, force: true });
-    }
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("9.9.9-fixture");
   });
 
   it("resolves the version to \"unknown\" when no package.json can be found (never crashes)", () => {
-    const bareDir = mkdtempSync(join(tmpdir(), "spec-controller-tool-bare-"));
-    try {
-      const identity = resolveToolIdentity({ toolDir: bareDir, packageJsonPath: join(bareDir, "does-not-exist.json") });
+    const bareDir = temporaryDirectory("spec-controller-tool-bare-");
+    const identity = resolveToolIdentity({ toolDir: bareDir, packageJsonPath: join(bareDir, "does-not-exist.json") });
 
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("unknown");
-    } finally {
-      rmSync(bareDir, { recursive: true, force: true });
-    }
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("unknown");
   });
 
   it("takes the version from the nearest package.json above the tool's directory when no path is given", () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-walk-")));
-    try {
-      writeFileSync(join(root, "package.json"), JSON.stringify({ name: "spec-controller", version: "4.5.6-above" }));
-      const toolDir = join(root, "dist", "run-management");
-      mkdirSync(toolDir, { recursive: true });
+    const root = realpathSync(temporaryDirectory("spec-controller-tool-walk-"));
+    writeFileSync(join(root, "package.json"), JSON.stringify({ name: "spec-controller", version: "4.5.6-above" }));
+    const toolDir = join(root, "dist", "run-management");
+    mkdirSync(toolDir, { recursive: true });
 
-      const identity = resolveToolIdentity({ toolDir });
+    const identity = resolveToolIdentity({ toolDir });
 
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("4.5.6-above");
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("4.5.6-above");
   });
 
   it.each([
@@ -74,34 +62,26 @@ describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it i
     ["a number", { name: "spec-controller", version: 7 }],
     ["absent", { name: "spec-controller" }],
   ])("resolves the version to \"unknown\" when the package.json version is %s", (_, pkg) => {
-    const toolDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-badver-")));
-    try {
-      writeFileSync(join(toolDir, "package.json"), JSON.stringify(pkg));
+    const toolDir = realpathSync(temporaryDirectory("spec-controller-tool-badver-"));
+    writeFileSync(join(toolDir, "package.json"), JSON.stringify(pkg));
 
-      const identity = resolveToolIdentity({ toolDir });
+    const identity = resolveToolIdentity({ toolDir });
 
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("unknown");
-    } finally {
-      rmSync(toolDir, { recursive: true, force: true });
-    }
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("unknown");
   });
 
   it("resolves the version to \"unknown\" when no package.json exists anywhere up to the filesystem root", () => {
-    const toolDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tool-rootward-")));
-    try {
-      for (let dir = toolDir; ; dir = dirname(dir)) {
-        expect(existsSync(join(dir, "package.json")), `fixture needs no package.json at ${dir}`).toBe(false);
-        if (dirname(dir) === dir) break;
-      }
-
-      const identity = resolveToolIdentity({ toolDir });
-
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("unknown");
-    } finally {
-      rmSync(toolDir, { recursive: true, force: true });
+    const toolDir = realpathSync(temporaryDirectory("spec-controller-tool-rootward-"));
+    for (let dir = toolDir; ; dir = dirname(dir)) {
+      expect(existsSync(join(dir, "package.json")), `fixture needs no package.json at ${dir}`).toBe(false);
+      if (dirname(dir) === dir) break;
     }
+
+    const identity = resolveToolIdentity({ toolDir });
+
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("unknown");
   });
 
   it("resolves a blank toolDir from the module's own location: this checkout's HEAD and its package's version", () => {
@@ -118,8 +98,8 @@ describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it i
 });
 
 describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules has no SHA of its own, though the tree it sits in is a git repository", () => {
-  function consumerRepo(): { repo: string; head: string; cleanup: () => void } {
-    const repo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt029-")));
+  function consumerRepo(): { repo: string; head: string } {
+    const repo = realpathSync(temporaryDirectory("spec-controller-rpt029-"));
     writeFileSync(
       join(repo, "package.json"),
       JSON.stringify({ name: "a-consumer", version: "7.7.7-consumer" }),
@@ -132,33 +112,29 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
       ).trim();
     git("init", "-q");
     git("commit", "--allow-empty", "-q", "-m", "the consumer's own commit");
-    return { repo, head: git("rev-parse", "HEAD"), cleanup: () => rmSync(repo, { recursive: true, force: true }) };
+    return { repo, head: git("rev-parse", "HEAD") };
   }
 
   it("returns a NULL sha for a toolDir under node_modules even though git -C that dir DOES answer with the enclosing repository's HEAD", () => {
-    const { repo, head, cleanup } = consumerRepo();
-    try {
-      const toolDir = join(repo, "node_modules", "spec-controller", "dist");
-      mkdirSync(toolDir, { recursive: true });
+    const { repo, head } = consumerRepo();
+    const toolDir = join(repo, "node_modules", "spec-controller", "dist");
+    mkdirSync(toolDir, { recursive: true });
 
-      const gitAnswers = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
-        encoding: "utf8",
-      }).trim();
-      expect(gitAnswers).toBe(head);
+    const gitAnswers = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+    }).trim();
+    expect(gitAnswers).toBe(head);
 
-      const identity = resolveToolIdentity({ toolDir });
+    const identity = resolveToolIdentity({ toolDir });
 
-      expect(identity.toolSha).toBeNull();
-      expect(identity.toolVersion).toBe("7.7.7-consumer");
-    } finally {
-      cleanup();
-    }
+    expect(identity.toolSha).toBeNull();
+    expect(identity.toolVersion).toBe("7.7.7-consumer");
   });
 });
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
-  function targetRepo(message = "the target's own commit"): { repo: string; head: string; cleanup: () => void } {
-    const repo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-")));
+  function targetRepo(message = "the target's own commit"): { repo: string; head: string } {
+    const repo = realpathSync(temporaryDirectory("spec-controller-rpt003-"));
     const git = (...args: string[]): string =>
       execFileSync(
         "git",
@@ -167,43 +143,31 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
       ).trim();
     git("init", "-q");
     git("commit", "--allow-empty", "-q", "-m", message);
-    return { repo, head: git("rev-parse", "HEAD"), cleanup: () => rmSync(repo, { recursive: true, force: true }) };
+    return { repo, head: git("rev-parse", "HEAD") };
   }
 
   it("resolves a git target with no override to that target's own HEAD", () => {
-    const { repo, head, cleanup } = targetRepo();
-    try {
-      expect(head).toMatch(/^[0-9a-f]{40}$/);
-      expect(resolveSourceSha({ targetDir: repo })).toBe(head);
-    } finally {
-      cleanup();
-    }
+    const { repo, head } = targetRepo();
+    expect(head).toMatch(/^[0-9a-f]{40}$/);
+    expect(resolveSourceSha({ targetDir: repo })).toBe(head);
   });
 
   it("trims whitespace from an explicit override", () => {
-    const { repo, cleanup } = targetRepo();
-    try {
-      const sha = "905a987c0ffeeba110000000000000000deadbeef";
-      expect(resolveSourceSha({ sourceSha: `  ${sha}\n`, targetDir: repo })).toBe(sha);
-    } finally {
-      cleanup();
-    }
+    const { repo } = targetRepo();
+    const sha = "905a987c0ffeeba110000000000000000deadbeef";
+    expect(resolveSourceSha({ sourceSha: `  ${sha}\n`, targetDir: repo })).toBe(sha);
   });
 
   it("treats a blank override as no override and reads the target's HEAD", () => {
-    const { repo, head, cleanup } = targetRepo();
-    try {
-      expect(resolveSourceSha({ sourceSha: "   ", targetDir: repo })).toBe(head);
-    } finally {
-      cleanup();
-    }
+    const { repo, head } = targetRepo();
+    expect(resolveSourceSha({ sourceSha: "   ", targetDir: repo })).toBe(head);
   });
 
   it.each([
     ["blank", { targetDir: "  " }],
     ["absent", {}],
   ])("reads the working directory's HEAD when the target directory is %s", (_, opts) => {
-    const { repo, head, cleanup } = targetRepo();
+    const { repo, head } = targetRepo();
     const realHead = execFileSync("git", ["-C", process.cwd(), "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     const cwd = vi.spyOn(process, "cwd").mockReturnValue(repo);
     try {
@@ -211,7 +175,6 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
       expect(resolveSourceSha(opts)).toBe(head);
     } finally {
       cwd.mockRestore();
-      cleanup();
     }
   });
 
@@ -226,9 +189,9 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
       fixtureFeatures = resolve("tests/fixtures/balanced/features");
     });
 
-    function plainDir(): { dir: string; cleanup: () => void } {
-      const dir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt003-plain-")));
-      return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+    function plainDir(): { dir: string } {
+      const dir = realpathSync(temporaryDirectory("spec-controller-rpt003-plain-"));
+      return { dir };
     }
 
     function writtenSourceSha(target: string, cwd: string, extra: string[]): unknown {
@@ -260,93 +223,64 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
     it("records the --features target's own commit, not the working directory's", () => {
       const target = targetRepo();
       const cwd = targetRepo("the working directory's commit");
-      try {
-        expect(target.head).not.toBe(cwd.head);
-        expect(writtenSourceSha(target.repo, cwd.repo, withFeatures(target.repo))).toBe(target.head);
-      } finally {
-        cwd.cleanup();
-        target.cleanup();
-      }
+      expect(target.head).not.toBe(cwd.head);
+      expect(writtenSourceSha(target.repo, cwd.repo, withFeatures(target.repo))).toBe(target.head);
     });
 
     it("records an explicit --source-sha over the target's own commit", () => {
       const target = targetRepo();
       const cwd = targetRepo("the working directory's commit");
-      try {
-        expect(
-          writtenSourceSha(target.repo, cwd.repo, [...withFeatures(target.repo), "--source-sha", "abc123"]),
-        ).toBe("abc123");
-      } finally {
-        cwd.cleanup();
-        target.cleanup();
-      }
+      expect(
+        writtenSourceSha(target.repo, cwd.repo, [...withFeatures(target.repo), "--source-sha", "abc123"]),
+      ).toBe("abc123");
     });
 
     it("records unknown for a --features target that is not a repository, given no override", () => {
       const target = plainDir();
       const cwd = targetRepo("the working directory's commit");
-      try {
-        expect(writtenSourceSha(target.dir, cwd.repo, withFeatures(target.dir))).toBeNull();
-      } finally {
-        cwd.cleanup();
-        target.cleanup();
-      }
+      expect(writtenSourceSha(target.dir, cwd.repo, withFeatures(target.dir))).toBeNull();
     });
 
     it("records the working directory's commit when no --features is given", () => {
       const target = plainDir();
       const cwd = targetRepo("the working directory's commit");
-      try {
-        expect(writtenSourceSha(target.dir, cwd.repo, [])).toBe(cwd.head);
-      } finally {
-        cwd.cleanup();
-        target.cleanup();
-      }
+      expect(writtenSourceSha(target.dir, cwd.repo, [])).toBe(cwd.head);
     });
   });
 });
 
 describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --features, independent of the run cwd", () => {
   it("derives a non-git target's root as dirname(--features), NOT the run cwd", () => {
-    const targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-")));
-    try {
-      const features = join(targetRepo, "features");
-      const root = resolveTargetRoot({ features });
-      expect(root).toBe(targetRepo);
-      expect(root).not.toBe(process.cwd());
-    } finally {
-      rmSync(targetRepo, { recursive: true, force: true });
-    }
+    const targetRepo = realpathSync(temporaryDirectory("spec-controller-tgtroot-"));
+    const features = join(targetRepo, "features");
+    const root = resolveTargetRoot({ features });
+    expect(root).toBe(targetRepo);
+    expect(root).not.toBe(process.cwd());
   });
 
   it("derives a git target's root as the git top-level of dirname(--features)", () => {
-    const targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-git-")));
-    try {
-      execFileSync("git", ["-C", targetRepo, "init", "-q"], { stdio: "ignore" });
-      mkdirSync(join(targetRepo, "spec", "features"), { recursive: true });
-      const features = join(targetRepo, "spec", "features");
-      const root = resolveTargetRoot({ features });
-      expect(realpathSync(root)).toBe(targetRepo);
-      expect(root).not.toBe(dirname(features));
-    } finally {
-      rmSync(targetRepo, { recursive: true, force: true });
-    }
+    const targetRepo = realpathSync(temporaryDirectory("spec-controller-tgtroot-git-"));
+    execFileSync("git", ["-C", targetRepo, "init", "-q"], { stdio: "ignore" });
+    mkdirSync(join(targetRepo, "spec", "features"), { recursive: true });
+    const features = join(targetRepo, "spec", "features");
+    const root = resolveTargetRoot({ features });
+    expect(realpathSync(root)).toBe(targetRepo);
+    expect(root).not.toBe(dirname(features));
   });
 
   it("resolves a blank --features to the working directory, not a root derived from the blank path", () => {
-    const workDir = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-blank-")));
+    const workDir = realpathSync(temporaryDirectory("spec-controller-tgtroot-blank-"));
     const cwd = vi.spyOn(process, "cwd").mockReturnValue(workDir);
     try {
       expect(resolveTargetRoot({ features: "   " })).toBe(workDir);
     } finally {
       cwd.mockRestore();
-      rmSync(workDir, { recursive: true, force: true });
     }
   });
 
   it("reconciles a Vitest report's test files relative to the target's repository, not the working directory", () => {
-    const target = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-reconcile-")));
-    const foreign = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-foreign-")));
+    const target = realpathSync(temporaryDirectory("spec-controller-tgtroot-reconcile-"));
+    const foreign = realpathSync(temporaryDirectory("spec-controller-tgtroot-foreign-"));
     const cwd = vi.spyOn(process, "cwd").mockReturnValue(foreign);
     try {
       execFileSync("git", ["-C", target, "init", "-q"], { stdio: "ignore" });
@@ -390,8 +324,6 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       expect(JSON.stringify(balance)).not.toContain(target);
     } finally {
       cwd.mockRestore();
-      rmSync(target, { recursive: true, force: true });
-      rmSync(foreign, { recursive: true, force: true });
     }
   });
 
@@ -399,8 +331,8 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
     ["a directory under it by its relative path", (target: string) => join(target, "workflows"), "workflows"],
     ["the target root itself as \".\"", (target: string) => target, "."],
   ])("runBalance names a cross-repo run's inputs relative to the target's repository on both surfaces, never by the target's absolute path — an input naming %s", (_title, ciInput, ciRecorded) => {
-    const target = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-")));
-    const foreign = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-foreign-")));
+    const target = realpathSync(temporaryDirectory("spec-controller-tgtroot-balance-"));
+    const foreign = realpathSync(temporaryDirectory("spec-controller-tgtroot-balance-foreign-"));
     const fixture = resolve("tests/fixtures/balanced");
     const savedExitCode = process.exitCode;
     const cwd = vi.spyOn(process, "cwd").mockReturnValue(foreign);
@@ -411,38 +343,32 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       cpSync(join(fixture, "package.json"), join(target, "package.json"));
       mkdirSync(join(target, "workflows"));
       writeFileSync(join(target, "workflows", "ci.yml"), "jobs: {}\n");
-      const reports = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-tgtroot-balance-out-")));
-      try {
-        const jsonPath = join(reports, "spec-reconciliation.json");
-        const mdPath = join(reports, "spec-reconciliation.md");
+      const reports = realpathSync(temporaryDirectory("spec-controller-tgtroot-balance-out-"));
+      const jsonPath = join(reports, "spec-reconciliation.json");
+      const mdPath = join(reports, "spec-reconciliation.md");
 
-        runBalance([
-          "--features", join(target, "features"),
-          "--vitest", join(target, "vitest.json"),
-          "--package-json", join(target, "package.json"),
-          "--ci", ciInput(target),
-          "--format", `json:${jsonPath}`,
-          "--format", `md:${mdPath}`,
-        ]);
+      runBalance([
+        "--features", join(target, "features"),
+        "--vitest", join(target, "vitest.json"),
+        "--package-json", join(target, "package.json"),
+        "--ci", ciInput(target),
+        "--format", `json:${jsonPath}`,
+        "--format", `md:${mdPath}`,
+      ]);
 
-        const json = readFileSync(jsonPath, "utf8");
-        const md = readFileSync(mdPath, "utf8");
-        expect(JSON.parse(json).runProvenance.inputs).toEqual({
-          features: "features",
-          vitest: "vitest.json",
-          packageJson: "package.json",
-          ci: ciRecorded,
-        });
-        expect(json).not.toContain(target);
-        expect(md).not.toContain(target);
-      } finally {
-        rmSync(reports, { recursive: true, force: true });
-      }
+      const json = readFileSync(jsonPath, "utf8");
+      const md = readFileSync(mdPath, "utf8");
+      expect(JSON.parse(json).runProvenance.inputs).toEqual({
+        features: "features",
+        vitest: "vitest.json",
+        packageJson: "package.json",
+        ci: ciRecorded,
+      });
+      expect(json).not.toContain(target);
+      expect(md).not.toContain(target);
     } finally {
       cwd.mockRestore();
       process.exitCode = savedExitCode;
-      rmSync(target, { recursive: true, force: true });
-      rmSync(foreign, { recursive: true, force: true });
     }
   });
 });
@@ -456,16 +382,12 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
   const wholeRun = { timeout: 30_000 };
 
   function withCheckout(origin: string | null, use: (dir: string) => void): void {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-unit-"));
-    try {
-      mkdirSync(join(dir, "features"));
-      writeFileSync(join(dir, "features", "widget.feature"), "Feature: widget\n\n  Scenario: a widget\n    Given a widget\n");
-      execFileSync("git", ["init", "-q", dir]);
-      if (origin !== null) execFileSync("git", ["-C", dir, "remote", "add", "origin", origin]);
-      use(dir);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
+    const dir = temporaryDirectory("scn-rpt-001-unit-");
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, "features", "widget.feature"), "Feature: widget\n\n  Scenario: a widget\n    Given a widget\n");
+    execFileSync("git", ["init", "-q", dir]);
+    if (origin !== null) execFileSync("git", ["-C", dir, "remote", "add", "origin", origin]);
+    use(dir);
   }
 
   function report(dir: string, extra: readonly string[] = []): { md: string; json: Record<string, unknown>; saved: string } {
@@ -478,25 +400,19 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
   // The origin's name is the only text a remote puts into the report, so most rows read the name from the reader, and a few
   // run the context balance assembles through the report's renderers. The header is all those rows read, so the report
   // renders an empty reconciliation.
-  let shared: { dir: string; root: string; balance: EvidenceReconciliation } | undefined;
-  beforeEach(() => {
-    if (shared !== undefined) return;
-    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-001-origins-"));
-    execFileSync("git", ["init", "-q", dir]);
-    shared = { dir, root: resolveTargetRoot({ features: join(dir, "features") }), balance: reconcileReadInputs([], dir, [], []) };
-  });
-  afterAll(() => {
-    if (shared !== undefined) rmSync(shared.dir, { recursive: true, force: true });
-  });
+  function checkoutIn(dir: string): string {
+    if (!existsSync(join(dir, ".git"))) execFileSync("git", ["init", "-q", dir]);
+    return dir;
+  }
 
-  function withOrigin(origin: string, use: (dir: string, root: string, balance: EvidenceReconciliation) => void): void {
-    const { dir, root, balance } = shared!;
+  function withOrigin(sharedDirectory: string, origin: string, use: (dir: string, root: string, balance: EvidenceReconciliation) => void): void {
+    const dir = checkoutIn(sharedDirectory);
     execFileSync("git", ["-C", dir, "config", "remote.origin.url", origin]);
-    use(dir, root, balance);
+    use(dir, resolveTargetRoot({ features: join(dir, "features") }), reconcileReadInputs([], dir, [], []));
   }
 
   // The run's context as balance assembles it with no --target, rendered by the report's own renderers. The root is the
-  // checkout's, read once, since every row shares the checkout.
+  // checkout's.
   // The checkout's path, as created and as resolved, and the tool's own commit are run facts the remote does not supply, so a
   // leak is read with them removed.
   function reportOf(dir: string, root: string, balance: EvidenceReconciliation): { md: string; json: string; rerendered: string; leaked: (secret: string) => string | undefined } {
@@ -512,8 +428,8 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     return { md, json, rerendered, leaked };
   }
 
-  function nameOf(origin: string): string | null {
-    const { dir } = shared!;
+  function nameOf(sharedDirectory: string, origin: string): string | null {
+    const dir = checkoutIn(sharedDirectory);
     execFileSync("git", ["-C", dir, "config", "remote.origin.url", origin]);
     return resolveTargetOrigin(dir);
   }
@@ -522,7 +438,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     return (JSON.parse(json) as { runProvenance: { targetOrigin?: unknown } }).runProvenance.targetOrigin;
   }
 
-  it.each([
+  test.for<[string, string, string[]]>([
     ["https://github.com/ekino/veggies.git", "ekino/veggies", []],
     ["https://github.com/ekino/veggies", "ekino/veggies", []],
     ["ssh://git@github.com/ekino/veggies.git", "ekino/veggies", ["git@"]],
@@ -564,8 +480,8 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["persistent-https::https://deploy:s3cret@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["deploy", "s3cret"]],
     ["persistent-https::https://deploy:p@ss@host/ekino/veggies.git?private_token=abc#s3cret", "persistent-https::https://host/ekino/veggies.git", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
     ["/srv/git/veggies@2024:archive.git", "/srv/git/veggies@2024:archive.git", []],
-  ])("names the target's origin %s as %s, and none of %j reaches the name", (origin, shown, secrets) => {
-    const named = nameOf(origin);
+  ])("names the target's origin %s as %s, and none of %j reaches the name", ([origin, shown, secrets], { sharedDirectory }) => {
+    const named = nameOf(sharedDirectory, origin);
     for (const secret of secrets) expect(named, `${secret} reached the name`).not.toContain(secret);
     expect(named).not.toMatch(/[?#]/);
     expect(named).toBe(shown);
@@ -583,8 +499,8 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["usrK7:{password}@host:veggies.git", "host:veggies.git", []],
     ["https://usrK7:{password}@github.com/ekino/veggies.git?private_token=Tk3#Fr4", "ekino/veggies", ["/", "?", "#"]],
   ])("a remote of the form %s, named %s unless its password holds one of %j", (form, shown, unread) => {
-    it.each(everyDelimiter)("with %j in its password, names what it reads and puts no part of its user, password or token in the name", (delimiter) => {
-      const named = nameOf(form.replace("{password}", `Zq1${delimiter}Xw9`));
+    test.for(everyDelimiter)("with %j in its password, names what it reads and puts no part of its user, password or token in the name", (delimiter, { sharedDirectory }) => {
+      const named = nameOf(sharedDirectory, form.replace("{password}", `Zq1${delimiter}Xw9`));
       for (const secret of ["usrK7", "Zq1", "Xw9", "Tk3", "Fr4"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
       expect(named).toBe(unread.includes(delimiter) ? null : shown);
     });
@@ -594,14 +510,14 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["file://usrK7:{password}@host/srv/x"],
     ["usrK7::{password}@host:veggies.git"],
   ])("a remote of the form %s", (form) => {
-    it.each(everyDelimiter)("with %j in its password, names no origin and puts no part of its user or password in the name", (delimiter) => {
-      const named = nameOf(form.replace("{password}", `Zq1${delimiter}Xw9`));
+    test.for(everyDelimiter)("with %j in its password, names no origin and puts no part of its user or password in the name", (delimiter, { sharedDirectory }) => {
+      const named = nameOf(sharedDirectory, form.replace("{password}", `Zq1${delimiter}Xw9`));
       for (const secret of ["usrK7", "Zq1", "Xw9"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
       expect(named).toBeNull();
     });
   });
 
-  it.each([
+  test.for<[string]>([
     ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git"],
     ["https://usrK7:Zq1?Xw9@github.com/veggies.git"],
     ["https://usrK7:Zq1#Xw9@github.com/veggies.git"],
@@ -612,28 +528,28 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["file://usrK7@localhost/srv/x"],
     ["ext::sshpass -p Zq1Xw9 ssh usrK7@host %S repo"],
     ["ext::ssh -l usrK7 host %S /srv/repo"],
-  ])("names no origin for %s, which is not read as a URL, an scp remote or a local path without guessing", (origin) => {
-    const named = nameOf(origin);
+  ])("names no origin for %s, which is not read as a URL, an scp remote or a local path without guessing", ([origin], { sharedDirectory }) => {
+    const named = nameOf(sharedDirectory, origin);
     for (const secret of ["usrK7", "Zq1", "Xw9", "a@b"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
     expect(named).toBeNull();
   });
 
-  it.each([
+  test.for<[string]>([
     ["file:///srv/git/veg#gies.git"],
     ["file:///srv/git/veg?gies.git"],
     ["/srv/git/veg#gies.git"],
     ["/srv/git/veg?gies.git"],
     ["veggies.git"],
-  ])("names the local origin %s as given, since git sends it to no server", (origin) => {
-    expect(nameOf(origin)).toBe(origin);
+  ])("names the local origin %s as given, since git sends it to no server", ([origin], { sharedDirectory }) => {
+    expect(nameOf(sharedDirectory, origin)).toBe(origin);
   });
 
-  it.each<[string, string | null, string[]]>([
+  test.for<[string, string | null, string[]]>([
     ["https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", "ekino/veggies", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
     ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git", null, ["usrK7", "Zq1", "Xw9"]],
     ["file:///srv/git/veg#gies.git", "file:///srv/git/veg#gies.git", []],
-  ])("in the run balance assembles, carries the origin %s's name, %s, into the markdown, the JSON and a re-render, with none of %j in any of them", (origin, shown, secrets) => {
-    withOrigin(origin, (dir, root, balance) => {
+  ])("in the run balance assembles, carries the origin %s's name, %s, into the markdown, the JSON and a re-render, with none of %j in any of them", ([origin, shown, secrets], { sharedDirectory }) => {
+    withOrigin(sharedDirectory, origin, (dir, root, balance) => {
       const { md, json, rerendered, leaked } = reportOf(dir, root, balance);
       for (const secret of secrets) expect(leaked(secret), `${secret} reached a surface`).toBeUndefined();
       expect(namedOrigin(json)).toBe(shown ?? undefined);

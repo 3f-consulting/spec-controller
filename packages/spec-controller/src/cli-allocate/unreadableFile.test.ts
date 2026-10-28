@@ -1,21 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { git, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function writeInto(root: string, path: string, content: string | Buffer): void {
   mkdirSync(dirname(join(root, path)), { recursive: true });
   writeFileSync(join(root, path), content);
 }
 
-const made: string[] = [];
-
 function repository(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-unreadable-file-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-unreadable-file-"));
   git(repo, ["init", "-q", "-b", "main"]);
   writeInto(repo, "features/one.feature", "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n");
   writeInto(repo, "docs/notes.md", "Cites SCN-ONE-003.\n");
@@ -27,7 +24,6 @@ function repository(): string {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-  while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });

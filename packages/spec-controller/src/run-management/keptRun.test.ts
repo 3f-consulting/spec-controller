@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
@@ -12,6 +11,7 @@ import {
   RUN_MANIFEST,
   type RunManifestInput,
 } from "./keptRun.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-RMG-001] planKeptRun: yields the nested run dir + the two file-dest paths from { storeRoot, target, runId }", () => {
 
@@ -77,33 +77,29 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
   });
 
   it("writes the stored run's own run.yaml with that run's id, target and metadata", () => {
-    const scratch = mkdtempSync(join(tmpdir(), "spec-controller-run-manifest-"));
-    try {
-      const storeRoot = join(scratch, "store");
-      const { runId, target, ...meta } = input;
+    const scratch = temporaryDirectory("spec-controller-run-manifest-");
+    const storeRoot = join(scratch, "store");
+    const { runId, target, ...meta } = input;
 
-      executeKeptRun({ storeRoot, target, runId }, meta, () => true);
+    executeKeptRun({ storeRoot, target, runId }, meta, () => true);
 
-      const written = parse(readFileSync(join(storeRoot, target, runId, RUN_MANIFEST), "utf8")) as Record<string, unknown>;
-      expect(written).toEqual({
-        schema_version: 2,
-        run_id: input.runId,
-        target: input.target,
-        source_sha: input.sourceSha,
-        tool_sha: input.toolSha,
-        tool_version: input.toolVersion,
-        mode: input.mode,
-        date: input.date,
-        purpose: [],
-        links: [],
-        artefacts: {
-          document: "spec-reconciliation.md",
-          reconciliation: "spec-reconciliation.json",
-        },
-      });
-    } finally {
-      rmSync(scratch, { recursive: true, force: true });
-    }
+    const written = parse(readFileSync(join(storeRoot, target, runId, RUN_MANIFEST), "utf8")) as Record<string, unknown>;
+    expect(written).toEqual({
+      schema_version: 2,
+      run_id: input.runId,
+      target: input.target,
+      source_sha: input.sourceSha,
+      tool_sha: input.toolSha,
+      tool_version: input.toolVersion,
+      mode: input.mode,
+      date: input.date,
+      purpose: [],
+      links: [],
+      artefacts: {
+        document: "spec-reconciliation.md",
+        reconciliation: "spec-reconciliation.json",
+      },
+    });
   });
 });
 

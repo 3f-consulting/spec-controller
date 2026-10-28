@@ -1,22 +1,15 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterAll, describe, it, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { readCorpus } from "./ingestQualityChecks.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function corpusOf(files: Record<string, string>): { features: string; paths: Record<string, string> } {
-  const root = mkdtempSync(join(tmpdir(), `scn-cli-016-${process.pid}-`));
-  made.push(root);
+  const root = temporaryDirectory(`scn-cli-016-${process.pid}-`);
   const features = join(root, "features");
   mkdirSync(features);
   const paths: Record<string, string> = {};

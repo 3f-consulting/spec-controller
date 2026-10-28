@@ -1,16 +1,10 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   it("posts lint:foo and lint:bar alone as fitness functions when the manifest names the runners test and cucumber run", () => {
@@ -34,8 +28,7 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
 
 describe("[SCN-CLI-090] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("recognises the pipeline step running this command as the reconciler, with nothing configured", () => {
-    const root = mkdtempSync(join(tmpdir(), `scn-usg-014-${process.pid}-`));
-    made.push(root);
+    const root = temporaryDirectory(`scn-usg-014-${process.pid}-`);
     const features = join(root, "features");
     mkdirSync(features);
     writeFileSync(

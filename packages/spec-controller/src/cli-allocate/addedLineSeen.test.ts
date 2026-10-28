@@ -1,15 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { realpathSync } from "node:fs";
 import { git, writeInto, commitAllReturningHash as commitAll, lines } from "./repository.test-utils.js";
 import { allocateInGuarded as allocateIn } from "./answered.test-utils.js";
-
-const repositories: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-added-")));
-  repositories.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-added-"));
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
@@ -40,7 +36,6 @@ function commitOnUnmergedBranch(repo: string, path: string, branchContent: strin
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-  for (const repo of repositories.splice(0)) rmSync(repo, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {

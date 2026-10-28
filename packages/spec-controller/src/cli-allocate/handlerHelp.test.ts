@@ -1,16 +1,13 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { allocateCommand, renderCommandHelp } from "../cli-registry.js";
 import { gitInRepository as git } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function headedOneCarryingThree(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-help-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-help-"));
   git(repo, ["init", "-q", "-b", "main"]);
   mkdirSync(join(repo, "features"));
   writeFileSync(join(repo, "features/one.feature"), "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n");
@@ -22,10 +19,6 @@ function headedOneCarryingThree(): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 const HELP_REQUEST: readonly (readonly [request: string, argv: string[]])[] = [

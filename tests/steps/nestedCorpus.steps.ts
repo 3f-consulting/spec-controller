@@ -1,10 +1,10 @@
-import { After, Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { copyFileSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const NESTED = "tests/fixtures/nested-corpus";
 
@@ -21,12 +21,6 @@ let nestedCorpus = "";
 let flatCorpus = "";
 let nestedRun: Run | undefined;
 let flatRun: Run | undefined;
-
-const temporaryPaths: string[] = [];
-
-After(function () {
-  for (const path of temporaryPaths.splice(0)) rmSync(path, { recursive: true, force: true });
-});
 
 function reconcile(features: string): Run {
   const result: SpawnSyncReturns<string> = spawnSync(
@@ -70,8 +64,7 @@ Given("a target whose feature files sit in its corpus at the top level and in su
 });
 
 Given("the same target with every one of those feature files at the top level of its corpus", function () {
-  const root = mkdtempSync(join(tmpdir(), `nested-corpus-flat-${process.pid}-`));
-  temporaryPaths.push(root);
+  const root = temporaryDirectory(`nested-corpus-flat-${process.pid}-`);
   flatCorpus = join(root, "features");
   mkdirSync(flatCorpus);
   for (const file of NESTED_FEATURE_FILES) copyFileSync(join(nestedCorpus, file), join(flatCorpus, basename(file)));

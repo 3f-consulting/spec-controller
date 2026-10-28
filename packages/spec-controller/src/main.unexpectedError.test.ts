@@ -1,10 +1,9 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { main } from "./main.js";
 import { refuse } from "./outputLocation.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   threw: unknown;
@@ -175,11 +174,7 @@ describe("[SCN-CLI-104] an error raised after the verdict is set keeps the verdi
     let store: string;
 
     beforeEach(() => {
-      store = mkdtempSync(join(tmpdir(), "spec-controller-kept-"));
-    });
-
-    afterEach(() => {
-      rmSync(store, { recursive: true, force: true });
+      store = temporaryDirectory("spec-controller-kept-");
     });
 
     const kept = (): string[] => ["--store", store, ...balance(...flags)];

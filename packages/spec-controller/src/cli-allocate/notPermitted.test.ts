@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { git, writeInto, made, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
+import { git, writeInto, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
@@ -27,7 +27,6 @@ function copyWithoutGit(): string {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-  while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });

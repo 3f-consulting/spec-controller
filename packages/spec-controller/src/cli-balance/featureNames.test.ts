@@ -1,19 +1,12 @@
-import { afterAll, describe, it, expect, vi } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect, vi } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-RMD-006] the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code", () => {
   it("names each coded feature file by its slug under metadata, omits the feature file with no code, and keeps no top-level featureNames", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rmd-006-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-rmd-006-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "config-vocabulary-lint.feature"),
@@ -26,8 +19,7 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
   });
 
   it("keys each feature title by the header code however the header's tags are laid out, and takes no code from a comment", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rmd-006-header-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-rmd-006-header-");
     const features = join(dir, "features");
     mkdirSync(features);
     const headers: Record<string, string> = {
@@ -51,8 +43,7 @@ describe("[SCN-RMD-006] the published spec-reconciliation.json carries the featu
   });
 
   it("reads the feature titles from the working directory's features/ when no directory is given", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rmd-006-cwd-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-rmd-006-cwd-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "default-corpus.feature"), "@DEF\nFeature: the default corpus\n");
     const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(dir);

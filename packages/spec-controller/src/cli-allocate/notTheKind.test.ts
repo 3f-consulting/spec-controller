@@ -1,8 +1,8 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { runAllocate } from "./cli.js";
-import { git, writeInto, commitAll, made, freshDirectory } from "./repository.test-utils.js";
+import { git, writeInto, commitAll, freshDirectory } from "./repository.test-utils.js";
 
 function headedOneCarrying003(): string {
   const repo = freshDirectory("allocate-not-the-kind-");
@@ -90,10 +90,6 @@ function allocateWith(cwd: () => string, argv: string[]): Answered {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {

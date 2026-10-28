@@ -1,15 +1,11 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { realpathSync } from "node:fs";
 import { git, writeInto } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function headedOneCarryingThree(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-new-part-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-new-part-"));
   git(repo, ["init", "-q", "-b", "main"]);
   writeInto(
     repo,
@@ -24,10 +20,6 @@ function headedOneCarryingThree(): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-011] --new admits a part no feature file's header carries, and on a part a header does carry it answers as usual with a note on stderr", () => {

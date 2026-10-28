@@ -1,22 +1,15 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { discover, temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
+import { discover } from "./corpusFixtures.test-utils.js";
 import { featureNamesOf, readCorpus } from "./ingestQualityChecks.js";
 import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function absentCorpus(): { features: string; packageJson: string; ci: string } {
-  const root = mkdtempSync(join(tmpdir(), `scn-cli-017-absent-${process.pid}-`));
-  made.push(root);
+  const root = temporaryDirectory(`scn-cli-017-absent-${process.pid}-`);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
@@ -25,8 +18,7 @@ function absentCorpus(): { features: string; packageJson: string; ci: string } {
 }
 
 function unreadableCorpus(): { features: string; packageJson: string; file: string } {
-  const root = mkdtempSync(join(tmpdir(), `scn-cli-017-unreadable-${process.pid}-`));
-  made.push(root);
+  const root = temporaryDirectory(`scn-cli-017-unreadable-${process.pid}-`);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
@@ -77,7 +69,7 @@ describe("[SCN-CLI-017] a corpus that is PRESENT and unreadable is still refused
 
 describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
   function absentDir(): string {
-    const dir = join(temporaryDirectoryIn(made, `scn-cli-017-${process.pid}-`), "features");
+    const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
     expect(existsSync(dir)).toBe(false);
     return dir;
   }
@@ -90,7 +82,7 @@ describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
   });
 
   it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {
-    const notADirectory = join(temporaryDirectoryIn(made, `scn-cli-017-file-${process.pid}-`), "features");
+    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
     const reading = readCorpus(notADirectory);

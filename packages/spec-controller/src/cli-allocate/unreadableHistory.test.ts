@@ -1,18 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readdirSync, realpathSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
 import { git, writeInto, commitAll, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-const made: string[] = [];
-
-function temporaryDirectory(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "allocate-unreadable-history-")));
-  made.push(dir);
-  return dir;
+function resolvedTemporaryDirectory(): string {
+  return realpathSync(temporaryDirectory("allocate-unreadable-history-"));
 }
 
 function scenarioBlock(code: string): string {
@@ -20,7 +16,7 @@ function scenarioBlock(code: string): string {
 }
 
 function repositoryWithADeletedCode(): string {
-  const repo = temporaryDirectory();
+  const repo = resolvedTemporaryDirectory();
   git(repo, ["init", "-q", "-b", "main"]);
   const path = "features/one.feature";
   writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("SCN-ONE-001")}\n${scenarioBlock("SCN-ONE-005")}`);
@@ -39,7 +35,6 @@ function looseObjectDirectories(repo: string): string[] {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-  while (made.length > 0) rmSync(made.pop() ?? "", { recursive: true, force: true });
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });

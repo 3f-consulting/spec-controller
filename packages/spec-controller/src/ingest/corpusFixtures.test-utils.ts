@@ -1,15 +1,8 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { corpusFeatureFiles } from "./ingestScenarios.js";
-
-// Each test file passes its own list of made directories and removes them in its own hook.
-export function temporaryDirectoryIn(made: string[], prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), prefix));
-  made.push(dir);
-  return dir;
-}
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 export function discover(dir: string): { returned: unknown; thrown: unknown } {
   let returned: unknown;
@@ -38,9 +31,8 @@ export const EMPTY_CORPUS: Shape = {
   build: buildEmptyCorpus,
 };
 
-export function targetIn(made: string[], { build }: Shape): string {
-  const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
-  made.push(root);
+export function targetIn({ build }: Shape): string {
+  const root = temporaryDirectory(`scn-cli-018-${process.pid}-`);
   writeFileSync(
     join(root, "package.json"),
     JSON.stringify({ name: "new-client-target", scripts: {} })

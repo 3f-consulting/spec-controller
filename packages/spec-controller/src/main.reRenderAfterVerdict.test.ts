@@ -1,12 +1,12 @@
 import { EventEmitter } from "node:events";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installCrashGuards } from "./crashGuards.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface ReRendered {
   threw: unknown;
@@ -35,7 +35,7 @@ let stdout: string[];
 let stderr: string[];
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-rerender-after-verdict-"));
+  scratch = temporaryDirectory("spec-controller-rerender-after-verdict-");
   stdout = [];
   stderr = [];
   vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
@@ -51,7 +51,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 // The saved report is the product's own: a live balance run writing its JSON report.

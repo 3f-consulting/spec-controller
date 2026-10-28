@@ -1,10 +1,10 @@
-import { After, Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { closeSync, copyFileSync, linkSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { closeSync, copyFileSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const BALANCED = 0;
 const OUT_OF_BALANCE = 1;
@@ -99,7 +99,6 @@ interface Run {
   readonly stderr: string;
 }
 
-let scratch: string | undefined;
 let target: string;
 let row: InputRow;
 let aimedAt: string;
@@ -108,12 +107,6 @@ let before: ReadonlyMap<string, string>;
 let run: Run;
 let namedOutput: string;
 const verdicts = new Map<string, number | null>();
-
-After({ tags: "@SCN-FMT-013" }, function () {
-  if (scratch === undefined) return;
-  rmSync(scratch, { recursive: true, force: true });
-  scratch = undefined;
-});
 
 function pointedArgs(pointedAt: PointedAt): string[] {
   const args = [...REPORTS];
@@ -161,8 +154,7 @@ Given(/^a (balanced|out-of-balance) target the run reads (.+) from$/, function (
   const inputRow = INPUT[input];
   assert.ok(inputRow, `no input is arranged for "${input}"`);
   row = inputRow;
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-input-overwrite-"));
-  target = join(scratch, "target");
+  target = join(temporaryDirectory("spec-controller-input-overwrite-"), "target");
   mkdirSync(target);
   buildTarget(target, verdict);
   row.arrange?.(target);

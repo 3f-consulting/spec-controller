@@ -38,7 +38,6 @@ jobs:
       - name: Resolve the evidence root
         run: |
           echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -48,6 +47,4 @@ jobs:
           LAYER: ${{ inputs.layer }}
           SCENARIO: ${{ inputs.scenario }}
           RED_PROOF_DIR: ${{ runner.temp }}/red-proof
-          TMPDIR: ${{ runner.temp }}/suite-tmp/vitest
-          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
         run: scripts/red-proof.sh "$LAYER" "$SCENARIO"

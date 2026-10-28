@@ -1,10 +1,10 @@
-import { After, Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { copyFileSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import { STORED_RUN_FILE_INTENT, storedRunFile } from "./support/storedRunFile.js";
 
 const USAGE = 2;
@@ -28,18 +28,11 @@ interface Run {
   readonly stderr: string;
 }
 
-let scratch: string | undefined;
 let target: string;
 let args: string[];
 let named: string;
 let before: ReadonlyMap<string, string>;
 let run: Run;
-
-After({ tags: "@SCN-RMG-011" }, function () {
-  if (scratch === undefined) return;
-  rmSync(scratch, { recursive: true, force: true });
-  scratch = undefined;
-});
 
 function specController(argv: readonly string[]): Run {
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: target, encoding: "utf8" });
@@ -78,8 +71,7 @@ Given(
   ),
   function (input: string, intent: string, earlier: string) {
     const file = storedRunFile(intent);
-    scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-input-"));
-    target = join(scratch, "target");
+    target = join(temporaryDirectory("spec-controller-stored-input-"), "target");
     mkdirSync(join(target, "features"), { recursive: true });
     copyFileSync(join(FIXTURE, "features", "target.feature"), join(target, "features", "target.feature"));
     copyFileSync(join(FIXTURE, "vitest.json"), join(target, "vitest.json"));

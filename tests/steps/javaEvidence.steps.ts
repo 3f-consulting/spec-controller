@@ -1,10 +1,10 @@
-import { After, Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const SINGLE_REPORT_TARGET = {
   features: "tests/fixtures/surefire-single-report/features",
@@ -59,7 +59,6 @@ let targetArgs: string[] = [];
 let reportArgs: string[] = [];
 let result: SpawnSyncReturns<string>;
 let notAReport = "";
-const temporaryDirectories: string[] = [];
 
 interface ScenarioRow {
   readonly scnId: string;
@@ -145,8 +144,7 @@ const NOT_A_JUNIT_XML_REPORT: Record<string, string> = {
 Given("beside the reports Surefire wrote, that directory holds a report file that is {}", function (defect: string) {
   const content = NOT_A_JUNIT_XML_REPORT[defect];
   assert.ok(content !== undefined, `no report file that is "${defect}"`);
-  const reports = mkdtempSync(join(tmpdir(), "surefire-reports-"));
-  temporaryDirectories.push(reports);
+  const reports = temporaryDirectory("surefire-reports-");
   cpSync(JAVA_TARGET.reports, reports, { recursive: true });
   notAReport = join(reports, "TEST-example.NotAReport.xml");
   writeFileSync(notAReport, content);
@@ -195,8 +193,4 @@ Then("the refusal names that report file and the shape a JUnit XML report takes"
     result.stderr.includes("in the shape of a JUnit XML report"),
     `expected stderr to name the shape a JUnit XML report takes; got:\n${result.stderr}`,
   );
-});
-
-After(function () {
-  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });

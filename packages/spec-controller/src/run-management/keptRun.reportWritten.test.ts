@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { beforeEach, describe, expect, it } from "vitest";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST } from "./keptRun.js";
 import { meta } from "./runManifestMeta.test-utils.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const TARGET = "target";
 const RUN_ID = "r1";
@@ -12,11 +12,7 @@ const RUN_ID = "r1";
 let scratch: string;
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-report-written-"));
-});
-
-afterEach(() => {
-  rmSync(scratch, { recursive: true, force: true });
+  scratch = temporaryDirectory("spec-controller-report-written-");
 });
 
 function filesUnder(dir: string): Map<string, string> {

@@ -1,5 +1,4 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +7,7 @@ import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } fr
 import { answerUnknownCommand } from "./host.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   stdout: string;
@@ -21,7 +21,7 @@ let savedReport: string;
 
 beforeEach(() => {
   const outOfBalance = fileURLToPath(new URL("../../../tests/fixtures/evidence-observation", import.meta.url));
-  savedDir = mkdtempSync(join(tmpdir(), "main-stored-re-render-saved-"));
+  savedDir = temporaryDirectory("main-stored-re-render-saved-");
   savedReport = join(savedDir, "saved.json");
   const quiet = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
   try {
@@ -36,10 +36,6 @@ beforeEach(() => {
     process.exitCode = undefined;
   }
   if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
-});
-
-afterEach(() => {
-  rmSync(savedDir, { recursive: true, force: true });
 });
 
 let stdout: string[];
@@ -64,20 +60,16 @@ afterEach(() => {
 });
 
 function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answered {
-  const cwd = mkdtempSync(join(tmpdir(), "main-stored-re-render-"));
-  try {
-    vi.spyOn(process, "cwd").mockReturnValue(cwd);
-    const storeRoot = join(cwd, "store");
-    main(argvAt(storeRoot));
-    return {
-      stdout: stdout.join(""),
-      stderr: stderr.join(""),
-      exitCode: process.exitCode,
-      storeMade: existsSync(storeRoot),
-    };
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
-  }
+  const cwd = temporaryDirectory("main-stored-re-render-");
+  vi.spyOn(process, "cwd").mockReturnValue(cwd);
+  const storeRoot = join(cwd, "store");
+  main(argvAt(storeRoot));
+  return {
+    stdout: stdout.join(""),
+    stderr: stderr.join(""),
+    exitCode: process.exitCode,
+    storeMade: existsSync(storeRoot),
+  };
 }
 
 function refusalNaming(modifiers: string, closing: string): string {

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, existsSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, closeSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, existsSync, fstatSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
 import { writeOutputs, type OutputPayloads } from "./writer.js";
@@ -8,6 +7,7 @@ import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 import { noOwnRun } from "./earlierStoredRun.test-utils.js";
+import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
 
 const ctx: RunContext = {
   target: "unwritable",
@@ -64,18 +64,14 @@ let scratch: string;
 let stderr: string[];
 
 function volumeIsCaseSensitive(): boolean {
-  const dir = mkdtempSync(join(tmpdir(), "spec-controller-case-"));
-  try {
-    writeFileSync(join(dir, "probe"), "");
-    return !existsSync(join(dir, "PROBE"));
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
+  const dir = temporaryDirectory("spec-controller-case-");
+  writeFileSync(join(dir, "probe"), "");
+  return !existsSync(join(dir, "PROBE"));
 }
 
 beforeEach(() => {
   payloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-writer-"));
+  scratch = temporaryDirectory("spec-controller-writer-");
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(String(chunk));
@@ -89,7 +85,6 @@ afterEach(() => {
   for (const name of ["read-only", "read-only.json"]) {
     if (existsSync(join(scratch, name))) chmodSync(join(scratch, name), 0o755);
   }
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
@@ -213,7 +208,8 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
     expect(readFileSync(path, "utf8")).toBe(EARLIER);
   });
 
-  it.runIf(volumeIsCaseSensitive())("writes both reports when two spellings that differ only in case are two files on a case-sensitive volume", () => {
+  it("writes both reports when two spellings that differ only in case are two files on a case-sensitive volume", ({ skip }) => {
+    skip(!volumeIsCaseSensitive());
     const lower = join(scratch, "y.md");
     const upper = join(scratch, "Y.MD");
 

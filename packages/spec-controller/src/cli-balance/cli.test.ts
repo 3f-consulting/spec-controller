@@ -1,6 +1,5 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkInputsExist, checkInputsParse } from "./cli.js";
 import { jsonInputsOf, readReports } from "./unreadableInputs.js";
@@ -10,12 +9,7 @@ import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { captured } from "./balanceRun.test-utils.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
   const flags = ["vitest", "pytest", "jest", "junit", "rspec", "cucumber", "features", "ci", "package-json"] as const;
@@ -50,8 +44,7 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
   }
 
   it("runBalance refuses a --vitest report that exists but is not JSON at exit 2, with the parse refusal alone naming it and the parser's own reason, reconciling nothing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "vitest-unparseable-"));
-    made.push(dir);
+    const dir = temporaryDirectory("vitest-unparseable-");
     const path = join(dir, "vitest.json");
     const text = "not valid json at all {{{";
     writeFileSync(path, text);
@@ -102,8 +95,7 @@ describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", ()
   }
 
   it("runBalance refuses a MISSING saved report at exit 2, naming it and the file system's reason, rendering nothing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "render-missing-"));
-    made.push(dir);
+    const dir = temporaryDirectory("render-missing-");
     const missing = join(dir, "does-not-exist.json");
     const reason = failureOf(() => readFileSync(missing, "utf8"));
 

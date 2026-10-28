@@ -1,10 +1,10 @@
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -58,12 +58,8 @@ Then("the markdown report is in that file, and nothing else is reported", functi
   assert.equal(fmt003Run.stdout, "", `expected nothing on stdout; got:\n${fmt003Run.stdout}`);
 });
 
-After({ tags: "@SCN-FMT-003" }, function () {
-  if (corpusCwd && existsSync(corpusCwd)) rmSync(corpusCwd, { recursive: true, force: true });
-});
-
 Given("a target corpus to reconcile", function () {
-  corpusCwd = mkdtempSync(join(tmpdir(), "spec-controller-corpus-"));
+  corpusCwd = temporaryDirectory("spec-controller-corpus-");
   assert.ok(
     existsSync(join(process.cwd(), FIXTURE.features)),
     "the reconcilable fixture features dir is missing"
@@ -117,12 +113,8 @@ Then("the rejection hints to give one of the outputs a path of its own", functio
   );
 });
 
-After({ tags: "@SCN-FMT-005" }, function () {
-  if (corpusCwd && existsSync(corpusCwd)) rmSync(corpusCwd, { recursive: true, force: true });
-});
-
 Given("a target corpus to reconcile with a destination for the legacy json option", function () {
-  fmt006Cwd = mkdtempSync(join(tmpdir(), "spec-controller-fmt006-"));
+  fmt006Cwd = temporaryDirectory("spec-controller-fmt006-");
   fmt006JsonPath = join(fmt006Cwd, "out.json");
   assert.ok(
     existsSync(join(process.cwd(), FIXTURE.features)),
@@ -175,12 +167,8 @@ Then("the rejection hints to use the format option to write the json report to a
   );
 });
 
-After({ tags: "@SCN-FMT-006" }, function () {
-  if (fmt006Cwd && existsSync(fmt006Cwd)) rmSync(fmt006Cwd, { recursive: true, force: true });
-});
-
 Given("a target corpus to reconcile with an unsupported report format", function () {
-  fmt007Cwd = mkdtempSync(join(tmpdir(), "spec-controller-fmt007-"));
+  fmt007Cwd = temporaryDirectory("spec-controller-fmt007-");
   assert.ok(
     existsSync(join(process.cwd(), FIXTURE.features)),
     "the reconcilable fixture features dir is missing"
@@ -231,8 +219,4 @@ Then("the rejection lists the supported formats md and json", function () {
     /\bjson\b/,
     `expected stderr to list json as a supported format; got:\n${stderr}`
   );
-});
-
-After({ tags: "@SCN-FMT-007" }, function () {
-  if (fmt007Cwd && existsSync(fmt007Cwd)) rmSync(fmt007Cwd, { recursive: true, force: true });
 });

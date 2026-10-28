@@ -1,18 +1,9 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, symlinkSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { git, writeInto, scenarioBlock } from "./repository.test-utils.js";
+import { freshDirectory, git, writeInto, scenarioBlock } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-
-const created: string[] = [];
-
-function freshDirectory(prefix: string): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-  created.push(dir);
-  return dir;
-}
 
 function corpusCarrying(code: string): string {
   return `@ONE\nFeature: part ONE\n\n${scenarioBlock(code, 1)}`;
@@ -44,10 +35,6 @@ function linkedWorktreeOfShallowClone(): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of created) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {

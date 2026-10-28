@@ -1,8 +1,8 @@
-import { afterAll, afterEach, describe, it, expect } from "vitest";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { afterEach, describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isWalkedDirectory, readTree } from "./readTree.js";
-import { runGit as git, made, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.test-utils.js";
+import { runGit as git, freshUnresolvedDirectory as freshDirectory, taken, withholdDirectory as withhold } from "./repository.test-utils.js";
 import { thrownBy } from "./answered.test-utils.js";
 
 describe("[SCN-ALC-004] with no history to read, a code is still offered and the boundary is stated", () => {
@@ -28,10 +28,6 @@ function repositoryWithDraft(): string {
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {

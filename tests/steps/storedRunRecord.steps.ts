@@ -1,10 +1,10 @@
-import { After, Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const RUN_ID = "r1";
 const USAGE = 2;
@@ -24,7 +24,6 @@ interface Run {
   readonly stderr: string;
 }
 
-let scratch: string | undefined;
 let storeRoot: string;
 let filesBefore: Map<string, string>;
 let run: Run;
@@ -45,13 +44,8 @@ function filesUnder(dir: string): Map<string, string> {
   return files;
 }
 
-After(function () {
-  if (scratch !== undefined) rmSync(scratch, { recursive: true, force: true });
-  scratch = undefined;
-});
-
 Given(/^a run store holding (nothing yet|an earlier kept run under the same run-id)$/, function (earlier: string) {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-run-"));
+  const scratch = temporaryDirectory("spec-controller-stored-run-");
   storeRoot = join(scratch, "store");
   if (earlier !== "nothing yet") {
     const earlierRun = specController(["--store", storeRoot, "--run-id", RUN_ID, "balance", ...KEPT_RUN_ARGS]);
@@ -87,7 +81,7 @@ const HELP_NAME: Readonly<Record<string, string>> = { long: "--help", short: "-h
 let rootBefore: { exists: boolean; isFile: boolean; bytes: string | undefined };
 
 Given(/^a run store that is (not yet made|a regular file)$/, function (root: string) {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-help-"));
+  const scratch = temporaryDirectory("spec-controller-stored-help-");
   storeRoot = join(scratch, "store");
   if (root === "a regular file") writeFileSync(storeRoot, "not a directory\n");
   rootBefore = snapshotRoot();
@@ -124,7 +118,7 @@ let savedReport: string;
 let invocation: readonly string[];
 
 Given(/^a saved reconciliation that is (of an out-of-balance run|at a path that is missing)$/, function (saved: string) {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-stored-rerender-"));
+  const scratch = temporaryDirectory("spec-controller-stored-rerender-");
   storeRoot = join(scratch, "store");
   savedReport = join(scratch, "saved.json");
   if (saved === "at a path that is missing") return;

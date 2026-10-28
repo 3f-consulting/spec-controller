@@ -50,7 +50,6 @@ jobs:
       - name: Resolve the evidence root
         run: |
           echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/suite-tmp/vitest" "$RUNNER_TEMP/suite-tmp/cucumber"
 
       # The docs: package scripts run Vale. Its version and checksum move together; the checksum is the Linux_64-bit line of the release's vale_<version>_checksums.txt.
       - name: Install dependencies
@@ -112,9 +111,6 @@ jobs:
 
       - name: Test
         id: SCN-FIT-012
-        env:
-          TMPDIR: ${{ runner.temp }}/suite-tmp/vitest
-          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
         # One worker per core: vitest's default leaves one core idle, which on a 2-core runner is half of it.
         # One module graph per worker, not one per file: re-importing it for every file was most of the step's time. Local runs and Stryker still isolate.
         # The suite's time is printed against its limit on every run, a killed run included, so headroom is read before it runs out.
@@ -128,10 +124,6 @@ jobs:
       - name: Cucumber
         id: SCN-FIT-013
         if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
-        env:
-          TMPDIR: ${{ runner.temp }}/suite-tmp/cucumber
-          NODE_COMPILE_CACHE: ${{ runner.temp }}/node-compile-cache
-          TSX_DISABLE_CACHE: "1"
         # `pnpm cucumber` builds the packages first, the run's one build; the steps after it that pack or hand on dist use it.
         run: |
           start=$SECONDS
@@ -139,15 +131,6 @@ jobs:
           timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" || status=$?
           echo "the behavioural suite took $((SECONDS - start)) s of its $CUCUMBER_SUITE_TIMEOUT_S s limit"
           exit "$status"
-
-      - name: No test leaves an entry in its temporary directory
-        id: SCN-FIT-031
-        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
-        shell: bash
-        run: |
-          cd "$RUNNER_TEMP/suite-tmp"
-          left="$(find . -mindepth 2 -maxdepth 2 | sed -E 's|^\./||; s/-?[0-9A-Za-z]{6}$//' | sort | uniq -c)"
-          [ -z "$left" ] || { printf 'left behind, by suite and prefix:\n%s\n' "$left"; exit 1; }
 
       - name: ESLint — every rule of eslint.config.js over the tree, and its warnings in the files the push touches
         id: SCN-FIT-073

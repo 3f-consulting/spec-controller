@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
 import { wrapCommandArgv } from "../host.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const TARGET = "unwritable";
 const RUN_ID = "r1";
@@ -27,7 +27,7 @@ let scratch: string;
 let stderr: string[];
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-kept-run-"));
+  scratch = temporaryDirectory("spec-controller-kept-run-");
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(String(chunk));
@@ -37,7 +37,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create, before the command runs", () => {

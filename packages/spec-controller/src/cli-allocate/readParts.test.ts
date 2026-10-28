@@ -1,20 +1,12 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
 import { join } from "node:path";
 import { readHeaderCodes } from "./readParts.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function freshDirectory(): string {
-  const dir = mkdtempSync(join(tmpdir(), "allocate-parts-"));
-  made.push(dir);
+  const dir = temporaryDirectory("allocate-parts-");
   return dir;
 }
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
 
 describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
 

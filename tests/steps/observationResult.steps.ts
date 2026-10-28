@@ -1,10 +1,10 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const UNNAMED_CLAIM_STATUS = {
   features: "tests/fixtures/unnamed-claim-status/features",
@@ -140,18 +140,13 @@ When("the target's evidence is reconciled into a report", function () {
 });
 
 When("the target's evidence is reconciled and saved as the JSON report", function () {
-  const outDir = mkdtempSync(join(tmpdir(), "spec-controller-rmd010-"));
-  try {
-    const jsonPath = join(outDir, "spec-reconciliation.json");
-    const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...args, "--format", `json:${jsonPath}`], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-    });
-    assert.equal(result.status, 1, `expected the out-of-balance exit; got ${result.status}\nstderr:\n${result.stderr}`);
-    savedJson = JSON.parse(readFileSync(jsonPath, "utf8"));
-  } finally {
-    rmSync(outDir, { recursive: true, force: true });
-  }
+  const jsonPath = join(temporaryDirectory("spec-controller-rmd010-"), "spec-reconciliation.json");
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...args, "--format", `json:${jsonPath}`], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1, `expected the out-of-balance exit; got ${result.status}\nstderr:\n${result.stderr}`);
+  savedJson = JSON.parse(readFileSync(jsonPath, "utf8"));
 });
 
 Then("the unnamed claim's row lists each of the two files once", function () {

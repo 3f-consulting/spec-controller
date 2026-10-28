@@ -1,10 +1,9 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { realpathSync } from "node:fs";
 import { writeInto, commitAll, lines } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function git(cwd: string, args: readonly string[]): string {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
@@ -17,11 +16,8 @@ function git(cwd: string, args: readonly string[]): string {
   return result.stdout;
 }
 
-const made: string[] = [];
-
 function newRepository(): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "allocate-deleted-")));
-  made.push(repo);
+  const repo = realpathSync(temporaryDirectory("allocate-deleted-"));
   git(repo, ["init", "-q", "-b", "main"]);
   return repo;
 }
@@ -29,10 +25,6 @@ function newRepository(): string {
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 const HEAD = ["@ONE", "Feature: part ONE"];

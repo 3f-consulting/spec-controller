@@ -1,21 +1,14 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { captured } from "./balanceRun.test-utils.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const block = { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Checkout"], deferralTags: ["deferred"] };
 
 function targetOf(specController: unknown): string {
-  const dir = mkdtempSync(join(tmpdir(), "scn-usg-config-"));
-  made.push(dir);
+  const dir = temporaryDirectory("scn-usg-config-");
   mkdirSync(join(dir, "features"));
   writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
   writeFileSync(
@@ -116,8 +109,7 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
 
 describe("[SCN-CLI-092] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-usg-017-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-usg-017-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
     writeFileSync(

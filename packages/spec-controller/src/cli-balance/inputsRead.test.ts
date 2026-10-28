@@ -1,11 +1,11 @@
-import { afterAll, describe, expect, it } from "vitest";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, expect, it } from "vitest";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { readFeatureSources } from "../ingest/ingestScenarios.js";
 import { inputsReadBy, NODE_INPUT_READER, type InputReader } from "./inputsRead.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function workflowFilesAt(path: string): string[] {
   return path.endsWith(".yml") ? [path] : [`${path}/ci.yml`, `${path}/nightly.yaml`];
@@ -49,14 +49,8 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
 });
 
 describe("[SCN-FMT-013] balance refuses a --format naming one of the feature files it reads, and writes one naming a file it does not read", () => {
-  const made: string[] = [];
-  afterAll(() => {
-    for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-  });
-
   function target(): { features: string; ci: string } {
-    const dir = mkdtempSync(join(tmpdir(), "fmt-013-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("fmt-013-unit-");
     const features = join(dir, "features");
     mkdirSync(features);
     writeFileSync(join(features, "a.feature"), "Feature: a\n");

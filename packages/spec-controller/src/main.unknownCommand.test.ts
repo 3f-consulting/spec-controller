@@ -1,8 +1,6 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { main } from "./main.js";
+import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
 interface Answered {
   stdout: string;
@@ -37,12 +35,8 @@ function answer(argv: string[]): Answered {
 }
 
 function inTemporaryStore(run: (storeRoot: string) => Answered): Answered {
-  const storeRoot = mkdtempSync(join(tmpdir(), "main-unknown-command-"));
-  try {
-    return run(storeRoot);
-  } finally {
-    rmSync(storeRoot, { recursive: true, force: true });
-  }
+  const storeRoot = temporaryDirectory("main-unknown-command-");
+  return run(storeRoot);
 }
 
 const askTypo = (): Answered => answer(["blance"]);

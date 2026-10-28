@@ -1,15 +1,9 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalance, sourceTarget } from "./cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target verbatim", () => {
   it("returns the --target value verbatim when given", () => {
@@ -24,8 +18,7 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and reads the Cucumber report's scenario as an integration evidence observation", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-002-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-rpt-002-unit-");
     cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });
     cpSync("tests/fixtures/evidence-observation/cucumber.json", join(dir, "cucumber.json"));
     cpSync("tests/fixtures/rpt-streams/ci-steps.json", join(dir, "ci-steps.json"));
@@ -73,8 +66,7 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
   }
 
   it("writes one row named by the file read off the feature files, and renders it again the same from the saved JSON", () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-rpt-031-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-rpt-031-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "checkout.feature"),

@@ -1,19 +1,13 @@
-import { copyFileSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { afterAll, describe, it, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 
-import { temporaryDirectoryIn } from "./corpusFixtures.test-utils.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { featureNamesOf, readCorpus } from "./ingestQualityChecks.js";
 import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
 import { readFeatureSources, slugOf } from "./ingestScenarios.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const WELL_FORMED = `@AAA
 Feature: alpha
@@ -45,7 +39,7 @@ function corpusWithTwoUnreadableFiles(): {
   firstBad: string;
   secondBad: string;
 } {
-  const dir = join(temporaryDirectoryIn(made, `scn-gpg-001-${process.pid}-`), "features");
+  const dir = join(temporaryDirectory(`scn-gpg-001-${process.pid}-`), "features");
   mkdirSync(dir, { recursive: true });
 
   const good = join(dir, "a-alpha.feature");
@@ -86,7 +80,7 @@ function featureNamed(code: string): string {
 }
 
 function flatCopyOfNested(): string {
-  const dir = join(temporaryDirectoryIn(made, `scn-cli-085-flat-${process.pid}-`), "features");
+  const dir = join(temporaryDirectory(`scn-cli-085-flat-${process.pid}-`), "features");
   mkdirSync(dir);
   for (const file of NESTED_FILES) copyFileSync(join(NESTED_FEATURES, file), join(dir, basename(file)));
   return dir;
@@ -120,7 +114,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
   });
 
   it("does not enter a symlinked directory, and reads a symlinked feature file", () => {
-    const root = temporaryDirectoryIn(made, `scn-cli-085-links-${process.pid}-`);
+    const root = temporaryDirectory(`scn-cli-085-links-${process.pid}-`);
     const outside = join(root, "outside");
     mkdirSync(outside);
     writeFileSync(join(outside, "elsewhere.feature"), featureNamed("ELS"));

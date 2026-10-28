@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../main.js";
 import { runGit as git } from "./repository.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function repositoryHeaded(part: string, code: string): string {
-  const repo = realpathSync(mkdtempSync(join(tmpdir(), "main-allocate-")));
+  const repo = realpathSync(temporaryDirectory("main-allocate-"));
   git(repo, ["init", "-q", "-b", "main"]);
   mkdirSync(join(repo, "features"));
   writeFileSync(join(repo, "features", `${part.toLowerCase()}.feature`), `@${part}\nFeature: part ${part}\n\n  @${code} @unit\n  Scenario: scenario 1\n    Given a step\n`);
@@ -53,10 +53,6 @@ describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to thre
 
   beforeEach(() => {
     repo = repositoryHeaded("ONE", "SCN-ONE-7");
-  });
-
-  afterEach(() => {
-    rmSync(repo, { recursive: true, force: true });
   });
 
   it("answers SCN-ONE-008 alone on stdout", () => {

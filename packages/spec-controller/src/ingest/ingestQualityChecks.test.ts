@@ -1,19 +1,12 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function unconfiguredTarget(tag: string): string {
-  const root = mkdtempSync(join(tmpdir(), `scn-pnd-019-${process.pid}-`));
-  made.push(root);
+  const root = temporaryDirectory(`scn-pnd-019-${process.pid}-`);
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
   mkdirSync(join(root, "features"));
   writeFileSync(
@@ -82,8 +75,7 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
 });
 
 function cucumberReportingTarget(tag: string): string {
-  const root = mkdtempSync(join(tmpdir(), `scn-pnd-019-${process.pid}-`));
-  made.push(root);
+  const root = temporaryDirectory(`scn-pnd-019-${process.pid}-`);
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
   mkdirSync(join(root, "features"));
   writeFileSync(

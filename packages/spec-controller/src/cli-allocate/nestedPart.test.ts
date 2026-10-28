@@ -1,15 +1,10 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { rmSync } from "node:fs";
-import { commitAll, freshDirectory, git, made, writeInto } from "./repository.test-utils.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { commitAll, freshDirectory, git, writeInto } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
-});
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
 describe("[SCN-ALC-023] a part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code", () => {

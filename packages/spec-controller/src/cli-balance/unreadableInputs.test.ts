@@ -1,6 +1,5 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
@@ -17,6 +16,7 @@ import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQual
 import { reRender } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const nothingByDefault = (): boolean => false;
 const reading = (content: string) => (): string => content;
@@ -37,8 +37,7 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
   });
 
   function reportsOnDisk(files: Record<string, string>): string {
-    const dir = mkdtempSync(join(tmpdir(), "misshapen-vitest-"));
-    made.push(dir);
+    const dir = temporaryDirectory("misshapen-vitest-");
     for (const [name, content] of Object.entries(files)) writeFileSync(join(dir, name), content);
     return dir;
   }
@@ -272,8 +271,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
   const JUNIT_SHAPE = "in the shape of a JUnit XML report";
 
   function surefireReportsBeside(name: string, content: string): { reports: string; notAReport: string } {
-    const reports = mkdtempSync(join(tmpdir(), "surefire-reports-"));
-    made.push(reports);
+    const reports = temporaryDirectory("surefire-reports-");
     cpSync("tests/fixtures/java/surefire-reports", reports, { recursive: true });
     const notAReport = join(reports, name);
     writeFileSync(notAReport, content);
@@ -341,8 +339,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
   });
 
   function directoryHoldingNoReport(): string {
-    const reports = mkdtempSync(join(tmpdir(), "surefire-reports-"));
-    made.push(reports);
+    const reports = temporaryDirectory("surefire-reports-");
     return reports;
   }
 
@@ -366,25 +363,8 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
   });
 });
 
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) {
-    for (const entry of ["features", "workflows"]) {
-      const path = join(dir, entry);
-      if (existsSync(path)) chmodSync(path, 0o755);
-    }
-    for (const entry of [join("features", "a.feature"), join("workflows", "ci.yml")]) {
-      const path = join(dir, entry);
-      if (existsSync(path)) chmodSync(path, 0o644);
-    }
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
 function targetOnDisk(): { features: string; ci: string } {
-  const dir = mkdtempSync(join(tmpdir(), "input-paths-"));
-  made.push(dir);
+  const dir = temporaryDirectory("input-paths-");
   const features = join(dir, "features");
   const ci = join(dir, "workflows");
   mkdirSync(features);
@@ -426,8 +406,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   });
 
   it("names the entry when the directory given to --junit holds a directory named as a JUnit report, never passing it as holding no report", () => {
-    const dir = mkdtempSync(join(tmpdir(), "junit-directory-named-as-report-"));
-    made.push(dir);
+    const dir = temporaryDirectory("junit-directory-named-as-report-");
     mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
     const error = checkInputShapes(readReports(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8")));
 
@@ -437,8 +416,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   });
 
   it("runBalance refuses a --junit directory holding a directory named as a JUnit report at exit 2, naming the flag and the entry, reconciling nothing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "junit-directory-named-as-report-"));
-    made.push(dir);
+    const dir = temporaryDirectory("junit-directory-named-as-report-");
     mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", "tests/fixtures/evidence-observation/features", "--junit", dir]);
 
@@ -493,8 +471,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --vitest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "vitest-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("vitest-not-permitted-");
     const path = join(dir, "vitest.json");
     writeFileSync(path, '{"testResults":[]}');
     lock(path);
@@ -515,8 +492,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     "runBalance refuses a given --%s it may not read at exit 2, naming it as its declaration names it, reconciling nothing",
     (flag, file, text, subject) => {
       if (runsAsRoot()) return;
-      const dir = mkdtempSync(join(tmpdir(), `${flag}-not-permitted-`));
-      made.push(dir);
+      const dir = temporaryDirectory(`${flag}-not-permitted-`);
       const path = join(dir, file);
       writeFileSync(path, text);
       lock(path);
@@ -532,8 +508,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --pytest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "pytest-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("pytest-not-permitted-");
     const path = join(dir, "report.xml");
     writeFileSync(path, '<testsuites><testsuite name="pytest" tests="0" /></testsuites>');
     lock(path);
@@ -548,8 +523,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --jest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "jest-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("jest-not-permitted-");
     const path = join(dir, "jest.json");
     writeFileSync(path, '{"numTotalTests":0,"success":true,"testResults":[]}');
     lock(path);
@@ -564,8 +538,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --rspec report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "rspec-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("rspec-not-permitted-");
     const path = join(dir, "rspec.json");
     writeFileSync(path, '{"version":"3.13.6","messages":["No examples found."],"examples":[],"summary":{"example_count":0,"errors_outside_of_examples_count":0}}');
     lock(path);
@@ -580,8 +553,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --junit report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "junit-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("junit-not-permitted-");
     const path = join(dir, "report.xml");
     writeFileSync(path, '<testsuites tests="0"><testsuite name="example.com/empty" tests="0" /></testsuites>');
     lock(path);
@@ -596,8 +568,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("runBalance refuses a given --junit directory it may not list at exit 2, naming the flag, the directory and the refusal to read it, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "junit-directory-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("junit-directory-not-permitted-");
     const reports = join(dir, "surefire-reports");
     mkdirSync(reports);
     writeFileSync(join(reports, "TEST-example.ExampleTest.xml"), '<testsuite name="example.ExampleTest" tests="0" />');
@@ -613,8 +584,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
 
   it("checkInputShapes refuses a --junit directory it may not list, naming the directory, never passing it as holding no report", ({ skip }) => {
     skip(runsAsRoot());
-    const dir = mkdtempSync(join(tmpdir(), "junit-directory-not-permitted-"));
-    made.push(dir);
+    const dir = temporaryDirectory("junit-directory-not-permitted-");
     const reports = lock(dir);
     const reason = osReasonFor(() => readFileSync(reports, "utf8"));
 
@@ -784,8 +754,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   });
 
   function reRendering(document: unknown): { path: string; report: string; stderr: string; exitCode: unknown } {
-    const dir = mkdtempSync(join(tmpdir(), "render-not-saved-"));
-    made.push(dir);
+    const dir = temporaryDirectory("render-not-saved-");
     const path = join(dir, "spec-reconciliation.json");
     writeFileSync(path, JSON.stringify(document));
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--render-from-json", path]);

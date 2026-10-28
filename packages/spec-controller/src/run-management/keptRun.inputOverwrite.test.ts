@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const TARGET = "reads-its-own";
 const RUN_ID = "r1";
@@ -24,7 +24,7 @@ let runYaml: string;
 let stderr: string[];
 
 beforeEach(() => {
-  scratch = mkdtempSync(join(tmpdir(), "spec-controller-kept-input-"));
+  scratch = temporaryDirectory("spec-controller-kept-input-");
   storeRoot = join(scratch, "store");
   runDir = join(storeRoot, TARGET, RUN_ID);
   runYaml = join(runDir, "run.yaml");
@@ -37,7 +37,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  rmSync(scratch, { recursive: true, force: true });
 });
 
 describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one of the files it reads, before the command runs", () => {

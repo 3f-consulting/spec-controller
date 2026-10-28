@@ -1,16 +1,10 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { checkLegacyJson } from "./cli.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-FMT-006] balance rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -26,8 +20,7 @@ describe("[SCN-FMT-006] balance rejects the removed --json flag with a migration
   });
 
   it("runBalance refuses --json at exit 2 with the hint alone, writing nothing and creating no file, over a target that would otherwise reconcile", () => {
-    const dir = mkdtempSync(join(tmpdir(), "legacy-json-"));
-    made.push(dir);
+    const dir = temporaryDirectory("legacy-json-");
     const destination = join(dir, "out.json");
     const { stdout, stderr, exitCode } = runBalanceCaptured([
       "--features", "tests/fixtures/balanced/features",

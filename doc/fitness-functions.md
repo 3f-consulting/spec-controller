@@ -31,6 +31,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | No unit test file runs code at collection time or in a hook that runs once for many tests | Testability | 3 |
 | The command's manifest declares no runtime dependency | Flexibility | 0 |
 | Evidence layers cross a seam | Scenarios a reader can trust | 0 |
+| Test code makes a temporary directory only through its runner's cleanup | Guards on the method | 0 |
 
 In the counting window each rule was a check of its own, except two. Import boundaries held the engine's idiom with its import rules, so its catches are not split between them. The complexity check held the dead suppressions, so they are counted with complexity.
 
@@ -177,7 +178,7 @@ These checks don't replace a review comment. They keep the pipeline's own eviden
 |---|---|
 | The unit suite runs inside its time limit | 55 |
 | The behavioural suite runs inside its time limit | 34 |
-| No test leaves an entry in its temporary directory | 0 |
+| ESLint: test code makes a temporary directory only through its runner's cleanup | 0 |
 | Workflow correctness | 1 |
 
 The two suite checks are the steps that run each suite. Their counts include any test that failed on a commit meant to pass, as well as runs over the time limit. The behavioural suite builds the packages before it starts, so its step also reds on a failed build, and its time limit includes the build.

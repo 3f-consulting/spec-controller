@@ -1,22 +1,15 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
-
-const made: string[] = [];
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 // A whole balance run takes longer than Vitest's default limit.
 const wholeRun = { timeout: 30_000 };
 
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
-
 describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
   function duplicateTarget(withDuplicate = true): string {
-    const dir = mkdtempSync(join(tmpdir(), "scn-stg-018-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-stg-018-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "dup.feature"),
@@ -70,8 +63,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
 
 describe("[SCN-CLI-094] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
   it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", wholeRun, () => {
-    const dir = mkdtempSync(join(tmpdir(), "scn-stg-028-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-stg-028-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "own.feature"),
@@ -88,8 +80,7 @@ describe("[SCN-CLI-094] a prose mention of a feature part outside two to five ch
 
 describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both", () => {
   function target(ids: string): string {
-    const dir = mkdtempSync(join(tmpdir(), "scn-stg-029-unit-"));
-    made.push(dir);
+    const dir = temporaryDirectory("scn-stg-029-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "two.feature"),

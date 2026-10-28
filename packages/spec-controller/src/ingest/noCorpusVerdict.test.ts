@@ -1,5 +1,4 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { rmSync } from "node:fs";
+import { describe, it, expect } from "vitest";
 import { join } from "node:path";
 import { renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 
@@ -10,16 +9,10 @@ import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
-
 const NO_CORPUS_DIRECTORY: Shape = { shape: "no corpus directory", build: () => {} };
 
 function verdictFor(target: Shape): string {
-  const root = targetIn(made, target);
+  const root = targetIn(target);
   const balance = runReconcile({
     features: join(root, CORPUS_DIR),
     packageJson: join(root, "package.json"),

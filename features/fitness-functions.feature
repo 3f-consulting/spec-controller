@@ -134,11 +134,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-038
     Scenario: no Feature, Rule or Scenario title or description names a code identifier or a source file
 
-  Rule: a test run leaves the machine it ran on as it found it
-
-    @fitness @SCN-FIT-031
-    Scenario: neither suite leaves an entry in the temporary directory it ran in
-
   Rule: production logic is written once
 
     @fitness @SCN-FIT-032

@@ -1,6 +1,5 @@
-import { afterAll, describe, it, expect } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, it, expect } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { CORPUS_DIR, EMPTY_CORPUS, targetIn } from "./corpusFixtures.test-utils.js";
@@ -8,17 +7,11 @@ import { featureNamesOf } from "./ingestQualityChecks.js";
 import { readFeatureCorpus, runReconcile } from "./corpusReading.test-utils.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-
-const made: string[] = [];
-
-afterAll(() => {
-  for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
-});
+import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-CLI-096] a feature part no file's header carries has no file behind its by-feature row", () => {
   it("maps no file to THR when the only scenario coded for it sits in a file headed @TWO", () => {
-    const root = mkdtempSync(join(tmpdir(), `scn-stg-022-${process.pid}-`));
-    made.push(root);
+    const root = temporaryDirectory(`scn-stg-022-${process.pid}-`);
     const features = join(root, "features");
     mkdirSync(features);
     writeFileSync(
@@ -37,7 +30,7 @@ describe("[SCN-CLI-096] a feature part no file's header carries has no file behi
 
 describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped", () => {
   it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
-    const root = targetIn(made, EMPTY_CORPUS);
+    const root = targetIn(EMPTY_CORPUS);
     const balance = runReconcile({
       features: join(root, CORPUS_DIR),
       packageJson: join(root, "package.json"),
