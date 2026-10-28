@@ -351,16 +351,6 @@ jobs:
         if: always()
         run: node_modules/.bin/depcruise --config config/.dependency-cruiser.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
 
-      - name: Gherkin is parsed by one module
-        id: SCN-FIT-060
-        if: always()
-        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.gherkin.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/gherkin" --cache-strategy content
-
-      - name: Workflow YAML is parsed by one module
-        id: SCN-FIT-061
-        if: always()
-        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.yaml.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/yaml" --cache-strategy content
-
       - name: Every production source file is in a mutation scope or on the recorded list
         id: SCN-FIT-040
         if: always()

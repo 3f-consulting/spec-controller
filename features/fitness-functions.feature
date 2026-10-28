@@ -236,14 +236,6 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-059
     Scenario: the build reds when a current-state document cites a file, heading or path that does not exist
 
-  Rule: each of Gherkin and workflow YAML is parsed by one module
-
-    @fitness @SCN-FIT-060
-    Scenario: the build reds when a second module imports the Gherkin parser
-
-    @fitness @SCN-FIT-061
-    Scenario: the build reds when a module other than the workflow module and the run store imports the YAML parser
-
   Rule: a test helper used by more than one test file is written once, in a test-utils file
 
     @fitness @SCN-FIT-062

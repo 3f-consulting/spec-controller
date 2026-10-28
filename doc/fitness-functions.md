@@ -79,8 +79,12 @@ Its headings are the standard's sub-characteristics of maintainability.
 | Import boundaries | 4 |
 | ESLint: the engine's idiom and core's domain language, seven rules | 1 |
 | A unit test citing a domain concept's scenario lives in core's domain | 0 |
-| Only one module imports the Gherkin parser | 0 |
-| Only the workflow module and the run store import the YAML parser | 0 |
+
+Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`](../config/.dependency-cruiser.js), and its output names the rule that failed. Among its rules, two give a parser one home:
+- only core's Gherkin module imports the Gherkin parser;
+- only core's workflow module and the run store import the YAML parser.
+
+Neither caught a real problem in the counting window.
 
 ### Reusability
 

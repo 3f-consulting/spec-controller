@@ -100,6 +100,34 @@ export default {
       from: {},
       to: { circular: true },
     },
+
+    {
+      name: "gherkin-parsed-by-one-module",
+      severity: "error",
+      comment:
+        "only core's Gherkin module imports the Gherkin parser; every other module reads a feature file through what it returns",
+      from: {
+        path: "^packages/[^/]+/src/",
+        pathNot: ["^packages/core/src/parse/scenarios\\.ts$", "\\.(test|test-utils)\\.ts$"],
+      },
+      to: { path: "(^|/)@cucumber/gherkin(/|$)" },
+    },
+
+    {
+      name: "yaml-parsed-by-its-two-homes",
+      severity: "error",
+      comment:
+        "only core's workflow module, which reads another tool's workflows, and the run store, which reads and writes spec-controller's own run manifest, import the YAML parser",
+      from: {
+        path: "^packages/[^/]+/src/",
+        pathNot: [
+          "^packages/core/src/parse/checkScriptsRunInCI\\.ts$",
+          "^packages/spec-controller/src/run-management/keptRun\\.ts$",
+          "\\.(test|test-utils)\\.ts$",
+        ],
+      },
+      to: { path: "(^|/)yaml(/|$)" },
+    },
   ],
   options: {
     doNotFollow: { path: "node_modules" },
