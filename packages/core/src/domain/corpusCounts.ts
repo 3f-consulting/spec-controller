@@ -54,10 +54,6 @@ export function corpusCountsOf(files: readonly ParsedFeature[]): EvidenceObligat
   return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files));
 }
 
-export function scenariosBehindAccountsOf(accounts: number, sharedScnCodes: readonly SharedScnCode[]): number {
-  return accounts + sharedScnCodes.reduce((extra, code) => extra + code.scenarios.length - 1, 0);
-}
-
 export function evidenceObligations(
   raw: number,
   scenarioCount: number,

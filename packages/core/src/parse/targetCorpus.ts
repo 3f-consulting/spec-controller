@@ -1,5 +1,5 @@
 import { citationOfCitedRow, type ScriptCitation } from "./fitnessCitations.js";
-import { scenariosOf, type ParsedFeatureFile } from "./scenarios.js";
+import { namedScenariosOf, type ParsedFeatureFile } from "./scenarios.js";
 import type { Scenario } from "../model.js";
 
 export interface TargetCorpus {
@@ -12,7 +12,7 @@ export function readTargetCorpus(
   deferralTags: readonly string[]
 ): TargetCorpus {
   return {
-    scenarios: features.flatMap((feature) => scenariosOf(feature, deferralTags)),
+    scenarios: features.flatMap((feature) => namedScenariosOf(feature, deferralTags)),
     citedRow: (citedScn) => citationOfCitedRow(citedScn),
   };
 }

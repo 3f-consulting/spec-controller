@@ -23,7 +23,6 @@ exceptions:
   - qualityCheck
   - qualityCheckReconciliations
   - rawByBehaviouralQualityCheck
-  - reconcilingItems
   - runningFitnessFunctionCount
   - runProvenance
   - scenarioCodes

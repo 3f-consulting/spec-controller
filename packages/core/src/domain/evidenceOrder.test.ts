@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf } from "./claimReconciliation.js";
 
 import { inEvidenceOrder } from "./evidenceOrder.js";
 import { reconcile } from "./evidenceReconciliation.js";
@@ -40,7 +41,7 @@ function permutations<T>(items: readonly T[]): T[][] {
 }
 
 const rowOf = (observations: EvidenceObservation[], scnId = SCN) =>
-  reconcile(scenarios, observations).claimReconciliations.find((r) => r.scnId === scnId)!;
+  reconcile(scenarios, observations).claimReconciliations.find((r) => r.claim === scnId)!;
 
 const coordinates = (observations: readonly EvidenceObservation[]) =>
   observations.map((o) => [o.qualityCheck, o.locator ?? null]);
@@ -53,7 +54,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("reads a row's evidence observations by quality check in tier order, fitness last, then by location", () => {
-    expect(coordinates(rowOf([fitness, performance, e2e, integration, unitZ, unitA]).evidenceObservations)).toEqual([
+    expect(coordinates(observationsOf(rowOf([fitness, performance, e2e, integration, unitZ, unitA])))).toEqual([
       ["unit", "a.test.ts"],
       ["unit", "z.test.ts"],
       ["integration", "f.feature"],
@@ -66,7 +67,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   it("reads an evidence observation with no location before every located evidence observation of its quality check", () => {
     const unlocated: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "passed" };
     const capitalised: EvidenceObservation = { ...unitA, locator: "A.test.ts" };
-    expect(coordinates(rowOf([unitA, capitalised, unlocated]).evidenceObservations)).toEqual([
+    expect(coordinates(observationsOf(rowOf([unitA, capitalised, unlocated])))).toEqual([
       ["unit", null],
       ["unit", "A.test.ts"],
       ["unit", "a.test.ts"],
@@ -78,7 +79,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const ghost1: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-GHOST-001", status: "passed", locator: "p.test.ts" };
     const phantomClaimIds = reconcile(scenarios, [ghost2, ghost1])
       .claimReconciliations.filter((r) => r.kind === "phantom-claim")
-      .map((r) => r.scnId);
+      .map((r) => r.claim);
     expect(phantomClaimIds).toEqual(["SCN-GHOST-001", "SCN-GHOST-002"]);
   });
 
@@ -92,7 +93,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {
     const saysA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", message: "a" };
     const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", scnId: SCN, qualityCheck: "unit" };
-    expect(rowOf([saysB, saysA]).evidenceObservations.map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);
+    expect(observationsOf(rowOf([saysB, saysA])).map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);
   });
 
   it("orders evidence observations alike but for their notes by what the notes say, however the notes were built", () => {
@@ -101,7 +102,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     const saysA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", notes: notesA };
     const saysB: EvidenceObservation = { ...saysA, notes: notesB };
     for (const order of [[saysA, saysB], [saysB, saysA]]) {
-      expect(rowOf(order).evidenceObservations.map((o) => ("notes" in o ? o.notes : undefined))).toEqual([notesA, notesB]);
+      expect(observationsOf(rowOf(order)).map((o) => ("notes" in o ? o.notes : undefined))).toEqual([notesA, notesB]);
     }
   });
 });

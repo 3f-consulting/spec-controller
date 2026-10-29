@@ -39,7 +39,7 @@ Feature: A pytest suite's results answer unit evidence obligations
     Scenario: a pytest run that failed to collect posts a broken item and the run is unsound
 
     @unit @SCN-PYT-008
-    Scenario: a pytest test whose setup errored posts a broken item naming the test, and the scenario it cites reads missing
+    Scenario: a pytest test whose setup errored posts a broken line naming the test, and the scenario it cites reads a missing line beside it
 
   Rule: the report given to --pytest is read only in the shape pytest writes
 

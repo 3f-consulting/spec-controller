@@ -5,6 +5,10 @@ import { runBalance, sourceTarget } from "./cli.js";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
+const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
+  row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
+
 describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target verbatim", () => {
   it("returns the --target value verbatim when given", () => {
     expect(sourceTarget({ target: "an-adopters-repository" })).toBe("an-adopters-repository");
@@ -40,9 +44,9 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
 
     const report = JSON.parse(readFileSync(reportPath, "utf8"));
     const integrationRow = report.ledger.claimReconciliations.find(
-      (row: { scnId: string }) => row.scnId === "SCN-TGT-002",
+      (row: { claim: string }) => row.claim === "SCN-TGT-002",
     );
-    expect({ inputs: report.runProvenance.inputs, observations: integrationRow?.evidenceObservations }).toEqual({
+    expect({ inputs: report.runProvenance.inputs, observations: heldObservationsOf(integrationRow) }).toEqual({
       inputs: { features: "features", cucumber: "cucumber.json", ci: "workflows", ciSteps: "ci-steps.json" },
       observations: [
         { qualityCheck: "integration", scnId: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { reconcilingItemsOf } from "./claimReconciliation.js";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import { obligationsRaisedBy } from "./scenarioObligations.js";
@@ -17,12 +18,12 @@ describe("[SCN-PND-019] a community deferral tag raises the Pending Item for a s
         ],
         []
       );
-      const scenario = (scnId: string) => ledger.claimReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => ledger.claimReconciliations.find((s) => s.claim === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
-      expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);
+      expect(reconcilingItemsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
-      expect(scenario("SCN-DFR-002")?.reconcilingItems).toEqual([
+      expect(reconcilingItemsOf(scenario("SCN-DFR-002")!)).toEqual([
         { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
       ]);
     }

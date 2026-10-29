@@ -262,7 +262,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
     const outcomes = ["SCN-AAA-001", "SCN-AAA-002"].map(
       (scnId) =>
         ledger.claimReconciliations
-          .find((row) => row.scnId === scnId)
+          .find((row) => row.claim === scnId)
           ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "integration")?.outcome
     );
     const ctx: RunContext = { target: "several", inputs: handedInputs({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };

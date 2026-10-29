@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import { summaryOf } from "../domain/evidenceReconciliation.js";
+import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE, UNNAMED_CLAIM_ID } from "../model.js";
-import type {
-  ClaimKind,
-  ClaimReconciliation,
-  EvidenceObservation,
-  Ledger,
-  QualityCheckReconciliation,
-} from "../model.js";
+import { UNNAMED_CLAIM_ID } from "../model.js";
+import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -48,60 +42,13 @@ const SKIPPED_CHECK: EvidenceObservation = {
   notes: [{ kind: "check-step-did-not-run", code: "SCN-RIN-001", outcome: "skipped" }],
 };
 
-function itemOf(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-  observation: EvidenceObservation,
-): QualityCheckReconciliation {
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(OUTCOME_SIDE_PROFILE[fields.outcome].observation === "Exists" ? { evidenceObservation: observation } : {}),
-  });
-}
-
-function brokenItemOf(observation: EvidenceObservation): QualityCheckReconciliation {
-  return itemOf(
-    {
-      qualityCheck: observation.qualityCheck,
-      outcome: "broken",
-      ...(observation.locator !== undefined ? { locator: observation.locator } : {}),
-      ...(observation.message !== undefined ? { message: observation.message } : {}),
-      ...(observation.notes !== undefined ? { notes: observation.notes } : {}),
-    },
-    observation,
-  );
-}
-
-function claimOf(
-  scnId: string,
-  kind: ClaimKind,
-  items: readonly QualityCheckReconciliation[],
-  observations: readonly EvidenceObservation[] = [],
-): ClaimReconciliation {
-  return {
-    scnId,
-    kind,
-    verdict: "out-of-balance",
-    evidenceObservations: observations,
-    evidenceObligations: items.flatMap((item) => (item.evidenceObligation !== undefined ? [item.evidenceObligation] : [])),
-    qualityCheckReconciliations: items,
-    reconcilingItems: items,
-    pendingItems: [],
-  };
-}
-
-const missingClaimOf = (scnId: string, qualityCheck: "unit" | "fitness"): ClaimReconciliation =>
-  claimOf(scnId, "scenario", [
-    makeQualityCheckReconciliation({ qualityCheck, outcome: "missing", evidenceObligation: { qualityCheck } }),
-  ]);
+const SCENARIOS: readonly Scenario[] = [
+  { scnId: "SCN-RIN-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-RIN-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+];
 
 function render(...broken: readonly EvidenceObservation[]): string {
-  const ledger: Ledger = {
-    claimReconciliations: [
-      missingClaimOf("SCN-RIN-001", "fitness"),
-      missingClaimOf("SCN-RIN-002", "unit"),
-      claimOf(UNNAMED_CLAIM_ID, "unnamed-claim", broken.map(brokenItemOf), broken),
-    ],
-  };
+  const ledger = reconcile(SCENARIOS, [...broken]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
@@ -115,11 +62,11 @@ function runIntegrityLines(md: string): string[] {
   return lines.slice(start, end);
 }
 
-function unnamedClaimCell(md: string): string {
+function reconcilingItemsCell(md: string, claim: string): string {
   const lines = md.split("\n");
   const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
   expect(header).toBeGreaterThanOrEqual(0);
-  const rows = lines.slice(header + 2).filter((line) => line.startsWith("| (unnamed claim) | "));
+  const rows = lines.slice(header + 2).filter((line) => line.startsWith(`| ${claim} | `));
   expect(rows).toHaveLength(1);
   return rows[0]!.slice(2, -2).split(" | ")[2]!;
 }
@@ -164,33 +111,33 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
       "",
       unsoundStamp(CORE_MESSAGES[CoreMessage.ProofsNeverRan](2)),
       "",
-      whatBroke(COLLECTION_FAILED_LOCATOR),
-      "",
-      "```text",
-      ...COLLECTION_FAILED_MESSAGE.split("\n"),
-      "```",
-      "",
       whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]),
       "",
       "```text",
       checkDidNotRun,
       "```",
       "",
+      whatBroke(COLLECTION_FAILED_LOCATOR),
+      "",
+      "```text",
+      ...COLLECTION_FAILED_MESSAGE.split("\n"),
+      "```",
+      "",
     ]);
   });
 
-  it("the unnamed claim's row headlines each broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped", () => {
+  it("each row headlines its broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped, the skipped check's on the scenario it names", () => {
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
-    expect(unnamedClaimCell(md)).toBe(
-      [
-        brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Error: Cannot find \\| package`),
-        brokenCell("fitness", checkDidNotRun),
-      ].join("; "),
+    expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(
+      brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Error: Cannot find \\| package`),
+    );
+    expect(reconcilingItemsCell(md, "SCN-RIN-001")).toBe(
+      [`fitness: ${OUTCOME_DESCRIPTION.missing}`, brokenCell("fitness", checkDidNotRun)].join("; "),
     );
   });
 
   it("the unnamed claim's row trims a broken file's locator that begins with a space, when the runner reports no error", () => {
     const md = render(collectionFailed(" spaced/collect.test.ts"));
-    expect(unnamedClaimCell(md)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
+    expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
   });
 });

@@ -109,6 +109,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.ExcludedScnOccurrences]: [1],
   [CoreMessage.UntaggedScenarios]: [1],
   [CoreMessage.SharedScnCodes]: [4, 3, 1],
+  [CoreMessage.SharedScnCodeScenario]: ["login.feature", "a user with the right password is let in"],
   [CoreMessage.PendingItemFor]: ["unit"],
   [CoreMessage.CheckStepNoOutcome]: ["SCN-ABC-001"],
   [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
@@ -119,6 +120,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.UnnamedClaimCiSteps]: [["lint:bar", "lint:foo"]],
   [CoreMessage.UnnamedClaimFailedNames]: [["spawns yarn", "reads the lockfile"]],
   [CoreMessage.SeveralScnCodes]: [["SCN-ABC-001", "SCN-ABC-002"]],
+  [CoreMessage.SharedScnCode]: ["SCN-ABC-001"],
 };
 
 function renderedCore(code: CoreMessage): string {

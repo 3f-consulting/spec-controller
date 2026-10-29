@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
-import { OUTCOME_DESCRIPTION } from "@3f-consulting/spec-controller-core/internal";
+import { OUTCOME_DESCRIPTION, observationsOf, reconcilingItemsOf } from "@3f-consulting/spec-controller-core/internal";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 const TARGET = "tests/fixtures/pytest";
 
@@ -17,11 +19,11 @@ describe("[SCN-PYT-001] runReconcile reads a real pytest report as unit evidence
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-PYF-001")
+      .find((s) => s.claim === "SCN-PYF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation?.locator).toBe("test_cases::test_passing_cited");
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations?.[0]?.locator).toBe("test_cases::test_passing_cited");
   });
 });
 
@@ -34,11 +36,11 @@ describe("[SCN-PYT-002] runReconcile reads a failing test in a real pytest repor
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-PYF-002")
+      .find((s) => s.claim === "SCN-PYF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("failing");
-    expect(unit?.evidenceObservation?.locator).toBe("test_cases::test_failing_cited");
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["failing"]);
+    expect(unit?.evidenceObservations?.[0]?.locator).toBe("test_cases::test_failing_cited");
   });
 });
 
@@ -51,11 +53,11 @@ describe("[SCN-PYT-003] runReconcile reads a skipped test in a real pytest repor
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-PYF-003")
+      .find((s) => s.claim === "SCN-PYF-003")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("missing");
-    expect(unit?.evidenceObservation).toBeUndefined();
+    expect(unit?.evidenceObservations).toBeUndefined();
   });
 });
 
@@ -67,10 +69,10 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
       ci: TARGET,
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
-    const phantomClaimRow = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-099");
+    const phantomClaimRow = balance.ledger.claimReconciliations.find((s) => s.claim === "SCN-PYF-099");
 
     expect(phantomClaimRow?.kind).toBe("phantom-claim");
-    expect(phantomClaimRow?.evidenceObservations).toEqual([
+    expect(observationsOf(phantomClaimRow!).map(postedOf)).toEqual([
       { qualityCheck: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
     ]);
   });
@@ -86,7 +88,7 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario as i
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unnamedClaimRow = balance.ledger.claimReconciliations.find((s) => s.kind === "unnamed-claim");
 
-    expect(unnamedClaimRow?.evidenceObservations).toContainEqual({
+    expect(observationsOf(unnamedClaimRow!).map(postedOf)).toContainEqual({
       qualityCheck: "unit",
       scnId: null,
       status: "passed",
@@ -106,12 +108,12 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
   const unitOf = (scnId: string) =>
     balance()
       .ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
   it.each(["SCN-PYF-004", "SCN-PYF-005"])("leaves %s missing, with no observation", (scnId) => {
     expect(unitOf(scnId)?.outcome).toBe("missing");
-    expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
+    expect(unitOf(scnId)?.evidenceObservations).toBeUndefined();
   });
 
   it("names both codes on the unnamed claim's row, beside the test", () => {
@@ -137,13 +139,13 @@ describe("[SCN-PYT-007] runReconcile reads a real pytest run that failed to coll
 
   it("posts one broken item, on the unnamed claim's row, naming the module and carrying the collection error", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
+      reconcilingItemsOf(row).filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
     expect(broken[0]?.kind).toBe("unnamed-claim");
-    expect(broken[0]?.item.locator).toBe("test_uncollectable");
-    expect(broken[0]?.item.message).toContain("ModuleNotFoundError: No module named 'module_that_does_not_exist'");
+    expect(broken[0]?.item.evidenceObservation?.locator).toBe("test_uncollectable");
+    expect(broken[0]?.item.evidenceObservation?.message).toContain("ModuleNotFoundError: No module named 'module_that_does_not_exist'");
   });
 
   it("stamps the run unsound", () => {
@@ -152,7 +154,7 @@ describe("[SCN-PYT-007] runReconcile reads a real pytest run that failed to coll
   });
 });
 
-describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real pytest report as broken evidence, and its scenario reads missing", () => {
+describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real pytest report as a broken line naming the test, and the scenario it cites reads a missing line beside it", () => {
   const balance = () =>
     runReconcile({
       features: `${TARGET}/features`,
@@ -161,23 +163,23 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
       pytest: `${TARGET}/report.xml`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
 
-  it("leaves the scenario the test cites missing, with no observation", () => {
+  it("reads the cited scenario's unit reconciliation as one missing line beside one broken line naming the test, with no observation that ran", () => {
     const unit = balance()
-      .ledger.claimReconciliations.find((s) => s.scnId === "SCN-PYF-006")
+      .ledger.claimReconciliations.find((s) => s.claim === "SCN-PYF-006")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("missing");
-    expect(unit?.evidenceObservation).toBeUndefined();
+    expect(unit?.evidenceObservations?.map((o) => [o.outcome, o.locator])).toEqual([["broken", "test_cases::test_setup_error"]]);
   });
 
   it("posts one broken item, naming the test and carrying the setup error", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken")
+      reconcilingItemsOf(row).filter((item) => item.outcome === "broken")
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.locator).toBe("test_cases::test_setup_error");
-    expect(broken[0]?.message).toContain("RuntimeError: the resource could not be set up");
+    expect(broken[0]?.evidenceObservation?.locator).toBe("test_cases::test_setup_error");
+    expect(broken[0]?.evidenceObservation?.message).toContain("RuntimeError: the resource could not be set up");
   });
 
   it("renders the broken item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {

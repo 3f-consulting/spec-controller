@@ -54,11 +54,11 @@ const GO_CITED = "SCN-GOF-001";
 const CITING_SUBTEST = `example.com/gofixture/cited::TestCited/[${GO_CITED}]_a_passing_subtest_cites_its_scenario`;
 
 interface ScenarioRow {
-  readonly scnId: string;
+  readonly claim: string;
   readonly qualityCheckReconciliations: ReadonlyArray<{
     readonly qualityCheck: string;
-    readonly outcome: string;
-    readonly evidenceObservation?: { readonly locator?: string; readonly testName?: string };
+    readonly outcome?: string;
+    readonly evidenceObservations?: ReadonlyArray<{ readonly outcome: string; readonly locator?: string; readonly testName?: string }>;
   }>;
 }
 
@@ -92,10 +92,10 @@ Then("the scenario that Go subtest cites reconciles satisfied, by that subtest",
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.scnId === GO_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.equal(unit?.outcome, "satisfied", `expected ${GO_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = rows.find((row) => row.claim === GO_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${GO_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   assert.equal(
-    unit?.evidenceObservation?.locator,
+    unit?.evidenceObservations?.[0]?.locator,
     CITING_SUBTEST,
     `expected the satisfying observation to be the Go subtest "${CITING_SUBTEST}"; got ${JSON.stringify(unit)}`,
   );
@@ -240,10 +240,10 @@ Then("the scenario that JUnit 5 test cites reconciles satisfied, by that test", 
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.scnId === this.citedScenario)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.equal(unit?.outcome, "satisfied", `expected ${this.citedScenario}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = rows.find((row) => row.claim === this.citedScenario)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${this.citedScenario}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   assert.equal(
-    unit?.evidenceObservation?.locator,
+    unit?.evidenceObservations?.[0]?.locator,
     this.citingLocator,
     `expected the satisfying observation to be the JUnit 5 test "${this.citingLocator}"; got ${JSON.stringify(unit)}`,
   );
@@ -313,10 +313,10 @@ Then("the scenario that Jest test cites reconciles satisfied, by that test", fun
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.scnId === JEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.equal(unit?.outcome, "satisfied", `expected ${JEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = rows.find((row) => row.claim === JEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${JEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   assert.equal(
-    unit?.evidenceObservation?.testName,
+    unit?.evidenceObservations?.[0]?.testName,
     JEST_CITING_TEST,
     `expected the satisfying observation to be the Jest test "${JEST_CITING_TEST}"; got ${JSON.stringify(unit)}`,
   );
@@ -362,10 +362,10 @@ Then("the scenario reconciles satisfied", function (this: SpecControllerWorld) {
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.scnId === PYTEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.equal(unit?.outcome, "satisfied", `expected ${PYTEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = rows.find((row) => row.claim === PYTEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${PYTEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   assert.match(
-    unit?.evidenceObservation?.locator ?? "",
+    unit?.evidenceObservations?.[0]?.locator ?? "",
     new RegExp(PYTEST_CITING_TEST),
     `expected the satisfying observation to be the pytest test ${PYTEST_CITING_TEST}; got ${JSON.stringify(unit)}`,
   );
@@ -418,10 +418,10 @@ Then("the scenario that RSpec example cites reconciles satisfied, by that exampl
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.scnId === RSPEC_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.equal(unit?.outcome, "satisfied", `expected ${RSPEC_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = rows.find((row) => row.claim === RSPEC_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${RSPEC_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   assert.equal(
-    unit?.evidenceObservation?.testName,
+    unit?.evidenceObservations?.[0]?.testName,
     `An RSpec fixture suite ${CITING_EXAMPLE}`,
     `expected the satisfying observation to be the RSpec example "${CITING_EXAMPLE}"; got ${JSON.stringify(unit)}`,
   );

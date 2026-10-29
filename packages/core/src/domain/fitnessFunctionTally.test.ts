@@ -58,7 +58,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
 
 describe("[SCN-USG-001] a fitness function no scenario cites is banked on the unnamed claim's row and counted uncited", () => {
   const rowFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
-    ledger.claimReconciliations.find((r) => r.scnId === scnId);
+    ledger.claimReconciliations.find((r) => r.claim === scnId);
 
   const pkg: PackageJsonScripts = {
     scripts: {
@@ -114,9 +114,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
     expect(rowFor(ledger, "(unnamed claim)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
-        fitnessFunction: "lint:bar",
-        outcome: "cites-no-scenario",
-        evidenceObservation: uncitedObservations[0],
+        evidenceObservations: [{ ...uncitedObservations[0], outcome: "cites-no-scenario" }],
       },
     ]);
   });

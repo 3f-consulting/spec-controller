@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -23,30 +24,36 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
 
     expect(
       reconciliation.ledger.claimReconciliations.map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [[["SCN-CVT-001"], "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "balanced", [[["SCN-CVT-002"], "satisfied"]]],
     ]);
   });
 
   it("carries both facts as OBSERVED and cites the row's own code, no registry standing behind it", () => {
     const [first, second] = reconcile().ledger.claimReconciliations;
-    expect(first?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
+    expect(first?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheck: "fitness",
       fitnessFunction: "SCN-CVT-001",
       scnId: "SCN-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",
-    });
-    expect(second?.qualityCheckReconciliations[0]?.evidenceObservation).toMatchObject({
+      outcome: "satisfied",
+    }]);
+    expect(second?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
+      qualityCheck: "fitness",
       fitnessFunction: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
-    });
+      exists: true,
+      enforcedOverRealSource: true,
+      status: "passed",
+      outcome: "satisfied",
+    }]);
   });
 });

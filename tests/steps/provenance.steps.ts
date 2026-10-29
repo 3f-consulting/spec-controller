@@ -401,7 +401,7 @@ Then(
     );
     const parsed = JSON.parse(this.jsonText) as {
       runProvenance?: { inputs?: Record<string, string> };
-      ledger?: { claimReconciliations: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }> };
+      ledger?: { claimReconciliations: Array<{ claim: string; kind?: string; qualityCheckReconciliations: Array<{ outcome?: string; evidenceObservations?: Array<{ outcome: string; locator?: string }> }> }> };
     };
     assert.equal(
       parsed.runProvenance?.inputs?.features,
@@ -416,8 +416,9 @@ Then(
     const unnamedClaimRow = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
     assert.ok(unnamedClaimRow, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${this.jsonText}`);
     const locators = unnamedClaimRow!.qualityCheckReconciliations
-      .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
-      .map((o) => o.locator!);
+      .flatMap((o) => o.evidenceObservations ?? [])
+      .filter((o) => o.outcome === "cites-no-scenario")
+      .flatMap((o) => (typeof o.locator === "string" ? [o.locator] : []));
     assert.ok(
       locators.length > 0 && locators.every((l) => !l.startsWith("/")),
       `expected the unnamed claim's evidence observation locators to be repo-relative (none absolute); got ${JSON.stringify(locators)}`

@@ -2,6 +2,11 @@ import { describe, it, expect } from "vitest";
 
 import { behaviouralObservationTally } from "./ledger.js";
 import { tallyOfEveryObservationKind } from "./behaviouralObservationTally.test-utils.js";
+import {
+  citesUnknownScenarioReconciliationsOf,
+  noEvidenceObligationReconciliationsOf,
+  unnamedClaimReconciliationsOf,
+} from "./qualityCheckReconciliation.js";
 import { UNNAMED_CLAIM_ID } from "../model.js";
 import type { ClaimKind, ClaimReconciliation, EvidenceObservation, Ledger } from "../model.js";
 
@@ -13,15 +18,22 @@ const fitnessObservationOf = (scnId?: string): EvidenceObservation => ({
   enforcedOverRealSource: true,
 });
 
-function rowOf(scnId: string, kind: ClaimKind, evidenceObservations: readonly EvidenceObservation[]): ClaimReconciliation {
+const RECONCILIATIONS_OF_KIND = {
+  scenario: (claim: string, observations: readonly EvidenceObservation[]) =>
+    noEvidenceObligationReconciliationsOf(claim, observations, new Set()),
+  "phantom-claim": (_claim: string, observations: readonly EvidenceObservation[]) =>
+    citesUnknownScenarioReconciliationsOf(observations),
+  "unnamed-claim": (_claim: string, observations: readonly EvidenceObservation[]) =>
+    unnamedClaimReconciliationsOf(observations),
+} as const;
+
+function rowOf(claim: string, kind: ClaimKind, evidenceObservations: readonly EvidenceObservation[]): ClaimReconciliation {
+  const qualityCheckReconciliations = RECONCILIATIONS_OF_KIND[kind](claim, evidenceObservations);
   return {
-    scnId,
+    claim,
     kind,
     verdict: "out-of-balance",
-    evidenceObservations,
-    evidenceObligations: [],
-    qualityCheckReconciliations: [],
-    reconcilingItems: [],
+    qualityCheckReconciliations,
     pendingItems: [],
   };
 }

@@ -489,7 +489,7 @@ function balanceGrammarTarget(world: SpecControllerWorld): GrammarRun {
 }
 
 function rowOf(world: SpecControllerWorld, scnId: string): GrammarRow | undefined {
-  return world.grammarRun.report.ledger.claimReconciliations.find((row) => row.scnId === scnId);
+  return world.grammarRun.report.ledger.claimReconciliations.find((row) => row.claim === scnId);
 }
 
 When("balance reconciles that grammar target", function (this: SpecControllerWorld) {
@@ -509,7 +509,8 @@ function rowsOfKind(world: SpecControllerWorld, kind: string): GrammarRow[] {
 function unnamedClaimObservations(world: SpecControllerWorld): number {
   return rowsOfKind(world, "unnamed-claim")
     .flatMap((row) => row.qualityCheckReconciliations)
-    .filter((qcr) => qcr.outcome === "cites-no-scenario").length;
+    .flatMap((qcr) => qcr.evidenceObservations ?? [])
+    .filter((observation) => observation.outcome === "cites-no-scenario").length;
 }
 
 Given(
@@ -576,7 +577,7 @@ Given(
 Then("the one- and six-character step ids post no evidence observation at all", function (this: SpecControllerWorld) {
   for (const id of OUTSIDE) assert.equal(rowOf(this, id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(this, id))}`);
   assert.equal(unnamedClaimObservations(this), 0, `expected no uncited evidence observation; got ${JSON.stringify(rowsOfKind(this, "unnamed-claim"))}`);
-  const rows = this.grammarRun.report.ledger.claimReconciliations.map((row) => row.scnId);
+  const rows = this.grammarRun.report.ledger.claimReconciliations.map((row) => row.claim);
   assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantom claims; got ${JSON.stringify(rows)}`);
 });
 
@@ -629,8 +630,8 @@ function reconciled(world: SpecControllerWorld): InheritedCodeRun {
 Then("the scenario is reconciled once, balanced, on its scenario code's row", function (this: SpecControllerWorld) {
   const rows = reconciled(this).report.ledger.claimReconciliations.filter(({ kind }) => kind === "scenario");
   assert.deepEqual(
-    rows.map(({ scnId, verdict }) => ({ scnId, verdict })),
-    [{ scnId: SCENARIO_CODE_INHERITED_FROM[this.ancestor], verdict: "balanced" }],
+    rows.map(({ claim, verdict }) => ({ claim, verdict })),
+    [{ claim: SCENARIO_CODE_INHERITED_FROM[this.ancestor], verdict: "balanced" }],
     "the scenario was not reconciled exactly once, balanced, on its inherited code's row",
   );
 });
@@ -638,7 +639,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
 Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
   assert.deepEqual(report.scenarioCodes.untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
-  const named = report.ledger.claimReconciliations.filter(({ scnId }) => scnId.endsWith(THE_ONE_SCENARIO));
+  const named = report.ledger.claimReconciliations.filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));
   assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
 });
 

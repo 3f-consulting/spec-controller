@@ -3,7 +3,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
-describe("[SCN-RMD-008] the missing split carries every quality-check in canonical order", () => {
+describe("[SCN-RMD-008] the missing split counts the missing Reconciliation lines by quality check, in canonical order", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",
@@ -25,5 +25,22 @@ describe("[SCN-RMD-008] the missing split carries every quality-check in canonic
       { subject: "e2e", count: 1 },
       { subject: "performance", count: 1 },
     ]);
+  });
+
+  it("counts an obligation answered only by a broken observation as one missing line, beside its broken line", () => {
+    const tally = ledgerTally(
+      reconcile(
+        [{ scnId: "SCN-RMD-008", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] }],
+        [
+          { qualityCheck: "unit", scnId: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
+          { qualityCheck: "integration", scnId: "SCN-RMD-008", status: "passed" },
+        ]
+      )
+    );
+
+    const totals = tally.qualityCheckReconciliations;
+    expect(totals.total).toBe(3);
+    expect(totals.byOutcome).toMatchObject({ missing: 1, broken: 1, satisfied: 1 });
+    expect(totals.missingByQualityCheck).toEqual([{ subject: "unit", count: 1 }]);
   });
 });

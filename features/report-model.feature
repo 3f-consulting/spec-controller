@@ -51,7 +51,17 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     of rows.
 
     @unit @SCN-RMD-002
-    Scenario: the ledger serialises under the top-level key ledger, beside summary, carrying each account's posted entries
+    Scenario: the ledger serialises under the top-level key ledger, beside summary, each Claim Reconciliation carrying its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else
+
+  Rule: a Claim Reconciliation carries each of its entries once, inside its Quality Check Reconciliations, named by the claim it reconciles
+
+    A Claim Reconciliation carries its claim, its kind, its verdict, its Quality Check
+    Reconciliations and its pending items, and nothing else. Its claim names what the row
+    reconciles: a scenario's @SCN code, the unknown code a phantom claim's evidence cites, the
+    unnamed claim, or, for a scenario carrying no @SCN, its feature file and title.
+
+    @unit @SCN-RMD-020
+    Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's @SCN, a phantom claim's cited code, the unnamed claim, and a scenario with no @SCN by its feature and title
 
   Rule: the behavioural evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
@@ -140,9 +150,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The evidence coordinate is ONE flat quality-check ∈ {fitness, unit, integration, e2e,
     performance}: fitness is one quality-check value, not a second axis. So each sub-row of
-    ledger.claimReconciliations[].qualityCheckReconciliations[] and reconcilingItems[] is keyed
-    by qualityCheck alone, and the summary's missing split, missingByQualityCheck under
-    summary.qualityCheckReconciliations, is keyed by the same flat quality-check. One reconcile function
+    ledger.claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheck alone,
+    and the summary's missing split, missingByQualityCheck under
+    summary.qualityCheckReconciliations, counts the missing Reconciliation lines by the same flat
+    quality-check: an obligation answered only by a broken observation is one missing line
+    beside the broken one, so it counts once. One reconcile function
     serves every quality check, and the fitness value is what tells a watermelon apart. The
     glossary names the quality check fitness, and lint is on its Double-check line
     (doc/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the quality-check
@@ -150,7 +162,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     isolation.
 
     @unit @SCN-RMD-008
-    Scenario: each reconciled evidence sub-row carries a single quality-check coordinate, not a (kind, level) grid
+    Scenario: each quality-check reconciliation carries a single quality-check coordinate, and the missing split counts the missing Reconciliation lines by it
 
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
 
@@ -224,15 +236,21 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the JSON report's structure is stated by a JSON Schema the published package ships
 
-    The published package carries spec-reconciliation.schema.json, which states every key the JSON report may carry. A report balance writes validates against it with a JSON Schema validator. A report missing a key the schema requires, or carrying a key it does not name, does not.
+    The published package carries spec-reconciliation.schema.json, which states every key the JSON report may carry. A report balance writes validates against it with a JSON Schema validator, whichever outcomes, claims and accounts its inputs give it. A report missing a key the schema requires, or carrying a key it does not name, does not.
 
     @e2e @SCN-RMD-019
-    Scenario: a real balance run's JSON report validates against the JSON Schema the package ships, and one missing a required key or carrying an unnamed one does not
-      Given a target whose tests that cite no scenario ran under Vitest and under Cucumber
+    Scenario Outline: real balance runs' JSON reports validate against the JSON Schema the package ships, the every-outcome corpus's and a pipeline target's, and one missing a required key or carrying an unnamed one does not
+      Given <target>
       When the target's evidence is reconciled and saved as the JSON report
       Then the JSON report validates against the JSON Schema the published package ships
       And the JSON report with its ledger removed is refused because the schema requires the ledger
       And the JSON report with a key the schema does not name added is refused because the schema does not name that key
+
+      Examples:
+        | target                                                                                                                       |
+        | a target whose tests that cite no scenario ran under Vitest and under Cucumber                                               |
+        | a target whose evidence reconciles to every outcome there is                                                                 |
+        | a target whose pipeline runs its unit tests and a fitness check, under its named runner, two of whose scenarios share a code |
 
   Rule: the JSON report states every fault in its inputs in one place, present only when there is one, and the corpus's own facts in another
 

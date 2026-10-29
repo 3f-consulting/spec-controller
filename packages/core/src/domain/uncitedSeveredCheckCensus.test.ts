@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf } from "./claimReconciliation.js";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, workflowObservationsOf } from "./fitnessReconciliation.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 const uncitedSteps: PipelineStep[] = [
   {
@@ -60,7 +63,7 @@ describe("[SCN-LNT-033] the fitness-function census counts a check whose red its
     const unnamedClaimRows = reconcileUncited().ledger.claimReconciliations.filter(
       (row) => row.kind === "unnamed-claim"
     );
-    expect(unnamedClaimRows.flatMap((row) => row.evidenceObservations)).toEqual([
+    expect(unnamedClaimRows.flatMap((row) => observationsOf(row).map(postedOf))).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:advisory",

@@ -4,6 +4,7 @@ import { fitnessObservationsOf, workflowObservationsOf } from "./fitnessReconcil
 import type { Scenario } from "./journal.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -53,15 +54,15 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
   it("answers the obligation on the row the annotated step names and leaves the unannotated check on the unnamed claim", () => {
     expect(
       reconcileAnnotated().ledger.claimReconciliations.map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
-      ["(unnamed claim)", "unnamed-claim", "out-of-balance", [["lint:beta", "cites-no-scenario"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [[["lint:alpha"], "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [[[], "missing"]]],
+      ["(unnamed claim)", "unnamed-claim", "out-of-balance", [[["lint:beta"], "cites-no-scenario"]]],
     ]);
   });
 });

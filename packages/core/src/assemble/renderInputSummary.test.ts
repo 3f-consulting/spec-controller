@@ -105,7 +105,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
   });
 });
 
-describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
+describe("[SCN-RMD-008] each quality-check reconciliation carries a single quality-check coordinate, and the missing split counts the missing Reconciliation lines by it", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",
@@ -113,32 +113,56 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     "    @unit @fitness @SCN-RMD-008",
     "    Scenario: a fixture scenario",
   ];
+  const brokenFitness: EvidenceObservation = {
+    qualityCheck: "fitness",
+    fitnessFunction: "lint:rmd",
+    scnId: "SCN-RMD-008",
+    exists: false,
+    enforcedOverRealSource: false,
+    broken: true,
+    message: "the check's step never ran",
+  };
   const report = () =>
-    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [])), ctx))) as {
+    JSON.parse(
+      JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [brokenFitness])), ctx))
+    ) as {
       ledger: {
         claimReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;
-          reconcilingItems: Array<Record<string, unknown>>;
         }>;
       };
       summary: { qualityCheckReconciliations: Record<string, unknown> };
     };
 
-  it("carries a fitness sub-row's qualityCheck as 'fitness', naming no characteristic", () => {
-    const r = report();
-    const fitness = r.ledger.claimReconciliations
-      .flatMap((s) => s.qualityCheckReconciliations)
-      .find((o) => o.qualityCheck === "fitness");
-    expect(fitness).toBeDefined();
-    expect(fitness!.qualityCheck).toBe("fitness");
-    expect(fitness).not.toHaveProperty("fitnessFunction");
+  it("carries a fitness reconciliation keyed by qualityCheck 'fitness' alone, its fitness function named only on its observation", () => {
+    const fitness = report()
+      .ledger.claimReconciliations.flatMap((s) => s.qualityCheckReconciliations)
+      .filter((o) => o.qualityCheck === "fitness");
+    expect(fitness).toEqual([
+      {
+        qualityCheck: "fitness",
+        outcome: "missing",
+        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObservations: [
+          {
+            qualityCheck: "fitness",
+            fitnessFunction: "lint:rmd",
+            scnId: "SCN-RMD-008",
+            exists: false,
+            enforcedOverRealSource: false,
+            broken: true,
+            message: "the check's step never ran",
+            outcome: "broken",
+          },
+        ],
+      },
+    ]);
   });
 
-  it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {
-    const summary = report().summary;
-    expect(summary).toHaveProperty("qualityCheckReconciliations.missingByQualityCheck");
-    const split = summary.qualityCheckReconciliations.missingByQualityCheck as Array<{ subject: string; count: number }>;
-    expect(split).toEqual([
+  it("counts the missing Reconciliation lines by quality check, an obligation answered only by a broken observation once", () => {
+    const totals = report().summary.qualityCheckReconciliations;
+    expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
+    expect(totals.missingByQualityCheck).toEqual([
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
     ]);

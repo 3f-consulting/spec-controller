@@ -5,6 +5,7 @@ import { fitnessReconciliationsOf, fitnessTally } from "./ledger.js";
 import {
   isScenario,
   fitnessFunctionReconciliationsOf,
+  linesOf,
   observationCountOf,
 } from "./claimReconciliation.js";
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
@@ -36,7 +37,7 @@ beforeEach(() => {
   ledger = reconcile(scenarios, evidenceObservations);
 });
 const rowOf = (scnId: string) =>
-  ledger.claimReconciliations.find((r) => r.scnId === scnId)!;
+  ledger.claimReconciliations.find((r) => r.claim === scnId)!;
 
 describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   let mixed: Ledger;
@@ -68,7 +69,7 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
     reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] }], observations)
-      .claimReconciliations.find((r) => r.scnId === "SCN-AAA-001")!;
+      .claimReconciliations.find((r) => r.claim === "SCN-AAA-001")!;
 
   it.each([
     ["a satisfied one", [satisfied], "satisfied"],
@@ -76,7 +77,7 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
     ["a failing one", [failing], "failing"],
   ] as const)("counts %s as one observation", (_title, observations, outcome) => {
     const row = rowPostedWith([...observations]);
-    expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual([outcome]);
+    expect(fitnessFunctionReconciliationsOf(row).flatMap(linesOf).map((line) => line.outcome)).toEqual([outcome]);
     expect(observationCountOf(row, "fitness")).toBe(1);
   });
 
@@ -86,7 +87,7 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
 
   it("counts nothing for a row with no fitness evidence observation", () => {
     const row = rowOf("SCN-AAA-002");
-    expect(fitnessFunctionReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
+    expect(fitnessFunctionReconciliationsOf(row).flatMap(linesOf).map((line) => line.outcome)).toEqual(["missing"]);
     expect(observationCountOf(row, "fitness")).toBe(0);
   });
 });
@@ -96,7 +97,7 @@ describe("[SCN-LDG-001] fitnessReconciliationsOf is the ONE named fitness list",
   it("is the source the fitness tally folds", () => {
     const named = fitnessReconciliationsOf(ledger);
     expect(fitnessTally(ledger)).toEqual({
-      satisfied: named.filter((d) => d.reconciliation.outcome === "satisfied").length,
+      satisfied: named.filter((d) => linesOf(d.reconciliation).every((line) => line.outcome === "satisfied")).length,
       total: named.length,
     });
     expect(fitnessTally(ledger)).toEqual({ satisfied: 1, total: 3 });

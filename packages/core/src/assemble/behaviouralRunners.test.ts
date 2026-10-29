@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { runnersReconciler } from "./runnerTiers.test-utils.js";
 import { feature } from "../evidenceReconciliation.test-utils.js";
+import { lineReadingsOf } from "../domain/qualityCheckReconciliation.test-utils.js";
 
 const ci = `name: fixture CI
 jobs:
@@ -29,12 +30,12 @@ describe("[SCN-RMD-015] a target with no runners block reports every step of its
     const { summary, ledger } = reconcile();
     const unnamedClaimRowItems = ledger.claimReconciliations
       .filter((row) => row.kind === "unnamed-claim")
-      .flatMap((row) => row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]));
+      .flatMap((row) => lineReadingsOf(row.qualityCheckReconciliations));
     expect(unnamedClaimRowItems).toStrictEqual([
-      ["Install", "cites-no-scenario"],
-      ["github/codeql-action/analyze@v3", "cites-no-scenario"],
-      ["lint", "cites-no-scenario"],
-      ["test", "cites-no-scenario"],
+      [["Install"], "cites-no-scenario"],
+      [["github/codeql-action/analyze@v3"], "cites-no-scenario"],
+      [["lint"], "cites-no-scenario"],
+      [["test"], "cites-no-scenario"],
     ]);
     expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 4, uncitedFitnessFunctionCount: 4 });
     expect(summary).not.toHaveProperty("behaviouralRunners");

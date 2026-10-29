@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf, reconcilingItemsOf } from "@3f-consulting/spec-controller-core/internal";
 import { assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { runInputsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 const SINGLE_REPORT = "tests/fixtures/surefire-single-report";
 
@@ -15,14 +18,14 @@ describe("[SCN-JAV-010] runReconcile reads a single Surefire report file whose r
       ci: SINGLE_REPORT,
       junit: `${SINGLE_REPORT}/report.xml`,
     }, resolveTargetRoot({ features: `${SINGLE_REPORT}/features` })).ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-AAA-001")
+      .find((s) => s.claim === "SCN-AAA-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       locator: "[SCN-AAA-010] a class that cites::[SCN-AAA-001] passes",
-    });
+    }]);
   });
 });
 
@@ -36,14 +39,14 @@ describe("[SCN-JAV-001] runReconcile reads the directory of reports Maven Surefi
       ci: JAVA,
       junit: `${JAVA}/surefire-reports`,
     }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JVF-001")
+      .find((s) => s.claim === "SCN-JVF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       locator: "example.CitedTest::[SCN-JVF-001] a passing test cites its scenario",
-    });
+    }]);
   });
 });
 
@@ -55,14 +58,14 @@ describe("[SCN-JAV-002] runReconcile reads a failing JUnit 5 test in the directo
       ci: JAVA,
       junit: `${JAVA}/surefire-reports`,
     }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JVF-002")
+      .find((s) => s.claim === "SCN-JVF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("failing");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["failing"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "failed",
       locator: "example.CitedTest::[SCN-JVF-002] a failing test cites its scenario",
-    });
+    }]);
   });
 });
 
@@ -76,12 +79,12 @@ describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's d
   const unitOf = (scnId: string) =>
     balance()
       .ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
   it.each(["SCN-JVF-005", "SCN-JVF-006"])("leaves %s missing, with no observation", (scnId) => {
     expect(unitOf(scnId)?.outcome).toBe("missing");
-    expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
+    expect(unitOf(scnId)?.evidenceObservations).toBeUndefined();
   });
 
   it("names both codes on the unnamed claim's row, beside the test", () => {
@@ -103,10 +106,10 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
     ci: JAVA,
     junit: `${JAVA}/surefire-reports`,
   }, resolveTargetRoot({ features: `${JAVA}/features` })).ledger.claimReconciliations
-    .find((s) => s.scnId === "SCN-JVF-007");
+    .find((s) => s.claim === "SCN-JVF-007");
 
   it("posts one passing observation per invocation, each citing that scenario and located at its own invocation", () => {
-    expect(scenario()?.evidenceObservations).toEqual([
+    expect(observationsOf(scenario()!).map(postedOf)).toEqual([
       {
         qualityCheck: "unit",
         scnId: "SCN-JVF-007",
@@ -123,7 +126,7 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
   });
 
   it("reconciles that scenario satisfied", () => {
-    expect(scenario()?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome).toBe("satisfied");
+    expect(scenario()?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied", "satisfied"]);
   });
 });
 
@@ -140,11 +143,11 @@ describe("[SCN-JAV-007] runReconcile posts no evidence observation for a disable
     ["a test whose assumption fails", "SCN-JVF-009"],
   ])("leaves the scenario %s cites missing, with no observation", (_, scnId) => {
     const unit = balance().ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("missing");
-    expect(unit?.evidenceObservation).toBeUndefined();
+    expect(unit?.evidenceObservations).toBeUndefined();
   });
 
   it.each([
@@ -172,17 +175,17 @@ describe("[SCN-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
     ],
   ])("reconciles the scenario %s cites as failing, by that test", (_, scnId, locator) => {
     const unit = balance().ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("failing");
-    expect(unit?.evidenceObservation).toMatchObject({ status: "failed", locator });
-    expect(unit?.evidenceObservation?.broken).toBeUndefined();
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["failing"]);
+    expect(unit?.evidenceObservations).toMatchObject([{ status: "failed", locator }]);
+    expect(unit?.evidenceObservations?.[0]?.broken).toBeUndefined();
   });
 
   it("posts no broken item for either test", () => {
     const brokenLocators = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => item.locator)
+      reconcilingItemsOf(row).filter((item) => item.outcome === "broken").flatMap((item) => (item.evidenceObservation === undefined ? [] : [item.evidenceObservation.locator]))
     );
 
     expect(brokenLocators.join("\n")).not.toMatch(/SCN-JVF-01[01]/);
@@ -199,18 +202,18 @@ describe("[SCN-JAV-009] runReconcile reads a JUnit 5 class whose setup before al
 
   it("posts one broken item, on the unnamed claim's row, naming the class and carrying the error that stopped it", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
+      reconcilingItemsOf(row).filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
     expect(broken[0]?.kind).toBe("unnamed-claim");
-    expect(broken[0]?.item.locator).toBe("example.BeforeAllFailsTest");
-    expect(broken[0]?.item.message).toContain("the shared resource could not be set up");
+    expect(broken[0]?.item.evidenceObservation?.locator).toBe("example.BeforeAllFailsTest");
+    expect(broken[0]?.item.evidenceObservation?.message).toContain("the shared resource could not be set up");
   });
 
   it("reads the scenario the class's test cites as missing", () => {
     const unit = balance().ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JVF-012")
+      .find((s) => s.claim === "SCN-JVF-012")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
     expect(unit?.outcome).toBe("missing");

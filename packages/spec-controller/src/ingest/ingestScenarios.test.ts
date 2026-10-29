@@ -105,7 +105,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
     const nested = reconciled(NESTED_FEATURES);
     const flat = reconciled(flatCopyOfNested());
 
-    expect(nested.ledger.claimReconciliations.flatMap((row) => (row.kind === "scenario" ? [row.scnId] : [])).sort()).toEqual(
+    expect(nested.ledger.claimReconciliations.flatMap((row) => (row.kind === "scenario" ? [row.claim] : [])).sort()).toEqual(
       ["SCN-NTA-001", "SCN-NTB-001", "SCN-NTC-001", "SCN-NTC-002"],
     );
     expect(nested.ledger).toEqual(flat.ledger);
@@ -161,7 +161,7 @@ describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path un
       ci: SAME_NAME,
     }, resolveTargetRoot({ features: SAME_NAME_FEATURES }));
 
-    expect(ledger.claimReconciliations.map(({ scnId }) => scnId)).toEqual([
+    expect(ledger.claimReconciliations.map(({ claim }) => claim)).toEqual([
       "SCN-SNA-001",
       "SCN-SNB-001",
       "alpha/run.feature : the run has no scenario code",

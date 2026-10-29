@@ -6,7 +6,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
-import type { EvidenceObligations } from "../domain/corpusCounts.js";
+import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { reportLedger } from "./renderInput.test-utils.js";
@@ -14,6 +14,11 @@ import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { __er, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
+import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
+const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
+  row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,
@@ -148,30 +153,53 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 });
 
-describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
+describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary, each Claim Reconciliation carrying its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else", () => {
+  it("writes every row of the every-outcome corpus's ledger with exactly its claim, kind, verdict, Quality Check Reconciliations and pending items", () => {
+    const parsed = JSON.parse(everyOutcomeCorpusJson()) as {
+      readonly summary: unknown;
+      readonly ledger: { readonly claimReconciliations: readonly Record<string, unknown>[] };
+    };
+    const rows = parsed.ledger.claimReconciliations;
 
-  it("carries each account's posted evidence obligations and evidence observations alongside its reconciling items", () => {
+    expect(parsed).toHaveProperty("summary");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(Object.keys(row)).toEqual(["claim", "kind", "verdict", "qualityCheckReconciliations", "pendingItems"]);
+    }
+  });
+});
+
+describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles", () => {
+  it("names a scenario by its @SCN, a phantom claim by its cited code, the unnamed claim, and a scenario with no @SCN by its feature and title", () => {
     const feature = [
       "@AAA",
       "Feature: alpha",
       "",
       "  @unit @SCN-AAA-001",
-      "  Scenario: a satisfied evidence observation",
+      "  Scenario: a tagged scenario",
       "    Given a thing",
     ].join("\n");
-    const observation = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
-    const real = reconcile(parseScenarios(feature), [observation]);
-    const parsed = JSON.parse(renderJson(__er(real), ctx));
-    const account = parsed.ledger.claimReconciliations.find(
-      (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
+    const ledger = reconcile(
+      parseScenarios(feature),
+      [
+        { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
+        { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
+        { qualityCheck: "unit", scnId: null, status: "passed" },
+      ],
+      [untaggedScenarioId({ feature: "alpha.feature", scenario: "an untagged scenario" })]
     );
-    expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
-    expect(account.evidenceObservations).toEqual([observation]);
-    expect(account.reconcilingItems).toEqual([]);
+    const rows: Record<string, unknown>[] = JSON.parse(renderJson(__er(ledger), ctx)).ledger.claimReconciliations;
+    expect(rows.map((row) => [row.kind, row.claim])).toEqual([
+      ["scenario", "SCN-AAA-001"],
+      ["phantom-claim", "SCN-PHM-999"],
+      ["unnamed-claim", "(unnamed claim)"],
+      ["scenario", "alpha.feature : an untagged scenario"],
+    ]);
+    for (const row of rows) expect(row).not.toHaveProperty("scnId");
   });
 });
 
-describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary; no evidenceObservations section", () => {
+describe("[SCN-RMD-003]the behavioural-observation totals re-home onto summary; no evidenceObservations section", () => {
   const rmd003Scenarios: Scenario[] = [{ scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rmd003Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
@@ -197,8 +225,8 @@ describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary;
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     const phantomClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
     const unnamedClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
-    expect(phantomClaimRow.scnId).toBe("SCN-PHX-999");
-    expect(unnamedClaimRow.evidenceObservations).toHaveLength(1);
+    expect(phantomClaimRow.claim).toBe("SCN-PHX-999");
+    expect(heldObservationsOf(unnamedClaimRow)).toHaveLength(1);
     expect(parsed.summary.testVolume.onPhantomClaim).toBe(1);
     expect(parsed.summary.testVolume.onUnnamedClaim).toBe(1);
   });

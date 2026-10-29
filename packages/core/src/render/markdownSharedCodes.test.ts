@@ -7,6 +7,7 @@ import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js
 import { countScnOccurrences } from "../parse/scenarios.js";
 import { parseFeatureCounts, parseScenarios, parseUntaggedScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -100,8 +101,8 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
 describe("[SCN-RPT-064] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
   it.each([
     [
-      "states that the corpus holds three scenarios in two accounts",
-      "- The corpus holds 3 scenarios in 2 accounts — 1 @SCN code(s) carried by more than one scenario:",
+      "states that the corpus holds three scenarios in three accounts, a shared code's scenarios each in an account of its own",
+      "- The corpus holds 3 scenarios in 3 accounts — 1 @SCN code(s) carried by more than one scenario:",
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
@@ -141,9 +142,46 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       ])
     ).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 3, 2)}`,
+      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 6, 2)}`,
       "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
       "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
     ]);
+  });
+});
+
+describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles", () => {
+  const sharerRowsOf = (): string[] =>
+    renderMarkdown(
+      er(
+        reconcile(
+          [
+            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
+            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
+          ],
+          []
+        )
+      ),
+      ctx,
+      publishedExitCodeOf
+    )
+      .split("\n")
+      .filter((line) => line.startsWith("| SCN-ONE-001 "));
+
+  it.each([
+    ["login.feature : a user with the right password is let in"],
+    ["logout.feature : a signed-in user is signed out"],
+  ])("names %s in its sharer's reconciling items", (scenario) => {
+    const rows = sharerRowsOf();
+    expect(rows).toHaveLength(2);
+    expect(rows.filter((row) => row.endsWith(`| unit: ${OUTCOME_DESCRIPTION["duplicate-scn-code"]} — this one is ${scenario} |`))).toHaveLength(1);
+  });
+
+  it("renders the two sharers' rows alike but for the scenario each names", () => {
+    const rows = sharerRowsOf().map((row) =>
+      row.replace(/ — this one is [^|]+ \|$/, " — this one is <scenario> |")
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toContain(" — this one is <scenario> |");
+    expect(rows[1]).toBe(rows[0]);
   });
 });

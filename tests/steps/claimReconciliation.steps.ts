@@ -35,6 +35,22 @@ const NO_OBLIGATION_STATUS = {
   ci: "tests/fixtures/no-obligation-status",
 };
 
+const EVERY_OUTCOME_CORPUS = {
+  features: "tests/fixtures/every-outcome-corpus/features",
+  vitest: "tests/fixtures/every-outcome-corpus/vitest.json",
+  packageJson: "tests/fixtures/every-outcome-corpus/package.json",
+  ci: "tests/fixtures/every-outcome-corpus",
+};
+
+const PIPELINE_TARGET = {
+  features: "tests/fixtures/pipeline-target/features",
+  vitest: "tests/fixtures/pipeline-target/vitest.json",
+  packageJson: "tests/fixtures/pipeline-target/package.json",
+  ci: "tests/fixtures/pipeline-target",
+};
+
+const UNSOUND_EXIT = 4;
+
 const MIXED_FILE = { locator: "tests/fixtures/unnamed-claim-status/broken-spawn.test.ts", ran: 2, passed: 1, failed: 1 };
 
 const MIXED_FILE_FAILED_TEST = "spawns yarn";
@@ -121,6 +137,18 @@ Given("a target whose tests that cite no scenario ran under Vitest and under Cuc
   this.invocationArgs = [...argsFor(UNNAMED_CLAIM_STATUS), "--cucumber", "tests/fixtures/unnamed-claim-status/cucumber.json"];
 });
 
+Given("a target whose evidence reconciles to every outcome there is", function (this: SpecControllerWorld) {
+  this.invocationArgs = [...argsFor(EVERY_OUTCOME_CORPUS), "--cucumber", "tests/fixtures/every-outcome-corpus/cucumber.json"];
+  this.verdictExit = UNSOUND_EXIT;
+});
+
+Given(
+  "a target whose pipeline runs its unit tests and a fitness check, under its named runner, two of whose scenarios share a code",
+  function (this: SpecControllerWorld) {
+    this.invocationArgs = [...argsFor(PIPELINE_TARGET), "--ci-steps", "tests/fixtures/pipeline-target/ci-steps.json"];
+  },
+);
+
 Given("a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario", function (this: SpecControllerWorld) {
   this.invocationArgs = argsFor(UNNAMED_CLAIM_STEPS);
 });
@@ -155,7 +183,7 @@ When("the target's evidence is reconciled and saved as the JSON report", functio
     cwd: process.cwd(),
     encoding: "utf8",
   });
-  assert.equal(result.status, 1, `expected the out-of-balance exit; got ${result.status}\nstderr:\n${result.stderr}`);
+  assert.equal(result.status, this.verdictExit, `expected the verdict's exit ${this.verdictExit}; got ${result.status}\nstderr:\n${result.stderr}`);
   this.savedJson = JSON.parse(readFileSync(jsonPath, "utf8"));
 });
 
@@ -271,7 +299,9 @@ Then("the scenario's row shows the test that passed as passed", function (this: 
 });
 
 function savedObservationAt(world: SpecControllerWorld, locator: string, status: string): Record<string, unknown> {
-  const observations = world.savedJson.ledger.claimReconciliations.flatMap((row) => row.evidenceObservations);
+  const observations = world.savedJson.ledger.claimReconciliations.flatMap((row) =>
+    row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? [])
+  );
   const found = observations.find((o) => o["locator"] === locator && o["status"] === status);
   assert.ok(found, `expected the JSON report to carry a ${status} evidence observation at ${locator}`);
   return found;

@@ -12,13 +12,13 @@ describe("[SCN-KOT-001] runReconcile reads the directory of reports Gradle wrote
       ci: KOTLIN,
       junit: `${KOTLIN}/test-results`,
     }, resolveTargetRoot({ features: `${KOTLIN}/features` })).ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-KOF-001")
+      .find((s) => s.claim === "SCN-KOF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       locator: "example.CitedTest::[SCN-KOF-001] a passing test cites its scenario",
-    });
+    }]);
   });
 });

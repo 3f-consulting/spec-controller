@@ -1,10 +1,8 @@
 import type {
   BehaviouralQualityCheck,
   Scenario,
-  FitnessEvidenceObservation,
   EvidenceObservation,
   PendingItem,
-  BehaviouralEvidenceObservation,
 } from "./journal.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Ledger } from "./ledger.js";
@@ -20,8 +18,8 @@ import {
   unnamedClaimReconciliationsOf,
   noScnCodeReconciliations,
   duplicateScnCodeReconciliationsOf,
-  brokenReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
+import type { ScenarioName } from "./qualityCheckReconciliation.js";
 import {
   ledgerTally,
   behaviouralObservationTally,
@@ -34,14 +32,12 @@ import type {
 } from "./ledger.js";
 import {
   verdictFor,
-  reconcilingItemsOf,
   qualityCheckReconciliationsOf,
   UNNAMED_CLAIM_ID,
 } from "./claimReconciliation.js";
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
-import { isFitnessObservation } from "./journal.js";
 
 type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly scnId: string };
 
@@ -70,27 +66,28 @@ function citationIndex(): CitationIndex {
 
 interface RoutedObservations {
   readonly citations: CitationIndex;
-  readonly brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[];
-  readonly uncited: readonly BehaviouralEvidenceObservation[];
-  readonly uncitedFitnessFunctions: readonly FitnessEvidenceObservation[];
+  readonly onUnnamedClaim: readonly EvidenceObservation[];
+}
+
+/** An evidence observation citing a code several scenarios share credits none of them, and names the code. */
+function namingSharedCode(observation: EvidenceObservation, code: string): EvidenceObservation {
+  return { ...observation, notes: [...(observation.notes ?? []), { kind: "shared-scn-code", code }] };
 }
 
 function routeObservations(
   evidenceObservations: readonly EvidenceObservation[],
-  scenarioIds: ReadonlySet<string>
+  scenarioIds: ReadonlySet<string>,
+  sharedScnCodes: ReadonlySet<string>
 ): RoutedObservations {
   const citations = citationIndex();
-  const brokenEvidence: EvidenceObservation[] = [];
-  const uncited: BehaviouralEvidenceObservation[] = [];
-  const uncitedFitnessFunctions: FitnessEvidenceObservation[] = [];
+  const onUnnamedClaim: EvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    const posting = postingOf(o, scenarioIds);
+    const posting = postingOf(o, scenarioIds, sharedScnCodes);
     if (posting.kind !== "unnamed-claim") citations.file(posting, o);
-    else if (posting.posted === "broken") brokenEvidence.push(o);
-    else if (isFitnessObservation(o)) uncitedFitnessFunctions.push(o);
-    else uncited.push(o);
+    else if (o.scnId !== null && o.scnId !== undefined && sharedScnCodes.has(o.scnId)) onUnnamedClaim.push(namingSharedCode(o, o.scnId));
+    else onUnnamedClaim.push(o);
   }
-  return { citations, brokenEvidence, uncited, uncitedFitnessFunctions };
+  return { citations, onUnnamedClaim };
 }
 
 function scenarioRow(
@@ -117,15 +114,16 @@ function scenarioRow(
     pendingItems
   );
   return {
-    scnId: d.scnId,
+    claim: d.scnId,
     kind: "scenario",
     verdict: verdictFor(qualityCheckReconciliations),
-    evidenceObservations: citations.observationsFor(d.scnId),
-    evidenceObligations: [...d.evidenceObligations],
     qualityCheckReconciliations,
-    reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
     pendingItems,
   };
+}
+
+function scenarioNameOf({ feature, title }: Scenario): ScenarioName | undefined {
+  return feature === undefined || title === undefined ? undefined : { feature, title };
 }
 
 function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
@@ -138,24 +136,13 @@ function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
   return [...byCode.values()];
 }
 
-function duplicateScnCodeRow(
-  sharers: readonly Scenario[],
-  citations: CitationIndex
-): ClaimReconciliation {
-  const scnId = sharers[0]!.scnId;
-  const evidenceObligations = sharers.flatMap((s) => s.evidenceObligations);
-  const items = [
-    ...duplicateScnCodeReconciliationsOf(evidenceObligations),
-    ...brokenReconciliationsOf(citations.observationsFor(scnId)),
-  ];
+function duplicateScnCodeRow(sharer: Scenario): ClaimReconciliation {
+  const items = duplicateScnCodeReconciliationsOf(sharer.evidenceObligations, scenarioNameOf(sharer));
   return {
-    scnId,
+    claim: sharer.scnId,
     kind: "scenario",
     verdict: verdictFor(items),
-    evidenceObservations: citations.observationsFor(scnId),
-    evidenceObligations,
     qualityCheckReconciliations: items,
-    reconcilingItems: reconcilingItemsOf(items),
     pendingItems: [],
   };
 }
@@ -166,35 +153,25 @@ function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
     const observations = citations.observationsFor(scnId);
     const items = citesUnknownScenarioReconciliationsOf(observations);
     rows.push({
-      scnId,
+      claim: scnId,
       kind: "phantom-claim",
       verdict: verdictFor(items),
-      evidenceObservations: [...observations],
-      evidenceObligations: [],
       qualityCheckReconciliations: items,
-      reconcilingItems: items,
       pendingItems: [],
     });
   }
   return rows;
 }
 
-function unnamedClaimRows(
-  brokenEvidence: readonly (BehaviouralEvidenceObservation | FitnessEvidenceObservation)[],
-  uncited: readonly BehaviouralEvidenceObservation[],
-  uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
-): ClaimReconciliation[] {
+function unnamedClaimRows({ onUnnamedClaim }: Omit<RoutedObservations, "citations">): ClaimReconciliation[] {
   const rows: ClaimReconciliation[] = [];
-  if (brokenEvidence.length > 0 || uncited.length > 0 || uncitedFitnessFunctions.length > 0) {
-    const items = unnamedClaimReconciliationsOf(brokenEvidence, uncited, uncitedFitnessFunctions);
+  if (onUnnamedClaim.length > 0) {
+    const items = unnamedClaimReconciliationsOf(onUnnamedClaim);
     rows.push({
-      scnId: UNNAMED_CLAIM_ID,
+      claim: UNNAMED_CLAIM_ID,
       kind: "unnamed-claim",
       verdict: verdictFor(items),
-      evidenceObservations: [...brokenEvidence, ...uncited, ...uncitedFitnessFunctions],
-      evidenceObligations: [],
       qualityCheckReconciliations: items,
-      reconcilingItems: items,
       pendingItems: [],
     });
   }
@@ -206,13 +183,10 @@ function untaggedScenarioRows(untaggedScenarios: readonly string[]): ClaimReconc
   for (const name of untaggedScenarios) {
     const items = noScnCodeReconciliations();
     rows.push({
-      scnId: name,
+      claim: name,
       kind: "scenario",
       verdict: verdictFor(items),
-      evidenceObservations: [],
-      evidenceObligations: [],
       qualityCheckReconciliations: items,
-      reconcilingItems: items,
       pendingItems: [],
     });
   }
@@ -227,19 +201,18 @@ export function reconcile(
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   const observations = inEvidenceOrder(evidenceObservations);
-  const { citations, brokenEvidence, uncited, uncitedFitnessFunctions } = routeObservations(
-    observations,
-    scenarioIds
-  );
+  const accounts = accountsByCode(scenarios);
+  const sharedScnCodes = new Set(accounts.filter((sharers) => sharers.length > 1).map((sharers) => sharers[0]!.scnId));
+  const { citations, ...unnamed } = routeObservations(observations, scenarioIds, sharedScnCodes);
   return {
     claimReconciliations: [
-      ...accountsByCode(scenarios).map((sharers) =>
+      ...accounts.flatMap((sharers) =>
         sharers.length === 1
-          ? scenarioRow(sharers[0]!, observations, citations, evidenceObligationPairs)
-          : duplicateScnCodeRow(sharers, citations)
+          ? [scenarioRow(sharers[0]!, observations, citations, evidenceObligationPairs)]
+          : sharers.map(duplicateScnCodeRow)
       ),
       ...phantomClaimRows(citations),
-      ...unnamedClaimRows(brokenEvidence, uncited, uncitedFitnessFunctions),
+      ...unnamedClaimRows(unnamed),
       ...untaggedScenarioRows(untaggedScenarios),
     ],
   };

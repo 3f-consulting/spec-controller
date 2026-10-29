@@ -64,7 +64,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     missing, and the run is stamped unsound.
 
     @unit @SCN-LNT-026
-    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence, which answers no obligation
+    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence, which answers no obligation, read over every line on the scenario's row
 
       A step that succeeded or failed answers its obligation. A skipped step, or any status the
       reader does not recognise, is broken evidence.
@@ -121,17 +121,17 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       A failed step reconciles failing, not broken or missing, exactly as a failed unit test does.
       The row is read from its own step alone, never from the run as a whole.
 
-  Rule: a fitness obligation answered by several Evidence Observations reads the worst outcome any of them carries, and names an Evidence Observation carrying it
+  Rule: a fitness obligation answered by several evidence observations reads one Reconciliation line per observation
 
-    Each Evidence Observation is read on its own, and the obligation reads the worst: failing,
-    then watermelon, then satisfied, whatever order they sort in. The item names the first
-    Evidence Observation carrying that outcome, in evidence order.
+    Each evidence observation is read on its own and is its own Reconciliation line, in evidence order,
+    whatever order the observations arrive in. No line names another observation, and the ledger balances
+    only when every line is satisfied.
 
     @unit @SCN-LNT-036
-    Scenario: a failed fitness Evidence Observation beside a passing one for the same check reads failing, and the ledger is out of balance
+    Scenario: a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance
 
     @unit @SCN-LNT-037
-    Scenario: a watermelon fitness Evidence Observation beside a wired one for the same check reads watermelon, and the ledger is out of balance, whichever one's locator sorts first
+    Scenario: a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first
 
     @unit @SCN-LNT-038
-    Scenario: a failed fitness Evidence Observation beside a watermelon one for the same check reads failing, carrying the failed Evidence Observation, whichever one's locator sorts first
+    Scenario: a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first

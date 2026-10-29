@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf } from "./claimReconciliation.js";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import type { Scenario, EvidenceObservation } from "../model.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 const UNTAGGED = "beta must never lose the money";
 
@@ -17,10 +20,10 @@ const observed: EvidenceObservation[] = [
 describe("[SCN-LDG-021] the untagged scenario's row carries no evidence observation and no Pending Item", () => {
   const ledger = () => reconcile(namedScenarios, observed, [UNTAGGED]);
   const rowFor = (scnId: string) =>
-    ledger().claimReconciliations.find((r) => r.scnId === scnId);
+    ledger().claimReconciliations.find((r) => r.claim === scnId);
 
   it("routes the run's one evidence observation to the account its citation names, not to the untagged row", () => {
-    expect(rowFor("SCN-AAA-001")?.evidenceObservations).toStrictEqual([observed[0]]);
-    expect(rowFor(UNTAGGED)?.evidenceObservations).toStrictEqual([]);
+    expect(observationsOf(rowFor("SCN-AAA-001")!).map(postedOf)).toStrictEqual([observed[0]]);
+    expect(observationsOf(rowFor(UNTAGGED)!)).toStrictEqual([]);
   });
 });

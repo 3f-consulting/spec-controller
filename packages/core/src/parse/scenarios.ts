@@ -89,8 +89,15 @@ export function corpusCountsOfFeatures(features: readonly ParsedFeatureFile[]): 
 }
 
 export function scenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {
+  return namedScenariosOf(feature, deferralTags).map(({ scnId, evidenceObligations }) => ({ scnId, evidenceObligations }));
+}
+
+/** The corpus's scenarios, each naming its feature file and title. */
+export function namedScenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {
   return scenariosByScnCodeOf(feature).taggedScenarios.map((scenario) => ({
     scnId: scenario.scnId,
     evidenceObligations: obligationsRaisedBy(scenario.tags, deferralTags),
+    feature: feature.file,
+    title: scenario.name,
   }));
 }

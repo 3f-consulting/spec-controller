@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { reconcilingItemsOf } from "./claimReconciliation.js";
 
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
@@ -28,7 +29,7 @@ describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pendi
     const pendingCount = balance.claimReconciliations.flatMap((s) => s.pendingItems ?? []).length;
     expect(pendingCount).toBe(3);
     expect(
-      balance.claimReconciliations.every((s) => s.reconcilingItems.length === 0)
+      balance.claimReconciliations.every((s) => reconcilingItemsOf(s).length === 0)
     ).toBe(true);
 
     expect(isBalanced(balance)).toBe(true);

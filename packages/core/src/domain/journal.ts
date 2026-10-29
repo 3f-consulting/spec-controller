@@ -40,6 +40,8 @@ export interface EvidenceObligation {
 export interface Scenario {
   readonly scnId: string;
   readonly evidenceObligations: readonly EvidenceObligation[];
+  readonly feature?: string;
+  readonly title?: string;
 }
 
 export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
@@ -92,6 +94,11 @@ interface SeveralScnCodesNote {
   readonly codes: readonly string[];
 }
 
+interface SharedScnCodeNote {
+  readonly kind: "shared-scn-code";
+  readonly code: string;
+}
+
 interface AmbiguousStepNote {
   readonly kind: "ambiguous-step";
   readonly step?: string;
@@ -103,7 +110,7 @@ interface CheckStepDidNotRunNote {
   readonly outcome?: string;
 }
 
-export type ObservationNote = SeveralScnCodesNote | AmbiguousStepNote | CheckStepDidNotRunNote;
+export type ObservationNote = SeveralScnCodesNote | SharedScnCodeNote | AmbiguousStepNote | CheckStepDidNotRunNote;
 
 export interface BehaviouralEvidenceObservation {
   readonly qualityCheck: BehaviouralQualityCheck;

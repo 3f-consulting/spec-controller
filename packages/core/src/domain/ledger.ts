@@ -1,6 +1,12 @@
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
-import type { ClaimReconciliation } from "./claimReconciliation.js";
-import { fitnessFunctionReconciliationsOf, isScenario } from "./claimReconciliation.js";
+import type { ClaimReconciliation, ReconciliationLine } from "./claimReconciliation.js";
+import {
+  fitnessFunctionReconciliationsOf,
+  isScenario,
+  linesOf,
+  observationsOf,
+  reconcilingItemsOf,
+} from "./claimReconciliation.js";
 import type { BehaviouralQualityCheck } from "./journal.js";
 import { QUALITY_CHECKS } from "./journal.js";
 
@@ -10,7 +16,7 @@ export interface Ledger {
 
 export function isBalanced(ledger: Ledger): boolean {
   return ledger.claimReconciliations.every(
-    (row) => row.reconcilingItems.length === 0
+    (row) => reconcilingItemsOf(row).length === 0
   );
 }
 
@@ -26,9 +32,9 @@ export function hasNothingToReconcile(ledger: Ledger): boolean {
   return ledger.claimReconciliations.length === 0;
 }
 
-export function brokenItemsOf(ledger: Ledger): QualityCheckReconciliation[] {
+export function brokenItemsOf(ledger: Ledger): ReconciliationLine[] {
   return ledger.claimReconciliations.flatMap((row) =>
-    row.reconcilingItems.filter((item) => item.outcome === "broken")
+    reconcilingItemsOf(row).filter((item) => item.outcome === "broken")
   );
 }
 
@@ -38,8 +44,12 @@ export function fitnessReconciliationsOf(
   return ledger.claimReconciliations
     .filter(isScenario)
     .flatMap((row) =>
-      fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
+      fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.claim, reconciliation: r }))
     );
+}
+
+function isSatisfied(reconciliation: QualityCheckReconciliation): boolean {
+  return linesOf(reconciliation).every((line) => line.outcome === "satisfied");
 }
 
 export interface ClaimReconciliationTotals {
@@ -127,10 +137,10 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
   };
   const missing = new Map<string, number>();
   for (const s of ledger.claimReconciliations) {
-    for (const o of s.qualityCheckReconciliations) {
-      byOutcome[o.outcome]++;
-      if (o.outcome === "missing" && o.qualityCheck) {
-        missing.set(o.qualityCheck, (missing.get(o.qualityCheck) ?? 0) + 1);
+    for (const line of s.qualityCheckReconciliations.flatMap(linesOf)) {
+      byOutcome[line.outcome]++;
+      if (line.outcome === "missing" && line.qualityCheck) {
+        missing.set(line.qualityCheck, (missing.get(line.qualityCheck) ?? 0) + 1);
       }
     }
   }
@@ -148,7 +158,7 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
 export function fitnessTally(ledger: Ledger): FitnessTally {
   const fitness = fitnessReconciliationsOf(ledger);
   return {
-    satisfied: fitness.filter(({ reconciliation }) => reconciliation.outcome === "satisfied").length,
+    satisfied: fitness.filter(({ reconciliation }) => isSatisfied(reconciliation)).length,
     total: fitness.length,
   };
 }
@@ -177,7 +187,7 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
   let onUnnamedClaim = 0;
 
   for (const row of ledger.claimReconciliations) {
-    for (const observation of row.evidenceObservations) {
+    for (const observation of observationsOf(row)) {
       if (observation.qualityCheck === "fitness") continue;
       rawByBehaviouralQualityCheck[observation.qualityCheck]++;
       if (row.kind === "phantom-claim") onPhantomClaim++;
@@ -200,7 +210,7 @@ export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
   let runningFitnessFunctionCount = 0;
   let uncitedFitnessFunctionCount = 0;
   for (const row of ledger.claimReconciliations) {
-    for (const observation of row.evidenceObservations) {
+    for (const observation of observationsOf(row)) {
       if (observation.qualityCheck !== "fitness") continue;
       if (observation.broken === true) continue;
       if (!observation.exists) continue;

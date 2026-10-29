@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf } from "./claimReconciliation.js";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, workflowObservationsOf } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -95,24 +99,24 @@ describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles 
   it("reconciles each severed check as the watermelon and leaves the siblings satisfied", () => {
     expect(
       reconcileSevered().ledger.claimReconciliations.map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
-      ["SCN-CVT-003", "scenario", "balanced", [[undefined, "satisfied"]]],
-      ["SCN-CVT-004", "scenario", "balanced", [[undefined, "satisfied"]]],
-      ["SCN-CVT-005", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-001", "scenario", "out-of-balance", [[["lint:alpha"], "watermelon"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [[["lint:beta"], "watermelon"]]],
+      ["SCN-CVT-003", "scenario", "balanced", [[["lint:gamma"], "satisfied"]]],
+      ["SCN-CVT-004", "scenario", "balanced", [[["lint:delta"], "satisfied"]]],
+      ["SCN-CVT-005", "scenario", "balanced", [[["lint:epsilon"], "satisfied"]]],
     ]);
   });
 
   it("still OBSERVES a severed check, as one that exists and enforces nothing", () => {
     const observed = reconcileSevered()
-      .ledger.claimReconciliations.filter((row) => row.scnId === "SCN-CVT-001" || row.scnId === "SCN-CVT-002")
-      .flatMap((row) => row.evidenceObservations);
+      .ledger.claimReconciliations.filter((row) => row.claim === "SCN-CVT-001" || row.claim === "SCN-CVT-002")
+      .flatMap((row) => observationsOf(row).map(postedOf));
     expect(observed).toEqual([
       {
         qualityCheck: "fitness",

@@ -10,6 +10,8 @@ function noteWords(note: ObservationNote): string {
   switch (note.kind) {
     case "several-scn-codes":
       return CORE_MESSAGES[CoreMessage.SeveralScnCodes](note.codes);
+    case "shared-scn-code":
+      return CORE_MESSAGES[CoreMessage.SharedScnCode](note.code);
     case "ambiguous-step":
       return note.step === undefined
         ? CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]

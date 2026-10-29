@@ -85,10 +85,17 @@ Feature: The report renders the ledger as sectioned facts
     The section has no check column. It labels obligations by the quality check, fitness,
     never by an internal kind.
 
+    It counts only the fitness evidence obligations scenarios raise: a fitness evidence
+    observation that never ran adds no obligation. Each obligation's row names every
+    Reconciliation line it holds, in evidence order.
+
     The section is left out entirely when no scenario raises a fitness evidence obligation.
 
     @unit @SCN-RPT-005
     Scenario: the markdown report lists the fitness evidence obligations as their own section
+
+    @unit @SCN-RPT-068
+    Scenario: the fitness evidence obligations count only the obligations scenarios raise, and each obligation's row names every Reconciliation line it holds, no line picked for it
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
@@ -210,15 +217,28 @@ Feature: The report renders the ledger as sectioned facts
     A key to the cells precedes the table wherever it has an evidence column. The columns are
     markdown only.
 
-    A `-/N` cell counts every observation the scenario received at that check, duplicate
+    A `-/N` cell counts every observation that ran at that check for the scenario, duplicate
     citations included. An observation citing a pending obligation, such as @unitpending,
     reconciles the same way and also renders `-/N`.
 
+    Each scenario sharing a code has its own row, lettered from its own obligations. Evidence
+    citing a shared code credits neither scenario and shows on the unnamed claim.
+
     @unit @SCN-RPT-011
-    Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
+    Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding, and a shared code's row is lettered from its obligations alone, its citing evidence on the unnamed claim
 
     @unit @SCN-RPT-054
     Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
+
+  Rule: the evidence grid counts the evidence observations that ran
+
+    An evidence observation that never ran, such as a test that failed at import, is not
+    backing. It adds nothing to its cell's right side and no column to the grid. Its
+    failure shows in the Verdict and Reconciling-items columns. An observation that ran
+    beside it at the same check is counted.
+
+    @unit @SCN-RPT-069
+    Scenario: the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column
 
   Rule: the ledger summary counts the untagged scenarios, and each is listed once, on its own ledger row
 
@@ -614,4 +634,13 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a corpus with no feature file is stated as no feature file judged, never as clean
 
     @unit @SCN-RPT-064
-    Scenario: the report states how many scenarios the corpus holds in how many accounts and names the scenarios sharing each code, a code to a line, and says nothing of sharing when no code is shared
+    Scenario: the report states how many scenarios the corpus holds in how many accounts, a shared code's scenarios each in an account of its own, and names the scenarios sharing each code
+
+  Rule: a shared code's Claim Reconciliations each name their scenario
+
+    Two scenarios sharing one @SCN code have a row each under that code. Each row's
+    reconciling item names the feature file and title of the scenario it reconciles, so the
+    two rows differ only in that name.
+
+    @unit @SCN-RPT-070
+    Scenario: each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles

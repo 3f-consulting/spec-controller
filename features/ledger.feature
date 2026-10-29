@@ -21,17 +21,6 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-002
     Scenario: a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item
 
-  Rule: an evidence obligation answered by several evidence observations reads the worst outcome any of them carries, and names an evidence observation carrying it
-
-    A runner emits one evidence observation per test, so a scenario cited by several tests carries several
-    evidence observations at one quality check. Each is read on its own, and the obligation reads the worst of
-    those readings — failing over watermelon over satisfied — on every quality check. A failed one is a failing observation whatever passed beside it, and nothing about
-    where its file sorts may discharge it. The item names the first evidence observation carrying that outcome
-    in the order the books read evidence in; the rest stay posted on the row.
-
-    @unit @SCN-LDG-038
-    Scenario: whatever evidence observations answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names an evidence observation carrying it
-
   Rule: a scenario that raises an Evidence Obligation with no matching result is out of balance
 
     @unit @SCN-LDG-003
@@ -58,10 +47,10 @@ Feature: Ledger over obligation-vs-observation evidence
     evidence observation's locator as the where-to-fix), verdict always out of balance.
 
     @unit @SCN-LDG-006
-    Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom claim's reconciliation, out of balance
+    Scenario: an evidence observation citing a scenario no feature carries is reported as a phantom claim's reconciliation, out of balance, its payload asserted on the observation
 
     @unit @SCN-LDG-034
-    Scenario: an item on a phantom claim's row carries the keys its evidence observation has a value for and omits the rest
+    Scenario: an observation on a phantom claim's row carries the keys it has a value for and omits the rest
 
   Rule: an evidence observation citing no scenario is the unnamed claim's reconciliation
 
@@ -92,7 +81,7 @@ Feature: Ledger over obligation-vs-observation evidence
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @SCN-LDG-008
-    Scenario: an evidence observation at a quality-check the scenario never raised is reported as no-evidence-obligation
+    Scenario: an evidence observation at a quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation
 
     @unit @SCN-LDG-010
     Scenario: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing
@@ -151,12 +140,13 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
-    A broken evidence observation posts to the claim it names, as every other does, as a broken
-    item carrying it. The obligation it was meant to answer reconciles from the evidence that
-    reached its proof.
+    An evidence observation is found once on its account, inside the quality-check reconciliation
+    of its quality check, and nowhere else on the row. A broken evidence observation posts to the
+    claim it names, as every other does, as a broken item carrying it. The obligation it was meant
+    to answer reconciles from the evidence that reached its proof.
 
     @unit @SCN-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is findable there, a broken one on the claim it names — behavioural and fitness evidence observations alike
+    Scenario: every evidence observation posts to exactly one ledger account and is found once there, inside the quality-check reconciliation of its quality check, a broken one on the claim it names
 
     @unit @SCN-LDG-035
     Scenario: a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites
@@ -173,26 +163,37 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)
     @unit @SCN-LDG-026
-    Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation
+    Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation, read from its observation list
 
-  Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the evidence observation side)
+  Rule: a Quality Check Reconciliation carries every evidence observation of its quality check on its claim
+
     @unit @SCN-LDG-027
-    Scenario: a no-evidence-obligation quality-check reconciliation carries its evidence observation and no obligation
+    Scenario: a quality-check reconciliation carries every evidence observation of its quality check on its claim
 
   Rule: a fitness missing reconciliation carries its obligation and no observation — an absent check is an absence
 
     @unit @SCN-LDG-028
-    Scenario: a fitness missing quality-check reconciliation carries its obligation and no observation
+    Scenario: a fitness missing quality-check reconciliation carries its obligation and no observation, read from its observation list
 
   Rule: a no-scn-code reconciliation carries a scenario-scope evidence obligation and no observation
 
     @unit @SCN-LDG-029
-    Scenario: a no-scn-code quality-check reconciliation carries a scenario-scope obligation and no observation
+    Scenario: a no-scn-code quality-check reconciliation carries a scenario-scope obligation and no observation, read from its observation list
 
   Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
 
     @unit @SCN-LDG-030
-    Scenario: every outcome's sides match its definition, a divergent pair is unconstructible, and the emitted report agrees
+    Scenario: every Reconciliation line's sides match its outcome's definition, a divergent pair is unconstructible, and the emitted report agrees
+
+  Rule: each evidence observation a Quality Check Reconciliation holds is a Reconciliation line with its own outcome
+
+    Each evidence observation a Quality Check Reconciliation holds is a Reconciliation line with its own outcome.
+    The Quality Check Reconciliation's own outcome is its evidence obligation's line, present only when no evidence
+    observation that ran answers that obligation. A claim is balanced when every Reconciliation line on its row is
+    satisfied, and no line stands in for another evidence observation.
+
+    @unit @SCN-LDG-047
+    Scenario: each evidence observation a quality-check reconciliation holds reads its own outcome, every one counting toward the claim's verdict, and an obligation with none reads one missing line
 
   Rule: an evidence observation that cites more than one scenario credits none of them, whatever the runner
 
@@ -201,6 +202,14 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-042
     Scenario: an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes
+
+  Rule: two scenarios sharing one @SCN code are two claims
+
+    Each scenario is a claim. A code two scenarios carry names neither, so evidence citing it credits
+    neither and posts to the unnamed claim, naming the code, as evidence naming several scenarios does.
+
+    @unit @SCN-LDG-046
+    Scenario: two scenarios sharing one @SCN code reconcile as two duplicate-scn-code Claim Reconciliations under that code, each naming its own scenario, and an observation citing the code posts to the unnamed claim
 
   Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
 

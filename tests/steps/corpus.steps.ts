@@ -285,10 +285,10 @@ function judgement({ report }: CorpusRun): Record<string, unknown> {
 }
 
 function scenarioCodesOf({ report }: CorpusRun): string[] {
-  const ledger = report["ledger"] as { claimReconciliations: { scnId: string; kind: string }[] };
+  const ledger = report["ledger"] as { claimReconciliations: { claim: string; kind: string }[] };
   return ledger.claimReconciliations
     .filter(({ kind }) => kind === "scenario")
-    .map(({ scnId }) => scnId)
+    .map(({ claim }) => claim)
     .sort();
 }
 
@@ -375,8 +375,8 @@ Then("the reconciliation names each of those scenarios by its feature file's pat
     SAME_NAME_FILES.map((feature) => ({ feature, scenario: UNTAGGED_TITLE })),
     "an untagged scenario's feature file was not named by its path under the corpus",
   );
-  const ledger = this.sameNameJson["ledger"] as { claimReconciliations: { scnId: string }[] };
-  const rows = ledger.claimReconciliations.map(({ scnId }) => scnId);
+  const ledger = this.sameNameJson["ledger"] as { claimReconciliations: { claim: string }[] };
+  const rows = ledger.claimReconciliations.map(({ claim }) => claim);
   for (const feature of SAME_NAME_FILES) {
     assert.ok(rows.includes(`${feature} : ${UNTAGGED_TITLE}`), `no reconciliation row names ${feature}:\n${rows.join("\n")}`);
     assert.ok(this.sameNameMarkdown.includes(`${feature} : ${UNTAGGED_TITLE}`), `the Markdown report does not name ${feature}`);

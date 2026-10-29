@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { reconcilingItemsOf } from "@3f-consulting/spec-controller-core/internal";
 import { assembleRenderInput, renderMarkdown, type RunContext } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -16,15 +17,15 @@ describe("[SCN-JST-001] runReconcile reads a real Jest report as unit evidence",
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JSF-001")
+      .find((s) => s.claim === "SCN-JSF-001")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       locator: expect.stringMatching(/tests\/fixtures\/jest\/project\/cases\.test\.js$/),
       testName: "[SCN-JSF-001] a passing test cites its scenario",
-    });
+    }]);
   });
 });
 
@@ -37,15 +38,15 @@ describe("[SCN-JST-002] runReconcile reads a failing Jest test as a failing unit
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JSF-002")
+      .find((s) => s.claim === "SCN-JSF-002")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("failing");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["failing"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "failed",
       locator: expect.stringMatching(/tests\/fixtures\/jest\/project\/cases\.test\.js$/),
       testName: "[SCN-JSF-002] a failing test cites its scenario",
-    });
+    }]);
   });
 });
 
@@ -58,28 +59,28 @@ describe("[SCN-JST-003] runReconcile reads a code in a Jest test's own title bef
   }, resolveTargetRoot({ features: `${TARGET}/features` }));
   const unitOf = (ledger: ReturnType<typeof balance>["ledger"], scnId: string) =>
     ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
   it("credits the scenario the test's own title cites, not the one its describe block cites", () => {
     const unit = unitOf(balance().ledger, "SCN-JSF-003");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       testName: "[SCN-JSF-004] a describe block that cites a scenario [SCN-JSF-003] a test whose own title cites a scenario",
-    });
-    expect(unit?.evidenceObservation?.notes).toBeUndefined();
+    }]);
+    expect(unit?.evidenceObservations?.[0]?.notes).toBeUndefined();
   });
 
   it("credits the describe block's scenario to a test whose own title cites nothing, and to no other test", () => {
     const unit = unitOf(balance().ledger, "SCN-JSF-004");
 
-    expect(unit?.outcome).toBe("satisfied");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "passed",
       testName: "[SCN-JSF-004] a describe block that cites a scenario a test whose own title cites nothing",
-    });
+    }]);
   });
 });
 
@@ -93,12 +94,12 @@ describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's titl
   const unitOf = (scnId: string) =>
     balance()
       .ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
   it.each(["SCN-JSF-005", "SCN-JSF-006"])("leaves %s missing, with no observation", (scnId) => {
     expect(unitOf(scnId)?.outcome).toBe("missing");
-    expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
+    expect(unitOf(scnId)?.evidenceObservations).toBeUndefined();
   });
 
   it("names both codes on the unnamed claim's row, beside the test's file", () => {
@@ -120,7 +121,7 @@ describe("[SCN-JST-005] runReconcile posts no evidence observation for a todo or
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }))
       .ledger.claimReconciliations
-      .find((s) => s.scnId === scnId)
+      .find((s) => s.claim === scnId)
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
   it.each([
@@ -128,7 +129,7 @@ describe("[SCN-JST-005] runReconcile posts no evidence observation for a todo or
     ["a skipped test", "SCN-JSF-008"],
   ])("leaves the scenario %s cites missing, with no observation", (_kind, scnId) => {
     expect(unitOf(scnId)?.outcome).toBe("missing");
-    expect(unitOf(scnId)?.evidenceObservation).toBeUndefined();
+    expect(unitOf(scnId)?.evidenceObservations).toBeUndefined();
   });
 });
 
@@ -141,16 +142,16 @@ describe("[SCN-JST-006] runReconcile reads a Jest test under a failing beforeAll
       jest: `${TARGET}/report.json`,
     }, resolveTargetRoot({ features: `${TARGET}/features` }));
     const unit = balance.ledger.claimReconciliations
-      .find((s) => s.scnId === "SCN-JSF-009")
+      .find((s) => s.claim === "SCN-JSF-009")
       ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
 
-    expect(unit?.outcome).toBe("failing");
-    expect(unit?.evidenceObservation).toMatchObject({
+    expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["failing"]);
+    expect(unit?.evidenceObservations).toMatchObject([{
       status: "failed",
       locator: expect.stringMatching(/tests\/fixtures\/jest\/project\/cases\.test\.js$/),
       testName: "a describe block whose beforeAll fails [SCN-JSF-009] a test under a failing beforeAll cites its scenario",
-    });
-    expect(unit?.evidenceObservation?.broken).toBeUndefined();
+    }]);
+    expect(unit?.evidenceObservations?.[0]?.broken).toBeUndefined();
   });
 });
 
@@ -165,14 +166,14 @@ describe("[SCN-JST-007] runReconcile reads a Jest test file that failed to run a
 
   it("posts one broken item, on the unnamed claim's row, naming the file and carrying the error that stopped it", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
+      reconcilingItemsOf(row).filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
     );
 
     expect(broken).toHaveLength(1);
     expect(broken[0]?.kind).toBe("unnamed-claim");
-    expect(broken[0]?.item.locator).toMatch(/tests\/fixtures\/jest\/project\/unloadable\.test\.js$/);
-    expect(broken[0]?.item.message).toContain("Test suite failed to run");
-    expect(broken[0]?.item.message).toContain("the test file could not be loaded");
+    expect(broken[0]?.item.evidenceObservation?.locator).toMatch(/tests\/fixtures\/jest\/project\/unloadable\.test\.js$/);
+    expect(broken[0]?.item.evidenceObservation?.message).toContain("Test suite failed to run");
+    expect(broken[0]?.item.evidenceObservation?.message).toContain("the test file could not be loaded");
   });
 
   it("stamps the run unsound", () => {

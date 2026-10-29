@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
-import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { readTargetCorpus } from "../parse/targetCorpus.js";
 import type { Ledger, ClaimReconciliation } from "../model.js";
 
 function accountsFor(ledger: Ledger, scnId: string): ClaimReconciliation[] {
-  return ledger.claimReconciliations.filter((r) => r.scnId === scnId);
+  return ledger.claimReconciliations.filter((r) => r.claim === scnId);
 }
 
-describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
+describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
@@ -23,34 +24,34 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
     );
   });
 
-  it("holds ONE real account for the code, never one row per scenario", () => {
-    const accounts = accountsFor(ledger, "SCN-DUP-001");
-    expect(accounts).toHaveLength(1);
-    expect(accounts[0]!.kind).toBe("scenario");
+  it("holds one claim per scenario under the code", () => {
+    expect(accountsFor(ledger, "SCN-DUP-001").map((account) => account.kind)).toEqual(["scenario", "scenario"]);
   });
 
-  it("reads duplicate-scn-code at every quality check the sharers name, the deferred one included", () => {
-    const [account] = accountsFor(ledger, "SCN-DUP-001");
+  it("reads duplicate-scn-code at every quality check each scenario raises, the deferred one included", () => {
     expect(
-      account!.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])
+      accountsFor(ledger, "SCN-DUP-001").map((account) =>
+        account.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])
+      )
     ).toEqual([
-      ["unit", "duplicate-scn-code"],
-      ["integration", "duplicate-scn-code"],
+      [["unit", "duplicate-scn-code"]],
+      [
+        ["unit", "duplicate-scn-code"],
+        ["integration", "duplicate-scn-code"],
+      ],
     ]);
   });
 
-  it("carries no Pending Item — the deferral is as unattributable as an evidence observation", () => {
-    const [account] = accountsFor(ledger, "SCN-DUP-001");
-    expect(account!.pendingItems).toEqual([]);
+  it("carries no Pending Item on either claim — the deferral is as unattributable as an evidence observation", () => {
+    expect(accountsFor(ledger, "SCN-DUP-001").map((account) => account.pendingItems)).toEqual([[], []]);
   });
 
-  it("is out of balance, and so is the run", () => {
-    const [account] = accountsFor(ledger, "SCN-DUP-001");
-    expect(account!.verdict).toBe("out-of-balance");
+  it("is out of balance on either claim, and so is the run", () => {
+    expect(accountsFor(ledger, "SCN-DUP-001").map((account) => account.verdict)).toEqual(["out-of-balance", "out-of-balance"]);
     expect(isBalanced(ledger)).toBe(false);
   });
 
-  it("with no quality check named at all, carries ONE duplicate-scn-code sub-row, never both-missing", () => {
+  it("with no quality check named at all, carries ONE duplicate-scn-code sub-row on each claim, never both-missing", () => {
     const bare = reconcile(
       [
         { scnId: "SCN-DUP-002", evidenceObligations: [] },
@@ -59,31 +60,37 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are one accoun
       []
     );
     const accounts = accountsFor(bare, "SCN-DUP-002");
-    expect(accounts).toHaveLength(1);
-    expect(accounts[0]!.qualityCheckReconciliations.map((q) => q.outcome)).toEqual([
-      "duplicate-scn-code",
+    expect(accounts.map((account) => account.qualityCheckReconciliations.map((q) => q.outcome))).toEqual([
+      ["duplicate-scn-code"],
+      ["duplicate-scn-code"],
     ]);
-    expect(accounts[0]!.verdict).toBe("out-of-balance");
+    expect(accounts.map((account) => account.verdict)).toEqual(["out-of-balance", "out-of-balance"]);
   });
 });
 
-describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check", () => {
+describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises", () => {
   const one = "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: in one\n    Given a thing\n";
-  const two = "@TWO\nFeature: two\n\n  @unit @SCN-ONE-001\n  Scenario: in two\n    Given a thing\n";
+  const two = "@TWO\nFeature: two\n\n  @integration @SCN-ONE-001\n  Scenario: in two\n    Given a thing\n";
   let ledger: Ledger;
   beforeEach(() => {
-    ledger = reconcile([...parseScenarios(one), ...parseScenarios(two)], []);
+    const corpus = readTargetCorpus(parsedFeatures([one, two], ["features/one.feature", "features/two.feature"]), []);
+    ledger = reconcile(corpus.scenarios, []);
   });
 
-  it("reads duplicate-scn-code at every quality check, out of balance", () => {
-    const [account] = accountsFor(ledger, "SCN-ONE-001");
-    expect(account!.qualityCheckReconciliations.map((q) => q.outcome)).toEqual(["duplicate-scn-code"]);
-    expect(account!.verdict).toBe("out-of-balance");
+  it("holds exactly two claims under the code, each reading duplicate-scn-code at its own quality check and naming its own scenario", () => {
+    expect(accountsFor(ledger, "SCN-ONE-001").map((account) => account.qualityCheckReconciliations)).toEqual([
+      [{ qualityCheck: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "unit" }, scenario: { feature: "features/one.feature", title: "in one" } }],
+      [{ qualityCheck: "integration", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "integration" }, scenario: { feature: "features/two.feature", title: "in two" } }],
+    ]);
+  });
+
+  it("is out of balance on either claim, and so is the run", () => {
+    expect(accountsFor(ledger, "SCN-ONE-001").map((account) => account.verdict)).toEqual(["out-of-balance", "out-of-balance"]);
     expect(isBalanced(ledger)).toBe(false);
   });
 });
 
-describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality checks still never balance", () => {
+describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality checks still never balance, on either claim", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
@@ -98,34 +105,16 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
     );
   });
 
-  it("never balances, though every check has passing evidence", () => {
-    const [account] = accountsFor(ledger, "SCN-DIS-001");
-    expect(account!.verdict).toBe("out-of-balance");
+  it("never balances on either claim, though every check has passing evidence", () => {
+    expect(accountsFor(ledger, "SCN-DIS-001").map((account) => account.verdict)).toEqual(["out-of-balance", "out-of-balance"]);
     expect(isBalanced(ledger)).toBe(false);
   });
-});
 
-describe("[SCN-STG-016] every evidence observation citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position", () => {
-  const observations = [
-    { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "passed", locator: "crd-pass.test.ts" },
-    { qualityCheck: "unit", scnId: "SCN-CRD-001", status: "failed", locator: "crd-fail.test.ts" },
-    { qualityCheck: "e2e", scnId: "SCN-CRD-001", status: "passed", locator: "crd-e2e.spec.ts" },
-  ] as const;
-  let ledger: Ledger;
-  beforeEach(() => {
-    ledger = reconcile(
-      [
-        { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-CRD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      ],
-      [...observations]
-    );
-  });
-
-  it("attributes none of them — every item on the account reads duplicate-scn-code", () => {
-    const [account] = accountsFor(ledger, "SCN-CRD-001");
-    expect(new Set(account!.qualityCheckReconciliations.map((q) => q.outcome))).toEqual(
-      new Set(["duplicate-scn-code"])
-    );
+  it("reads duplicate-scn-code on each claim at its own quality check only", () => {
+    expect(
+      accountsFor(ledger, "SCN-DIS-001").map((account) =>
+        account.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])
+      )
+    ).toEqual([[["unit", "duplicate-scn-code"]], [["integration", "duplicate-scn-code"]]]);
   });
 });

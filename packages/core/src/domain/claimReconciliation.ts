@@ -1,38 +1,90 @@
 import type {
   EvidenceObligation,
-  EvidenceObservation,
   PendingItem,
   QualityCheck,
 } from "./journal.js";
 import { evidenceObligationsOf } from "./journal.js";
-import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
-import { bothMissingReconciliation } from "./qualityCheckReconciliation.js";
+import type { ClaimKind } from "./claimKind.js";
+import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
+import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
 
 export type Verdict = "balanced" | "out-of-balance";
 
-export type ClaimKind = "scenario" | "phantom-claim" | "unnamed-claim";
+export type { ClaimKind } from "./claimKind.js";
 
 export const UNNAMED_CLAIM_ID = "(unnamed claim)";
 
 export interface ClaimReconciliation {
-  readonly scnId: string;
+  readonly claim: string;
   readonly kind: ClaimKind;
   readonly verdict: Verdict;
-  readonly evidenceObservations: readonly EvidenceObservation[];
-  readonly evidenceObligations: readonly EvidenceObligation[];
   readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
-  readonly reconcilingItems: readonly QualityCheckReconciliation[];
   readonly pendingItems: readonly PendingItem[];
 }
 
-export function verdictFor(evidenceObligations: QualityCheckReconciliation[]): Verdict {
-  return reconcilingItemsOf(evidenceObligations).length === 0 ? "balanced" : "out-of-balance";
+/** One Reconciliation line of a Quality Check Reconciliation: its obligation's own, or one evidence observation's. */
+export interface ReconciliationLine {
+  readonly qualityCheck?: QualityCheck;
+  readonly outcome: Outcome;
+  readonly evidenceObligation?: EvidenceObligation;
+  readonly evidenceObservation?: ReconciledEvidenceObservation;
+  readonly scenario?: ScenarioName;
 }
 
-export function reconcilingItemsOf(
-  evidenceObligations: QualityCheckReconciliation[]
-): QualityCheckReconciliation[] {
-  return evidenceObligations.filter((r) => r.outcome !== "satisfied");
+function observationLineOf(
+  reconciliation: QualityCheckReconciliation,
+  observation: ReconciledEvidenceObservation
+): ReconciliationLine {
+  const carriesObligation = carriesEvidenceObligation(reconciliation, observation);
+  return {
+    ...(reconciliation.qualityCheck === undefined ? {} : { qualityCheck: reconciliation.qualityCheck }),
+    outcome: observation.outcome,
+    ...(carriesObligation ? { evidenceObligation: reconciliation.evidenceObligation } : {}),
+    evidenceObservation: observation,
+  };
+}
+
+/** A Quality Check Reconciliation's lines: its own outcome's, when it has one, then each evidence observation's. */
+export function linesOf(reconciliation: QualityCheckReconciliation): ReconciliationLine[] {
+  const own: ReconciliationLine[] =
+    !isObligationLineOutcome(reconciliation.outcome)
+      ? []
+      : [
+          {
+            ...(reconciliation.qualityCheck === undefined ? {} : { qualityCheck: reconciliation.qualityCheck }),
+            outcome: reconciliation.outcome,
+            ...(reconciliation.evidenceObligation === undefined ? {} : { evidenceObligation: reconciliation.evidenceObligation }),
+            ...(reconciliation.scenario === undefined ? {} : { scenario: reconciliation.scenario }),
+          },
+        ];
+  return [
+    ...own,
+    ...(reconciliation.evidenceObservations ?? []).map((observation) => observationLineOf(reconciliation, observation)),
+  ];
+}
+
+function unsatisfiedOf(reconciliations: readonly QualityCheckReconciliation[]): ReconciliationLine[] {
+  return reconciliations.flatMap(linesOf).filter((line) => line.outcome !== "satisfied");
+}
+
+export function verdictFor(reconciliations: readonly QualityCheckReconciliation[]): Verdict {
+  return unsatisfiedOf(reconciliations).length === 0 ? "balanced" : "out-of-balance";
+}
+
+export function reconcilingItemsOf(row: ClaimReconciliation): readonly ReconciliationLine[] {
+  return unsatisfiedOf(row.qualityCheckReconciliations);
+}
+
+/** A row's evidence observations: those its Quality Check Reconciliations hold, each once, with its line's outcome. */
+export function observationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObservation[] {
+  return row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []);
+}
+
+/** A row's evidence obligations at a quality check, read from its Quality Check Reconciliations: a scenario-scope obligation names none. */
+export function obligationsOf(row: ClaimReconciliation): readonly EvidenceObligation[] {
+  return row.qualityCheckReconciliations.flatMap(({ evidenceObligation }) =>
+    evidenceObligation?.qualityCheck === undefined ? [] : [evidenceObligation]
+  );
 }
 
 export function isScenario(row: ClaimReconciliation): boolean {
@@ -56,28 +108,34 @@ export function outOfBalanceCountOf(rows: readonly ClaimReconciliation[]): numbe
 }
 
 export function carriesNoScnCode(row: ClaimReconciliation): boolean {
-  return row.reconcilingItems.some((item) => item.outcome === "no-scn-code");
+  return reconcilingItemsOf(row).some((item) => item.outcome === "no-scn-code");
 }
 
 export function fitnessFunctionReconciliationsOf(
   row: ClaimReconciliation
 ): QualityCheckReconciliation[] {
-  return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "fitness");
+  return row.qualityCheckReconciliations.filter(
+    (r) => r.qualityCheck === "fitness" && r.evidenceObligation !== undefined
+  );
+}
+
+/** A row's evidence observations that ran: a broken one never reached its assertions, so backs nothing. */
+function ranObservationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObservation[] {
+  return observationsOf(row).filter((o) => o.broken !== true);
 }
 
 export function carriesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
-  return (
-    row.qualityCheckReconciliations.some((r) => r.qualityCheck === qualityCheck) ||
-    row.evidenceObservations.some((o) => o.qualityCheck === qualityCheck)
+  return row.qualityCheckReconciliations.some(
+    (r) => r.qualityCheck === qualityCheck && linesOf(r).some((line) => line.outcome !== "broken")
   );
 }
 
 export function namesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
-  return evidenceObligationsOf(row.evidenceObligations).some((o) => o.qualityCheck === qualityCheck);
+  return evidenceObligationsOf(obligationsOf(row)).some((o) => o.qualityCheck === qualityCheck);
 }
 
 export function observationCountOf(row: ClaimReconciliation, qualityCheck: QualityCheck): number {
-  return row.evidenceObservations.filter((o) => o.qualityCheck === qualityCheck).length;
+  return ranObservationsOf(row).filter((o) => o.qualityCheck === qualityCheck).length;
 }
 
 export function qualityCheckReconciliationsOf(

@@ -778,12 +778,12 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### Duplicate `@SCN` codes
 
-**An `@SCN` code is an account number, and two scenarios carrying one code are one account.** The ledger is keyed by the code. A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
+**An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
-- It reconciles as **one** Claim Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*.
-- No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says. Every evidence observation citing the code posts to it once.
+- Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every quality check it raises reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
+- No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
-- The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`scenarioCodes.sharedScnCodes` in the JSON).
+- The report names each shared code with the file and the name of every scenario carrying it (`scenarioCodes.sharedScnCodes` in the JSON).
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 ### Scenario code errors
@@ -1005,7 +1005,7 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **The verdict reads SCENARIO CODE ERRORS.** The corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one scenario code. `## Scenario code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
 
-**A row reads `duplicate-scn-code`.** Two scenarios carry that `@SCN` code. The report names them under *The corpus holds N scenarios in M accounts*. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
+**A row reads `duplicate-scn-code`.** Two scenarios carry that `@SCN` code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 
 **`--json` rejected.** There is no such flag. Use `--format json:<path>`.
 

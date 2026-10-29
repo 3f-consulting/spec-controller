@@ -3,11 +3,13 @@ import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
+import { linesOf } from "../domain/claimReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { evidenceOfRunResult } from "../domain/journal.js";
 
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
   const scenarios: Scenario[] = [
@@ -45,12 +47,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("builds the fixture through the reconciler — the no-evidence-obligation evidence observation is OUT of an evidence obligation", () => {
     const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
-      s.qualityCheckReconciliations.filter((o) => o.outcome === "no-evidence-obligation")
+      s.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.outcome === "no-evidence-obligation")
     );
     expect(noEvidenceObligation).toHaveLength(2);
-    const scnC = balance.claimReconciliations.find((s) => s.scnId === "SCN-C")!;
-    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "no-evidence-obligation")).toBe(true);
-    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
+    const scnC = balance.claimReconciliations.find((s) => s.claim === "SCN-C")!;
+    expect(scnC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheck === "integration" && line.outcome === "no-evidence-obligation")).toBe(true);
+    expect(scnC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheck === "integration" && line.outcome === "satisfied")).toBe(false);
   });
 
   it("renders corpus-driven columns — Fitness first, then the behavioural levels present (e2e/performance absent)", () => {
@@ -119,7 +121,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     ]);
   });
 
-  it("adds a column for a tier observed on a shared-code row, whose reconciliations name only the tiers its scenarios raise", () => {
+  const citesNoScenario = (qualityCheck: string): string =>
+    `${qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}`;
+
+  it("letters a shared code's rows from their obligations alone, and adds no column for a tier only its citing evidence carries, which shows on the unnamed claim", () => {
     const shared = reconcile(
       [
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -131,12 +136,18 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ]
     );
     const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
-    expect(table[0]).toBe(headerOf("Unit", "Integration"));
-    expect(table[1]).toBe("| --- | --- | --- | --- | --- |");
-    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "U/1", "-/1"]]);
+    expect(table[0]).toBe(headerOf("Unit"));
+    expect(table[1]).toBe("| --- | --- | --- | --- |");
+    expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
+      ["SCN-D", "U/-"],
+      ["SCN-D", "U/-"],
+      ["(unnamed claim)", "—"],
+    ]);
+    expect(table[4]).toContain(citesNoScenario("unit"));
+    expect(table[4]).toContain(citesNoScenario("integration"));
   });
 
-  it("adds a Fitness column for a fitness observation on a shared-code row, as it adds a Unit column for a unit test there", () => {
+  it("adds no Fitness column for a fitness observation citing a shared code, which shows on the unnamed claim as a unit test citing it does", () => {
     const shared = reconcile(
       [
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -148,11 +159,17 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ]
     );
     const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
-    expect(table[0]).toBe(headerOf("Fitness", "Unit"));
-    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "-/1", "U/1"]]);
+    expect(table[0]).toBe(headerOf("Unit"));
+    expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
+      ["SCN-D", "U/-"],
+      ["SCN-D", "U/-"],
+      ["(unnamed claim)", "—"],
+    ]);
+    expect(table[4]).toContain(citesNoScenario("fitness"));
+    expect(table[4]).toContain(citesNoScenario("unit"));
   });
 
-  it("adds a Fitness column with a blank cell for a shared-code row where one scenario's fitness obligation is pending", () => {
+  it("adds a Fitness column with a blank cell for the shared code's row whose scenario's fitness obligation is pending", () => {
     const shared = reconcile(
       [
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "fitness", pending: true }] },
@@ -162,7 +179,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     );
     const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Fitness", "Unit"));
-    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([["SCN-D", "", "U/1"]]);
+    expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([
+      ["SCN-D", "", ""],
+      ["SCN-D", "", "U/-"],
+      ["(unnamed claim)", "—", "—"],
+    ]);
+    expect(table[4]).toContain(citesNoScenario("unit"));
   });
 
   it("letters the Fitness cell only for a scenario that raises a fitness obligation that is not pending, however its one fitness observation reconciles", () => {
@@ -196,7 +218,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         { qualityCheck: "e2e", scnId: "SCN-GHOST", status: "passed" },
       ]
     );
-    expect(ledgerWithPhantomClaimRow.claimReconciliations.map((s) => [s.scnId, s.kind])).toEqual([
+    expect(ledgerWithPhantomClaimRow.claimReconciliations.map((s) => [s.claim, s.kind])).toEqual([
       ["SCN-U", "scenario"],
       ["SCN-GHOST", "phantom-claim"],
     ]);
@@ -336,5 +358,59 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
       leafSum += n;
     }
     expect(leafSum).toBe(qcrOutOfBalance);
+  });
+});
+
+describe("[SCN-RPT-069] the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column", () => {
+  const ranNever = () => evidenceOfRunResult("never-reached-its-assertions")!;
+
+  const gridOf = (scenarios: Scenario[], observations: EvidenceObservation[]): { header: string; cells: Map<string, string[]> } => {
+    const lines = renderMarkdown(__er(reconcile(scenarios, observations), true, false), ctx, publishedExitCodeOf).split("\n");
+    const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
+    const start = lines.findIndex((l, i) => i > section && l.startsWith("| Claim |"));
+    expect(start).toBeGreaterThan(section);
+    const table = lines.slice(start + 2, lines.indexOf("", start));
+    return {
+      header: lines[start]!,
+      cells: new Map(table.map((row): [string, string[]] => {
+        const cells = row.slice(2, -2).split(" | ");
+        return [cells[0]!, cells.slice(1, -2)];
+      })),
+    };
+  };
+
+  it("reads U/- for a unit obligation whose only unit test never reached its assertions", () => {
+    const grid = gridOf(
+      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-U", ...ranNever() }]
+    );
+    expect(grid.header).toBe("| Claim | Unit | Verdict | Reconciling items |");
+    expect(grid.cells.get("SCN-U")).toEqual(["U/-"]);
+  });
+
+  it("adds no E2e column for a broken e2e observation on a scenario that raises no e2e obligation", () => {
+    const grid = gridOf(
+      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-U", status: "passed" },
+        { qualityCheck: "e2e", scnId: "SCN-U", ...ranNever() },
+      ]
+    );
+    expect(grid.header).toBe("| Claim | Unit | Verdict | Reconciling items |");
+    expect(grid.cells.get("SCN-U")).toEqual(["U/1"]);
+  });
+
+  it("counts the observation that ran beside a broken one at the same check", () => {
+    const grid = gridOf(
+      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [
+        { qualityCheck: "unit", scnId: "SCN-U", ...ranNever() },
+        { qualityCheck: "unit", scnId: "SCN-U", status: "passed" },
+        { qualityCheck: "e2e", scnId: "SCN-U", ...ranNever() },
+        { qualityCheck: "e2e", scnId: "SCN-U", status: "failed" },
+      ]
+    );
+    expect(grid.header).toBe("| Claim | Unit | E2e | Verdict | Reconciling items |");
+    expect(grid.cells.get("SCN-U")).toEqual(["U/1", "-/1"]);
   });
 });

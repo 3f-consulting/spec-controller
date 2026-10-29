@@ -3,6 +3,7 @@ import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, workflowObservationsOf } from "./fitnessReconciliation.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const unannotatedSteps: PipelineStep[] = [
   {
@@ -51,10 +52,10 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
   it("puts every check on the unnamed claim's one row and reports the steps that are not checks nowhere", () => {
     expect(
       reconcileUnannotated().ledger.claimReconciliations.map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
       [
@@ -62,9 +63,9 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
         "unnamed-claim",
         "out-of-balance",
         [
-          ["lint:alpha", "cites-no-scenario"],
-          ["lint:beta", "cites-no-scenario"],
-          ["typecheck", "cites-no-scenario"],
+          [["lint:alpha"], "cites-no-scenario"],
+          [["lint:beta"], "cites-no-scenario"],
+          [["typecheck"], "cites-no-scenario"],
         ],
       ],
     ]);

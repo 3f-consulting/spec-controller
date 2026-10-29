@@ -131,6 +131,7 @@ export enum CoreMessage {
   ExcludedScnOccurrences,
   UntaggedScenarios,
   SharedScnCodes,
+  SharedScnCodeScenario,
   LedgerTableHeader,
   ClaimColumn,
   VerdictColumn,
@@ -165,6 +166,7 @@ export enum CoreMessage {
   UnnamedClaimCiSteps,
   UnnamedClaimFailedNames,
   SeveralScnCodes,
+  SharedScnCode,
 }
 
 interface CoreMessageParams {
@@ -228,6 +230,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.ExcludedScnOccurrences]: [count: number];
   readonly [CoreMessage.UntaggedScenarios]: [count: number];
   readonly [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
+  readonly [CoreMessage.SharedScnCodeScenario]: [feature: string, title: string];
   readonly [CoreMessage.PendingItemFor]: [qualityCheck: string];
   readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
   readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
@@ -238,6 +241,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.UnnamedClaimCiSteps]: [names: readonly string[]];
   readonly [CoreMessage.UnnamedClaimFailedNames]: [names: readonly string[]];
   readonly [CoreMessage.SeveralScnCodes]: [codes: readonly string[]];
+  readonly [CoreMessage.SharedScnCode]: [code: string];
 }
 
 export type CoreMessages = {
@@ -444,6 +448,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
     `The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${codes} @SCN code(s) carried by more than one scenario:`,
+  [CoreMessage.SharedScnCodeScenario]: (feature, title) => `this one is ${feature} : ${title}`,
   [CoreMessage.LedgerTableHeader]: "| Claim | Verdict | Reconciling items |",
   [CoreMessage.ClaimColumn]: "Claim",
   [CoreMessage.VerdictColumn]: "Verdict",
@@ -492,4 +497,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.UnnamedClaimFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
   [CoreMessage.SeveralScnCodes]: (codes) =>
     `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
+  [CoreMessage.SharedScnCode]: (code) =>
+    `${code} is carried by more than one scenario, so this test credits none of them.`,
 };

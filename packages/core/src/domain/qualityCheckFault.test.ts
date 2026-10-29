@@ -5,8 +5,8 @@ import {
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
 } from "./qualityCheckReconciliation.js";
-import type { Outcome } from "./qualityCheckReconciliation.js";
-import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
+import type { Outcome, ReconciledEvidenceObservation } from "./qualityCheckReconciliation.js";
+import type { EvidenceObligation } from "./journal.js";
 
 interface Refusal {
   refused: boolean;
@@ -57,10 +57,11 @@ function expectCodedFaultWordedByTheCatalogue(refusal: Refusal): void {
 
 describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone", () => {
   const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
-  const sampleObservation: EvidenceObservation = {
+  const sampleObservation: ReconciledEvidenceObservation = {
     qualityCheck: "unit",
     scnId: "SCN-MSG-001",
     status: "passed",
+    outcome: "satisfied",
   };
 
   for (const [outcomeKey, profile] of Object.entries(OUTCOME_SIDE_PROFILE)) {
@@ -73,7 +74,7 @@ describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that dive
         makeQualityCheckReconciliation({
           outcome,
           ...(obligationExists ? {} : { evidenceObligation: sampleObligation }),
-          ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
+          ...(observationExists ? { evidenceObservations: [sampleObservation] } : {}),
         }),
       );
 
@@ -85,7 +86,7 @@ describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that dive
         makeQualityCheckReconciliation({
           outcome,
           ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
-          ...(observationExists ? {} : { evidenceObservation: sampleObservation }),
+          ...(observationExists ? {} : { evidenceObservations: [sampleObservation] }),
         }),
       );
 

@@ -22,3 +22,5 @@ export {
   QUALITY_CHECK_FAULT_MESSAGES,
   type CoreMessages,
 } from "./render/messages.js";
+
+export { observationsOf, obligationsOf, reconcilingItemsOf } from "./domain/claimReconciliation.js";

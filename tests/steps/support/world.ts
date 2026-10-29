@@ -3,7 +3,7 @@ import type { IWorldOptions } from "@cucumber/cucumber";
 import type { SpawnSyncReturns } from "node:child_process";
 
 export interface ClaimReconciliation {
-  scnId: string;
+  claim: string;
   kind: string;
   verdict: string;
 }
@@ -52,9 +52,9 @@ export interface CorpusRun {
 }
 
 export interface GrammarRow {
-  scnId: string;
+  claim: string;
   kind: string;
-  qualityCheckReconciliations: { outcome: string }[];
+  qualityCheckReconciliations: { outcome?: string; evidenceObservations?: { outcome: string }[] }[];
 }
 
 export interface GrammarRun {
@@ -106,7 +106,7 @@ export interface ExitZeroPair {
 }
 
 export interface SavedLedger {
-  ledger: { claimReconciliations: { evidenceObservations: Record<string, unknown>[] }[] };
+  ledger: { claimReconciliations: { qualityCheckReconciliations: { evidenceObservations?: Record<string, unknown>[] }[] }[] };
 }
 
 export interface ToolProvenance {
@@ -184,6 +184,7 @@ export class SpecControllerWorld extends World {
 
   report!: string;
   savedJson!: SavedLedger;
+  verdictExit = 1;
   fitnessTarget!: FitnessTarget;
   siblingStatus!: number | null;
 

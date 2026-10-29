@@ -1,28 +1,31 @@
 import { describe, it, expect } from "vitest";
+import { everyOutcomeCorpusJson } from "../assemble/everyOutcomeCorpus.test-utils.js";
 import {
   reconcileEvidenceObligation,
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
 } from "./qualityCheckReconciliation.js";
-import type { Outcome, SidePresence } from "./qualityCheckReconciliation.js";
+import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, SidePresence } from "./qualityCheckReconciliation.js";
+import { linesOf, type ReconciliationLine } from "./claimReconciliation.js";
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
+import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
-  it("a missing behavioural reconciliation carries its evidence obligation and no observation — the pure debit case", () => {
+  it("a missing behavioural reconciliation is its quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheck: "unit" };
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-026", obligation, []);
 
-    expect(reconciliation.outcome).toBe("missing");
-    expect(reconciliation.evidenceObligation).toEqual(obligation);
-    expect(
-      (reconciliation as { evidenceObservation?: unknown }).evidenceObservation
-    ).toBeUndefined();
+    expect(reconciliation).toStrictEqual({
+      qualityCheck: "unit",
+      outcome: "missing",
+      evidenceObligation: obligation,
+    });
   });
 });
 
 describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
-  it("a fitness missing reconciliation carries its obligation and no observation — an absent guard's {exists:false} is not an observation", () => {
+  it("a fitness missing reconciliation is the fitness quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheck: "fitness" };
     const absentGuard: EvidenceObservation = {
       qualityCheck: "fitness",
@@ -32,11 +35,11 @@ describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation 
     };
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-028", obligation, [absentGuard]);
 
-    expect(reconciliation.outcome).toBe("missing");
-    expect(reconciliation.evidenceObligation).toEqual(obligation);
-    expect(
-      (reconciliation as { evidenceObservation?: unknown }).evidenceObservation
-    ).toBeUndefined();
+    expect(reconciliation).toStrictEqual({
+      qualityCheck: "fitness",
+      outcome: "missing",
+      evidenceObligation: obligation,
+    });
   });
 });
 
@@ -54,6 +57,8 @@ function attemptMint(mint: () => unknown): Refusal {
   }
 }
 
+type OutcomeSides = (typeof OUTCOME_SIDE_PROFILE)[Outcome];
+
 function flipped(presence: SidePresence): SidePresence {
   switch (presence) {
     case "Exists":
@@ -67,37 +72,84 @@ function flipped(presence: SidePresence): SidePresence {
   }
 }
 
-describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consistent with its outcome (the invariant)", () => {
-  const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
-  const sampleObservation: EvidenceObservation = {
-    qualityCheck: "unit",
-    scnId: "SCN-LDG-030",
-    status: "passed",
-  };
+type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 
+const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
+
+function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
+  return { qualityCheck: "unit", scnId: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
+}
+
+/** The outcomes only an evidence observation's line reads; a reconciliation's own outcome is never one of them. */
+const OBSERVATION_LINE_OUTCOMES: readonly Outcome[] = [
+  "satisfied",
+  "failing",
+  "watermelon",
+  "cites-unknown-scenario",
+  "cites-no-scenario",
+  "no-evidence-obligation",
+  "broken",
+];
+
+/** The outcomes an evidence obligation's own line reads when no evidence observation that ran answers it. */
+const OBLIGATION_LINE_OUTCOMES: readonly Outcome[] = ["missing", "both-missing", "no-scn-code", "duplicate-scn-code"];
+
+function isObligationsOwnLine(profile: OutcomeSides): boolean {
+  return profile.observation === "None";
+}
+
+function obligationSide(presence: SidePresence): Pick<Fields, "evidenceObligation"> {
+  return presence === "Exists" ? { evidenceObligation: sampleObligation } : {};
+}
+
+/** A reconciliation holding one line of the outcome, its sides as the outcome's definition requires. */
+function lineAsDefined(outcome: Outcome, profile: OutcomeSides): Fields {
+  if (isObligationsOwnLine(profile)) return { outcome, ...obligationSide(profile.obligation) };
+  return { ...obligationSide(profile.obligation), evidenceObservations: [observationLine(outcome, outcome !== "broken")] };
+}
+
+/** The same line with its obligation side flipped: an observation's line carries the obligation exactly when it ran against one. */
+function lineWithObligationFlipped(outcome: Outcome, profile: OutcomeSides): Fields {
+  const flippedObligation = obligationSide(flipped(profile.obligation));
+  if (isObligationsOwnLine(profile)) return { outcome, ...flippedObligation };
+  return { ...flippedObligation, evidenceObservations: [observationLine(outcome, true)] };
+}
+
+/** The same line with its observation side flipped: the obligation's own line answered by an observation that ran, or an observation's outcome on the obligation's own line. */
+function lineWithObservationFlipped(outcome: Outcome, profile: OutcomeSides): Fields {
+  if (!isObligationsOwnLine(profile)) return { outcome, ...obligationSide(profile.obligation) };
+  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+  return { outcome, ...obligationSide(profile.obligation), evidenceObservations: [observationLine(answering, true)] };
+}
+
+function sidesOf(line: ReconciliationLine): [Outcome, SidePresence, SidePresence] {
+  return [
+    line.outcome,
+    line.evidenceObligation === undefined ? "None" : "Exists",
+    line.evidenceObservation === undefined ? "None" : "Exists",
+  ];
+}
+
+/** Every Reconciliation line of the JSON report the every-outcome corpus emits, read back through the domain's own reader. */
+function corpusReportLines(): ReconciliationLine[] {
+  const report = JSON.parse(everyOutcomeCorpusJson()) as {
+    readonly ledger: { readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[] }[] };
+  };
+  return report.ledger.claimReconciliations.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf));
+}
+
+describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's definition, a divergent pair is unconstructible, and the emitted report agrees", () => {
   for (const [outcomeKey, profile] of Object.entries(OUTCOME_SIDE_PROFILE)) {
     const outcome = outcomeKey as Outcome;
-    const obligationExists = profile.obligation === "Exists";
-    const observationExists = profile.observation === "Exists";
 
-    it(`${outcome}: the sides its definition requires construct, and their presence matches that definition`, () => {
-      const reconciliation = makeQualityCheckReconciliation({
-        outcome,
-        ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
-        ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
-      });
-      expect(reconciliation.evidenceObligation !== undefined).toBe(obligationExists);
-      expect(reconciliation.evidenceObservation !== undefined).toBe(observationExists);
+    it(`${outcome}: a line with the sides its definition requires constructs, and reads back with exactly those sides`, () => {
+      const lines = linesOf(makeQualityCheckReconciliation(lineAsDefined(outcome, profile)));
+
+      expect(lines.map(sidesOf)).toStrictEqual([[outcome, profile.obligation, profile.observation]]);
     });
 
-    it(`${outcome}: a forbidden obligation side is unconstructible — refused with the obligation-side code and the whole divergence`, () => {
-      const refusal = attemptMint(() =>
-        makeQualityCheckReconciliation({
-          outcome,
-          ...(obligationExists ? {} : { evidenceObligation: sampleObligation }),
-          ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
-        })
-      );
+    it(`${outcome}: a line with its obligation side flipped is unconstructible — refused with the obligation-side code and the whole divergence`, () => {
+      const refusal = attemptMint(() => makeQualityCheckReconciliation(lineWithObligationFlipped(outcome, profile)));
 
       expect(refusal.refused).toBe(true);
       expect(refusal.fault).toStrictEqual({
@@ -109,14 +161,8 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
       });
     });
 
-    it(`${outcome}: a forbidden observation side is unconstructible — refused with the observation-side code and the whole divergence`, () => {
-      const refusal = attemptMint(() =>
-        makeQualityCheckReconciliation({
-          outcome,
-          ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
-          ...(observationExists ? {} : { evidenceObservation: sampleObservation }),
-        })
-      );
+    it(`${outcome}: a line with its observation side flipped is unconstructible — refused with the observation-side code and the whole divergence`, () => {
+      const refusal = attemptMint(() => makeQualityCheckReconciliation(lineWithObservationFlipped(outcome, profile)));
 
       expect(refusal.refused).toBe(true);
       expect(refusal.fault).toStrictEqual({
@@ -128,6 +174,62 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
       });
     });
   }
+
+  it("the observation-line and obligation-line outcomes are every outcome, each once", () => {
+    expect([...OBSERVATION_LINE_OUTCOMES, ...OBLIGATION_LINE_OUTCOMES].sort()).toStrictEqual(Object.keys(OUTCOME_SIDE_PROFILE).sort());
+  });
+
+  for (const outcome of OBSERVATION_LINE_OUTCOMES) {
+    it(`${outcome}: a reconciliation carrying an observation line's outcome as its own is unconstructible, with no observation beside it`, () => {
+      const profile = OUTCOME_SIDE_PROFILE[outcome];
+
+      expect(() => makeQualityCheckReconciliation({ outcome, ...obligationSide(profile.obligation) })).toThrow(
+        QualityCheckReconciliationFault
+      );
+    });
+
+    it(`${outcome}: a reconciliation carrying an observation line's outcome as its own is unconstructible beside an observation that ran`, () => {
+      const profile = OUTCOME_SIDE_PROFILE[outcome];
+      const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+
+      expect(() =>
+        makeQualityCheckReconciliation({
+          outcome,
+          ...obligationSide(profile.obligation),
+          evidenceObservations: [observationLine(answering, true)],
+        })
+      ).toThrow(QualityCheckReconciliationFault);
+    });
+  }
+
+  for (const outcome of OBLIGATION_LINE_OUTCOMES) {
+    it(`${outcome}: a reconciliation carrying it as its own outcome is unconstructible beside an observation that ran`, () => {
+      const profile = OUTCOME_SIDE_PROFILE[outcome];
+      const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+
+      expect(() =>
+        makeQualityCheckReconciliation({
+          outcome,
+          ...obligationSide(profile.obligation),
+          evidenceObservations: [observationLine(answering, true)],
+        })
+      ).toThrow(QualityCheckReconciliationFault);
+    });
+  }
+
+  it("every line of the JSON report the every-outcome corpus emits carries the sides its outcome's definition requires", () => {
+    const lines = corpusReportLines();
+
+    expect(lines.map(sidesOf)).toStrictEqual(
+      lines.map((line) => [line.outcome, OUTCOME_SIDE_PROFILE[line.outcome].obligation, OUTCOME_SIDE_PROFILE[line.outcome].observation])
+    );
+  });
+
+  it("the JSON report the every-outcome corpus emits holds a line of every outcome", () => {
+    const outcomes = new Set(corpusReportLines().map((line) => line.outcome));
+
+    expect([...outcomes].sort()).toStrictEqual(Object.keys(OUTCOME_SIDE_PROFILE).sort());
+  });
 });
 
 describe("[SCN-LDG-035] a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites", () => {
@@ -144,12 +246,10 @@ describe("[SCN-LDG-035] a fitness-function evidence observation discharges only 
     const cited = reconcileEvidenceObligation("SCN-AAA-001", obligation, [observation]);
     const other = reconcileEvidenceObligation("SCN-AAA-002", obligation, [observation]);
 
-    expect(cited.outcome).toBe("satisfied");
-    expect(cited.evidenceObservation).toEqual(observation);
+    expect(cited).not.toHaveProperty("outcome");
+    expect(cited.evidenceObservations).toEqual([{ ...observation, outcome: "satisfied" }]);
 
     expect(other.outcome).toBe("missing");
-    expect(
-      (other as { evidenceObservation?: unknown }).evidenceObservation
-    ).toBeUndefined();
+    expect(other.evidenceObservations).toBeUndefined();
   });
 });

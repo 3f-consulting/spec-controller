@@ -3,6 +3,7 @@ import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
 import { hasBrokenEvidence } from "./ledger.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -20,18 +21,23 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
 
     expect(
       reconciliation.ledger.claimReconciliations.map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ])
-    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]]);
+    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[["SCN-CVT-001"], "failing"]]]]);
 
     const [item] = reconciliation.ledger.claimReconciliations[0]!.qualityCheckReconciliations;
-    expect(item?.evidenceObservation).toMatchObject({
+    expect(item?.evidenceObservations).toEqual([{
       qualityCheck: "fitness",
+      fitnessFunction: "SCN-CVT-001",
       scnId: "SCN-CVT-001",
-    });
+      exists: true,
+      enforcedOverRealSource: true,
+      status: "failed",
+      outcome: "failing",
+    }]);
 
     expect(hasBrokenEvidence(reconciliation.ledger)).toBe(false);
   });

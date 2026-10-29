@@ -238,7 +238,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     );
     const unitOutcomeOf = (scnId: string) =>
       ledger().claimReconciliations
-        .find((row) => row.scnId === scnId)
+        .find((row) => row.claim === scnId)
         ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
 
     it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (scnId) => {

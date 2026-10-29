@@ -4,6 +4,7 @@ import { fitnessObservationsOf, workflowObservationsOf, type RecordedCheckStep }
 import type { Scenario } from "./journal.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
+import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -54,12 +55,12 @@ function reconcileWithRecord() {
 describe("[SCN-LNT-029] a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report", () => {
   it("keeps every uncited check on the unnamed claim's row where the run's step record answers the cited ones", () => {
     const unnamedClaimRows = reconcileWithRecord()
-      .ledger.claimReconciliations.filter((row) => row.scnId === "(unnamed claim)")
+      .ledger.claimReconciliations.filter((row) => row.claim === "(unnamed claim)")
       .map((row) => [
-        row.scnId,
+        row.claim,
         row.kind,
         row.verdict,
-        row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+        lineReadingsOf(row.qualityCheckReconciliations),
       ]);
     expect(unnamedClaimRows).toEqual([
       [
@@ -67,8 +68,8 @@ describe("[SCN-LNT-029] a check step citing no @SCN posts to the unnamed claim, 
         "unnamed-claim",
         "out-of-balance",
         [
-          ["lint:beta", "cites-no-scenario"],
-          ["typecheck", "cites-no-scenario"],
+          [["lint:beta"], "cites-no-scenario"],
+          [["typecheck"], "cites-no-scenario"],
         ],
       ],
     ]);

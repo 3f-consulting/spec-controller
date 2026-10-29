@@ -27,7 +27,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
 
 function byCode(reconciliation: EvidenceReconciliation) {
   return [...reconciliation.ledger.claimReconciliations].sort((a, b) =>
-    String(a.scnId).localeCompare(String(b.scnId))
+    String(a.claim).localeCompare(String(b.claim))
   );
 }
 

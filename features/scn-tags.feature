@@ -43,31 +43,27 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-019
     Scenario: A feature file with no header code whose scenarios carry codes is listed as no-feature-code, and the run reds
 
-  Rule: an @SCN is one account number, and two scenarios carrying it make that account unreconcilable
+  Rule: an @SCN is one account number, and two scenarios carrying it are two claims that cannot reconcile
 
-    THE ACCOUNT IS KEYED BY THE CODE, SO TWO SCENARIOS CARRYING ONE CODE ARE ONE ACCOUNT. A phantom
-    claim's account already exists for a cited code with no scenario behind it; a code carried twice is the
-    mirror, two scenarios behind one account. No evidence observation citing that code can be attributed to either
-    of them, so nothing the account says can be trusted, and every quality check on it reads
-    `duplicate-scn-code`. Each is a reconciling item, so the account is out of balance by the
-    ordinary rule: no new verdict, no precedence. It is not `broken` — the proofs ran; what fails is
-    the attribution.
+    Each scenario is a claim. Two scenarios carrying one code are two claims, each its own Claim
+    Reconciliation under the code, and every quality check each one raises reads `duplicate-scn-code`.
+    No evidence observation citing that code can be attributed to either of them, so it credits
+    neither and posts to the unnamed claim. Each `duplicate-scn-code` is a reconciling item, so each
+    claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `broken` —
+    the proofs ran; what fails is the attribution.
 
     `balance` does not refuse such a corpus as unreadable, so one bad code does not blank the
     whole report. Reported on its account, it reds the run and leaves every other account
     reconciling exactly as it would without it.
 
     @unit @SCN-STG-013
-    Scenario: Two scenarios in one file sharing an @SCN are one account, reading duplicate-scn-code at every quality check
+    Scenario: two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises
 
     @unit @SCN-STG-014
-    Scenario: Two scenarios in different files sharing an @SCN are one account, reading duplicate-scn-code at every quality check
+    Scenario: two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises
 
     @unit @SCN-STG-015
-    Scenario: Scenarios sharing a code but naming disjoint quality checks still never balance
-
-    @unit @SCN-STG-016
-    Scenario: Every evidence observation citing a duplicated code posts to its one account, none dropped, none doubled, none attributed by position
+    Scenario: scenarios sharing a code but naming disjoint quality checks still never balance, on either claim
 
   Rule: an @SCN is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 

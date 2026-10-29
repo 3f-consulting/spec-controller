@@ -1,4 +1,6 @@
+import { isDeepStrictEqual } from "node:util";
 import { describe, it, expect } from "vitest";
+import { linesOf, obligationsOf, observationsOf, reconcilingItemsOf } from "./claimReconciliation.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
@@ -63,25 +65,23 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
     const balance = reconcile(scenarios, evidenceObservations);
 
     const phantomClaimRow = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
-    expect(phantomClaimRow?.scnId).toBe("SCN-AAA-001");
+    expect(phantomClaimRow?.claim).toBe("SCN-AAA-001");
     expect(phantomClaimRow?.verdict).toBe("out-of-balance");
-    expect(phantomClaimRow?.evidenceObligations).toEqual([]);
-    expect(phantomClaimRow?.evidenceObservations).toEqual([observation]);
+    expect(obligationsOf(phantomClaimRow!)).toEqual([]);
+    expect(observationsOf(phantomClaimRow!)).toEqual([{ ...observation, outcome: "cites-unknown-scenario" }]);
     expect(phantomClaimRow?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "fitness",
-        fitnessFunction: REAL_GUARD,
-        outcome: "cites-unknown-scenario",
-        evidenceObservation: observation,
+        evidenceObservations: [{ ...observation, outcome: "cites-unknown-scenario" }],
       },
     ]);
-    expect(phantomClaimRow?.reconcilingItems).toEqual(phantomClaimRow?.qualityCheckReconciliations);
+    expect(reconcilingItemsOf(phantomClaimRow!)).toEqual(phantomClaimRow?.qualityCheckReconciliations.flatMap(linesOf));
     expect(phantomClaimRow?.pendingItems).toEqual([]);
 
     expect(
       balance.claimReconciliations
-        .filter((row) => row.evidenceObservations.includes(observation!))
-        .map((row) => row.scnId)
+        .filter((row) => observationsOf(row).some(({ outcome: _outcome, ...posted }) => isDeepStrictEqual(posted, observation)))
+        .map((row) => row.claim)
     ).toEqual(["SCN-AAA-001"]);
   });
 });
@@ -131,26 +131,31 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     ]);
 
     const balance = reconcile(scenarios, [unitObservation, ...fitnessObservations]);
-    const scenario = balance.claimReconciliations.find((s) => s.scnId === "SCN-AAA-001");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-AAA-001");
 
     expect(scenario?.verdict).toBe("out-of-balance");
 
-    const watermelonItem = {
-      qualityCheck: "fitness",
-      outcome: "watermelon",
-      evidenceObligation: { qualityCheck: "fitness" },
-      evidenceObservation: fitnessObservations[0],
-    };
+    const watermelonObservation = { ...fitnessObservations[0]!, outcome: "watermelon" };
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "unit",
-        outcome: "satisfied",
         evidenceObligation: { qualityCheck: "unit" },
-        evidenceObservation: unitObservation,
+        evidenceObservations: [{ ...unitObservation, outcome: "satisfied" }],
       },
-      watermelonItem,
+      {
+        qualityCheck: "fitness",
+        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObservations: [watermelonObservation],
+      },
     ]);
 
-    expect(scenario?.reconcilingItems).toEqual([watermelonItem]);
+    expect(reconcilingItemsOf(scenario!)).toEqual([
+      {
+        qualityCheck: "fitness",
+        outcome: "watermelon",
+        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObservation: watermelonObservation,
+      },
+    ]);
   });
 });

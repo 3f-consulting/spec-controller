@@ -904,7 +904,7 @@ Feature: spec-controller balance runs standalone
   Rule: balance reads a corpus's scenario codes end to end, and a scenario code error never refuses the corpus
 
     @unit @SCN-CLI-093
-    Scenario: balance over a corpus whose @SCN two scenarios carry exits 1 with the report in full, reconciles every other account, and never refuses the corpus
+    Scenario: balance over a corpus whose @SCN two scenarios carry exits 1 with the report in full, one claim per sharer, reconciles every other account, and never refuses the corpus
 
     @unit @SCN-CLI-094
     Scenario: balance counts a prose mention of a feature part of two or five characters as an excluded @SCN occurrence, and one of one or six characters as none, listing no scenario code error

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
+import { linesOf } from "./claimReconciliation.js";
 import { brokenItemsOf, hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
@@ -28,19 +29,24 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
     const balance = reconcile(scenarios, evidenceObservations);
 
     const row = balance.claimReconciliations.find(
-      (s) => s.scnId === "SCN-LNT-026",
+      (s) => s.claim === "SCN-LNT-026",
     );
     expect(row?.verdict).toBe("out-of-balance");
     expect(
-      row?.qualityCheckReconciliations.filter((item) => item.evidenceObligation !== undefined),
+      row?.qualityCheckReconciliations.flatMap(linesOf),
     ).toEqual([
       {
         qualityCheck: "fitness",
         outcome: "missing",
         evidenceObligation: { qualityCheck: "fitness" },
       },
+      {
+        qualityCheck: "fitness",
+        outcome: "broken",
+        evidenceObservation: { ...evidenceObservations[0], outcome: "broken" },
+      },
     ]);
-    expect(brokenItemsOf(balance)).toMatchObject([
+    expect(brokenItemsOf(balance).flatMap((line) => line.evidenceObservation ?? [])).toMatchObject([
       {
         locator: "features/fitness-functions.feature",
         message: "the run's record says this check's step was skipped",

@@ -1,28 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import type { Ledger, ClaimReconciliation } from "../model.js";
-import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
+import type { Ledger } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario, BehaviouralQualityCheck } from "../model.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-
-function qcr(
-  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
-): ReturnType<typeof makeQualityCheckReconciliation> {
-  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
-  return makeQualityCheckReconciliation({
-    ...fields,
-    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
-      ? { evidenceObligation: { qualityCheck: "unit" } }
-      : {}),
-    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
-      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" } }
-      : {}),
-  });
-}
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
   const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";
@@ -41,44 +25,24 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     return row!;
   };
 
-  const balanceWithBroken = (
-    item: ClaimReconciliation["reconcilingItems"][number]
-  ): Ledger => {
+  const brokenObservation = (
+    qualityCheck: BehaviouralQualityCheck,
+    locator: string,
+    message: string
+  ): EvidenceObservation => ({ qualityCheck, scnId: null, status: "passed", broken: true, locator, message });
+
+  const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-HNS-002", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
-    const observations: EvidenceObservation[] = [
-      {
-        qualityCheck: item.qualityCheck as BehaviouralQualityCheck,
-        scnId: null,
-        status: "passed",
-        broken: true,
-        ...(item.locator !== undefined ? { locator: item.locator } : {}),
-        ...(item.message !== undefined ? { message: item.message } : {}),
-      },
-    ];
-    return reconcile(scenarios, observations);
+    return reconcile(scenarios, [observation]);
   };
 
   let vitestBroken: Ledger;
   let cucumberBroken: Ledger;
   beforeEach(() => {
-    vitestBroken = balanceWithBroken(
-      qcr({
-        qualityCheck: "unit",
-        outcome: "broken",
-        locator: VITEST_LOCATOR,
-        message: VITEST_MESSAGE,
-      }),
-    );
-    cucumberBroken = balanceWithBroken(
-      qcr({
-        qualityCheck: "integration",
-        outcome: "broken",
-        locator: CUCUMBER_LOCATOR,
-        message: CUCUMBER_MESSAGE,
-      }),
-    );
+    vitestBroken = balanceWithBroken(brokenObservation("unit", VITEST_LOCATOR, VITEST_MESSAGE));
+    cucumberBroken = balanceWithBroken(brokenObservation("integration", CUCUMBER_LOCATOR, CUCUMBER_MESSAGE));
   });
 
   it("stamps each run unsound, above the summary views", () => {

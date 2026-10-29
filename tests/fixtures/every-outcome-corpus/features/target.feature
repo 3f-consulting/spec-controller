@@ -3,9 +3,8 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
 
   # Each scenario (plus the citing observations in vitest.json / cucumber.json and the guard
   # wiring in package.json / ci.yml) is chosen so the real `balance` pipeline emits one of the
-  # Outcome members, and together they emit all of them. The @integration arm of @SCN-LDG-030 spawns the real binary over this
-  # directory and asserts every emitted Quality Check Reconciliation's side-presence against
-  # OUTCOME_SIDE_PROFILE. This fixture lives under tests/fixtures/, so this repository's own
+  # Outcome members, and together they emit all of them. A unit test reconciles this directory and
+  # asserts every Reconciliation line of the JSON report it emits against OUTCOME_SIDE_PROFILE. This fixture lives under tests/fixtures/, so this repository's own
   # checks, which scan features/*.feature only, never see it.
 
   @unit @SCN-TOC-001

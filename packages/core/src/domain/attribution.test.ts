@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { attributionOf } from "./attribution.js";
 import { reconcile } from "./evidenceReconciliation.js";
-import { isUnnamedClaim } from "./claimReconciliation.js";
+import { isUnnamedClaim, reconcilingItemsOf } from "./claimReconciliation.js";
 import { unnamedClaimGroupsOf } from "./unnamedClaimGroups.js";
 import type { BehaviouralEvidenceObservation } from "./journal.js";
 
@@ -44,10 +44,12 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
       );
     const unitOutcomeOf = (codes: readonly string[], scnId: string) =>
       ledgerOf(codes)
-        .claimReconciliations.find((row) => row.scnId === scnId)
+        .claimReconciliations.find((row) => row.claim === scnId)
         ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
-    const unnamedClaimGroups = (codes: readonly string[]) =>
-      unnamedClaimGroupsOf(ledgerOf(codes).claimReconciliations.find(isUnnamedClaim)?.reconcilingItems ?? []);
+    const unnamedClaimGroups = (codes: readonly string[]) => {
+      const row = ledgerOf(codes).claimReconciliations.find(isUnnamedClaim);
+      return unnamedClaimGroupsOf(row === undefined ? [] : reconcilingItemsOf(row));
+    };
 
     it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (scnId) => {
       expect(unitOutcomeOf(["SCN-AAA-001", "SCN-AAA-002"], scnId)).toBe("missing");

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -15,7 +16,7 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
     }, resolveTargetRoot({ features: "tests/fixtures/usg/features" }));
 
     const postings = balance.ledger.claimReconciliations.flatMap((row) =>
-      row.evidenceObservations
+      observationsOf(row)
         .filter((o) => o.qualityCheck === "fitness")
         .map((o) => [row.kind, o.fitnessFunction])
     );

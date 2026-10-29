@@ -1,4 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
+import { observationsOf } from "@3f-consulting/spec-controller-core/internal";
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
@@ -12,6 +13,8 @@ import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
 import { reRender } from "../cli-balance/reRender.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 import { temporaryDirectory, test } from "../temporaryDirectory.test-utils.js";
+
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
@@ -316,9 +319,9 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
         ci: target,
         vitest: join(target, "vitest.json"),
       }, resolveTargetRoot({ features: join(target, "features") }));
-      const scenario = balance.ledger.claimReconciliations.find((s) => s.scnId === "SCN-WGT-001");
+      const scenario = balance.ledger.claimReconciliations.find((s) => s.claim === "SCN-WGT-001");
 
-      expect(scenario?.evidenceObservations).toEqual([
+      expect(observationsOf(scenario!).map(postedOf)).toEqual([
         { qualityCheck: "unit", scnId: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[SCN-WGT-001] the widget is proven works" },
       ]);
       expect(JSON.stringify(balance)).not.toContain(target);

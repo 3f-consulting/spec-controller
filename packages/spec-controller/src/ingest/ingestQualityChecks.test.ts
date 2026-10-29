@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { observationsOf, reconcilingItemsOf } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runReconcile } from "./corpusReading.test-utils.js";
@@ -28,12 +29,12 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
         packageJson: join(root, "package.json"),
         ci: root,
       }, resolveTargetRoot({ features: join(root, "features") }));
-      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.claim === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
-      expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);
+      expect(reconcilingItemsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
-      expect(scenario("SCN-DFR-002")?.reconcilingItems).toEqual([
+      expect(reconcilingItemsOf(scenario("SCN-DFR-002")!)).toEqual([
         { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
       ]);
     }
@@ -49,25 +50,25 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
         ci: root,
         cucumber: join(root, "cucumber.json"),
       }, resolveTargetRoot({ features: join(root, "features") }));
-      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.scnId === scnId);
+      const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.claim === scnId);
 
       expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
-      expect(scenario("SCN-DFR-001")?.reconcilingItems).toEqual([]);
-      expect(scenario("SCN-DFR-001")?.evidenceObservations).toEqual([]);
+      expect(reconcilingItemsOf(scenario("SCN-DFR-001")!)).toEqual([]);
+      expect(observationsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
-      expect(scenario("SCN-DFR-002")?.reconcilingItems).toEqual([]);
+      expect(reconcilingItemsOf(scenario("SCN-DFR-002")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.qualityCheckReconciliations).toEqual([
         {
           qualityCheck: "integration",
-          outcome: "satisfied",
           evidenceObligation: { qualityCheck: "integration" },
-          evidenceObservation: {
+          evidenceObservations: [{
             qualityCheck: "integration",
             scnId: "SCN-DFR-002",
             status: "passed",
             locator: "features/deferral.feature",
             testName: "its untagged twin",
-          },
+            outcome: "satisfied",
+          }],
         },
       ]);
     }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
+import { linesOf } from "./claimReconciliation.js";
 import { fitnessObservationsOf } from "./fitnessReconciliation.js";
 import type { FitnessEvidenceObservation, Scenario } from "./journal.js";
 
@@ -18,7 +19,7 @@ const citingStep: FitnessEvidenceObservation = {
 function rowWith(recordedStep: string) {
   const observations = fitnessObservationsOf([citingStep], [{ citedScn: recordedStep, report: "succeeded" }]);
   return evidenceReconciliationOf(scenarios, observations, [], false, true).ledger.claimReconciliations.find(
-    (row) => row.scnId === "SCN-AAA-001"
+    (row) => row.claim === "SCN-AAA-001"
   );
 }
 
@@ -28,7 +29,7 @@ describe("[SCN-LNT-020] a cited step the run's own record never recorded leaves 
     ["reads satisfied where the record carried its step and says it succeeded", "SCN-AAA-001", "satisfied", "balanced"],
   ])("%s", (_title, recordedStep, outcome, verdict) => {
     const row = rowWith(recordedStep);
-    expect(row?.qualityCheckReconciliations.map((item) => item.outcome)).toEqual([outcome]);
+    expect(row?.qualityCheckReconciliations.flatMap(linesOf).map((line) => line.outcome)).toEqual([outcome]);
     expect(row?.verdict).toBe(verdict);
   });
 });

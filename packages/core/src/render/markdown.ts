@@ -1,14 +1,16 @@
 import type {
   ClaimReconciliation,
+  ReconciliationLine,
   PendingItem,
   EvidenceStatus,
+  EvidenceObservation,
 } from "../model.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
+import { isFitnessObservation } from "../domain/journal.js";
 import {
   untaggedScenarioId,
-  scenariosBehindAccountsOf,
   type SharedScnCode,
   type UntaggedScenario,
 } from "../domain/corpusCounts.js";
@@ -20,6 +22,8 @@ import {
   isOutOfBalance,
   outOfBalanceCountOf,
   carriesNoScnCode,
+  reconcilingItemsOf,
+  linesOf,
 } from "../domain/claimReconciliation.js";
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
@@ -41,27 +45,32 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { remarkWordsOf } from "./remarkWords.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
-function renderItem(item: ClaimReconciliation["reconcilingItems"][number]): string {
-  const sentence = OUTCOME_DESCRIPTION[item.outcome];
-  if (item.outcome === "both-missing" || item.outcome === "no-scn-code" || item.qualityCheck === undefined) {
+function renderLine(line: ReconciliationLine): string {
+  const sentence = `${OUTCOME_DESCRIPTION[line.outcome]}${scenarioClauseOf(line)}`;
+  if (line.outcome === "both-missing" || line.outcome === "no-scn-code" || line.qualityCheck === undefined) {
     return sentence;
   }
-  return `${item.qualityCheck}: ${sentence}${observationSuffix(item) ?? ""}`;
+  const head = `${line.qualityCheck}: ${sentence}`;
+  const observation = line.evidenceObservation;
+  if (observation === undefined || !isObservationOnly(line.outcome)) return head;
+  return `${head}${line.outcome === "broken" ? brokenSuffix(observation) : observationSuffix(observation)}`;
 }
 
-function observationSuffix(item: ClaimReconciliation["reconcilingItems"][number]): string | undefined {
-  const observationOnly = isObservationOnly(item.outcome);
-  const remark = remarkWordsOf(item);
-  if (item.outcome === "broken") {
-    const where = [item.locator, remark === undefined ? undefined : headlineOf(remark)]
-      .filter((part): part is string => part !== undefined && part.length > 0)
-      .join(": ");
-    return where.length > 0 ? ` (${cellSafe(where)})` : undefined;
-  }
-  if (!observationOnly) return undefined;
-  const where = item.fitnessFunction || item.locator;
-  const said = item.fitnessFunction || remark === undefined ? "" : `: ${cellSafe(headlineOf(remark))}`;
-  return `${where === undefined ? "" : ` (${where}${said})`}${resultOf(item)}`;
+function scenarioClauseOf({ scenario }: ReconciliationLine): string {
+  return scenario === undefined ? "" : ` — ${CORE_MESSAGES[CoreMessage.SharedScnCodeScenario](scenario.feature, scenario.title)}`;
+}
+
+function brokenSuffix(o: EvidenceObservation): string {
+  const remark = remarkWordsOf(o);
+  const where = [o.locator, remark === undefined ? undefined : headlineOf(remark)]
+    .filter((part): part is string => part !== undefined && part.length > 0)
+    .join(": ");
+  return where.length > 0 ? ` (${cellSafe(where)})` : "";
+}
+
+function observationSuffix(o: EvidenceObservation): string {
+  const where = isFitnessObservation(o) ? o.fitnessFunction || undefined : o.locator;
+  return `${where === undefined ? "" : ` (${where})`}${resultOf(o)}`;
 }
 
 const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
@@ -69,9 +78,8 @@ const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
   failed: CoreMessage.ObservationFailed,
 };
 
-function resultOf(item: ClaimReconciliation["reconcilingItems"][number]): string {
-  const status = item.evidenceObservation?.status;
-  return status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[status]]}`;
+function resultOf(o: EvidenceObservation): string {
+  return o.status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[o.status]]}`;
 }
 
 function headlineOf(message: string): string {
@@ -104,13 +112,13 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
 }
 
-function renderUnnamedClaimItems(items: ClaimReconciliation["reconcilingItems"]): string[] {
-  const broken = items.filter((item) => item.outcome === "broken");
-  return [...broken.map(renderItem), ...unnamedClaimGroupsOf(items).map(renderUnnamedClaimGroup)];
+function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[] {
+  const broken = lines.filter((line) => line.outcome === "broken");
+  return [...broken.map(renderLine), ...unnamedClaimGroupsOf(lines).map(renderUnnamedClaimGroup)];
 }
 
 function renderRowExceptions(s: ClaimReconciliation): string {
-  const items = isUnnamedClaim(s) ? renderUnnamedClaimItems(s.reconcilingItems) : s.reconcilingItems.map(renderItem);
+  const items = isUnnamedClaim(s) ? renderUnnamedClaimItems(reconcilingItemsOf(s)) : reconcilingItemsOf(s).map(renderLine);
   const reconciling = items.join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
@@ -123,10 +131,10 @@ const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitl
 
 const runIntegritySection: SectionEmitter = (report) => {
   if (!hasBrokenEvidence({ claimReconciliations: report.ledger.claimReconciliations })) return [];
-  const brokenItems = brokenItemsOf({
+  const brokenObservations = brokenItemsOf({
     claimReconciliations: report.ledger.claimReconciliations,
-  });
-  const count = brokenItems.length;
+  }).flatMap((line) => line.evidenceObservation ?? []);
+  const count = brokenObservations.length;
   const proofs =
     count === 1
       ? CORE_MESSAGES[CoreMessage.OneProofNeverRan]
@@ -137,7 +145,7 @@ const runIntegritySection: SectionEmitter = (report) => {
     CORE_MESSAGES[CoreMessage.RunUnsound](proofs),
     "",
   ];
-  for (const item of brokenItems) {
+  for (const item of brokenObservations) {
     const locator = item.locator ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
     lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
     lines.push("");
@@ -206,7 +214,7 @@ const fitnessSection: SectionEmitter = (report) => {
     claimReconciliations: report.ledger.claimReconciliations,
   }).map(
     ({ scnId, reconciliation: r }) =>
-      `| ${scnId} | ${OUTCOME_DESCRIPTION[r.outcome]} |`
+      `| ${scnId} | ${linesOf(r).map((line) => OUTCOME_DESCRIPTION[line.outcome]).join("; ")} |`
   );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.fitness;
@@ -260,9 +268,9 @@ function outOfBalanceByFeature(
   for (const s of scenarios) {
     if (!isOutOfBalance(s)) continue;
     const noScnCode = carriesNoScnCode(s);
-    const key = (noScnCode ? featureOf.get(s.scnId) : featureCodeOf(s.scnId)) ?? s.scnId;
+    const key = (noScnCode ? featureOf.get(s.claim) : featureCodeOf(s.claim)) ?? s.claim;
     const group = groups.get(key) ?? { ids: [], noScnCode: 0 };
-    groups.set(key, noScnCode ? { ...group, noScnCode: group.noScnCode + 1 } : { ...group, ids: [...group.ids, s.scnId] });
+    groups.set(key, noScnCode ? { ...group, noScnCode: group.noScnCode + 1 } : { ...group, ids: [...group.ids, s.claim] });
   }
   return groups;
 }
@@ -352,7 +360,7 @@ function censusLines(codes: RenderInput["scenarioCodes"], accounts: number): str
 function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number): string[] {
   if (shared.length === 0) return [];
   return [
-    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenariosBehindAccountsOf(accounts, shared), accounts, shared.length)}`,
+    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](accounts, accounts, shared.length)}`,
     ...shared.map(
       (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
     ),
@@ -374,7 +382,7 @@ function ledgerTableLines(
     const cells = columns.map((col) => evidenceCell(s, col));
     const items = renderRowExceptions(s);
     lines.push(
-      `| ${[s.scnId, ...cells, s.verdict, items].join(" | ")} |`
+      `| ${[s.claim, ...cells, s.verdict, items].join(" | ")} |`
     );
   }
   return lines;
