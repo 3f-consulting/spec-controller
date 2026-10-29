@@ -5,6 +5,7 @@ import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createGenerator } from "ts-json-schema-generator";
 import { thirdPartyNotices } from "./src/thirdPartyNotices.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -68,4 +69,18 @@ const bundleTheCommand = async () => {
   writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), thirdPartyNotices(packages, wording));
 };
 
+// The JSON report is the report type serialised as it is, so its schema is generated from that type and never written by hand.
+const writeTheReportSchema = () => {
+  const core = resolve(here, "../core");
+  const schema = createGenerator({
+    path: join(core, "src", "domain", "renderInput.ts"),
+    tsconfig: join(core, "tsconfig.build.json"),
+    type: "RenderInput",
+    additionalProperties: false,
+    skipTypeCheck: true,
+  }).createSchema("RenderInput");
+  writeFileSync(join(dist, "spec-reconciliation.schema.json"), `${JSON.stringify(schema, null, 2)}\n`);
+};
+
 await bundleTheCommand();
+writeTheReportSchema();

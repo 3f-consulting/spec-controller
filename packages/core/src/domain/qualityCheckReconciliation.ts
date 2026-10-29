@@ -30,6 +30,7 @@ interface QualityCheckReconciliationFields {
 }
 
 export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
+  /** @hidden */
   readonly [qualityCheckReconciliationBrand]: typeof qualityCheckReconciliationBrand;
 };
 

@@ -219,3 +219,15 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-018
     Scenario: the JSON report's step accounting states whether every step the run read is accounted for, as the Markdown's step accounting does
+
+  Rule: the JSON report's structure is stated by a JSON Schema the published package ships
+
+    The published package carries spec-reconciliation.schema.json, which states every key the JSON report may carry. A report balance writes validates against it with a JSON Schema validator. A report missing a key the schema requires, or carrying a key it does not name, does not.
+
+    @e2e @SCN-RMD-019
+    Scenario: a real balance run's JSON report validates against the JSON Schema the package ships, and one missing a required key or carrying an unnamed one does not
+      Given a target whose tests that cite no scenario ran under Vitest and under Cucumber
+      When the target's evidence is reconciled and saved as the JSON report
+      Then the JSON report validates against the JSON Schema the published package ships
+      And the JSON report with its ledger removed is refused because the schema requires the ledger
+      And the JSON report with a key the schema does not name added is refused because the schema does not name that key
