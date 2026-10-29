@@ -761,7 +761,7 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 
 | Row or outcome | The Markdown prints | Note |
 |---|---|---|
-| unnamed claim | Claim Reconciliation(s) for evidence observations citing no scenario | it also holds evidence that never ran (`broken`) |
+| unnamed claim | Claim Reconciliation(s) for evidence observations citing no scenario | it also holds evidence that never ran (`broken`) and names no claim; broken evidence that names a scenario sits on that scenario's row |
 | phantom claim | Claim Reconciliation(s) for cited scenario ids with no real scenario | |
 | `missing` | Evidence Observation is missing | |
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
