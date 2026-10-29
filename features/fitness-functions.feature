@@ -111,7 +111,7 @@ Feature: The fitness functions this repository carries, one scenario per check
     Scenario: no file in the tree is more than fifteen per cent comment lines
 
     @fitness @SCN-FIT-075
-    Scenario: no comment, description or current-state document in the tree carries a ticket ID or a scenario code, or narrates how the product used to be
+    Scenario: no comment in the source code or its workflows' configuration, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
 
   Rule: every Given, When and Then in the corpus is one Cucumber runs
 

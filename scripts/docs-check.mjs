@@ -2,13 +2,21 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 // Every documentation gate CI runs, for a push CI skips: each docs: script is the one definition its CI step also runs.
-// The probe shows the ticket-ID rule fires: its line holds only a ticket ID, joined at run time so the tree holds none.
+// The probes show each rule .vale.ini turns on fires: each line breaks one rule, and Vale must name that rule.
+// Each line's tokens are joined at run time, so the tree holds none of them.
 const { scripts } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const gates = Object.keys(scripts).filter((name) => name.startsWith("docs:") && name !== "docs:check");
 
-const ticketId = ["3F", "1234"].join("-");
-const probe = spawnSync("vale", ["--ext=.md", "--config=.vale.ini"], { input: `${ticketId}\n`, encoding: "utf8" });
-const failed = probe.status === 1 ? [] : ["the Vale firing probe: Vale found no ticket ID in a line that carries one"];
+const probes = [
+  ["Identifiers.TicketId", ["3F", "1234"].join("-")],
+  ["Identifiers.ScenarioCode", ["SCN", "ABC", "001"].join("-")],
+  ["History.Narrated", ["used", "to"].join(" ")],
+];
+const failed = [];
+for (const [rule, line] of probes) {
+  const probe = spawnSync("vale", ["--ext=.md", "--config=.vale.ini", "--output=line"], { input: `${line}\n`, encoding: "utf8" });
+  if (probe.status !== 1 || !probe.stdout.includes(`:${rule}:`)) failed.push(`the Vale firing probe: ${rule} did not fire on a line that breaks it`);
+}
 
 for (const gate of gates) {
   console.log(`\n> pnpm ${gate}`);
@@ -19,4 +27,4 @@ if (failed.length > 0) {
   console.error(`\ndocs:check failed: ${failed.join(", ")}`);
   process.exit(1);
 }
-console.log(`\ndocs:check passed: the Vale firing probe and ${gates.length} gates`);
+console.log(`\ndocs:check passed: the Vale firing probes for ${probes.length} rules and ${gates.length} gates`);
