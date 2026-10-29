@@ -5,7 +5,7 @@ import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { engineBundled, noticeHeader } from "./src/thirdPartyNotices.ts";
+import { thirdPartyNotices } from "./src/thirdPartyNotices.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "dist");
@@ -53,25 +53,19 @@ const bundleTheCommand = async () => {
     const dir = packageOf(resolve(input));
     if (dir !== undefined && dir !== here) packageDirs.add(dir);
   }
-  const carried = engineBundled([...packageDirs].map((dir) => manifestOf(dir).name));
-  if (carried.kind === "refused") {
-    throw new Error(`The engine, ${carried.engine}, is not among the packages the command's bundle carries, so the command would ship without it and without its licence notice.`);
-  }
-  const notices = [...packageDirs].sort().map((dir) => {
+  const packages = [...packageDirs].map((dir) => {
     const { name, version, license, author } = manifestOf(dir);
     const declared = license ?? "no licence declared";
     const files = licenceFiles(dir).length > 0 ? licenceFiles(dir) : inheritedLicence(dir);
     const authorName = typeof author === "string" ? author : author?.name;
     const texts = files.length > 0 ? files.map((f) => readFileSync(f, "utf8").trim()) : [authorName === undefined ? declared : `${declared}, by ${authorName}`];
-    const header = noticeHeader({ directory: dir, installed: installed(dir), name, version, license: declared });
-    if (header.kind === "refused") {
-      throw new Error(`The bundled package at ${header.directory} has no ${header.field} as text in its package.json, so its licence notice cannot be written.`);
-    }
-    return [header.header, ...texts].join("\n\n");
+    return { directory: dir, installed: installed(dir), name, version, license: declared, texts };
   });
-  // Not named like a licence: pnpm pack takes a LICENSE* or NOTICE* file for the package's own licence, and leaves the
-  // repository's LICENSE out.
-  writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n");
+  const wording = {
+    field: (directory, field) => `The bundled package at ${directory} gives no ${field} in its package.json, or one that is empty or not text, so its licence notice cannot be written.`,
+    engine: (engine) => `The engine, ${engine}, is not among the packages the command's bundle carries, so the command would ship without it and without its licence notice.`,
+  };
+  writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), thirdPartyNotices(packages, wording));
 };
 
 await bundleTheCommand();

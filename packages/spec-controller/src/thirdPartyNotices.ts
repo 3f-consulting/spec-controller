@@ -1,36 +1,41 @@
-export type BundledManifest = {
+export type BundledPackage = {
   readonly directory: string;
   readonly installed: boolean;
   readonly name: unknown;
   readonly version: unknown;
   readonly license: unknown;
+  readonly texts: readonly string[];
 };
 
 type NoticeField = "name" | "version" | "license";
 
-export type NoticeHeader =
-  | { readonly kind: "header"; readonly header: string }
-  | { readonly kind: "refused"; readonly directory: string; readonly field: NoticeField };
-
-const isText = (value: unknown): value is string => typeof value === "string";
-
-// A workspace package's version is stamped at release, after the build, so the tree's version would misname it.
-export const noticeHeader = ({ directory, installed, name, version, license }: BundledManifest): NoticeHeader => {
-  const refused = (field: NoticeField): NoticeHeader => ({ kind: "refused", directory, field });
-  if (!isText(name)) return refused("name");
-  if (!isText(license)) return refused("license");
-  if (!installed) return { kind: "header", header: `${name} (${license})` };
-  if (!isText(version)) return refused("version");
-  return { kind: "header", header: `${name}@${version} (${license})` };
+export type NoticeWording = {
+  readonly field: (directory: string, field: NoticeField) => string;
+  readonly engine: (engine: string) => string;
 };
 
-export type BundledEngine =
-  | { readonly kind: "bundled" }
-  | { readonly kind: "refused"; readonly engine: string };
+const isText = (value: unknown): value is string => typeof value === "string" && /\S/.test(value);
+
+// A workspace package's version is stamped at release, after the build, so the tree's version would misname it.
+const noticeHeader = ({ directory, installed, name, version, license }: BundledPackage, wording: NoticeWording): string => {
+  const refuse = (field: NoticeField): never => {
+    throw new Error(wording.field(directory, field));
+  };
+  if (!isText(name)) return refuse("name");
+  if (!isText(license)) return refuse("license");
+  if (!installed) return `${name} (${license})`;
+  if (!isText(version)) return refuse("version");
+  return `${name}@${version} (${license})`;
+};
 
 const engine = "@3f-consulting/spec-controller-core";
 
 // Inside the repository the workspace resolves the engine at run time, so a bundle without it passes every test and
 // breaks only the published command.
-export const engineBundled = (names: readonly unknown[]): BundledEngine =>
-  names.includes(engine) ? { kind: "bundled" } : { kind: "refused", engine };
+export const thirdPartyNotices = (packages: readonly BundledPackage[], wording: NoticeWording): string => {
+  const notices = [...packages]
+    .sort((a, b) => (a.directory < b.directory ? -1 : 1))
+    .map((bundled) => [noticeHeader(bundled, wording), ...bundled.texts].join("\n\n"));
+  if (!packages.some(({ name }) => name === engine)) throw new Error(wording.engine(engine));
+  return notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n";
+};
