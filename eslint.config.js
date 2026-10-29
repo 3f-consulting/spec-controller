@@ -209,6 +209,14 @@ const DOMAIN_TEST_SELECTORS = [
 
 const PROSE = ["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"];
 
+// A files pattern that matches nothing lints nothing, and ESLint says nothing about it.
+const COMMAND_MANIFEST = "packages/spec-controller/package.json";
+if (!existsSync(new URL(COMMAND_MANIFEST, import.meta.url))) {
+  throw new Error(
+    `No command manifest found at ${COMMAND_MANIFEST}, so the no-runtime-dependency rule would check nothing.`,
+  );
+}
+
 export default [
   { ignores: ["**/dist/**", ".stryker-tmp/**", "**/node_modules/**"] },
 
@@ -500,7 +508,7 @@ export default [
   },
 
   {
-    files: ["packages/spec-controller/package.json"],
+    files: [COMMAND_MANIFEST],
     plugins: { json },
     language: "json/json",
     rules: {
