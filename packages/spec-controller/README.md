@@ -2,9 +2,9 @@
 
 **One command, `balance`, that checks the behaviour your scenarios name against the evidence that actually ran.**
 
-You give it your Gherkin scenarios and the reports your tools already write: a Vitest report, a Cucumber report, and your CI run's own record of what its steps did. It prints one table that shows which scenarios have living evidence, which do not, and which evidence ran that no scenario asked for.
+You give it your Gherkin scenarios and the reports your tools already write: a Vitest report, a Cucumber report, and your CI run's own record of what its steps did. It prints one table showing which scenarios have living evidence, which do not, and which evidence ran that no scenario asked for.
 
-It runs nothing itself. It only reads what your pipeline already wrote.
+It runs nothing itself; it only reads what your pipeline wrote.
 
 Requires Node ≥ 22. ESM only.
 
@@ -28,7 +28,7 @@ Point it at your scenarios and nothing else:
 spec-controller balance --features ./features
 ```
 
-Every scenario gets a row, whether or not any evidence exists for it. On this first run you have supplied no reports, so every scenario that names evidence reads **missing** and the run is out-of-balance. That is how the tool works, not a fault in your repository: it starts from what you specified, not from what a tool happened to find, and no input makes silence the right answer.
+Every scenario gets a row, whether or not any evidence exists for it. You have supplied no reports, so every scenario that names evidence reads **missing** and the run is out-of-balance. That is by design, not a fault in your repository: the tool starts from what you specified, not from what a tool happened to find, and no input makes silence the right answer.
 
 **`balance` fails your build by default.** An out-of-balance run exits `1`, so the run above reds any pipeline you put it in. Two tools it sits beside do the opposite: Stryker's `thresholds.break` defaults to `null` (*"never let your build fail"*), and the Sonar scanner exits `0` whatever its quality gate says unless you set `sonar.qualitygate.wait`. Both make you opt in to gating. `balance` makes you opt out.
 
@@ -43,9 +43,9 @@ spec-controller balance --features ./features --vitest ./vitest-report.json --ex
 The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status changes:
 
 - Out-of-balance and scenario code errors (`1`), and pending under `--strict` (`3`), exit `0`.
-- Usage (`2`), unsound (`4`), nothing to reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Each means the run could not reach a verdict at all, and a flag that suppresses verdicts does not suppress that.
+- Usage (`2`), unsound (`4`), nothing to reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Each means the run could not reach a verdict, and a flag that suppresses verdicts does not suppress that.
 
-Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted, and they leave nothing in the command to show the gate is off.
+Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted, and leave nothing in the command to show the gate is off.
 
 ### Give it the evidence
 
@@ -72,7 +72,7 @@ A scenario tagged `@unit` names an obligation: a unit test must exist and pass. 
 
 The whole report is written before the exit code is set, so a failing run still tells you why.
 
-**Design your pipeline for new codes.** The list is open at the top. A state that is none of the above gets a **new** code rather than being folded into the nearest one; the highest is `6`. So **treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. Matching `1` exactly is not affected when a code is added. Treating any non-zero code as a red build is already correct, only less precise about why.
+**Design your pipeline for new codes.** The list is open at the top: a state that is none of the above gets a **new** code, not the nearest existing one. The highest is `6`. **Treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. Matching `1` exactly is not affected when a code is added. Treating any non-zero code as a red build is correct, only less precise about why.
 
 **Node's default exit code is never one of these.** A run that cannot reconcile ends on one of its own codes, never by falling out of the process: a crash that exits `1` would look, by status, exactly like an honest disagreement.
 
@@ -107,7 +107,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-`--format` can be repeated and takes an optional `:<path>`. On GitHub Actions, writing Markdown to `$GITHUB_STEP_SUMMARY` puts the reconciliation on the run's summary page. The report is a table, and that is the channel GitHub provides for one. No action, no plugin, no permission.
+`--format` can be repeated and takes an optional `:<path>`. On GitHub Actions, writing Markdown to `$GITHUB_STEP_SUMMARY` puts the reconciliation on the run's summary page, the channel GitHub provides for a table. No action, no plugin, no permission.
 
 `spec-controller balance --help` lists every flag, one line each.
 

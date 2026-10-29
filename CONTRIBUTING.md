@@ -6,21 +6,20 @@ You need Node ≥ 22 and pnpm.
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm build       # both packages
 pnpm typecheck
 pnpm test        # unit tests (Vitest)
 pnpm cucumber    # integration and end-to-end scenarios (Cucumber)
 ```
 
-CI runs more than these, including mutation testing, the lint gates and the reconciliation of this repository's own scenarios. [`.github/workflows/ci.yml`](.github/workflows/ci.yml) is the full list.
-
 ## Make a change
 
 Open a pull request against `main`. It merges when CI is green.
 
-A helper shared by more than one unit test file goes in a `*.test-utils.ts` file beside them, never copied into each. No check finds a copied helper; review does.
+Put a helper that more than one unit test file uses in a `*.test-utils.ts` file beside them. Do not copy it into each file. No check finds a copied helper; review does.
 
-A push to `main` that changes only [`doc/`](doc/), [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) or [`LICENSE`](LICENSE) runs no CI, so run `pnpm docs:check` before making one. It runs every documentation check CI runs, each from the same package script, and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installs.
+Before a change that touches only [`doc/`](doc/), [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) or [`LICENSE`](LICENSE), run `pnpm docs:check`. It runs every documentation check and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installs.
 
 ## Report a problem
 
-Open an issue at https://github.com/3f-consulting/spec-controller/issues. Say what you ran, what you expected and what happened, and attach the report if `balance` produced one.
+Open an issue at https://github.com/3f-consulting/spec-controller/issues. Say what you ran, what you expected and what happened. If `balance` produced a report, attach it.
