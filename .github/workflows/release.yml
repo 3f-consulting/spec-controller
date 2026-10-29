@@ -14,8 +14,28 @@ concurrency:
 permissions: {}
 
 jobs:
-  release:
+  tip:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      current: ${{ steps.tip.outputs.current }}
+    timeout-minutes: 5
+    steps:
+      # A re-run of an older commit's CI would otherwise publish that commit's tree as latest, over every newer change.
+      - name: Publish only main's tip
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          tip="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [ "$tip" = "$HEAD_SHA" ]; then echo current=true >> "$GITHUB_OUTPUT"; else echo "CI ran on $HEAD_SHA, but main's tip is $tip: publishing nothing; the tip's own CI run publishes"; echo current=false >> "$GITHUB_OUTPUT"; fi
+
+  release:
+    needs: tip
+    if: needs.tip.outputs.current == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -53,6 +73,7 @@ jobs:
 
       - name: Stamp the next counter version on both packages
         id: counter
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -60,9 +81,11 @@ jobs:
           prefix="${base%.*}."
           n="$(
             {
-              npm view @3f-consulting/spec-controller-core versions --json &&
-              npm view spec-controller versions --json &&
-              gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --jq '[.[].ref | ltrimstr("refs/tags/v")]'
+              {
+                npm view @3f-consulting/spec-controller-core versions --json &&
+                npm view spec-controller versions --json &&
+                gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --jq '[.[].ref | ltrimstr("refs/tags/v")]'
+              } || { echo "could not read the published versions from registry.npmjs.org and the repository's tags" >&2; exit 1; }
             } | jq -r 'if type == "array" then .[] else . end' \
               | awk -v p="$prefix" 'index($0, p) == 1 { s = substr($0, length(p) + 1); if (s ~ /^[0-9]+$/) print s }' \
               | sort -n | tail -1
