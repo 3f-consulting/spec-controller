@@ -172,9 +172,8 @@ Three measurable facts decide whether it works:
   npmjs.com naming the org, this repository, and `release.yml`.
 
 **No provenance attestation is produced, and that is not a misconfiguration.** npm enables
-provenance only when the id-token says the repository is public. This repository is private, so
-none appears. Attestations will appear by themselves when the repository becomes public, with no
-edit here.
+provenance only when the id-token says the repository is public. While the repository is private,
+none appears, and once it is public they appear with no edit here.
 
 ---
 

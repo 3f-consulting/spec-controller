@@ -242,8 +242,8 @@ The agent has been caught. Claude Code once re-pointed two live tests at scenari
 
 ## The library
 
-The reconciliation engine ships separately as **`@3f-consulting/spec-controller-core`**: the same logic, pure, with no CLI and no I/O.
+The reconciliation engine ships separately as **`@3f-consulting/spec-controller-core`**: the same logic, pure, with no CLI and no I/O. Its README is [`packages/core/README.md`](./packages/core/README.md).
 
-## License
+## Licence
 
 MIT, see [`LICENSE`](./LICENSE). © 2026 3F Consulting Ltd.
