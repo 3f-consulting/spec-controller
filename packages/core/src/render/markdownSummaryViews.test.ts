@@ -197,7 +197,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   });
 
   it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
-    const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [] }, ctx, publishedExitCodeOf);
+    const md = renderMarkdown({ ...__er(reconciliationFixture), scenarioCodeErrors: [], scenarioCodePopulation: { featureFiles: 1, featureCodes: 1 } }, ctx, publishedExitCodeOf);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections).toEqual([
       "## Run provenance",

@@ -12,7 +12,7 @@ export interface InheritedCodeRun {
   status: number | null;
   report: {
     ledger: { claimReconciliations: ClaimReconciliation[] };
-    evidenceObligations: { untaggedScenarios: { feature: string; scenario: string }[] };
+    scenarioCodes: { untaggedScenarios: { feature: string; scenario: string }[] };
   };
 }
 
@@ -59,7 +59,7 @@ export interface GrammarRow {
 
 export interface GrammarRun {
   status: number;
-  report: { ledger: { claimReconciliations: GrammarRow[] }; scenarioCodeErrors?: unknown[] };
+  report: { ledger: { claimReconciliations: GrammarRow[] }; errors?: { scenarioCodes?: unknown[] } };
 }
 
 export interface RoomCommand {

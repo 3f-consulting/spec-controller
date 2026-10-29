@@ -10,8 +10,10 @@ import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { reportLedger } from "./renderInput.test-utils.js";
-import { __er } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import { __er, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
+import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,
@@ -35,14 +37,65 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     const report = assembleRenderInput(judged, ctx, evidenceObligations) as unknown as Record<string, unknown>;
     expect(Object.keys(report)).toEqual([
       "runProvenance",
+      "scenarioCodes",
       "summary",
       "ledger",
-      "scenarioCodeErrors",
-      "scenarioCodePopulation",
-      "evidenceObligations",
     ]);
-    expect(report.scenarioCodePopulation).toEqual({ featureFiles: 2, featureCodes: 1 });
+    expect(report.scenarioCodes).toEqual({
+      featureFiles: 2,
+      featureCodes: 1,
+      excludedOccurrences: 3,
+      untaggedScenarios: [],
+    });
     expect(report).not.toHaveProperty("warnings");
+  });
+
+  it("states each fact once: the faults only under errors and the corpus's facts only under scenarioCodes", () => {
+    const features = parsedFeatures(
+      [
+        "Feature: uncoded\n\n  @unit @SCN-FIX-001\n  Scenario: one\n    Given a thing\n\n  @unit @SCN-FIX-001\n  Scenario: two\n    Given a thing\n",
+      ],
+      ["uncoded.feature"]
+    );
+    const judged = evidenceReconciliationFromSources({
+      features,
+      packageJson: {
+        scripts: { test: "vitest run", lint: "eslint ." },
+        specController: {
+          runners: { unit: "vitest", lint: "eslint" },
+          notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install", "ci.yml:quality:Deploy"],
+          deferralTags: { a: 1 },
+          zzz: true,
+        },
+      } as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"],
+      ciWorkflows: parsedWorkflows([unitTestsAndLintCi], ["ci.yml"]),
+      behaviouralObservations: [],
+      deferralTags: [],
+    });
+    const report = assembleRenderInput(judged, ctx, corpusCountsOfFeatures(features)) as unknown as Record<
+      string,
+      unknown
+    >;
+    const errors = report.errors as { scenarioCodes: unknown; configuration: Record<string, unknown> };
+    expect(Object.keys(errors)).toEqual(["scenarioCodes", "configuration"]);
+    expect(Object.keys(errors.configuration)).toEqual([
+      "keysNotRead",
+      "ofWrongKind",
+      "runnerKeysNotATier",
+      "nonChecksMatchingNoStep",
+    ]);
+    expect(report.scenarioCodes).toHaveProperty("sharedScnCodes");
+    for (const oldPlace of ["scenarioCodeErrors", "scenarioCodePopulation", "evidenceObligations"]) {
+      expect(report).not.toHaveProperty(oldPlace);
+    }
+    for (const oldPlace of [
+      "configurationKeysNotRead",
+      "configurationOfWrongKind",
+      "runnerKeysNotATier",
+      "nonChecksMatchingNoStep",
+    ]) {
+      expect(report.summary).not.toHaveProperty(oldPlace);
+    }
   });
 
   it("renames the provenance section to runProvenance carrying the run facts", () => {

@@ -369,9 +369,9 @@ When("balance is asked to reconcile that corpus", function (this: SpecController
 
 Then("the reconciliation names each of those scenarios by its feature file's path under the corpus", function (this: SpecControllerWorld) {
   assert.ok(this.sameNameJson, "the corpus was not reconciled");
-  const obligations = this.sameNameJson["evidenceObligations"] as { untaggedScenarios: { feature: string; scenario: string }[] };
+  const scenarioCodes = this.sameNameJson["scenarioCodes"] as { untaggedScenarios: { feature: string; scenario: string }[] };
   assert.deepEqual(
-    obligations.untaggedScenarios,
+    scenarioCodes.untaggedScenarios,
     SAME_NAME_FILES.map((feature) => ({ feature, scenario: UNTAGGED_TITLE })),
     "an untagged scenario's feature file was not named by its path under the corpus",
   );

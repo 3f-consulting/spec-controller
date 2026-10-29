@@ -1,7 +1,7 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { provenanceObject } from "../provenance/provenance.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import type { RenderInput } from "../domain/renderInput.js";
+import { errorsOf, scenarioCodesOf, summaryStatingNoFault, type RenderInput } from "../domain/renderInput.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { runVerdict, type RunVerdict, type VerdictInputs } from "../domain/runVerdict.js";
 import { everyStepAccountedFor } from "../domain/uncitedFitnessFunctions.js";
@@ -44,25 +44,18 @@ export function assembleRenderInput(
   evidenceObligations?: EvidenceObligations,
   featureNames?: ReadonlyMap<string, string>
 ): RenderInput {
+  const errors = errorsOf(evidenceReconciliation.scenarioCodeErrors, evidenceReconciliation.summary);
+  const scenarioCodes = scenarioCodesOf(evidenceReconciliation.scenarioCodePopulation, evidenceObligations);
   return {
     runProvenance: provenanceObject(ctx),
-    ...evidenceReconciliation,
-    summary: concludedSummary(evidenceReconciliation.summary, {
+    ...(errors ? { errors } : {}),
+    ...(scenarioCodes ? { scenarioCodes } : {}),
+    summary: concludedSummary(summaryStatingNoFault(evidenceReconciliation.summary), {
       ledger: evidenceReconciliation.ledger,
       scenarioCodeErrors: evidenceReconciliation.scenarioCodeErrors,
       strict: ctx.strict === true,
     }),
-    ...(evidenceObligations
-      ? {
-          evidenceObligations: {
-            excludedOccurrences: evidenceObligations.excludedOccurrences,
-            untaggedScenarios: evidenceObligations.untaggedScenarios,
-            ...(evidenceObligations.sharedScnCodes && evidenceObligations.sharedScnCodes.length > 0
-              ? { sharedScnCodes: evidenceObligations.sharedScnCodes }
-              : {}),
-          },
-        }
-      : {}),
+    ledger: evidenceReconciliation.ledger,
     ...(featureNames && featureNames.size > 0
       ? { metadata: { featureNames: Object.fromEntries(featureNames) } }
       : {}),

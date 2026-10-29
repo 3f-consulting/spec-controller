@@ -46,7 +46,6 @@ export enum CoreMessage {
   DuplicateScnCodeNotListed,
   FeatureFileNoun,
   FeatureCodeNoun,
-  ScenarioCodesClean,
   NoFeatureFileJudged,
   ScenarioCodesCleanOver,
   CleanNoCodedScenario,
@@ -309,7 +308,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.DuplicateScnCodeNotListed]: `A duplicated @SCN code is not listed here: it is reported on its account's rows, as "${DUPLICATE_SCN_CODE}".`,
   [CoreMessage.FeatureFileNoun]: "feature file",
   [CoreMessage.FeatureCodeNoun]: "feature code",
-  [CoreMessage.ScenarioCodesClean]: `Scenario codes are clean, and ${IN_ITS_FILE}.`,
   [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so this section vouches for no scenario code.",
   [CoreMessage.ScenarioCodesCleanOver]: (featureFiles, featureCodes) =>
     `Scenario codes are clean over ${featureFiles} carrying ${featureCodes}`,

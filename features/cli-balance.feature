@@ -385,7 +385,7 @@ Feature: spec-controller balance runs standalone
         | workflow read by default    |
 
     @unit @e2e @SCN-CLI-074
-    Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, and nothing is rendered
+    Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, naming a section of the wrong kind by its place in the report
       Given a saved report that parses but is <defect>
       When the balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict

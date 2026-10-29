@@ -114,9 +114,9 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {
     const shared = JSON.parse(renderJson(er(ledger), ctx, census));
-    expect(shared.evidenceObligations.sharedScnCodes).toEqual(census.sharedScnCodes);
+    expect(shared.scenarioCodes.sharedScnCodes).toEqual(census.sharedScnCodes);
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
-    expect(clean.evidenceObligations).not.toHaveProperty("sharedScnCodes");
+    expect(clean.scenarioCodes).not.toHaveProperty("sharedScnCodes");
     expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 

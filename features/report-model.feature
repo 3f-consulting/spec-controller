@@ -4,8 +4,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   The reconciliation is ONE whole-document report model — the ordered sections of the
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
-  Its top-level keys, in document order, are runProvenance, summary and ledger, then
-  scenarioCodeErrors, scenarioCodePopulation, evidenceObligations and metadata. There is no
+  Its top-level keys, in document order, are runProvenance, then errors when the inputs hold a
+  fault, then scenarioCodes, summary, ledger and metadata. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
   beside spec-reconciliation.md, and the markdown renderer reads the same assembled model, so
@@ -15,9 +15,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The foundation. One report model, assembled from the reconciliation and the facts of the
     run, is serialised glue-free as spec-reconciliation.json. The report opens with
-    runProvenance (the run facts), then the materialised summary (the totals the markdown's
-    trial-balance table shows), then the ledger, then the remaining sections. There is no
-    `warnings` key: a zero-evidence scenario is a both-missing row on the ledger. Its unit tests
+    runProvenance (the run facts), then the faults in its inputs and the corpus's own facts,
+    then the materialised summary (the totals the markdown's trial-balance table shows), then
+    the ledger. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
+    the ledger. Each fact is stated once: a fault in the inputs only under errors, a fact of the
+    corpus only under scenarioCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
 
     And its summary totals count EVERY Claim Reconciliation. The Evidence
@@ -32,7 +34,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     exit code in agreement.
 
     @unit @SCN-RMD-001
-    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model whose summary totals count every Claim Reconciliation
+    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model that states each fact once, whose summary totals count every Claim Reconciliation
 
   Rule: the ledger is the detail beside the summary's totals
 
@@ -231,3 +233,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the JSON report validates against the JSON Schema the published package ships
       And the JSON report with its ledger removed is refused because the schema requires the ledger
       And the JSON report with a key the schema does not name added is refused because the schema does not name that key
+
+  Rule: the JSON report states every fault in its inputs in one place, present only when there is one, and the corpus's own facts in another
+
+    @unit @SCN-RMD-021
+    Scenario: the JSON report carries a top-level errors key only when its inputs hold a fault, with the scenario code errors and each kind of configuration fault beneath it
+
+    @unit @SCN-RMD-022
+    Scenario: the JSON report carries the corpus's own facts in one place: its feature files and codes, the @SCN occurrences it excludes, the scenarios carrying no code and the codes scenarios share

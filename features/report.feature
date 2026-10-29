@@ -608,7 +608,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report states a corpus's scenario codes clean only over the files it judged, with the counts the run recorded
 
     @unit @SCN-RPT-062
-    Scenario: clean scenario codes are stated with the run's count of feature files and of feature codes, with no count for a saved report that recorded none, and the section is absent when no corpus was judged
+    Scenario: clean scenario codes are stated with the run's count of feature files and of feature codes, and the section is absent when no corpus was judged
 
     @unit @SCN-RPT-063
     Scenario: a corpus with no feature file is stated as no feature file judged, never as clean

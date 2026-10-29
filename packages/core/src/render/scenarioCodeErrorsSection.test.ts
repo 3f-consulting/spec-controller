@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { renderReportFromJson } from "../assemble/composers.js";
-import { renderJson } from "../assemble/composers.js";
+import { assembleRenderInput } from "../assemble/renderInput.js";
+import type { RenderInput } from "../domain/renderInput.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
@@ -172,6 +173,10 @@ function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconcil
   });
 }
 
+function newShapeReport(reconciliation: EvidenceReconciliation): RenderInput {
+  return assembleRenderInput(reconciliation, ctx);
+}
+
 function cleanSectionOf(md: string): string[] {
   const lines = md.split("\n");
   const start = lines.indexOf(HEADING);
@@ -215,33 +220,27 @@ describe("[SCN-RPT-062] clean scenario codes are stated with the corpus's own co
     const files = codes.length + plain;
     it(`states the codes clean over ${files} files carrying ${codes.length} codes, counted from the corpus`, () => {
       const statement = statements()[row];
-      const judged = judgedCorpus(codes, plain);
-      expect(judged.scenarioCodeErrors).toEqual([]);
-      expect(judged.scenarioCodePopulation).toEqual({ featureFiles: files, featureCodes: codes.length });
-      const md = renderMarkdown(judged, ctx, publishedExitCodeOf);
+      const report = newShapeReport(judgedCorpus(codes, plain));
+      expect(report.errors?.scenarioCodes).toBeUndefined();
+      expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
+      const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
       expect(cleanSectionOf(md)).toEqual([HEADING, "", statement, "", DUPLICATE_LINE, ""]);
       expect(md).not.toContain("**SCENARIO CODE ERRORS**");
-      expect(cleanSectionOf(renderReportFromJson(renderJson(judged, ctx), ctx.inputs, publishedExitCodeOf))).toEqual(cleanSectionOf(md));
     });
   }
 
-  it("states the codes clean with no count when re-rendering a report saved before the population was recorded", () => {
-    const { scenarioCodePopulation: _counted, ...saved } = JSON.parse(renderJson(judgedCorpus(["ONE", "TWO"], 1), ctx));
-    expect(saved).toHaveProperty("scenarioCodeErrors", []);
-    const md = renderReportFromJson(JSON.stringify(saved), ctx.inputs, publishedExitCodeOf);
-    expect(cleanSectionOf(md)).toEqual([
-      HEADING,
-      "",
-      CORE_MESSAGES[CoreMessage.ScenarioCodesClean],
-      "",
-      DUPLICATE_LINE,
-      "",
-    ]);
-  });
-
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
-    expect(renderMarkdown(unjudged, ctx, publishedExitCodeOf)).not.toContain("## Scenario code errors");
+    const report = newShapeReport(unjudged);
+    expect(report.errors?.scenarioCodes).toBeUndefined();
+    expect(report.scenarioCodes).toBeUndefined();
+    expect(renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf)).not.toContain(HEADING);
+  });
+
+  it("says nothing when the corpus's facts carry no count of feature files", () => {
+    const report = { ...newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), scenarioCodes: { excludedOccurrences: 0, untaggedScenarios: [] } };
+    expect(report.errors?.scenarioCodes).toBeUndefined();
+    expect(renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf)).not.toContain(HEADING);
   });
 });
 
@@ -262,7 +261,6 @@ describe("[SCN-RPT-063] a corpus with no feature file is never stated clean", ()
   it("says no feature file was judged, in place of any clean statement", () => {
     const section = cleanSectionOf(renderMarkdown(empty, ctx, publishedExitCodeOf));
     expect(section).toEqual(noFileSection);
-    expect(section).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodesClean]);
   });
 });
 

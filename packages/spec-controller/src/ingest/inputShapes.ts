@@ -81,10 +81,21 @@ export const SAVED_RECONCILIATION: Shape = {
     runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
     summary: { fields: {} },
     ledger: { fields: { claimReconciliations: { list: "anything" } }, required: ["claimReconciliations"] },
-    scenarioCodeErrors: { list: "anything" },
-    scenarioCodePopulation: { fields: {} },
-    evidenceObligations: { fields: {} },
     metadata: { fields: {} },
+    errors: {
+      fields: {
+        scenarioCodes: { list: "anything" },
+        configuration: {
+          fields: {
+            keysNotRead: { list: "anything" },
+            ofWrongKind: { list: "anything" },
+            runnerKeysNotATier: { list: "anything" },
+            nonChecksMatchingNoStep: { list: "anything" },
+          },
+        },
+      },
+    },
+    scenarioCodes: { fields: {} },
   },
   required: ["runProvenance", "summary", "ledger"],
 };

@@ -712,7 +712,21 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
 const SAVED = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"claimReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 const SAVED_BEFORE_CLAIM_KEYS = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 
-describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, and nothing is rendered", () => {
+const SAVED_WITH_SECTIONS = {
+  ...SAVED,
+  errors: {
+    scenarioCodes: [{ kind: "several-scn-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
+    configuration: {
+      keysNotRead: ["runner"],
+      ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
+      runnerKeysNotATier: ["smoke"],
+      nonChecksMatchingNoStep: ["lint"],
+    },
+  },
+  scenarioCodes: { featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [{ feature: "a.feature", scenario: "one" }] },
+};
+
+describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report", () => {
   it.each([
     [[], "the top level is a list, not an object"],
     ["x", "the top level is a string, not an object"],
@@ -724,7 +738,17 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [{ ...SAVED, ledger: "x" }, "ledger is a string, not an object"],
     [{ ...SAVED, ledger: { claimReconciliations: {} } }, "ledger.claimReconciliations is an object, not a list"],
     [{ ...SAVED, runProvenance: null }, "runProvenance is null, not an object"],
-    [{ ...SAVED, scenarioCodeErrors: "x" }, "scenarioCodeErrors is a string, not a list"],
+    [{ ...SAVED, errors: "x" }, "errors is a string, not an object"],
+    [{ ...SAVED, errors: { scenarioCodes: "x" } }, "errors.scenarioCodes is a string, not a list"],
+    [{ ...SAVED, errors: { configuration: "x" } }, "errors.configuration is a string, not an object"],
+    [{ ...SAVED, errors: { configuration: { keysNotRead: "x" } } }, "errors.configuration.keysNotRead is a string, not a list"],
+    [{ ...SAVED, errors: { configuration: { ofWrongKind: "x" } } }, "errors.configuration.ofWrongKind is a string, not a list"],
+    [{ ...SAVED, errors: { configuration: { runnerKeysNotATier: "x" } } }, "errors.configuration.runnerKeysNotATier is a string, not a list"],
+    [
+      { ...SAVED, errors: { configuration: { nonChecksMatchingNoStep: "x" } } },
+      "errors.configuration.nonChecksMatchingNoStep is a string, not a list",
+    ],
+    [{ ...SAVED, scenarioCodes: "x" }, "scenarioCodes is a string, not an object"],
     [{ ...SAVED, runProvenance: { ...SAVED.runProvenance, corpus: undefined } }, "runProvenance.corpus is missing"],
   ])("names where %j departs from a saved reconciliation", (document, fault) => {
     const error = checkSavedReconciliation("saved.json", document);
@@ -737,6 +761,10 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
 
   it("passes a reconciliation this tool saved", () => {
     expect(checkSavedReconciliation("saved.json", SAVED)).toBeNull();
+  });
+
+  it("passes a reconciliation saved with its input faults and its corpus's facts", () => {
+    expect(checkSavedReconciliation("saved.json", SAVED_WITH_SECTIONS)).toBeNull();
   });
 
   it("refuses, naming the file, a saved reconciliation the renderer cannot read below its top", () => {

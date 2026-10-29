@@ -78,7 +78,7 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
   });
 
   it("the scenario code errors section's note quotes the duplicated code's outcome sentence", () => {
-    const md = renderMarkdown({ ...__er(reconcile([proven], [provenObservation])), scenarioCodeErrors: [] }, ctx, publishedExitCodeOf);
+    const md = renderMarkdown({ ...__er(reconcile([proven], [provenObservation])), scenarioCodeErrors: [], scenarioCodePopulation: { featureFiles: 1, featureCodes: 1 } }, ctx, publishedExitCodeOf);
     expect(md).toContain(
       "A duplicated @SCN code is not listed here: it is reported on its account's rows, as " +
         '"Evidence Obligation\'s @SCN code is carried by another Scenario".'

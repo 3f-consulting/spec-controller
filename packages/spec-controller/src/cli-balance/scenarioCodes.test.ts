@@ -73,8 +73,8 @@ describe("[SCN-CLI-094] a prose mention of a feature part outside two to five ch
     );
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
-    expect(report.evidenceObligations.excludedOccurrences).toBe(2);
-    expect(report.scenarioCodeErrors ?? []).toEqual([]);
+    expect(report.scenarioCodes.excludedOccurrences).toBe(2);
+    expect(report.errors).toBeUndefined();
   });
 });
 
@@ -124,13 +124,13 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.scnId)).toEqual(["SCN-TWO-001"]);
     expect(rows.find((r) => r.scnId === "SCN-TWO-002")?.kind).toBe("phantom-claim");
     expect(rows.find((r) => r.scnId === "SCN-TWO-003")).toBeUndefined();
-    expect(report.evidenceObligations.untaggedScenarios).toEqual([]);
+    expect(report.scenarioCodes.untaggedScenarios).toEqual([]);
   });
 
   it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", wholeRun, () => {
     const dir = target("@SCN-TWO-002 @SCN-TWO-003");
     const json = balance(dir, "json");
-    expect(JSON.parse(json.stdout).scenarioCodeErrors).toEqual([
+    expect(JSON.parse(json.stdout).errors.scenarioCodes).toEqual([
       expect.objectContaining({
         kind: "several-scn-codes",
         files: ["two.feature"],
@@ -155,7 +155,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     const report = JSON.parse(json.stdout);
     const row = (report.ledger.claimReconciliations as Row[]).find((r) => r.scnId === "SCN-TWO-002");
     expect(row).toMatchObject({ kind: "scenario", verdict: "balanced" });
-    expect(report.scenarioCodeErrors).toEqual([]);
+    expect(report.errors).toBeUndefined();
     expect(json.exitCode).toBe(0);
   });
 });

@@ -20,8 +20,8 @@ function kindWords(kind: ConfigurationKind): string {
 }
 
 export const configurationNotReadSection = (report: RenderInput): string[] => {
-  const wrongKinds = report.summary.configurationOfWrongKind ?? [];
-  const unknownKeys = report.summary.configurationKeysNotRead ?? [];
+  const wrongKinds = report.errors?.configuration?.ofWrongKind ?? [];
+  const unknownKeys = report.errors?.configuration?.keysNotRead ?? [];
   if (wrongKinds.length === 0 && unknownKeys.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],

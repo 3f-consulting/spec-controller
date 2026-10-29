@@ -9,6 +9,6 @@ export function assembleSavedReport(saved: SavedReport, strictGiven: boolean): R
   return {
     ...saved,
     runProvenance: { ...saved.runProvenance, strict },
-    summary: concludedSummary(saved.summary, { ledger: saved.ledger, scenarioCodeErrors: saved.scenarioCodeErrors, strict }),
+    summary: concludedSummary(saved.summary, { ledger: saved.ledger, scenarioCodeErrors: saved.errors?.scenarioCodes, strict }),
   };
 }

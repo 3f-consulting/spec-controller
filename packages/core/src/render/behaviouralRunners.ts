@@ -17,7 +17,7 @@ export const behaviouralRunnersSection = (report: RenderInput): string[] => {
   const runners = report.summary.behaviouralRunners ?? [];
   const account = [
     ...runnerTierAccount(report.summary.tiersWithoutRunner),
-    ...unrecognisedKeyAccount(report.summary.runnerKeysNotATier),
+    ...unrecognisedKeyAccount(report.errors?.configuration?.runnerKeysNotATier),
   ];
   if (runners.length === 0 && account.length === 0) return [];
   return [

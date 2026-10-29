@@ -227,7 +227,7 @@ const byFeatureSection: SectionEmitter = (report) => {
   const scenarios = rows.filter(isScenario);
   const groups = outOfBalanceByFeature(
     scenarios,
-    report.evidenceObligations?.untaggedScenarios ?? [],
+    report.scenarioCodes?.untaggedScenarios ?? [],
     report.metadata?.featureNames ?? {},
   );
   const ungrouped = ungroupedOutOfBalance(report.summary.claimReconciliations);
@@ -314,7 +314,7 @@ const ledgerSection: SectionEmitter = (report) => {
     CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.claimReconciliations),
-    ...(report.evidenceObligations ? censusLines(report.evidenceObligations, scenarioRows.length) : []),
+    ...censusLines(report.scenarioCodes, scenarioRows.length),
     "",
     ...evidenceKeyLines(columns),
     ...ledgerTableLines(claims, columns),
@@ -340,11 +340,12 @@ function ledgerTallyLines(totals: RenderInput["summary"]["claimReconciliations"]
   return lines;
 }
 
-function censusLines(census: NonNullable<RenderInput["evidenceObligations"]>, accounts: number): string[] {
-  const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](census.excludedOccurrences)}`];
-  const untagged = census.untaggedScenarios.length;
+function censusLines(codes: RenderInput["scenarioCodes"], accounts: number): string[] {
+  if (codes?.excludedOccurrences === undefined) return [];
+  const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](codes.excludedOccurrences)}`];
+  const untagged = (codes.untaggedScenarios ?? []).length;
   if (untagged > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged)}`);
-  lines.push(...sharedScnCodeLines(census.sharedScnCodes ?? [], accounts));
+  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], accounts));
   return lines;
 }
 

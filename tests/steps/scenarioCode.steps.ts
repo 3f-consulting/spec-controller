@@ -497,7 +497,7 @@ When("balance reconciles that grammar target", function (this: SpecControllerWor
 });
 
 Then("the grammar target lists no scenario code error", function (this: SpecControllerWorld) {
-  assert.deepEqual(this.grammarRun.report.scenarioCodeErrors ?? [], [], `expected no scenario code error; got ${JSON.stringify(this.grammarRun.report.scenarioCodeErrors)}`);
+  assert.deepEqual(this.grammarRun.report.errors?.scenarioCodes ?? [], [], `expected no scenario code error; got ${JSON.stringify(this.grammarRun.report.errors?.scenarioCodes)}`);
 });
 
 const OWN = "SCN-OWN-001";
@@ -637,7 +637,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
 
 Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
-  assert.deepEqual(report.evidenceObligations.untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
+  assert.deepEqual(report.scenarioCodes.untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
   const named = report.ledger.claimReconciliations.filter(({ scnId }) => scnId.endsWith(THE_ONE_SCENARIO));
   assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
 });

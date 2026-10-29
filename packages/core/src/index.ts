@@ -60,7 +60,7 @@ export type { WorkflowStep } from "./domain/pipelineStep.js";
 export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourceParse.js";
 
 export { assembleRenderInput } from "./assemble/renderInput.js";
-export type { RenderInput, ReportMetadata, EvidenceObligationsSection, FeatureNames, ExitCodeOf } from "./domain/renderInput.js";
+export type { RenderInput, ReportMetadata, FeatureNames, ExitCodeOf } from "./domain/renderInput.js";
 export type {
   EvidenceReconciliation,
   Summary,

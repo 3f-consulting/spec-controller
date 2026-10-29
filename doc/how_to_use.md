@@ -783,12 +783,12 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 - It reconciles as **one** Claim Reconciliation, and every quality check on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*.
 - No evidence citing that code can be attributed to either scenario, so the account is out of balance whatever the evidence says. Every evidence observation citing the code posts to it once.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
-- The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`evidenceObligations.sharedScnCodes` in the JSON).
+- The report states the corpus's scenarios against its accounts, and names each shared code with the file and the name of every scenario carrying it (`scenarioCodes.sharedScnCodes` in the JSON).
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and reports what it found under `## Scenario code errors` (`scenarioCodeErrors` in the JSON), just after `## Run integrity`. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and reports what it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON), just after `## Run integrity`. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |

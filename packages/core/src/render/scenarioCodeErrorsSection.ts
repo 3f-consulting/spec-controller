@@ -1,10 +1,5 @@
 import type { RenderInput } from "../domain/renderInput.js";
-import {
-  scenarioCodeErrorsAre,
-  type ForeignScnCodeError,
-  type ScenarioCodeError,
-  type ScenarioCodePopulation,
-} from "../domain/scnTags.js";
+import { scenarioCodeErrorsAre, type ForeignScnCodeError, type ScenarioCodeError } from "../domain/scnTags.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 function scenarioCodeErrorsFraming(errors: readonly ScenarioCodeError[], count: string): string {
@@ -22,9 +17,7 @@ function counted(n: number, noun: string): string {
   return `${n} ${noun}${n === 1 ? "" : "s"}`;
 }
 
-function cleanStatement(population: ScenarioCodePopulation | undefined): string {
-  if (population === undefined) return CORE_MESSAGES[CoreMessage.ScenarioCodesClean];
-  const { featureFiles, featureCodes } = population;
+function cleanStatement(featureFiles: number, featureCodes: number): string {
   if (featureFiles === 0) return CORE_MESSAGES[CoreMessage.NoFeatureFileJudged];
   const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver](
     counted(featureFiles, CORE_MESSAGES[CoreMessage.FeatureFileNoun]),
@@ -69,12 +62,13 @@ function foreignWorded(error: ForeignScnCodeError): string {
 }
 
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
-  if (report.scenarioCodeErrors === undefined) return [];
-  const errors = report.scenarioCodeErrors;
+  const errors = report.errors?.scenarioCodes;
+  const { featureFiles, featureCodes } = report.scenarioCodes ?? {};
   const heading = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
   const duplicateLine = CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed];
-  if (errors.length === 0) {
-    return [heading, "", cleanStatement(report.scenarioCodePopulation), "", duplicateLine, ""];
+  if (errors === undefined) {
+    if (featureFiles === undefined || featureCodes === undefined) return [];
+    return [heading, "", cleanStatement(featureFiles, featureCodes), "", duplicateLine, ""];
   }
   const count =
     errors.length === 1

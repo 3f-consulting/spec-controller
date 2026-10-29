@@ -694,8 +694,8 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string
   "a list, not a reconciliation": [() => [], "the top level is a list, not an object"],
   "a reconciliation with no ledger": [(saved) => ({ ...saved, ledger: undefined }), "ledger is missing"],
   "holding a section of the wrong kind": [
-    (saved) => ({ ...saved, scenarioCodeErrors: "x" }),
-    "scenarioCodeErrors is a string, not a list",
+    (saved) => ({ ...saved, errors: { scenarioCodes: "x" } }),
+    "errors.scenarioCodes is a string, not a list",
   ],
   "unreadable below its top": [(saved) => ({ ...saved, ledger: { claimReconciliations: [null] } }), "could not be rendered"],
   "a reconciliation that does not name its corpus": [

@@ -73,7 +73,7 @@ function verdictFor(verdict: RunVerdict, ledger: Ledger, corpusDir: string, code
 export const runVerdictSection = (report: RenderInput, exitCodeOf: ExitCodeOf): string[] => {
   const reconciliation = { claimReconciliations: report.ledger.claimReconciliations };
   const verdict = report.summary.runVerdict;
-  const line = verdictFor(verdict, reconciliation, report.runProvenance.corpus, report.scenarioCodeErrors ?? []);
+  const line = verdictFor(verdict, reconciliation, report.runProvenance.corpus, report.errors?.scenarioCodes ?? []);
   const exit = CORE_MESSAGES[CoreMessage.VerdictExit](exitCodeOf(verdict));
   const lines = [CORE_MESSAGES[CoreMessage.RunVerdictHeading], "", `${line.headline} — ${line.gloss} (${exit})`];
   if (verdict === "balanced" && hasPendingItems(reconciliation)) {

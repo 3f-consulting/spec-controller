@@ -3,7 +3,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 export const excludedStepsSection = (report: RenderInput): string[] => {
   const excluded = report.summary.excludedSteps ?? [];
-  const unmatched = report.summary.nonChecksMatchingNoStep ?? [];
+  const unmatched = report.errors?.configuration?.nonChecksMatchingNoStep ?? [];
   if (excluded.length === 0 && unmatched.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.ExcludedStepsHeading],
