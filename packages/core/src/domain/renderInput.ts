@@ -1,6 +1,6 @@
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import type { Ledger } from "./ledger.js";
-import type { StepAccounting, Summary, WrongKindEntry } from "./evidenceReconciliation.js";
+import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
 import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./corpusCounts.js";
 import type { RunVerdict } from "./runVerdict.js";
@@ -89,9 +89,8 @@ export interface RenderInput {
   readonly runProvenance: ProvenanceObject;
   readonly errors?: ErrorsSection;
   readonly scenarioCodes?: ScenarioCodesSection;
-  readonly summary: Omit<SummaryStatingNoFault, "stepAccounting"> & {
+  readonly summary: SummaryStatingNoFault & {
     readonly runVerdict: RunVerdict;
-    readonly stepAccounting?: StepAccounting & { readonly everyStepAccountedFor: boolean };
   };
   readonly ledger: Ledger;
   readonly metadata?: ReportMetadata;

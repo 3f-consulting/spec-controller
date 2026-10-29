@@ -149,11 +149,11 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: the report names the scope it read
 
-    The report lists each workflow and job read, with the steps read and the candidates found in
-    each job, sorted. It makes no judgement about whether that scope is plausible.
+    The report lists each workflow and job read, with the steps read and each disposition's count
+    in each job, sorted. It makes no judgement about whether that scope is plausible.
 
     @unit @SCN-USG-020
-    Scenario: the report names the workflows, the jobs and the step count discovery ranged over
+    Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read
 
   Rule: every step the reader saw is accounted for
 
@@ -164,4 +164,4 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     A saved report with no plumbing figure renders that figure as nought.
 
     @unit @SCN-USG-018
-    Scenario: candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read
+    Scenario: the step account's total sums each count over its rows, and every step read is accounted for when the dispositions sum to the steps read

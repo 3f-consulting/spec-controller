@@ -11,14 +11,14 @@ import { sectionCtx as ctx } from "../render/runContext.test-utils.js";
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
 describe("[SCN-RMD-018] the JSON report's step accounting states whether every step the run read is accounted for, as the Markdown's step accounting does", () => {
-  it("a run that read CI configuration states the domain's conclusion over its counts, and the Markdown's step accounting agrees", () => {
+  it("a run that read CI configuration states the domain's conclusion over its counts, read from its total, and the Markdown's step accounting agrees", () => {
     const reconciliation = reconcile([ci]);
     const report = JSON.parse(renderJson(reconciliation, ctx)) as RenderInput;
     const md = renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 
     const accounting = report.summary.stepAccounting;
     expect(accounting).toBeDefined();
-    expect(accounting!.everyStepAccountedFor).toBe(everyStepAccountedFor(reconciliation.summary.stepAccounting!));
+    expect(accounting!.everyStepAccountedFor).toBe(everyStepAccountedFor(accounting!.total));
     expect(accounting!.everyStepAccountedFor).toBe(true);
     expect(sectionUnder(heading)(md)[6]).toBe(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
   });

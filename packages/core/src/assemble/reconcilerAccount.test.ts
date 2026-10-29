@@ -19,18 +19,20 @@ function reconcile(
   });
 }
 
-describe("[SCN-RMD-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[SCN-RMD-014] the step accounting names each reconciler step with its role, and none for a pipeline that runs no reconciliation", () => {
 
-  it("carries each reconciler step under its workflow, job and name, with its role", () => {
+  it("names each reconciler step under its workflow, job and name, with its role, in step order", () => {
     const { summary } = reconcile([ci], ["ci.yml"]);
-    expect(summary.reconcilerSteps).toStrictEqual([
+    expect(summary.stepAccounting).toHaveProperty("steps.reconciler");
+    expect(summary.stepAccounting?.steps.reconciler).toStrictEqual([
       { step: "ci.yml:ci:Dump this run's step record", role: "records" },
       { step: "ci.yml:ci:Reconciliation", role: "reconciles" },
     ]);
   });
 
-  it("carries no reconciler account for a pipeline that runs no reconciliation", () => {
+  it("names no reconciler step for a pipeline that runs no reconciliation", () => {
     const { summary } = reconcile([ciWithoutReconciler], ["ci.yml"]);
-    expect(summary).not.toHaveProperty("reconcilerSteps");
+    expect(summary.stepAccounting).toHaveProperty("steps");
+    expect(summary.stepAccounting?.steps).not.toHaveProperty("reconciler");
   });
 });

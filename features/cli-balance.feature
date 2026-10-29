@@ -893,7 +893,7 @@ Feature: spec-controller balance runs standalone
     Scenario: balance posts the checks a target's CI runs as fitness functions, and not the steps running the runners its manifest names
 
     @unit @SCN-CLI-090
-    Scenario: balance recognises the step that runs it as the reconciler, with nothing configured
+    Scenario: balance recognises the step that runs it as the reconciler, with nothing configured, named in its step accounting
 
     @unit @SCN-CLI-091
     Scenario: a CI workflows input naming a directory is read as every workflow file in it, of either YAML spelling and nothing else

@@ -260,21 +260,33 @@ export interface WrongKindEntry {
   readonly reads: ConfigurationKind;
 }
 
-export interface JobDiscoveryScope {
-  readonly source: string;
+export interface JobStepAccount {
+  readonly workflow: string;
   readonly job: string;
-  readonly steps: number;
-  readonly candidates: number;
-}
-
-export interface StepAccounting {
   readonly stepsRead: number;
   readonly candidates: number;
   readonly runners: number;
   readonly reconciler: number;
   readonly excluded: number;
-  readonly plumbing?: number;
+  readonly plumbing: number;
+}
+
+export interface StepAccountTotal extends Omit<JobStepAccount, "workflow" | "job"> {
   readonly accountedFor: number;
+}
+
+export interface StepsBehindCounts {
+  readonly runners?: readonly string[];
+  readonly reconciler?: readonly ReconcilerStep[];
+  readonly excluded?: readonly string[];
+  readonly plumbing?: readonly string[];
+}
+
+export interface StepAccounting {
+  readonly byJob: readonly JobStepAccount[];
+  readonly total: StepAccountTotal;
+  readonly everyStepAccountedFor: boolean;
+  readonly steps: StepsBehindCounts;
 }
 
 export interface TierWithoutRunner {
@@ -295,10 +307,7 @@ export interface Summary {
   readonly runnerKeysNotATier?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
   readonly configurationKeysNotRead?: readonly string[];
-  readonly excludedSteps?: readonly string[];
-  readonly reconcilerSteps?: readonly ReconcilerStep[];
   readonly nonChecksMatchingNoStep?: readonly string[];
-  readonly discoveryScope?: readonly JobDiscoveryScope[];
   readonly stepAccounting?: StepAccounting;
 }
 

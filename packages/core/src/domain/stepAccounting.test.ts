@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { everyStepAccountedFor, stepAccounting, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
+import { everyStepAccountedFor, stepAccountOf, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
+import type { JobStepAccount } from "./evidenceReconciliation.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
+import { qualifiedStepName } from "../parse/stepNames.js";
+
+const noRole = (): undefined => undefined;
 
 const ciYml = (): string =>
   [
@@ -26,6 +30,20 @@ const ciYml = (): string =>
     "        run: pnpm lint:reconcile",
   ].join("\n");
 
+const nightlyYml = (): string =>
+  [
+    "jobs:",
+    "  sweep:",
+    "    steps:",
+    "      - name: Depth check",
+    "        run: pnpm lint:depth",
+    "      - uses: actions/cache@v4",
+    "  audit:",
+    "    steps:",
+    "      - name: Unit tests",
+    "        run: pnpm test",
+  ].join("\n");
+
 const named =
   (...identities: readonly string[]): StepTest =>
   (step) =>
@@ -33,22 +51,31 @@ const named =
 
 const NONE: StepTest = () => false;
 
-describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
-  it("counts each disposition and adds them back up to the steps it read", () => {
+const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "excluded", "plumbing"] as const;
+
+const summedOver = (rows: readonly JobStepAccount[], count: (typeof COUNTS)[number]): number =>
+  rows.reduce((sum, row) => sum + row[count], 0);
+
+describe("[SCN-USG-018] the step account's total sums each count over its rows, and every step read is accounted for when the dispositions sum to the steps read", () => {
+  it("sums each count over the rows of every workflow and job, and adds the dispositions back up to the steps read", () => {
     const dispositionOf = stepDispositions({
       isReconciler: named("Dump this run's step record", "Reconciliation"),
       isNamedANonCheck: named("actions/checkout@v4", "Install"),
       runsARunner: named("Unit tests"),
     });
-    expect(stepAccounting(workflowSteps([ciYml()]), dispositionOf)).toEqual({
-      stepsRead: 10,
-      candidates: 2,
-      runners: 1,
+    const account = stepAccountOf(workflowSteps([ciYml(), nightlyYml()], ["ci.yml", "nightly.yml"]), dispositionOf, qualifiedStepName, noRole);
+    expect(account.total).toEqual({
+      stepsRead: 13,
+      candidates: 3,
+      runners: 2,
       reconciler: 2,
       excluded: 2,
-      plumbing: 3,
-      accountedFor: 10,
+      plumbing: 4,
+      accountedFor: 13,
     });
+    expect(COUNTS.map((count) => account.total[count])).toEqual(COUNTS.map((count) => summedOver(account.byJob, count)));
+    expect(account.byJob).toHaveLength(3);
+    expect(account.everyStepAccountedFor).toBe(true);
   });
 
   it("reads no step from a list item that neither runs a command nor uses an action", () => {
@@ -63,7 +90,7 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
       "        run: pnpm lint:depth",
     ].join("\n");
     const dispositionOf = stepDispositions({ isReconciler: NONE, isNamedANonCheck: NONE, runsARunner: NONE });
-    expect(stepAccounting(workflowSteps([source]), dispositionOf)).toEqual({
+    expect(stepAccountOf(workflowSteps([source], ["ci.yml"]), dispositionOf, qualifiedStepName, noRole).total).toEqual({
       stepsRead: 1,
       candidates: 1,
       runners: 0,
@@ -74,10 +101,10 @@ describe("[SCN-USG-018] candidates, runners, the reconciler, the excluded and Gi
     });
   });
 
-  it("finds the account balanced when the dispositions add up to the steps read, and unbalanced otherwise", () => {
-    const account = { stepsRead: 10, candidates: 4, runners: 1, reconciler: 2, excluded: 3 };
-    expect(everyStepAccountedFor({ ...account, accountedFor: 10 })).toBe(true);
-    expect(everyStepAccountedFor({ ...account, accountedFor: 9 })).toBe(false);
-    expect(everyStepAccountedFor({ ...account, accountedFor: 11 })).toBe(false);
+  it("finds every step accounted for when the dispositions add up to the steps read, and not otherwise", () => {
+    const total = { stepsRead: 10, candidates: 4, runners: 1, reconciler: 2, excluded: 3, plumbing: 0 };
+    expect(everyStepAccountedFor({ ...total, accountedFor: 10 })).toBe(true);
+    expect(everyStepAccountedFor({ ...total, accountedFor: 9 })).toBe(false);
+    expect(everyStepAccountedFor({ ...total, accountedFor: 11 })).toBe(false);
   });
 });

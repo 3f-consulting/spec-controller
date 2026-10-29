@@ -28,7 +28,7 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
 });
 
 describe("[SCN-CLI-090] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
-  it("recognises the pipeline step running this command as the reconciler, with nothing configured", () => {
+  it("recognises the pipeline step running this command as the reconciler, with nothing configured, named in its step accounting", () => {
     const root = temporaryDirectory(`scn-usg-014-${process.pid}-`);
     const features = join(root, "features");
     mkdirSync(features);
@@ -49,7 +49,7 @@ describe("[SCN-CLI-090] the balance step and its step-record dump are not candid
 
     const balance = runReconcile({ features, packageJson, ci }, resolveTargetRoot({ features }));
 
-    expect(balance.summary.reconcilerSteps).toStrictEqual([
+    expect(balance.summary.stepAccounting?.steps.reconciler).toStrictEqual([
       { step: "ci.yml:ci:Reconciliation", role: "reconciles" },
     ]);
   });

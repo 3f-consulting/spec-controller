@@ -1,17 +1,17 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-type ConcludedAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
+type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
 
-const verdictOf = (accounting: ConcludedAccounting): string =>
-  accounting.everyStepAccountedFor
+const verdictOf = ({ everyStepAccountedFor, total }: StepAccounting): string =>
+  everyStepAccountedFor
     ? `- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`
-    : `- ${CORE_MESSAGES[CoreMessage.StepsNotAccountedFor](accounting.stepsRead, accounting.accountedFor)}`;
+    : `- ${CORE_MESSAGES[CoreMessage.StepsNotAccountedFor](total.stepsRead, total.accountedFor)}`;
 
 export const stepAccountingSection = (report: RenderInput): string[] => {
   const accounting = report.summary.stepAccounting;
   if (accounting === undefined) return [];
-  const { stepsRead, candidates, runners, reconciler, excluded, plumbing = 0, accountedFor } = accounting;
+  const { stepsRead, candidates, runners, reconciler, excluded, plumbing, accountedFor } = accounting.total;
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingHeading],
     "",

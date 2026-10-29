@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { discoveryScope, type StepDisposition } from "./uncitedFitnessFunctions.js";
+import { stepAccountOf, type StepDisposition } from "./uncitedFitnessFunctions.js";
+import type { JobStepAccount } from "./evidenceReconciliation.js";
 import type { PipelineStep } from "./pipelineStep.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
+import { qualifiedStepName } from "../parse/stepNames.js";
+
+const noRole = (): undefined => undefined;
 
 const ciYml = (): string =>
   [
@@ -39,26 +43,39 @@ const answering =
 
 const CHECKOUT_IS_PLUMBING = { "actions/checkout@v4": "plumbing" } as const;
 
-describe("[SCN-USG-020] discoveryScope — the workflows and the jobs a run read", () => {
-  it("names every workflow and every job, with the steps it read from each", () => {
-    const dispositionOf = answering({ ...CHECKOUT_IS_PLUMBING, Install: "nonCheck", "Unit tests": "runner" });
-    expect(
-      discoveryScope(workflowSteps([ciYml(), nightlyYml()], ["ci.yml", "nightly.yml"]), dispositionOf)
-    ).toEqual([
-      { source: "ci.yml", job: "ci", steps: 4, candidates: 1 },
-      { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
-      { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
+const dispositionsSummed = ({ candidates, runners, reconciler, excluded, plumbing }: JobStepAccount): number =>
+  candidates + runners + reconciler + excluded + plumbing;
+
+describe("[SCN-USG-020] the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read", () => {
+  it("gives a row for every workflow and job, in workflow then job order, with each disposition's count summing to the steps read", () => {
+    const dispositionOf = answering({
+      ...CHECKOUT_IS_PLUMBING,
+      Install: "nonCheck",
+      "Unit tests": "runner",
+      "Depth check": "reconciler",
+    });
+    const { byJob } = stepAccountOf(
+      workflowSteps([nightlyYml(), ciYml()], ["nightly.yml", "ci.yml"]),
+      dispositionOf,
+      qualifiedStepName,
+      noRole
+    );
+    expect(byJob).toEqual([
+      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 1, runners: 1, reconciler: 0, excluded: 1, plumbing: 1 },
+      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 1, runners: 0, reconciler: 1, excluded: 0, plumbing: 0 },
     ]);
+    expect(byJob.map((row) => dispositionsSummed(row) - row.stepsRead)).toEqual([0, 0, 0]);
   });
 
-  it("adds no steps for a job that calls a reusable workflow, or for a job with no body", () => {
+  it("gives no row for a job that calls a reusable workflow, or for a job with no body", () => {
     const withStepless = [ciYml(), "  reuse:", "    uses: ./.github/workflows/x.yml", "  empty:"].join("\n");
-    expect(discoveryScope(workflowSteps([withStepless], ["ci.yml"]), answering(CHECKOUT_IS_PLUMBING))).toEqual([
-      { source: "ci.yml", job: "ci", steps: 4, candidates: 3 },
+    expect(stepAccountOf(workflowSteps([withStepless], ["ci.yml"]), answering(CHECKOUT_IS_PLUMBING), qualifiedStepName, noRole).byJob).toEqual([
+      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 3, runners: 0, reconciler: 0, excluded: 0, plumbing: 1 },
     ]);
   });
 
-  it("reads nothing from a document that parses to no jobs", () => {
-    expect(discoveryScope(workflowSteps(["name: CI\non: [push]\n"], ["ci.yml"]), answering({}))).toEqual([]);
+  it("gives no row for a workflow that parses to no jobs", () => {
+    expect(stepAccountOf(workflowSteps(["name: CI\non: [push]\n"], ["ci.yml"]), answering({}), qualifiedStepName, noRole).byJob).toEqual([]);
   });
 });

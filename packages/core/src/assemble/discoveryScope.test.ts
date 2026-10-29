@@ -19,30 +19,30 @@ function reconcile(
   });
 }
 
-describe("[SCN-RMD-012] the report names the workflows, the jobs and the step count discovery ranged over", () => {
-  it("names every workflow and every job it read, with its steps and candidates, in one settled order", () => {
+describe("[SCN-RMD-012] the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, in a settled order, and none for a target with no pipeline", () => {
+  it("carries a row for every workflow and job read, with its steps read and each disposition's count, in one settled order", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
-    expect(summary.discoveryScope).toStrictEqual([
-      { source: "ci.yml", job: "quality", steps: 3, candidates: 1 },
-      { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
-      { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
+    expect(summary.stepAccounting?.byJob).toStrictEqual([
+      { workflow: "ci.yml", job: "quality", stepsRead: 3, candidates: 1, runners: 1, reconciler: 0, excluded: 0, plumbing: 1 },
+      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
     ]);
   });
 
-  it("counts no step the target calls a non-check among the candidates", () => {
+  it("counts a step the target calls a non-check as excluded, not as a candidate, in its row", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"], {
       ...packageJson,
       specController: { runners: { unit: "vitest" }, notChecks: ["ci.yml:quality:Install"] },
     });
-    expect(summary.discoveryScope).toStrictEqual([
-      { source: "ci.yml", job: "quality", steps: 3, candidates: 0 },
-      { source: "nightly.yml", job: "audit", steps: 1, candidates: 1 },
-      { source: "nightly.yml", job: "sweep", steps: 2, candidates: 2 },
+    expect(summary.stepAccounting?.byJob).toStrictEqual([
+      { workflow: "ci.yml", job: "quality", stepsRead: 3, candidates: 0, runners: 1, reconciler: 0, excluded: 1, plumbing: 1 },
+      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
     ]);
   });
 
-  it("carries no discovery scope for a target with no pipeline", () => {
+  it("carries no step accounting for a target with no pipeline", () => {
     const { summary } = reconcile([], []);
-    expect(summary).not.toHaveProperty("discoveryScope");
+    expect(summary).not.toHaveProperty("stepAccounting");
   });
 });

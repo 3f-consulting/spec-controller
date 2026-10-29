@@ -582,7 +582,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report accounts for fitness-function discovery, each account in a section of its own that is absent when it has nothing to say
 
     @unit @SCN-RPT-047
-    Scenario: the discovery-scope section tables each workflow and job read with its steps and candidates, and is absent for a target with no pipeline
+    Scenario: the discovery-scope section tables each workflow and job read from the step accounting's rows, and is absent for a target with no pipeline
 
     @unit @SCN-RPT-048
     Scenario: the excluded-steps section lists each step the target names a non-check with its reason, and is absent when the target names none
@@ -597,7 +597,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the runner-tier account says a tier the target names null has no runner and a tier it omits is unnamed, and is absent when every tier is named
 
     @unit @SCN-RPT-052
-    Scenario: the step-accounting section tables each count and states that every step read is accounted for, a saved run with no plumbing count reading nought in that cell
+    Scenario: the step-accounting section tables each count of the step accounting's total and states that every step read is accounted for
 
     @unit @SCN-RPT-053
     Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises

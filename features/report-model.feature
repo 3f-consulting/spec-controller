@@ -194,16 +194,37 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
 
-  Rule: the summary carries fitness-function discovery's accounts, each absent when it has nothing to say
+  Rule: the summary's step accounting is a row per workflow and job, with the steps behind each count
+
+    The summary's step accounting states every CI step the run read, and what it counted each
+    step as. It holds one row per workflow and job, ordered by workflow and then by job. Each
+    row carries the steps read and how many of them are candidates, runners, reconciler steps,
+    excluded steps and plumbing. Its total sums each of those counts over the rows, with how
+    many steps they account for, and the step accounting states whether that is every step read.
+    It names each reconciler step with its role, each step the target calls a non-check, and
+    the steps behind its runners and plumbing counts, each list holding exactly the steps its
+    count counts. The summary states the CI steps the run read there alone.
+    A target with no pipeline has no step accounting.
 
     @unit @SCN-RMD-012
-    Scenario: the summary carries the discovery scope, each workflow and job read with its steps and candidates in a settled order, and none for a target with no pipeline
+    Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, in a settled order, and none for a target with no pipeline
+
+    @unit @SCN-RMD-023
+    Scenario: the step accounting's total sums each count over its rows, one per workflow and job
 
     @unit @SCN-RMD-013
-    Scenario: the summary carries no exclusion account for a target that names no step a non-check
+    Scenario: the step accounting names the steps the target calls non-checks, and none for a target that names no step a non-check
 
     @unit @SCN-RMD-014
-    Scenario: the summary carries each reconciler step with its role, and none for a pipeline that runs no reconciliation
+    Scenario: the step accounting names each reconciler step with its role, and none for a pipeline that runs no reconciliation
+
+    @unit @SCN-RMD-024
+    Scenario: the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts
+
+    @unit @SCN-RMD-025
+    Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it
+
+  Rule: the summary carries the runner account, absent when it has nothing to say
 
     @unit @SCN-RMD-015
     Scenario: the summary carries no runner account for a target whose manifest names no runners, and carries the step running a runner once it names one

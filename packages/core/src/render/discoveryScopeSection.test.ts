@@ -33,10 +33,10 @@ function rendered(reconciliation: EvidenceReconciliation): string[] {
 }
 
 describe("[SCN-RPT-047] the report names the workflows, the jobs and the step count discovery ranged over", () => {
-  it("tables each workflow and job it read, with its steps and candidates, one row each in the settled order", () => {
+  it("tables each workflow and job it read from the step accounting's rows, with its steps and candidates, one row each in the settled order", () => {
     const reconciliation = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
-    const scope = reconciliation.summary.discoveryScope;
-    expect(scope).toHaveLength(3);
+    const rows = reconciliation.summary.stepAccounting?.byJob;
+    expect(rows).toHaveLength(3);
     const lines = rendered(reconciliation);
     expect(lines).toHaveLength(8);
     expect(lines.slice(0, 3)).toStrictEqual([
@@ -55,14 +55,14 @@ describe("[SCN-RPT-047] the report names the workflows, the jobs and the step co
       "| nightly.yml | sweep | 2 | 2 |",
     ]);
     expect(lines.slice(4, 7).map(cells)).toStrictEqual(
-      scope!.map(({ source, job, steps, candidates }) => [source, job, String(steps), String(candidates)])
+      rows!.map(({ workflow, job, stepsRead, candidates }) => [workflow, job, String(stepsRead), String(candidates)])
     );
     expect(lines.at(-1)).toBe("");
   });
 
   it("renders no section, and nothing in its place, for a target with no pipeline", () => {
     const reconciliation = reconcile([], []);
-    expect(reconciliation.summary).not.toHaveProperty("discoveryScope");
+    expect(reconciliation.summary).not.toHaveProperty("stepAccounting");
     const lines = renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
     expect(lines).not.toContain(heading);
     expect(lines).not.toContain(tableHeader);

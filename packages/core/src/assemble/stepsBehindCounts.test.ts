@@ -1,0 +1,116 @@
+import { describe, it, expect } from "vitest";
+import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
+import type { EvidenceReconciliation } from "./renderInput.js";
+import type { StepAccounting } from "../domain/evidenceReconciliation.js";
+import { feature, nightly, stepAccountingCi } from "../evidenceReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+
+const setUpAndTestCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+      - name: Save cache
+        uses: actions/cache/save@v4
+`;
+
+const testOnlyCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+`;
+
+const unitRunner = {
+  scripts: { test: "vitest run" },
+  specController: { runners: { unit: "vitest" } },
+} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+
+const everyDisposition = {
+  scripts: {
+    test: "vitest run",
+    build: "tsc -b",
+    typecheck: "tsc --noEmit",
+    "lint:sweep": "madge --circular",
+    "lint:circular": "madge --circular",
+    "lint:depth": "depcruise src",
+  },
+  specController: {
+    runners: { unit: "vitest" },
+    notChecks: ["ci.yml:ci:Checkout", "ci.yml:ci:Install", "ci.yml:ci:Build"],
+  },
+} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+
+function reconcile(
+  packageJson: Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"],
+  workflowSources: readonly string[],
+  workflowNames: readonly string[]
+): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson,
+    ciWorkflows: parsedWorkflows(workflowSources, workflowNames),
+    reconcilerInvocation: "spec-controller balance",
+    behaviouralObservations: [],
+    deferralTags: [],
+  });
+}
+
+function listLengths({ steps }: StepAccounting): Record<"runners" | "reconciler" | "excluded" | "plumbing", number> {
+  return {
+    runners: steps.runners?.length ?? 0,
+    reconciler: steps.reconciler?.length ?? 0,
+    excluded: steps.excluded?.length ?? 0,
+    plumbing: steps.plumbing?.length ?? 0,
+  };
+}
+
+describe("[SCN-RMD-024] the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts", () => {
+  it("names the steps that run a declared runner and the plumbing steps under their workflow, job and name, in step order", () => {
+    const accounting = reconcile(unitRunner, [setUpAndTestCi], ["ci.yml"]).summary.stepAccounting!;
+    expect(accounting.steps.runners).toStrictEqual(["ci.yml:quality:Unit tests"]);
+    expect(accounting.steps.plumbing).toStrictEqual([
+      "ci.yml:quality:Checkout",
+      "ci.yml:quality:Setup Node",
+      "ci.yml:quality:Save cache",
+    ]);
+  });
+
+  it("holds, in each list, as many steps as the total counts for it, over two workflows and three jobs", () => {
+    const accounting = reconcile(everyDisposition, [stepAccountingCi, nightly], ["ci.yml", "nightly.yml"]).summary
+      .stepAccounting!;
+    const { runners, reconciler, excluded, plumbing } = accounting.total;
+    expect({ runners, reconciler, excluded, plumbing }).toStrictEqual({
+      runners: 1,
+      reconciler: 2,
+      excluded: 3,
+      plumbing: 5,
+    });
+    expect(listLengths(accounting)).toStrictEqual({ runners, reconciler, excluded, plumbing });
+    expect(accounting.steps.plumbing).toStrictEqual([
+      "ci.yml:ci:Checkout tools",
+      "ci.yml:ci:Setup Node",
+      "ci.yml:ci:Cache store",
+      "ci.yml:ci:Download build",
+      "ci.yml:ci:Upload report",
+    ]);
+  });
+
+  it("names no plumbing step for a pipeline with none, and still names its runner", () => {
+    const accounting = reconcile(unitRunner, [testOnlyCi], ["ci.yml"]).summary.stepAccounting!;
+    expect(accounting.total.plumbing).toBe(0);
+    expect(accounting.steps).not.toHaveProperty("plumbing");
+    expect(accounting.steps.runners).toStrictEqual(["ci.yml:quality:Unit tests"]);
+  });
+});

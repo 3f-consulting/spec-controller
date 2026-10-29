@@ -1,12 +1,22 @@
 import type { PipelineStep } from "./pipelineStep.js";
-import type { BehaviouralRunner, JobDiscoveryScope, ReconcilerStep, StepAccounting } from "./evidenceReconciliation.js";
+import type {
+  BehaviouralRunner,
+  JobStepAccount,
+  ReconcilerStep,
+  StepAccountTotal,
+  StepAccounting,
+  StepsBehindCounts,
+} from "./evidenceReconciliation.js";
 
 export type StepTest = (step: PipelineStep) => boolean;
 type StepName = (step: PipelineStep) => string;
 
+export type ReconcilerRole = (step: PipelineStep) => ReconcilerStep["role"] | undefined;
+
 export interface ReconcilerSteps {
   readonly steps: readonly ReconcilerStep[];
   readonly isReconciler: StepTest;
+  readonly roleOf: ReconcilerRole;
 }
 
 function reconcilerRoleOf(
@@ -28,6 +38,7 @@ export function reconcilerSteps(
       return role === undefined ? [] : [{ step: nameOf(step), role }];
     }),
     isReconciler: (step) => reconcilerRoleOf(step, runsTheReconciler) !== undefined,
+    roleOf: (step) => reconcilerRoleOf(step, runsTheReconciler),
   };
 }
 
@@ -82,45 +93,99 @@ export function stepDispositions({
   return (step) => exclusionOf(step, isReconciler, isNamedANonCheck) ?? dispositionOfIncluded(step, runsARunner);
 }
 
-export function stepAccounting(
-  steps: readonly PipelineStep[],
-  dispositionOf: (step: PipelineStep) => StepDisposition
-): StepAccounting {
-  const count = (disposition: StepDisposition): number =>
-    steps.filter((step) => dispositionOf(step) === disposition).length;
-  const candidates = count("candidate");
-  const runners = count("runner");
-  const reconciler = count("reconciler");
-  const excluded = count("nonCheck");
-  const plumbing = count("plumbing");
-  return {
-    stepsRead: steps.length,
-    candidates,
-    runners,
-    reconciler,
-    excluded,
-    plumbing,
-    accountedFor: reconciler + excluded + plumbing + runners + candidates,
-  };
-}
-
-export function everyStepAccountedFor({ stepsRead, accountedFor }: StepAccounting): boolean {
+export function everyStepAccountedFor({
+  stepsRead,
+  accountedFor,
+}: Pick<StepAccountTotal, "stepsRead" | "accountedFor">): boolean {
   return accountedFor === stepsRead;
 }
 
 const jobKeyOf = (step: PipelineStep): string => `${step.workflow}:${step.job}`;
 
-export function discoveryScope(
+type DispositionCount = Exclude<keyof JobStepAccount, "workflow" | "job" | "stepsRead">;
+
+const COUNTED_AS: Readonly<Record<StepDisposition, DispositionCount>> = {
+  candidate: "candidates",
+  runner: "runners",
+  reconciler: "reconciler",
+  nonCheck: "excluded",
+  plumbing: "plumbing",
+};
+
+const noStepsOf = ({ workflow, job }: PipelineStep): JobStepAccount => ({
+  workflow,
+  job,
+  stepsRead: 0,
+  candidates: 0,
+  runners: 0,
+  reconciler: 0,
+  excluded: 0,
+  plumbing: 0,
+});
+
+function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
+  const summed = (count: DispositionCount | "stepsRead"): number => rows.reduce((sum, row) => sum + row[count], 0);
+  const candidates = summed("candidates");
+  const runners = summed("runners");
+  const reconciler = summed("reconciler");
+  const excluded = summed("excluded");
+  const plumbing = summed("plumbing");
+  return {
+    stepsRead: summed("stepsRead"),
+    candidates,
+    runners,
+    reconciler,
+    excluded,
+    plumbing,
+    accountedFor: candidates + runners + reconciler + excluded + plumbing,
+  };
+}
+
+function stepsBehindCounts(
   steps: readonly PipelineStep[],
-  dispositionOf: (step: PipelineStep) => StepDisposition
-): readonly JobDiscoveryScope[] {
-  const tallies = new Map<string, JobDiscoveryScope>();
+  dispositionOf: (step: PipelineStep) => StepDisposition,
+  nameOf: StepName,
+  roleOf: ReconcilerRole
+): StepsBehindCounts {
+  const reconciler = steps
+    .filter((step) => dispositionOf(step) === "reconciler")
+    .flatMap((step) => {
+      const role = roleOf(step);
+      return role === undefined ? [] : [{ step: nameOf(step), role }];
+    });
+  const namesOf = (disposition: StepDisposition): string[] =>
+    steps.filter((step) => dispositionOf(step) === disposition).map(nameOf);
+  const runners = namesOf("runner");
+  const excluded = namesOf("nonCheck");
+  const plumbing = namesOf("plumbing");
+  return {
+    ...(runners.length > 0 ? { runners } : {}),
+    ...(reconciler.length > 0 ? { reconciler } : {}),
+    ...(excluded.length > 0 ? { excluded } : {}),
+    ...(plumbing.length > 0 ? { plumbing } : {}),
+  };
+}
+
+export function stepAccountOf(
+  steps: readonly PipelineStep[],
+  dispositionOf: (step: PipelineStep) => StepDisposition,
+  nameOf: StepName,
+  roleOf: ReconcilerRole
+): StepAccounting {
+  const rows = new Map<string, JobStepAccount>();
   for (const step of steps) {
-    const tally = tallies.get(jobKeyOf(step)) ?? { source: step.workflow, job: step.job, steps: 0, candidates: 0 };
-    const candidate = dispositionOf(step) === "candidate" ? 1 : 0;
-    tallies.set(jobKeyOf(step), { ...tally, steps: tally.steps + 1, candidates: tally.candidates + candidate });
+    const row = rows.get(jobKeyOf(step)) ?? noStepsOf(step);
+    const count = COUNTED_AS[dispositionOf(step)];
+    rows.set(jobKeyOf(step), { ...row, stepsRead: row.stepsRead + 1, [count]: row[count] + 1 });
   }
-  return [...tallies.values()].sort((a, b) => a.source.localeCompare(b.source) || a.job.localeCompare(b.job));
+  const byJob = [...rows.values()].sort((a, b) => a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job));
+  const total = totalOf(byJob);
+  return {
+    byJob,
+    total,
+    everyStepAccountedFor: everyStepAccountedFor(total),
+    steps: stepsBehindCounts(steps, dispositionOf, nameOf, roleOf),
+  };
 }
 
 export function isExcludedFromDiscovery(

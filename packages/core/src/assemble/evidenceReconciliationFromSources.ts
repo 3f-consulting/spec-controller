@@ -13,12 +13,12 @@ import { qualifiedStepName } from "../parse/stepNames.js";
 import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
   declaredRunnerTest,
-  discoveryScope,
   nonChecksApplied,
   recognisedRunners,
   reconcilerSteps,
-  stepAccounting,
+  stepAccountOf,
   stepDispositions,
+  type ReconcilerRole,
   type ReconcilerSteps,
   type StepDisposition,
   type StepExclusions,
@@ -177,68 +177,37 @@ function withReaderAccounts(
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withScopeAccount(
-      withExclusionAccount(
-        withReconcilerAccount(
-          withRunnerAccount(reconciliation, steps, packageJson, runners),
-          reconciler
-        ),
-        exclusions
-      ),
-      steps,
-      dispositionOf
-    ),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), exclusions),
     steps,
-    dispositionOf
+    dispositionOf,
+    reconciler.roleOf
   );
 }
 
 function withStepAccounting(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
-  dispositionOf: (step: PipelineStep) => StepDisposition
+  dispositionOf: (step: PipelineStep) => StepDisposition,
+  roleOf: ReconcilerRole
 ): EvidenceReconciliation {
-  const accounting = stepAccounting(steps, dispositionOf);
-  if (accounting.stepsRead === 0) return reconciliation;
-  return {
-    ...reconciliation,
-    summary: { ...reconciliation.summary, stepAccounting: accounting },
-  };
-}
-
-function withScopeAccount(
-  reconciliation: EvidenceReconciliation,
-  steps: readonly PipelineStep[],
-  dispositionOf: (step: PipelineStep) => StepDisposition
-): EvidenceReconciliation {
-  const scope = discoveryScope(steps, dispositionOf);
-  if (scope.length === 0) return reconciliation;
-  return { ...reconciliation, summary: { ...reconciliation.summary, discoveryScope: scope } };
-}
-
-function withReconcilerAccount(
-  reconciliation: EvidenceReconciliation,
-  reconciler: ReconcilerSteps
-): EvidenceReconciliation {
-  if (reconciler.steps.length === 0) return reconciliation;
-  return {
-    ...reconciliation,
-    summary: { ...reconciliation.summary, reconcilerSteps: reconciler.steps },
-  };
-}
-
-function withExclusionAccount(
-  reconciliation: EvidenceReconciliation,
-  exclusions: StepExclusions
-): EvidenceReconciliation {
-  const { excluded, unmatchedEntries } = exclusions;
+  if (steps.length === 0) return reconciliation;
   return {
     ...reconciliation,
     summary: {
       ...reconciliation.summary,
-      ...(excluded.length > 0 ? { excludedSteps: excluded } : {}),
-      ...(unmatchedEntries.length > 0 ? { nonChecksMatchingNoStep: unmatchedEntries } : {}),
+      stepAccounting: stepAccountOf(steps, dispositionOf, qualifiedStepName, roleOf),
     },
+  };
+}
+
+function withUnmatchedNonChecks(
+  reconciliation: EvidenceReconciliation,
+  { unmatchedEntries }: StepExclusions
+): EvidenceReconciliation {
+  if (unmatchedEntries.length === 0) return reconciliation;
+  return {
+    ...reconciliation,
+    summary: { ...reconciliation.summary, nonChecksMatchingNoStep: unmatchedEntries },
   };
 }
 

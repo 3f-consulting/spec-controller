@@ -8,7 +8,7 @@ const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
 };
 
 export const reconcilerSection = (report: RenderInput): string[] => {
-  const steps = report.summary.reconcilerSteps ?? [];
+  const steps = report.summary.stepAccounting?.steps.reconciler ?? [];
   if (steps.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.ReconcilerHeading],
