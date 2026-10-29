@@ -106,13 +106,13 @@ Feature: The fitness functions this repository carries, one scenario per check
   @fitness @SCN-FIT-021
   Scenario: no workflow file this repository runs carries a CI security fault the community's auditor knows
 
-  Rule: a comment carries only what the code cannot say, and the build holds every comment it reads to that on every run
+  Rule: the build holds the comments it reads to a share of their file, and to no ticket ID, scenario code or narrated history
 
     @fitness @SCN-FIT-023
     Scenario: no source, script, configuration or Gherkin file is more than fifteen per cent comment lines, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
 
     @fitness @SCN-FIT-075
-    Scenario: no comment in its workflows' configuration or in the source code outside its shell scripts, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
+    Scenario: outside the test fixtures, no comment in a module or a YAML file, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
 
   Rule: every Given, When and Then in the corpus is one Cucumber runs
 
