@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
+import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import json from "@eslint/json";
 import checkFile from "eslint-plugin-check-file";
 import i18next from "eslint-plugin-i18next";
@@ -133,8 +134,16 @@ const HOST_GLOBALS = [
 ].map((name) => ({ name, message: HOST_GLOBAL_MESSAGE }));
 
 const HARNESS = "/^(describe|it|test|beforeAll|beforeEach|afterEach|afterAll|expect|vi)$/";
-const DESCRIBE =
-  'CallExpression[callee.name="describe"], CallExpression[callee.object.name="describe"], CallExpression[callee.callee.object.name="describe"]';
+// A Vitest call's callee reaches the runner's name through modifiers (it.skip.each) and calls (it.each(rows)). Four steps
+// from the callee cover every chain Vitest documents: three modifiers and one call.
+const CALLEE_STEPS = 4;
+const calleePathsOfLength = (length) =>
+  length === 0 ? ["callee"] : calleePathsOfLength(length - 1).flatMap((path) => [`${path}.object`, `${path}.callee`]);
+const CALLEE_PATHS = Array.from({ length: CALLEE_STEPS + 1 }, (_, length) => calleePathsOfLength(length)).flat();
+const vitestCall = (names) =>
+  `CallExpression:matches(${CALLEE_PATHS.map((path) => `[${path}.name=/^(${names})$/]`).join(", ")})`;
+
+const DESCRIBE = vitestCall("describe");
 const DESCRIBE_BODY = `:is(${DESCRIBE}) > :function > BlockStatement`;
 const TABLE = 'CallExpression[callee.object.name=/^(describe|it|test)$/][callee.property.name=/^(each|for)$/]';
 
@@ -163,32 +172,40 @@ const LITERAL_TRANSLATE =
 const FEATURES = new URL("features/", import.meta.url);
 const DOMAIN = new URL("packages/core/src/domain/", import.meta.url);
 const camelCase = (slug) => slug.replace(/-([a-z0-9])/g, (_, letter) => letter.toUpperCase());
+const scenariosIn = (children) =>
+  children.flatMap((child) => (child.rule ? scenariosIn(child.rule.children) : child.scenario ? [child.scenario] : []));
+const scenarioCodesIn = (text) => {
+  const { feature } = new Parser(new AstBuilder(() => ""), new GherkinClassicTokenMatcher()).parse(text);
+  return scenariosIn(feature?.children ?? [])
+    .flatMap((scenario) => scenario.tags)
+    .map((tag) => /^@SCN-([A-Z0-9]+)-\d+$/.exec(tag.name)?.[1])
+    .filter((code) => code !== undefined);
+};
 const CONCEPT_CODES = [
   ...new Set(
     readdirSync(FEATURES)
       .filter((file) => file.endsWith(".feature"))
       .filter((file) => existsSync(new URL(`${camelCase(basename(file, ".feature"))}.ts`, DOMAIN)))
-      .flatMap((file) => [...readFileSync(new URL(file, FEATURES), "utf8").matchAll(/@SCN-([A-Z0-9]+)-\d+/g)])
-      .map(([, code]) => code),
+      .flatMap((file) => scenarioCodesIn(readFileSync(new URL(file, FEATURES), "utf8"))),
   ),
 ].sort();
+if (CONCEPT_CODES.length === 0) {
+  throw new Error(
+    "No domain concept found: no feature in features/ names a module in packages/core/src/domain/, so the domain-tests rule has nothing to refuse.",
+  );
+}
 
-const TEST_TITLE =
-  "CallExpression:matches([callee.name=/^(describe|it|test)$/], [callee.object.name=/^(describe|it|test)$/], " +
-  "[callee.callee.object.name=/^(describe|it|test)$/])";
+const TEST_TITLE = vitestCall("describe|it|test");
 const CONCEPT_CITATION = `/\\[SCN-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
 const MISPLACED_TEST =
   "A test citing a domain concept's scenario tests a rule of core's domain. Move it to packages/core/src/domain/.";
-const DOMAIN_TEST_SELECTORS =
-  CONCEPT_CODES.length === 0
-    ? []
-    : [
-        { selector: `${TEST_TITLE} > Literal.arguments:first-child[value=${CONCEPT_CITATION}]`, message: MISPLACED_TEST },
-        {
-          selector: `${TEST_TITLE} > TemplateLiteral.arguments:first-child > TemplateElement[value.raw=${CONCEPT_CITATION}]`,
-          message: MISPLACED_TEST,
-        },
-      ];
+const DOMAIN_TEST_SELECTORS = [
+  { selector: `${TEST_TITLE} > Literal.arguments:first-child[value=${CONCEPT_CITATION}]`, message: MISPLACED_TEST },
+  {
+    selector: `${TEST_TITLE} > TemplateLiteral.arguments:first-child > TemplateElement[value.raw=${CONCEPT_CITATION}]`,
+    message: MISPLACED_TEST,
+  },
+];
 
 const PROSE = ["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"];
 

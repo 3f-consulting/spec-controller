@@ -72,7 +72,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Scenario: every function in a file the push touches scores under the external change-risk standard
 
   @fitness @SCN-FIT-009
-  Scenario: every import boundary this repository draws holds
+  Scenario: the packages, the engine's adapters and its domain import each other only across the boundaries this repository draws
 
     The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
     through the domain, a driven module of the command-line app never reaches into another, and a

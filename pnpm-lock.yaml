@@ -17,6 +17,9 @@ importers:
       '@cucumber/cucumber':
         specifier: ^12.9.0
         version: 12.9.0
+      '@cucumber/gherkin':
+        specifier: ^41.0.0
+        version: 41.0.0
       '@eslint/json':
         specifier: 2.1.1
         version: 2.1.1
