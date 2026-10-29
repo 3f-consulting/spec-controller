@@ -20,6 +20,7 @@ import {
   unnamedClaimReconciliationsOf,
   noScnCodeReconciliations,
   duplicateScnCodeReconciliationsOf,
+  brokenReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import {
   ledgerTally,
@@ -143,7 +144,10 @@ function duplicateScnCodeRow(
 ): ClaimReconciliation {
   const scnId = sharers[0]!.scnId;
   const evidenceObligations = sharers.flatMap((s) => s.evidenceObligations);
-  const items = duplicateScnCodeReconciliationsOf(evidenceObligations);
+  const items = [
+    ...duplicateScnCodeReconciliationsOf(evidenceObligations),
+    ...brokenReconciliationsOf(citations.observationsFor(scnId)),
+  ];
   return {
     scnId,
     kind: "scenario",

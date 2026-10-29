@@ -147,8 +147,12 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
+    A broken evidence observation posts to the claim it names, as every other does, as a broken
+    item carrying it. The obligation it was meant to answer reconciles from the evidence that
+    reached its proof.
+
     @unit @SCN-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is findable there — behavioural and fitness evidence observations alike
+    Scenario: every evidence observation posts to exactly one ledger account and is findable there, a broken one on the claim it names — behavioural and fitness evidence observations alike
 
     @unit @SCN-LDG-035
     Scenario: a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites

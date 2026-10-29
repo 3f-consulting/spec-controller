@@ -1,12 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
+import { summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
-import { parseVitestEvidenceObservations } from "../parse/vitest.js";
-import type { VitestJsonReport } from "../parse/vitest.js";
-import { ciStepRecordObservations } from "../parse/ciStepRecord.js";
-import type { StepRecord } from "../parse/ciStepRecord.js";
+import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE, UNNAMED_CLAIM_ID } from "../model.js";
+import type {
+  ClaimKind,
+  ClaimReconciliation,
+  EvidenceObservation,
+  Ledger,
+  QualityCheckReconciliation,
+} from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -23,31 +26,82 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-const ROOT = "/work/target";
-
-const FEATURE = `Feature: run integrity
-
-  @fitness @SCN-RIN-001
-  Scenario: a check the CI run never ran
-
-  @unit @SCN-RIN-002
-  Scenario: a behaviour whose suite failed to collect
-`;
-
 const COLLECTION_FAILED_LOCATOR = "src/collect.test.ts";
 const COLLECTION_FAILED_MESSAGE = "  \n\t\nError:  Cannot   find | package\n    at packageResolve (node:internal)";
 
-const collectionFailed = (name: string, message?: string): VitestJsonReport => ({
-  testResults: [{ name, status: "failed", ...(message !== undefined ? { message } : {}) }],
+const collectionFailed = (locator: string, message?: string): EvidenceObservation => ({
+  qualityCheck: "unit",
+  scnId: null,
+  status: "failed",
+  locator,
+  broken: true,
+  ...(message !== undefined ? { message } : {}),
 });
 
-const SKIPPED_CHECK: StepRecord = { "SCN-RIN-001": { outcome: "skipped" } };
+const SKIPPED_CHECK: EvidenceObservation = {
+  qualityCheck: "fitness",
+  fitnessFunction: "SCN-RIN-001",
+  scnId: "SCN-RIN-001",
+  exists: false,
+  enforcedOverRealSource: false,
+  broken: true,
+  notes: [{ kind: "check-step-did-not-run", code: "SCN-RIN-001", outcome: "skipped" }],
+};
 
-function render(vitest: VitestJsonReport, ciSteps?: StepRecord): string {
-  const ledger = reconcile(parseScenarios(FEATURE), [
-    ...parseVitestEvidenceObservations(vitest, "unit", ROOT),
-    ...ciStepRecordObservations(ciSteps),
+function itemOf(
+  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
+  observation: EvidenceObservation,
+): QualityCheckReconciliation {
+  return makeQualityCheckReconciliation({
+    ...fields,
+    ...(OUTCOME_SIDE_PROFILE[fields.outcome].observation === "Exists" ? { evidenceObservation: observation } : {}),
+  });
+}
+
+function brokenItemOf(observation: EvidenceObservation): QualityCheckReconciliation {
+  return itemOf(
+    {
+      qualityCheck: observation.qualityCheck,
+      outcome: "broken",
+      ...(observation.locator !== undefined ? { locator: observation.locator } : {}),
+      ...(observation.message !== undefined ? { message: observation.message } : {}),
+      ...(observation.notes !== undefined ? { notes: observation.notes } : {}),
+    },
+    observation,
+  );
+}
+
+function claimOf(
+  scnId: string,
+  kind: ClaimKind,
+  items: readonly QualityCheckReconciliation[],
+  observations: readonly EvidenceObservation[] = [],
+): ClaimReconciliation {
+  return {
+    scnId,
+    kind,
+    verdict: "out-of-balance",
+    evidenceObservations: observations,
+    evidenceObligations: items.flatMap((item) => (item.evidenceObligation !== undefined ? [item.evidenceObligation] : [])),
+    qualityCheckReconciliations: items,
+    reconcilingItems: items,
+    pendingItems: [],
+  };
+}
+
+const missingClaimOf = (scnId: string, qualityCheck: "unit" | "fitness"): ClaimReconciliation =>
+  claimOf(scnId, "scenario", [
+    makeQualityCheckReconciliation({ qualityCheck, outcome: "missing", evidenceObligation: { qualityCheck } }),
   ]);
+
+function render(...broken: readonly EvidenceObservation[]): string {
+  const ledger: Ledger = {
+    claimReconciliations: [
+      missingClaimOf("SCN-RIN-001", "fitness"),
+      missingClaimOf("SCN-RIN-002", "unit"),
+      claimOf(UNNAMED_CLAIM_ID, "unnamed-claim", broken.map(brokenItemOf), broken),
+    ],
+  };
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
@@ -88,7 +142,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 
   it("one broken evidence: the stamp counts one proof, then names its file and prints its error verbatim, each block followed by a blank line", () => {
-    const md = render(collectionFailed(`${ROOT}/${COLLECTION_FAILED_LOCATOR}`, COLLECTION_FAILED_MESSAGE));
+    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE));
     expect(runIntegrityLines(md)).toEqual([
       CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
       "",
@@ -104,10 +158,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 
   it("two broken evidences: the stamp counts them in the plural, and the one the runner did not name is listed as unnamed", () => {
-    const md = render(
-      collectionFailed(`${ROOT}/${COLLECTION_FAILED_LOCATOR}`, COLLECTION_FAILED_MESSAGE),
-      SKIPPED_CHECK,
-    );
+    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
     expect(runIntegrityLines(md)).toEqual([
       CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
       "",
@@ -129,10 +180,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 
   it("the unnamed claim's row headlines each broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped", () => {
-    const md = render(
-      collectionFailed(`${ROOT}/${COLLECTION_FAILED_LOCATOR}`, COLLECTION_FAILED_MESSAGE),
-      SKIPPED_CHECK,
-    );
+    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
     expect(unnamedClaimCell(md)).toBe(
       [
         brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Error: Cannot find \\| package`),
@@ -142,7 +190,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 
   it("the unnamed claim's row trims a broken file's locator that begins with a space, when the runner reports no error", () => {
-    const md = render(collectionFailed(`${ROOT}/ spaced/collect.test.ts`));
+    const md = render(collectionFailed(" spaced/collect.test.ts"));
     expect(unnamedClaimCell(md)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
   });
 });

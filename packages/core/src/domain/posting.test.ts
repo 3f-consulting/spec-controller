@@ -20,18 +20,6 @@ describe("[SCN-LDG-001] postingOf routes a BEHAVIOURAL evidence observation by i
       postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "unnamed-claim", posted: "cites-nothing" });
   });
-
-  it.each([
-    ["posts a BROKEN evidence observation to the unnamed claim on the FLAG, though it carries a named scnId", "SCN-AAA-001"],
-    ["posts a BROKEN evidence observation carrying an UNKNOWN scnId to the unnamed claim too — it mints no phantom claim's row", "SCN-ZZZ-009"],
-  ])("%s", (_title, scnId) => {
-    expect(
-      postingOf(
-        { qualityCheck: "unit", scnId, status: "failed", broken: true },
-        namedScenarioIds
-      )
-    ).toEqual({ kind: "unnamed-claim", posted: "broken" });
-  });
 });
 
 describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its citation, the same rule", () => {
@@ -59,5 +47,35 @@ describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its c
       kind: "unnamed-claim",
       posted: "cites-nothing",
     });
+  });
+});
+
+describe("[SCN-LDG-022] postingOf routes a BROKEN evidence observation by its citation, as every other", () => {
+  const brokenTest = (scnId: string | null) =>
+    postingOf({ qualityCheck: "unit", scnId, status: "failed", broken: true }, namedScenarioIds);
+  const brokenCheck = (scnId?: string) =>
+    postingOf(
+      {
+        qualityCheck: "fitness",
+        fitnessFunction: "lint:named",
+        exists: false,
+        enforcedOverRealSource: false,
+        broken: true,
+        ...(scnId !== undefined ? { scnId } : {}),
+      },
+      namedScenarioIds
+    );
+
+  it.each([
+    ["behavioural", brokenTest],
+    ["fitness", brokenCheck],
+  ] as const)("posts a broken %s evidence observation to the claim it names", (_kind, post) => {
+    expect(post("SCN-AAA-001")).toEqual({ kind: "scenario", scnId: "SCN-AAA-001" });
+    expect(post("SCN-ZZZ-009")).toEqual({ kind: "phantom-claim", scnId: "SCN-ZZZ-009" });
+  });
+
+  it("posts a broken evidence observation that names no claim to the unnamed claim, as broken", () => {
+    expect(brokenTest(null)).toEqual({ kind: "unnamed-claim", posted: "broken" });
+    expect(brokenCheck()).toEqual({ kind: "unnamed-claim", posted: "broken" });
   });
 });

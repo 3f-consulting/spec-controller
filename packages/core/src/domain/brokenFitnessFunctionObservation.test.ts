@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
+import { brokenItemsOf, hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
-  it("leaves the obligation missing and posts to the unnamed claim even when the evidence observation says the check exists and ran", () => {
+  it("leaves the obligation missing and stamps the run unsound even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
         scnId: "SCN-LNT-026",
@@ -31,20 +31,17 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
       (s) => s.scnId === "SCN-LNT-026",
     );
     expect(row?.verdict).toBe("out-of-balance");
-    expect(row?.qualityCheckReconciliations).toEqual([
+    expect(
+      row?.qualityCheckReconciliations.filter((item) => item.evidenceObligation !== undefined),
+    ).toEqual([
       {
         qualityCheck: "fitness",
         outcome: "missing",
         evidenceObligation: { qualityCheck: "fitness" },
       },
     ]);
-    const unnamedClaimRow = balance.claimReconciliations.find(
-      (s) => s.kind === "unnamed-claim",
-    );
-    expect(unnamedClaimRow?.qualityCheckReconciliations).toEqual([
+    expect(brokenItemsOf(balance)).toMatchObject([
       {
-        qualityCheck: "fitness",
-        outcome: "broken",
         locator: "features/fitness-functions.feature",
         message: "the run's record says this check's step was skipped",
       },

@@ -23,7 +23,7 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
   Rule: an ambiguous Cucumber step is broken, not absent
 
     @unit @SCN-CUC-003
-    Scenario: an ambiguous Cucumber step posts a broken item naming the step to the unnamed claim's row, while the scenario it would have proven still reads missing
+    Scenario: an ambiguous Cucumber step posts a broken observation naming the step and citing the scenario it would have proven
 
   Rule: a Cucumber scenario's step results give its run result: passed when every step passed, failed when one failed, inconclusive when one was skipped
 

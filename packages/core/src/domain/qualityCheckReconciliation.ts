@@ -46,7 +46,7 @@ export const OUTCOME_SIDE_PROFILE: Record<
   "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
   "cites-no-scenario": { obligation: "None", observation: "Exists" },
   "no-evidence-obligation": { obligation: "None", observation: "Exists" },
-  broken: { obligation: "None", observation: "None" },
+  broken: { obligation: "None", observation: "Exists" },
   "both-missing": { obligation: "None", observation: "None" },
 };
 
@@ -173,6 +173,32 @@ function fitnessFunctionNameOf(observation: EvidenceObservation): string | undef
     : undefined;
 }
 
+function remarkOf(
+  o: EvidenceObservation
+): Pick<QualityCheckReconciliationFields, "locator" | "message" | "notes"> {
+  return {
+    ...(o.locator !== undefined ? { locator: o.locator } : {}),
+    ...(o.message !== undefined ? { message: o.message } : {}),
+    ...(o.notes !== undefined ? { notes: o.notes } : {}),
+  };
+}
+
+function brokenReconciliationOf(o: EvidenceObservation): QualityCheckReconciliation {
+  return makeQualityCheckReconciliation({
+    qualityCheck: o.qualityCheck,
+    ...(fitnessFunctionNameOf(o) !== undefined ? { fitnessFunction: fitnessFunctionNameOf(o) } : {}),
+    outcome: "broken",
+    evidenceObservation: o,
+    ...remarkOf(o),
+  });
+}
+
+export function brokenReconciliationsOf(
+  postedObservations: readonly EvidenceObservation[]
+): QualityCheckReconciliation[] {
+  return postedObservations.filter((o) => o.broken === true).map(brokenReconciliationOf);
+}
+
 export function noEvidenceObligationReconciliationsOf(
   scnId: string,
   postedObservations: readonly EvidenceObservation[],
@@ -181,16 +207,19 @@ export function noEvidenceObligationReconciliationsOf(
   return postedObservations
     .filter(
       (o) =>
+        o.broken === true ||
         !evidenceObligationPairs.has(evidenceObligationPairKey(scnId, o.qualityCheck))
     )
     .map((o) =>
-      makeQualityCheckReconciliation({
-        qualityCheck: o.qualityCheck,
-        outcome: "no-evidence-obligation" as const,
-        ...(fitnessFunctionNameOf(o) !== undefined ? { fitnessFunction: fitnessFunctionNameOf(o) } : {}),
-        evidenceObservation: o,
-        ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
-      })
+      o.broken === true
+        ? brokenReconciliationOf(o)
+        : makeQualityCheckReconciliation({
+            qualityCheck: o.qualityCheck,
+            outcome: "no-evidence-obligation" as const,
+            ...(fitnessFunctionNameOf(o) !== undefined ? { fitnessFunction: fitnessFunctionNameOf(o) } : {}),
+            evidenceObservation: o,
+            ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
+          })
     );
 }
 
@@ -198,13 +227,15 @@ export function citesUnknownScenarioReconciliationsOf(
   observations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return observations.map((o) =>
-    makeQualityCheckReconciliation({
-      qualityCheck: o.qualityCheck,
-      ...(isFitnessObservation(o) ? { fitnessFunction: o.fitnessFunction } : {}),
-      outcome: "cites-unknown-scenario",
-      evidenceObservation: o,
-      ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
-    })
+    o.broken === true
+      ? brokenReconciliationOf(o)
+      : makeQualityCheckReconciliation({
+          qualityCheck: o.qualityCheck,
+          ...(isFitnessObservation(o) ? { fitnessFunction: o.fitnessFunction } : {}),
+          outcome: "cites-unknown-scenario",
+          evidenceObservation: o,
+          ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
+        })
   );
 }
 
@@ -214,23 +245,13 @@ export function unnamedClaimReconciliationsOf(
   uncitedFitnessFunctions: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
-    ...brokenEvidence.map((o) =>
-      makeQualityCheckReconciliation({
-        qualityCheck: o.qualityCheck,
-        outcome: "broken" as const,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
-        ...(o.message !== undefined ? { message: o.message } : {}),
-        ...("notes" in o && o.notes !== undefined ? { notes: o.notes } : {}),
-      })
-    ),
+    ...brokenEvidence.map(brokenReconciliationOf),
     ...uncited.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: o.qualityCheck,
         outcome: "cites-no-scenario" as const,
         evidenceObservation: o,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
-        ...(o.message !== undefined ? { message: o.message } : {}),
-        ...(o.notes !== undefined ? { notes: o.notes } : {}),
+        ...remarkOf(o),
       })
     ),
     ...uncitedFitnessFunctions.map((o) =>

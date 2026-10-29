@@ -3,7 +3,6 @@ import type {
   BehaviouralEvidenceObservation,
   FitnessEvidenceObservation,
 } from "./journal.js";
-import { isFitnessObservation } from "./journal.js";
 
 export type Posting =
   | { readonly kind: "scenario"; readonly scnId: string }
@@ -36,21 +35,9 @@ export function postingOf(
   observation: EvidenceObservation,
   scenarioIds: ReadonlySet<string>
 ): Posting {
-  if (observation.qualityCheck === "fitness") {
-    if (isFitnessObservation(observation) && observation.broken === true) {
-      return { kind: "unnamed-claim", posted: "broken" };
-    }
-    if (observation.scnId !== undefined) {
-      return scenarioIds.has(observation.scnId)
-        ? { kind: "scenario", scnId: observation.scnId }
-        : { kind: "phantom-claim", scnId: observation.scnId };
-    }
-    return { kind: "unnamed-claim", posted: "cites-nothing" };
+  const scnId = observation.scnId ?? null;
+  if (scnId === null) {
+    return { kind: "unnamed-claim", posted: observation.broken === true ? "broken" : "cites-nothing" };
   }
-  if (observation.broken === true) return { kind: "unnamed-claim", posted: "broken" };
-  if (observation.scnId === null) return { kind: "unnamed-claim", posted: "cites-nothing" };
-  if (!scenarioIds.has(observation.scnId)) {
-    return { kind: "phantom-claim", scnId: observation.scnId };
-  }
-  return { kind: "scenario", scnId: observation.scnId };
+  return scenarioIds.has(scnId) ? { kind: "scenario", scnId } : { kind: "phantom-claim", scnId };
 }

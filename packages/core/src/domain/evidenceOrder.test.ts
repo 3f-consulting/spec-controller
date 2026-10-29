@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { inEvidenceOrder } from "./evidenceOrder.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
@@ -82,13 +83,10 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {
-    const broken = { qualityCheck: "unit", status: "failed", broken: true, locator: "a.test.ts" } as const;
-    const citing: EvidenceObservation = { ...broken, scnId: "SCN-CITED-001" };
-    const citingNone: EvidenceObservation = { ...broken, scnId: null };
-    const unnamedClaimRow = reconcile(scenarios, [citing, citingNone]).claimReconciliations.find(
-      (r) => r.kind === "unnamed-claim"
-    )!;
-    expect(unnamedClaimRow.evidenceObservations.map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
+    const atLocation = { qualityCheck: "unit", status: "passed", locator: "a.test.ts" } as const;
+    const citing: EvidenceObservation = { ...atLocation, scnId: "SCN-CITED-001" };
+    const citingNone: EvidenceObservation = { ...atLocation, scnId: null };
+    expect(inEvidenceOrder([citing, citingNone]).map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });
 
   it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {

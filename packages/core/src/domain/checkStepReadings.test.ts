@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf, type EvidenceReconciliation } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
-import { hasBrokenEvidence } from "./ledger.js";
+import { brokenItemsOf, hasBrokenEvidence } from "./ledger.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -30,15 +30,10 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
     .map((row) => [
       row.scnId,
       row.verdict,
-      row.qualityCheckReconciliations.map((item) => [item.fitnessFunction, item.outcome]),
+      row.qualityCheckReconciliations
+        .filter((item) => item.evidenceObligation !== undefined)
+        .map((item) => [item.fitnessFunction, item.outcome]),
     ]);
-}
-
-function unnamedClaimItemsOf(reconciliation: EvidenceReconciliation) {
-  const row = reconciliation.ledger.claimReconciliations.find(
-    (r) => r.kind === "unnamed-claim"
-  );
-  return row?.qualityCheckReconciliations ?? [];
 }
 
 describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
@@ -71,7 +66,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
     expect(
       hasBrokenEvidence({ claimReconciliations: reconciliation.ledger.claimReconciliations })
     ).toBe(true);
-    const items = unnamedClaimItemsOf(reconciliation);
+    const items = brokenItemsOf(reconciliation.ledger);
     expect(items.map((item) => [item.outcome, item.notes])).toEqual([
       ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" }]],
       ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" }]],
@@ -86,11 +81,11 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
-    const unnamedClaimRow = reconcile().ledger.claimReconciliations.find(
-      (row) => row.kind === "unnamed-claim"
+    const observations = fitnessObservationsOf([], recorded).filter(
+      (o) => o.scnId !== "SCN-CVT-001" && o.scnId !== "SCN-CVT-002"
     );
     expect(
-      unnamedClaimRow?.evidenceObservations.map((o) => [
+      observations.map((o) => [
         o.scnId,
         "exists" in o ? o.exists : undefined,
         "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,

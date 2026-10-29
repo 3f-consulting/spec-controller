@@ -170,24 +170,23 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
     expect(unit?.evidenceObservation).toBeUndefined();
   });
 
-  it("posts one broken item, on the unnamed claim's row, naming the test and carrying the setup error", () => {
+  it("posts one broken item, naming the test and carrying the setup error", () => {
     const broken = balance().ledger.claimReconciliations.flatMap((row) =>
-      row.reconcilingItems.filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
+      row.reconcilingItems.filter((item) => item.outcome === "broken")
     );
 
     expect(broken).toHaveLength(1);
-    expect(broken[0]?.kind).toBe("unnamed-claim");
-    expect(broken[0]?.item.locator).toBe("test_cases::test_setup_error");
-    expect(broken[0]?.item.message).toContain("RuntimeError: the resource could not be set up");
+    expect(broken[0]?.locator).toBe("test_cases::test_setup_error");
+    expect(broken[0]?.message).toContain("RuntimeError: the resource could not be set up");
   });
 
   it("renders the broken item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {
     const ctx: RunContext = { target: TARGET, inputs: runInputsOf({}), corpus: "features", runStart: new Date("2026-10-13T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown(balance(), ctx, reportedExitCodeOf)
+    const brokenItemLine = renderMarkdown(balance(), ctx, reportedExitCodeOf)
       .split("\n")
-      .find((line) => line.startsWith("| (unnamed claim) | ") && line.includes("test_cases::test_setup_error"));
+      .find((line) => line.startsWith("| ") && line.includes("test_cases::test_setup_error"));
 
-    expect(unnamedClaimRow ?? "").toContain(`${OUTCOME_DESCRIPTION.broken} (test_cases::test_setup_error`);
-    expect(unnamedClaimRow ?? "").not.toContain("failed to collect");
+    expect(brokenItemLine ?? "").toContain(`${OUTCOME_DESCRIPTION.broken} (test_cases::test_setup_error`);
+    expect(brokenItemLine ?? "").not.toContain("failed to collect");
   });
 });

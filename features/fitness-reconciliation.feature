@@ -60,12 +60,11 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a check that did not run is broken evidence rather than an absent one
 
-    A broken check posts to the unnamed claim's row with where to fix it and what broke, and carries no
-    Evidence Observation. The obligation it cites reconciles missing, and the run is stamped
-    unsound.
+    A broken check carries where to fix it and what broke. The obligation it cites reconciles
+    missing, and the run is stamped unsound.
 
     @unit @SCN-LNT-026
-    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence rather than an Evidence Observation
+    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence, which answers no obligation
 
       A step that succeeded or failed answers its obligation. A skipped step, or any status the
       reader does not recognise, is broken evidence.

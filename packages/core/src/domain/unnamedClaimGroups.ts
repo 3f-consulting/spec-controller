@@ -30,8 +30,12 @@ interface UnnamedClaimStepsGroup {
 
 export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
 
+function citesNoScenario(item: QualityCheckReconciliation): boolean {
+  return item.outcome === "cites-no-scenario";
+}
+
 function isFileGrouped(item: QualityCheckReconciliation): boolean {
-  return item.evidenceObservation !== undefined && !isFitnessObservation(item.evidenceObservation);
+  return citesNoScenario(item) && item.evidenceObservation !== undefined && !isFitnessObservation(item.evidenceObservation);
 }
 
 function keyOf(item: FileGroupedItem): string {
@@ -63,7 +67,7 @@ function groupOf(items: readonly FileGroupedItem[]): UnnamedClaimFileGroup {
 }
 
 function stepsGroupOf(items: readonly QualityCheckReconciliation[]): UnnamedClaimStepsGroup[] {
-  const names = items.flatMap(({ evidenceObservation: o }) =>
+  const names = items.filter(citesNoScenario).flatMap(({ evidenceObservation: o }) =>
     o !== undefined && isFitnessObservation(o) ? [o.fitnessFunction] : []
   );
   return names.length === 0 ? [] : [{ names }];

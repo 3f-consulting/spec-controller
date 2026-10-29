@@ -355,7 +355,7 @@ Feature: The report renders the ledger as sectioned facts
     feature file.
 
     Second, it prints what broke. The message appears verbatim, in a fenced block, in the
-    run-integrity section, and the unnamed claim's broken item carries the same locator and the
+    run-integrity section, and the broken item on the ledger carries the same locator and the
     message's first line. Where the runner gives its own message, the report shows it
     unchanged. Where it gives none, as for an ambiguous Cucumber step, the report shows a
     diagnosis built from what the runner reported. Either way it names what failed and where,
@@ -392,16 +392,12 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
 
-  Rule: a proof that never ran is attributed to no scenario, even when it cites one
-
-    A broken observation discharges and fails no obligation, even when it cites a real
-    scenario, as an ambiguous Cucumber step does. It is posted to the unnamed claim and counted
-    there, not as attributed to that scenario.
+  Rule: Test volume counts each behavioural evidence observation on the kind of claim its row reconciles, a broken one included
 
     Fitness observations are not counted in Test volume.
 
     @unit @SCN-RPT-023
-    Scenario: a broken observation citing a real scenario counts on the unnamed claim, not attributed to that scenario
+    Scenario: Test volume counts each behavioural evidence observation by the kind of claim its row reconciles, a broken one included
 
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
