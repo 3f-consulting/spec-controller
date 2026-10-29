@@ -152,7 +152,7 @@ No check holds it. spec-controller carries no safety concern.
 | Every reference in a current-state document resolves | 0 |
 | No title or description names a code identifier or a source file | 1 |
 
-Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, of the kinds `.vale.ini` names: Markdown, the modules, YAML and Gherkin. Its output names the rule that failed. Each rule keeps its own count:
+Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, of the kinds it names: Markdown, the modules, YAML and Gherkin. Its output names the rule that failed. Each rule keeps its own count:
 
 | Rule | Real catches |
 |---|---|
