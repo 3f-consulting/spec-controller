@@ -157,20 +157,22 @@ jobs:
         id: SCN-FIT-032
         if: always()
         shell: bash
-        # jscpd, pinned in package.json, reads its settings from .jscpd.json, which takes no comments, so their reasons are here.
+        # jscpd, pinned in package.json, reads its settings from .jscpd.json, named so that one it cannot parse stops the run rather than falling back to defaults; the file takes no comments, so their reasons are here.
         # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
-        run: node_modules/.bin/jscpd --exit-code
+        # --fail-on-empty reds an analysis of no file. jscpd does not count five files under the 50-token clone size, so none can hold a clone:
+        # core's domain/outcome.ts, model.ts and parse/stepNames.ts, and spec-controller's cli.ts and defaultCorpus.ts.
+        run: node_modules/.bin/jscpd --config .jscpd.json --exit-code --fail-on-empty
 
-      - name: Unused code — no unused file, export or dependency
+      - name: Unused code — no unused file, export or dependency outside the test code
         id: SCN-FIT-033
         if: always()
         shell: bash
         # knip, pinned in package.json and configured in knip.jsonc, where each setting carries its reason.
-        # Default mode: an export a test imports is used. Exported types count as exports.
-        # The step reds on knip's own exit code, so an unused file, export or dependency anywhere in the tree reds it, whichever files the change touches.
-        run: node_modules/.bin/knip --include files,exports,types,dependencies
+        # Default mode: an export a test imports is used, and exported types count as exports. A configuration hint reds the step, so a pattern or ignore entry matching nothing fails it.
+        # The step reds on knip's own exit code, so an unused file, export or dependency reds it whichever files the change touches, outside what knip.jsonc ignores: the test code, three dependencies and one script.
+        run: node_modules/.bin/knip --include files,exports,types,dependencies --treat-config-hints-as-errors
 
       - name: Import boundaries
         id: SCN-FIT-009

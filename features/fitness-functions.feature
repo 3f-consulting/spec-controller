@@ -140,7 +140,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Rule: nothing ships that nothing uses
 
     @fitness @SCN-FIT-033
-    Scenario: nothing in the tree carries an unused file, export or dependency
+    Scenario: outside the behavioural suite's test code, no file, export or dependency is unused, except three dependencies and one script whose use the check cannot read
 
   Rule: mutation reaches every production source file, or the repository records which it leaves out and why
 
