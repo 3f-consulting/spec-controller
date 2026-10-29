@@ -275,7 +275,7 @@ jobs:
           semgrep scan --config .semgrep/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep.json" packages
           jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
-      - name: Comment share — no file over its comment-line ceiling
+      - name: Comment share — no file cloc counts over its comment-line ceiling
         id: SCN-FIT-023
         if: always()
         shell: bash
@@ -286,7 +286,7 @@ jobs:
       # Each probe pipes one line that breaks one rule into Vale and reds the step unless Vale names that rule, so a dead
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.
       # The runner's default bash has no pipefail, so the probe's verdict is grep's, not Vale's exit.
-      - name: No ticket ID, scenario code or narrated history in a comment, description or document
+      - name: Vale — no ticket ID, scenario code or narrated history in a comment, description or document it reads
         id: SCN-FIT-075
         if: always()
         run: |
