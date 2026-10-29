@@ -1,20 +1,20 @@
 # What each fitness function catches
 
-Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most of them automate a kind of comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the suite time limits, the test runs and the workflows honest.
+Each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](../features/fitness-functions.feature). Most automate a comment a technical lead makes in code review, so a reviewer's attention goes to design and intent. The rest guard the method itself: they keep the suite time limits, the test runs and the workflows honest.
 
 Each table below gives, for each check:
 - the comment it automates;
 - how many times it caught a real problem on a pull request between 15 July and 15 October 2026.
 
-A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose is not counted, and neither is a red caused by the runner rather than the change. Deliberate reds include a scenario's red commit, a test written before its code, and a planted violation that proves a check fires. The counts are refreshed at each quarterly gate review.
+A **real catch** is a red on a commit that was meant to pass. A red the method makes on purpose does not count: a scenario's red commit, a test written before its code, or a planted violation that proves a check fires. Nor does a red caused by the runner rather than the change. The counts are refreshed at each quarterly gate review.
 
-Many of these checks and rules first ran on `main` between 30 September and 14 October 2026, near the end of the window, and more after it, from 20 October. For them, a zero says little yet.
+Many checks and rules first ran on `main` between 30 September and 14 October 2026, near the end of the window. More first ran after it, from 20 October. For these, a zero says little yet.
 
-Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order; process conformance is 3F's extension of it. Each characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
+Quality checks fall into three categories: product, technical and process conformance. The first two group the product quality characteristics of ISO/IEC 25010:2023, in the standard's order. Process conformance is 3F's extension of the standard. Every characteristic is listed, including those no check holds and those that do not apply to a command-line tool run inside its adopter's CI.
 
 ## One check, many rules: ESLint
 
-One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the repository's one ESLint configuration. It fails on any error in the tree, and on any warning in a file the push touches. ESLint's output names the rule that failed, so its rules need no scenario each. They are listed here with the characteristic each holds, and each characteristic's table below carries one row for its rules.
+One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the repository's only ESLint configuration. It fails on any error in the tree, and on any warning in a file the push touches. ESLint's output names the rule that failed, so no rule needs a scenario of its own. Each rule is listed here with the characteristic it holds, and each characteristic's table below has one row for its rules.
 
 | Rule | Characteristic | Real catches |
 |---|---|---|
@@ -33,7 +33,7 @@ One check runs ESLint over [`eslint.config.js`](../eslint.config.js), the reposi
 | Evidence layers cross a seam | Scenarios a reader can trust | 0 |
 | Test code makes a temporary directory only through its runner's cleanup | Guards on the method | 0 |
 
-In the counting window each rule was a check of its own, except two. Import boundaries held the engine's idiom with its import rules, so its catches are not split between them. The complexity check held the dead suppressions, so they are counted with complexity.
+In the counting window each rule was a check of its own, with two exceptions. Import boundaries held the engine's idiom alongside its import rules, so their catches are not split. The complexity check held the dead suppressions, so those are counted with complexity.
 
 **Product conformance:** what the product does.
 
@@ -49,11 +49,11 @@ No check holds it. spec-controller declares no performance claim, so it runs no 
 
 ## Compatibility
 
-No fitness function holds it. Interoperability with each runner's report format is held by the behavioural scenarios of that format's reader. Co-existence has no check.
+No fitness function holds it. The behavioural scenarios of each runner's report-format reader hold interoperability with that format. Co-existence has no check.
 
 ## Interaction capability
 
-No fitness function holds it. The wording of the report and the help is held by behavioural scenarios over their text.
+No fitness function holds it. Behavioural scenarios over the text of the report and the help hold their wording.
 
 ## Reliability
 
@@ -66,7 +66,7 @@ No check holds it. Availability and recoverability do not apply: spec-controller
 | Workflow security | 1 |
 | Semgrep: four security patterns | 0 |
 
-Semgrep runs this repository's four rules, one file each under [`.semgrep/`](../.semgrep/), over the packages, and its output names the rule that failed. In the counting window each was a check of its own, so each keeps its own count:
+Semgrep runs this repository's four rules over the packages, one file each under [`.semgrep/`](../.semgrep/). Its output names the rule that failed. In the counting window each rule was a check of its own, so each keeps its own count:
 
 | Rule | Real catches |
 |---|---|
@@ -75,7 +75,7 @@ Semgrep runs this repository's four rules, one file each under [`.semgrep/`](../
 | No regular expression is built from a value the program receives | 0 |
 | A file is written only where its location has been checked | 0 |
 
-Workflow security's catch is the same pull request as the published-package checks under *Flexibility*.
+Workflow security's catch is the pull request that also reddened the published-package checks under *Flexibility*.
 
 ## Maintainability
 
@@ -88,7 +88,7 @@ Its headings are the standard's sub-characteristics of maintainability.
 | Import boundaries | 4 |
 | ESLint: the engine's idiom, core's domain language and where a domain rule's unit test lives, seven rules | 1 |
 
-Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`](../config/.dependency-cruiser.js), and its output names the rule that failed. Two of its rules keep each input format's parser in its homes among the packages' source; the repository's ESLint configuration, outside them, also reads the scenarios' tags with the Gherkin parser. In the counting window each was a check of its own, so each keeps its own count:
+Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`](../config/.dependency-cruiser.js), and its output names the rule that failed. Two of its rules keep each input format's parser in its homes in the packages' source. The repository's ESLint configuration lies outside them, and also reads the scenarios' tags with the Gherkin parser. In the counting window each rule was a check of its own, so each keeps its own count:
 
 | Rule | Real catches |
 |---|---|
@@ -97,7 +97,7 @@ Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`]
 
 ### Reusability
 
-No check holds it. Core is published as a package of its own, and its front door is held under *Modularity*.
+No check holds it. Core is published as a package of its own, and *Modularity* holds its front door.
 
 ### Analysability
 
@@ -105,7 +105,7 @@ No check holds it. Core is published as a package of its own, and its front door
 |---|---|
 | ESLint: complexity and function length, and no dead suppression | 13 |
 
-Supportability and observability sit here. No check holds them yet. It is the comment that an error should tell its reader something stable to search for or report.
+Supportability and observability belong here. No check holds them yet. Their review comment is that an error should give its reader something stable to search for or report.
 
 ### Modifiability
 
@@ -127,7 +127,7 @@ Supportability and observability sit here. No check holds them yet. It is the co
 
 ## Flexibility
 
-Installability is held by the published packages and types, and by the ESLint rule that refuses a runtime dependency in the command's manifest. Scalability does not apply to a command-line tool run once per CI run.
+The published-package and published-type checks hold installability, as does the ESLint rule that refuses a runtime dependency in the command's manifest. Scalability does not apply to a command-line tool run once per CI run.
 
 | Check | Real catches |
 |---|---|
@@ -135,7 +135,7 @@ Installability is held by the published packages and types, and by the ESLint ru
 | Published types | 1 |
 | ESLint: the command's manifest declares no runtime dependency | 0 |
 
-The two published checks and workflow correctness share their one catch: a single pull request reddened all three.
+The two published checks and workflow correctness share one catch: a single pull request reddened all three.
 
 ## Safety
 
@@ -152,7 +152,7 @@ No check holds it. spec-controller carries no safety concern.
 | Every reference in a current-state document resolves | 0 |
 | No title or description names a code identifier or a source file | 1 |
 
-Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, of the kinds it names: Markdown, the modules, YAML and Gherkin. Its output names the rule that failed. Each rule keeps its own count:
+Vale runs every rule [`.vale.ini`](../.vale.ini) turns on, over the files git tracks or would track, of the kinds it names: Markdown, the modules, YAML and Gherkin. Its output names the rule that failed. Each rule keeps its own count:
 
 | Rule | Real catches |
 |---|---|
@@ -171,7 +171,7 @@ Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tra
 
 ## Guards on the method
 
-These checks don't replace a review comment. They keep the pipeline's own evidence honest.
+These checks replace no review comment. They keep the pipeline's own evidence honest.
 
 | Check | Real catches |
 |---|---|

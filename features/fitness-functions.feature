@@ -1,69 +1,53 @@
 @FIT
 Feature: The fitness functions this repository carries, one scenario per check
 
-  HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
-  a tag line carrying `@fitness` and a freshly minted code, and a title saying what the check
-  asserts. It has no Given/When/Then, because nothing here runs it. The
-  CI step that runs the check takes that same code as its `id:`, in the pipeline this
-  repository runs anyway. Neither half is derived from the
-  other, which is what makes them two books rather than one read twice: a scenario derived from the
-  step it is reconciled against could never disagree with it.
+  A check is added here in two steps: write the scenario, then annotate the step. The scenario is a
+  tag line carrying `@fitness` and a freshly minted code, and a title saying what the check
+  asserts. The CI step that runs the check, in the pipeline this repository runs anyway, takes that
+  same code as its `id:`. Neither half is derived from the other, so they are two books rather than
+  one read twice, and they can disagree. A scenario whose code no CI step states reconciles as
+  missing, and the run is out of balance, as a `@unit` scenario with no test is.
 
-  SO A SCENARIO THE PIPELINE NEVER RUNS IS A FAULT SOMETHING SAYS OUT LOUD. Each scenario here
-  raises its fitness Evidence Obligation from its @fitness tag; a scenario whose @SCN no CI step
-  states reconciles missing and the run is out of balance, exactly as a @unit scenario with no test
-  does. That is the return on authoring the two halves independently, and the whole of it: the
-  disagreement is reportable because it is possible.
+  The scenarios exist because a check that finds nothing says nothing, so its silence cannot be told
+  from its absence. The run's record of its steps tells them apart: the pipeline reports every step
+  it ran and what each one did. Each scenario raises its fitness evidence obligation from its
+  `@fitness` tag, and that record answers it.
 
-  WHY THE SCENARIOS EXIST AT ALL, given the pipeline already runs everything. A check reports its
-  findings and says nothing when it finds none, so its silence cannot be told from its absence. The
-  enumeration that tells them apart is the RUN's own record of its steps: the pipeline reports every
-  step it ran and what each one did, and a scenario here is the obligation that record answers.
-  Reading the pipeline alone would put the axis back to single-entry.
+  The tag names the axis and the title names the check. A scenario here carries no other tag about
+  its subject: its title says what the check asserts, its `@SCN` is its identity, and its CI step
+  runs the command that settles it. A fitness function is known by its tag, never its shape. The
+  Cucumber profile selects `@integration or @e2e`, so it selects none of these scenarios. Any
+  scenario that profile does not select, a `@unit`-only one included, carries no Given, When or
+  Then and no step definition. The title is the specification. The evidence is the check's own
+  command, run as a pipeline step under the scenario's code. It is an evidence obligation rather
+  than a test, because nothing here runs it: the pipeline records what the step did, and `balance`
+  reads the record.
 
-  THE CODE IS STORED, NEVER POSITIONAL. Each scenario's `@SCN` is the one its CI step states, chosen
-  when the check is written and never derived from where the scenario sits in this file, so
-  inserting one renumbers nothing and every citation elsewhere in the tree stays true. The
-  numbering below is not contiguous for that reason, and that is the rule working rather than a
-  gap.
+  A code is stored, never positional. It is chosen when the check is written, never derived from
+  where its scenario sits in this file, so inserting a scenario renumbers nothing and every citation
+  elsewhere stays true. The numbering has gaps for that reason: the rule working rather than a gap.
+  A code, once allocated, is stable forever: it survives a feature-file rename and is never reused.
+  So a check's step may state a code minted under another feature. A check whose code is cited
+  outside this repository's corpus, such as by a record another pipeline stamps with it, keeps that
+  code when its scenario moves here. Only a change that can move every citing surface with it
+  re-mints the code.
 
-  A CHECK'S STEP MAY ALSO STATE A CODE MINTED UNDER ANOTHER FEATURE, and that is the same rule. A
-  code, once allocated, is stable forever: it survives a feature-file rename and is never reused.
-  A check whose code is cited by something outside this repository's corpus — a record another
-  pipeline stamps with it, say — therefore keeps that code while its scenario moves here, and is
-  re-minted only by the change that can move every citing surface with it.
+  A title states the property the check asserts, as a `@unit` scenario's title does. It never
+  grades the run: "the check passes" or "the build is green" would raise the obligation and answer
+  it at once, both sides of one entry, which double entry forbids. Whether a push cleared the check
+  is the ledger's to say, from the record.
 
-  THE TAG NAMES THE AXIS AND THE TITLE NAMES THE CHECK. Every scenario here carries `@fitness` and
-  nothing else about its subject: what the check asserts is its title's to say, its `@SCN` is its
-  identity, and the command that settles it is the one its CI step runs.
+  No scenario states a bar, and neither does this file. Every obligation is answered by its step's
+  outcome. A check that measures something holds its own bar, such as the time limit around a suite
+  or the ratio check's declared ceiling, and fails its step when the measurement misses it. Whether
+  the step succeeded is the ledger's to say, never this file's: a scenario that compared its own
+  measurement would be grading its own work.
 
-  AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
-  outside the Cucumber profile's `@integration or @e2e` exactly as `@unit` does, so
-  Cucumber selects none of these scenarios. A scenario Cucumber does not select carries no
-  Given/When/Then and no step definition, here as for a `@unit`-only scenario: the title is the
-  SPECIFICATION, saying what the check asserts of this tree, and the check's own command — run as a
-  step of the pipeline under this scenario's code — is the EVIDENCE. It is an EVIDENCE OBLIGATION
-  rather than a test, because nothing here runs it: the pipeline records what that step did, and
-  `balance` reads the record.
-
-  WHAT A TITLE HERE MAY NOT DO IS GRADE THE RUN. "the check passes", or "the build is green", is the
-  scenario raising the obligation and answering it in the same breath — BOTH SIDES OF THE ENTRY,
-  which is the one thing double entry cannot allow. The title states the PROPERTY ASSERTED, as a
-  `@unit` scenario's does; whether this push cleared it is the ledger's sentence, taken from the
-  record.
-
-  NOTHING HERE STATES A BAR, AND NEITHER DOES THIS FILE. Every obligation is answered by its
-  step's outcome: a check that measures something holds its own bar — `timeout` around a
-  suite, the ratio check's declared ceiling — and fails its step below it. Whether
-  the step succeeded is the ledger's sentence, never this file's — a scenario comparing its own
-  measurement would be grading its own homework.
-
-  A BAR IS RAISED AS DELIBERATE PROCESS OPTIMISATION AND IS NEVER LOWERED BECAUSE A PUSH WENT RED.
-  Raising one because the suite has got stronger and should be held higher is a change of its own,
-  in its own commit, with its own reason. Lowering one because a PR went red is the gate certifying
-  the regression it exists to catch, and it is banned. The rule is that a bar rises or holds and
-  never re-baselines down; a fixed bar obeys it by standing still, which is why it cannot go stale
-  in the direction that matters.
+  A bar is raised as a deliberate process optimisation. Raising one because the suite has got
+  stronger is a change of its own, in its own commit, with its own reason. A bar is never lowered
+  because a push went red: that would certify the regression the gate exists to catch. A bar rises
+  or holds and never re-baselines down. A fixed bar obeys that by standing still, so it cannot go
+  stale in the direction that matters.
 
   @fitness @SCN-FIT-073
   Scenario: the source code follows this repository's design rules for its structure, its domain's language and its tests, and no file the push touches breaks a readability limit
@@ -108,7 +92,7 @@ Feature: The fitness functions this repository carries, one scenario per check
 
   Rule: the build holds the comments it reads to a share of their file, and to no ticket ID, scenario code or narrated history
 
-    A comment carries only what the code cannot say. No check reads what a comment means, so the build holds the two parts of that a tool can read: how much of a file is comment, and whether a comment names a ticket or a scenario or tells how the code came to be. The rest is review.
+    A comment carries only what the code cannot say. No check reads what a comment means, so the build holds the two parts a tool can read: how much of a file is comment, and whether a comment names a ticket or a scenario or tells how the code came to be. Review holds the rest.
 
     @fitness @SCN-FIT-023
     Scenario: no source, script, configuration or Gherkin file is more than fifteen per cent comment lines, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
