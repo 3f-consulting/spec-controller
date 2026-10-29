@@ -1,9 +1,9 @@
-import type { BehaviouralQualityCheck, EvidenceObservation, ObservationNote } from "../model.js";
+import type { EvidenceObservation, ObservationNote } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { withoutSigil } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
-import { evidenceOfRunResult, qualityChecksPostedAt, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackQualityCheckOf, qualityChecksPostedAt, type RunResult } from "../domain/journal.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -29,7 +29,6 @@ function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNo
 
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
-  fallbackQualityCheck: BehaviouralQualityCheck,
   root?: string
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
@@ -37,7 +36,7 @@ export function parseCucumberEvidenceObservations(
     const named = feature.uri ?? feature.name;
     const locator = named && relativizeToRoot(named, root);
     for (const scenario of feature.elements ?? []) {
-      results.push(...scenarioObservations(scenario, locator, fallbackQualityCheck));
+      results.push(...scenarioObservations(scenario, locator));
     }
   }
   return results;
@@ -54,10 +53,10 @@ function citedCodesOf(tagNames: readonly string[]): string[] {
 
 function scenarioObservations(
   scenario: CucumberScenario,
-  locator: string | undefined,
-  fallbackQualityCheck: BehaviouralQualityCheck
+  locator: string | undefined
 ): EvidenceObservation[] {
   const tagNames = (scenario.tags ?? []).map((t) => withoutSigil(t.name ?? ""));
+  const qualityChecks = qualityChecksPostedAt(tagNames, fallbackQualityCheckOf("scenario-runs"));
   const { scnId, severalCodes } = attributionOf(citedCodesOf(tagNames));
   const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
@@ -66,7 +65,7 @@ function scenarioObservations(
   if (evidence.broken) {
     const ambiguous = steps.find(isAmbiguous)!;
     return [{
-      qualityCheck: qualityChecksPostedAt(tagNames, fallbackQualityCheck)[0]!,
+      qualityCheck: qualityChecks[0]!,
       scnId,
       status: evidence.status,
       locator,
@@ -74,7 +73,7 @@ function scenarioObservations(
       notes: [ambiguousNote(ambiguous), ...severalNotes],
     }];
   }
-  return qualityChecksPostedAt(tagNames, fallbackQualityCheck).map((level) => ({
+  return qualityChecks.map((level) => ({
     qualityCheck: level,
     scnId,
     status: evidence.status,

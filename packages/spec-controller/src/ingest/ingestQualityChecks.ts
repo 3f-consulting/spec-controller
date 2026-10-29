@@ -31,17 +31,9 @@ import {
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts, StepRecord } from "@3f-consulting/spec-controller-core";
 import type {
-  BehaviouralQualityCheck,
   EvidenceObservation,
   EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
-
-const VITEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
-const PYTEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
-const JEST_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
-const JUNIT_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
-const RSPEC_QUALITY_CHECK: BehaviouralQualityCheck = "unit";
-const CUCUMBER_QUALITY_CHECK: BehaviouralQualityCheck = "integration";
 
 const RECONCILER_INVOCATION = "spec-controller balance";
 
@@ -124,12 +116,12 @@ export function featureNamesOf(corpus: readonly ParsedFeatureFile[]): Map<string
 }
 
 const OBSERVATION_READERS = {
-  vitest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, VITEST_QUALITY_CHECK, root),
-  pytest: (report) => parsePytestEvidenceObservations(report as JunitXmlReport, PYTEST_QUALITY_CHECK),
-  jest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, JEST_QUALITY_CHECK, root),
-  junit: (report) => parseJunitEvidenceObservations(report as JunitXmlReport, JUNIT_QUALITY_CHECK),
-  rspec: (report, root) => parseRspecEvidenceObservations(report as RspecJsonReport, RSPEC_QUALITY_CHECK, root),
-  cucumber: (report, root) => parseCucumberEvidenceObservations(report as CucumberJsonReport, CUCUMBER_QUALITY_CHECK, root),
+  vitest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, root),
+  pytest: (report) => parsePytestEvidenceObservations(report as JunitXmlReport),
+  jest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, root),
+  junit: (report) => parseJunitEvidenceObservations(report as JunitXmlReport),
+  rspec: (report, root) => parseRspecEvidenceObservations(report as RspecJsonReport, root),
+  cucumber: (report, root) => parseCucumberEvidenceObservations(report as CucumberJsonReport, root),
 } satisfies Readonly<Record<string, (report: unknown, root: string) => EvidenceObservation[]>>;
 
 type ObservationReader = keyof typeof OBSERVATION_READERS;

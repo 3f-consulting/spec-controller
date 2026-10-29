@@ -11,12 +11,10 @@ describe("[SCN-RMD-010] the JSON report carries each test's name on its evidence
     const observations = [
       ...parseVitestEvidenceObservations(
         { testResults: [{ name: "/r/a.test.ts", assertionResults: [{ title: "spawns yarn", status: "failed" }] }] },
-        "unit",
         "/r",
       ),
       ...parseCucumberEvidenceObservations(
         [{ uri: "features/checkout.feature", elements: [{ name: "an expired coupon is refused", steps: [{ result: { status: "failed" } }] }] }],
-        "integration",
       ),
     ];
     const json = JSON.parse(renderJson(__er(reconcile([], observations)), ctx));

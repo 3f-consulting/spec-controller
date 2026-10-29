@@ -155,7 +155,7 @@ describe("[SCN-PND-014] an undefined step with no pending deferral is reported o
         ],
       },
     ];
-    const observations = parseCucumberEvidenceObservations(report, "integration");
+    const observations = parseCucumberEvidenceObservations(report);
     expect(observations).toEqual([]);
 
     const balance = reconcile(scenarios, observations);

@@ -20,7 +20,7 @@ describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase
   };
 
   it("emits one passed unit observation citing that code, located at the test", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "tests.test_widget::test_the_widget_turns" },
     ]);
   });
@@ -45,7 +45,7 @@ describe("[SCN-PYT-002] parsePytestEvidenceObservations posts a failing testcase
   };
 
   it("emits one failed unit observation citing that code, located at the test", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "tests.test_widget::test_the_widget_jams" },
     ]);
   });
@@ -70,7 +70,7 @@ describe("[SCN-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
   };
 
   it("emits no observation for a skipped testcase, though it cites a scenario", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([]);
+    expect(parsePytestEvidenceObservations(report)).toEqual([]);
   });
 });
 
@@ -86,14 +86,14 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
   });
 
   it("emits one unit observation citing no scenario for a testcase with no scn property", () => {
-    expect(parsePytestEvidenceObservations(reportOf(), "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(reportOf())).toEqual([
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 
   it("emits one unit observation citing no scenario for a scn property whose value is not a scenario code", () => {
     expect(
-      parsePytestEvidenceObservations(reportOf({ property: [{ name: "scn", value: "FOO-005" }] }), "unit")
+      parsePytestEvidenceObservations(reportOf({ property: [{ name: "scn", value: "FOO-005" }] }))
     ).toEqual([
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
@@ -101,7 +101,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
 
   it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a scenario code", () => {
     expect(
-      parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }), "unit")
+      parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }))
     ).toEqual([
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
@@ -131,7 +131,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   };
 
   it("emits one unit observation citing no scenario, with a note of both codes and no message", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: null,
@@ -143,7 +143,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   });
 
   it("words its note as every reader words it, in scenario codes rather than scn properties", () => {
-    const [observation] = parsePytestEvidenceObservations(report, "unit");
+    const [observation] = parsePytestEvidenceObservations(report);
 
     expect(remarkWordsOf(observation ?? {})).toContain("2 scenario codes cite SCN-FOO-004, SCN-FOO-005");
   });
@@ -170,7 +170,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
       },
     };
 
-    expect(parsePytestEvidenceObservations(repeated, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(repeated)).toEqual([
       { qualityCheck: "unit", scnId: "SCN-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
@@ -197,7 +197,7 @@ describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failu
   };
 
   it("emits one broken unit observation citing no scenario, located at the module, carrying the error text", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: null,
@@ -232,7 +232,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
   };
 
   it("emits one broken unit observation citing that code, located at the test, carrying the error text", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")).toEqual([
+    expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: "SCN-FOO-008",
@@ -248,7 +248,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
 describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as broken evidence naming the package", () => {
   type Testcase = NonNullable<NonNullable<NonNullable<JunitXmlReport["testsuites"]>["testsuite"]>[number]["testcase"]>[number];
   const observationsOf = (testcase: Testcase) =>
-    parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.com/m/broken", testcase: [testcase] }] } }, "unit");
+    parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.com/m/broken", testcase: [testcase] }] } });
 
   it.each([
     ["with its failure's text read from the element", { "#text": "FAIL\texample.com/m/broken [build failed]" }],
@@ -292,7 +292,7 @@ describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5
   };
 
   it("credits a test that cites a code of its own to that code, and a test that cites none to its class's code", () => {
-    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+    expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: "SCN-JVF-003",
@@ -311,10 +311,9 @@ describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5
 
 describe("[SCN-JAV-004] parseJunitEvidenceObservations credits a JUnit 5 test with no code of its own to the innermost class around it that cites one", () => {
   const observationOf = (classname: string) =>
-    parseJunitEvidenceObservations(
-      { testsuites: { testsuite: [{ testcase: [{ classname, name: "a test whose own display name cites nothing" }] }] } },
-      "unit"
-    )[0];
+    parseJunitEvidenceObservations({
+      testsuites: { testsuite: [{ testcase: [{ classname, name: "a test whose own display name cites nothing" }] }] },
+    })[0];
 
   it("credits a test in an inner class that cites a scenario to the inner class's code, not the outer class's", () => {
     const observation = observationOf(
@@ -351,7 +350,7 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
   };
 
   it("emits one failing unit observation citing that code, located at the test, never broken", () => {
-    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+    expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: "SCN-JVF-010",
@@ -362,7 +361,7 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
   });
 
   it("keeps the same testcase broken when it is read as a pytest report", () => {
-    expect(parsePytestEvidenceObservations(report, "unit")[0]?.broken).toBe(true);
+    expect(parsePytestEvidenceObservations(report)[0]?.broken).toBe(true);
   });
 });
 
@@ -387,7 +386,7 @@ describe("[SCN-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class who
   };
 
   it("emits one broken observation located at the class, carrying the error that stopped it", () => {
-    expect(parseJunitEvidenceObservations(report, "unit")).toEqual([
+    expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheck: "unit",
         scnId: null,

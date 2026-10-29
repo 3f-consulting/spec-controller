@@ -18,7 +18,7 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
   Rule: a Cucumber scenario's observations are posted at the quality checks its own tags decide
 
     @unit @SCN-CUC-002
-    Scenario: the tags a Cucumber scenario carries, its own and those it inherits, decide each quality check its observations are posted at, and with no tier tag they are posted at the quality check the caller names
+    Scenario: the tags a Cucumber scenario carries, its own and those it inherits, decide each quality check its observations are posted at, and with no tier tag they are posted at integration, because a Cucumber report is a report of scenario runs
 
   Rule: an ambiguous Cucumber step is broken, not absent
 

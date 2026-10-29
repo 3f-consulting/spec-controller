@@ -27,7 +27,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
         },
       ],
     };
-    const vitestObs = parseVitestEvidenceObservations(vitestReport, "unit");
+    const vitestObs = parseVitestEvidenceObservations(vitestReport);
 
     const cucumberReport: CucumberJsonReport = [
       {
@@ -40,7 +40,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
         ],
       },
     ];
-    const cucumberObs = parseCucumberEvidenceObservations(cucumberReport, "integration");
+    const cucumberObs = parseCucumberEvidenceObservations(cucumberReport);
     expect(cucumberObs).toEqual([
       { qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" },
     ]);

@@ -29,7 +29,7 @@ import {
 const corpus = parseFeatureCorpus([{ file: "features/checkout.feature", source: featureSource }]);
 if (corpus.kind === "unparseable") throw new Error(corpus.faults[0].message);
 const scenarios = corpus.parsed.flatMap((feature) => scenariosOf(feature));
-const observed = parseVitestEvidenceObservations(vitestReport, "unit");
+const observed = parseVitestEvidenceObservations(vitestReport);
 
 const ledger = reconcile(scenarios, observed);
 isBalanced(ledger); // false while any scenario names evidence that did not arrive

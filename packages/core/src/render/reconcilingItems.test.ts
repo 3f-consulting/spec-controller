@@ -162,8 +162,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
 
     it("a file that failed to collect, with its error, names the locator and the error joined by a colon", () => {
       const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "src/broken.test.ts", status: "failed", message: "Error: Cannot find module './gone.js'" }] },
-        "unit"
+        { testResults: [{ name: "src/broken.test.ts", status: "failed", message: "Error: Cannot find module './gone.js'" }] }
       );
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
@@ -183,7 +182,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         "src/empty.test.ts",
       ],
     ])("%s", (_title, testResult, locator) => {
-      const observations = parseVitestEvidenceObservations({ testResults: [testResult] }, "unit");
+      const observations = parseVitestEvidenceObservations({ testResults: [testResult] });
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
         items: item("broken", "unit", locator),
@@ -192,8 +191,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
 
     it("a file with no name that failed to collect with no error renders no suffix", () => {
       const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "", status: "failed" }] },
-        "unit"
+        { testResults: [{ name: "", status: "failed" }] }
       );
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",

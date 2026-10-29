@@ -4,6 +4,17 @@ export type QualityCheck = (typeof QUALITY_CHECKS)[number];
 
 export type BehaviouralQualityCheck = Exclude<QualityCheck, "fitness">;
 
+export type EvidenceReportKind = "test-results" | "scenario-runs";
+
+const FALLBACK_QUALITY_CHECK: Readonly<Record<EvidenceReportKind, BehaviouralQualityCheck>> = {
+  "test-results": "unit",
+  "scenario-runs": "integration",
+};
+
+export function fallbackQualityCheckOf(kind: EvidenceReportKind): BehaviouralQualityCheck {
+  return FALLBACK_QUALITY_CHECK[kind];
+}
+
 const TIERS: ReadonlySet<string> = new Set(
   QUALITY_CHECKS.filter((qualityCheck) => qualityCheck !== "fitness" && qualityCheck !== "unit")
 );

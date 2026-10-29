@@ -2,7 +2,7 @@ import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { SCN_CODE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
-import { evidenceOfRunResult, type RunEvidence, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackQualityCheckOf, type RunEvidence, type RunResult } from "../domain/journal.js";
 
 export interface JunitXmlReport {
   readonly testsuites?: {
@@ -30,25 +30,16 @@ const SCN_PROPERTY = "scn";
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
-export function parseJunitEvidenceObservations(
-  report: JunitXmlReport,
-  qualityCheck: BehaviouralQualityCheck
-): EvidenceObservation[] {
-  return observationsOf(report, qualityCheck, "failed");
+export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
+  return observationsOf(report, "failed");
 }
 
-export function parsePytestEvidenceObservations(
-  report: JunitXmlReport,
-  qualityCheck: BehaviouralQualityCheck
-): EvidenceObservation[] {
-  return observationsOf(report, qualityCheck, "never-reached-its-assertions");
+export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
+  return observationsOf(report, "never-reached-its-assertions");
 }
 
-function observationsOf(
-  report: JunitXmlReport,
-  qualityCheck: BehaviouralQualityCheck,
-  errorResult: RunResult
-): EvidenceObservation[] {
+function observationsOf(report: JunitXmlReport, errorResult: RunResult): EvidenceObservation[] {
+  const qualityCheck = fallbackQualityCheckOf("test-results");
   return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
     (suite.testcase ?? []).flatMap((testcase): EvidenceObservation[] => {
       const evidence = evidenceOfRunResult(runResultOf(testcase, errorResult));

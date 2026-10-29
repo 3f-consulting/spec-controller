@@ -6,7 +6,7 @@ describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own co
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
     };
-    return parseRspecEvidenceObservations(report, "unit")[0]?.scnId;
+    return parseRspecEvidenceObservations(report)[0]?.scnId;
   };
 
   it("credits the example's own code inside a group that cites another", () => {
@@ -31,7 +31,7 @@ describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an e
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
     };
-    return parseRspecEvidenceObservations(report, "unit")[0];
+    return parseRspecEvidenceObservations(report)[0];
   };
 
   it("posts one observation citing no scenario, with a note of both codes", () => {
@@ -66,7 +66,7 @@ describe("[SCN-RSP-005] parseRspecEvidenceObservations posts nothing for an exam
   const observationsOf = (status: string) =>
     parseRspecEvidenceObservations({
       examples: [{ description: "[SCN-AAA-001] leaf", full_description: "group [SCN-AAA-001] leaf", status, file_path: "./spec/a_spec.rb" }],
-    }, "unit");
+    });
 
   it("posts no observation for a pending example", () => {
     expect(observationsOf("pending")).toEqual([]);
@@ -87,7 +87,7 @@ describe("[SCN-RSP-006] parseRspecEvidenceObservations posts a failing observati
       pending_message: "not yet",
     };
 
-    expect(parseRspecEvidenceObservations({ examples: [fixedPending] }, "unit")).toEqual([{
+    expect(parseRspecEvidenceObservations({ examples: [fixedPending] })).toEqual([{
       qualityCheck: "unit",
       scnId: "SCN-AAA-001",
       status: "failed",
@@ -111,7 +111,7 @@ describe("[SCN-RSP-007] parseRspecEvidenceObservations posts a failing observati
       exception: { class: "RuntimeError", message, backtrace: [`./spec/a_spec.rb:${hookLine}:in 'block (2 levels) in <top (required)>'`] },
     };
 
-    expect(parseRspecEvidenceObservations({ examples: [stoppedByHook] }, "unit")).toEqual([{
+    expect(parseRspecEvidenceObservations({ examples: [stoppedByHook] })).toEqual([{
       qualityCheck: "unit",
       scnId: "SCN-AAA-001",
       status: "failed",
@@ -132,7 +132,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
   ])("posts one broken item citing no scenario for a file that failed to load with %s, located at that file, carrying RSpec's message", (_, message, locator) => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [message] };
 
-    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([
+    expect(parseRspecEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: null, status: "failed", locator, broken: true, message },
     ]);
   });
@@ -144,13 +144,13 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
       messages: ["\nAn error occurred while loading /r/spec/raising_spec.rb.\n"],
     };
 
-    expect(parseRspecEvidenceObservations(report, "unit", "/r")[0]?.locator).toBe("spec/raising_spec.rb");
+    expect(parseRspecEvidenceObservations(report, "/r")[0]?.locator).toBe("spec/raising_spec.rb");
   });
 
   it("posts the broken item beside the observations of the examples other files ran", () => {
     const report: RspecJsonReport = { examples: [passing], summary: { errors_outside_of_examples_count: 1 }, messages: [syntaxError] };
 
-    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([
+    expect(parseRspecEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
       { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
     ]);
@@ -159,7 +159,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
   it("posts one broken item for each file that failed to load", () => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 2 }, messages: [syntaxError, raisedWhileLoading] };
 
-    expect(parseRspecEvidenceObservations(report, "unit").map((o) => o.locator)).toEqual(["spec/unloadable_spec.rb", "spec/raising_spec.rb"]);
+    expect(parseRspecEvidenceObservations(report).map((o) => o.locator)).toEqual(["spec/unloadable_spec.rb", "spec/raising_spec.rb"]);
   });
 
   it("posts one more broken item for the run, holding the other messages, when RSpec counts more errors than files it names", () => {
@@ -170,7 +170,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
       messages: [syntaxError, suiteHook],
     };
 
-    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([
+    expect(parseRspecEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
       { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: suiteHook },
     ]);
@@ -179,7 +179,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
   it("posts the run's extra broken item with no message when RSpec gives none beside the files it names", () => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 2 }, messages: [syntaxError] };
 
-    const observations = parseRspecEvidenceObservations(report, "unit");
+    const observations = parseRspecEvidenceObservations(report);
 
     expect(observations).toEqual([
       { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
@@ -197,7 +197,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
       messages: [syntaxError, hookA, hookB],
     };
 
-    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([
+    expect(parseRspecEvidenceObservations(report)).toEqual([
       { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
       { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
     ]);
@@ -208,6 +208,6 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     ["a summary with no count", { examples: [], summary: {}, messages: ["No examples found."] }],
     ["a report with no summary", { examples: [] }],
   ])("CONTROL: posts nothing for %s", (_, report: RspecJsonReport) => {
-    expect(parseRspecEvidenceObservations(report, "unit")).toEqual([]);
+    expect(parseRspecEvidenceObservations(report)).toEqual([]);
   });
 });

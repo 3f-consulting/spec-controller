@@ -117,8 +117,9 @@ Feature: Ledger over obligation-vs-observation evidence
 
     An observation is posted at each tier its cited scenario is tagged with, integration, e2e
     or performance, in tag order and once each. A scenario tagged with no tier beyond @unit has
-    its observation posted at the quality check its source names as the fallback. The source
-    that produced an observation never overrides the scenario's own tier.
+    its observation posted at the quality check its report falls back to: unit for a report of
+    test results, integration for a report of scenario runs. The source that produced an
+    observation never overrides the scenario's own tier.
 
     @unit @SCN-LDG-011
     Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its source's fallback
@@ -134,6 +135,9 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @SCN-LDG-015
     Scenario: an observation of a scenario carrying no tier tag beyond @unit is posted at its source's fallback
+
+    @unit @SCN-LDG-045
+    Scenario: a report of test results falls back to unit, and a report of scenario runs to integration
 
   Rule: a run carrying broken evidence is unsound
 

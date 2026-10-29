@@ -18,7 +18,7 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
     ["emits a `passed` observation when every step passed (→ satisfied downstream)", "passed"],
     ["emits a `failed` observation when a step failed (→ failing downstream)", "failed"],
   ] as const)("%s", (_title, status) => {
-    expect(parseCucumberEvidenceObservations(reportWithStep(status), "integration")).toEqual([
+    expect(parseCucumberEvidenceObservations(reportWithStep(status))).toEqual([
       { qualityCheck: "integration", scnId: "SCN-PDN-001", status, locator: "features/pnd013.feature" },
     ]);
   });
@@ -35,12 +35,12 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
         ],
       },
     ];
-    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([]);
+    expect(parseCucumberEvidenceObservations(report)).toEqual([]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at the caller-named fallback, since a pending tag is no tier tag", () => {
-  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the caller's fallback, never as integration", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at integration, the fallback of a report of scenario runs, since a pending tag is no tier tag", () => {
+  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the report's fallback, integration, with no quality check handed in", () => {
     const observations = parseCucumberEvidenceObservations(
       [
         {
@@ -52,9 +52,25 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
             },
           ],
         },
-      ],
-      "e2e"
+      ]
     );
+    expect(observations).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+    ]);
+  });
+
+  it("a passing Cucumber scenario tagged @integrationpending and @e2e emits its evidence observation at e2e alone, never at integration", () => {
+    const observations = parseCucumberEvidenceObservations([
+      {
+        uri: "features/deferred.feature",
+        elements: [
+          {
+            tags: [{ name: "@integrationpending" }, { name: "@e2e" }, { name: "@SCN-XXX-002" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ]);
     expect(observations).toEqual([
       { qualityCheck: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
     ]);

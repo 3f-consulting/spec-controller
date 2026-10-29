@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { qualityChecksPostedAt } from "./journal.js";
+import { fallbackQualityCheckOf, qualityChecksPostedAt } from "./journal.js";
 
 describe("[SCN-LDG-012] an observation of a scenario tagged @integration is posted at integration", () => {
   it.each([
@@ -43,5 +43,18 @@ describe("[SCN-LDG-015] an observation of a scenario carrying no tier tag beyond
     ["@unit repeated", ["unit", "unit", "SCN-LDG-015"]],
   ] as const)("is posted at its source's fallback alone when it carries %s", (_title, tagNames) => {
     expect(qualityChecksPostedAt(tagNames, "integration")).toEqual(["integration"]);
+  });
+});
+
+describe("[SCN-LDG-045] a report of test results falls back to unit, and a report of scenario runs to integration", () => {
+  it.each([
+    ["test-results", "unit"],
+    ["scenario-runs", "integration"],
+  ] as const)("a report of %s falls back to %s", (kind, fallback) => {
+    expect(fallbackQualityCheckOf(kind)).toBe(fallback);
+  });
+
+  it("gives the two kinds of report different fallbacks", () => {
+    expect(fallbackQualityCheckOf("test-results")).not.toBe(fallbackQualityCheckOf("scenario-runs"));
   });
 });

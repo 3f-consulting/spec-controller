@@ -11,7 +11,7 @@ describe("[SCN-CUC-005] a Cucumber scenario tagged with a feature part outside t
   });
 
   it("cites the two- and five-character codes, any number width, and nothing for the one- or six-character tags", () => {
-    expect(parseCucumberEvidenceObservations(report, "integration").map((o) => o.scnId)).toEqual([
+    expect(parseCucumberEvidenceObservations(report).map((o) => o.scnId)).toEqual([
       null,
       "SCN-AB-001",
       "SCN-FIVEC-001",

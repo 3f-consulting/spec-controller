@@ -2,7 +2,7 @@ import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { attributionOf } from "../domain/attribution.js";
-import { evidenceOfRunResult, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackQualityCheckOf, type RunResult } from "../domain/journal.js";
 
 export interface RspecJsonReport {
   readonly examples?: ReadonlyArray<{
@@ -15,11 +15,8 @@ export interface RspecJsonReport {
   readonly messages?: readonly string[];
 }
 
-export function parseRspecEvidenceObservations(
-  report: RspecJsonReport,
-  qualityCheck: BehaviouralQualityCheck,
-  root?: string
-): EvidenceObservation[] {
+export function parseRspecEvidenceObservations(report: RspecJsonReport, root?: string): EvidenceObservation[] {
+  const qualityCheck = fallbackQualityCheckOf("test-results");
   const results: EvidenceObservation[] = [];
   for (const example of report.examples ?? []) {
     const evidence = evidenceOfRunResult(runResultOf(example.status));

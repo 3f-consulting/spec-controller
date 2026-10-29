@@ -29,10 +29,10 @@ Feature: A Vitest suite's results answer unit evidence obligations
     @unit @SCN-VIT-005
     Scenario: a Vitest file that failed to collect posts a broken item naming the file and its error to the unnamed claim's row, while the scenario it would have proven still reads missing
 
-  Rule: a Vitest observation carries the quality check the caller names
+  Rule: a Vitest observation is posted at unit, because a Vitest report is a report of test results
 
     @unit @SCN-VIT-006
-    Scenario: every observation read from a Vitest report carries the quality check the caller names, because a Vitest report carries no tier tags
+    Scenario: every observation read from a Vitest report is posted at unit, because a Vitest report is a report of test results and carries no tier tags
 
   Rule: a Vitest test's result gives its run result: passed or failed as reported, inconclusive when skipped or todo
 

@@ -12,7 +12,7 @@ describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way —
     ["emits a `passed` observation for a passed assertion", "passed"],
     ["emits a `failed` observation for a failed assertion", "failed"],
   ] as const)("%s", (_title, status) => {
-    expect(parseVitestEvidenceObservations(reportWithStatus(status), "unit")).toEqual([
+    expect(parseVitestEvidenceObservations(reportWithStatus(status))).toEqual([
       { qualityCheck: "unit", scnId: "SCN-PDV-001", status, locator: "/r/a.test.ts", testName: "[SCN-PDV-001] a unit assertion" },
     ]);
   });
@@ -21,6 +21,6 @@ describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way —
     ["DROPS a skipped assertion — inconclusive, so nothing is emitted", "skipped"],
     ["DROPS a todo assertion — inconclusive, so nothing is emitted", "todo"],
   ] as const)("%s", (_title, status) => {
-    expect(parseVitestEvidenceObservations(reportWithStatus(status), "unit")).toEqual([]);
+    expect(parseVitestEvidenceObservations(reportWithStatus(status))).toEqual([]);
   });
 });

@@ -52,7 +52,7 @@ describe("[SCN-GOT-002] runReconcile reads a failing Go subtest as a failing uni
 
 describe("[SCN-GOT-003] parseJunitEvidenceObservations reads the code in a Go subtest's own name before the codes in the names around it", () => {
   const observationOf = (name: string) =>
-    parseJunitEvidenceObservations(parseJunitXml(readFileSync(`${TARGET}/report.xml`, "utf8")), "unit")
+    parseJunitEvidenceObservations(parseJunitXml(readFileSync(`${TARGET}/report.xml`, "utf8")))
       .find((o) => o.locator === `example.com/gofixture/cited::TestCited/${name}`);
 
   it("credits a child subtest whose own name cites a scenario with that scenario alone, not its parent's", () => {
@@ -102,7 +102,7 @@ describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's nam
 
 describe("[SCN-GOT-005] runReconcile reads a skipped Go subtest as posting no evidence observation", () => {
   it("posts no observation for the skipped subtest", () => {
-    const observations = parseJunitEvidenceObservations(parseJunitXml(readFileSync(`${TARGET}/report.xml`, "utf8")), "unit");
+    const observations = parseJunitEvidenceObservations(parseJunitXml(readFileSync(`${TARGET}/report.xml`, "utf8")));
 
     expect(observations.filter((o) => o.locator?.includes("[SCN-GOF-007]"))).toEqual([]);
   });
