@@ -108,6 +108,8 @@ Feature: The fitness functions this repository carries, one scenario per check
 
   Rule: the build holds the comments it reads to a share of their file, and to no ticket ID, scenario code or narrated history
 
+    A comment carries only what the code cannot say. No check reads what a comment means, so the build holds the two parts of that a tool can read: how much of a file is comment, and whether a comment names a ticket or a scenario or tells how the code came to be. The rest is review.
+
     @fitness @SCN-FIT-023
     Scenario: no source, script, configuration or Gherkin file is more than fifteen per cent comment lines, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
 

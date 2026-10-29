@@ -112,7 +112,7 @@ Supportability and observability sit here. No check holds them yet. It is the co
 | Check | Real catches |
 |---|---|
 | Duplication: no clone in production code | 0 |
-| Unused code: no unused file, export or dependency | 8 |
+| Unused code: no unused file, export or dependency outside the test code | 8 |
 | CRAP: complex code must be tested | 0 |
 | Typecheck | 8 |
 
@@ -147,11 +147,12 @@ No check holds it. spec-controller carries no safety concern.
 
 | Check | Real catches |
 |---|---|
-| Comment share: no file over its comment-line ceiling | 5 |
-| Vale: no ticket ID, scenario code or narrated history in a comment, description or document | by rule, below |
+| Comment share: no file cloc counts over its comment-line ceiling | 5 |
+| Vale: no ticket ID, scenario code or narrated history in a comment, description or document it reads | by rule, below |
+| Every reference in a current-state document resolves | 0 |
 | No title or description names a code identifier or a source file | 1 |
 
-Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, and its output names the rule that failed. Each rule keeps its own count:
+Vale runs every rule [`.vale.ini`](../.vale.ini) turns on over the files git tracks or would track, of the kinds `.vale.ini` names: Markdown, the modules, YAML and Gherkin. Its output names the rule that failed. Each rule keeps its own count:
 
 | Rule | Real catches |
 |---|---|
