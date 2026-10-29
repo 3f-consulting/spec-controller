@@ -19,7 +19,7 @@ export const NO_WORKFLOWS = (fixtureDir: string): string[] => ["--ci", fixtureDi
 export function spawnBalance(world: SpecControllerWorld, args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
   const cwd = world.invocationCwd ?? root;
-  world.invocationCwd = undefined;
+  world.invocationCwd = null;
   const result = spawnSync(
     NODE,
     [...SPEC_CONTROLLER_ARGV, "balance", ...args],

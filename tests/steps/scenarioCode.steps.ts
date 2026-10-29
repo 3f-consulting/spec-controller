@@ -594,7 +594,7 @@ Given(
   function (this: SpecControllerWorld, from: string) {
     assert.ok(SCENARIO_CODE_INHERITED_FROM[from], `no fixture inherits a scenario code from its ${from}`);
     this.ancestor = from;
-    this.inheritedCodeRun = undefined;
+    this.inheritedCodeRun = null;
   },
 );
 

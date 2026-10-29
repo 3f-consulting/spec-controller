@@ -311,7 +311,7 @@ function buildTarget(dir: string, verdict: string): void {
 }
 
 function specControllerInTarget(world: SpecControllerWorld, args: readonly string[], stdout: "pipe" | number = "pipe"): CommandRun {
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...args], { cwd: world.targetDir, encoding: "utf8", stdio: ["ignore", stdout, "pipe"] });
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...args], { cwd: world.destinationTargetDir, encoding: "utf8", stdio: ["ignore", stdout, "pipe"] });
   assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
   return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr };
 }
@@ -331,10 +331,10 @@ Given(/^a (balanced|out-of-balance) target the run reads (.+) from$/, function (
   const inputRow = INPUT[input];
   assert.ok(inputRow, `no input is arranged for "${input}"`);
   this.inputRow = inputRow;
-  this.targetDir = join(temporaryDirectory(this, "spec-controller-input-overwrite-"), "target");
-  mkdirSync(this.targetDir);
-  buildTarget(this.targetDir, verdict);
-  this.inputRow.arrange?.(this.targetDir);
+  this.destinationTargetDir = join(temporaryDirectory(this, "spec-controller-input-overwrite-"), "target");
+  mkdirSync(this.destinationTargetDir);
+  buildTarget(this.destinationTargetDir, verdict);
+  this.inputRow.arrange?.(this.destinationTargetDir);
   const args = ["balance", ...pointedArgs(this.inputRow.pointedAt)];
   const key = `${verdict} ${args.join(" ")}`;
   if (!verdicts.has(key)) verdicts.set(key, specControllerInTarget(this, args).status);
@@ -344,7 +344,7 @@ Given(/^a (balanced|out-of-balance) target the run reads (.+) from$/, function (
 Given(/^a path to that input that is (.+)$/, function (this: SpecControllerWorld, alias: string) {
   const spell = ALIAS[alias];
   assert.ok(spell, `no path is arranged for "${alias}"`);
-  this.aimedAt = spell(this.inputRow.file, this.targetDir);
+  this.aimedAt = spell(this.inputRow.file, this.destinationTargetDir);
   this.throughStdout = alias === APPENDED_STDOUT;
 });
 
@@ -355,14 +355,14 @@ When(
     const second = flag === "json" ? "md:second.md" : "json:second.json";
     const spec = this.throughStdout ? flag : `${flag}:${this.aimedAt}`;
     this.namedOutput = this.throughStdout ? `${flag} on standard output` : spec;
-    const store = runs === "runs" ? [] : ["--store", join(this.targetDir, "store"), "--run-id", "r1"];
+    const store = runs === "runs" ? [] : ["--store", join(this.destinationTargetDir, "store"), "--run-id", "r1"];
     const args = [...store, "balance", ...pointedArgs(this.inputRow.pointedAt), "--format", spec, "--format", second];
-    this.inputsBefore = entriesUnder(this.targetDir);
+    this.destinationInputsBefore = entriesUnder(this.destinationTargetDir);
     if (!this.throughStdout) {
       this.run = specControllerInTarget(this, args);
       return;
     }
-    const fd = openSync(join(this.targetDir, this.inputRow.file), "a");
+    const fd = openSync(join(this.destinationTargetDir, this.inputRow.file), "a");
     try {
       this.run = specControllerInTarget(this, args, fd);
     } finally {
@@ -387,7 +387,7 @@ Then("nothing is reported", function (this: SpecControllerWorld) {
 });
 
 Then("every file of the target is left exactly as it was", function (this: SpecControllerWorld) {
-  assert.deepEqual(entriesUnder(this.targetDir), this.inputsBefore, "the refused run added, changed or removed a file of the target");
+  assert.deepEqual(entriesUnder(this.destinationTargetDir), this.destinationInputsBefore, "the refused run added, changed or removed a file of the target");
 });
 
 const DESTINATION: Readonly<Record<string, (dir: string) => string>> = {
@@ -419,8 +419,8 @@ Given(/^an out-of-balance target and a report destination that is (.+)$/, functi
   assertTargetOutOfBalance();
   const arrange = DESTINATION[location];
   assert.ok(arrange, `no destination is arranged for "${location}"`);
-  this.scratch = temporaryDirectory(this, "spec-controller-unwritable-");
-  this.destination = arrange(this.scratch);
+  this.destinationScratch = temporaryDirectory(this, "spec-controller-unwritable-");
+  this.destination = arrange(this.destinationScratch);
 });
 
 When(/^the operator asks for the (json|markdown) report to be written to that destination$/, function (this: SpecControllerWorld, format: string) {
@@ -449,17 +449,16 @@ Then("no report is produced", function (this: SpecControllerWorld) {
 
 Given("an out-of-balance target and a json report destination under a regular file", function (this: SpecControllerWorld) {
   assertTargetOutOfBalance();
-  this.scratch = temporaryDirectory(this, "spec-controller-unwritable-");
-  this.destination = DESTINATION["a path under a regular file"]!(this.scratch);
+  this.destinationScratch = temporaryDirectory(this, "spec-controller-unwritable-");
+  this.destination = DESTINATION["a path under a regular file"]!(this.destinationScratch);
 });
 
 Given(/^a markdown report destination that is (the terminal|a file that does not exist|a file holding an earlier run)$/, function (this: SpecControllerWorld, markdown: string) {
-  const dir = this.scratch;
-  assert.ok(dir !== undefined, "the json destination is arranged first");
-  this.markdownPath = markdown === "the terminal" ? undefined : join(dir, "report.md");
-  this.markdownSpec = this.markdownPath === undefined ? "md" : `md:${this.markdownPath}`;
-  this.markdownBefore = undefined;
-  if (markdown === "a file holding an earlier run" && this.markdownPath !== undefined) {
+  const dir = this.destinationScratch;
+  this.markdownPath = markdown === "the terminal" ? null : join(dir, "report.md");
+  this.markdownSpec = this.markdownPath === null ? "md" : `md:${this.markdownPath}`;
+  this.markdownBefore = null;
+  if (markdown === "a file holding an earlier run" && this.markdownPath !== null) {
     this.markdownBefore = "an earlier run's report\n";
     writeFileSync(this.markdownPath, this.markdownBefore);
   }
@@ -472,8 +471,8 @@ When(/^the operator asks for both reports, the (markdown|json) one named first$/
 });
 
 Then("the markdown report destination is left exactly as it was", function (this: SpecControllerWorld) {
-  if (this.markdownPath === undefined) return;
-  if (this.markdownBefore === undefined) {
+  if (this.markdownPath === null) return;
+  if (this.markdownBefore === null) {
     assert.equal(existsSync(this.markdownPath), false, `${this.markdownPath} was created by a refused run`);
   } else {
     assert.equal(readFileSync(this.markdownPath, "utf8"), this.markdownBefore, `${this.markdownPath} was overwritten by a refused run`);
@@ -493,8 +492,8 @@ const SECOND_PATH: Readonly<Record<string, (file: string, dir: string, world: Sp
     return { first: file, second: join(dir, "link.out") };
   },
   "a path through a link to its folder": (file, _dir, world) => {
-    symlinkSync(join(world.scratch!, "dir"), join(world.scratch!, "dir-link"));
-    return { first: file, second: join(world.scratch!, "dir-link", "shared.out") };
+    symlinkSync(join(world.destinationScratch, "dir"), join(world.destinationScratch, "dir-link"));
+    return { first: file, second: join(world.destinationScratch, "dir-link", "shared.out") };
   },
   "a hard link to it": (file, dir) => {
     linkSync(file, join(dir, "hard.out"));
@@ -505,18 +504,18 @@ const SECOND_PATH: Readonly<Record<string, (file: string, dir: string, world: Sp
 
 Given(/^an out-of-balance target and a report file that (does not exist|holds an earlier run)$/, function (this: SpecControllerWorld, state: string) {
   assertTargetOutOfBalance();
-  this.scratch = temporaryDirectory(this, "spec-controller-shared-");
-  mkdirSync(join(this.scratch, "dir"));
-  this.sharedFile = join(this.scratch, "dir", "shared.out");
-  this.thirdPath = join(this.scratch, "dir", "third.json");
-  this.sharedBefore = state === "holds an earlier run" ? "an earlier run's report\n" : undefined;
-  if (this.sharedBefore !== undefined) writeFileSync(this.sharedFile, this.sharedBefore);
+  this.destinationScratch = temporaryDirectory(this, "spec-controller-shared-");
+  mkdirSync(join(this.destinationScratch, "dir"));
+  this.sharedFile = join(this.destinationScratch, "dir", "shared.out");
+  this.thirdPath = join(this.destinationScratch, "dir", "third.json");
+  this.sharedBefore = state === "holds an earlier run" ? "an earlier run's report\n" : null;
+  if (this.sharedBefore !== null) writeFileSync(this.sharedFile, this.sharedBefore);
 });
 
 Given(/^a second path to that file that is (.+)$/, function (this: SpecControllerWorld, alias: string) {
   const arrange = SECOND_PATH[alias];
   assert.ok(arrange, `no second path is arranged for "${alias}"`);
-  ({ first: this.firstPath, second: this.secondPath } = arrange(this.sharedFile, join(this.scratch!, "dir"), this));
+  ({ first: this.firstPath, second: this.secondPath } = arrange(this.sharedFile, join(this.destinationScratch, "dir"), this));
   this.throughStdout = alias === "where the default report destination is redirected";
 });
 
@@ -550,7 +549,7 @@ Then("the refusal names both outputs that share the file", function (this: SpecC
 });
 
 Then("every destination is left exactly as it was", function (this: SpecControllerWorld) {
-  if (this.sharedBefore === undefined) {
+  if (this.sharedBefore === null) {
     assert.equal(existsSync(this.sharedFile), false, `${this.sharedFile} was created by a refused run`);
   } else {
     assert.equal(readFileSync(this.sharedFile, "utf8"), this.sharedBefore, `${this.sharedFile} was overwritten by a refused run`);
@@ -560,14 +559,14 @@ Then("every destination is left exactly as it was", function (this: SpecControll
 
 Given(/^an out-of-balance target whose default report destination is (a pipe|a file)$/, function (this: SpecControllerWorld, connectedTo: string) {
   assertTargetOutOfBalance();
-  this.scratch = temporaryDirectory(this, "spec-controller-stdout-path-");
-  this.stdoutFile = connectedTo === "a file" ? join(this.scratch, "stdout.txt") : undefined;
+  this.destinationScratch = temporaryDirectory(this, "spec-controller-stdout-path-");
+  this.stdoutFile = connectedTo === "a file" ? join(this.destinationScratch, "stdout.txt") : null;
 });
 
 function specAt(world: SpecControllerWorld, fmt: string, destination: string): string {
   if (destination === "standard output") return fmt;
   if (destination === "a link to /dev/stdout") {
-    const link = join(world.scratch!, "to-stdout");
+    const link = join(world.destinationScratch, "to-stdout");
     if (!existsSync(link)) symlinkSync("/dev/stdout", link);
     return `${fmt}:${link}`;
   }
@@ -578,7 +577,7 @@ const STDOUT_DESTINATION = "(standard output|/dev/stdout|/dev/fd/1|a link to /de
 
 When(new RegExp(`^the operator asks for the markdown report at ${STDOUT_DESTINATION} and the json report at ${STDOUT_DESTINATION}$`), function (this: SpecControllerWorld, first: string, second: string) {
   const args = ["balance", ...TARGET_ARGS, "--format", specAt(this, "md", first), "--format", specAt(this, "json", second)];
-  if (this.stdoutFile === undefined) {
+  if (this.stdoutFile === null) {
     this.run = specController(args);
     return;
   }
@@ -591,14 +590,14 @@ Then("the refusal says more than one output goes to the same place", function (t
 });
 
 Then("nothing reaches the default report destination", function (this: SpecControllerWorld) {
-  const printed = this.stdoutFile === undefined ? this.run.stdout : readFileSync(this.stdoutFile, "utf8");
+  const printed = this.stdoutFile === null ? this.run.stdout : readFileSync(this.stdoutFile, "utf8");
   assert.equal(printed, "", `a report reached standard output:\n${printed.slice(0, 400)}`);
 });
 
 Given("a balanced target and a link to a report file that does not exist yet", function (this: SpecControllerWorld) {
-  this.scratch = temporaryDirectory(this, "spec-controller-link-");
-  this.linkTargetPath = join(this.scratch, "report.json");
-  this.linkPath = join(this.scratch, "link.json");
+  this.destinationScratch = temporaryDirectory(this, "spec-controller-link-");
+  this.linkTargetPath = join(this.destinationScratch, "report.json");
+  this.linkPath = join(this.destinationScratch, "link.json");
   symlinkSync(this.linkTargetPath, this.linkPath);
 });
 

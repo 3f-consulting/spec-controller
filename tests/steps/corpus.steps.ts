@@ -351,7 +351,7 @@ function balanceOverSameName(format: "json" | "md"): string {
 Given(
   "a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no scenario code",
   function (this: SpecControllerWorld) {
-    this.sameNameJson = undefined;
+    this.sameNameJson = null;
     this.sameNameMarkdown = "";
   },
 );

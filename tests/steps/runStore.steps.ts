@@ -172,7 +172,7 @@ const INPUT: Readonly<Record<string, { readonly flag: string; readonly content: 
 };
 
 function specControllerInTarget(world: SpecControllerWorld, argv: readonly string[]): CommandRun {
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.targetDir, encoding: "utf8" });
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.storedRunTargetDir, encoding: "utf8" });
   assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
@@ -208,18 +208,18 @@ Given(
   ),
   function (this: SpecControllerWorld, input: string, intent: string, earlier: string) {
     const file = storedRunFile(intent);
-    this.targetDir = join(temporaryDirectory(this, "spec-controller-stored-input-"), "target");
-    mkdirSync(join(this.targetDir, "features"), { recursive: true });
-    copyFileSync(join(BALANCED_FIXTURE_DIR, "features", "target.feature"), join(this.targetDir, "features", "target.feature"));
-    copyFileSync(join(BALANCED_FIXTURE_DIR, "vitest.json"), join(this.targetDir, "vitest.json"));
-    writeFileSync(join(this.targetDir, "cucumber.json"), "[]\n");
-    writeFileSync(join(this.targetDir, "ci-steps.json"), "{}\n");
-    writeFileSync(join(this.targetDir, "package.json"), MANIFEST);
-    writeFileSync(join(this.targetDir, "ci.yml"), WORKFLOW);
+    this.storedRunTargetDir = join(temporaryDirectory(this, "spec-controller-stored-input-"), "target");
+    mkdirSync(join(this.storedRunTargetDir, "features"), { recursive: true });
+    copyFileSync(join(BALANCED_FIXTURE_DIR, "features", "target.feature"), join(this.storedRunTargetDir, "features", "target.feature"));
+    copyFileSync(join(BALANCED_FIXTURE_DIR, "vitest.json"), join(this.storedRunTargetDir, "vitest.json"));
+    writeFileSync(join(this.storedRunTargetDir, "cucumber.json"), "[]\n");
+    writeFileSync(join(this.storedRunTargetDir, "ci-steps.json"), "{}\n");
+    writeFileSync(join(this.storedRunTargetDir, "package.json"), MANIFEST);
+    writeFileSync(join(this.storedRunTargetDir, "ci.yml"), WORKFLOW);
     const store = ["--store", "store", "--run-id", RUN_ID];
     if (earlier === "nothing yet") {
-      mkdirSync(join(this.targetDir, RUN_DIR), { recursive: true });
-      writeFileSync(join(this.targetDir, RUN_DIR, file), INPUT[input]!.content(this.targetDir));
+      mkdirSync(join(this.storedRunTargetDir, RUN_DIR), { recursive: true });
+      writeFileSync(join(this.storedRunTargetDir, RUN_DIR, file), INPUT[input]!.content(this.storedRunTargetDir));
     } else {
       const kept = specControllerInTarget(this, [...store, "balance", ...targetArgs({})]);
       assert.equal(kept.status, 0, `the earlier kept run did not complete:\n${kept.stderr}`);
@@ -230,7 +230,7 @@ Given(
 );
 
 When("the operator stores a run of it reading that input", function (this: SpecControllerWorld) {
-  this.inputsBefore = entriesUnder(this.targetDir);
+  this.storedRunInputsBefore = entriesUnder(this.storedRunTargetDir);
   this.run = specControllerInTarget(this, this.invocationArgs);
 });
 
@@ -249,7 +249,7 @@ Then("no kept run is announced", function (this: SpecControllerWorld) {
 });
 
 Then("every file of the target and its store is left exactly as it was", function (this: SpecControllerWorld) {
-  assert.deepEqual(entriesUnder(this.targetDir), this.inputsBefore, "the refused stored run added, changed or removed a file");
+  assert.deepEqual(entriesUnder(this.storedRunTargetDir), this.storedRunInputsBefore, "the refused stored run added, changed or removed a file");
 });
 
 const STORE_ROOT: Readonly<Record<string, (dir: string) => string>> = {
@@ -288,8 +288,8 @@ Given(/^an out-of-balance target and a run store that is (.+)$/, function (this:
   assertTargetOutOfBalance();
   const arrange = STORE_ROOT[location];
   assert.ok(arrange, `no store root is arranged for "${location}"`);
-  this.scratch = temporaryDirectory(this, "spec-controller-unwritable-");
-  this.storeRoot = arrange(this.scratch);
+  this.storeScratch = temporaryDirectory(this, "spec-controller-unwritable-");
+  this.storeRoot = arrange(this.storeScratch);
 });
 
 When("the operator stores a run of it under that run store", function (this: SpecControllerWorld) {
@@ -312,8 +312,8 @@ Given(/^an out-of-balance target and a run store whose run directory already hol
   assertTargetOutOfBalance();
   const arrange = RUN_DIRECTORY_OBSTACLE[obstacle];
   assert.ok(arrange, `no obstacle is arranged for "${obstacle}"`);
-  this.scratch = temporaryDirectory(this, "spec-controller-unwritable-");
-  this.storeRoot = join(this.scratch, "store");
+  this.storeScratch = temporaryDirectory(this, "spec-controller-unwritable-");
+  this.storeRoot = join(this.storeScratch, "store");
   const runDir = join(this.storeRoot, TARGET, RUN_ID);
   mkdirSync(runDir, { recursive: true });
   arrange(runDir);
@@ -339,8 +339,8 @@ function filesByPathUnder(root: string): Map<string, string> {
 
 Given(/^an out-of-balance target and a run store holding (nothing yet|an earlier kept run under the same run-id)$/, function (this: SpecControllerWorld, earlier: string) {
   assertTargetOutOfBalance();
-  this.scratch = temporaryDirectory(this, "spec-controller-store-shared-");
-  this.storeRoot = join(this.scratch, "store");
+  this.storeScratch = temporaryDirectory(this, "spec-controller-store-shared-");
+  this.storeRoot = join(this.storeScratch, "store");
   if (earlier !== "nothing yet") {
     const kept = specController(["--store", this.storeRoot, "--run-id", RUN_ID, "balance", ...TARGET_ARGS]);
     assert.equal(kept.status, OUT_OF_BALANCE, `the earlier kept run did not complete:\n${kept.stderr}`);
@@ -369,8 +369,8 @@ const EARLIER_RUN_ID = "r0";
 
 Given("an out-of-balance target and a run store holding an earlier stored run of a balanced target", function (this: SpecControllerWorld) {
   assertTargetOutOfBalance();
-  this.scratch = temporaryDirectory(this, "spec-controller-store-earlier-");
-  this.storeRoot = join(this.scratch, "store");
+  this.storeScratch = temporaryDirectory(this, "spec-controller-store-earlier-");
+  this.storeRoot = join(this.storeScratch, "store");
   const earlier = specController(["--store", this.storeRoot, "--run-id", EARLIER_RUN_ID, "balance", ...BALANCED_ARGS, "--target", EARLIER_TARGET]);
   assert.equal(earlier.status, BALANCED, `the earlier stored run did not complete:\n${earlier.stderr}`);
   assert.ok(existsSync(join(this.storeRoot, EARLIER_TARGET, EARLIER_RUN_ID, "run.yaml")), "the earlier stored run left no run.yaml");
@@ -396,8 +396,8 @@ Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the earlier r
 });
 
 Given(new RegExp(`^a link to (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (this: SpecControllerWorld, file: string) {
-  mkdirSync(join(this.scratch!, "links"));
-  this.earlierRunLink = join(this.scratch!, "links", "report");
+  mkdirSync(join(this.storeScratch, "links"));
+  this.earlierRunLink = join(this.storeScratch, "links", "report");
   symlinkSync(relative(dirname(this.earlierRunLink), inEarlierRun(this, file)), this.earlierRunLink);
 });
 

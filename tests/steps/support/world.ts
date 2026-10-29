@@ -115,20 +115,22 @@ export interface ToolProvenance {
   throughASymlink: Provenance;
 }
 
-// A field a Given sets has no initialiser, so a step that reads it before its own scenario set it fails.
+// Every declared field is an own property holding undefined until a step sets it, so the proxy the
+// constructor returns can refuse a read of one this scenario never set. A field left empty on purpose
+// holds null.
 export class SpecControllerWorld extends World {
   readonly temporaryDirectories: string[] = [];
   readonly permissionsTaken: Array<() => void> = [];
 
   invocationArgs!: string[];
-  invocationCwd: string | undefined;
+  invocationCwd: string | null = null;
   targetArgs!: string[];
   reportArgs!: string[];
   balanceResult!: SpawnSyncReturns<string>;
   hostResult!: SpawnSyncReturns<string>;
   retiredFlagResult!: SpawnSyncReturns<string>;
   balanceHelpAlone!: SpawnSyncReturns<string>;
-  exitZeroPair: ExitZeroPair | undefined;
+  exitZeroPair!: ExitZeroPair | null;
   run!: CommandRun;
 
   repository!: string;
@@ -147,7 +149,9 @@ export class SpecControllerWorld extends World {
   savedReport!: string;
   reRendered!: SpawnSyncReturns<string>;
   refusalCwd!: string;
-  scratch: string | undefined;
+  storeScratch!: string;
+  storedRunTargetDir!: string;
+  storedRunInputsBefore!: ReadonlyMap<string, string>;
 
   missingPath!: string;
   unknownCommand!: string;
@@ -168,12 +172,12 @@ export class SpecControllerWorld extends World {
   target!: ArrangedTarget;
 
   ancestor!: string;
-  inheritedCodeRun: InheritedCodeRun | undefined;
+  inheritedCodeRun!: InheritedCodeRun | null;
   nestedCorpus!: string;
   flatCorpus!: string;
-  nestedRun: CorpusRun | undefined;
-  flatRun: CorpusRun | undefined;
-  sameNameJson: Record<string, unknown> | undefined;
+  nestedRun!: CorpusRun | null;
+  flatRun!: CorpusRun | null;
+  sameNameJson!: Record<string, unknown> | null;
   sameNameMarkdown!: string;
   grammarTarget!: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
   grammarRun!: GrammarRun;
@@ -192,25 +196,26 @@ export class SpecControllerWorld extends World {
   markdown!: string;
   jsonText!: string;
 
-  targetDir!: string;
+  destinationTargetDir!: string;
+  destinationScratch!: string;
   inputRow!: InputRow;
   aimedAt!: string;
   throughStdout!: boolean;
-  inputsBefore!: ReadonlyMap<string, string>;
+  destinationInputsBefore!: ReadonlyMap<string, string>;
   namedOutput!: string;
   namedInput!: string;
 
   destination!: string;
   markdownSpec!: string;
-  markdownPath: string | undefined;
-  markdownBefore: string | undefined;
+  markdownPath!: string | null;
+  markdownBefore!: string | null;
   sharedFile!: string;
   firstPath!: string;
   secondPath!: string;
   thirdPath!: string;
-  sharedBefore: string | undefined;
+  sharedBefore!: string | null;
   namedOutputs!: readonly [string, string];
-  stdoutFile: string | undefined;
+  stdoutFile!: string | null;
   linkPath!: string;
   linkTargetPath!: string;
 
@@ -219,6 +224,14 @@ export class SpecControllerWorld extends World {
 
   constructor(options: IWorldOptions) {
     super(options);
+    return new Proxy(this, {
+      get(target, prop, receiver) {
+        if (typeof prop === "string" && Object.hasOwn(target, prop) && Reflect.get(target, prop) === undefined) {
+          throw new Error(`${prop} was read before this scenario set it`);
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
   }
 }
 

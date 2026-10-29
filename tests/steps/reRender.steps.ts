@@ -74,8 +74,7 @@ function fixtureInputs(dir: string): string[] {
 
 function saveLiveRun(world: SpecControllerWorld, fixture: string, flags: string[]): string {
   const dir = join(process.cwd(), "tests", "fixtures", fixture);
-  world.scratch ??= temporaryDirectory(world, "spec-controller-rerender-");
-  const path = join(world.scratch, `${fixture}${flags.join("")}.json`);
+  const path = join(temporaryDirectory(world, "spec-controller-rerender-"), `${fixture}${flags.join("")}.json`);
   const live = spawnController([...fixtureInputs(dir), ...flags, "--format", `json:${path}`], dir);
   assert.ok(existsSync(path), `the live run saved no report (exit ${live.status}):\n${live.stderr}`);
   return path;

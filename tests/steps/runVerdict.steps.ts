@@ -259,7 +259,7 @@ When(
 );
 
 function exitZeroRuns(world: SpecControllerWorld): { without: SpawnSyncReturns<string>; with: SpawnSyncReturns<string> } {
-  assert.ok(world.exitZeroPair !== undefined, "the with/without --exit-zero pair was never run");
+  assert.ok(world.exitZeroPair !== null, "the with/without --exit-zero pair was never run");
   return world.exitZeroPair;
 }
 
