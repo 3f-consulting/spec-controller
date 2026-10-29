@@ -86,7 +86,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   Scenario: the packages contain none of the patterns this repository forbids for security: a child process started through a shell, code built from a string, a regular expression built from an argument, or a file written outside the modules that check its location
 
   @fitness @SCN-FIT-011
-  Scenario: the whole tree type-checks
+  Scenario: the packages' source, their unit tests and the behavioural suite's code type-check
 
   @fitness @SCN-FIT-012
   Scenario: the unit suite finishes inside the limit its step runs it under
@@ -109,10 +109,10 @@ Feature: The fitness functions this repository carries, one scenario per check
   Rule: a comment carries only what the code cannot say, and the build holds it to that on every run
 
     @fitness @SCN-FIT-023
-    Scenario: no file in the tree is more than fifteen per cent comment lines
+    Scenario: no source, script, configuration or Gherkin file is more than fifteen per cent comment lines, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
 
     @fitness @SCN-FIT-075
-    Scenario: no comment in the source code or its workflows' configuration, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
+    Scenario: no comment in the source code outside its shell scripts, or in its workflows' configuration, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
 
   Rule: every Given, When and Then in the corpus is one Cucumber runs
 
