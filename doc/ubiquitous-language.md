@@ -101,6 +101,9 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | host modifier | A flag that goes before the command (`--store`, `--run-id`). A command, or `--help`, must follow it. |
 | re-render | `--render-from-json`: Markdown rebuilt from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report, each named by its own flag. |
+| report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
+| report of scenario runs | An evidence report of Gherkin scenarios run step by step: the Cucumber report. Its fallback is `integration`. |
+| fallback | The quality check an evidence report posts a behavioural observation at. A report of test results posts every observation there. A report of scenario runs posts an observation at each tier its scenario is tagged with (`@integration`, `@e2e` or `@performance`), and at its fallback only when the scenario carries none. |
 | report destination | Where a `--format` sends its report: standard output, or the file named after the colon. |
 | `--exit-zero` | The same report, but exiting `0` on an out-of-balance or scenario-code-error verdict, or on a `--strict` run held back by pending items. It never changes the exit code of a run that could not judge (unsound, nothing to reconcile, or an unexpected error before the verdict). The on-ramp before gating. |
 | run verdict | The whole run's headline and its exit code: BALANCED, OUT-OF-BALANCE, UNSOUND, PENDING, NOTHING TO RECONCILE or SCENARIO CODE ERRORS. |
