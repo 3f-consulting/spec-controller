@@ -77,12 +77,12 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the evidence reconciliation section says what it counts before its table
 
-    Under "### Evidence reconciliation", four sentences come before the table, one each for a
+    Under "### Evidence reconciliation", four definitions come before the table, one each for a
     Claim Reconciliation, a Quality Check Reconciliation, an Evidence Obligation and an
-    Evidence Observation. Every run prints the same four sentences, and none of them states a
-    count.
+    Evidence Observation. Every run prints the same four, and none states a figure from the
+    run.
 
-    The second sentence says why the two totals differ: a claim holds one Quality Check
+    The second definition also says why the two totals differ: a claim holds one Quality Check
     Reconciliation for each quality check its evidence names, so a scenario tagged both unit
     and integration adds one to the Claim Reconciliation total and two to the Quality Check
     Reconciliation total.
