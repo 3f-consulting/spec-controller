@@ -307,7 +307,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   });
 });
 
-describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObservations reconciliation", () => {
+describe("[SCN-RPT-010] the markdown report renders the Evidence observations reconciliation", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
   ];
@@ -326,9 +326,9 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
     balance = reconcile(scenarios, observations);
   });
 
-  it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
+  it("[SCN-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx, publishedExitCodeOf);
-    expect(md).toContain("### Test volume");
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.TestVolumeSum](8, 4, 1, 3));
+    expect(md).toContain("### Evidence observations");
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](8, 4, 1, 3));
   });
 });

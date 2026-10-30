@@ -5,7 +5,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
   Its top-level keys, in document order, are runProvenance, then errors when the inputs hold a
-  fault, then scenarioCodes, summary, ledger and metadata. There is no
+  fault, then scenarioCodes, summary and ledger. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
   beside spec-reconciliation.md, and the markdown renderer reads the same assembled model, so
@@ -63,70 +63,46 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-020
     Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's @SCN, a phantom claim's cited code, the unnamed claim, and a scenario with no @SCN by its feature and title
 
-  Rule: the behavioural evidence-observation counting folds onto the Ledger, no evidenceObservations section
+  Rule: the summary states its evidence reconciliation, and its evidence observations over every quality check
 
-    The behavioural evidence-observation counting is a FOLD the Ledger owns.
-    The raw per-quality-check totals are materialised on summary.rawByBehaviouralQualityCheck, and
-    the persisted JSON carries NO separate evidence-observations section: every evidence observation is
-    already posted on the ledger, an evidence observation citing an unknown scenario on its phantom claim's row and an uncited one
-    on the unnamed claim's row, each with its file locator. The markdown's Test volume cut and
-    its identity line read the same summary folds. The balancing identity Σ
-    rawByBehaviouralQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds by
-    construction on the persisted file. Its unit tests hold the assembled totals in isolation.
-
-    @unit @SCN-RMD-003
-    Scenario: the behavioural-observation totals re-home onto summary and the balancing identity holds on the persisted file
-
-  Rule: the fitness-function census is summary counts, no standalone section
-
-    The fitness-function census is
-    summary.fitnessFunctions COUNTS alone — a pure counter over the fitness observations, symmetric
-    with the behavioural testVolume counter. There is no standalone member-list section, because
-    each check's detail lives on the rows: a cited check on its scenario's own row, an
-    uncited one as a cites-no-scenario evidence observation on the unnamed claim's row, so nothing is reported twice.
-    The persisted summary carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the cited
-    count is implicit, running − uncited. A pure derive over the model, held in isolation by
-    Vitest.
-
-    @unit @SCN-RMD-004
-    Scenario: the fitness-function census is summary counts with no standalone section
-
-  Rule: the summary materialises the three report totals a JSON consumer reads
-
-    The whole document is one report model, so the numbers the markdown prints are model data,
-    not renderer arithmetic. The Test-volume totals, the fitness-function totals and the fitness
-    tally are materialised on report.summary, where a JSON consumer reads them and the markdown
-    reads them too. The test-volume identity line is a reconciliation fact (a balance check,
-    Σ = Σ) that belongs in the model, not asserted by the renderer:
-
-      Test volume — Σ rawByBehaviouralQualityCheck = onScenario + onPhantomClaim + onUnnamedClaim.
-
-    The fitness-function census carries runningFitnessFunctionCount and uncitedFitnessFunctionCount; the
-    cited count is implicit, running − uncited. The fitness tally is the fitness-only evidence
-    obligation cut (satisfied of total), under summary.fitness: the outcome breakdown under
-    summary.qualityCheckReconciliations is kind-agnostic and cannot give the fitness-only total, so it is
-    materialised explicitly. Its unit tests hold the summary's folds and the assembled summary
-    in isolation.
+    The numbers the markdown prints are model data, not renderer arithmetic. The summary states
+    the evidence reconciliation as one section: the Claim Reconciliations counted by verdict and
+    by kind of claim, the Quality Check Reconciliations counted by outcome with the missing ones
+    by quality check, and the pending items counted. The fitness tally is
+    the fitness-only evidence obligation cut (satisfied of total), under summary.fitness: the
+    outcome breakdown is kind-agnostic and cannot give the fitness-only total, so it is stated
+    explicitly. The summary states its evidence observations as one section: the total, the
+    counts on each kind of claim, and a count for each of the five quality checks, fitness last.
+    A behavioural count is every evidence observation of that quality check, a broken one
+    included; the fitness count is every fitness function that ran. The total is the sum of the
+    five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
+    quality check names the CI steps its counted evidence came from, in step order, where there
+    is at least one: a behavioural one the steps that run the runner the manifest declares for
+    it, beside that runner, and fitness the step behind each fitness function that ran, so its
+    steps are as many as its count. Its unit tests hold the assembled summary and the persisted
+    file in isolation.
 
     @unit @SCN-RMD-005
-    Scenario: the summary materialises the test-volume, fitness-function, and fitness totals with the test-volume balance identity and the fitness-function shape holding on the persisted file
+    Scenario: the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted
 
-  Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
+    @unit @SCN-RMD-003
+    Scenario: the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
-    The by-feature cut names each feature in full ("slug (FFF)") from the feature titles carried
-    on the report model. They sit under a small top-level `metadata` object
-    (report.metadata.featureNames) — presentation *metadata* (names), kept apart from the
-    reconciliation records (summary and ledger). The assembly takes the code→slug source
-    and stores it under metadata.featureNames as a plain object, only when it is non-empty, and
-    metadata is the LAST document key. The published JSON carries the titles there, which is what
-    lets it round-trip, and the markdown renderer reads them off metadata.featureNames with no
-    external map. Its unit tests hold that the assembly carries the titles under metadata, that the
-    glue-free JSON serialises them there, and that the model-sourced by-feature cut names features
-    in full; and the CLI publishes the titles it reads off the feature files under metadata in
-    spec-reconciliation.json, keyed by feature code.
+    @unit @SCN-RMD-015
+    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the manifest declares for it
+
+  Rule: the summary states the out-of-balance view by feature, each feature named by its title
+
+    The summary groups each out-of-balance scenario under its feature, in ledger order. An entry
+    names its feature by the feature code, or by the feature file for a scenario with no @SCN in
+    a file that carries no code. It carries the feature's title where its file has a code, the
+    out-of-balance @SCN codes, the count of scenarios with no @SCN where there are any, and its
+    total. A phantom claim and the unnamed claim belong to
+    no feature and sit in no entry. The view is absent when no scenario is out of balance. Its
+    unit tests hold the assembled summary and the JSON the CLI writes.
 
     @unit @SCN-RMD-006
-    Scenario: the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code
+    Scenario: the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and title
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
 
@@ -138,7 +114,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     the saved verdict names. Drift-equality is the acceptance: the markdown regenerated from the
     saved JSON EQUALS the markdown rendered directly from the same run, the by-feature titles
     included. Its unit tests hold the parse→render drift-equality over a corpus spanning
-    the whole document (the three-way test-volume line, the materialised summary totals, and a coded
+    the whole document (the three-way evidence observations line, the materialised summary totals, and a coded
     out-of-balance feature, so the by-feature title path has teeth), and the CLI, run over a
     fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
     from it the markdown it rendered directly, exiting the code the saved run exited.
@@ -151,8 +127,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The evidence coordinate is ONE flat quality-check ∈ {fitness, unit, integration, e2e,
     performance}: fitness is one quality-check value, not a second axis. So each sub-row of
     ledger.claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheck alone,
-    and the summary's missing split, missingByQualityCheck under
-    summary.qualityCheckReconciliations, counts the missing Reconciliation lines by the same flat
+    and the summary's missing split, missingByQualityCheck under the qualityCheckReconciliations
+    of the summary's evidence reconciliation, counts the missing Reconciliation lines by the same flat
     quality-check: an obligation answered only by a broken observation is one missing line
     beside the broken one, so it counts once. One reconcile function
     serves every quality check, and the fitness value is what tells a watermelon apart. The
@@ -225,9 +201,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it
 
   Rule: the summary carries the runner account, absent when it has nothing to say
-
-    @unit @SCN-RMD-015
-    Scenario: the summary carries no runner account for a target whose manifest names no runners, and carries the step running a runner once it names one
 
   Rule: the summary carries scenario code errors beside the ledger, and they never alter it
 

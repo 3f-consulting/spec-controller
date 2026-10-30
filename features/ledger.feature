@@ -77,7 +77,7 @@ Feature: Ledger over obligation-vs-observation evidence
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of behavioural observations never silently counts a
     stray evidence observation at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
-    appears in summary.byOutcome, while the Test-volume attributed (evidence observations citing a real
+    appears in summary.byOutcome, while the Evidence observations attributed (evidence observations citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @SCN-LDG-008

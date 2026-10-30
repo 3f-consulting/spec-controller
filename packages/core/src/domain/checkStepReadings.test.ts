@@ -101,9 +101,10 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   });
 
   it("counts TWO running fitness functions over a record holding five check steps", () => {
-    expect(reconcile().summary.fitnessFunctions).toEqual({
-      runningFitnessFunctionCount: 2,
-      uncitedFitnessFunctionCount: 0,
-    });
+    const reconciliation = reconcile();
+    expect(
+      reconciliation.summary.evidenceObservations?.byQualityCheck.find((entry) => entry.qualityCheck === "fitness")?.count
+    ).toBe(2);
+    expect(reconciliation.ledger.claimReconciliations.filter((row) => row.kind === "unnamed-claim")).toEqual([]);
   });
 });

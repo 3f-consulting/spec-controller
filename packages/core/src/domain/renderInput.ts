@@ -4,6 +4,7 @@ import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
 import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./corpusCounts.js";
 import type { RunVerdict } from "./runVerdict.js";
+import type { FeatureOutOfBalance } from "./outOfBalanceByFeature.js";
 
 export interface ScenarioCodesSection {
   readonly featureFiles?: number;
@@ -81,19 +82,15 @@ function nonEmpty<K extends string, T>(key: K, entries: readonly T[] | undefined
   return entries && entries.length > 0 ? ({ [key]: entries } as Record<K, readonly T[]>) : {};
 }
 
-export interface ReportMetadata {
-  readonly featureNames?: Record<string, string>;
-}
-
 export interface RenderInput {
   readonly runProvenance: ProvenanceObject;
   readonly errors?: ErrorsSection;
   readonly scenarioCodes?: ScenarioCodesSection;
   readonly summary: SummaryStatingNoFault & {
     readonly runVerdict: RunVerdict;
+    readonly outOfBalanceByFeature?: readonly FeatureOutOfBalance[];
   };
   readonly ledger: Ledger;
-  readonly metadata?: ReportMetadata;
 }
 
 export type FeatureNames = ReadonlyMap<string, string>;

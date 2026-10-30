@@ -702,6 +702,13 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string
     (saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }),
     "runProvenance.corpus is missing",
   ],
+  "in an earlier summary shape": [
+    (saved) => ({
+      ...saved,
+      summary: { ...(saved["summary"] as object), evidenceReconciliation: undefined, evidenceObservations: undefined },
+    }),
+    "summary.evidenceReconciliation is missing",
+  ],
 };
 
 function savedReconciliation(dir: string): Record<string, unknown> {

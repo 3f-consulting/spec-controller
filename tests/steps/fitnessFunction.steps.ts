@@ -77,8 +77,8 @@ Then(
       `a scenario cites lint:foo; the unnamed claim's row must not name it at all; got:\n${unnamedClaimRow}`
     );
     assert.ok(
-      this.markdown.includes("2 fitness function(s) run, 1 uncited fitness function(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 uncited fitness function(s)); got:\n${this.markdown}`
+      this.markdown.includes("| fitness | 2 |") && this.markdown.includes(" + 1 citing no scenario."),
+      `expected lint:foo folded into the running volume (fitness 2, 1 citing no scenario); got:\n${this.markdown}`
     );
   }
 );
@@ -160,7 +160,7 @@ When("the reconciliation report is rendered for that target's ci.yml alone", fun
 
 Then("lint:sweep is not counted among the running fitness functions", function (this: SpecControllerWorld) {
   assert.ok(
-    this.markdown.includes("0 fitness function(s) run, 0 uncited fitness function(s)"),
+    this.markdown.includes("| fitness | 0 |"),
     `expected NOTHING observed: the caller named one workflow, and lint:sweep runs in ` +
       `another. Sweeping the parent directory off a file argument would widen a scope ` +
       `the caller chose deliberately. Got:\n${this.markdown}`,

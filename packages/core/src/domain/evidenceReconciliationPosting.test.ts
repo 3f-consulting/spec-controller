@@ -240,7 +240,7 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
     expect(accountFor(ledger, "(unnamed claim)")).toBeUndefined();
     expect(isBalanced(ledger)).toBe(true);
-    expect(assembleRenderInput(__er(ledger), ctx).summary.claimReconciliations.outOfBalance).toBe(0);
+    expect(assembleRenderInput(__er(ledger), ctx).summary.evidenceReconciliation.claimReconciliations.outOfBalance).toBe(0);
   });
 });
 

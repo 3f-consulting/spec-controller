@@ -1,20 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import type { EvidenceObservation } from "../model.js";
+import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 
-const corpus = `@VOL
-Feature: fixture volume corpus
-
-  Rule: observations land on scenarios
-
-    @unit @integration @SCN-VOL-001
-    Scenario: a scenario with an evidence observation
-`;
+const scenarios: Scenario[] = [
+  { scnId: "SCN-VOL-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
+];
 
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-VOL-001", status: "passed" },
@@ -23,20 +16,14 @@ const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-VOL-404", status: "passed" },
   { qualityCheck: "e2e", scnId: null, status: "passed" },
   { qualityCheck: "e2e", scnId: null, status: "failed" },
+  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
-const reconcile = (): EvidenceReconciliation =>
-  evidenceReconciliationFromSources({
-    features: parsedFeatures([corpus]),
-    packageJson: {},
-    ciWorkflows: [],
-    behaviouralObservations: observations,
-    deferralTags: [],
-  });
-
-const heading = CORE_MESSAGES[CoreMessage.TestVolumeHeading];
-const sum = CORE_MESSAGES[CoreMessage.TestVolumeSum];
-const tableHeader = CORE_MESSAGES[CoreMessage.TestVolumeTableHeader];
+const heading = "### Evidence observations";
+const sum = CORE_MESSAGES[CoreMessage.EvidenceObservationsSum];
+const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
@@ -49,19 +36,19 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
   for (const i of headings) expect(lines[i - 1]).toBe("");
 }
 
-describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence observation identity balances by construction", () => {
-  it("renders heading, blank, the identity line, blank, the two-column table with a row per behavioural quality-check, then one blank", () => {
-    const reconciliation = reconcile();
-    expect(reconciliation.summary.testVolume).toStrictEqual({
-      totalEvidenceObservations: 6,
-      onScenario: 3,
+describe("[SCN-RPT-010] the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction", () => {
+  it("renders heading, blank, the identity line, blank, the two-column table with a row per quality check and fitness last at the running count, then one blank", () => {
+    const reconciliation = evidenceReconciliationOf(scenarios, observations, [], true, true);
+    expect(reconciliation.summary.evidenceObservations).toMatchObject({
+      total: 8,
+      onScenario: 5,
       onPhantomClaim: 1,
       onUnnamedClaim: 2,
     });
     expect(section(linesOf(reconciliation))).toStrictEqual([
       heading,
       "",
-      sum(6, 3, 1, 2),
+      sum(8, 5, 1, 2),
       "",
       tableHeader,
       "| --- | --- |",
@@ -69,14 +56,14 @@ describe("[SCN-RPT-010] the report renders the Test volume cut and the evidence 
       "| integration | 1 |",
       "| e2e | 2 |",
       "| performance | 0 |",
+      "| fitness | 2 |",
       "",
     ]);
   });
 
-  it("renders no section, and nothing in its place, for a report that read no behavioural observations", () => {
-    const reconciliation = evidenceReconciliationOf([], [], [], false, true);
-    expect(reconciliation.summary).not.toHaveProperty("testVolume");
-    expect(reconciliation.summary).not.toHaveProperty("rawByBehaviouralQualityCheck");
+  it("renders no section, and nothing in its place, for a report with no evidence observations", () => {
+    const reconciliation = evidenceReconciliationOf([], [], [], false, false);
+    expect(reconciliation.summary).not.toHaveProperty("evidenceObservations");
     expectNoSectionAndNothingInItsPlace(reconciliation);
   });
 });

@@ -165,7 +165,7 @@ Feature: The report renders the ledger as sectioned facts
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance"
     comes first. "## Summary views" holds the derived cuts: Run verdict first, followed on a
     run whose judged corpus holds no scenario code error by one line stating its codes are
-    clean, then Evidence reconciliation and Test volume, and Fitness evidence obligations and Out-of-balance by
+    clean, then Evidence reconciliation and Evidence observations, and Fitness evidence obligations and Out-of-balance by
     feature last. "## Claim Reconciliations" comes last, with its summary lines on top: the
     verdict tally and the excluded-occurrence bullet.
 
@@ -177,24 +177,24 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the Claim Reconciliations last
 
-  Rule: the report reconciles the test evidence observation — raw = attributed + phantom claim + unnamed claim
+  Rule: the report reconciles the evidence observations — raw = attributed + phantom claim + unnamed claim
 
-    Under "## Summary views", the "### Test volume" cut counts the observed test evidence
-    observations. It opens with the identity
+    Under "## Summary views", the "### Evidence observations" cut counts the evidence
+    observations of every quality check, fitness included. It opens with the identity
     "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c citing no scenario",
     which always balances.
 
     A phantom claim is an @SCN code no scenario carries; the unnamed claim holds observations
     with no @SCN code.
 
-    A table by level follows, always listing all four levels, with e2e and performance shown
-    at zero when empty.
+    A table by quality check follows, always listing all five, with fitness last at the count
+    of fitness functions that ran, and a quality check with no evidence observation at zero.
 
-    The raw per-level totals and the three per-account counts are also in the JSON; the
+    The per-quality-check counts and the three per-account counts are also in the JSON; the
     identity line is markdown only.
 
     @unit @SCN-RPT-010
-    Scenario: the report renders the Test volume cut and the evidence observation identity balances by construction
+    Scenario: the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction
 
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
 
@@ -275,7 +275,7 @@ Feature: The report renders the ledger as sectioned facts
 
     A behavioural observation is levelled by the cited scenario's own tier tag, in the
     report's views as in the reconciliation. A Cucumber run of an @e2e scenario counts at e2e
-    in Test volume and in the scenario's E2e cell. A Cucumber run of a scenario tagged
+    in Evidence observations and in the scenario's E2e cell. A Cucumber run of a scenario tagged
     both @integration and @e2e counts in both tiers.
 
     @unit @SCN-RPT-017
@@ -413,12 +413,16 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
 
-  Rule: Test volume counts each behavioural evidence observation on the kind of claim its row reconciles, a broken one included
+  Rule: Evidence observations counts each evidence observation on the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
 
-    Fitness observations are not counted in Test volume.
+    A behavioural evidence observation counts whether it passed, failed or is broken. A fitness
+    evidence observation counts when its fitness function ran, on the kind of row it sits on, so
+    an uncited one counts on the unnamed claim. A broken fitness evidence observation does not
+    count. The total is the sum of the five quality checks' counts and the sum of the counts on
+    each kind of claim.
 
     @unit @SCN-RPT-023
-    Scenario: Test volume counts each behavioural evidence observation by the kind of claim its row reconciles, a broken one included
+    Scenario: Evidence observations counts each evidence observation by the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
 
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
@@ -587,9 +591,6 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-048
     Scenario: the excluded-steps section lists each step the target names a non-check with its reason, and is absent when the target names none
-
-    @unit @SCN-RPT-049
-    Scenario: the fitness-functions section counts the fitness functions that run and those no scenario cites, and is absent when the report carries no fitness-function axis
 
     @unit @SCN-RPT-050
     Scenario: the reconciler section names each reconciler step with what it does, and is absent for a pipeline that runs no reconciliation

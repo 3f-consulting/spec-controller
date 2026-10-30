@@ -7,25 +7,42 @@ import type { Ledger } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 
-describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
+describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted", () => {
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }] },
+    { scnId: "SCN-RMD-012", evidenceObligations: [{ qualityCheck: "unit" }] },
   ];
   const rmd005Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "integration", scnId: "SCN-RMD-002", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-RMD-002", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
-    { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", fitnessFunction: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
+  const evidenceReconciliation = {
+    claimReconciliations: { total: 5, balanced: 2, outOfBalance: 3, phantomClaim: 1, unnamedClaim: 1 },
+    qualityCheckReconciliations: {
+      total: 5,
+      byOutcome: {
+        satisfied: 2,
+        missing: 1,
+        failing: 0,
+        watermelon: 0,
+        "cites-unknown-scenario": 1,
+        "cites-no-scenario": 1,
+        "no-scn-code": 0,
+        "duplicate-scn-code": 0,
+        broken: 0,
+        "no-evidence-obligation": 0,
+        "both-missing": 0,
+      },
+      outOfBalance: 3,
+      missingByQualityCheck: [{ subject: "unit", count: 1 }],
+    },
+    pending: 1,
+  };
   let rmd005Balance: Ledger;
   let lintBalance: Ledger;
   beforeEach(() => {
@@ -42,66 +59,91 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     );
   });
 
-  it("materialises the test-volume totals (onScenario excludes onPhantomClaim)", () => {
-    const report = assembleRenderInput(__er(rmd005Balance, true, false), ctx);
-    expect(report.summary.testVolume).toEqual({
-      totalEvidenceObservations: 6,
-      onScenario: 4,
-      onPhantomClaim: 1,
-      onUnnamedClaim: 1,
-    });
+  it("states the Claim Reconciliations, the Quality Check Reconciliations and the pending items counted under evidenceReconciliation", () => {
+    const report = assembleRenderInput(__er(rmd005Balance), ctx);
+    expect(report.summary.evidenceReconciliation).toEqual(evidenceReconciliation);
   });
 
-  it("materialises the fitness-function totals", () => {
-    const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
-    expect(report.summary.fitnessFunctions).toEqual({
-      runningFitnessFunctionCount: 3,
-      uncitedFitnessFunctionCount: 1,
-    });
-  });
-
-  it("materialises the fitness-only tally (satisfied / total) under summary.fitness, ignoring behavioural evidenceObligations", () => {
+  it("states the fitness-only tally (satisfied / total) under summary.fitness, ignoring behavioural evidenceObligations", () => {
     const report = assembleRenderInput(__er(lintBalance), ctx);
     expect(report.summary.fitness).toEqual({ satisfied: 1, total: 2 });
     expect(report.summary).not.toHaveProperty("lint");
   });
 
-  it("carries the three totals through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
-    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomClaim: 1, onUnnamedClaim: 1 });
-    expect(parsed.summary.fitnessFunctions).toEqual({ runningFitnessFunctionCount: 3, uncitedFitnessFunctionCount: 1 });
-    expect(parsed.summary.fitness).toEqual({ satisfied: 1, total: 2 });
+  it("carries the evidence reconciliation and the fitness tally through the glue-free JSON serialisation", () => {
+    expect(JSON.parse(renderJson(__er(rmd005Balance), ctx)).summary.evidenceReconciliation).toEqual(evidenceReconciliation);
+    expect(JSON.parse(renderJson(__er(lintBalance), ctx)).summary.fitness).toEqual({ satisfied: 1, total: 2 });
   });
 });
 
-describe("[SCN-RMD-006] the report model carries the feature titles", () => {
-  let codedBalance: Ledger;
-  beforeEach(() => {
-    codedBalance = reconcile(
-      [
-        { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-      ],
-      [{ qualityCheck: "fitness", fitnessFunction: "guard-lint", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: false }],
-    );
-  });
+describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and title", () => {
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-XYZ-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "integration" }] },
+  ];
+  const observations: EvidenceObservation[] = [
+    { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
+    { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
+    { qualityCheck: "fitness", fitnessFunction: "lint:guard", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheck: "unit", scnId: null, status: "passed" },
+  ];
+  const untaggedScenarios = [
+    { feature: "ledger.feature", scenario: "a ledger scenario with no code" },
+    { feature: "loose.feature", scenario: "a loose scenario" },
+    { feature: "loose.feature", scenario: "another loose scenario" },
+  ];
+  const evidenceObligations: EvidenceObligations = {
+    rawScnOccurrences: 5,
+    scenarioCount: 8,
+    excludedOccurrences: 0,
+    untaggedScenarios,
+  };
   const featureNames = new Map([
     ["LDG", "ledger"],
     ["LNT", "fitness-evidence"],
   ]);
-
-  it("materialises the feature titles under metadata as a plain object", () => {
-    const report = assembleRenderInput(__er(codedBalance, false, false), ctx, undefined, featureNames);
-    expect(report.metadata?.featureNames).toEqual({ LDG: "ledger", LNT: "fitness-evidence" });
-    expect(report).not.toHaveProperty("featureNames");
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile(scenarios, observations, untaggedScenarios.map(untaggedScenarioId));
   });
 
-  it("omits metadata when no coded feature is named (no map, or an empty map)", () => {
-    expect(assembleRenderInput(__er(codedBalance), ctx)).not.toHaveProperty("metadata");
-    expect(assembleRenderInput(__er(codedBalance), ctx)).not.toHaveProperty("featureNames");
-    expect(
-      assembleRenderInput(__er(codedBalance, false, false), ctx, undefined, new Map())
-    ).not.toHaveProperty("metadata");
+  it("groups the out-of-balance scenarios by feature in ledger order, a phantom and an unnamed claim in no group", () => {
+    const report = assembleRenderInput(__er(ledger), ctx, evidenceObligations, featureNames);
+    expect(report.summary.outOfBalanceByFeature).toEqual([
+      { feature: "LDG", title: "ledger", count: 3, claims: ["SCN-LDG-003", "SCN-LDG-007"], scenariosWithNoScnCode: 1 },
+      { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
+      { feature: "loose.feature", count: 2, claims: [], scenariosWithNoScnCode: 2 },
+    ]);
+  });
+
+  it("names no feature by its title and keys each scenario with no @SCN by its file when no feature titles are read", () => {
+    const report = assembleRenderInput(__er(ledger), ctx, evidenceObligations);
+    expect(report.summary.outOfBalanceByFeature).toEqual([
+      { feature: "LDG", count: 2, claims: ["SCN-LDG-003", "SCN-LDG-007"] },
+      { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
+      { feature: "ledger.feature", count: 1, claims: [], scenariosWithNoScnCode: 1 },
+      { feature: "loose.feature", count: 2, claims: [], scenariosWithNoScnCode: 2 },
+    ]);
+  });
+
+  it("states no view when no scenario is out of balance, a phantom and an unnamed claim out of balance included", () => {
+    const balanced = reconcile(scenarios.slice(0, 1), [observations[0]!, observations[3]!, observations[4]!]);
+    const report = assembleRenderInput(__er(balanced), ctx, evidenceObligations, featureNames);
+    expect(report.summary.evidenceReconciliation.claimReconciliations).toMatchObject({ outOfBalance: 2 });
+    expect(report.summary).not.toHaveProperty("outOfBalanceByFeature");
+  });
+
+  it("carries the view through the glue-free JSON serialisation", () => {
+    const summary = JSON.parse(renderJson(__er(ledger), ctx, evidenceObligations, featureNames)).summary;
+    expect(summary.outOfBalanceByFeature).toEqual([
+      { feature: "LDG", title: "ledger", count: 3, claims: ["SCN-LDG-003", "SCN-LDG-007"], scenariosWithNoScnCode: 1 },
+      { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
+      { feature: "loose.feature", count: 2, claims: [], scenariosWithNoScnCode: 2 },
+    ]);
   });
 });
 
@@ -131,7 +173,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
           qualityCheckReconciliations: Array<Record<string, unknown>>;
         }>;
       };
-      summary: { qualityCheckReconciliations: Record<string, unknown> };
+      summary: { evidenceReconciliation: { qualityCheckReconciliations: Record<string, unknown> } };
     };
 
   it("carries a fitness reconciliation keyed by qualityCheck 'fitness' alone, its fitness function named only on its observation", () => {
@@ -160,7 +202,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
   });
 
   it("counts the missing Reconciliation lines by quality check, an obligation answered only by a broken observation once", () => {
-    const totals = report().summary.qualityCheckReconciliations;
+    const totals = report().summary.evidenceReconciliation.qualityCheckReconciliations;
     expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
     expect(totals.missingByQualityCheck).toEqual([
       { subject: "fitness", count: 1 },

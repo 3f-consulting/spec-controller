@@ -6,8 +6,8 @@ Feature: an @e2e-via-cucumber evidence-observation fixture target
   scenario carries an @e2e evidence obligation, so only an e2e observation answers it;
   the fixture's cucumber report supplies exactly that (tag-derived, per @SCN-LDG-011).
   The census must PROJECT that parsed e2e observation — counting it under e2e, not the
-  caller-named integration fallback — so the report's evidence-observation views (Test
-  volume, attributed, the E2e cell) agree with the reconciler.
+  caller-named integration fallback — so the report's evidence-observation views (Evidence
+  observations, attributed, the E2e cell) agree with the reconciler.
 
   This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
   which scan features/*.feature only, never see @TGT / @SCN-TGT-NNN.

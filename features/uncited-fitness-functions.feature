@@ -3,7 +3,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Every check a CI step runs is reported. A check whose step cites a scenario posts to that
   scenario's row; a check whose step cites none lands on the unnamed claim's row as an uncited fitness
-  function, and the report counts running and uncited fitness functions under "### Fitness functions".
+  function, and the report counts it among the evidence observations citing no scenario.
 
   A fitness function is any CI step left once the manifest's named runners, the reconciler,
   GitHub's plumbing actions and the steps the manifest names non-checks are taken out. A step's

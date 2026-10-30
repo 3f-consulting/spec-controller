@@ -89,13 +89,11 @@ export enum CoreMessage {
   ClaimReconciliationSubject,
   QualityCheckReconciliationSubject,
   PendingTally,
-  TestVolumeHeading,
-  TestVolumeSum,
-  TestVolumeTableHeader,
+  EvidenceObservationsHeading,
+  EvidenceObservationsSum,
+  EvidenceObservationsTableHeader,
   DiscoveryScopeHeading,
   DiscoveryScopeTableHeader,
-  FitnessFunctionsHeading,
-  FitnessFunctionsCounts,
   BehaviouralRunnersHeading,
   BehaviouralRunnersTableHeader,
   RunnerTierNamesNone,
@@ -209,8 +207,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: [alsoOutOfBalance: string];
   readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
-  readonly [CoreMessage.TestVolumeSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
-  readonly [CoreMessage.FitnessFunctionsCounts]: [running: number, uncited: number];
+  readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.RunnerTierNamesNone]: [tier: string];
   readonly [CoreMessage.RunnerTierUnnamed]: [tier: string];
   readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
@@ -395,15 +392,12 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.QualityCheckReconciliationSubject]: "Quality Check Reconciliation",
   [CoreMessage.PendingTally]: (pending) =>
     `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
-  [CoreMessage.TestVolumeHeading]: "### Test volume",
-  [CoreMessage.TestVolumeSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
+  [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
+  [CoreMessage.EvidenceObservationsSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
     `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
-  [CoreMessage.TestVolumeTableHeader]: "| Quality-check | Evidence observations |",
+  [CoreMessage.EvidenceObservationsTableHeader]: "| Quality-check | Evidence observations |",
   [CoreMessage.DiscoveryScopeHeading]: "### Discovery scope",
   [CoreMessage.DiscoveryScopeTableHeader]: "| Workflow | Job | Steps read | Candidates |",
-  [CoreMessage.FitnessFunctionsHeading]: "### Fitness functions",
-  [CoreMessage.FitnessFunctionsCounts]: (running, uncited) =>
-    `${running} fitness function(s) run, ${uncited} uncited fitness function(s).`,
   [CoreMessage.BehaviouralRunnersHeading]: "### Behavioural runners",
   [CoreMessage.BehaviouralRunnersTableHeader]: "| Tier | Runner | Recognised at |",
   [CoreMessage.RunnerTierNamesNone]: (tier) => `${tier} — no runner: the target names none.`,

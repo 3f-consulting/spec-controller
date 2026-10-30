@@ -36,14 +36,20 @@ function assembled(): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-RMD-003] the behavioural-observation totals re-home onto summary and the balancing identity holds on the persisted file", () => {
-  it("carries the raw per-quality-check totals of the observations it was handed on its summary", () => {
-    expect(assembled().summary.rawByBehaviouralQualityCheck).toStrictEqual({
-      unit: 4,
-      integration: 0,
-      e2e: 0,
-      performance: 0,
+describe("[SCN-RMD-003] the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
+  it("states the evidence observations it was handed on its summary, a count for each of the five quality checks with fitness last", () => {
+    expect(assembled().summary.evidenceObservations).toStrictEqual({
+      total: 4,
+      onScenario: 2,
+      onPhantomClaim: 1,
+      onUnnamedClaim: 1,
+      byQualityCheck: [
+        { qualityCheck: "unit", count: 4 },
+        { qualityCheck: "integration", count: 0 },
+        { qualityCheck: "e2e", count: 0 },
+        { qualityCheck: "performance", count: 0 },
+        { qualityCheck: "fitness", count: 0 },
+      ],
     });
-    expect(Object.keys(assembled().summary).filter((key) => key.startsWith("rawBy"))).toEqual(["rawByBehaviouralQualityCheck"]);
   });
 });

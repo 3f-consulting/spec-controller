@@ -60,12 +60,12 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     expect(regenerated).toContain("| checkout (CHK) | 1 | SCN-CHK-002 |");
   });
 
-  it("carries the whole document — the three-way test-volume line and the materialised summary totals", () => {
+  it("carries the whole document — the three-way evidence observations line and the materialised summary totals", () => {
     const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson, HANDED_INPUT_NAMES, publishedExitCodeOf);
     const citesNoScenario = OUTCOME_DESCRIPTION["cites-no-scenario"];
-    expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.TestVolumeSum](3, 1, 1, 1));
-    expect(regenerated).toContain("2 fitness function(s) run, 1 uncited fitness function(s).");
+    expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](5, 2, 1, 2));
+    expect(regenerated).toContain("| fitness | 2 |");
     expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1));
     const unnamedClaimRow = regenerated.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
     expect(unnamedClaimRow).toContain(`unit: ${citesNoScenario} (src/b.test.ts)`);

@@ -142,16 +142,22 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
 
 Then("the uncited evidence observations are posted to the unnamed claim's reconciliation", function (this: SpecControllerWorld) {
   const { summary } = JSON.parse(readFileSync(this.uncitedJsonPath, "utf8"));
-  const { testVolume } = summary;
+  const { evidenceObservations } = summary;
   assert.deepEqual(
-    [testVolume.totalEvidenceObservations, testVolume.onScenario, testVolume.onPhantomClaim, testVolume.onUnnamedClaim],
+    [
+      evidenceObservations.total,
+      evidenceObservations.onScenario,
+      evidenceObservations.onPhantomClaim,
+      evidenceObservations.onUnnamedClaim,
+    ],
     [2, 0, 0, 2],
-    `expected both uncited evidence observations on the unnamed claim and none anywhere else; got: ${JSON.stringify(testVolume)}`,
+    `expected both uncited evidence observations on the unnamed claim and none anywhere else; got: ${JSON.stringify(evidenceObservations)}`,
   );
+  const { qualityCheckReconciliations } = summary.evidenceReconciliation;
   assert.equal(
-    summary.qualityCheckReconciliations.byOutcome["cites-no-scenario"],
+    qualityCheckReconciliations.byOutcome["cites-no-scenario"],
     2,
-    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(summary.qualityCheckReconciliations)}`,
+    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(qualityCheckReconciliations)}`,
   );
 });
 
@@ -280,8 +286,10 @@ function reconcile(features: string): CorpusRun {
 }
 
 function judgement({ report }: CorpusRun): Record<string, unknown> {
-  const { runProvenance: _provenance, metadata: _metadata, ...judged } = report;
-  return judged;
+  const { runProvenance: _provenance, ...judged } = report;
+  const summary = judged["summary"] as { outOfBalanceByFeature?: { title?: string }[] };
+  const byFeature = summary.outOfBalanceByFeature?.map(({ title: _title, ...entry }) => entry);
+  return { ...judged, summary: { ...summary, ...(byFeature ? { outOfBalanceByFeature: byFeature } : {}) } };
 }
 
 function scenarioCodesOf({ report }: CorpusRun): string[] {

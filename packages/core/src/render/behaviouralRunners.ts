@@ -13,8 +13,13 @@ const unrecognisedKeyAccount = (keys: readonly string[] | undefined): string[] =
   (keys ?? []).map(
 (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`);
 
+const runnerRows = (report: RenderInput): { tier: string; runner: string; step: string }[] =>
+  (report.summary.evidenceObservations?.byQualityCheck ?? []).flatMap(({ qualityCheck, runner, ciSteps }) =>
+    runner === undefined ? [] : (ciSteps ?? []).map((step) => ({ tier: qualityCheck, runner, step }))
+  );
+
 export const behaviouralRunnersSection = (report: RenderInput): string[] => {
-  const runners = report.summary.behaviouralRunners ?? [];
+  const runners = runnerRows(report);
   const account = [
     ...runnerTierAccount(report.summary.tiersWithoutRunner),
     ...unrecognisedKeyAccount(report.errors?.configuration?.runnerKeysNotATier),

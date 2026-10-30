@@ -15,7 +15,7 @@ import {
 } from "../domain/uncitedFitnessFunctions.js";
 import { workflowObservationsOf } from "../domain/fitnessReconciliation.js";
 
-function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
+export function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
   if (!("command" in step)) return step.identity;
   const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.command, name));
   return invoked[0] ?? step.identity;

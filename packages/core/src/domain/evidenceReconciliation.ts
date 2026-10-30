@@ -2,6 +2,7 @@ import type {
   BehaviouralQualityCheck,
   Scenario,
   EvidenceObservation,
+  FitnessEvidenceObservation,
   PendingItem,
 } from "./journal.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
@@ -22,13 +23,15 @@ import {
 import type { ScenarioName } from "./qualityCheckReconciliation.js";
 import {
   ledgerTally,
-  behaviouralObservationTally,
-  fitnessFunctionTally,
+  evidenceObservationTally,
+  runningFitnessObservations,
 } from "./ledger.js";
 import type {
   ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   FitnessTally,
+  EvidenceObservationTally,
+  QualityCheckObservations,
 } from "./ledger.js";
 import {
   verdictFor,
@@ -218,18 +221,6 @@ export function reconcile(
   };
 }
 
-export interface TestVolumeTotals {
-  readonly totalEvidenceObservations: number;
-  readonly onScenario: number;
-  readonly onPhantomClaim: number;
-  readonly onUnnamedClaim: number;
-}
-
-export interface FitnessFunctionTotals {
-  readonly runningFitnessFunctionCount: number;
-  readonly uncitedFitnessFunctionCount: number;
-}
-
 export interface ReconcilerStep {
   readonly step: string;
   readonly role: "reconciles" | "records";
@@ -239,6 +230,55 @@ export interface BehaviouralRunner {
   readonly tier: string;
   readonly runner: string;
   readonly step: string;
+}
+
+/** A step that is no fitness candidate offers only its id, which a run's record can cite. */
+export interface FitnessCandidateStep {
+  readonly step: string;
+  readonly fitnessFunction?: string;
+  readonly id?: string;
+}
+
+function isTheStepBehind(observation: FitnessEvidenceObservation, candidate: FitnessCandidateStep): boolean {
+  if (candidate.id !== undefined && observation.scnId === candidate.id) return true;
+  return observation.fitnessFunction === candidate.fitnessFunction && (observation.scnId === undefined || candidate.id === undefined);
+}
+
+/** Each running observation is the evidence of one step, so a step is taken once and an observation once. */
+function stepsBehind(
+  running: readonly FitnessEvidenceObservation[],
+  candidates: readonly FitnessCandidateStep[]
+): string[] {
+  const unmatched = [...running];
+  return candidates.flatMap((candidate) => {
+    const at = unmatched.findIndex((observation) => isTheStepBehind(observation, candidate));
+    if (at === -1) return [];
+    unmatched.splice(at, 1);
+    return [candidate.step];
+  });
+}
+
+function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[], runner?: string): QualityCheckObservations {
+  if (ciSteps.length === 0) return entry;
+  return { ...entry, ...(runner === undefined ? {} : { runner }), ciSteps };
+}
+
+export function ciStepsJoined(
+  observations: EvidenceObservationTally,
+  ledger: Ledger,
+  runners: readonly BehaviouralRunner[],
+  fitnessCandidates: readonly FitnessCandidateStep[]
+): EvidenceObservationTally {
+  return {
+    ...observations,
+    byQualityCheck: observations.byQualityCheck.map((entry) => {
+      if (entry.qualityCheck === "fitness") {
+        return withSteps(entry, stepsBehind(runningFitnessObservations(ledger), fitnessCandidates));
+      }
+      const running = runners.filter((row) => row.tier === entry.qualityCheck);
+      return withSteps(entry, running.map((row) => row.step), running[0]?.runner);
+    }),
+  };
 }
 
 export type ConfigurationKind =
@@ -294,15 +334,16 @@ export interface TierWithoutRunner {
   readonly namesNone: boolean;
 }
 
-export interface Summary {
+interface EvidenceReconciliationTotals {
   readonly claimReconciliations: ClaimReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
-  readonly testVolume?: TestVolumeTotals;
-  readonly rawByBehaviouralQualityCheck?: Record<BehaviouralQualityCheck, number>;
-  readonly fitnessFunctions?: FitnessFunctionTotals;
+}
+
+export interface Summary {
+  readonly evidenceReconciliation: EvidenceReconciliationTotals;
+  readonly evidenceObservations?: EvidenceObservationTally;
   readonly fitness: FitnessTally;
-  readonly behaviouralRunners?: readonly BehaviouralRunner[];
   readonly tiersWithoutRunner?: readonly TierWithoutRunner[];
   readonly runnerKeysNotATier?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
@@ -324,24 +365,15 @@ export function summaryOf(
   withFitnessFunctions: boolean
 ): Summary {
   const tally = ledgerTally(ledger);
-  const observations = behaviouralObservationTally(ledger);
-  const fitnessFunctions = fitnessFunctionTally(ledger);
   return {
-    claimReconciliations: tally.claimReconciliations,
-    qualityCheckReconciliations: tally.qualityCheckReconciliations,
-    pending: tally.pending,
-    ...(withBehaviouralObservations
-      ? {
-          testVolume: {
-            totalEvidenceObservations: observations.total,
-            onScenario: observations.onScenario,
-            onPhantomClaim: observations.onPhantomClaim,
-            onUnnamedClaim: observations.onUnnamedClaim,
-          },
-          rawByBehaviouralQualityCheck: observations.rawByBehaviouralQualityCheck,
-        }
+    evidenceReconciliation: {
+      claimReconciliations: tally.claimReconciliations,
+      qualityCheckReconciliations: tally.qualityCheckReconciliations,
+      pending: tally.pending,
+    },
+    ...(withBehaviouralObservations || withFitnessFunctions
+      ? { evidenceObservations: evidenceObservationTally(ledger) }
       : {}),
-    ...(withFitnessFunctions ? { fitnessFunctions } : {}),
     fitness: tally.fitness,
   };
 }

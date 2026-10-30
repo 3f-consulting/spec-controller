@@ -8,7 +8,7 @@ Feature: an @integration @e2e-via-cucumber evidence-observation fixture target
   supplies exactly one passing scenario, from which parseCucumber emits an integration AND an e2e
   observation (the per-tier emission, @SCN-LDG-014). The census must PROJECT both parsed
   observations — counting the scenario under integration AND e2e — so the report's
-  evidence-observation views (Test volume, both cells) agree with the reconciler that both
+  evidence-observation views (Evidence observations, both cells) agree with the reconciler that both
   non-unit tiers are discharged by the one cucumber pass.
 
   This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,

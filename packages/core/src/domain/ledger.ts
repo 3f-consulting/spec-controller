@@ -7,8 +7,14 @@ import {
   observationsOf,
   reconcilingItemsOf,
 } from "./claimReconciliation.js";
-import type { BehaviouralQualityCheck } from "./journal.js";
-import { QUALITY_CHECKS } from "./journal.js";
+import type {
+  BehaviouralQualityCheck,
+  EvidenceObservation,
+  FitnessEvidenceObservation,
+  QualityCheck,
+} from "./journal.js";
+import { QUALITY_CHECKS, isFitnessObservation } from "./journal.js";
+import type { ClaimKind } from "./claimKind.js";
 
 export interface Ledger {
   readonly claimReconciliations: readonly ClaimReconciliation[];
@@ -167,6 +173,8 @@ export const BEHAVIOURAL_QUALITY_CHECKS: readonly BehaviouralQualityCheck[] = QU
   (qualityCheck): qualityCheck is BehaviouralQualityCheck => qualityCheck !== "fitness"
 );
 
+export const TIER_ORDER_FITNESS_LAST: readonly QualityCheck[] = [...BEHAVIOURAL_QUALITY_CHECKS, "fitness"];
+
 export interface BehaviouralObservationTally {
   readonly rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number>;
   readonly total: number;
@@ -201,6 +209,16 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
   return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomClaim, onUnnamedClaim };
 }
 
+function ranAsFitnessFunction(observation: EvidenceObservation): observation is FitnessEvidenceObservation {
+  return isFitnessObservation(observation) && observation.broken !== true && observation.exists;
+}
+
+export function runningFitnessObservations(ledger: Ledger): FitnessEvidenceObservation[] {
+  return ledger.claimReconciliations.flatMap((row) =>
+    observationsOf(row).flatMap((observation) => (ranAsFitnessFunction(observation) ? [observation] : []))
+  );
+}
+
 export interface FitnessFunctionTally {
   readonly runningFitnessFunctionCount: number;
   readonly uncitedFitnessFunctionCount: number;
@@ -211,13 +229,46 @@ export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
   let uncitedFitnessFunctionCount = 0;
   for (const row of ledger.claimReconciliations) {
     for (const observation of observationsOf(row)) {
-      if (observation.qualityCheck !== "fitness") continue;
-      if (observation.broken === true) continue;
-      if (!observation.exists) continue;
+      if (!ranAsFitnessFunction(observation)) continue;
       runningFitnessFunctionCount++;
       if (row.kind === "unnamed-claim") uncitedFitnessFunctionCount++;
     }
   }
 
   return { runningFitnessFunctionCount, uncitedFitnessFunctionCount };
+}
+
+export interface QualityCheckObservations {
+  readonly qualityCheck: QualityCheck;
+  readonly count: number;
+  readonly runner?: string;
+  readonly ciSteps?: readonly string[];
+}
+
+export interface EvidenceObservationTally {
+  readonly total: number;
+  readonly onScenario: number;
+  readonly onPhantomClaim: number;
+  readonly onUnnamedClaim: number;
+  readonly byQualityCheck: readonly QualityCheckObservations[];
+}
+
+export function evidenceObservationTally(ledger: Ledger): EvidenceObservationTally {
+  const behavioural = behaviouralObservationTally(ledger);
+  const ranByKind: Record<ClaimKind, number> = { scenario: 0, "phantom-claim": 0, "unnamed-claim": 0 };
+  for (const row of ledger.claimReconciliations) {
+    ranByKind[row.kind] += observationsOf(row).filter(ranAsFitnessFunction).length;
+  }
+  const ran = ranByKind.scenario + ranByKind["phantom-claim"] + ranByKind["unnamed-claim"];
+
+  return {
+    total: behavioural.total + ran,
+    onScenario: behavioural.onScenario + ranByKind.scenario,
+    onPhantomClaim: behavioural.onPhantomClaim + ranByKind["phantom-claim"],
+    onUnnamedClaim: behavioural.onUnnamedClaim + ranByKind["unnamed-claim"],
+    byQualityCheck: TIER_ORDER_FITNESS_LAST.map((qualityCheck) => ({
+      qualityCheck,
+      count: qualityCheck === "fitness" ? ran : behavioural.rawByBehaviouralQualityCheck[qualityCheck],
+    })),
+  };
 }

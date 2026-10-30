@@ -1,7 +1,5 @@
-import type { EvidenceObservation, QualityCheck } from "./journal.js";
-import { BEHAVIOURAL_QUALITY_CHECKS } from "./ledger.js";
-
-const TIER_ORDER_FITNESS_LAST: readonly QualityCheck[] = [...BEHAVIOURAL_QUALITY_CHECKS, "fitness"];
+import type { EvidenceObservation } from "./journal.js";
+import { TIER_ORDER_FITNESS_LAST } from "./ledger.js";
 
 function withSortedKeys(_key: string, value: unknown): unknown {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return value;

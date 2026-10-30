@@ -4,7 +4,7 @@ import { pipelineStepsOf, type PackageJsonScripts, type ParsedWorkflow } from ".
 import type { PipelineStep } from "../domain/pipelineStep.js";
 import { fitnessObservationsOf } from "../domain/fitnessReconciliation.js";
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
-import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
+import { fitnessFunctionsAmong, handleOf } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../domain/scnTags.js";
 import { untaggedScenariosOf, type ParsedFeatureFile } from "../parse/scenarios.js";
@@ -31,7 +31,7 @@ import {
   resolveRunners,
   type ResolvedRunners,
 } from "../parse/targetManifest.js";
-import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
+import { ciStepsJoined, type BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 
 type TargetManifest = PackageJsonScripts & {
@@ -177,7 +177,7 @@ function withReaderAccounts(
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), exclusions),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners, dispositionOf), exclusions),
     steps,
     dispositionOf,
     reconciler.roleOf
@@ -215,19 +215,31 @@ function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners
+  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners,
+  dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
-  const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
-    steps,
-    packageJson.scripts ?? {},
-    runnerTiers,
-    shellReading
-  );
+  const scripts = packageJson.scripts ?? {};
+  const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(steps, scripts, runnerTiers, shellReading);
+  const { evidenceObservations } = reconciliation.summary;
+  const fitnessCandidates = steps.flatMap((step) => {
+    const id = step.id === undefined ? {} : { id: step.id };
+    if (dispositionOf(step) === "candidate") return [{ step: step.identity, fitnessFunction: handleOf(step, scripts), ...id }];
+    return step.id === undefined ? [] : [{ step: step.identity, ...id }];
+  });
   return {
     ...reconciliation,
     summary: {
       ...reconciliation.summary,
-      ...(behaviouralRunners.length > 0 ? { behaviouralRunners } : {}),
+      ...(evidenceObservations === undefined
+        ? {}
+        : {
+            evidenceObservations: ciStepsJoined(
+              evidenceObservations,
+              reconciliation.ledger,
+              behaviouralRunners,
+              fitnessCandidates
+            ),
+          }),
       ...(tiersWithoutRunner.length > 0 ? { tiersWithoutRunner } : {}),
       ...(unrecognisedKeys.length > 0 ? { runnerKeysNotATier: unrecognisedKeys } : {}),
     },

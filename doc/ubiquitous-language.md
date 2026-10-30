@@ -118,7 +118,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | tool SHA | The tool's own identity, taken from its install, never from the target. |
 | run integrity | The report section that surfaces broken evidence as a harness failure and stamps the run unsound. |
 | proof never ran | A behaviour whose proof was never exercised in the run. |
-| Test volume | The report's balancing identity: every evidence observation lands on a scenario, a phantom claim or the unnamed claim, and the three counts sum to the total. |
+| Evidence observations | The report's count of evidence observations over every quality check, fitness included, and its balancing identity: every evidence observation lands on a scenario, a phantom claim or the unnamed claim, and the three counts sum to the total. |
 
 ### Fitness functions in CI
 

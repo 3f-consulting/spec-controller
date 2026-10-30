@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { runnersReconciler } from "./runnerTiers.test-utils.js";
+import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { feature } from "../evidenceReconciliation.test-utils.js";
 import { lineReadingsOf } from "../domain/qualityCheckReconciliation.test-utils.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
+import type { EvidenceReconciliation } from "./renderInput.js";
+import type { QualityCheckObservations } from "../domain/ledger.js";
 
 const ci = `name: fixture CI
 jobs:
@@ -18,17 +23,100 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 `;
 
+const unitTwiceCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: Lint
+        run: pnpm lint
+  again:
+    steps:
+      - name: Unit tests again
+        run: pnpm test
+`;
+
 const scripts = { test: "vitest run", lint: "eslint ." };
+
+const fitnessFeature = `Feature: fixture
+
+  @fitness @SCN-FIX-002
+  Scenario: a fixture property holds
+
+  @fitness @SCN-FIX-003
+  Scenario: another fixture property holds
+`;
+
+const recordedCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Types
+        run: pnpm typecheck
+      - name: Property
+        id: SCN-FIX-003
+        run: pnpm property
+      - name: Lint
+        run: pnpm lint
+      - name: Other property
+        id: SCN-FIX-002
+        run: pnpm other
+`;
+
+function withRecordedSteps(): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([fitnessFeature]),
+    packageJson: { scripts: { typecheck: "tsc", property: "node p.js", lint: "eslint .", other: "node o.js" } },
+    ciWorkflows: parsedWorkflows([recordedCi]),
+    behaviouralObservations: [],
+    deferralTags: [],
+    ciStepRecord: {
+      "SCN-FIX-002": { outcome: "success", conclusion: "success" },
+      "SCN-FIX-003": { outcome: "skipped", conclusion: "skipped" },
+    },
+  });
+}
+
+const runnerStepCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        id: SCN-FIX-002
+        run: pnpm test
+      - name: Lint
+        run: pnpm lint
+`;
+
+function withARecordedRunnerStep(): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([fitnessFeature]),
+    packageJson: { scripts, specController: { runners: { unit: "vitest" } } },
+    ciWorkflows: parsedWorkflows([runnerStepCi]),
+    behaviouralObservations: [],
+    deferralTags: [],
+    ciStepRecord: { "SCN-FIX-002": { outcome: "success", conclusion: "success" } },
+  });
+}
+
+function entries(reconciliation: EvidenceReconciliation): readonly QualityCheckObservations[] {
+  return reconciliation.summary.evidenceObservations?.byQualityCheck ?? [];
+}
+
+function entryFor(reconciliation: EvidenceReconciliation, qualityCheck: string): QualityCheckObservations | undefined {
+  return entries(reconciliation).find((entry) => entry.qualityCheck === qualityCheck);
+}
 
 let reconcile: ReturnType<typeof runnersReconciler>;
 beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-RMD-015] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
-  it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and carries no runner account", () => {
-    const { summary, ledger } = reconcile();
-    const unnamedClaimRowItems = ledger.claimReconciliations
+describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the manifest declares for it", () => {
+  it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and names no runner for a target with no runners block", () => {
+    const reconciliation = reconcile();
+    const unnamedClaimRowItems = reconciliation.ledger.claimReconciliations
       .filter((row) => row.kind === "unnamed-claim")
       .flatMap((row) => lineReadingsOf(row.qualityCheckReconciliations));
     expect(unnamedClaimRowItems).toStrictEqual([
@@ -37,22 +125,87 @@ describe("[SCN-RMD-015] a target with no runners block reports every step of its
       [["lint"], "cites-no-scenario"],
       [["test"], "cites-no-scenario"],
     ]);
-    expect(summary.fitnessFunctions).toStrictEqual({ runningFitnessFunctionCount: 4, uncitedFitnessFunctionCount: 4 });
-    expect(summary).not.toHaveProperty("behaviouralRunners");
-    expect(summary).not.toHaveProperty("tiersWithoutRunner");
-    expect(summary).not.toHaveProperty("runnerKeysNotATier");
-  });
-
-  it("carries no runner account for a runners block that names no tier", () => {
-    const { summary } = reconcile({});
-    expect(summary).not.toHaveProperty("behaviouralRunners");
-    expect(summary).not.toHaveProperty("tiersWithoutRunner");
-  });
-
-  it("carries the step that runs the unit runner for the same pipeline once its runners block names it", () => {
-    const { summary } = reconcile({ unit: "vitest" });
-    expect(summary.behaviouralRunners).toStrictEqual([
-      { tier: "unit", runner: "vitest", step: "Unit tests" },
+    expect(entries(reconciliation)).toStrictEqual([
+      { qualityCheck: "unit", count: 0 },
+      { qualityCheck: "integration", count: 0 },
+      { qualityCheck: "e2e", count: 0 },
+      { qualityCheck: "performance", count: 0 },
+      {
+        qualityCheck: "fitness",
+        count: 4,
+        ciSteps: ["Install", "Unit tests", "Lint", "github/codeql-action/analyze@v3"],
+      },
     ]);
+    expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
+    expect(reconciliation.summary).not.toHaveProperty("runnerKeysNotATier");
+  });
+
+  it("names no runner and no CI step on a behavioural quality check for a runners block that names no tier", () => {
+    const reconciliation = reconcile({});
+    for (const entry of entries(reconciliation).filter((entry) => entry.qualityCheck !== "fitness")) {
+      expect(entry).not.toHaveProperty("runner");
+      expect(entry).not.toHaveProperty("ciSteps");
+    }
+    expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
+  });
+
+  it("names the declared runner and the step that runs it on the unit entry once the runners block names it, and that step leaves fitness", () => {
+    const reconciliation = reconcile({ unit: "vitest" });
+    expect(entryFor(reconciliation, "unit")).toStrictEqual({
+      qualityCheck: "unit",
+      count: 0,
+      runner: "vitest",
+      ciSteps: ["Unit tests"],
+    });
+    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheck: "integration", count: 0 });
+    expect(entryFor(reconciliation, "fitness")).toStrictEqual({
+      qualityCheck: "fitness",
+      count: 3,
+      ciSteps: ["Install", "Lint", "github/codeql-action/analyze@v3"],
+    });
+  });
+
+  it("lists both steps, in step order, for a runner run at two steps", () => {
+    const reconciliation = runnersReconciler(feature, unitTwiceCi, scripts)({ unit: "vitest" });
+    expect(entryFor(reconciliation, "unit")).toStrictEqual({
+      qualityCheck: "unit",
+      count: 0,
+      runner: "vitest",
+      ciSteps: ["Unit tests", "Unit tests again"],
+    });
+    expect(entryFor(reconciliation, "fitness")).toStrictEqual({ qualityCheck: "fitness", count: 1, ciSteps: ["Lint"] });
+  });
+
+  it("names on fitness the step behind each fitness function that ran, in step order, and none behind one the run's record says did not run", () => {
+    const fitness = entryFor(withRecordedSteps(), "fitness");
+    expect(fitness).toStrictEqual({
+      qualityCheck: "fitness",
+      count: 3,
+      ciSteps: ["Types", "Lint", "Other property"],
+    });
+    expect(fitness?.ciSteps).toHaveLength(fitness?.count ?? -1);
+  });
+
+  it("names on fitness a step that runs a declared runner when the run's record says its fitness function ran there", () => {
+    const reconciliation = withARecordedRunnerStep();
+    expect(entryFor(reconciliation, "unit")).toStrictEqual({
+      qualityCheck: "unit",
+      count: 0,
+      runner: "vitest",
+      ciSteps: ["Unit tests"],
+    });
+    expect(entryFor(reconciliation, "fitness")).toStrictEqual({
+      qualityCheck: "fitness",
+      count: 2,
+      ciSteps: ["Unit tests", "Lint"],
+    });
+  });
+
+  it("names as many fitness steps as fitness functions ran, with and without a declared runner", () => {
+    for (const reconciliation of [reconcile(), reconcile({ unit: "vitest" }), withRecordedSteps(), withARecordedRunnerStep()]) {
+      const fitness = entryFor(reconciliation, "fitness");
+      expect(fitness?.ciSteps).toHaveLength(fitness?.count ?? -1);
+      expect(fitness).not.toHaveProperty("runner");
+    }
   });
 });
