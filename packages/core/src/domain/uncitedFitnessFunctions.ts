@@ -100,9 +100,7 @@ type WorkflowAndJob = Pick<PipelineStep, "workflow" | "job">;
 const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
   a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job);
 
-type DispositionCount = Exclude<keyof JobStepAccount, "workflow" | "job" | "stepsRead" | "accountedFor">;
-
-type CountedRow = Omit<JobStepAccount, "accountedFor">;
+type DispositionCount = "candidates" | "runners" | "reconciler" | "excluded" | "plumbing";
 
 const COUNTED_AS: Readonly<Record<StepDisposition, DispositionCount>> = {
   candidate: "candidates",
@@ -112,7 +110,7 @@ const COUNTED_AS: Readonly<Record<StepDisposition, DispositionCount>> = {
   plumbing: "plumbing",
 };
 
-const noStepsOf = ({ workflow, job }: PipelineStep): CountedRow => ({
+const noStepsOf = ({ workflow, job }: PipelineStep): JobStepAccount => ({
   workflow,
   job,
   stepsRead: 0,
@@ -123,7 +121,7 @@ const noStepsOf = ({ workflow, job }: PipelineStep): CountedRow => ({
   plumbing: 0,
 });
 
-function accountedForOf({
+export function accountedForOf({
   candidates,
   runners,
   reconciler,
@@ -135,7 +133,7 @@ function accountedForOf({
 
 function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
   const summed = (count: DispositionCount | "stepsRead"): number => rows.reduce((sum, row) => sum + row[count], 0);
-  const counts = {
+  return {
     stepsRead: summed("stepsRead"),
     candidates: summed("candidates"),
     runners: summed("runners"),
@@ -143,7 +141,6 @@ function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
     excluded: summed("excluded"),
     plumbing: summed("plumbing"),
   };
-  return { ...counts, accountedFor: accountedForOf(counts) };
 }
 
 function stepsBehindCounts(
@@ -177,13 +174,13 @@ export function stepAccountOf(
   nameOf: StepName,
   roleOf: ReconcilerRole
 ): StepAccounting {
-  const rows = new Map<string, CountedRow>();
+  const rows = new Map<string, JobStepAccount>();
   for (const step of steps) {
     const row = rows.get(jobKeyOf(step)) ?? noStepsOf(step);
     const count = COUNTED_AS[dispositionOf(step)];
     rows.set(jobKeyOf(step), { ...row, stepsRead: row.stepsRead + 1, [count]: row[count] + 1 });
   }
-  const byJob = [...rows.values()].sort(byWorkflowThenJob).map((row) => ({ ...row, accountedFor: accountedForOf(row) }));
+  const byJob = [...rows.values()].sort(byWorkflowThenJob);
   return {
     byJob,
     total: totalOf(byJob),

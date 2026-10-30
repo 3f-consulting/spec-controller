@@ -154,7 +154,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     about whether that scope is plausible.
 
     @unit @SCN-USG-020
-    Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and how many steps those dispositions account for
+    Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and those counts add up to the steps read
 
   Rule: every step the reader saw is accounted for
 

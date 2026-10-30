@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stepAccountOf, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
+import { accountedForOf, stepAccountOf, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
 import type { JobStepAccount } from "./evidenceReconciliation.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
@@ -71,11 +71,10 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
       reconciler: 2,
       excluded: 2,
       plumbing: 4,
-      accountedFor: 13,
     });
     expect(COUNTS.map((count) => account.total[count])).toEqual(COUNTS.map((count) => summedOver(account.byJob, count)));
     expect(account.byJob).toHaveLength(3);
-    expect(account.total.accountedFor).toBe(account.total.stepsRead);
+    expect(accountedForOf(account.total)).toBe(account.total.stepsRead);
   });
 
   it("reads no step from a list item that neither runs a command nor uses an action", () => {
@@ -97,7 +96,6 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
       reconciler: 0,
       excluded: 0,
       plumbing: 0,
-      accountedFor: 1,
     });
   });
 });

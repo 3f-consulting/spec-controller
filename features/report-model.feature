@@ -179,9 +179,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The summary's step accounting states every CI step the run read, and what it counted each
     step as. It holds one row per workflow and job, ordered by workflow and then by job. Each
-    row carries the steps read, how many of them are candidates, runners, reconciler steps,
-    excluded steps and plumbing, and how many steps those account for. Its total sums each of
-    those counts over the rows.
+    row carries the steps read, and how many of them are candidates, runners, reconciler steps,
+    excluded steps and plumbing. Its total sums each of those counts over the rows.
     It names each reconciler step with its role, each step the target calls a non-check, and
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
     count counts. Each list of steps follows the rows' order, and each job's steps the order

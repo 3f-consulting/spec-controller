@@ -1,5 +1,6 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
+import { accountedForOf } from "../domain/uncitedFitnessFunctions.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
@@ -17,14 +18,14 @@ const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
       row.reconciler,
       row.excluded,
       row.plumbing,
-      row.accountedFor,
+      accountedForOf(row),
     ])
   );
 
 const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
   if (byJob.length < 2) return [];
-  const { stepsRead, candidates, runners, reconciler, excluded, plumbing, accountedFor } = total;
-  const counts = rowOf([stepsRead, candidates, runners, reconciler, excluded, plumbing, accountedFor]);
+  const { stepsRead, candidates, runners, reconciler, excluded, plumbing } = total;
+  const counts = rowOf([stepsRead, candidates, runners, reconciler, excluded, plumbing, accountedForOf(total)]);
   return [`| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | ${counts}`];
 };
 
