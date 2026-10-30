@@ -788,7 +788,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, just after `## Run integrity`. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, just before `## Summary views`. A run whose corpus holds none states that its scenario codes are clean in one line, just after its run verdict. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |

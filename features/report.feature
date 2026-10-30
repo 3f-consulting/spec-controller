@@ -163,8 +163,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report renders summary-first, ledger-last
 
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance"
-    comes first. "## Summary views" holds the derived cuts: Run verdict first, then Evidence
-    reconciliation and Test volume, and Fitness evidence obligations and Out-of-balance by
+    comes first. "## Summary views" holds the derived cuts: Run verdict first, followed on a
+    run whose judged corpus holds no scenario code error by one line stating its codes are
+    clean, then Evidence reconciliation and Test volume, and Fitness evidence obligations and Out-of-balance by
     feature last. "## Claim Reconciliations" comes last, with its summary lines on top: the
     verdict tally and the excluded-occurrence bullet.
 
