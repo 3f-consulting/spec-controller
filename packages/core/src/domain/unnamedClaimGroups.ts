@@ -10,6 +10,7 @@ interface UnnamedClaimRemark {
 export interface UnnamedClaimFileGroup {
   readonly qualityCheck: BehaviouralQualityCheck;
   readonly locator: string | undefined;
+  readonly sharedScnCode?: string;
   readonly remarks: readonly UnnamedClaimRemark[];
   readonly ran: number;
   readonly passed: number;
@@ -40,19 +41,20 @@ function keyOf(observation: BehaviouralEvidenceObservation): string {
 }
 
 function remarksOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimRemark[] {
-  return observations.flatMap(({ message, notes }) =>
-    message === undefined && notes === undefined
-      ? []
-      : [{ ...(message !== undefined ? { message } : {}), ...(notes !== undefined ? { notes } : {}) }]
-  );
+  return observations.flatMap(({ message, notes = [] }) => {
+    const kept = notes.filter((note) => note.kind !== "shared-scn-code");
+    return message === undefined && kept.length === 0 ? [] : [{ ...(message !== undefined ? { message } : {}), notes: kept }];
+  });
 }
 
 function groupOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimFileGroup {
   const [first] = observations as [BehaviouralEvidenceObservation, ...BehaviouralEvidenceObservation[]];
   const passed = observations.filter((o) => o.status === "passed").length;
+  const sharedScnCode = sharedScnCodeOf(first);
   return {
     qualityCheck: first.qualityCheck,
     locator: first.locator,
+    ...(sharedScnCode === null ? {} : { sharedScnCode }),
     remarks: remarksOf(observations),
     ran: observations.length,
     passed,

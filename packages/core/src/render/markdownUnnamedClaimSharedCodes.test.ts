@@ -35,7 +35,7 @@ function unnamedClaimItemsOf(observations: BehaviouralEvidenceObservation[]): st
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
 }
 
-describe("[SCN-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code", () => {
+describe("[SCN-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say", () => {
   it("gives the file one entry per shared code and one for its tests citing nothing, each counting and naming only its own tests", () => {
     const remark = (code: string): string => CORE_MESSAGES[CoreMessage.SharedScnCode](code);
     expect(unnamedClaimItemsOf(mixedFile())).toEqual([
@@ -43,6 +43,17 @@ describe("[SCN-RPT-075] in one file, the tests citing a code more than one scena
       `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${remark("SCN-DUP-001")}) — 2 ran, 1 passed, 1 failed (failed: lets the right password in)`,
       `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${remark("SCN-DUP-002")}) — 1 ran, 1 passed, 0 failed`,
       `unit: ${CITES_NO_SCENARIO} (tests/y.test.ts) — 1 ran, 1 passed, 0 failed`,
+    ]);
+  });
+
+  it("names the code once, then the first line of each different message its failing tests give", () => {
+    const failing = (testName: string, message: string): BehaviouralEvidenceObservation => ({ ...observed("SCN-DUP-001", "failed", testName), message });
+    const said = `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${CORE_MESSAGES[CoreMessage.SharedScnCode]("SCN-DUP-001")}`;
+    expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2\n    at foo (x.ts:1)")])).toEqual([
+      `${said} / expected 1 to be 2) — 1 ran, 0 passed, 1 failed (failed: t1)`,
+    ]);
+    expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2"), failing("t2", "expected 3 to be 4")])).toEqual([
+      `${said} / expected 1 to be 2 / expected 3 to be 4) — 2 ran, 0 passed, 2 failed (failed: t1 / t2)`,
     ]);
   });
 

@@ -551,8 +551,8 @@ Feature: The report renders the ledger as sectioned facts
     Evidence citing an @SCN code that more than one scenario carries is grouped apart from
     evidence citing nothing. In one file, the tests citing such a code form a group of their
     own, and the CI steps citing it are listed apart from the CI steps citing nothing. Each such
-    group names the code, and says that evidence citing it credits none of the scenarios that
-    carry it.
+    group names the code once, whatever its tests' messages say, and says that evidence citing it
+    credits none of the scenarios that carry it.
 
     The grouping is not stored; the JSON carries each observation's test name.
 
@@ -587,7 +587,7 @@ Feature: The report renders the ledger as sectioned facts
       And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
 
     @unit @SCN-RPT-075
-    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code
+    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say
 
     @unit @SCN-RPT-076
     Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code

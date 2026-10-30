@@ -84,7 +84,8 @@ function renderPendingItem(item: PendingItem): string {
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkWordsOf(remark) ?? []);
-  const said = [...new Set(remarks.map((remark) => cellSafe(headlineOf(remark))))].join(" / ");
+  const code = group.sharedScnCode === undefined ? [] : [cellSafe(CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode))];
+  const said = [...new Set([...code, ...remarks.map((remark) => cellSafe(headlineOf(remark)))])].join(" / ");
   const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
   const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
   const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
