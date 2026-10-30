@@ -18,7 +18,6 @@ function counted(n: number, noun: string): string {
 }
 
 function cleanStatement(featureFiles: number, featureCodes: number): string {
-  if (featureFiles === 0) return CORE_MESSAGES[CoreMessage.NoFeatureFileJudged];
   const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver](
     counted(featureFiles, CORE_MESSAGES[CoreMessage.FeatureFileNoun]),
     counted(featureCodes, CORE_MESSAGES[CoreMessage.FeatureCodeNoun])
@@ -63,25 +62,27 @@ function foreignWorded(error: ForeignScnCodeError): string {
 
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
   const errors = report.errors?.scenarioCodes;
-  const { featureFiles, featureCodes } = report.scenarioCodes ?? {};
-  const heading = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
-  const duplicateLine = CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed];
-  if (errors === undefined) {
-    if (featureFiles === undefined || featureCodes === undefined) return [];
-    return [heading, "", cleanStatement(featureFiles, featureCodes), "", duplicateLine, ""];
-  }
+  if (errors === undefined) return [];
   const count =
     errors.length === 1
       ? CORE_MESSAGES[CoreMessage.OneScenarioCodeError]
       : CORE_MESSAGES[CoreMessage.ScenarioCodeErrorCount](errors.length);
   return [
-    heading,
+    CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading],
     "",
     scenarioCodeErrorsFraming(errors, count),
     "",
     ...errors.map((error) => `- \`${error.kind}\` — ${worded(error)}`),
     "",
-    duplicateLine,
+    CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed],
     "",
   ];
+};
+
+export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
+  if (report.errors?.scenarioCodes !== undefined) return [];
+  const { featureFiles, featureCodes } = report.scenarioCodes ?? {};
+  if (featureFiles === undefined || featureCodes === undefined) return [];
+  if (featureFiles === 0) return [CORE_MESSAGES[CoreMessage.NoFeatureFileJudged], ""];
+  return [cleanStatement(featureFiles, featureCodes), ""];
 };

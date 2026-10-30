@@ -602,7 +602,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-053
     Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises
 
-  Rule: the report lists each scenario code error in a section of its own, before the summary views, worded from the error's own values
+  Rule: the report lists each scenario code error in a section of its own before the summary views, only when the corpus holds one, worded from the error's own values
 
     @unit @SCN-RPT-055
     Scenario: a foreign-scn-code is listed by its handle under Scenario code errors, worded from its values with the one file or the several files carrying the named code, before the summary views
@@ -628,10 +628,10 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report states a corpus's scenario codes clean only over the files it judged, with the counts the run recorded
 
     @unit @SCN-RPT-062
-    Scenario: clean scenario codes are stated with the run's count of feature files and of feature codes, and the section is absent when no corpus was judged
+    Scenario: clean scenario codes are stated after the run verdict under the summary views, with the run's count of feature files and of feature codes, no scenario code errors section prints, and nothing is stated when no corpus was judged
 
     @unit @SCN-RPT-063
-    Scenario: a corpus with no feature file is stated as no feature file judged, never as clean
+    Scenario: a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean
 
     @unit @SCN-RPT-064
     Scenario: the report states how many scenarios the corpus holds in how many accounts, a shared code's scenarios each in an account of its own, and names the scenarios sharing each code

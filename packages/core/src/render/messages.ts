@@ -312,7 +312,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.DuplicateScnCodeNotListed]: `A duplicated @SCN code is not listed here: it is reported on its account's rows, as "${DUPLICATE_SCN_CODE}".`,
   [CoreMessage.FeatureFileNoun]: "feature file",
   [CoreMessage.FeatureCodeNoun]: "feature code",
-  [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so this section vouches for no scenario code.",
+  [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so no scenario code is vouched for.",
   [CoreMessage.ScenarioCodesCleanOver]: (featureFiles, featureCodes) =>
     `Scenario codes are clean over ${featureFiles} carrying ${featureCodes}`,
   [CoreMessage.CleanNoCodedScenario]: (over, them) => `${over}: no scenario in ${them} carries an @SCN code to misfile.`,

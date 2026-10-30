@@ -29,7 +29,7 @@ import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
-import { scenarioCodeErrorsSection } from "./scenarioCodeErrorsSection.js";
+import { scenarioCodeErrorsSection, scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { configurationNotReadSection } from "./configurationNotRead.js";
 import { discoveryScopeSection } from "./discoveryScope.js";
@@ -396,6 +396,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   scenarioCodeErrorsSection,
   summaryViewsSection,
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
+  scenarioCodesCleanStatement,
   evidenceReconciliationSection,
   testVolumeSection,
   discoveryScopeSection,

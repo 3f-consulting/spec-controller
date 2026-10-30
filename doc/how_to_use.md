@@ -788,7 +788,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read and reports what it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON), just after `## Run integrity`. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, just after `## Run integrity`. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
@@ -800,9 +800,9 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
 - What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any scenario code error fails the run at exit `1`**.
 - A run carrying both a scenario code error and an out-of-balance account exits `1`, and its verdict names both.
-- When the codes are clean, the section says so, with how many feature files it judged, coded or not, and how many feature codes they carry, each counted on its own.
-- Over a corpus with no feature file, it says that no feature file was judged, and states nothing clean.
-- It always says that a duplicated `@SCN` is reported on its account's rows, never in this section.
+- When the codes are clean, no section prints. The run verdict under `## Summary views` is followed by one line saying so, with how many feature files the run judged, coded or not, and how many feature codes they carry, each counted on its own.
+- Over a corpus with no feature file, no section prints either. The line after the run verdict says that no feature file was judged, and states nothing clean.
+- The section always says that a duplicated `@SCN` is reported on its account's rows, never in this section.
 
 ### What counts as an `@SCN` code
 
