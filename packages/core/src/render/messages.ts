@@ -389,20 +389,25 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
   [CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]:
-    "A Quality Check Reconciliation is one quality check's evidence within a claim. " +
-    "A claim holds one for each quality check its evidence names, so a scenario tagged both unit and integration " +
-    "adds one to the Claim Reconciliation total and two to the Quality Check Reconciliation total.",
+    "A Reconciliation line is one line of a Quality Check Reconciliation, the evidence of one quality check within a claim, " +
+    "with its own outcome: each Evidence Observation it holds is one, so is its Evidence Obligation when no Evidence Observation " +
+    "that ran answers it, and so is a scenario's quality check that has neither. " +
+    "A scenario whose one Evidence Obligation two passing tests answer adds one to the Claim Reconciliation total " +
+    "and two to the Reconciliation line total.",
   [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
-    "An Evidence Obligation is what a scenario asks for: one for each quality check its tags name, met by Evidence Observations.",
+    "An Evidence Obligation is what a scenario asks for: one for each quality check its tags name, met by Evidence Observations. " +
+    "A quality check its tags name as pending raises none.",
   [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
-    "An Evidence Observation is a test or a fitness function that ran, attributed to the scenario it cites.",
+    "An Evidence Observation is one reported result of a test or a fitness function, attributed by the code it cites: " +
+    "to that scenario, to a phantom claim when no scenario carries the code, or to the unnamed claim when it cites none. " +
+    "One that never reached its assertions is broken: it was reported, but did not run to a result.",
   [CoreMessage.SubjectColumn]: "Subject",
   [CoreMessage.TotalColumn]: "Total",
   [CoreMessage.BalancedColumn]: "Balanced",
   [CoreMessage.OutOfBalanceColumn]: "Out-of-balance",
   [CoreMessage.DetailColumn]: "Detail",
   [CoreMessage.ClaimReconciliationSubject]: "Claim Reconciliation",
-  [CoreMessage.QualityCheckReconciliationSubject]: "Quality Check Reconciliation",
+  [CoreMessage.QualityCheckReconciliationSubject]: "Reconciliation line",
   [CoreMessage.PendingTally]: (pending) =>
     `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",

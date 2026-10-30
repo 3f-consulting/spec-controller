@@ -52,7 +52,7 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
   });
 });
 
-describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliations by reconciliation outcome", () => {
+describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reconciliation outcome", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
@@ -76,10 +76,10 @@ describe("[SCN-RPT-004] the markdown report tallies Quality Check Reconciliation
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
     expect(md).toContain("| Claim Reconciliation | 3 | 0 | 3 |");
-    expect(md).toContain("| Quality Check Reconciliation | 6 | 2 | 4 |");
+    expect(md).toContain("| Reconciliation line | 6 | 2 | 4 |");
   });
 
-  it("decomposes the Quality Check Reconciliation out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
+  it("decomposes the Reconciliation line out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.missing} |`);
     expect(md).toContain("1 unit + 1 integration");

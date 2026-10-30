@@ -48,29 +48,28 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
     Under "## Summary views", the "### Evidence reconciliation" section renders one table. Its
-    rows are the subjects, Claim Reconciliation and Quality Check Reconciliation, each with its
-    own Total. Its columns are balanced and out-of-balance. Nothing in it is bold.
+    rows are the subjects, Claim Reconciliation and Reconciliation line, each with its own
+    Total. Its columns are balanced and out-of-balance. Nothing in it is bold.
 
     The Claim Reconciliation row counts every row of the collection: each scenario, each
     phantom claim and the unnamed claim. A phantom claim's row and the unnamed claim's row are
     always out of balance, so a run whose only out-of-balance row is the unnamed claim's reads
     N+1 | N | 1. This out-of-balance count agrees with the balance verdict and the exit code.
 
-    The Quality Check Reconciliation row counts every quality check reconciliation on every
-    row, including the rows of phantom claims and the unnamed claim, and including each
-    evidence observation that answers no evidence obligation. It is therefore not a count of
-    evidence obligations.
+    The Reconciliation line row counts every Reconciliation line on every row, including the
+    rows of phantom claims and the unnamed claim: each evidence observation a Quality Check
+    Reconciliation holds, and its evidence obligation when no evidence observation that ran
+    answers it. It is therefore not a count of evidence obligations.
 
     Its out-of-balance count breaks down in place into cause rows, one per outcome, each
     reading the outcome's sentence alone. The cause rows fill only the out-of-balance column,
     always show even at zero, and sum to that count.
 
-    The missing cause row's Detail splits the missing quality check reconciliations by quality
-    check, fitness first: a behavioural check by its bare level, a fitness check as "fitness".
+    The missing cause row's Detail splits the missing Reconciliation lines by quality check,
+    fitness first: a behavioural check by its bare level, a fitness check as "fitness".
 
     The two out-of-balance counts differ in granularity: a scenario with two missing arms is
-    one out-of-balance Claim Reconciliation and two out-of-balance Quality Check
-    Reconciliations.
+    one out-of-balance Claim Reconciliation and two out-of-balance Reconciliation lines.
 
     @unit @SCN-RPT-004
     Scenario: the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns
@@ -78,17 +77,18 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the evidence reconciliation section says what it counts before its table
 
     Under "### Evidence reconciliation", four definitions come before the table, one each for a
-    Claim Reconciliation, a Quality Check Reconciliation, an Evidence Obligation and an
-    Evidence Observation. Every run prints the same four, and none states a figure from the
-    run.
+    Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence
+    Observation. Every run prints the same four, none states a figure from the run, and each
+    is true of every row the table counts.
 
-    The second definition also says why the two totals differ: a claim holds one Quality Check
-    Reconciliation for each quality check its evidence names, so a scenario tagged both unit
-    and integration adds one to the Claim Reconciliation total and two to the Quality Check
-    Reconciliation total.
+    The second definition also says why the two totals differ: a Claim Reconciliation holds a
+    Reconciliation line for each evidence observation, for each evidence obligation that no
+    evidence observation answers, and for a quality check that has neither, so a scenario
+    whose one obligation two passing tests answer adds one to the Claim Reconciliation total
+    and two to the Reconciliation line total.
 
     @unit @SCN-RPT-071
-    Scenario: the evidence reconciliation section says what a Claim Reconciliation, a Quality Check Reconciliation, an Evidence Obligation and an Evidence Observation are before its table
+    Scenario: the evidence reconciliation section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table
 
   Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
