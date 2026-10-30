@@ -545,6 +545,12 @@ Feature: The report renders the ledger as sectioned facts
     or Cucumber scenario name, and each CI step, which holds no result. Broken items are listed
     individually.
 
+    Evidence citing an @SCN code that more than one scenario carries is grouped apart from
+    evidence citing nothing. In one file, the tests citing such a code form a group of their
+    own, and the CI steps citing it are listed apart from the CI steps citing nothing. Each such
+    group names the code, and says that evidence citing it credits none of the scenarios that
+    carry it.
+
     The grouping is not stored; the JSON carries each observation's test name.
 
     @SCN-RPT-033 @unit @e2e
@@ -576,6 +582,12 @@ Feature: The report renders the ledger as sectioned facts
       Then the unnamed claim's row lists the CI steps together once, after the test's file
       And the CI steps' entry names each of the two checks
       And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
+
+    @unit @SCN-RPT-075
+    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code
+
+    @unit @SCN-RPT-076
+    Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code
 
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 

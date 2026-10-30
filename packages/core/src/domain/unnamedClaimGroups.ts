@@ -19,6 +19,7 @@ export interface UnnamedClaimFileGroup {
 
 interface UnnamedClaimStepsGroup {
   readonly names: readonly string[];
+  readonly sharedScnCode?: string;
 }
 
 export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
@@ -29,8 +30,13 @@ function citingNoScenario(lines: readonly ReconciliationLine[]): EvidenceObserva
     .flatMap((line) => line.evidenceObservation ?? []);
 }
 
+function sharedScnCodeOf(observation: EvidenceObservation): string | null {
+  const [code = null] = (observation.notes ?? []).flatMap((note) => (note.kind === "shared-scn-code" ? [note.code] : []));
+  return code;
+}
+
 function keyOf(observation: BehaviouralEvidenceObservation): string {
-  return JSON.stringify([observation.qualityCheck, observation.locator ?? null]);
+  return JSON.stringify([observation.qualityCheck, observation.locator ?? null, sharedScnCodeOf(observation)]);
 }
 
 function remarksOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimRemark[] {
@@ -57,9 +63,14 @@ function groupOf(observations: readonly BehaviouralEvidenceObservation[]): Unnam
   };
 }
 
-function stepsGroupOf(observations: readonly EvidenceObservation[]): UnnamedClaimStepsGroup[] {
-  const names = observations.flatMap((o) => (isFitnessObservation(o) ? [o.fitnessFunction] : []));
-  return names.length === 0 ? [] : [{ names }];
+function stepsGroupsOf(observations: readonly EvidenceObservation[]): UnnamedClaimStepsGroup[] {
+  const byCode = new Map<string | null, string[]>();
+  for (const o of observations) {
+    if (!isFitnessObservation(o)) continue;
+    const code = sharedScnCodeOf(o);
+    byCode.set(code, [...(byCode.get(code) ?? []), o.fitnessFunction]);
+  }
+  return [...byCode].map(([code, names]) => (code === null ? { names } : { names, sharedScnCode: code }));
 }
 
 export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): UnnamedClaimGroup[] {
@@ -70,5 +81,5 @@ export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): Unna
     const key = keyOf(o);
     byFile.set(key, [...(byFile.get(key) ?? []), o]);
   }
-  return [...[...byFile.values()].map(groupOf), ...stepsGroupOf(observations)];
+  return [...[...byFile.values()].map(groupOf), ...stepsGroupsOf(observations)];
 }

@@ -98,7 +98,9 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names);
-  return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]} — ${steps}`;
+  const remark =
+    group.sharedScnCode === undefined ? "" : ` (${CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)})`;
+  return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${remark} — ${steps}`;
 }
 
 function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[] {

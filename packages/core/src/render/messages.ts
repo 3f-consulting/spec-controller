@@ -507,5 +507,5 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.SeveralScnCodes]: (codes) =>
     `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
   [CoreMessage.SharedScnCode]: (code) =>
-    `${code} is carried by more than one scenario, so this test credits none of them.`,
+    `${code} is carried by more than one scenario, so evidence citing it credits none of them.`,
 };
