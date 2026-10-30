@@ -200,8 +200,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-025
     Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it
 
-  Rule: the summary carries the runner account, absent when it has nothing to say
-
   Rule: the summary carries scenario code errors beside the ledger, and they never alter it
 
     @unit @SCN-RMD-016
