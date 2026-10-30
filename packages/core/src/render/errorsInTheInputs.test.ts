@@ -34,7 +34,7 @@ interface Inputs {
 function reportLines({ codeErrors, configuration = {}, unsound = false }: Inputs): string[] {
   const ledger = reconcile(SCENARIOS, unsound ? [PASSED, NEVER_RAN] : [PASSED]);
   const reconciliation: EvidenceReconciliation = {
-    summary: { ...summaryOf(ledger, false, false), ...configuration },
+    summary: { ...summaryOf(ledger, false), ...configuration },
     ledger,
     ...(codeErrors === undefined ? {} : { scenarioCodeErrors: codeErrors }),
   };

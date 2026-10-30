@@ -15,7 +15,7 @@ const ctx: RunContext = {
   sourceSha: null,
 };
 
-const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
+const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false), ledger });
 
 function noScnCodeCorpus(untagged: UntaggedScenario[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
   const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${u.scenario}`));

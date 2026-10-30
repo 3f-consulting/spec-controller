@@ -49,7 +49,7 @@ const SCENARIOS: readonly Scenario[] = [
 
 function render(...broken: readonly EvidenceObservation[]): string {
   const ledger = reconcile(SCENARIOS, [...broken]);
-  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 

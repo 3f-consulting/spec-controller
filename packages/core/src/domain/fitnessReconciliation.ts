@@ -9,6 +9,7 @@ export interface RecordedCheckStep {
   readonly report: StepReport;
   /** What the record said the step did, repeated verbatim in the note of a step that did not run. */
   readonly said?: string;
+  readonly step?: string;
 }
 
 interface Citation {
@@ -16,13 +17,15 @@ interface Citation {
 }
 
 type HandleOf = (step: PipelineStep) => string;
+type StepNameOf = (step: PipelineStep) => string;
 type CitationOf = (handle: string, citedByStep?: string) => Citation | null;
 
-function namedOf(citedScn: string) {
+function namedOf({ citedScn, step }: RecordedCheckStep) {
   return {
     qualityCheck: "fitness",
     fitnessFunction: citedScn,
     scnId: citedScn,
+    ...(step === undefined ? {} : { step }),
   } as const;
 }
 
@@ -37,7 +40,7 @@ function checkDidNotRunNote(step: RecordedCheckStep): ObservationNote {
 export function recordedObservationOf(step: RecordedCheckStep): FitnessEvidenceObservation {
   if (step.report === "other") {
     return {
-      ...namedOf(step.citedScn),
+      ...namedOf(step),
       exists: false,
       enforcedOverRealSource: false,
       broken: true,
@@ -45,7 +48,7 @@ export function recordedObservationOf(step: RecordedCheckStep): FitnessEvidenceO
     };
   }
   return {
-    ...namedOf(step.citedScn),
+    ...namedOf(step),
     exists: true,
     enforcedOverRealSource: true,
     status: step.report === "succeeded" ? "passed" : "failed",
@@ -56,6 +59,7 @@ export function workflowObservationsOf(
   steps: readonly PipelineStep[],
   isCandidate: StepTest,
   handleOf: HandleOf,
+  stepNameOf: StepNameOf,
   citationOf: CitationOf
 ): FitnessEvidenceObservation[] {
   return steps
@@ -66,12 +70,33 @@ export function workflowObservationsOf(
       return {
         qualityCheck: "fitness" as const,
         fitnessFunction,
+        step: stepNameOf(step),
         exists: true,
         enforcedOverRealSource: step.abortsJob,
         ...(citation !== null ? { scnId: step.id ?? citation.scnId } : {}),
       };
     })
     .sort((a, b) => a.fitnessFunction.localeCompare(b.fitnessFunction));
+}
+
+function stepCarryingCode(
+  steps: readonly PipelineStep[],
+  code: string,
+  stepNameOf: StepNameOf
+): string | undefined {
+  const [only, ...others] = steps.filter((step) => step.id === code);
+  return only !== undefined && others.length === 0 ? stepNameOf(only) : undefined;
+}
+
+export function recordedAtSteps(
+  recorded: readonly RecordedCheckStep[] | undefined,
+  steps: readonly PipelineStep[],
+  stepNameOf: StepNameOf
+): RecordedCheckStep[] | undefined {
+  return recorded?.map((entry) => {
+    const step = stepCarryingCode(steps, entry.citedScn, stepNameOf);
+    return step === undefined ? entry : { ...entry, step };
+  });
 }
 
 /** An absent record leaves the workflow to answer every step; a record, even an empty one, answers every citing step. */

@@ -47,9 +47,10 @@ function reconcileWithRecord() {
     partlyAnnotatedSteps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
+    (step) => step.identity,
     (_handle, citedByStep) => (citedByStep === "SCN-AAA-001" ? { scnId: citedByStep } : null)
   );
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, recorded), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, recorded), []);
 }
 
 describe("[SCN-LNT-029] a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report", () => {

@@ -41,9 +41,7 @@ function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): Evidenc
       { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" },
       { qualityCheck: "unit", scnId: "SCN-ONE-002", status: "passed" },
     ],
-    [],
-    true,
-    false
+    []
   );
   return { ...reconciliation, scenarioCodeErrors };
 }

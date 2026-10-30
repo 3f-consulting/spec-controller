@@ -31,7 +31,7 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
   });
 
   it("sums the test volume over scenarios, cited scenario ids with no real scenario, and observations citing no scenario", () => {
-    const md = renderMarkdown(__er(unbalanced(), true, false), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(unbalanced(), true), ctx, publishedExitCodeOf);
     expect(md).toContain(
       "3 evidence observations = 1 on scenarios + 1 on cited scenario ids with no real scenario + 1 citing no scenario."
     );

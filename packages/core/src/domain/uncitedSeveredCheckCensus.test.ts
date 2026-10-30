@@ -47,14 +47,13 @@ function reconcileUncited() {
     uncitedSteps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
+    (step) => step.identity,
     () => null
   );
   return evidenceReconciliationOf(
     [{ scnId: "SCN-TSC-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
     fitnessObservationsOf(workflow, undefined),
-    [],
-    false,
-    true
+    []
   );
 }
 
@@ -63,7 +62,9 @@ describe("[SCN-LNT-033] the fitness-function census counts a check whose red its
     const unnamedClaimRows = reconcileUncited().ledger.claimReconciliations.filter(
       (row) => row.kind === "unnamed-claim"
     );
-    expect(unnamedClaimRows.flatMap((row) => observationsOf(row).map(postedOf))).toEqual([
+    const observed = unnamedClaimRows.flatMap((row) => observationsOf(row).map(postedOf));
+    const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
+    expect(observed.map(withoutStep)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:advisory",

@@ -45,9 +45,10 @@ function reconcileAnnotated() {
     annotatedSteps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
+    (step) => step.identity,
     (_handle, citedByStep) => (citedByStep !== undefined && rows.has(citedByStep) ? { scnId: citedByStep } : null)
   );
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), []);
 }
 
 describe("[SCN-LNT-031] a check step stating its row's code supplies that row's citation", () => {

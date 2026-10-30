@@ -44,7 +44,7 @@ const UNIT: EvidenceObservation = {
 
 function render(feature: string, ciSteps: StepRecord): string[] {
   const ledger = reconcile(parseScenarios(feature), [...ciStepRecordObservations(ciSteps), UNIT]);
-  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
@@ -131,7 +131,7 @@ describe("[SCN-RPT-068] the fitness evidence obligations count only the obligati
 
     for (const observations of [[failed, watermelon], [watermelon, failed]]) {
       const ledger = reconcile(scenarios, observations);
-      const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+      const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
       const lines = renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 
       expect(fitnessTally(ledger)).toEqual({ satisfied: 0, total: 1 });

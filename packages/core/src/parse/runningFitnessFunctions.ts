@@ -14,8 +14,9 @@ import {
   type StepTest,
 } from "../domain/uncitedFitnessFunctions.js";
 import { workflowObservationsOf } from "../domain/fitnessReconciliation.js";
+import { qualifiedStepName } from "./stepNames.js";
 
-export function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
+function handleOf(step: PipelineStep, scripts: Readonly<Record<string, string>>): string {
   if (!("command" in step)) return step.identity;
   const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.command, name));
   return invoked[0] ?? step.identity;
@@ -46,5 +47,5 @@ export function fitnessFunctionsAmong(
   citedScn: CitationOf
 ): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  return workflowObservationsOf(steps, isCandidate, (step) => handleOf(step, scripts), citedScn);
+  return workflowObservationsOf(steps, isCandidate, (step) => handleOf(step, scripts), qualifiedStepName, citedScn);
 }

@@ -15,7 +15,7 @@ const recorded: RecordedCheckStep[] = [
 ];
 
 function reconcile() {
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
 }
 
 describe("[SCN-LNT-021] a fitness function's step the run's record says succeeded answers its own row's obligation", () => {

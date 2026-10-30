@@ -248,7 +248,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     it("words both codes on the unnamed claim's row in the catalogue's words", () => {
       const ctx: RunContext = { target: "several", inputs: handedInputs({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
       const reconciled = ledger();
-      const unnamedClaimRow = renderMarkdown({ summary: summaryOf(reconciled, false, false), ledger: reconciled }, ctx, publishedExitCodeOf)
+      const unnamedClaimRow = renderMarkdown({ summary: summaryOf(reconciled, false), ledger: reconciled }, ctx, publishedExitCodeOf)
         .split("\n")
         .find((line) => line.startsWith("| (unnamed claim) | "));
 

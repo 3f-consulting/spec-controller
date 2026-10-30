@@ -44,7 +44,7 @@ const OBSERVATIONS: EvidenceObservation[] = [
 
 function render(scenarios: Scenario[], observations: EvidenceObservation[], untagged: string[] = []): string {
   const ledger = reconcile(scenarios, observations, untagged);
-  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 

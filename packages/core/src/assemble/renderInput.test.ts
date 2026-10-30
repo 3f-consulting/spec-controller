@@ -267,12 +267,12 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
   });
 
   it("states the evidence observations under the summary: a broken behavioural one counted, and each fitness function that ran", () => {
-    const report = assembleRenderInput(__er(rmd003Balance, true, true), ctx);
+    const report = assembleRenderInput(__er(rmd003Balance, true), ctx);
     expect(report.summary.evidenceObservations).toEqual(evidenceObservations);
   });
 
   it("carries them on the persisted file, where the total is the sum of the five counts and of the counts on each kind of claim", () => {
-    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, true), ctx));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true), ctx));
     const persisted = parsed.summary.evidenceObservations;
     expect(persisted).toEqual(evidenceObservations);
     expect(parsed).not.toHaveProperty("evidenceObservations");
@@ -281,7 +281,7 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
   });
 
   it("counts the phantom claim's and the unnamed claim's evidence observations where their ledger rows hold them", () => {
-    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, true), ctx));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true), ctx));
     const phantomClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
     const unnamedClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
     expect(phantomClaimRow.claim).toBe("SCN-PHX-999");
@@ -290,9 +290,8 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
     expect(parsed.summary.evidenceObservations.onUnnamedClaim).toBe(2);
   });
 
-  it("states them when either kind of evidence was read, and not when neither was", () => {
-    expect(assembleRenderInput(__er(rmd003Balance, true, false), ctx).summary.evidenceObservations).toEqual(evidenceObservations);
-    expect(assembleRenderInput(__er(rmd003Balance, false, true), ctx).summary.evidenceObservations).toEqual(evidenceObservations);
-    expect(assembleRenderInput(__er(rmd003Balance, false, false), ctx).summary).not.toHaveProperty("evidenceObservations");
+  it("states them when the summary is asked for evidence observations, and not when it is not", () => {
+    expect(assembleRenderInput(__er(rmd003Balance, true), ctx).summary.evidenceObservations).toEqual(evidenceObservations);
+    expect(assembleRenderInput(__er(rmd003Balance, false), ctx).summary).not.toHaveProperty("evidenceObservations");
   });
 });

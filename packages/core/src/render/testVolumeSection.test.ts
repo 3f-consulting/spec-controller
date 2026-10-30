@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
-import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
+import { evidenceReconciliationOf, reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
@@ -40,7 +40,7 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
 
 describe("[SCN-RPT-010] the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction", () => {
   it("renders heading, blank, the identity line, blank, the four-column table with a row per quality check and fitness last at the running count, then one blank", () => {
-    const reconciliation = evidenceReconciliationOf(scenarios, observations, [], true, true);
+    const reconciliation = evidenceReconciliationOf(scenarios, observations, []);
     expect(reconciliation.summary.evidenceObservations).toMatchObject({
       total: 8,
       onScenario: 5,
@@ -64,7 +64,8 @@ describe("[SCN-RPT-010] the report renders the Evidence observations cut over ev
   });
 
   it("renders no section, and nothing in its place, for a report with no evidence observations", () => {
-    const reconciliation = evidenceReconciliationOf([], [], [], false, false);
+    const ledger = reconcile([], []);
+    const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
     expect(reconciliation.summary).not.toHaveProperty("evidenceObservations");
     expectNoSectionAndNothingInItsPlace(reconciliation);
   });

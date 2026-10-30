@@ -47,7 +47,7 @@ beforeEach(() => {
   manifest = serialiseRunManifest(
     planRunManifest({ runId: "r0", target: "earlier", sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.0.0", mode: "balance", date: "2026-10-10T00:00:00.000Z" }),
   );
-  payloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
+  payloads = { balance: evidenceReconciliationOf([], [], []), ctx };
   scratch = temporaryDirectory("spec-controller-earlier-run-");
   earlierRunDir = join(scratch, "store", "earlier", "r0");
   storeAnEarlierRun(earlierRunDir);

@@ -2,9 +2,9 @@ import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, FitnessEvidenceObservation } from "../model.js";
 import { pipelineStepsOf, type PackageJsonScripts, type ParsedWorkflow } from "../parse/checkScriptsRunInCI.js";
 import type { PipelineStep } from "../domain/pipelineStep.js";
-import { fitnessObservationsOf } from "../domain/fitnessReconciliation.js";
+import { fitnessObservationsOf, recordedAtSteps } from "../domain/fitnessReconciliation.js";
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
-import { fitnessFunctionsAmong, handleOf } from "../parse/runningFitnessFunctions.js";
+import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
 import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../domain/scnTags.js";
 import { untaggedScenariosOf, type ParsedFeatureFile } from "../parse/scenarios.js";
@@ -56,7 +56,7 @@ function observationStreams(
     ...input.behaviouralObservations,
     ...fitnessObservationsOf(
       checkObservations(corpus, steps, packageJson, isCandidate),
-      recordedCheckStepsOf(input.ciStepRecord)
+      recordedAtSteps(recordedCheckStepsOf(input.ciStepRecord), steps, qualifiedStepName)
     ),
   ];
 }
@@ -128,9 +128,7 @@ export function evidenceReconciliationFromSources(
   const reconciliation = evidenceReconciliationOf(
     corpus.scenarios,
     observationStreams(input, steps, corpus, packageJson, isCandidate),
-    untaggedScenariosAmong(input.features),
-    true,
-    true
+    untaggedScenariosAmong(input.features)
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
@@ -177,7 +175,7 @@ function withReaderAccounts(
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners, dispositionOf), exclusions),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), exclusions),
     steps,
     dispositionOf,
     reconciler.roleOf
@@ -215,17 +213,11 @@ function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners,
-  dispositionOf: (step: PipelineStep) => StepDisposition
+  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const scripts = packageJson.scripts ?? {};
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(steps, scripts, runnerTiers, shellReading);
   const { evidenceObservations } = reconciliation.summary;
-  const fitnessCandidates = steps.flatMap((step) => {
-    const id = step.id === undefined ? {} : { id: step.id };
-    if (dispositionOf(step) === "candidate") return [{ step: step.identity, fitnessFunction: handleOf(step, scripts), ...id }];
-    return step.id === undefined ? [] : [{ step: step.identity, ...id }];
-  });
   return {
     ...reconciliation,
     summary: {
@@ -237,7 +229,7 @@ function withRunnerAccount(
               evidenceObservations,
               reconciliation.ledger,
               behaviouralRunners,
-              fitnessCandidates
+              steps.map(qualifiedStepName)
             ),
           }),
       ...(tiersWithoutRunner.length > 0 ? { tiersWithoutRunner } : {}),

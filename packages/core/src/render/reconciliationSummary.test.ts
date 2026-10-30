@@ -53,7 +53,7 @@ const DEFERRED_OBSERVATIONS: EvidenceObservation[] = [
 
 function render(feature: string, observations: EvidenceObservation[] = OBSERVATIONS): string {
   const ledger = reconcile(parseScenarios(feature), observations);
-  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 

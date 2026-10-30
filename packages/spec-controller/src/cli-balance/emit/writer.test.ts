@@ -70,7 +70,7 @@ function volumeIsCaseSensitive(): boolean {
 }
 
 beforeEach(() => {
-  payloads = { balance: evidenceReconciliationOf([], [], [], false, false), ctx };
+  payloads = { balance: evidenceReconciliationOf([], [], []), ctx };
   scratch = temporaryDirectory("spec-controller-writer-");
   stderr = [];
   vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {

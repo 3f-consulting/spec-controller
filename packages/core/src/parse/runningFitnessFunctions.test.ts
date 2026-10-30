@@ -35,7 +35,9 @@ describe("[SCN-WFS-008] runningFitnessFunctions — the running-guard observer (
   });
 
   it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
-    expect(runningFitnessFunctions(parsedWorkflows([usgCi]), usgPkg, SUITE_RUNNERS)).toEqual([
+    const observed = runningFitnessFunctions(parsedWorkflows([usgCi]), usgPkg, SUITE_RUNNERS);
+    const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
+    expect(observed.map(withoutStep)).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
@@ -138,7 +140,9 @@ describe("[SCN-WFS-011] a fitness function running in ANY of a target's workflow
   });
 
   it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
-    expect(runningFitnessFunctions(parsedWorkflows([ci, nightly]), pkg, SUITE_RUNNERS)).toEqual([
+    const observed = runningFitnessFunctions(parsedWorkflows([ci, nightly]), pkg, SUITE_RUNNERS);
+    const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
+    expect(observed.map(withoutStep)).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
@@ -196,7 +200,9 @@ describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported
       "      - uses: github/codeql-action/analyze@v3",
       "        continue-on-error: true",
     ].join("\n");
-    expect(runningFitnessFunctions(parsedWorkflows([severed]), pkg, SUITE_RUNNERS)).toEqual([
+    const observed = runningFitnessFunctions(parsedWorkflows([severed]), pkg, SUITE_RUNNERS);
+    const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
+    expect(observed.map(withoutStep)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "github/codeql-action/analyze@v3",

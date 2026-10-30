@@ -127,6 +127,8 @@ export interface FitnessEvidenceObservation {
   readonly qualityCheck: "fitness";
   readonly fitnessFunction: string;
   readonly scnId?: string;
+  /** The CI step it was observed at, as workflow, job and step. */
+  readonly step?: string;
   readonly exists: boolean;
   readonly enforcedOverRealSource: boolean;
   readonly status?: EvidenceStatus;

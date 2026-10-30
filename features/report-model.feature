@@ -91,6 +91,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-015
     Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the manifest declares for it
 
+    @unit @SCN-RMD-027
+    Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code
+
   Rule: the summary states the out-of-balance view by feature, each feature named by its title
 
     The summary groups each out-of-balance scenario under its feature, in ledger order. An entry

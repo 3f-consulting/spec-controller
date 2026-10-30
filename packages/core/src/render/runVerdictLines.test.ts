@@ -39,7 +39,7 @@ function verdictLine(headline: CoreMessage, gloss: string, exitCode: number): st
 }
 
 const evidenceReconciliation = (ledger: Ledger): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, false, false),
+  summary: summaryOf(ledger, false),
   ledger,
 });
 

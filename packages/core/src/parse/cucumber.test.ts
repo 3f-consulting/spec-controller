@@ -266,7 +266,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
           ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "integration")?.outcome
     );
     const ctx: RunContext = { target: "several", inputs: handedInputs({}), corpus: "features", runStart: new Date("2026-10-14T09:00:00.000Z"), sourceSha: null };
-    const unnamedClaimRow = renderMarkdown({ summary: summaryOf(ledger, false, false), ledger }, ctx, publishedExitCodeOf)
+    const unnamedClaimRow = renderMarkdown({ summary: summaryOf(ledger, false), ledger }, ctx, publishedExitCodeOf)
       .split("\n")
       .find((line) => line.startsWith("| (unnamed claim) | "));
 

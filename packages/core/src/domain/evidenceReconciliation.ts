@@ -232,30 +232,9 @@ export interface BehaviouralRunner {
   readonly step: string;
 }
 
-/** A step that is no fitness candidate offers only its id, which a run's record can cite. */
-export interface FitnessCandidateStep {
-  readonly step: string;
-  readonly fitnessFunction?: string;
-  readonly id?: string;
-}
-
-function isTheStepBehind(observation: FitnessEvidenceObservation, candidate: FitnessCandidateStep): boolean {
-  if (candidate.id !== undefined && observation.scnId === candidate.id) return true;
-  return observation.fitnessFunction === candidate.fitnessFunction && (observation.scnId === undefined || candidate.id === undefined);
-}
-
-/** Each running observation is the evidence of one step, so a step is taken once and an observation once. */
-function stepsBehind(
-  running: readonly FitnessEvidenceObservation[],
-  candidates: readonly FitnessCandidateStep[]
-): string[] {
-  const unmatched = [...running];
-  return candidates.flatMap((candidate) => {
-    const at = unmatched.findIndex((observation) => isTheStepBehind(observation, candidate));
-    if (at === -1) return [];
-    unmatched.splice(at, 1);
-    return [candidate.step];
-  });
+function stepsNamed(running: readonly FitnessEvidenceObservation[], stepsInOrder: readonly string[]): string[] {
+  const named = new Set(running.map((observation) => observation.step));
+  return stepsInOrder.filter((step) => named.has(step));
 }
 
 function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[], runner?: string): QualityCheckObservations {
@@ -267,13 +246,13 @@ export function ciStepsJoined(
   observations: EvidenceObservationTally,
   ledger: Ledger,
   runners: readonly BehaviouralRunner[],
-  fitnessCandidates: readonly FitnessCandidateStep[]
+  stepsInOrder: readonly string[]
 ): EvidenceObservationTally {
   return {
     ...observations,
     byQualityCheck: observations.byQualityCheck.map((entry) => {
       if (entry.qualityCheck === "fitness") {
-        return withSteps(entry, stepsBehind(runningFitnessObservations(ledger), fitnessCandidates));
+        return withSteps(entry, stepsNamed(runningFitnessObservations(ledger), stepsInOrder));
       }
       const running = runners.filter((row) => row.tier === entry.qualityCheck);
       return withSteps(entry, running.map((row) => row.step), running[0]?.runner);
@@ -359,11 +338,7 @@ export interface EvidenceReconciliation {
   readonly scenarioCodePopulation?: ScenarioCodePopulation;
 }
 
-export function summaryOf(
-  ledger: Ledger,
-  withBehaviouralObservations: boolean,
-  withFitnessFunctions: boolean
-): Summary {
+export function summaryOf(ledger: Ledger, withEvidenceObservations: boolean): Summary {
   const tally = ledgerTally(ledger);
   return {
     evidenceReconciliation: {
@@ -371,7 +346,7 @@ export function summaryOf(
       qualityCheckReconciliations: tally.qualityCheckReconciliations,
       pending: tally.pending,
     },
-    ...(withBehaviouralObservations || withFitnessFunctions
+    ...(withEvidenceObservations
       ? { evidenceObservations: evidenceObservationTally(ledger) }
       : {}),
     fitness: tally.fitness,
@@ -381,10 +356,8 @@ export function summaryOf(
 export function evidenceReconciliationOf(
   scenarios: readonly Scenario[],
   evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[],
-  withBehaviouralObservations: boolean,
-  withFitnessFunctions: boolean
+  untaggedScenarios: readonly string[]
 ): EvidenceReconciliation {
   const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
-  return { summary: summaryOf(ledger, withBehaviouralObservations, withFitnessFunctions), ledger };
+  return { summary: summaryOf(ledger, true), ledger };
 }

@@ -47,7 +47,7 @@ const OBSERVATIONS: EvidenceObservation[] = [
 
 function render(): string {
   const ledger = reconcile(parseScenarios(FEATURE, [DEFERRAL_TAG.slice(1)]), OBSERVATIONS);
-  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+  const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 

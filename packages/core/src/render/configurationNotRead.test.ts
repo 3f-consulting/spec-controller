@@ -27,7 +27,7 @@ const ctx: RunContext = {
 };
 
 const render = (extra: Partial<Summary>): string => {
-  const er: EvidenceReconciliation = { summary: { ...summaryOf(ledger, false, false), ...extra }, ledger };
+  const er: EvidenceReconciliation = { summary: { ...summaryOf(ledger, false), ...extra }, ledger };
   return renderMarkdown(er, ctx, publishedExitCodeOf);
 };
 

@@ -23,7 +23,7 @@ const recorded: RecordedCheckStep[] = [
 ];
 
 function reconcile() {
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
 }
 
 function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, unknown[]][] {

@@ -17,9 +17,7 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
           { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheck: "unit" }] },
         ],
         [{ qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" }],
-        [],
-        true,
-        false
+        []
       ),
       scenarioCodeErrors: [FOREIGN],
     };

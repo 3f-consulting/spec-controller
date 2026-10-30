@@ -83,7 +83,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
       ["LDG", "ledger"],
       ["LNT", "fitness-evidence"],
     ]);
-    const md = renderMarkdown(__er(spanning, false, false), ctx, publishedExitCodeOf, undefined, featureNames);
+    const md = renderMarkdown(__er(spanning, false), ctx, publishedExitCodeOf, undefined, featureNames);
     expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
   });
@@ -225,7 +225,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
-    const md = renderMarkdown(__er(simple, false, false), ctx, publishedExitCodeOf, evidenceObligations);
+    const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
     expect(md).toContain("## Claim Reconciliations");
     expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
   });
@@ -327,7 +327,7 @@ describe("[SCN-RPT-010] the markdown report renders the Evidence observations re
   });
 
   it("[SCN-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
     expect(md).toContain("### Evidence observations");
     expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](8, 4, 1, 3));
   });

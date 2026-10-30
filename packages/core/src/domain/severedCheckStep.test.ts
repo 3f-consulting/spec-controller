@@ -90,9 +90,10 @@ function reconcileSevered() {
     severedSteps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
+    (step) => step.identity,
     (_handle, citedByStep) => (citedByStep !== undefined && rows.has(citedByStep) ? { scnId: citedByStep } : null)
   );
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), []);
 }
 
 describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles as the watermelon, beside a sibling check whose red is the job's verdict", () => {
@@ -117,7 +118,8 @@ describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles 
     const observed = reconcileSevered()
       .ledger.claimReconciliations.filter((row) => row.claim === "SCN-CVT-001" || row.claim === "SCN-CVT-002")
       .flatMap((row) => observationsOf(row).map(postedOf));
-    expect(observed).toEqual([
+    const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
+    expect(observed.map(withoutStep)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:alpha",

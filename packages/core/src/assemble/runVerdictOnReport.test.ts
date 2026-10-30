@@ -38,7 +38,7 @@ const broken: EvidenceObservation = {
   message: "Error: Cannot find package 'missing-package'",
 };
 
-const fromLedger = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false, false), ledger });
+const fromLedger = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false), ledger });
 
 const misfiledCorpus = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({

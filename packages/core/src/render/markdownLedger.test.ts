@@ -56,14 +56,14 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("renders corpus-driven columns — Fitness first, then the behavioural levels present (e2e/performance absent)", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
     expect(md).toContain("| Claim | Fitness | Unit | Integration | Verdict | Reconciling items |");
     expect(md).not.toContain("| Performance |");
     expect(md).not.toContain(" E2e ");
   });
 
   it("encodes the four cell cases two-sided — named+met, named+missing, no-evidence-obligation, and absent", () => {
-    const md = renderMarkdown(__er(balance, true, false), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
     expect(md).toContain("| SCN-A | F/1 | U/2 |  |");
     expect(md).toContain("| SCN-B |  | U/- |  |");
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
@@ -75,7 +75,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     ["[SCN-RPT-018] renders both cells for a scenario naming two behavioural tiers — neither reads as missing", "| SCN-G |  | U/1 | I/1 |"],
     ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation, no evidence-obligation letter", "| SCN-F |  | -/1 |  |"],
   ])("%s", (_title, row) => {
-    const md = renderMarkdown(__er(balance, true, false), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
     expect(md).toContain(row);
   });
 
@@ -111,7 +111,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ],
       [{ qualityCheck: "unit", scnId: "SCN-U", status: "passed" }]
     );
-    const table = ledgerTable(renderMarkdown(__er(named, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(named, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Unit", "E2e", "Performance"));
     expect(table[1]).toBe("| --- | --- | --- | --- | --- | --- |");
     expect(table.slice(2).map((row) => cellsOf(row, 4))).toEqual([
@@ -135,7 +135,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
       ]
     );
-    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Unit"));
     expect(table[1]).toBe("| --- | --- | --- | --- |");
     expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
@@ -158,7 +158,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         { qualityCheck: "fitness", fitnessFunction: "guard-d", scnId: "SCN-D", exists: true, enforcedOverRealSource: true },
       ]
     );
-    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Unit"));
     expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
       ["SCN-D", "U/-"],
@@ -177,7 +177,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ],
       [{ qualityCheck: "unit", scnId: "SCN-D", status: "passed" }]
     );
-    const table = ledgerTable(renderMarkdown(__er(shared, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Fitness", "Unit"));
     expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([
       ["SCN-D", "", ""],
@@ -201,7 +201,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         { qualityCheck: "fitness", fitnessFunction: "guard-c", scnId: "SCN-WATERMELON", exists: true, enforcedOverRealSource: false },
       ]
     );
-    const table = ledgerTable(renderMarkdown(__er(fitness, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(fitness, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Fitness", "Unit"));
     expect(table.slice(2).map((row) => cellsOf(row, 3))).toEqual([
       ["SCN-UNASKED", "-/1", "U/1"],
@@ -222,7 +222,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ["SCN-U", "scenario"],
       ["SCN-GHOST", "phantom-claim"],
     ]);
-    const table = ledgerTable(renderMarkdown(__er(ledgerWithPhantomClaimRow, true, false), ctx, publishedExitCodeOf));
+    const table = ledgerTable(renderMarkdown(__er(ledgerWithPhantomClaimRow, true), ctx, publishedExitCodeOf));
     expect(table[0]).toBe(headerOf("Unit"));
     expect(table[1]).toBe("| --- | --- | --- | --- |");
     expect(table.slice(2).map((row) => cellsOf(row, 2))).toEqual([
@@ -244,7 +244,7 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
         { qualityCheck: "unit", scnId: "SCN-UNIT", status: "failed" },
       ]
     );
-    const lines = renderMarkdown(__er(failed, true, false), ctx, publishedExitCodeOf).split("\n");
+    const lines = renderMarkdown(__er(failed, true), ctx, publishedExitCodeOf).split("\n");
     const header = "| Claim | Fitness | Unit | Verdict | Reconciling items |";
     const start = lines.indexOf(header);
     expect(start).toBeGreaterThanOrEqual(0);
@@ -365,7 +365,7 @@ describe("[SCN-RPT-069] the evidence grid counts only the evidence observations 
   const ranNever = () => evidenceOfRunResult("never-reached-its-assertions")!;
 
   const gridOf = (scenarios: Scenario[], observations: EvidenceObservation[]): { header: string; cells: Map<string, string[]> } => {
-    const lines = renderMarkdown(__er(reconcile(scenarios, observations), true, false), ctx, publishedExitCodeOf).split("\n");
+    const lines = renderMarkdown(__er(reconcile(scenarios, observations), true), ctx, publishedExitCodeOf).split("\n");
     const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     const start = lines.findIndex((l, i) => i > section && l.startsWith("| Claim |"));
     expect(start).toBeGreaterThan(section);

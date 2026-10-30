@@ -10,7 +10,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 export function tallyBlockOf(scenarios: Scenario[]): (observations: EvidenceObservation[]) => string[] {
   return function tallyBlock(observations: EvidenceObservation[]): string[] {
     const ledger: Ledger = reconcile(scenarios, observations);
-    const report: EvidenceReconciliation = { summary: summaryOf(ledger, false, false), ledger };
+    const report: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
     const lines = renderMarkdown(report, ctx, publishedExitCodeOf).split("\n");
     const start = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(start).toBeGreaterThan(0);

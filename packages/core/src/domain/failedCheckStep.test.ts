@@ -12,7 +12,7 @@ const scenarios: Scenario[] = [
 const recorded: RecordedCheckStep[] = [{ citedScn: "SCN-CVT-001", report: "failed" }];
 
 function reconcile() {
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), [], false, true);
+  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
 }
 
 describe("[SCN-LNT-028] a check step the run's record says failed posts a failing observation", () => {

@@ -43,9 +43,10 @@ function reconcileUnannotated() {
     unannotatedSteps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
+    (step) => step.identity,
     () => null
   );
-  return evidenceReconciliationOf([], fitnessObservationsOf(workflow, undefined), [], false, true);
+  return evidenceReconciliationOf([], fitnessObservationsOf(workflow, undefined), []);
 }
 
 describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it runs, citing nothing", () => {

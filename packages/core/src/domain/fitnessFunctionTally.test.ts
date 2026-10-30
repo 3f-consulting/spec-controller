@@ -96,7 +96,8 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   });
 
   it("derives one citing evidence observation and one uncited evidence observation from the CI source (the corpus is real, not seeded)", () => {
-    expect(citedObservations).toEqual([
+    const withoutStep = ({ step: _step, ...rest }: (typeof citedObservations)[number] & { step?: string }) => rest;
+    expect(citedObservations.map(withoutStep)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: "lint:foo",
@@ -105,7 +106,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
         scnId: "SCN-TGT-001",
       },
     ]);
-    expect(uncitedObservations).toEqual([
+    expect(uncitedObservations.map(withoutStep)).toEqual([
       { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]);
   });

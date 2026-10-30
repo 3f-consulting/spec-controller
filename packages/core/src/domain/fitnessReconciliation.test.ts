@@ -120,7 +120,8 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       NO_RUNNERS,
       citedScn
     ).filter((o) => o.fitnessFunction === SEVERED_SCRIPT);
-    expect(fitnessObservations).toEqual([
+    const withoutStep = ({ step: _step, ...rest }: (typeof fitnessObservations)[number] & { step?: string }) => rest;
+    expect(fitnessObservations.map(withoutStep)).toEqual([
       {
         qualityCheck: "fitness",
         fitnessFunction: SEVERED_SCRIPT,

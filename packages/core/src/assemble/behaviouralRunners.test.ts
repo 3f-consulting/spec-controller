@@ -100,6 +100,26 @@ function withARecordedRunnerStep(): EvidenceReconciliation {
   });
 }
 
+const excludedTwinCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Early lint
+        run: pnpm lint
+      - name: Lint
+        run: pnpm lint
+`;
+
+function withAnExcludedTwin(): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson: { scripts, specController: { notChecks: ["workflow-0.yml:quality:Early lint"] } },
+    ciWorkflows: parsedWorkflows([excludedTwinCi]),
+    behaviouralObservations: [],
+    deferralTags: [],
+  });
+}
+
 function entries(reconciliation: EvidenceReconciliation): readonly QualityCheckObservations[] {
   return reconciliation.summary.evidenceObservations?.byQualityCheck ?? [];
 }
@@ -133,7 +153,12 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       {
         qualityCheck: "fitness",
         count: 4,
-        ciSteps: ["Install", "Unit tests", "Lint", "github/codeql-action/analyze@v3"],
+        ciSteps: [
+          "workflow-0.yml:quality:Install",
+          "workflow-0.yml:quality:Unit tests",
+          "workflow-0.yml:quality:Lint",
+          "workflow-0.yml:quality:github/codeql-action/analyze@v3",
+        ],
       },
     ]);
     expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
@@ -161,7 +186,11 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
       qualityCheck: "fitness",
       count: 3,
-      ciSteps: ["Install", "Lint", "github/codeql-action/analyze@v3"],
+      ciSteps: [
+        "workflow-0.yml:quality:Install",
+        "workflow-0.yml:quality:Lint",
+        "workflow-0.yml:quality:github/codeql-action/analyze@v3",
+      ],
     });
   });
 
@@ -173,7 +202,11 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       runner: "vitest",
       ciSteps: ["Unit tests", "Unit tests again"],
     });
-    expect(entryFor(reconciliation, "fitness")).toStrictEqual({ qualityCheck: "fitness", count: 1, ciSteps: ["Lint"] });
+    expect(entryFor(reconciliation, "fitness")).toStrictEqual({
+      qualityCheck: "fitness",
+      count: 1,
+      ciSteps: ["workflow-0.yml:quality:Lint"],
+    });
   });
 
   it("names on fitness the step behind each fitness function that ran, in step order, and none behind one the run's record says did not run", () => {
@@ -181,7 +214,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     expect(fitness).toStrictEqual({
       qualityCheck: "fitness",
       count: 3,
-      ciSteps: ["Types", "Lint", "Other property"],
+      ciSteps: ["workflow-0.yml:quality:Types", "workflow-0.yml:quality:Lint", "workflow-0.yml:quality:Other property"],
     });
     expect(fitness?.ciSteps).toHaveLength(fitness?.count ?? -1);
   });
@@ -197,7 +230,15 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
       qualityCheck: "fitness",
       count: 2,
-      ciSteps: ["Unit tests", "Lint"],
+      ciSteps: ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:quality:Lint"],
+    });
+  });
+
+  it("names on fitness the candidate step behind its fitness function, never an excluded step running the same script before it", () => {
+    expect(entryFor(withAnExcludedTwin(), "fitness")).toStrictEqual({
+      qualityCheck: "fitness",
+      count: 1,
+      ciSteps: ["workflow-0.yml:quality:Lint"],
     });
   });
 

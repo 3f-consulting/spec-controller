@@ -5,8 +5,8 @@ import type { Ledger } from "./model.js";
 import { parsedFeatures } from "./parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "./parse/parsedWorkflows.test-utils.js";
 
-export const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
-  summary: summaryOf(ledger, wo, wg),
+export const __er = (ledger: Ledger, withEvidenceObservations = false): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, withEvidenceObservations),
   ledger,
 });
 

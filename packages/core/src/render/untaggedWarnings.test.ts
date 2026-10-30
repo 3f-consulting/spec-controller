@@ -48,7 +48,7 @@ function renderCorpus(corpus: readonly { feature: string; source: string }[]): s
     untagged.map(({ feature, scenario }) => `${feature} : ${scenario}`)
   );
   return renderMarkdown(
-    { summary: summaryOf(ledger, false, false), ledger },
+    { summary: summaryOf(ledger, false), ledger },
     ctx,
     publishedExitCodeOf,
     evidenceObligations(raw, scenarios.length, untagged)
