@@ -57,9 +57,7 @@ Feature: The report renders the ledger as sectioned facts
     N+1 | N | 1. This out-of-balance count agrees with the balance verdict and the exit code.
 
     The Reconciliation line row counts every Reconciliation line on every row, including the
-    rows of phantom claims and the unnamed claim: each evidence observation a Quality Check
-    Reconciliation holds, its evidence obligation when no evidence observation that ran
-    answers it, and one line for a scenario that has neither at any quality check. It is
+    rows of phantom claims and the unnamed claim. It is
     therefore not a count of evidence obligations.
 
     Its out-of-balance count breaks down in place into cause rows, one per outcome, each
