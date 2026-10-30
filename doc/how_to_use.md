@@ -609,8 +609,10 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 - **An entry of a kind its reader does not take** (a `notChecks` written as one string, a runner written as a number) is read as absent.
 - **A key the block does not read at all** (a misspelling, or a key an older version read) is passed over.
+- **A `runners` key that is not one of the four tiers** excludes nothing.
+- **A `notChecks` entry that matches no step the run read** excludes nothing.
 
-Neither refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
+None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
 
 ### Limits
 
