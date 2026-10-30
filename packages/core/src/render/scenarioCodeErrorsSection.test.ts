@@ -54,8 +54,8 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
     md = renderMarkdown(balancedWith([FOREIGN]), ctx, publishedExitCodeOf);
   });
 
-  it("lists the error by its handle, in a section of its own", () => {
-    expect(md).toContain("## Scenario code errors");
+  it("lists the error by its handle under the Scenario code errors heading", () => {
+    expect(md.split("\n")).toContain(HEADING);
     expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
@@ -89,8 +89,10 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
   });
 
   it("sits before the summary views, as a caveat on every cut beneath it", () => {
-    const sections = md.split("\n").filter((line) => line.startsWith("## "));
-    expect(sections.indexOf("## Scenario code errors")).toBe(sections.indexOf("## Summary views") - 1);
+    const lines = md.split("\n");
+    const summaryViews = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]);
+    expect(lines.indexOf(HEADING)).toBeGreaterThanOrEqual(0);
+    expect(lines.indexOf(HEADING)).toBeLessThan(summaryViews);
   });
 });
 

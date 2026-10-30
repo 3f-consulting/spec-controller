@@ -26,6 +26,7 @@ export enum CoreMessage {
   ProvenanceToolSha,
   ProvenanceToolShaUnknown,
   ProvenanceToolVersion,
+  ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
   ConfigurationNotReadIntro,
   ConfigurationWrongKind,
@@ -278,7 +279,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ProvenanceToolSha]: (sha) => `Tool SHA: ${sha}`,
   [CoreMessage.ProvenanceToolShaUnknown]: "unknown (not a git checkout)",
   [CoreMessage.ProvenanceToolVersion]: (version) => `Tool version: ${version}`,
-  [CoreMessage.ConfigurationNotReadHeading]: "## Configuration not read",
+  [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
+  [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
   [CoreMessage.ConfigurationNotReadIntro]:
     "The target's package.json holds configuration this run could not use. Each entry below was read as absent, and every account in this report is the one the target gives without it.",
   [CoreMessage.ConfigurationWrongKind]: (entry, is, reads) =>
@@ -295,7 +297,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.BrokenEvidenceNotNamed]: "(evidence not named by the runner)",
   [CoreMessage.BrokenEvidenceWhatBroke]: (locator) => `${locator} — what broke:`,
   [CoreMessage.BrokenEvidenceNoMessage]: "(no message reported by the runner)",
-  [CoreMessage.ScenarioCodeErrorsHeading]: "## Scenario code errors",
+  [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
   [CoreMessage.OneScenarioCodeError]: "1 scenario code error",
   [CoreMessage.ScenarioCodeErrorCount]: (count) => `${count} scenario code errors`,
   [CoreMessage.ScenarioCodeErrorsFraming]: (count) =>
@@ -353,14 +355,14 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ScenarioCodeErrorsHeadline]: "**SCENARIO CODE ERRORS**",
   [CoreMessage.ScenarioCodeErrorsGloss]: (alsoOutOfBalance) =>
     "the corpus files a scenario code under the wrong feature, so the by-feature grouping " +
-    `cannot be trusted. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+    `cannot be trusted. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
   [CoreMessage.SeveralScnCodesGloss]: (alsoOutOfBalance) =>
     "a scenario in the corpus carries more than one scenario code, so no account was raised for it " +
-    `under any of them. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+    `under any of them. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
   [CoreMessage.MisfiledAndSeveralScnCodesGloss]: (alsoOutOfBalance) =>
     "the corpus files a scenario code under the wrong feature, so the by-feature grouping cannot be " +
     "trusted, and a scenario in it carries more than one scenario code, so no account was raised for it " +
-    `under any of them. Read \`## Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
+    `under any of them. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
   [CoreMessage.AlsoOutOfBalance]:
     " The accounts do not agree either: at least one Claim Reconciliation carries a reconciling item.",
   [CoreMessage.OutOfBalanceHeadline]: "**OUT-OF-BALANCE**",

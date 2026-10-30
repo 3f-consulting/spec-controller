@@ -89,15 +89,7 @@ describe("[SCN-CFG-007] a saved run re-rendered names the same specController en
 });
 
 describe("[SCN-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
-  const SECTION = "## Configuration not read";
-  const withoutSection = (report: string): string => {
-    const lines = report.split("\n");
-    const start = lines.indexOf(SECTION);
-    const end = start === -1 ? -1 : lines.findIndex((line, i) => i > start && line.startsWith("## "));
-    return (start === -1 ? lines : [...lines.slice(0, start), ...lines.slice(end)])
-      .filter((line) => !line.startsWith("- Run timestamp"))
-      .join("\n");
-  };
+  const accounts = (report: string): string => report.slice(report.indexOf("## Summary views"));
 
   it.each(["notCheck", "fitnessChecks", "zzz"])("reconciles a target also holding %s as the target without it, naming the key in the one sentence every unread key gets", (key) => {
     const dir = targetOf(block);
@@ -109,7 +101,8 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
     ]);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(without.exitCode);
-    expect(withoutSection(run.report)).toBe(withoutSection(without.report));
+    expect(accounts(run.report)).toMatch(/^## Summary views\n/);
+    expect(accounts(run.report)).toBe(accounts(without.report));
   });
 });
 

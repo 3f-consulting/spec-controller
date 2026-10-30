@@ -23,7 +23,14 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
   const wrongKinds = report.errors?.configuration?.ofWrongKind ?? [];
   const unknownKeys = report.errors?.configuration?.keysNotRead ?? [];
   const runnerKeysNotATier = report.errors?.configuration?.runnerKeysNotATier ?? [];
-  if (wrongKinds.length === 0 && unknownKeys.length === 0 && runnerKeysNotATier.length === 0) return [];
+  const nonChecksMatchingNoStep = report.errors?.configuration?.nonChecksMatchingNoStep ?? [];
+  if (
+    wrongKinds.length === 0 &&
+    unknownKeys.length === 0 &&
+    runnerKeysNotATier.length === 0 &&
+    nonChecksMatchingNoStep.length === 0
+  )
+    return [];
   return [
     CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],
     "",
@@ -35,7 +42,10 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
     ...unknownKeys.map(
       (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`
     ),
-    ...runnerKeysNotATier.map((key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`),
+    ...runnerKeysNotATier.map(
+      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](`\`specController.runners.${key}\``)}`
+    ),
+    ...nonChecksMatchingNoStep.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](entry)}`),
     "",
   ];
 };

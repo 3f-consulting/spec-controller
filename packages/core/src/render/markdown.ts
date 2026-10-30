@@ -23,9 +23,9 @@ import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
-import { scenarioCodeErrorsSection, scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
+import { scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
-import { configurationNotReadSection } from "./configurationNotRead.js";
+import { errorsInTheInputsSection } from "./errorsInTheInputs.js";
 import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
@@ -360,9 +360,8 @@ function ledgerTableLines(
 const SECTIONS: readonly SectionEmitter[] = [
   titleSection,
   provenanceSection,
-  configurationNotReadSection,
+  errorsInTheInputsSection,
   runIntegritySection,
-  scenarioCodeErrorsSection,
   summaryViewsSection,
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   scenarioCodesCleanStatement,

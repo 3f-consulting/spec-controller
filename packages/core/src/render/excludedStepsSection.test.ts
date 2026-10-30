@@ -56,27 +56,26 @@ const excludedList = (lines: readonly string[], length: number): string[] => {
   return lines.slice(start, start + length);
 };
 
-describe("[SCN-RPT-048] the step-accounting section lists each excluded step beneath its table with its reason, then each entry that matches no step, and lists none when the target names no non-check", () => {
-  it("lists each excluded step with its reason under an Excluded label beneath the table's verdict, then each entry that matches no step, then a blank line", () => {
+describe("[SCN-RPT-048] the step-accounting section lists each excluded step beneath its table with its reason, and lists none when the target names no non-check", () => {
+  it("lists each excluded step with its reason under an Excluded label beneath the table's verdict, then a blank line, and no entry that matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types", "ci.yml:quality:Lint"]));
     const verdict = section.indexOf(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
 
     expect(verdict).toBeGreaterThanOrEqual(0);
     expect(section.indexOf(label)).toBeGreaterThan(verdict);
-    expect(excludedList(section, 4)).toStrictEqual([
+    expect(excludedList(section, 3)).toStrictEqual([
       "Excluded:",
       "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
-      "- ci.yml:quality:Lint — matches no step: the entry names nothing this run read.",
       "",
     ]);
+    expect(section.some((line) => line.includes("— matches no step:"))).toBe(false);
   });
 
-  it("lists an entry that matches no step under the Excluded label when no step is excluded", () => {
-    expect(excludedList(stepAccounting(reportLines(["ci.yml:quality:Lint"])), 3)).toStrictEqual([
-      "Excluded:",
-      "- ci.yml:quality:Lint — matches no step: the entry names nothing this run read.",
-      "",
-    ]);
+  it("prints no Excluded label when the target's only entry matches no step", () => {
+    const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
+    expect(section.length).toBeGreaterThan(0);
+    expect(section).not.toContain(label);
+    expect(section.some((line) => line.includes("— matches no step:"))).toBe(false);
   });
 
   it("lists one line for each step an entry matches", () => {

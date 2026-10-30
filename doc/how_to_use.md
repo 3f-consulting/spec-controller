@@ -512,7 +512,7 @@ That is all.
 - A step stating an `@SCN` that no scenario carries posts to a **phantom claim**'s row.
 - A step stating no `@SCN` posts to the **unnamed claim**.
 
-**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: it is named under `## Configuration not read`, in the same words as a misspelling. You author only the two artefacts above.
+**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: it is named under `### Configuration not read`, in the same words as a misspelling. You author only the two artefacts above.
 
 **One `toJSON(steps)` dump step per job** lets the reconciler read what each step did, and `--ci-steps` points `balance` at it. That is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
@@ -574,7 +574,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **Each entry is `<workflow file>:<job id>:<step name>`**, matched **exactly**: no prefix form, no glob, no bare name.
 - **To take a whole workflow out, narrow `--ci`** rather than listing its steps.
 - **An excluded step is named on the report**, not dropped.
-- **An entry that matches no step is reported as stale.**
+- **An entry that matches no step is reported as stale**, under `### Configuration not read`, whether or not the run read any CI step.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
 **GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref or sub-path follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *GitHub plumbing* in **Step accounting** and names it in that section's *GitHub plumbing* list, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is excluded as you named it.
@@ -598,7 +598,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 - **Your list extends the built-in set and never replaces it.** `@wip` defers whatever you configure.
 - **An entry may be written bare or with its `@`.** Surrounding whitespace is ignored.
-- **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named under `## Configuration not read`.
+- **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named under `### Configuration not read`.
 - **A tag in neither list never defers the whole scenario**, however much it looks like a deferral tag.
 
 **A deferral tag is scenario scope. `@<check>pending` is not.** `@integrationpending` defers only the integration obligation on its scenario, so a passing `@unit` beside it still reconciles satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending Item from each.
@@ -610,7 +610,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 - **An entry of a kind its reader does not take** (a `notChecks` written as one string, a runner written as a number) is read as absent.
 - **A key the block does not read at all** (a misspelling, or a key an older version read) is passed over.
 
-Neither refuses the run. Each is named under `## Configuration not read`, right after the run provenance, so the rest of the report is the one you would get without it.
+Neither refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
 
 ### Limits
 
@@ -788,7 +788,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `## Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, just before `## Summary views`. A run whose corpus holds none states that its scenario codes are clean in one line, just after its run verdict. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `### Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, in `## Errors in the inputs` right after the run provenance. A run whose corpus holds none states that its scenario codes are clean in one line, just after its run verdict. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
@@ -1003,7 +1003,7 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The verdict reads SCENARIO CODE ERRORS.** The corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one scenario code. `## Scenario code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
+**The verdict reads SCENARIO CODE ERRORS.** The corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one scenario code. `### Scenario code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
 
 **A row reads `duplicate-scn-code`.** Two scenarios carry that `@SCN` code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 

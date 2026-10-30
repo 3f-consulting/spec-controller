@@ -6,6 +6,7 @@ import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconcil
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 let ledger: Ledger;
 beforeEach(() => {
@@ -30,11 +31,13 @@ const render = (extra: Partial<Summary>): string => {
   return renderMarkdown(er, ctx, publishedExitCodeOf);
 };
 
+const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+
 const section = (md: string): string[] => {
   const lines = md.split("\n");
-  const start = lines.indexOf("## Configuration not read");
+  const start = lines.indexOf(heading);
   if (start === -1) return [];
-  const end = lines.findIndex((line, i) => i > start && line.startsWith("## "));
+  const end = lines.findIndex((line, i) => i > start && line.startsWith("#"));
   return lines.slice(start, end);
 };
 
@@ -47,7 +50,7 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       ],
     });
     expect(section(md)).toEqual([
-      "## Configuration not read",
+      heading,
       "",
       "The target's package.json holds configuration this run could not use. Each entry below was read as absent, and every account in this report is the one the target gives without it.",
       "",
@@ -55,9 +58,8 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       "- `specController.runners.unit` is a number where a string or null is read, so this run read it as absent.",
       "",
     ]);
-    expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("## Configuration not read"));
-    expect(md.indexOf("## Configuration not read")).toBeLessThan(md.indexOf("## Summary views"));
-    expect(md.replace(section(md).join("\n") + "\n", "")).toBe(render({}));
+    expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf(heading));
+    expect(md.indexOf(heading)).toBeLessThan(md.indexOf("## Summary views"));
   });
 });
 

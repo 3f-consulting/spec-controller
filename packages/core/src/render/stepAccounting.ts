@@ -55,13 +55,12 @@ const reconcilerListOf = ({ steps }: StepAccounting): string[] => {
   ];
 };
 
-const excludedListOf = ({ steps }: StepAccounting, unmatched: readonly string[]): string[] => {
+const excludedListOf = ({ steps }: StepAccounting): string[] => {
   const excluded = steps.excluded ?? [];
-  if (excluded.length === 0 && unmatched.length === 0) return [];
+  if (excluded.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel],
     ...excluded.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](step)}`),
-    ...unmatched.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](entry)}`),
     "",
   ];
 };
@@ -87,7 +86,7 @@ export const stepAccountingSection = (report: RenderInput): string[] => {
     "",
     ...runnersListOf(accounting),
     ...reconcilerListOf(accounting),
-    ...excludedListOf(accounting, report.errors?.configuration?.nonChecksMatchingNoStep ?? []),
+    ...excludedListOf(accounting),
     ...plumbingListOf(accounting),
   ];
 };

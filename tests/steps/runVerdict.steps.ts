@@ -318,7 +318,7 @@ Given(
 );
 
 Then("the report lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^## Scenario code errors$/m);
+  assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
   assert.match(this.balanceResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-CEA-002/m);
 });
 
@@ -356,6 +356,6 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
 });
 
 Then("the report still lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^## Scenario code errors$/m);
+  assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
   assert.match(this.balanceResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-UCA-002/m);
 });

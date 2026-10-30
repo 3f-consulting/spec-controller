@@ -63,7 +63,7 @@ A scenario tagged `@unit` names an obligation: a unit test must exist and pass. 
 | Exit | What it says |
 | --- | --- |
 | `0` | balanced — every obligation has evidence, and it holds |
-| `1` | out-of-balance — the two records disagree, and the report says where; or a scenario code is misfiled, listed under `## Scenario code errors` |
+| `1` | out-of-balance — the two records disagree, and the report says where; or a scenario code is misfiled, listed under `### Scenario code errors` |
 | `2` | usage — the invocation was wrong |
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |

@@ -20,7 +20,7 @@ function reportLines(runners: Record<string, string | null>, otherKeys: Record<s
         ...otherKeys,
       },
     },
-    ciWorkflows: parsedWorkflows([ci]),
+    ciWorkflows: parsedWorkflows([ci], ["ci.yml"]),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -30,7 +30,8 @@ function reportLines(runners: Record<string, string | null>, otherKeys: Record<s
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-const notATier = (key: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`;
+const notATier = (key: string): string =>
+  `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](`\`specController.runners.${key}\``)}`;
 
 const notRead = (key: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`;
@@ -44,7 +45,7 @@ describe("[SCN-RPT-053] each runners key outside the four tiers is named under C
       "",
       CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
       "",
-      "- lint — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.",
+      "- `specController.runners.lint` — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.",
       "",
     ]);
   });

@@ -21,7 +21,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     leaves every posting unambiguous — the account still reconciles exactly as it would if it
     were filed correctly — but the report's by-feature cut groups on the code, so a misfiled one
     makes that cut say something false. So `balance` lists each misfiling under
-    `## Scenario code errors` (`errors.scenarioCodes` in the JSON), and any one of them reds the
+    `### Scenario code errors` (`errors.scenarioCodes` in the JSON), and any one of them reds the
     run. A duplicated @SCN is not one of these: it makes its account unreconcilable, and it is
     reported on that account's rows.
 
@@ -108,7 +108,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     reader picks one ([ubiquitous-language.md → Posting](../doc/ubiquitous-language.md#posting)). A scenario carrying more than
     one @SCN is the same fault from the other side: no reader picks one either, so it raises no
     evidence obligation under any of its codes and opens no account under any of them. It is not
-    untagged, since it carries codes, so `balance` lists it under `## Scenario code errors`
+    untagged, since it carries codes, so `balance` lists it under `### Scenario code errors`
     (`errors.scenarioCodes` in the JSON) as several-scn-codes, naming the file, the scenario and every
     code it carries, and the run reds. A test citing one of those codes cites a code no scenario
     carries, as any such citation does.
