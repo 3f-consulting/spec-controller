@@ -601,23 +601,44 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report accounts for fitness-function discovery, each account in a section of its own that is absent when it has nothing to say
 
-    @unit @SCN-RPT-047
-    Scenario: the discovery-scope section tables each workflow and job read from the step accounting's rows, and is absent for a target with no pipeline
-
-    @unit @SCN-RPT-048
-    Scenario: the excluded-steps section lists each step the target names a non-check with its reason, and is absent when the target names none
-
-    @unit @SCN-RPT-050
-    Scenario: the reconciler section names each reconciler step with what it does, and is absent for a pipeline that runs no reconciliation
-
     @unit @SCN-RPT-051
     Scenario: the runner-tier account says a tier the target names null has no runner and a tier it omits is unnamed, and is absent when every tier is named
 
-    @unit @SCN-RPT-052
-    Scenario: the step-accounting section tables each count of the step accounting's total and states that every step read is accounted for
-
     @unit @SCN-RPT-053
     Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises
+
+  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job with the steps behind each count listed beneath
+
+    Under "## Summary views", the "### Step accounting" section is the report's one section about
+    the CI steps the run read. Its table has a row per workflow and job read, in the step
+    accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners,
+    Reconciler, Excluded, GitHub plumbing and Accounted for. When more than one job was read, a
+    Total row follows them. The section then states that every step read is accounted for.
+
+    Beneath the table, each column other than Candidates that counts a step lists the steps
+    behind it, under the column's name: Runners, Reconciler, Excluded and GitHub plumbing, in
+    that order. A list follows the table's rows, and each job's steps in the order they were
+    read. A reconciler step says what it does. An excluded step says the target names it a
+    non-check, one line for each step an entry matches, and each entry that matches no step
+    follows, saying it names nothing the run read. A column that counts no step lists
+    nothing.
+
+    The section is absent for a target with no pipeline.
+
+    @unit @SCN-RPT-052
+    Scenario: the step-accounting section tables a row per workflow and job read, a total row when more than one job was read, and states that every step read is accounted for
+
+    @unit @SCN-RPT-072
+    Scenario: the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one
+
+    @unit @SCN-RPT-050
+    Scenario: the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation
+
+    @unit @SCN-RPT-048
+    Scenario: the step-accounting section lists each excluded step beneath its table with its reason, then each entry that matches no step, and lists none when the target names no non-check
+
+    @unit @SCN-RPT-073
+    Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing
 
   Rule: the report lists each scenario code error in a section of its own before the summary views, only when the corpus holds one, worded from the error's own values
 

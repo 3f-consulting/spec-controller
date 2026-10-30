@@ -997,7 +997,7 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **My first run reds with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
 
-1. Read the report's **Discovery scope** and **Step accounting** sections. They name each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
+1. Read the report's **Step accounting** section. It names each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
 3. To keep the report while you work it down without redding the build, add `--exit-zero`. Delete it when you are ready to gate.
 

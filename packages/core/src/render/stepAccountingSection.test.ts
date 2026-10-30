@@ -2,55 +2,49 @@ import { describe, it, expect } from "vitest";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { sectionUnder, cells } from "./renderedSection.test-utils.js";
-import { stepAccountingCi as ci, reconcileStepAccounting as reconcile } from "../evidenceReconciliation.test-utils.js";
+import { sectionUnder } from "./renderedSection.test-utils.js";
+import {
+  stepAccountingCi as ci,
+  nightly,
+  reconcileStepAccounting as reconcile,
+} from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-describe("[SCN-RPT-052] candidates, runners, the reconciler, the excluded and GitHub's plumbing sum to the steps read", () => {
-  it("tables each count of the step accounting's total under its header, then states that every step read is accounted for", () => {
-    const reconciliation = reconcile([ci]);
-    const total = reconciliation.summary.stepAccounting!.total;
-    expect(total).toStrictEqual({
-      stepsRead: 15,
-      candidates: 4,
-      runners: 1,
-      reconciler: 2,
-      excluded: 3,
-      plumbing: 5,
-      accountedFor: 15,
-    });
+describe("[SCN-RPT-052] the step-accounting section tables a row per workflow and job read, a total row when more than one job was read, and states that every step read is accounted for", () => {
+  const throughVerdict = (reconciliation: ReturnType<typeof reconcile>): string[] => {
     const lines = section(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
-    expect(lines).toHaveLength(8);
-    expect(lines[0]).toBe(heading);
-    expect(lines[1]).toBe("");
-    expect(lines[2]).toBe(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-    expect(lines[3]).toBe("| --- | --- | --- | --- | --- | --- | --- |");
-    expect(lines[4]).toBe("| 15 | 4 | 1 | 2 | 3 | 5 | 15 |");
-    expect(cells(lines[4]!)).toStrictEqual(
-      [
-        total.stepsRead,
-        total.candidates,
-        total.runners,
-        total.reconciler,
-        total.excluded,
-        total.plumbing,
-        total.accountedFor,
-      ].map(String)
-    );
-    expect(cells(lines[2]!)).toHaveLength(7);
-    expect(lines[5]).toBe("");
-    expect(lines[6]).toBe(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
-    expect(lines[7]).toBe("");
-    expect(lines).toStrictEqual([
+    const verdict = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
+    expect(verdict).toBeGreaterThan(0);
+    return lines.slice(0, verdict + 2);
+  };
+
+  it("tables the one job read as one row, with no total row, then states that every step read is accounted for", () => {
+    expect(throughVerdict(reconcile([ci]))).toStrictEqual([
       "### Step accounting",
       "",
-      "| Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
-      "| --- | --- | --- | --- | --- | --- | --- |",
-      "| 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
+      "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+      "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
+      "",
+      "- every step this run read is accounted for.",
+      "",
+    ]);
+  });
+
+  it("tables each job read as a row, by workflow then job, then a total row, then states that every step read is accounted for", () => {
+    expect(throughVerdict(reconcile([nightly, ci], ["nightly.yml", "ci.yml"]))).toStrictEqual([
+      "### Step accounting",
+      "",
+      "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+      "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
+      "| nightly.yml | audit | 1 | 1 | 0 | 0 | 0 | 0 | 1 |",
+      "| nightly.yml | sweep | 2 | 2 | 0 | 0 | 0 | 0 | 2 |",
+      "| Total | | 18 | 7 | 1 | 2 | 3 | 5 | 18 |",
       "",
       "- every step this run read is accounted for.",
       "",

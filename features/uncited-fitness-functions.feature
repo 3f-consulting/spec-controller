@@ -98,10 +98,10 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     The step that runs this tool's balance invocation, directly or through a manifest script, is
     the reconciler. The step that dumps GitHub's step record is its input. Both are excluded without
-    any configuration. The report names both under "### The reconciler", saying which runs the
-    reconciliation and which writes the step record it reads, and lists neither as excluded. The
-    same tool run for another purpose stays a candidate, and neither step is recognised by its
-    title.
+    any configuration. The report lists both under Reconciler, beneath the step accounting's
+    table, saying which runs the reconciliation and which writes the step record it reads, and
+    lists neither as excluded. The same tool run for another purpose stays a candidate, and
+    neither step is recognised by its title.
 
     @unit @SCN-USG-014
     Scenario: the balance step and its step-record dump are not candidates, and no configuration says so

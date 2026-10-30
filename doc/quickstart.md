@@ -202,7 +202,7 @@ The [README's sample report](../README.md) shows every kind of row in one small 
 
 Watch for a **watermelon**: a check that is green but could not have failed its job, because `continue-on-error` would have swallowed its red. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
-If your first run shows a wall of uncited checks, read the report's **Discovery scope** and **Step accounting** sections. They name each workflow and job, and what became of every step.
+If your first run shows a wall of uncited checks, read the report's **Step accounting** section. It names each workflow and job, how many steps were read and what became of every one.
 
 See [Reading the report](./how_to_use.md#reading-the-report), [Report rows to know](./how_to_use.md#report-rows-to-know) and [Watermelons](./how_to_use.md#watermelons).
 

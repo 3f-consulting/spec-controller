@@ -27,7 +27,7 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
   });
 });
 
-describe("[SCN-CLI-090] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[SCN-CLI-090] balance recognises the step that runs it as the reconciler, with nothing configured, named in its step accounting", () => {
   it("recognises the pipeline step running this command as the reconciler, with nothing configured, named in its step accounting", () => {
     const root = temporaryDirectory(`scn-usg-014-${process.pid}-`);
     const features = join(root, "features");

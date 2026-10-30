@@ -14,12 +14,6 @@ export function sectionUnder(heading: string): (lines: readonly string[]) => str
   };
 }
 
-export const cells = (row: string): string[] =>
-  row
-    .split("|")
-    .slice(1, -1)
-    .map((cell) => cell.trim());
-
 export const behaviouralRunnersSection = (lines: readonly string[]): string[] =>
   sectionUnder(CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading])(lines);
 

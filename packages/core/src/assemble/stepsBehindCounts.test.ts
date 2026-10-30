@@ -114,3 +114,86 @@ describe("[SCN-RMD-024] the step accounting names the steps behind its runners a
     expect(accounting.steps.runners).toStrictEqual(["ci.yml:quality:Unit tests"]);
   });
 });
+
+const qualityCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+      - name: Reconciliation
+        run: pnpm exec spec-controller balance --features features --ci .github/workflows
+`;
+
+const sweepThenAuditNightly = `name: fixture nightly
+jobs:
+  sweep:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Unit tests
+        run: pnpm test
+  audit:
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Reconciliation
+        run: pnpm exec spec-controller balance --features features --ci .github/workflows
+`;
+
+const twoWorkflowsEveryList = {
+  scripts: { test: "vitest run" },
+  specController: {
+    runners: { unit: "vitest" },
+    notChecks: ["nightly.yml:audit:Install", "ci.yml:quality:Install"],
+  },
+} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+
+describe("[SCN-RMD-026] every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists", () => {
+  it("lists each count's steps by workflow, then by job, and within a job in the order they were read, though the workflows are given against that order", () => {
+    const accounting = reconcile(
+      twoWorkflowsEveryList,
+      [sweepThenAuditNightly, qualityCi],
+      ["nightly.yml", "ci.yml"]
+    ).summary.stepAccounting!;
+    expect(accounting.byJob.map(({ workflow, job }) => `${workflow}:${job}`)).toStrictEqual([
+      "ci.yml:quality",
+      "nightly.yml:audit",
+      "nightly.yml:sweep",
+    ]);
+    expect(accounting.steps.runners).toStrictEqual(["ci.yml:quality:Unit tests", "nightly.yml:sweep:Unit tests"]);
+    expect(accounting.steps.reconciler).toStrictEqual([
+      { step: "ci.yml:quality:Reconciliation", role: "reconciles" },
+      { step: "nightly.yml:audit:Reconciliation", role: "reconciles" },
+    ]);
+    expect(accounting.steps.excluded).toStrictEqual(["ci.yml:quality:Install", "nightly.yml:audit:Install"]);
+    expect(accounting.steps.plumbing).toStrictEqual([
+      "ci.yml:quality:Setup Node",
+      "ci.yml:quality:Checkout",
+      "nightly.yml:audit:Setup Node",
+      "nightly.yml:sweep:Checkout",
+    ]);
+  });
+
+  it("gives the same rows and lists whichever order the workflows are given in", () => {
+    const givenAgainstTheOrder = reconcile(
+      twoWorkflowsEveryList,
+      [sweepThenAuditNightly, qualityCi],
+      ["nightly.yml", "ci.yml"]
+    ).summary.stepAccounting;
+    const givenInTheOrder = reconcile(
+      twoWorkflowsEveryList,
+      [qualityCi, sweepThenAuditNightly],
+      ["ci.yml", "nightly.yml"]
+    ).summary.stepAccounting;
+    expect(givenAgainstTheOrder).toStrictEqual(givenInTheOrder);
+  });
+});

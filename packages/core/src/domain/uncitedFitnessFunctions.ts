@@ -102,6 +102,11 @@ export function everyStepAccountedFor({
 
 const jobKeyOf = (step: PipelineStep): string => `${step.workflow}:${step.job}`;
 
+type WorkflowAndJob = Pick<PipelineStep, "workflow" | "job">;
+
+const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
+  a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job);
+
 type DispositionCount = Exclude<keyof JobStepAccount, "workflow" | "job" | "stepsRead">;
 
 const COUNTED_AS: Readonly<Record<StepDisposition, DispositionCount>> = {
@@ -123,22 +128,27 @@ const noStepsOf = ({ workflow, job }: PipelineStep): JobStepAccount => ({
   plumbing: 0,
 });
 
+export function accountedForOf({
+  candidates,
+  runners,
+  reconciler,
+  excluded,
+  plumbing,
+}: Pick<JobStepAccount, DispositionCount>): number {
+  return candidates + runners + reconciler + excluded + plumbing;
+}
+
 function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
   const summed = (count: DispositionCount | "stepsRead"): number => rows.reduce((sum, row) => sum + row[count], 0);
-  const candidates = summed("candidates");
-  const runners = summed("runners");
-  const reconciler = summed("reconciler");
-  const excluded = summed("excluded");
-  const plumbing = summed("plumbing");
-  return {
+  const counts = {
     stepsRead: summed("stepsRead"),
-    candidates,
-    runners,
-    reconciler,
-    excluded,
-    plumbing,
-    accountedFor: candidates + runners + reconciler + excluded + plumbing,
+    candidates: summed("candidates"),
+    runners: summed("runners"),
+    reconciler: summed("reconciler"),
+    excluded: summed("excluded"),
+    plumbing: summed("plumbing"),
   };
+  return { ...counts, accountedFor: accountedForOf(counts) };
 }
 
 function stepsBehindCounts(
@@ -178,13 +188,13 @@ export function stepAccountOf(
     const count = COUNTED_AS[dispositionOf(step)];
     rows.set(jobKeyOf(step), { ...row, stepsRead: row.stepsRead + 1, [count]: row[count] + 1 });
   }
-  const byJob = [...rows.values()].sort((a, b) => a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job));
+  const byJob = [...rows.values()].sort(byWorkflowThenJob);
   const total = totalOf(byJob);
   return {
     byJob,
     total,
     everyStepAccountedFor: everyStepAccountedFor(total),
-    steps: stepsBehindCounts(steps, dispositionOf, nameOf, roleOf),
+    steps: stepsBehindCounts([...steps].sort(byWorkflowThenJob), dispositionOf, nameOf, roleOf),
   };
 }
 

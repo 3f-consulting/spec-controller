@@ -179,7 +179,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     many steps they account for, and the step accounting states whether that is every step read.
     It names each reconciler step with its role, each step the target calls a non-check, and
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
-    count counts. The summary states the CI steps the run read there alone.
+    count counts. Each list of steps follows the rows' order, and each job's steps the order
+    they were read. The summary states the CI steps the run read there alone.
     A target with no pipeline has no step accounting.
 
     @unit @SCN-RMD-012
@@ -199,6 +200,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-025
     Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it
+
+    @unit @SCN-RMD-026
+    Scenario: every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists
 
   Rule: the summary carries scenario code errors beside the ledger, and they never alter it
 
