@@ -26,7 +26,6 @@ import { runVerdictSection } from "./runVerdict.js";
 import { scenarioCodeErrorsSection, scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { configurationNotReadSection } from "./configurationNotRead.js";
-import { behaviouralRunnersSection } from "./behaviouralRunners.js";
 import { stepAccountingSection } from "./stepAccounting.js";
 import { testVolumeSection } from "./testVolume.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
@@ -367,7 +366,6 @@ const SECTIONS: readonly SectionEmitter[] = [
   scenarioCodesCleanStatement,
   evidenceReconciliationSection,
   testVolumeSection,
-  behaviouralRunnersSection,
   stepAccountingSection,
   fitnessSection,
   byFeatureSection,

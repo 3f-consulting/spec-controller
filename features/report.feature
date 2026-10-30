@@ -211,6 +211,29 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-010
     Scenario: the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction
 
+  Rule: the evidence observations table names, beside each quality check's count, the runner that produced its evidence and the CI step that runs it
+
+    Under "### Evidence observations", the table has a row per quality check with its count,
+    its runner and its CI step. A behavioural quality check's runner is the one the target
+    declares for it, and its CI step is the step where balance found that runner run, directly
+    or through a package.json script. A quality check run in several steps lists each of them.
+
+    The fitness row says what runs a fitness function: each one's own check step, the step
+    whose id is its @SCN. Each fitness function's step is named on its row of Claim
+    Reconciliations.
+
+    A quality check with no evidence observations has blank runner and CI step cells. One
+    with evidence observations and no runner the target declares says so in its runner cell:
+    no runner where the target names none, unnamed where the target has not said.
+
+    There is no Behavioural runners section.
+
+    @unit @SCN-RPT-074
+    Scenario: each quality check's row names its runner and the CI steps that run it, the fitness row says what runs a fitness function, and a quality check with no evidence observations has blank runner and CI step cells
+
+    @unit @SCN-RPT-051
+    Scenario: a quality check with evidence observations and no runner the target declares says in its runner cell that the target names none, or that it has not said
+
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
 
     Each ledger row has evidence columns between Scenario and Verdict: Fitness first, then
@@ -599,13 +622,8 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-046
     Scenario: each key the specController block does not read is named in one sentence, after the entries of the wrong kind
 
-  Rule: the report accounts for fitness-function discovery, each account in a section of its own that is absent when it has nothing to say
-
-    @unit @SCN-RPT-051
-    Scenario: the runner-tier account says a tier the target names null has no runner and a tier it omits is unnamed, and is absent when every tier is named
-
     @unit @SCN-RPT-053
-    Scenario: the unrecognised-runner-key section names each runners key outside the four tiers, beneath the tiers the target recognises
+    Scenario: each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read
 
   Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job with the steps behind each count listed beneath
 

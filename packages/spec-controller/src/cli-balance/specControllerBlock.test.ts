@@ -60,11 +60,17 @@ describe("[SCN-CFG-006] a specController block whose every entry is a kind its r
     ["a null runner", { ...block, runners: { unit: "vitest", e2e: null } }],
     ["an empty notChecks", { ...block, notChecks: [] }],
     ["an empty deferralTags", { ...block, deferralTags: [] }],
-    ["a runners key that is not a tier, given a number", { ...block, runners: { unit: "vitest", lint: 5 } }],
   ])("reconciles a target holding %s, naming no entry it could not use and writing nothing to stderr", (_, specController) => {
     const run = balanceOf(specController);
     expect(run.report).toContain("## Run provenance");
     expect(run.report).not.toContain("## Configuration not read");
+    expect(run.stderr).toBe("");
+  });
+
+  it("reconciles a target holding a runners key that is not a tier, given a number, naming no entry as the wrong kind and writing nothing to stderr", () => {
+    const run = balanceOf({ ...block, runners: { unit: "vitest", lint: 5 } });
+    expect(run.report).toContain("## Run provenance");
+    expect(run.report.split("\n").filter((line) => /^- `[^`]+` is /.test(line))).toEqual([]);
     expect(run.stderr).toBe("");
   });
 });

@@ -3,15 +3,13 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { behaviouralRunnersSection as section } from "./renderedSection.test-utils.js";
+import { sectionUnder } from "./renderedSection.test-utils.js";
 import { unitTestsAndLintCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
-const tiers = ["unit", "integration", "e2e", "performance"];
-
-function reportLines(runners: Record<string, string | null>): string[] {
+function reportLines(runners: Record<string, string | null>, otherKeys: Record<string, unknown> = {}): string[] {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson: {
@@ -19,6 +17,7 @@ function reportLines(runners: Record<string, string | null>): string[] {
       specController: {
         runners,
         notChecks: ["ci.yml:quality:Checkout", "ci.yml:quality:Install"],
+        ...otherKeys,
       },
     },
     ciWorkflows: parsedWorkflows([ci]),
@@ -28,38 +27,40 @@ function reportLines(runners: Record<string, string | null>): string[] {
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
-const heading = CORE_MESSAGES[CoreMessage.BehaviouralRunnersHeading];
+const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const notATier = (key: string): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](key)}`;
 
-describe("[SCN-RPT-053] a runners key that is not one of the four tiers is reported, never silently honoured", () => {
-  it("renders the section for a key outside the four tiers alone, naming that key and no tier", () => {
-    const lines = section(
-      reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" })
-    );
-    const account = lines.filter((line) => line.startsWith("- "));
+const notRead = (key: string): string =>
+  `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`;
 
-    expect(account).toStrictEqual([notATier("lint")]);
-    for (const tier of tiers) {
-      expect(account.some((line) => line.includes(tier))).toBe(false);
-    }
-    expect(lines.some((line) => line.startsWith("| "))).toBe(false);
-    expect(lines).toStrictEqual([heading, "", notATier("lint"), ""]);
-  });
+describe("[SCN-RPT-053] each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read", () => {
+  it("gives a target whose only unread configuration is a key outside the four tiers the whole section, naming that key", () => {
+    const lines = reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" });
 
-  it("names the key after the tiers the target has not said, beneath the tier it recognises", () => {
-    expect(section(reportLines({ unit: "vitest", lint: "eslint" }))).toStrictEqual([
-      "### Behavioural runners",
+    expect(section(lines)).toStrictEqual([
+      heading,
       "",
-      "| Tier | Runner | Recognised at |",
-      "| --- | --- | --- |",
-      "| unit | vitest | Unit tests |",
+      CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
       "",
-      "- integration — unnamed: the target has not said.",
-      "- e2e — unnamed: the target has not said.",
-      "- performance — unnamed: the target has not said.",
       "- lint — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.",
       "",
     ]);
+  });
+
+  it("names the key after the keys the specController block does not read", () => {
+    const lines = reportLines({ unit: "vitest", lint: "eslint" }, { fitnessChecks: [] });
+
+    expect(section(lines).filter((line) => line.startsWith("- "))).toStrictEqual([
+      notRead("fitnessChecks"),
+      notATier("lint"),
+    ]);
+  });
+
+  it("prints no Behavioural runners section", () => {
+    const lines = reportLines({ unit: "vitest", lint: "eslint" });
+
+    expect(lines.some((line) => line.includes("Behavioural runners"))).toBe(false);
   });
 });

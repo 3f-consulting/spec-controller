@@ -24,6 +24,8 @@ const observations: EvidenceObservation[] = [
 const heading = "### Evidence observations";
 const sum = CORE_MESSAGES[CoreMessage.EvidenceObservationsSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
+const fitnessRunner = CORE_MESSAGES[CoreMessage.FitnessRunner];
+const fitnessCiStep = CORE_MESSAGES[CoreMessage.FitnessCiStep];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
@@ -37,7 +39,7 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
 }
 
 describe("[SCN-RPT-010] the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction", () => {
-  it("renders heading, blank, the identity line, blank, the two-column table with a row per quality check and fitness last at the running count, then one blank", () => {
+  it("renders heading, blank, the identity line, blank, the four-column table with a row per quality check and fitness last at the running count, then one blank", () => {
     const reconciliation = evidenceReconciliationOf(scenarios, observations, [], true, true);
     expect(reconciliation.summary.evidenceObservations).toMatchObject({
       total: 8,
@@ -51,12 +53,12 @@ describe("[SCN-RPT-010] the report renders the Evidence observations cut over ev
       sum(8, 5, 1, 2),
       "",
       tableHeader,
-      "| --- | --- |",
-      "| unit | 3 |",
-      "| integration | 1 |",
-      "| e2e | 2 |",
-      "| performance | 0 |",
-      "| fitness | 2 |",
+      "| --- | --- | --- | --- |",
+      "| unit | 3 |  |  |",
+      "| integration | 1 |  |  |",
+      "| e2e | 2 |  |  |",
+      "| performance | 0 |  |  |",
+      `| fitness | 2 | ${fitnessRunner} | ${fitnessCiStep} |`,
       "",
     ]);
   });

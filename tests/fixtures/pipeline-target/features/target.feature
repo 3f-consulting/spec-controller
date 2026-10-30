@@ -5,7 +5,7 @@ Feature: a target whose pipeline runs its unit tests and a fitness check, two of
   --features. Beside it sit that repository's CI workflow, the record of one run of it, its unit
   test report and a package.json naming its unit runner. Together they give the JSON report what
   the every-outcome corpus does not: a fitness Quality Check Reconciliation answered by a step
-  record, a shared code's two claims, the summary's behavioural runners and its step accounting.
+  record, a shared code's two claims, the evidence observations' runners and its step accounting.
 
   This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
   which scan features/*.feature only, never see the PLT code.

@@ -27,7 +27,9 @@
   "specController": {
     "runners": {
       "unit": "vitest",
-      "integration": "cucumber-js"
+      "integration": "cucumber-js",
+      "e2e": "cucumber-js",
+      "performance": null
     },
     "notChecks": [
       "ci.yml:ci:Check out the repository",

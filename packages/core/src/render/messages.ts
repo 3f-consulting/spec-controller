@@ -96,8 +96,8 @@ export enum CoreMessage {
   EvidenceObservationsHeading,
   EvidenceObservationsSum,
   EvidenceObservationsTableHeader,
-  BehaviouralRunnersHeading,
-  BehaviouralRunnersTableHeader,
+  FitnessRunner,
+  FitnessCiStep,
   RunnerTierNamesNone,
   RunnerTierUnnamed,
   RunnerKeyNotATier,
@@ -213,8 +213,6 @@ interface CoreMessageParams {
   readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
-  readonly [CoreMessage.RunnerTierNamesNone]: [tier: string];
-  readonly [CoreMessage.RunnerTierUnnamed]: [tier: string];
   readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
@@ -410,11 +408,11 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
   [CoreMessage.EvidenceObservationsSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
     `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
-  [CoreMessage.EvidenceObservationsTableHeader]: "| Quality-check | Evidence observations |",
-  [CoreMessage.BehaviouralRunnersHeading]: "### Behavioural runners",
-  [CoreMessage.BehaviouralRunnersTableHeader]: "| Tier | Runner | Recognised at |",
-  [CoreMessage.RunnerTierNamesNone]: (tier) => `${tier} — no runner: the target names none.`,
-  [CoreMessage.RunnerTierUnnamed]: (tier) => `${tier} — unnamed: the target has not said.`,
+  [CoreMessage.EvidenceObservationsTableHeader]: "| Quality-check | Evidence observations | Runner | CI step |",
+  [CoreMessage.FitnessRunner]: "each fitness function's check step",
+  [CoreMessage.FitnessCiStep]: "the step whose id is its @SCN",
+  [CoreMessage.RunnerTierNamesNone]: "no runner: the target names none.",
+  [CoreMessage.RunnerTierUnnamed]: "unnamed: the target has not said.",
   [CoreMessage.RunnerKeyNotATier]: (key) =>
     `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
