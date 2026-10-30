@@ -360,9 +360,10 @@ Feature: The report renders the ledger as sectioned facts
 
     A reconciling item reads its quality check, a colon and its outcome's sentence, as
     "unit: Evidence Observation is missing" or "fitness: Evidence Observation is missing". An
-    item with no quality check reads the sentence alone.
+    item with no quality check reads the sentence alone. Where an item names what the run
+    reported, such as the test that failed, that follows in parentheses, quoted as the run gave it.
 
-    No symbol stands beside a verdict or an outcome.
+    The report puts no symbol of its own beside a verdict or an outcome.
 
     @unit @SCN-RPT-066
     Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
