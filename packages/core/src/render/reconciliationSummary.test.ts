@@ -78,6 +78,11 @@ function expectedTable(
   return [
     CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
     "",
+    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationClaimReconciliationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObligationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObservationTerm]}`,
+    "",
     row([
       CORE_MESSAGES[CoreMessage.SubjectColumn],
       CORE_MESSAGES[CoreMessage.TotalColumn],

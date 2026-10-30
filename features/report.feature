@@ -75,6 +75,21 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-004
     Scenario: the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns
 
+  Rule: the evidence reconciliation section says what it counts before its table
+
+    Under "### Evidence reconciliation", four sentences come before the table, one each for a
+    Claim Reconciliation, a Quality Check Reconciliation, an Evidence Obligation and an
+    Evidence Observation. Every run prints the same four sentences, and none of them states a
+    count.
+
+    The second sentence says why the two totals differ: a claim holds one Quality Check
+    Reconciliation for each quality check its evidence names, so a scenario tagged both unit
+    and integration adds one to the Claim Reconciliation total and two to the Quality Check
+    Reconciliation total.
+
+    @unit @SCN-RPT-071
+    Scenario: the evidence reconciliation section says what a Claim Reconciliation, a Quality Check Reconciliation, an Evidence Obligation and an Evidence Observation are before its table
+
   Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
     Under "## Summary views", the "### Fitness evidence obligations" section lists the fitness

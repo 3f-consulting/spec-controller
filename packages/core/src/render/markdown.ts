@@ -160,6 +160,13 @@ const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
   CORE_MESSAGES[CoreMessage.DetailColumn],
 ];
 
+const EVIDENCE_RECONCILIATION_TERMS = [
+  CoreMessage.EvidenceReconciliationClaimReconciliationTerm,
+  CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm,
+  CoreMessage.EvidenceReconciliationEvidenceObligationTerm,
+  CoreMessage.EvidenceReconciliationEvidenceObservationTerm,
+] as const;
+
 const evidenceReconciliationSection: SectionEmitter = (report) => {
   const { claimReconciliations, qualityCheckReconciliations, pending } = report.summary.evidenceReconciliation;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
@@ -168,6 +175,8 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     .join(" + ");
   const lines = [
     CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
+    "",
+    ...EVIDENCE_RECONCILIATION_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
     "",
     row(EVIDENCE_RECONCILIATION_COLUMNS),
     row(["---", "---", "---", "---", "---"]),

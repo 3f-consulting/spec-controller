@@ -81,6 +81,10 @@ export enum CoreMessage {
   NothingToReconcileGloss,
   PendingItemsOutstanding,
   EvidenceReconciliationHeading,
+  EvidenceReconciliationClaimReconciliationTerm,
+  EvidenceReconciliationQualityCheckReconciliationTerm,
+  EvidenceReconciliationEvidenceObligationTerm,
+  EvidenceReconciliationEvidenceObservationTerm,
   SubjectColumn,
   TotalColumn,
   BalancedColumn,
@@ -383,6 +387,16 @@ export const CORE_MESSAGES: CoreMessages = {
     "Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
+  [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
+    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
+  [CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]:
+    "A Quality Check Reconciliation is one quality check's evidence within a claim. " +
+    "A claim holds one for each quality check its evidence names, so a scenario tagged both unit and integration " +
+    "adds one to the Claim Reconciliation total and two to the Quality Check Reconciliation total.",
+  [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
+    "An Evidence Obligation is what a scenario asks for: one for each quality check its tags name, met by Evidence Observations.",
+  [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
+    "An Evidence Observation is a test or a fitness function that ran, attributed to the scenario it cites.",
   [CoreMessage.SubjectColumn]: "Subject",
   [CoreMessage.TotalColumn]: "Total",
   [CoreMessage.BalancedColumn]: "Balanced",
