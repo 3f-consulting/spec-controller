@@ -181,7 +181,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     step as. It holds one row per workflow and job, ordered by workflow and then by job. Each
     row carries the steps read and how many of them are candidates, runners, reconciler steps,
     excluded steps and plumbing. Its total sums each of those counts over the rows, with how
-    many steps they account for, and the step accounting states whether that is every step read.
+    many steps they account for.
     It names each reconciler step with its role, each step the target calls a non-check, and
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
     count counts. Each list of steps follows the rows' order, and each job's steps the order
@@ -216,9 +216,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the JSON report carries the run's conclusions as the Markdown states them
 
-    The JSON report is the run's result, so it names the run verdict and says whether every
-    step the run read is accounted for. A machine reading it never works either out from the
-    ledger.
+    The JSON report is the run's result, so it names the run verdict. A machine reading it
+    never works the verdict out from the ledger.
 
     @unit @SCN-RMD-017
     Scenario Outline: the JSON report's summary names the <verdict> run verdict, the one the Markdown's verdict headline states
@@ -231,9 +230,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
         | pending              |
         | nothing-to-reconcile |
         | scenario-code-errors |
-
-    @unit @SCN-RMD-018
-    Scenario: the JSON report's step accounting states whether every step the run read is accounted for, as the Markdown's step accounting does
 
   Rule: the JSON report's structure is stated by a JSON Schema the published package ships
 

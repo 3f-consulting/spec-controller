@@ -50,6 +50,14 @@ const label = "Excluded:";
 const stepAccounting = (lines: readonly string[]): string[] =>
   sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(lines);
 
+const endOfTable = (section: readonly string[]): number => {
+  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+  expect(header).toBeGreaterThanOrEqual(0);
+  const end = section.indexOf("", header);
+  expect(end).toBeGreaterThan(header);
+  return end;
+};
+
 const excludedList = (lines: readonly string[], length: number): string[] => {
   const start = lines.indexOf(label);
   expect(start).toBeGreaterThanOrEqual(0);
@@ -57,12 +65,11 @@ const excludedList = (lines: readonly string[], length: number): string[] => {
 };
 
 describe("[SCN-RPT-048] the step-accounting section lists each excluded step beneath its table with its reason, and lists none when the target names no non-check", () => {
-  it("lists each excluded step with its reason under an Excluded label beneath the table's verdict, then a blank line, and no entry that matches no step", () => {
+  it("lists each excluded step with its reason under an Excluded label beneath the table, then a blank line, and no entry that matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types", "ci.yml:quality:Lint"]));
-    const verdict = section.indexOf(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
+    const tableEnd = endOfTable(section);
 
-    expect(verdict).toBeGreaterThanOrEqual(0);
-    expect(section.indexOf(label)).toBeGreaterThan(verdict);
+    expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
     expect(excludedList(section, 3)).toStrictEqual([
       "Excluded:",
       "- ci.yml:quality:Types — excluded: the target names this step a non-check.",

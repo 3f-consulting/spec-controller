@@ -94,7 +94,6 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
   [CoreMessage.StepExcluded]: ["ci.yml / build / lint"],
   [CoreMessage.NotChecksEntryMatchesNoStep]: ["ci.yml / build / gone"],
-  [CoreMessage.StepsNotAccountedFor]: [5, 4],
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
   [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],
   [CoreMessage.PhantomClaimReconciliations]: [1],

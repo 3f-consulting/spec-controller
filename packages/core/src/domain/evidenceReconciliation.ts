@@ -311,7 +311,6 @@ export interface StepsBehindCounts {
 export interface StepAccounting {
   readonly byJob: readonly JobStepAccount[];
   readonly total: StepAccountTotal;
-  readonly everyStepAccountedFor: boolean;
   readonly steps: StepsBehindCounts;
 }
 

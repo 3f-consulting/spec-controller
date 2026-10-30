@@ -660,7 +660,7 @@ Feature: The report renders the ledger as sectioned facts
     the CI steps the run read. Its table has a row per workflow and job read, in the step
     accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners,
     Reconciler, Excluded, GitHub plumbing and Accounted for. When more than one job was read, a
-    Total row follows them. The section then states whether every step read is accounted for.
+    Total row follows them.
 
     Beneath the table, each column other than Candidates that counts a step lists the steps
     behind it, under the column's name: Runners, Reconciler, Excluded and GitHub plumbing, in
@@ -672,7 +672,7 @@ Feature: The report renders the ledger as sectioned facts
     The section is absent for a target with no pipeline.
 
     @unit @SCN-RPT-052
-    Scenario: the step-accounting section tables a row per workflow and job read, a total row when more than one job was read, and states that every step read is accounted for
+    Scenario: the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read
 
     @unit @SCN-RPT-072
     Scenario: the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one

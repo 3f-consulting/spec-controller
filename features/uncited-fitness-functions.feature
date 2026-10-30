@@ -159,8 +159,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     Every step read leaves as a candidate, a runner, the reconciler, an excluded step or one of
     GitHub's plumbing actions. The report states how many steps it read and how many it accounted
-    for, and the two are equal. The JSON report names the steps behind each count, plumbing steps
-    included; the Markdown report counts plumbing steps and does not name them.
+    for, and the two are equal. The JSON report and the Markdown report both name the steps behind
+    each count other than the candidates, plumbing steps included.
 
     @unit @SCN-USG-018
-    Scenario: the step account's total sums each count over its rows, and every step read is accounted for when the dispositions sum to the steps read
+    Scenario: the step account's total sums each count over its rows, and the steps its dispositions account for equal the steps read

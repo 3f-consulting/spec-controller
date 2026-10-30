@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { JobStepAccount } from "../domain/evidenceReconciliation.js";
-import { everyStepAccountedFor } from "../domain/uncitedFitnessFunctions.js";
 import {
   feature,
   nightly,
@@ -67,12 +66,6 @@ describe("[SCN-RMD-023] the step accounting's total sums each count over its row
       accountedFor: 18,
     });
     expect(accounting.total).toStrictEqual(summedOver(accounting.byJob));
-  });
-
-  it("states the domain's conclusion over the total, that every step read is accounted for", () => {
-    const accounting = reconcileTwoWorkflows().summary.stepAccounting!;
-    expect(accounting.everyStepAccountedFor).toBe(true);
-    expect(accounting.everyStepAccountedFor).toBe(everyStepAccountedFor(accounting.total));
   });
 
   it("carries, for a pipeline of one job, a total equal to that job's row", () => {

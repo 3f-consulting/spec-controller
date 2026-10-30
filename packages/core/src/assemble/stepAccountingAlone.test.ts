@@ -23,8 +23,8 @@ describe("[SCN-RMD-025] the summary states the CI steps the run read in its step
     expect(summary).not.toHaveProperty("excludedSteps");
   });
 
-  it("holds in the step accounting its rows, its total, its conclusion and the steps behind its counts, and nothing else", () => {
+  it("holds in the step accounting its rows, its total and the steps behind its counts, and nothing else", () => {
     const accounting = savedReport().summary.stepAccounting!;
-    expect(Object.keys(accounting).sort()).toStrictEqual(["byJob", "everyStepAccountedFor", "steps", "total"]);
+    expect(Object.keys(accounting).sort()).toStrictEqual(["byJob", "steps", "total"]);
   });
 });

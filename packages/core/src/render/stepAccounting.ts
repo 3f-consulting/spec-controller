@@ -5,11 +5,6 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
 
-const verdictOf = ({ everyStepAccountedFor, total }: StepAccounting): string =>
-  everyStepAccountedFor
-    ? `- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`
-    : `- ${CORE_MESSAGES[CoreMessage.StepsNotAccountedFor](total.stepsRead, total.accountedFor)}`;
-
 const rowOf = (cells: readonly (string | number)[]): string => `| ${cells.join(" | ")} |`;
 
 const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
@@ -81,8 +76,6 @@ export const stepAccountingSection = (report: RenderInput): string[] => {
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...jobRowsOf(accounting),
     ...totalRowOf(accounting),
-    "",
-    verdictOf(accounting),
     "",
     ...runnersListOf(accounting),
     ...reconcilerListOf(accounting),

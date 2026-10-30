@@ -115,8 +115,6 @@ export enum CoreMessage {
   StepAccountingReconcilerLabel,
   StepAccountingExcludedLabel,
   StepAccountingPlumbingLabel,
-  EveryStepAccountedFor,
-  StepsNotAccountedFor,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
@@ -217,7 +215,6 @@ interface CoreMessageParams {
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
-  readonly [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
@@ -432,10 +429,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepAccountingReconcilerLabel]: "Reconciler:",
   [CoreMessage.StepAccountingExcludedLabel]: "Excluded:",
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
-  [CoreMessage.EveryStepAccountedFor]: "every step this run read is accounted for.",
-  [CoreMessage.StepsNotAccountedFor]: (stepsRead, accountedFor) =>
-    `${stepsRead} step(s) read, ${accountedFor} accounted for — the five dispositions do not ` +
-    `add up to the steps this run read.`,
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",

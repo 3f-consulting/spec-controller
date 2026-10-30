@@ -30,6 +30,14 @@ const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
 const stepAccounting = (lines: readonly string[]): string[] =>
   sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(lines);
 
+const endOfTable = (section: readonly string[]): number => {
+  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+  expect(header).toBeGreaterThanOrEqual(0);
+  const end = section.indexOf("", header);
+  expect(end).toBeGreaterThan(header);
+  return end;
+};
+
 const reconcilerList = (lines: readonly string[]): string[] => {
   const start = lines.indexOf(label);
   expect(start).toBeGreaterThanOrEqual(0);
@@ -37,13 +45,12 @@ const reconcilerList = (lines: readonly string[]): string[] => {
 };
 
 describe("[SCN-RPT-050] the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation", () => {
-  it("lists each reconciler step under a Reconciler label beneath the table's verdict, with what that step does, in the order the steps were read", () => {
+  it("lists each reconciler step under a Reconciler label beneath the table, with what that step does, in the order the steps were read", () => {
     const section = stepAccounting(reportLines(ci));
-    const verdict = section.indexOf(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
+    const tableEnd = endOfTable(section);
 
     expect(reconciles).not.toBe(records);
-    expect(verdict).toBeGreaterThanOrEqual(0);
-    expect(section.indexOf(label)).toBeGreaterThan(verdict);
+    expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
     expect(reconcilerList(section)).toStrictEqual([
       "Reconciler:",
       "- ci.yml:ci:Dump this run's step record — the reconciler: this step writes the step record the reconciliation reads.",

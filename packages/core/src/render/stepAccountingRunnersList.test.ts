@@ -21,6 +21,14 @@ const stepAccounting = (reconciliation: EvidenceReconciliation): string[] =>
     renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n")
   );
 
+const endOfTable = (section: readonly string[]): number => {
+  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+  expect(header).toBeGreaterThanOrEqual(0);
+  const end = section.indexOf("", header);
+  expect(end).toBeGreaterThan(header);
+  return end;
+};
+
 const withoutRunners = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
@@ -34,13 +42,12 @@ const withoutRunners = (): EvidenceReconciliation =>
   });
 
 describe("[SCN-RPT-072] the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one", () => {
-  it("lists the step that runs the declared runner under a Runners label beneath the table's verdict, before the Reconciler list", () => {
+  it("lists the step that runs the declared runner under a Runners label beneath the table, before the Reconciler list", () => {
     const section = stepAccounting(reconcileStepAccounting([ci]));
-    const verdict = section.indexOf(`- ${CORE_MESSAGES[CoreMessage.EveryStepAccountedFor]}`);
+    const tableEnd = endOfTable(section);
     const start = section.indexOf(label);
 
-    expect(verdict).toBeGreaterThanOrEqual(0);
-    expect(start).toBeGreaterThan(verdict);
+    expect(start).toBeGreaterThan(tableEnd);
     expect(section.slice(start, start + 4)).toStrictEqual([
       "Runners:",
       "- ci.yml:ci:Unit tests",

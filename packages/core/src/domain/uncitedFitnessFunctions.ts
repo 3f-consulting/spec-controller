@@ -93,13 +93,6 @@ export function stepDispositions({
   return (step) => exclusionOf(step, isReconciler, isNamedANonCheck) ?? dispositionOfIncluded(step, runsARunner);
 }
 
-export function everyStepAccountedFor({
-  stepsRead,
-  accountedFor,
-}: Pick<StepAccountTotal, "stepsRead" | "accountedFor">): boolean {
-  return accountedFor === stepsRead;
-}
-
 const jobKeyOf = (step: PipelineStep): string => `${step.workflow}:${step.job}`;
 
 type WorkflowAndJob = Pick<PipelineStep, "workflow" | "job">;
@@ -189,11 +182,9 @@ export function stepAccountOf(
     rows.set(jobKeyOf(step), { ...row, stepsRead: row.stepsRead + 1, [count]: row[count] + 1 });
   }
   const byJob = [...rows.values()].sort(byWorkflowThenJob);
-  const total = totalOf(byJob);
   return {
     byJob,
-    total,
-    everyStepAccountedFor: everyStepAccountedFor(total),
+    total: totalOf(byJob),
     steps: stepsBehindCounts([...steps].sort(byWorkflowThenJob), dispositionOf, nameOf, roleOf),
   };
 }

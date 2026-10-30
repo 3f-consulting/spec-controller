@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { everyStepAccountedFor, stepAccountOf, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
+import { stepAccountOf, stepDispositions, type StepTest } from "./uncitedFitnessFunctions.js";
 import type { JobStepAccount } from "./evidenceReconciliation.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
@@ -56,7 +56,7 @@ const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "excluded", 
 const summedOver = (rows: readonly JobStepAccount[], count: (typeof COUNTS)[number]): number =>
   rows.reduce((sum, row) => sum + row[count], 0);
 
-describe("[SCN-USG-018] the step account's total sums each count over its rows, and every step read is accounted for when the dispositions sum to the steps read", () => {
+describe("[SCN-USG-018] the step account's total sums each count over its rows, and the steps its dispositions account for equal the steps read", () => {
   it("sums each count over the rows of every workflow and job, and adds the dispositions back up to the steps read", () => {
     const dispositionOf = stepDispositions({
       isReconciler: named("Dump this run's step record", "Reconciliation"),
@@ -75,7 +75,7 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
     });
     expect(COUNTS.map((count) => account.total[count])).toEqual(COUNTS.map((count) => summedOver(account.byJob, count)));
     expect(account.byJob).toHaveLength(3);
-    expect(account.everyStepAccountedFor).toBe(true);
+    expect(account.total.accountedFor).toBe(account.total.stepsRead);
   });
 
   it("reads no step from a list item that neither runs a command nor uses an action", () => {
@@ -99,12 +99,5 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
       plumbing: 0,
       accountedFor: 1,
     });
-  });
-
-  it("finds every step accounted for when the dispositions add up to the steps read, and not otherwise", () => {
-    const total = { stepsRead: 10, candidates: 4, runners: 1, reconciler: 2, excluded: 3, plumbing: 0 };
-    expect(everyStepAccountedFor({ ...total, accountedFor: 10 })).toBe(true);
-    expect(everyStepAccountedFor({ ...total, accountedFor: 9 })).toBe(false);
-    expect(everyStepAccountedFor({ ...total, accountedFor: 11 })).toBe(false);
   });
 });
