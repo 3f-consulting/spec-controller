@@ -58,8 +58,9 @@ Feature: The report renders the ledger as sectioned facts
 
     The Reconciliation line row counts every Reconciliation line on every row, including the
     rows of phantom claims and the unnamed claim: each evidence observation a Quality Check
-    Reconciliation holds, and its evidence obligation when no evidence observation that ran
-    answers it. It is therefore not a count of evidence obligations.
+    Reconciliation holds, its evidence obligation when no evidence observation that ran
+    answers it, and one line for a scenario that has neither at any quality check. It is
+    therefore not a count of evidence obligations.
 
     Its out-of-balance count breaks down in place into cause rows, one per outcome, each
     reading the outcome's sentence alone. The cause rows fill only the out-of-balance column,
@@ -324,7 +325,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the Quality Check Reconciliation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
-    The Quality Check Reconciliation out-of-balance count in the Evidence reconciliation table
+    The Reconciliation line out-of-balance count in the Evidence reconciliation table
     breaks down into a flat list of the ten out-of-balance outcomes. Each is a counted row that
     reads the outcome's sentence alone, in this order: missing, failing, watermelon,
     no-scn-code, duplicate-scn-code, cites-unknown-scenario, cites-no-scenario,
