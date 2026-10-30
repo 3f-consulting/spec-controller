@@ -28,7 +28,6 @@ import {
 import type {
   ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
-  FitnessTally,
   EvidenceObservationTally,
   QualityCheckObservations,
 } from "./ledger.js";
@@ -325,7 +324,6 @@ interface EvidenceReconciliationTotals {
 export interface Summary {
   readonly evidenceReconciliation: EvidenceReconciliationTotals;
   readonly evidenceObservations?: EvidenceObservationTally;
-  readonly fitness: FitnessTally;
   readonly runnerKeysNotATier?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
   readonly configurationKeysNotRead?: readonly string[];
@@ -351,7 +349,6 @@ export function summaryOf(ledger: Ledger, withEvidenceObservations: boolean): Su
     ...(withEvidenceObservations
       ? { evidenceObservations: evidenceObservationTally(ledger) }
       : {}),
-    fitness: tally.fitness,
   };
 }
 

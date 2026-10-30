@@ -12,7 +12,7 @@ const runnerCells = ({ qualityCheck, count, runner, ciSteps }: QualityCheckObser
   }
   if (qualityCheck === "fitness") {
     if (count === 0) return ["", ""];
-    return [CORE_MESSAGES[CoreMessage.FitnessRunner], CORE_MESSAGES[CoreMessage.FitnessCiStep]];
+    return [CORE_MESSAGES[CoreMessage.FitnessRunner], ciSteps ? CORE_MESSAGES[CoreMessage.FitnessCiStep](ciSteps.length) : ""];
   }
   if (runner === undefined) return [CORE_MESSAGES[CoreMessage.RunnerTierUnnamed], ""];
   return [CORE_MESSAGES[CoreMessage.RunnerTierNamesNone], ""];

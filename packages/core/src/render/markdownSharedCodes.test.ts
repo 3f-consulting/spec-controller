@@ -13,6 +13,13 @@ import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import {
+  RECONCILING_ITEMS_COLUMN,
+  VERDICT_COLUMN,
+  claimReconciliationsTable,
+  type ClaimReconciliationsTable,
+  type ClaimRow,
+} from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "stg-017",
@@ -98,11 +105,11 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   return block.slice(0, block.indexOf(""));
 }
 
-describe("[SCN-RPT-064] the report states scenarios against accounts, and names the scenarios sharing each code", () => {
+describe("[SCN-RPT-064] the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code", () => {
   it.each([
     [
-      "states that the corpus holds three scenarios in three accounts, a shared code's scenarios each in an account of its own",
-      "- The corpus holds 3 scenarios in 3 accounts — 1 @SCN code(s) carried by more than one scenario:",
+      "states that the corpus holds three scenarios, one code carried by more than one of them",
+      "- The corpus holds 3 scenarios — 1 @SCN code(s) carried by more than one scenario:",
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
@@ -129,12 +136,13 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       ],
       []
     );
-    const row = renderMarkdown(er(bare), ctx, publishedExitCodeOf).split("\n").find((line) => line.startsWith("| SCN-ONE-001 "));
-    expect(row).toContain("| out-of-balance | Evidence Obligation's @SCN code is carried by another Scenario");
-    expect(row).not.toContain("undefined");
+    const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("SCN-ONE-001");
+    expect(row?.cell(VERDICT_COLUMN)).toBe("out-of-balance");
+    expect(row?.cell(RECONCILING_ITEMS_COLUMN).startsWith("Evidence Obligation's @SCN code is carried by another Scenario")).toBe(true);
+    expect(row?.cells.join(" | ")).not.toContain("undefined");
   });
 
-  it("counts every scenario against its accounts and names each shared code's carriers, a code to a line, in code order", () => {
+  it("counts every scenario and every shared code, and names each shared code's carriers, a code to a line, in code order", () => {
     expect(
       censusBlock([
         { feature: "alpha.feature", source: alpha },
@@ -142,7 +150,7 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
       ])
     ).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 6, 2)}`,
+      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 2)}`,
       "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
       "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
     ]);
@@ -150,8 +158,8 @@ describe("[SCN-RPT-064] the report states scenarios against accounts, and names 
 });
 
 describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles", () => {
-  const sharerRowsOf = (): string[] =>
-    renderMarkdown(
+  const sharerTable = (): ClaimReconciliationsTable =>
+    claimReconciliationsTable(renderMarkdown(
       er(
         reconcile(
           [
@@ -163,9 +171,8 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
       ),
       ctx,
       publishedExitCodeOf
-    )
-      .split("\n")
-      .filter((line) => line.startsWith("| SCN-ONE-001 "));
+    ));
+  const sharerRowsOf = (): ClaimRow[] => sharerTable().rowsOf("SCN-ONE-001");
 
   it.each([
     ["login.feature : a user with the right password is let in"],
@@ -173,15 +180,18 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
   ])("names %s in its sharer's reconciling items", (scenario) => {
     const rows = sharerRowsOf();
     expect(rows).toHaveLength(2);
-    expect(rows.filter((row) => row.endsWith(`| unit: ${OUTCOME_DESCRIPTION["duplicate-scn-code"]} — this one is ${scenario} |`))).toHaveLength(1);
+    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN) === `unit: ${OUTCOME_DESCRIPTION["duplicate-scn-code"]} — this one is ${scenario}`)).toHaveLength(1);
   });
 
   it("renders the two sharers' rows alike but for the scenario each names", () => {
-    const rows = sharerRowsOf().map((row) =>
-      row.replace(/ — this one is [^|]+ \|$/, " — this one is <scenario> |")
+    const table = sharerTable();
+    const rows = table.rowsOf("SCN-ONE-001").map((row) =>
+      table.header.map((column) =>
+        column === RECONCILING_ITEMS_COLUMN ? row.cell(column).replace(/ — this one is .+$/, " — this one is <scenario>") : row.cell(column)
+      )
     );
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toContain(" — this one is <scenario> |");
-    expect(rows[1]).toBe(rows[0]);
+    expect(rows[0]![table.header.indexOf(RECONCILING_ITEMS_COLUMN)]).toContain(" — this one is <scenario>");
+    expect(rows[1]).toEqual(rows[0]);
   });
 });

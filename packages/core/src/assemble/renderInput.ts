@@ -10,7 +10,6 @@ export type {
   ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   MissingByQualityCheck,
-  FitnessTally,
 } from "../domain/ledger.js";
 export type { Summary, EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 

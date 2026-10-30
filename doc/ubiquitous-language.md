@@ -177,9 +177,8 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 |---|---|
 | corpus | The feature files under `--features`, whose scenarios one run reconciles. |
 | corpus census | The count of the corpus's scenarios, read from the Ledger summary. |
-| Summary views | The report's `## Summary views` section: the tallies by subject. It holds the by-quality-check view, *Out-of-balance by feature* and *Fitness evidence obligations*. |
+| Summary views | The report's `## Summary views` section: the tallies by subject. It holds the by-quality-check view and *Out-of-balance by feature*. |
 | Out-of-balance by feature | The Summary views subsection that groups out-of-balance Claim Reconciliations by feature, opening with an *N of M* total line. |
-| Fitness evidence obligations | The Summary views subsection listing the fitness Evidence Obligations that `@fitness` scenarios raise, apart from behavioural items, opening with an *N of M* total line. |
 | harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. A broken one is reported as a harness failure, and the run is stamped Unsound. |
 | term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |
 | pair | The scenario code and quality check at which an Evidence Obligation, and the Evidence Observations answering it, are booked. A term names a pair, and a credit at a named pair reconciles as a matched obligation. |

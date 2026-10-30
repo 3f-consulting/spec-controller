@@ -3,12 +3,12 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { verdictAndItemsOf as rowFor } from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "pending-item-row-target",
@@ -49,18 +49,6 @@ function render(): string {
   const ledger = reconcile(parseScenarios(FEATURE, [DEFERRAL_TAG.slice(1)]), OBSERVATIONS);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
-}
-
-function rowFor(md: string, scnId: string): { verdict: string; items: string } {
-  const lines = md.split("\n");
-  const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  const matching = lines.slice(header + 2).filter((line) => line.startsWith(`| ${scnId} | `));
-  expect(matching).toHaveLength(1);
-  const cells = matching[0]!.slice(2, -2).split(" | ");
-  expect(cells).toHaveLength(3);
-  expect(cells[0]).toBe(scnId);
-  return { verdict: cells[1]!, items: cells[2]! };
 }
 
 const pendingFor = (qualityCheck: string): string => `pending: ${qualityCheck}`;

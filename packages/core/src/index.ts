@@ -67,7 +67,6 @@ export type {
   ClaimReconciliationTotals,
   QualityCheckReconciliationTotals,
   MissingByQualityCheck,
-  FitnessTally,
 } from "./assemble/renderInput.js";
 
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";

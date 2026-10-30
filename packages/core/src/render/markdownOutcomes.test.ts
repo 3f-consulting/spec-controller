@@ -6,6 +6,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
 describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the bare handle", () => {
   let rich: Ledger;
@@ -49,9 +50,10 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     }
   });
 
-  it("renders the fitness table's Outcome column with the outcome's sentence", () => {
-    const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
-    expect(md).toContain(`| SCN-A | ${OUTCOME_DESCRIPTION.watermelon} |`);
+  it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
+    const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
+    expect(items).toContain(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
+    expect(items).not.toContain("fitness: watermelon");
   });
 });
 

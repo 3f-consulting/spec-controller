@@ -9,6 +9,7 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { RECONCILING_ITEMS_COLUMN, claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-integrity-target",
@@ -63,12 +64,7 @@ function runIntegrityLines(md: string): string[] {
 }
 
 function reconcilingItemsCell(md: string, claim: string): string {
-  const lines = md.split("\n");
-  const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  const rows = lines.slice(header + 2).filter((line) => line.startsWith(`| ${claim} | `));
-  expect(rows).toHaveLength(1);
-  return rows[0]!.slice(2, -2).split(" | ")[2]!;
+  return claimReconciliationsTable(md).rowOf(claim).cell(RECONCILING_ITEMS_COLUMN);
 }
 
 const whatBroke = (locator: string): string =>

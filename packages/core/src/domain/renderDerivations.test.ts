@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { fitnessReconciliationsOf, fitnessTally } from "./ledger.js";
 import {
   isScenario,
   fitnessFunctionReconciliationsOf,
@@ -89,17 +88,5 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
     const row = rowOf("SCN-AAA-002");
     expect(fitnessFunctionReconciliationsOf(row).flatMap(linesOf).map((line) => line.outcome)).toEqual(["missing"]);
     expect(observationCountOf(row, "fitness")).toBe(0);
-  });
-});
-
-describe("[SCN-LDG-001] fitnessReconciliationsOf is the ONE named fitness list", () => {
-
-  it("is the source the fitness tally folds", () => {
-    const named = fitnessReconciliationsOf(ledger);
-    expect(fitnessTally(ledger)).toEqual({
-      satisfied: named.filter((d) => linesOf(d.reconciliation).every((line) => line.outcome === "satisfied")).length,
-      total: named.length,
-    });
-    expect(fitnessTally(ledger)).toEqual({ satisfied: 1, total: 3 });
   });
 });

@@ -3,7 +3,7 @@ import type {
   PendingItem,
   QualityCheck,
 } from "./journal.js";
-import { evidenceObligationsOf } from "./journal.js";
+import { QUALITY_CHECKS, evidenceObligationsOf, isFitnessObservation } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
@@ -136,6 +136,28 @@ export function namesQualityCheck(row: ClaimReconciliation, qualityCheck: Qualit
 
 export function observationCountOf(row: ClaimReconciliation, qualityCheck: QualityCheck): number {
   return ranObservationsOf(row).filter((o) => o.qualityCheck === qualityCheck).length;
+}
+
+type StepsAtQualityCheck = { readonly qualityCheck: QualityCheck; readonly ciSteps?: readonly string[] };
+
+function stepsAt(
+  row: ClaimReconciliation,
+  qualityCheck: QualityCheck,
+  stepsByQualityCheck: readonly StepsAtQualityCheck[]
+): readonly string[] {
+  if (qualityCheck === "fitness") {
+    return ranObservationsOf(row).flatMap((o) => (isFitnessObservation(o) && o.step !== undefined ? [o.step] : []));
+  }
+  if (!namesQualityCheck(row, qualityCheck) && observationCountOf(row, qualityCheck) === 0) return [];
+  return stepsByQualityCheck.find((entry) => entry.qualityCheck === qualityCheck)?.ciSteps ?? [];
+}
+
+/** The CI steps behind each quality check a row obligates or observes, in quality-check order, each step once. */
+export function ciStepsOf(
+  row: ClaimReconciliation,
+  stepsByQualityCheck: readonly StepsAtQualityCheck[]
+): readonly string[] {
+  return [...new Set(QUALITY_CHECKS.flatMap((qualityCheck) => stepsAt(row, qualityCheck, stepsByQualityCheck)))];
 }
 
 export function qualityCheckReconciliationsOf(

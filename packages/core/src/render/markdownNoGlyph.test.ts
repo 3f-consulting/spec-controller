@@ -7,24 +7,13 @@ import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { symbolCharactersIn } from "./symbolCharacter.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable, reconcilingItemsOf, type ClaimRow } from "./claimReconciliationsTable.test-utils.js";
 
 const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"];
 const UNTAGGED = "features/checkout.feature : a scenario with no code";
 
-function cellsOf(line: string): string[] {
-  return line.replace(/^\| /, "").replace(/ \|$/, "").split(" | ");
-}
-
-function ledgerRows(md: string): string[][] {
-  const lines = md.split("\n");
-  const header = lines.findIndex((line) => line.startsWith("| Claim |") && line.endsWith("| Verdict | Reconciling items |"));
-  expect(header, "expected the ledger table").toBeGreaterThan(-1);
-  const rows: string[][] = [];
-  for (const line of lines.slice(header + 2)) {
-    if (!line.startsWith("| ")) break;
-    rows.push(cellsOf(line));
-  }
-  return rows;
+function ledgerRows(md: string): readonly ClaimRow[] {
+  return claimReconciliationsTable(md).rows;
 }
 
 function readsInWords(item: string): boolean {
@@ -61,7 +50,7 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("holds every outcome but satisfied among its reconciling items, so every item shape prints", () => {
-    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.at(-1)!.split("; "));
+    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.cell(RECONCILING_ITEMS_COLUMN).split("; "));
     const outcomes = Object.keys(OUTCOME_DESCRIPTION) as Outcome[];
     for (const outcome of outcomes.filter((o) => o !== "satisfied")) {
       expect(items.some((item) => item.includes(OUTCOME_DESCRIPTION[outcome])), outcome).toBe(true);
@@ -69,13 +58,13 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("shows each Verdict cell as balanced or out-of-balance, and nothing else", () => {
-    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).map((row) => row.at(-2));
+    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).map((row) => row.cell(VERDICT_COLUMN));
     expect(new Set(verdicts)).toEqual(new Set(["balanced", "out-of-balance"]));
   });
 
   it("reads each reconciling item as its quality check and its outcome's sentence, or the sentence alone", () => {
     const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf))
-      .map((row) => row.at(-1)!)
+      .map((row) => row.cell(RECONCILING_ITEMS_COLUMN))
       .filter((cell) => cell !== "—")
       .flatMap((cell) => cell.split("; "));
     expect(items.length).toBeGreaterThan(0);
@@ -85,14 +74,16 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     expect(items).toContain(`unit: ${OUTCOME_DESCRIPTION.failing}`);
   });
 
-  it("shows each fitness evidence obligation's Outcome cell as its sentence alone", () => {
+  it("reads each fitness evidence obligation's reconciling item on its claim's row as its quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
-    expect(md).toContain(`| SCN-NGL-001 | ${OUTCOME_DESCRIPTION.satisfied} |`);
-    expect(md).toContain(`| SCN-NGL-003 | ${OUTCOME_DESCRIPTION.watermelon} |`);
+    const watermelon = reconcilingItemsOf(md, "SCN-NGL-003");
+    expect(watermelon).toContain(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
+    expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
+    expect(reconcilingItemsOf(md, "SCN-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });
 
   it("holds no symbol character in any cell of the claim table, judged by what a symbol is, not by a list of known ones", () => {
-    const cells = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flat();
+    const cells = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.cells);
     expect(cells.length).toBeGreaterThan(0);
     expect(symbolCharactersIn(cells.join("\n"))).toEqual([]);
   });

@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { SpecControllerWorld } from "./support/world.js";
 
@@ -92,9 +93,7 @@ function rowItemFor(world: SpecControllerWorld, rowName: string, locator: string
 }
 
 function unnamedClaimItems(world: SpecControllerWorld): string[] {
-  const row = world.report.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
-  assert.ok(row, `expected the unnamed claim's row in the report; got:\n${world.report}`);
-  return row.replace(/ \|$/, "").split(" | ").at(-1)!.split("; ");
+  return claimReconciliationCell(world.report, "(unnamed claim)", "Reconciling items").split("; ");
 }
 
 function unnamedClaimItemsFor(world: SpecControllerWorld, locator: string): string[] {

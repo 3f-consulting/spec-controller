@@ -6,6 +6,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
 const KEY = [
   "Key: each evidence cell reads *obligation*/*observations*.",
@@ -34,21 +35,24 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
     const section = sectionOf(renderMarkdown(__er(ledger, true), ctx, publishedExitCodeOf));
-    const header = "| Claim | Unit | Verdict | Reconciling items |";
-    expect(section.slice(0, 12)).toEqual([
+    expect(section.slice(0, 11)).toEqual([
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
       "",
       `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
       "",
       ...KEY,
       "",
-      header,
     ]);
+    const table = claimReconciliationsTable(section);
+    expect(table.start).toBe(11);
+    expect(table.evidenceColumns).toEqual(["Unit"]);
   });
 
   it("renders no line of the key when the table carries no evidence column", () => {
     const md = renderMarkdown(__er(ledger, false), ctx, publishedExitCodeOf);
-    expect(sectionOf(md)[4]).toBe("| Claim | Verdict | Reconciling items |");
+    const table = claimReconciliationsTable(sectionOf(md));
+    expect(table.start).toBe(4);
+    expect(table.evidenceColumns).toEqual([]);
     for (const line of KEY) expect(md).not.toContain(line);
   });
 });

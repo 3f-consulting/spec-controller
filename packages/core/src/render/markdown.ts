@@ -11,14 +11,14 @@ import { cellSafe } from "./cellSafe.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
 import { type SharedScnCode } from "../domain/corpusCounts.js";
-import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
+import { brokenItemsOf, type QualityCheckObservations } from "../domain/ledger.js";
 import {
   isScenario,
+  ciStepsOf,
   isPhantomClaim,
   isUnnamedClaim,
   outOfBalanceCountOf,
   reconcilingItemsOf,
-  linesOf,
 } from "../domain/claimReconciliation.js";
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
@@ -205,27 +205,6 @@ function pendingTally(pending: number): string[] {
     : [];
 }
 
-const fitnessSection: SectionEmitter = (report) => {
-  const rows = fitnessReconciliationsOf({
-    claimReconciliations: report.ledger.claimReconciliations,
-  }).map(
-    ({ scnId, reconciliation: r }) =>
-      `| ${scnId} | ${linesOf(r).map((line) => OUTCOME_DESCRIPTION[line.outcome]).join("; ")} |`
-  );
-  if (rows.length === 0) return [];
-  const { satisfied, total } = report.summary.fitness;
-  return [
-    CORE_MESSAGES[CoreMessage.FitnessHeading],
-    "",
-    CORE_MESSAGES[CoreMessage.FitnessSatisfiedOf](satisfied, total),
-    "",
-    CORE_MESSAGES[CoreMessage.FitnessTableHeader],
-    "| --- | --- |",
-    ...rows,
-    "",
-  ];
-};
-
 const byFeatureSection: SectionEmitter = (report) => {
   const rows = report.ledger.claimReconciliations;
   const scenarios = rows.filter(isScenario);
@@ -291,7 +270,7 @@ const ledgerSection: SectionEmitter = (report) => {
     ...censusLines(report.scenarioCodes, scenarioRows.length),
     "",
     ...evidenceKeyLines(columns),
-    ...ledgerTableLines(claims, columns),
+    ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheck ?? []),
     "",
   ];
 };
@@ -314,19 +293,19 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
   return lines;
 }
 
-function censusLines(codes: RenderInput["scenarioCodes"], accounts: number): string[] {
+function censusLines(codes: RenderInput["scenarioCodes"], scenarios: number): string[] {
   if (codes?.excludedOccurrences === undefined) return [];
   const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](codes.excludedOccurrences)}`];
   const untagged = (codes.untaggedScenarios ?? []).length;
   if (untagged > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged)}`);
-  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], accounts));
+  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], scenarios));
   return lines;
 }
 
-function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number): string[] {
+function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number): string[] {
   if (shared.length === 0) return [];
   return [
-    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](accounts, accounts, shared.length)}`,
+    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenarios, shared.length)}`,
     ...shared.map(
       (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
     ),
@@ -335,20 +314,24 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], accounts: number):
 
 function ledgerTableLines(
   claims: readonly ClaimReconciliation[],
-  columns: readonly EvidenceColumn[]
+  columns: readonly EvidenceColumn[],
+  stepsByQualityCheck: readonly QualityCheckObservations[]
 ): string[] {
+  const withSteps = columns.length > 0;
   const headers = [
     CORE_MESSAGES[CoreMessage.ClaimColumn],
     ...columns.map(columnHeader),
     CORE_MESSAGES[CoreMessage.VerdictColumn],
     CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
+    ...(withSteps ? [CORE_MESSAGES[CoreMessage.CiStepsColumn]] : []),
   ];
   const lines = [`| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`];
   for (const s of claims) {
     const cells = columns.map((col) => evidenceCell(s, col));
     const items = renderRowExceptions(s);
+    const steps = withSteps ? [cellSafe(ciStepsOf(s, stepsByQualityCheck).join(", "))] : [];
     lines.push(
-      `| ${[s.claim, ...cells, s.verdict, items].join(" | ")} |`
+      `| ${[s.claim, ...cells, s.verdict, items, ...steps].join(" | ")} |`
     );
   }
   return lines;
@@ -365,7 +348,6 @@ const SECTIONS: readonly SectionEmitter[] = [
   evidenceReconciliationSection,
   testVolumeSection,
   stepAccountingSection,
-  fitnessSection,
   byFeatureSection,
   ledgerSection,
 ];

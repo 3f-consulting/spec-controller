@@ -1,8 +1,6 @@
-import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
+import type { Outcome } from "./qualityCheckReconciliation.js";
 import type { ClaimReconciliation, ReconciliationLine } from "./claimReconciliation.js";
 import {
-  fitnessFunctionReconciliationsOf,
-  isScenario,
   linesOf,
   observationsOf,
   reconcilingItemsOf,
@@ -44,20 +42,6 @@ export function brokenItemsOf(ledger: Ledger): ReconciliationLine[] {
   );
 }
 
-export function fitnessReconciliationsOf(
-  ledger: Ledger
-): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
-  return ledger.claimReconciliations
-    .filter(isScenario)
-    .flatMap((row) =>
-      fitnessFunctionReconciliationsOf(row).map((r) => ({ scnId: row.claim, reconciliation: r }))
-    );
-}
-
-function isSatisfied(reconciliation: QualityCheckReconciliation): boolean {
-  return linesOf(reconciliation).every((line) => line.outcome === "satisfied");
-}
-
 export interface ClaimReconciliationTotals {
   readonly total: number;
   readonly balanced: number;
@@ -78,16 +62,10 @@ export interface QualityCheckReconciliationTotals {
   readonly missingByQualityCheck: readonly MissingByQualityCheck[];
 }
 
-export interface FitnessTally {
-  readonly satisfied: number;
-  readonly total: number;
-}
-
 export interface LedgerTally {
   readonly claimReconciliations: ClaimReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
   readonly pending: number;
-  readonly fitness: FitnessTally;
 }
 
 export function ledgerTally(ledger: Ledger): LedgerTally {
@@ -97,7 +75,6 @@ export function ledgerTally(ledger: Ledger): LedgerTally {
     claimReconciliations,
     qualityCheckReconciliations,
     pending,
-    fitness: fitnessTally(ledger),
   };
 }
 
@@ -158,14 +135,6 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
     missingByQualityCheck: QUALITY_CHECKS.filter((s) => (missing.get(s) ?? 0) > 0).map(
       (subject) => ({ subject, count: missing.get(subject)! })
     ),
-  };
-}
-
-export function fitnessTally(ledger: Ledger): FitnessTally {
-  const fitness = fitnessReconciliationsOf(ledger);
-  return {
-    satisfied: fitness.filter(({ reconciliation }) => isSatisfied(reconciliation)).length,
-    total: fitness.length,
   };
 }
 

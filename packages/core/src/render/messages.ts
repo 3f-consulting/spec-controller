@@ -117,9 +117,6 @@ export enum CoreMessage {
   StepAccountingPlumbingLabel,
   EveryStepAccountedFor,
   StepsNotAccountedFor,
-  FitnessHeading,
-  FitnessSatisfiedOf,
-  FitnessTableHeader,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
@@ -137,10 +134,10 @@ export enum CoreMessage {
   UntaggedScenarios,
   SharedScnCodes,
   SharedScnCodeScenario,
-  LedgerTableHeader,
   ClaimColumn,
   VerdictColumn,
   ReconcilingItemsColumn,
+  CiStepsColumn,
   EvidenceCellKey,
   PendingItem,
   PendingItemFor,
@@ -215,12 +212,12 @@ interface CoreMessageParams {
   readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
+  readonly [CoreMessage.FitnessCiStep]: [steps: number];
   readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
   readonly [CoreMessage.StepsNotAccountedFor]: [stepsRead: number, accountedFor: number];
-  readonly [CoreMessage.FitnessSatisfiedOf]: [satisfied: number, total: number];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
@@ -231,7 +228,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.UnnamedClaimTally]: [count: number];
   readonly [CoreMessage.ExcludedScnOccurrences]: [count: number];
   readonly [CoreMessage.UntaggedScenarios]: [count: number];
-  readonly [CoreMessage.SharedScnCodes]: [scenarios: number, accounts: number, codes: number];
+  readonly [CoreMessage.SharedScnCodes]: [scenarios: number, codes: number];
   readonly [CoreMessage.SharedScnCodeScenario]: [feature: string, title: string];
   readonly [CoreMessage.PendingItemFor]: [qualityCheck: string];
   readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
@@ -415,7 +412,8 @@ export const CORE_MESSAGES: CoreMessages = {
     `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
   [CoreMessage.EvidenceObservationsTableHeader]: "| Quality-check | Evidence observations | Runner | CI step |",
   [CoreMessage.FitnessRunner]: "each fitness function's check step",
-  [CoreMessage.FitnessCiStep]: "the step whose id is its @SCN",
+  [CoreMessage.FitnessCiStep]: (steps) =>
+    `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
   [CoreMessage.RunnerTierNamesNone]: "no runner: the target names none.",
   [CoreMessage.RunnerTierUnnamed]: "unnamed: the target has not said.",
   [CoreMessage.NoStepReadRunsIt]: "no step read runs it.",
@@ -438,10 +436,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepsNotAccountedFor]: (stepsRead, accountedFor) =>
     `${stepsRead} step(s) read, ${accountedFor} accounted for — the five dispositions do not ` +
     `add up to the steps this run read.`,
-  [CoreMessage.FitnessHeading]: "### Fitness evidence obligations",
-  [CoreMessage.FitnessSatisfiedOf]: (satisfied, total) =>
-    `${satisfied} of ${total} fitness evidence obligations reconcile satisfied.`,
-  [CoreMessage.FitnessTableHeader]: "| Scenario | Outcome |",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",
@@ -461,13 +455,13 @@ export const CORE_MESSAGES: CoreMessages = {
     `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
-  [CoreMessage.SharedScnCodes]: (scenarios, accounts, codes) =>
-    `The corpus holds ${scenarios} scenarios in ${accounts} accounts — ${codes} @SCN code(s) carried by more than one scenario:`,
+  [CoreMessage.SharedScnCodes]: (scenarios, codes) =>
+    `The corpus holds ${scenarios} scenarios — ${codes} @SCN code(s) carried by more than one scenario:`,
   [CoreMessage.SharedScnCodeScenario]: (feature, title) => `this one is ${feature} : ${title}`,
-  [CoreMessage.LedgerTableHeader]: "| Claim | Verdict | Reconciling items |",
   [CoreMessage.ClaimColumn]: "Claim",
   [CoreMessage.VerdictColumn]: "Verdict",
   [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
+  [CoreMessage.CiStepsColumn]: "CI steps",
   [CoreMessage.EvidenceCellKey]: [
     "Key: each evidence cell reads *obligation*/*observations*.",
     "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.",

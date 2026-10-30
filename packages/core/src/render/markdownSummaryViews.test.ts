@@ -8,6 +8,7 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
 describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {
   let spanning: Ledger;
@@ -61,19 +62,19 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).not.toContain("Claim Reconciliation(s) of scenarios out of balance");
   });
 
-  it("slots the by-feature section after the fitness section and before the ledger (no warnings section)", () => {
+  it("slots the by-feature section after the Evidence observations and before the Claim Reconciliations (no warnings section)", () => {
     const withAll: Ledger = reconcile(
       [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
       [{ qualityCheck: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
-    const md = renderMarkdown(__er(withAll), ctx, publishedExitCodeOf);
-    const iFitness = md.indexOf("### Fitness evidence obligations");
+    const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
+    const iObservations = md.indexOf("### Evidence observations");
     const iByFeature = md.indexOf("### Out-of-balance by feature");
     const iLedger = md.indexOf("## Claim Reconciliations");
-    expect(iFitness).toBeGreaterThanOrEqual(0);
+    expect(iObservations).toBeGreaterThanOrEqual(0);
     expect(iByFeature).toBeGreaterThanOrEqual(0);
     expect(iLedger).toBeGreaterThanOrEqual(0);
-    expect(iFitness).toBeLessThan(iByFeature);
+    expect(iObservations).toBeLessThan(iByFeature);
     expect(iByFeature).toBeLessThan(iLedger);
     expect(md).not.toContain("## Warnings");
   });
@@ -234,16 +235,17 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     const lines = renderMarkdown(__er(simple), ctx, publishedExitCodeOf).split("\n");
     const heading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
     const section = lines.slice(lines.indexOf(heading));
-    const header = "| Claim | Verdict | Reconciling items |";
-    expect(section.slice(0, 6)).toEqual([
+    expect(section.slice(0, 4)).toEqual([
       heading,
       "",
       `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](1, 1, 0)}`,
       "",
-      header,
-      "| --- | --- | --- |",
     ]);
-    expect(section.slice(6)).toEqual([expect.stringMatching(/^\| SCN-A \| .+ \|$/), ""]);
+    const table = claimReconciliationsTable(section);
+    expect(table.start).toBe(4);
+    expect(table.evidenceColumns).toEqual([]);
+    expect(table.rows.map((row) => row.claim)).toEqual(["SCN-A"]);
+    expect(section.slice(table.end)).toEqual([""]);
   });
 });
 
@@ -265,10 +267,11 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
-    expect(md).toContain(`| SCN-LDG-002 | out-of-balance | unit: ${OUTCOME_DESCRIPTION.missing} |`);
-    expect(md).toContain(
-      `| SCN-LNT-001 | out-of-balance | fitness: ${OUTCOME_DESCRIPTION.watermelon} |`
-    );
+    const table = claimReconciliationsTable(md);
+    expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN)).toBe("out-of-balance");
+    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN)).toBe(`unit: ${OUTCOME_DESCRIPTION.missing}`);
+    expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN)).toBe("out-of-balance");
+    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN)).toBe(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });
@@ -287,7 +290,6 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(start).toBeGreaterThan(0);
     expect(lines.filter((line) => line.startsWith("## ")).at(-1)).toBe(heading);
 
-    const header = "| Claim | Unit | Verdict | Reconciling items |";
     const section = lines.slice(start);
     expect(section.slice(0, 4)).toEqual([
       heading,
@@ -295,15 +297,11 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
       "",
     ]);
-    const table = section.indexOf(header);
-    expect(table).toBeGreaterThanOrEqual(4);
-    expect(section.slice(table)).toEqual([
-      header,
-      "| --- | --- | --- | --- |",
-      expect.stringMatching(/^\| SCN-LDG-001 \| .+ \|$/),
-      expect.stringMatching(/^\| SCN-LDG-002 \| .+ \|$/),
-      "",
-    ]);
+    const table = claimReconciliationsTable(section);
+    expect(table.start).toBeGreaterThanOrEqual(4);
+    expect(table.evidenceColumns).toEqual(["Unit"]);
+    expect(table.rows.map((row) => row.claim)).toEqual(["SCN-LDG-001", "SCN-LDG-002"]);
+    expect(section.slice(table.end)).toEqual([""]);
   });
 });
 

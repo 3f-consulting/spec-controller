@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import type { EvidenceObservation } from "../model.js";
+import type { EvidenceReconciliation } from "../assemble/renderInput.js";
+import type { QualityCheckObservations } from "../domain/ledger.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
@@ -65,7 +67,34 @@ function tableRows(workflow: string = ci, observations: EvidenceObservation[] = 
   return lines.filter((line) => line.startsWith("|")).map(cells);
 }
 
-describe("[SCN-RPT-074] each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row says what runs a fitness function", () => {
+function fitnessRowWith(fitness: QualityCheckObservations): string[] | undefined {
+  const reconciliation = evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson,
+    ciWorkflows: parsedWorkflows([ci]),
+    behaviouralObservations,
+    deferralTags: [],
+  });
+  const observations = reconciliation.summary.evidenceObservations;
+  expect(observations).toBeDefined();
+  const withFitness: EvidenceReconciliation = {
+    ...reconciliation,
+    summary: {
+      ...reconciliation.summary,
+      evidenceObservations: observations && {
+        ...observations,
+        byQualityCheck: observations.byQualityCheck.map((entry) => (entry.qualityCheck === "fitness" ? fitness : entry)),
+      },
+    },
+  };
+  const lines = sectionUnder("### Evidence observations")(linesOf(withFitness));
+  return lines
+    .filter((line) => line.startsWith("|"))
+    .map(cells)
+    .find(([check]) => check === "fitness");
+}
+
+describe("[SCN-RPT-074] each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
   it("heads the table with the quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
     expect(header).toStrictEqual(["Quality-check", "Evidence observations", "Runner", "CI step"]);
@@ -83,11 +112,19 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
     ]);
   });
 
-  it("says in the fitness row what runs a fitness function, naming no step", () => {
-    const fitness = tableRows().at(-1);
-    expect(fitness?.[0]).toBe("fitness");
-    expect(Number(fitness?.[1])).toBeGreaterThan(0);
-    expect(fitness?.slice(2)).toStrictEqual(["each fitness function's check step", "the step whose id is its @SCN"]);
+  it("counts in the fitness row the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
+    const fitness = fitnessRowWith({ qualityCheck: "fitness", count: 3, ciSteps: ["Lint", "Typecheck"] });
+    expect(fitness).toStrictEqual([
+      "fitness",
+      "3",
+      "each fitness function's check step",
+      "2 step(s), each named on its fitness function's row of Claim Reconciliations.",
+    ]);
+  });
+
+  it("leaves the CI step cell blank on a fitness row with evidence observations and no steps", () => {
+    const fitness = fitnessRowWith({ qualityCheck: "fitness", count: 2 });
+    expect(fitness).toStrictEqual(["fitness", "2", "each fitness function's check step", ""]);
   });
 
   it("names the declared runner and the step that runs it on a quality check with no evidence observations", () => {

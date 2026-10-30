@@ -7,6 +7,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
 const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
@@ -31,10 +32,7 @@ function step(fitnessFunction: string, scnId?: string): EvidenceObservation {
 const uncitedTest: EvidenceObservation = { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests/x.test.ts", testName: "reads the config" };
 
 function unnamedClaimItemsOf(observations: EvidenceObservation[]): string[] {
-  const md = renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf);
-  const row = md.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
-  if (row === undefined) throw new Error(`no unnamed claim row in:\n${md}`);
-  return row.split(" | ").at(-1)!.replace(/ \|$/, "").split("; ");
+  return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
 }
 
 describe("[SCN-RPT-076] a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code", () => {

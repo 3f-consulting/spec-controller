@@ -88,28 +88,6 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-071
     Scenario: the evidence reconciliation section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table
 
-  Rule: the markdown report surfaces the fitness evidence obligations as their own section
-
-    Under "## Summary views", the "### Fitness evidence obligations" section lists the fitness
-    evidence obligations on their own. It opens with a total line,
-    "N of M fitness evidence obligations reconcile satisfied.", then a table listing each
-    fitness evidence obligation by its scenario and its outcome, including any watermelon.
-
-    The section has no check column. It labels obligations by the quality check, fitness,
-    never by an internal kind.
-
-    It counts only the fitness evidence obligations scenarios raise: a fitness evidence
-    observation that never ran adds no obligation. Each obligation's row names every
-    Reconciliation line it holds, in evidence order.
-
-    The section is left out entirely when no scenario raises a fitness evidence obligation.
-
-    @unit @SCN-RPT-005
-    Scenario: the markdown report lists the fitness evidence obligations as their own section
-
-    @unit @SCN-RPT-068
-    Scenario: the fitness evidence obligations count only the obligations scenarios raise, and each obligation's row names every Reconciliation line it holds, no line picked for it
-
   Rule: the markdown report groups out-of-balance scenarios by feature
 
     Under "## Summary views", the "### Out-of-balance by feature" section shows which features
@@ -178,8 +156,8 @@ Feature: The report renders the ledger as sectioned facts
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance"
     comes first. "## Summary views" holds the derived cuts: Run verdict first, followed on a
     run whose judged corpus holds no scenario code error by one line stating its codes are
-    clean, then Evidence reconciliation and Evidence observations, and Fitness evidence obligations and Out-of-balance by
-    feature last. "## Claim Reconciliations" comes last, with its summary lines on top: the
+    clean, then Evidence reconciliation and Evidence observations, and Out-of-balance by feature
+    last. "## Claim Reconciliations" comes last, with its summary lines on top: the
     verdict tally and the excluded-occurrence bullet.
 
     This layout is markdown only; the JSON is unaffected.
@@ -217,10 +195,9 @@ Feature: The report renders the ledger as sectioned facts
     that runner run, directly or through a package.json script, in step order, or says no step
     read runs it.
 
-    The fitness row says what runs a fitness function: each one's own check step, the step
-    whose id is its @SCN. Each fitness function's step is named on its row of Claim
-    Reconciliations. The fitness row has blank runner and CI step cells when no fitness
-    function ran.
+    The fitness row counts the steps that run its fitness functions, each named on its fitness
+    function's row of Claim Reconciliations. The fitness row has blank runner and CI step cells
+    when no fitness function ran.
 
     A behavioural quality check whose runner the target does not declare says so in its
     runner cell, whatever its count: no runner where the target names none, unnamed where the
@@ -233,7 +210,7 @@ Feature: The report renders the ledger as sectioned facts
     There is no Behavioural runners section.
 
     @unit @SCN-RPT-074
-    Scenario: each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row says what runs a fitness function
+    Scenario: each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
     @unit @SCN-RPT-051
     Scenario: a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
@@ -270,11 +247,29 @@ Feature: The report renders the ledger as sectioned facts
     Each scenario sharing a code has its own row, lettered from its own obligations. Evidence
     citing a shared code credits neither scenario and shows on the unnamed claim.
 
+    Wherever the table has an evidence column, its last column, CI steps, follows Reconciling
+    items. It names the CI steps behind each quality check the row obligates or observes, in
+    column order, each step once. A behavioural quality check's steps are those that run its
+    runner. A fitness function's step is the one its evidence observation ran at, named by
+    workflow, job and step. The rule is the same on every row: a scenario, each scenario
+    sharing a code, a phantom claim and the unnamed claim.
+
+    A quality check with no known step adds none: a behavioural check no CI step is found
+    running, a fitness obligation with no evidence observation, and a fitness observation that
+    names no step. A row with no known step, and a scenario with no @SCN, has a blank CI steps
+    cell.
+
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding, and a shared code's row is lettered from its obligations alone, its citing evidence on the unnamed claim
 
     @unit @SCN-RPT-054
     Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
+
+    @unit @SCN-RPT-080
+    Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each quality check it obligates or observes, each step once
+
+    @unit @SCN-RPT-081
+    Scenario: a quality check with no known step adds none to its Claim Reconciliation's CI steps, and a Claim Reconciliation with none has a blank cell
 
   Rule: the evidence grid counts the evidence observations that ran
 
@@ -346,12 +341,13 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown renders each outcome's sentence in place of the bare handle
 
     Wherever an outcome reaches a reader, the markdown shows its sentence in place of its
-    handle: the cause rows of the Evidence reconciliation summary, each scenario's reconciling
-    items, and the Outcome column of the fitness evidence obligations table.
+    handle: the cause rows of the Evidence reconciliation summary and each scenario's
+    reconciling items, a fitness function's included.
 
     The "missing" cause row reads "Evidence Observation is missing". A reconciling item for a
-    missing unit observation reads "unit: Evidence Observation is missing". A "watermelon"
-    Outcome cell reads "Evidence Observation is passing but its check could not fail its job".
+    missing unit observation reads "unit: Evidence Observation is missing". A reconciling item
+    for a "watermelon" fitness observation reads "fitness: Evidence Observation is passing but
+    its check could not fail its job".
 
     The Detail column shows no sentence. The JSON keeps the bare handle.
 
@@ -363,8 +359,8 @@ Feature: The report renders the ledger as sectioned facts
     A ledger row's Verdict cell reads "balanced" or "out-of-balance" alone.
 
     A reconciling item reads its quality check, a colon and its outcome's sentence, as
-    "unit: Evidence Observation is missing". An item with no quality check reads the sentence
-    alone. The fitness evidence obligations table's Outcome cell reads the sentence alone.
+    "unit: Evidence Observation is missing" or "fitness: Evidence Observation is missing". An
+    item with no quality check reads the sentence alone.
 
     No symbol stands beside a verdict or an outcome.
 
@@ -722,7 +718,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean
 
     @unit @SCN-RPT-064
-    Scenario: the report states how many scenarios the corpus holds in how many accounts, a shared code's scenarios each in an account of its own, and names the scenarios sharing each code
+    Scenario: the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code
 
   Rule: a shared code's Claim Reconciliations each name their scenario
 

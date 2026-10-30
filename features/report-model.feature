@@ -68,10 +68,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The numbers the markdown prints are model data, not renderer arithmetic. The summary states
     the evidence reconciliation as one section: the Claim Reconciliations counted by verdict and
     by kind of claim, the Quality Check Reconciliations counted by outcome with the missing ones
-    by quality check, and the pending items counted. The fitness tally is
-    the fitness-only evidence obligation cut (satisfied of total), under summary.fitness: the
-    outcome breakdown is kind-agnostic and cannot give the fitness-only total, so it is stated
-    explicitly. The summary states its evidence observations as one section: the total, the
+    by quality check, and the pending items counted. No fitness-only tally stands beside it: the
+    fitness Quality Check Reconciliations are counted there with the rest. The summary states
+    its evidence observations as one section: the total, the
     counts on each kind of claim, and a count for each of the five quality checks, fitness last.
     A behavioural count is every evidence observation of that quality check, a broken one
     included; the fitness count is every fitness function that ran. The total is the sum of the

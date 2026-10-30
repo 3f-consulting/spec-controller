@@ -6,6 +6,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { RECONCILING_ITEMS_COLUMN, claimReconciliationsTable, reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
 const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
@@ -23,8 +24,14 @@ function rowCells(md: string, rowName: string): string[] {
   return row.split(" | ").map((cell) => cell.replace(/^\| | \|$/g, ""));
 }
 
+const UNNAMED_CLAIM = "(unnamed claim)";
+
 function unnamedClaimItemsOf(md: string): string[] {
-  return rowCells(md, "(unnamed claim)").at(-1)!.split("; ");
+  return reconcilingItemsOf(md, UNNAMED_CLAIM);
+}
+
+function unnamedClaimCell(md: string): string {
+  return claimReconciliationsTable(md).rowOf(UNNAMED_CLAIM).cell(RECONCILING_ITEMS_COLUMN);
 }
 
 function unit(status: "passed" | "failed", locator: string | undefined, message?: string): BehaviouralEvidenceObservation {
@@ -79,10 +86,10 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   });
 
   it("lists a broken item before the groups, as before", () => {
-    const cell = rowCells(reportOf([
+    const cell = unnamedClaimCell(reportOf([
       unit("passed", "src/a.test.ts"),
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
-    ]), "(unnamed claim)").at(-1);
+    ]));
     expect(cell).toBe(
       `unit: ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`
@@ -123,11 +130,11 @@ describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together 
   });
 
   it("lists the CI steps after a broken item and the file groups", () => {
-    const cell = rowCells(reportOf([
+    const cell = unnamedClaimCell(reportOf([
       step("lint:uncited"),
       unit("passed", "src/a.test.ts"),
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
-    ]), "(unnamed claim)").at(-1);
+    ]));
     expect(cell).toBe(
       `unit: ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness: ${CITES_NO_SCENARIO} — 1 CI step: lint:uncited`

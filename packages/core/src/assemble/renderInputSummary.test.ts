@@ -64,15 +64,15 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
     expect(report.summary.evidenceReconciliation).toEqual(evidenceReconciliation);
   });
 
-  it("states the fitness-only tally (satisfied / total) under summary.fitness, ignoring behavioural evidenceObligations", () => {
-    const report = assembleRenderInput(__er(lintBalance), ctx);
-    expect(report.summary.fitness).toEqual({ satisfied: 1, total: 2 });
-    expect(report.summary).not.toHaveProperty("lint");
+  it("states no fitness-only tally beside the evidence reconciliation, in the assembled summary or its JSON serialisation", () => {
+    const summary = assembleRenderInput(__er(lintBalance), ctx).summary;
+    expect(summary).not.toHaveProperty("fitness");
+    expect(summary).not.toHaveProperty("lint");
+    expect(JSON.parse(renderJson(__er(lintBalance), ctx)).summary).not.toHaveProperty("fitness");
   });
 
-  it("carries the evidence reconciliation and the fitness tally through the glue-free JSON serialisation", () => {
+  it("carries the evidence reconciliation through the glue-free JSON serialisation", () => {
     expect(JSON.parse(renderJson(__er(rmd005Balance), ctx)).summary.evidenceReconciliation).toEqual(evidenceReconciliation);
-    expect(JSON.parse(renderJson(__er(lintBalance), ctx)).summary.fitness).toEqual({ satisfied: 1, total: 2 });
   });
 });
 

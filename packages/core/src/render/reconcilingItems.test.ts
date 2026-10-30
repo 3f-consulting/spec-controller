@@ -3,12 +3,12 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { verdictAndItemsOf as rowFor } from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciling-items-target",
@@ -30,28 +30,6 @@ function render(
   const ledger = reconcile(scenarios, observations, untagged);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
-}
-
-function ledgerRows(md: string): string[] {
-  const lines = md.split("\n");
-  const header = lines.indexOf(CORE_MESSAGES[CoreMessage.LedgerTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  expect(lines[header + 1]).toBe("| --- | --- | --- |");
-  const rows: string[] = [];
-  for (const line of lines.slice(header + 2)) {
-    if (!line.startsWith("| ")) break;
-    rows.push(line);
-  }
-  return rows;
-}
-
-function rowFor(md: string, account: string): { verdict: string; items: string } {
-  const matching = ledgerRows(md).filter((row) => row.startsWith(`| ${account} | `));
-  expect(matching).toHaveLength(1);
-  const cells = matching[0]!.slice(2, -2).split(" | ");
-  expect(cells).toHaveLength(3);
-  expect(cells[0]).toBe(account);
-  return { verdict: cells[1]!, items: cells[2]! };
 }
 
 function item(outcome: Outcome, subject?: string, suffix?: string, result?: string): string {
