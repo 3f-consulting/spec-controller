@@ -250,8 +250,8 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
     const unitItems = table.rowOf("SCN-UNIT").cell(RECONCILING_ITEMS_COLUMN);
     expect(fitnessVerdict).toBe(unitVerdict);
     expect(fitnessVerdict).toBe("out-of-balance");
-    expect(unitItems).toBe(`unit: ${OUTCOME_DESCRIPTION.failing}`);
-    expect(fitnessItems).toBe(`fitness: ${OUTCOME_DESCRIPTION.failing}`);
+    expect(unitItems.startsWith(`unit: ${OUTCOME_DESCRIPTION.failing}`)).toBe(true);
+    expect(fitnessItems.startsWith(`fitness: ${OUTCOME_DESCRIPTION.failing}`)).toBe(true);
   });
 });
 

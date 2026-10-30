@@ -52,8 +52,8 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
 
   it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
     const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
-    expect(items).toContain(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
-    expect(items).not.toContain("fitness: watermelon");
+    expect(items.some((item) => item.startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`))).toBe(true);
+    expect(items.some((item) => item.startsWith("fitness: watermelon"))).toBe(false);
   });
 });
 

@@ -41,17 +41,6 @@ function item(outcome: Outcome, subject?: string, suffix?: string, result?: stri
 
 describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns", () => {
   describe("an obligation side with nothing to show for it", () => {
-    it("a failing observation renders its quality check and the outcome's sentence, with no suffix", () => {
-      const md = render(
-        [{ scnId: "SCN-RCI-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-        [{ qualityCheck: "unit", scnId: "SCN-RCI-001", status: "failed", locator: "src/a.test.ts" }]
-      );
-      expect(rowFor(md, "SCN-RCI-001")).toEqual({
-        verdict: "out-of-balance",
-        items: item("failing", "unit"),
-      });
-    });
-
     it("a scenario with no obligation and no observation renders the both-missing sentence alone", () => {
       const md = render([{ scnId: "SCN-RCI-002", evidenceObligations: [] }], []);
       expect(rowFor(md, "SCN-RCI-002")).toEqual({
@@ -176,5 +165,50 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
         items: item("broken", "unit"),
       });
     });
+  });
+});
+
+describe("[SCN-RPT-082] each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items", () => {
+  it("two failing tests in one file read as two items, each naming the file and its test name", () => {
+    const ran = (testName: string, status: "failed" | "passed" = "failed"): EvidenceObservation =>
+      ({ qualityCheck: "unit", scnId: "SCN-DEM-001", status, locator: "src/widget.test.ts", testName });
+    const md = render(
+      [{ scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [ran("renders the header"), ran("renders the body", "passed"), ran("renders the footer")]
+    );
+    expect(rowFor(md, "SCN-DEM-001")).toEqual({
+      verdict: "out-of-balance",
+      items: ["renders the footer", "renders the header"].map((name) => item("failing", "unit", `src/widget.test.ts: ${name}`)).join("; "),
+    });
+  });
+});
+
+describe("[SCN-RPT-083] a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function", () => {
+  it.each([
+    ["failing", { status: "failed", enforcedOverRealSource: true }],
+    ["watermelon", { status: "passed", enforcedOverRealSource: false }],
+  ] as const)("a %s fitness item names its fitness function", (outcome, ran) => {
+    const md = render(
+      [{ scnId: "SCN-DEM-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
+      [{ qualityCheck: "fitness", fitnessFunction: "lint:demo", scnId: "SCN-DEM-002", exists: true, ...ran }]
+    );
+    expect(rowFor(md, "SCN-DEM-002")).toEqual({ verdict: "out-of-balance", items: item(outcome, "fitness", "lint:demo") });
+  });
+});
+
+describe("[SCN-RPT-084] an item naming an evidence observation quotes it whole in its cell, a pipe or a line break included, and leaves out a part the run did not give", () => {
+  it.each([
+    ["a test's name holding a pipe", { locator: "src/a.test.ts", testName: "a | b" }, "failing", "src/a.test.ts: a \\| b"],
+    ["a test's name holding a line break", { locator: "src/a.test.ts", testName: "renders\n  the header " }, "failing", "src/a.test.ts: renders the header"],
+    ["a file and no test name", { locator: "src/a.test.ts" }, "failing", "src/a.test.ts"],
+    ["a test name and a file that is empty once made safe", { locator: " ", testName: "renders" }, "failing", "renders"],
+    ["a test name and no file", { testName: "renders" }, "failing", "renders"],
+    ["neither a file nor a test name", {}, "failing", undefined],
+    ["a fitness function with an empty name", { qualityCheck: "fitness", fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "failing", undefined],
+    ["an observation-only item whose file holds a pipe", { scnId: "SCN-GHO-003", locator: "src/a|b.test.ts" }, "cites-unknown-scenario", "src/a\\|b.test.ts", "failed"],
+  ] as const)("%s", (_title, fields, outcome, suffix, result?: string) => {
+    const observation = { qualityCheck: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
+    const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheck: observation.qualityCheck }] }], [observation]);
+    expect(rowFor(md, String(observation.scnId)).items).toBe(item(outcome, observation.qualityCheck, suffix, result));
   });
 });

@@ -71,13 +71,13 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     for (const item of items) expect(readsInWords(item), item).toBe(true);
     expect(items).toContain(OUTCOME_DESCRIPTION["no-scn-code"]);
     expect(items).toContain(OUTCOME_DESCRIPTION["both-missing"]);
-    expect(items).toContain(`unit: ${OUTCOME_DESCRIPTION.failing}`);
+    expect(items.some((item) => item.startsWith(`unit: ${OUTCOME_DESCRIPTION.failing}`))).toBe(true);
   });
 
   it("reads each fitness evidence obligation's reconciling item on its claim's row as its quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
     const watermelon = reconcilingItemsOf(md, "SCN-NGL-003");
-    expect(watermelon).toContain(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
+    expect(watermelon.some((item) => item.startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`))).toBe(true);
     expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
     expect(reconcilingItemsOf(md, "SCN-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });

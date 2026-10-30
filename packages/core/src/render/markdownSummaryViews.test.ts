@@ -271,7 +271,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN)).toBe("out-of-balance");
     expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN)).toBe(`unit: ${OUTCOME_DESCRIPTION.missing}`);
     expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN)).toBe(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`);
+    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN).startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`)).toBe(true);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });

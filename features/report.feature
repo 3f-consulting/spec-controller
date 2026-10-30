@@ -346,8 +346,8 @@ Feature: The report renders the ledger as sectioned facts
 
     The "missing" cause row reads "Evidence Observation is missing". A reconciling item for a
     missing unit observation reads "unit: Evidence Observation is missing". A reconciling item
-    for a "watermelon" fitness observation reads "fitness: Evidence Observation is passing but
-    its check could not fail its job".
+    for a "watermelon" fitness observation opens with "fitness: Evidence Observation is passing
+    but its check could not fail its job", and its fitness function follows.
 
     The Detail column shows no sentence. The JSON keeps the bare handle.
 
@@ -538,6 +538,25 @@ Feature: The report renders the ledger as sectioned facts
       When the target's evidence is reconciled into a report
       Then the scenario's row shows the test that failed as failed
       And the scenario's row shows the test that passed as passed
+
+  Rule: a failing or watermelon reconciling item names the evidence observation it carries
+
+    A failing reconciling item names, after its outcome's sentence, the test that failed by its
+    file and its name, or the fitness function that failed by its name. A watermelon item names
+    its fitness function. So two failing tests on one scenario read as two different items.
+
+    What an item quotes from the run sits whole in its cell. A pipe or a line break in a file, a
+    test's name or a fitness function's name never splits the row, and a part the run did not
+    give leaves no empty part or separator behind.
+
+    @unit @SCN-RPT-082
+    Scenario: each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items
+
+    @unit @SCN-RPT-083
+    Scenario: a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function
+
+    @unit @SCN-RPT-084
+    Scenario: an item naming an evidence observation quotes it whole in its cell, a pipe or a line break included, and leaves out a part the run did not give
 
   Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
 

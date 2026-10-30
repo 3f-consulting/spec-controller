@@ -42,8 +42,18 @@ function renderLine(line: ReconciliationLine): string {
   }
   const head = `${line.qualityCheck}: ${sentence}`;
   const observation = line.evidenceObservation;
-  if (observation === undefined || !isObservationOnly(line.outcome)) return head;
+  if (observation === undefined) return head;
+  if (!isObservationOnly(line.outcome)) return `${head}${namedSuffix(observation)}`;
   return `${head}${line.outcome === "broken" ? brokenSuffix(observation) : observationSuffix(observation)}`;
+}
+
+function quotedSuffix(parts: readonly (string | undefined)[]): string {
+  const where = parts.flatMap((part) => cellSafe(part ?? "") || []).join(": ");
+  return where === "" ? "" : ` (${where})`;
+}
+
+function namedSuffix(o: EvidenceObservation): string {
+  return quotedSuffix(isFitnessObservation(o) ? [o.fitnessFunction] : [o.locator, o.testName]);
 }
 
 function scenarioClauseOf({ scenario }: ReconciliationLine): string {
@@ -59,8 +69,7 @@ function brokenSuffix(o: EvidenceObservation): string {
 }
 
 function observationSuffix(o: EvidenceObservation): string {
-  const where = isFitnessObservation(o) ? o.fitnessFunction || undefined : o.locator;
-  return `${where === undefined ? "" : ` (${where})`}${resultOf(o)}`;
+  return `${quotedSuffix([isFitnessObservation(o) ? o.fitnessFunction : o.locator])}${resultOf(o)}`;
 }
 
 const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {

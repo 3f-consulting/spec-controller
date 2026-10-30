@@ -6,6 +6,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { OUTCOME_DESCRIPTION } from "../render/outcomeDescription.js";
 import { sampleReportCtx as ctx } from "../render/runContext.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
+import { reconcilingItemsOf } from "../render/claimReconciliationsTable.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import type { EvidenceObservation, Scenario } from "./journal.js";
 
@@ -118,9 +119,7 @@ describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelo
     ]);
     const lines = (failedFirst ? ["failing", "watermelon"] as const : ["watermelon", "failing"] as const)
       .map((outcome) => `fitness: ${OUTCOME_DESCRIPTION[outcome]}`);
-    const markdownRow = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf)
-      .split("\n")
-      .find((line) => line.startsWith(`| ${SCN} |`) && line.includes("out-of-balance"));
-    expect(markdownRow).toContain(lines.join("; "));
+    const markdown = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
+    expect(reconcilingItemsOf(markdown, SCN).map((item, i) => item.startsWith(lines[i]!))).toEqual([true, true]);
   });
 });
