@@ -1,6 +1,5 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
-import { accountedForOf } from "../domain/uncitedFitnessFunctions.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
@@ -18,7 +17,7 @@ const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
       row.reconciler,
       row.excluded,
       row.plumbing,
-      accountedForOf(row),
+      row.accountedFor,
     ])
   );
 

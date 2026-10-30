@@ -149,11 +149,12 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: the report names the scope it read
 
-    The report lists each workflow and job read, with the steps read and each disposition's count
-    in each job, sorted. It makes no judgement about whether that scope is plausible.
+    The report lists each workflow and job read, with the steps read, each disposition's count
+    and how many steps those dispositions account for, in each job, sorted. It makes no judgement
+    about whether that scope is plausible.
 
     @unit @SCN-USG-020
-    Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read
+    Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and how many steps those dispositions account for
 
   Rule: every step the reader saw is accounted for
 

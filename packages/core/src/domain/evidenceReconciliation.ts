@@ -295,6 +295,7 @@ export interface JobStepAccount {
   readonly reconciler: number;
   readonly excluded: number;
   readonly plumbing: number;
+  readonly accountedFor: number;
 }
 
 export interface StepAccountTotal extends Omit<JobStepAccount, "workflow" | "job"> {
