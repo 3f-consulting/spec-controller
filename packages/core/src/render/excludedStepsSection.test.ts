@@ -75,14 +75,14 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
       "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
       "",
     ]);
-    expect(section.some((line) => line.includes("— matches no step:"))).toBe(false);
+    expect(section.some((line) => line.includes("matches no step"))).toBe(false);
   });
 
   it("prints no Excluded label when the target's only entry matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
     expect(section.length).toBeGreaterThan(0);
     expect(section).not.toContain(label);
-    expect(section.some((line) => line.includes("— matches no step:"))).toBe(false);
+    expect(section.some((line) => line.includes("matches no step"))).toBe(false);
   });
 
   it("lists one line for each step an entry matches", () => {
@@ -112,6 +112,6 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
     expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes("— excluded:") || line.includes("— matches no step:"))).toBe(false);
+    expect(lines.some((line) => line.includes("— excluded:") || line.includes("matches no step"))).toBe(false);
   });
 });

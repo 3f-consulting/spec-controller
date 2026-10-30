@@ -277,7 +277,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
   [CoreMessage.ConfigurationNotReadIntro]:
-    "The target's package.json holds configuration this run could not use. Each entry below was read as absent, and every account in this report is the one the target gives without it.",
+    "The target's package.json holds configuration this run could not use. Each line below says what this run did with its entry, and every account in this report is the one the target gives without it.",
   [CoreMessage.ConfigurationWrongKind]: (entry, is, reads) =>
     `${entry} is ${is} where ${reads} is read, so this run read it as absent.`,
   [CoreMessage.ConfigurationUnknownKey]: (key) =>
@@ -420,7 +420,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
   [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",
   [CoreMessage.StepExcluded]: (entry) => `${entry} — excluded: the target names this step a non-check.`,
-  [CoreMessage.NotChecksEntryMatchesNoStep]: (entry) => `${entry} — matches no step: the entry names nothing this run read.`,
+  [CoreMessage.NotChecksEntryMatchesNoStep]: (entry) =>
+    `\`specController.notChecks\` entry ${entry} matches no step of the workflows this run read, so it excludes nothing.`,
   [CoreMessage.StepAccountingHeading]: "### Step accounting",
   [CoreMessage.StepAccountingTableHeader]:
     "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",

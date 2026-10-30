@@ -52,7 +52,7 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
     expect(section(md)).toEqual([
       heading,
       "",
-      "The target's package.json holds configuration this run could not use. Each entry below was read as absent, and every account in this report is the one the target gives without it.",
+      "The target's package.json holds configuration this run could not use. Each line below says what this run did with its entry, and every account in this report is the one the target gives without it.",
       "",
       "- `specController.notChecks` is a string where a list is read, so this run read it as absent.",
       "- `specController.runners.unit` is a number where a string or null is read, so this run read it as absent.",

@@ -642,6 +642,10 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report names each specController entry it could not read, before any cut of the reconciliation
 
+    Each line under "### Configuration not read" names its entry by its specController path and
+    says what this run did with it, and every account in the report is the one the target gives
+    without it.
+
     @unit @SCN-RPT-045
     Scenario: each specController entry of a kind its reader does not take is named on a line of its own, after the run provenance and before any cut of the reconciliation
 
@@ -652,7 +656,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read
 
     @unit @SCN-RPT-078
-    Scenario: a notChecks entry that matches no step is named under Configuration not read, whether or not the run read any CI step
+    Scenario: a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not
 
   Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job with the steps behind each count listed beneath
 

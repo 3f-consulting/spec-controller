@@ -45,7 +45,7 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
     ...runnerKeysNotATier.map(
       (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](`\`specController.runners.${key}\``)}`
     ),
-    ...nonChecksMatchingNoStep.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](entry)}`),
+    ...nonChecksMatchingNoStep.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](`\`${entry}\``)}`),
     "",
   ];
 };

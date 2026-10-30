@@ -65,6 +65,15 @@ export function nonChecksApplied(
   };
 }
 
+export function nonChecksMatchingNoStep(
+  { unmatchedEntries }: Pick<StepExclusions, "unmatchedEntries">,
+  workflowsRead: readonly string[]
+): string[] {
+  return unmatchedEntries.filter(
+    (entry) => !entry.includes(":") || workflowsRead.includes(entry.slice(0, entry.indexOf(":")))
+  );
+}
+
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";
 
 type Exclusion = Extract<StepDisposition, "reconciler" | "nonCheck" | "plumbing">;

@@ -574,7 +574,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **Each entry is `<workflow file>:<job id>:<step name>`**, matched **exactly**: no prefix form, no glob, no bare name.
 - **To take a whole workflow out, narrow `--ci`** rather than listing its steps.
 - **An excluded step is named on the report**, not dropped.
-- **An entry that matches no step is reported as stale**, under `### Configuration not read`, whether or not the run read any CI step.
+- **An entry that matches no step of a workflow the run read is reported as stale**, under `### Configuration not read`. An entry naming a workflow the run did not read is not judged.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
 **GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref or sub-path follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *GitHub plumbing* in **Step accounting** and names it in that section's *GitHub plumbing* list, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is excluded as you named it.
@@ -610,7 +610,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 - **An entry of a kind its reader does not take** (a `notChecks` written as one string, a runner written as a number) is read as absent.
 - **A key the block does not read at all** (a misspelling, or a key an older version read) is passed over.
 - **A `runners` key that is not one of the four tiers** excludes nothing.
-- **A `notChecks` entry that matches no step the run read** excludes nothing.
+- **A `notChecks` entry that matches no step of a workflow the run read** excludes nothing.
 
 None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
 

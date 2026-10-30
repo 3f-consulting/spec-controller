@@ -14,6 +14,7 @@ import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
   declaredRunnerTest,
   nonChecksApplied,
+  nonChecksMatchingNoStep,
   recognisedRunners,
   reconcilerSteps,
   stepAccountOf,
@@ -21,7 +22,6 @@ import {
   type ReconcilerRole,
   type ReconcilerSteps,
   type StepDisposition,
-  type StepExclusions,
   type StepTest,
 } from "../domain/uncitedFitnessFunctions.js";
 import {
@@ -74,7 +74,7 @@ export interface EvidenceReconciliationSources {
 interface PipelineReadings {
   readonly steps: readonly PipelineStep[];
   readonly runners: ResolvedRunners;
-  readonly exclusions: StepExclusions;
+  readonly matchingNoStep: readonly string[];
   readonly reconciler: ReconcilerSteps;
   readonly dispositionOf: (step: PipelineStep) => StepDisposition;
 }
@@ -97,7 +97,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   return {
     steps,
     runners,
-    exclusions,
+    matchingNoStep: nonChecksMatchingNoStep(exclusions, input.ciWorkflows.map(({ file }) => file)),
     reconciler,
     dispositionOf: stepDispositions({
       isReconciler: reconciler.isReconciler,
@@ -122,7 +122,7 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { steps, runners, exclusions, reconciler, dispositionOf } = pipelineReadings(input);
+  const { steps, runners, matchingNoStep, reconciler, dispositionOf } = pipelineReadings(input);
   const isCandidate: StepTest = (step) => dispositionOf(step) === "candidate";
 
   const reconciliation = evidenceReconciliationOf(
@@ -132,7 +132,7 @@ export function evidenceReconciliationFromSources(
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, steps, packageJson, runners, exclusions, reconciler, dispositionOf),
+      withReaderAccounts(reconciliation, steps, packageJson, runners, matchingNoStep, reconciler, dispositionOf),
       packageJson
     ),
     input
@@ -170,12 +170,12 @@ function withReaderAccounts(
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
   runners: ResolvedRunners,
-  exclusions: StepExclusions,
+  matchingNoStep: readonly string[],
   reconciler: ReconcilerSteps,
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), exclusions),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), matchingNoStep),
     steps,
     dispositionOf,
     reconciler.roleOf
@@ -200,12 +200,12 @@ function withStepAccounting(
 
 function withUnmatchedNonChecks(
   reconciliation: EvidenceReconciliation,
-  { unmatchedEntries }: StepExclusions
+  matchingNoStep: readonly string[]
 ): EvidenceReconciliation {
-  if (unmatchedEntries.length === 0) return reconciliation;
+  if (matchingNoStep.length === 0) return reconciliation;
   return {
     ...reconciliation,
-    summary: { ...reconciliation.summary, nonChecksMatchingNoStep: unmatchedEntries },
+    summary: { ...reconciliation.summary, nonChecksMatchingNoStep: matchingNoStep },
   };
 }
 
