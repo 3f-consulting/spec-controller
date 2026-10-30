@@ -53,19 +53,19 @@ jobs:
         run: pnpm cucumber
 `;
 
-function tableRows(workflow: string = ci): string[][] {
+function tableRows(workflow: string = ci, observations: EvidenceObservation[] = behaviouralObservations): string[][] {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson,
     ciWorkflows: parsedWorkflows([workflow]),
-    behaviouralObservations,
+    behaviouralObservations: observations,
     deferralTags: [],
   });
   const lines = sectionUnder("### Evidence observations")(linesOf(reconciliation));
   return lines.filter((line) => line.startsWith("|")).map(cells);
 }
 
-describe("[SCN-RPT-074] each quality check's row names its runner and the CI steps that run it, the fitness row says what runs a fitness function, and a quality check with no evidence observations has blank runner and CI step cells", () => {
+describe("[SCN-RPT-074] each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row says what runs a fitness function", () => {
   it("heads the table with the quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
     expect(header).toStrictEqual(["Quality-check", "Evidence observations", "Runner", "CI step"]);
@@ -90,10 +90,33 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
     expect(fitness?.slice(2)).toStrictEqual(["each fitness function's check step", "the step whose id is its @SCN"]);
   });
 
-  it("leaves both cells blank on a quality check with no evidence observations, though the target declares its runner and a step runs it", () => {
+  it("names the declared runner and the step that runs it on a quality check with no evidence observations", () => {
     const rows = tableRows().slice(2);
-    expect(rows.find(([check]) => check === "e2e")).toStrictEqual(["e2e", "0", "", ""]);
-    expect(rows.find(([check]) => check === "performance")).toStrictEqual(["performance", "0", "", ""]);
+    expect(rows.find(([check]) => check === "e2e")).toStrictEqual(["e2e", "0", "playwright", "E2e"]);
+  });
+
+  it("says no step read runs a declared runner that no step runs, with no evidence observations", () => {
+    const rows = tableRows().slice(2);
+    expect(rows.find(([check]) => check === "performance")).toStrictEqual([
+      "performance",
+      "0",
+      "k6",
+      "no step read runs it.",
+    ]);
+  });
+
+  it("says no step read runs a declared runner that no step runs, with evidence observations", () => {
+    const withPerformance: EvidenceObservation[] = [
+      ...behaviouralObservations,
+      { qualityCheck: "performance", scnId: "SCN-FIX-001", status: "passed" },
+    ];
+    const rows = tableRows(ci, withPerformance).slice(2);
+    expect(rows.find(([check]) => check === "performance")).toStrictEqual([
+      "performance",
+      "1",
+      "k6",
+      "no step read runs it.",
+    ]);
   });
 
   it("leaves both cells blank on the fitness row when no fitness function ran", () => {
@@ -107,6 +130,56 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
       "e2e",
       "performance",
       "fitness",
+    ]);
+  });
+});
+
+const unescapedCells = (row: string): string[] =>
+  row
+    .split(/(?<!\\)\|/)
+    .slice(1, -1)
+    .map((cell) => cell.trim().replace(/\\\|/g, "|"));
+
+function rawTableRows(workflow: string, runners: Record<string, string>): string[] {
+  const reconciliation = evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson: { scripts: packageJson.scripts, specController: { runners } },
+    ciWorkflows: parsedWorkflows([workflow]),
+    behaviouralObservations,
+    deferralTags: [],
+  });
+  return sectionUnder("### Evidence observations")(linesOf(reconciliation)).filter((line) => line.startsWith("|"));
+}
+
+const pipeStepCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: Cucumber
+        run: pnpm cucumber
+      - name: "E2e | headless"
+        run: pnpm e2e
+`;
+
+describe("[SCN-RPT-079] every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included", () => {
+  const declared = { unit: "vitest", integration: "cucumber-js", e2e: "playwright", performance: "k6 | cloud" };
+
+  it("keeps a step name holding a pipe in its CI step cell, the row keeping four cells", () => {
+    const e2e = rawTableRows(pipeStepCi, declared).find((row) => row.startsWith("| e2e "));
+    expect(e2e).toBeDefined();
+    expect(unescapedCells(e2e ?? "")).toStrictEqual(["e2e", "0", "playwright", "E2e | headless"]);
+  });
+
+  it("keeps a declared runner holding a pipe in its runner cell, the row keeping four cells", () => {
+    const performance = rawTableRows(pipeStepCi, declared).find((row) => row.startsWith("| performance "));
+    expect(performance).toBeDefined();
+    expect(unescapedCells(performance ?? "")).toStrictEqual([
+      "performance",
+      "0",
+      "k6 | cloud",
+      "no step read runs it.",
     ]);
   });
 });

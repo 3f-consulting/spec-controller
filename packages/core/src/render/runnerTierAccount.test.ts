@@ -33,10 +33,10 @@ const behaviouralObservations: EvidenceObservation[] = [
   { qualityCheck: "performance", scnId: "SCN-FIX-003", status: "passed" },
 ];
 
-function rowsByCheck(runners: Record<string, string | null>): Map<string, string[]> {
+function rowsOf(specController: { runners?: unknown }): Map<string, string[]> {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    packageJson: { scripts: { test: "vitest run", cucumber: "cucumber-js" }, specController: { runners } },
+    packageJson: { scripts: { test: "vitest run", cucumber: "cucumber-js" }, specController },
     ciWorkflows: parsedWorkflows([ci]),
     behaviouralObservations,
     deferralTags: [],
@@ -46,7 +46,11 @@ function rowsByCheck(runners: Record<string, string | null>): Map<string, string
   return new Map(rows.map((row) => [row[0] ?? "", row]));
 }
 
-describe("[SCN-RPT-051] a quality check with evidence observations and no runner the target declares says in its runner cell that the target names none, or that it has not said", () => {
+function rowsByCheck(runners: unknown): Map<string, string[]> {
+  return rowsOf({ runners });
+}
+
+describe("[SCN-RPT-051] a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included", () => {
   it("says in the runner cell of a quality check the target names null that the target names none, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
     expect(rows.get("performance")).toStrictEqual(["performance", "1", "no runner: the target names none.", ""]);
@@ -62,18 +66,35 @@ describe("[SCN-RPT-051] a quality check with evidence observations and no runner
     expect(rows.get("unit")).toStrictEqual(["unit", "1", "vitest", "Unit tests"]);
   });
 
-  it("leaves both cells blank on a quality check with no evidence observations, whatever the target declares", () => {
+  it("says at count 0 that the target has not said on a quality check it leaves out, and that it names none on one it names null", () => {
     expect(rowsByCheck({ unit: "vitest", performance: null }).get("integration")).toStrictEqual([
       "integration",
       "0",
-      "",
+      "unnamed: the target has not said.",
       "",
     ]);
     expect(rowsByCheck({ unit: "vitest", integration: null }).get("integration")).toStrictEqual([
       "integration",
       "0",
-      "",
+      "no runner: the target names none.",
       "",
     ]);
+  });
+
+  it("says the target has not said, with a blank CI step cell, when the target has no runners block", () => {
+    expect(rowsOf({}).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
+  });
+
+  it("says the target has not said, with a blank CI step cell, when its runners block holds only a key that is not a tier", () => {
+    expect(rowsByCheck({ lint: "eslint" }).get("unit")).toStrictEqual([
+      "unit",
+      "1",
+      "unnamed: the target has not said.",
+      "",
+    ]);
+  });
+
+  it("says the target has not said, with a blank CI step cell, when it gives a tier a value of the wrong kind", () => {
+    expect(rowsByCheck({ unit: 5 }).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
   });
 });

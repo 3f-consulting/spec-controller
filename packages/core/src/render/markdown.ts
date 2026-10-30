@@ -7,6 +7,7 @@ import type {
 } from "../model.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { cellSafe } from "./cellSafe.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
 import { type SharedScnCode } from "../domain/corpusCounts.js";
@@ -73,10 +74,6 @@ function resultOf(o: EvidenceObservation): string {
 
 function headlineOf(message: string): string {
   return message.split("\n").map((line) => line.trim()).find((line) => line.length > 0) ?? "";
-}
-
-function cellSafe(text: string): string {
-  return text.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
 }
 
 function renderPendingItem(item: PendingItem): string {

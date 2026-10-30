@@ -24,10 +24,13 @@ const observations: EvidenceObservation[] = [
 const heading = "### Evidence observations";
 const sum = CORE_MESSAGES[CoreMessage.EvidenceObservationsSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
-const fitnessRunner = CORE_MESSAGES[CoreMessage.FitnessRunner];
-const fitnessCiStep = CORE_MESSAGES[CoreMessage.FitnessCiStep];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
+
+// The runner and CI step cells are asserted by the scenarios that own them.
+function qualityCheckAndCount(row: string): string[] {
+  return row.split("|").slice(1, 3).map((cell) => cell.trim());
+}
 
 function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliation): void {
   const lines = linesOf(reconciliation);
@@ -47,20 +50,16 @@ describe("[SCN-RPT-010] the report renders the Evidence observations cut over ev
       onPhantomClaim: 1,
       onUnnamedClaim: 2,
     });
-    expect(section(linesOf(reconciliation))).toStrictEqual([
-      heading,
-      "",
-      sum(8, 5, 1, 2),
-      "",
-      tableHeader,
-      "| --- | --- | --- | --- |",
-      "| unit | 3 |  |  |",
-      "| integration | 1 |  |  |",
-      "| e2e | 2 |  |  |",
-      "| performance | 0 |  |  |",
-      `| fitness | 2 | ${fitnessRunner} | ${fitnessCiStep} |`,
-      "",
+    const lines = section(linesOf(reconciliation));
+    expect(lines.slice(0, 6)).toStrictEqual([heading, "", sum(8, 5, 1, 2), "", tableHeader, "| --- | --- | --- | --- |"]);
+    expect(lines.slice(6, -1).map(qualityCheckAndCount)).toStrictEqual([
+      ["unit", "3"],
+      ["integration", "1"],
+      ["e2e", "2"],
+      ["performance", "0"],
+      ["fitness", "2"],
     ]);
+    expect(lines.at(-1)).toBe("");
   });
 
   it("renders no section, and nothing in its place, for a report with no evidence observations", () => {

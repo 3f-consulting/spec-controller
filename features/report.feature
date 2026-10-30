@@ -216,24 +216,33 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "### Evidence observations", the table has a row per quality check with its count,
     its runner and its CI step. A behavioural quality check's runner is the one the target
-    declares for it, and its CI step is the step where balance found that runner run, directly
-    or through a package.json script. A quality check run in several steps lists each of them.
+    declares for it, whatever its count. Its CI step cell names each step where balance found
+    that runner run, directly or through a package.json script, in step order, or says no step
+    read runs it.
 
     The fitness row says what runs a fitness function: each one's own check step, the step
     whose id is its @SCN. Each fitness function's step is named on its row of Claim
-    Reconciliations.
+    Reconciliations. The fitness row has blank runner and CI step cells when no fitness
+    function ran.
 
-    A quality check with no evidence observations has blank runner and CI step cells. One
-    with evidence observations and no runner the target declares says so in its runner cell:
-    no runner where the target names none, unnamed where the target has not said.
+    A behavioural quality check whose runner the target does not declare says so in its
+    runner cell, whatever its count: no runner where the target names none, unnamed where the
+    target has not said. The target has not said when it leaves the tier out, gives the tier a
+    value of the wrong kind, or has no runners block. Its CI step cell is blank.
+
+    Each cell holds its text whole, so a runner or a step name holding a pipe stays in its
+    cell.
 
     There is no Behavioural runners section.
 
     @unit @SCN-RPT-074
-    Scenario: each quality check's row names its runner and the CI steps that run it, the fitness row says what runs a fitness function, and a quality check with no evidence observations has blank runner and CI step cells
+    Scenario: each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row says what runs a fitness function
 
     @unit @SCN-RPT-051
-    Scenario: a quality check with evidence observations and no runner the target declares says in its runner cell that the target names none, or that it has not said
+    Scenario: a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
+
+    @unit @SCN-RPT-079
+    Scenario: every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included
 
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
 

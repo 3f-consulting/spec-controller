@@ -77,10 +77,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     included; the fitness count is every fitness function that ran. The total is the sum of the
     five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
     quality check names the CI steps its counted evidence came from, in step order, where there
-    is at least one: a behavioural one the steps that run the runner the manifest declares for
-    it, beside that runner, and fitness the step behind each fitness function that ran, named
-    workflow:job:step, where a single step carries its code; a fitness function no single step
-    carries is counted and names no step. Its unit tests hold the assembled summary and the persisted
+    is at least one: a behavioural one the steps that run the runner the target declares for
+    it, and fitness the step behind each fitness function that ran, named workflow:job:step,
+    where a single step carries its code; a fitness function no single step carries is counted
+    and names no step. A behavioural quality check names the runner the target declares for it,
+    whatever its count and whatever steps were found: null where the target names none, and no
+    runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
 
     @unit @SCN-RMD-005
@@ -90,7 +92,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
     @unit @SCN-RMD-015
-    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the manifest declares for it
+    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count
 
     @unit @SCN-RMD-027
     Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code

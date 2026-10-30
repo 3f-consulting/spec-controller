@@ -1,9 +1,8 @@
 import { BEHAVIOURAL_QUALITY_CHECKS } from "./ledger.js";
-import type { ConfigurationKind, TierWithoutRunner, WrongKindEntry } from "./evidenceReconciliation.js";
+import type { ConfigurationKind, WrongKindEntry } from "./evidenceReconciliation.js";
 
 export interface RunnerTiers {
   readonly tiers: Readonly<Record<string, string | null>>;
-  readonly tiersWithoutRunner: readonly TierWithoutRunner[];
   readonly unrecognisedKeys: readonly string[];
 }
 
@@ -15,22 +14,13 @@ const isTier = (key: string): boolean => (BEHAVIOURAL_QUALITY_CHECKS as readonly
 
 const isRunner = (value: unknown): value is string | null => typeof value === "string" || value === null;
 
-function tiersWithoutRunnerOf(tiers: Readonly<Record<string, string | null>>): TierWithoutRunner[] {
-  if (Object.keys(tiers).length === 0) return [];
-  return BEHAVIOURAL_QUALITY_CHECKS.filter((tier) => typeof tiers[tier] !== "string").map((tier) => ({
-    tier,
-    namesNone: Object.hasOwn(tiers, tier),
-  }));
-}
-
 function runnerTiersOf(value: unknown): RunnerTiers {
-  if (!isBlock(value)) return { tiers: {}, tiersWithoutRunner: [], unrecognisedKeys: [] };
+  if (!isBlock(value)) return { tiers: {}, unrecognisedKeys: [] };
   const tiers: Readonly<Record<string, string | null>> = Object.fromEntries(
     Object.entries(value).filter((entry): entry is [string, string | null] => isTier(entry[0]) && isRunner(entry[1]))
   );
   return {
     tiers,
-    tiersWithoutRunner: tiersWithoutRunnerOf(tiers),
     unrecognisedKeys: Object.keys(value).filter((key) => !isTier(key)),
   };
 }

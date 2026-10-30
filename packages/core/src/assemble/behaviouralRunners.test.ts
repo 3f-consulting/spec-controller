@@ -7,6 +7,7 @@ import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { QualityCheckObservations } from "../domain/ledger.js";
+import type { BehaviouralEvidenceObservation } from "../domain/journal.js";
 
 const ci = `name: fixture CI
 jobs:
@@ -120,6 +121,22 @@ function withAnExcludedTwin(): EvidenceReconciliation {
   });
 }
 
+function withObservations(
+  specController: Record<string, unknown>,
+  behaviouralObservations: readonly BehaviouralEvidenceObservation[]
+): EvidenceReconciliation {
+  const packageJson = { scripts, specController } as Parameters<
+    typeof evidenceReconciliationFromSources
+  >[0]["packageJson"];
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson,
+    ciWorkflows: parsedWorkflows([ci]),
+    behaviouralObservations,
+    deferralTags: [],
+  });
+}
+
 function entries(reconciliation: EvidenceReconciliation): readonly QualityCheckObservations[] {
   return reconciliation.summary.evidenceObservations?.byQualityCheck ?? [];
 }
@@ -133,7 +150,7 @@ beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the manifest declares for it", () => {
+describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count", () => {
   it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and names no runner for a target with no runners block", () => {
     const reconciliation = reconcile();
     const unnamedClaimRowItems = reconciliation.ledger.claimReconciliations
@@ -172,6 +189,34 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       expect(entry).not.toHaveProperty("ciSteps");
     }
     expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
+  });
+
+  it("names a declared runner that no step read runs on its entry, with no CI step, where it has evidence", () => {
+    const reconciliation = withObservations({ runners: { unit: "vitest", e2e: "playwright" } }, [
+      { qualityCheck: "e2e", scnId: "SCN-FIX-001", status: "passed" },
+    ]);
+    expect(entryFor(reconciliation, "e2e")).toStrictEqual({ qualityCheck: "e2e", count: 1, runner: "playwright" });
+  });
+
+  it("names null as the runner of a tier the target names none for, with no CI step, at count 0 and with evidence", () => {
+    const reconciliation = withObservations({ runners: { unit: "vitest", integration: null, performance: null } }, [
+      { qualityCheck: "performance", scnId: "SCN-FIX-001", status: "passed" },
+    ]);
+    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheck: "integration", count: 0, runner: null });
+    expect(entryFor(reconciliation, "performance")).toStrictEqual({ qualityCheck: "performance", count: 1, runner: null });
+    expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
+  });
+
+  it("names no runner on a tier the target has not said, left out, of the wrong kind, or with no runners block, where it has evidence", () => {
+    const unitObservations: BehaviouralEvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "failed" },
+    ];
+    for (const specController of [{}, { runners: { e2e: "playwright" } }, { runners: { unit: 5 } }]) {
+      const reconciliation = withObservations(specController, unitObservations);
+      expect(entryFor(reconciliation, "unit")).toStrictEqual({ qualityCheck: "unit", count: 2 });
+      expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
+    }
   });
 
   it("names the declared runner and the step that runs it on the unit entry once the runners block names it, and that step leaves fitness", () => {

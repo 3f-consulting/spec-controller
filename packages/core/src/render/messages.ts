@@ -101,6 +101,7 @@ export enum CoreMessage {
   FitnessCiStep,
   RunnerTierNamesNone,
   RunnerTierUnnamed,
+  NoStepReadRunsIt,
   RunnerKeyNotATier,
   ReconcilerStep,
   ReconcilerReconciles,
@@ -420,6 +421,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.FitnessCiStep]: "the step whose id is its @SCN",
   [CoreMessage.RunnerTierNamesNone]: "no runner: the target names none.",
   [CoreMessage.RunnerTierUnnamed]: "unnamed: the target has not said.",
+  [CoreMessage.NoStepReadRunsIt]: "no step read runs it.",
   [CoreMessage.RunnerKeyNotATier]: (key) =>
     `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,

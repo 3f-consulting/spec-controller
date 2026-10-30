@@ -241,7 +241,7 @@ export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
 export interface QualityCheckObservations {
   readonly qualityCheck: QualityCheck;
   readonly count: number;
-  readonly runner?: string;
+  readonly runner?: string | null;
   readonly ciSteps?: readonly string[];
 }
 

@@ -1,5 +1,4 @@
 import type {
-  BehaviouralQualityCheck,
   Scenario,
   EvidenceObservation,
   FitnessEvidenceObservation,
@@ -237,15 +236,24 @@ function stepsNamed(running: readonly FitnessEvidenceObservation[], stepsInOrder
   return stepsInOrder.filter((step) => named.has(step));
 }
 
-function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[], runner?: string): QualityCheckObservations {
+function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[]): QualityCheckObservations {
   if (ciSteps.length === 0) return entry;
-  return { ...entry, ...(runner === undefined ? {} : { runner }), ciSteps };
+  return { ...entry, ciSteps };
+}
+
+function withDeclaredRunner(
+  entry: QualityCheckObservations,
+  tiers: Readonly<Record<string, string | null>>
+): QualityCheckObservations {
+  if (!Object.hasOwn(tiers, entry.qualityCheck)) return entry;
+  return { ...entry, runner: tiers[entry.qualityCheck] as string | null };
 }
 
 export function ciStepsJoined(
   observations: EvidenceObservationTally,
   ledger: Ledger,
   runners: readonly BehaviouralRunner[],
+  tiers: Readonly<Record<string, string | null>>,
   stepsInOrder: readonly string[]
 ): EvidenceObservationTally {
   return {
@@ -255,7 +263,7 @@ export function ciStepsJoined(
         return withSteps(entry, stepsNamed(runningFitnessObservations(ledger), stepsInOrder));
       }
       const running = runners.filter((row) => row.tier === entry.qualityCheck);
-      return withSteps(entry, running.map((row) => row.step), running[0]?.runner);
+      return withSteps(withDeclaredRunner(entry, tiers), running.map((row) => row.step));
     }),
   };
 }
@@ -308,11 +316,6 @@ export interface StepAccounting {
   readonly steps: StepsBehindCounts;
 }
 
-export interface TierWithoutRunner {
-  readonly tier: BehaviouralQualityCheck;
-  readonly namesNone: boolean;
-}
-
 interface EvidenceReconciliationTotals {
   readonly claimReconciliations: ClaimReconciliationTotals;
   readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
@@ -323,7 +326,6 @@ export interface Summary {
   readonly evidenceReconciliation: EvidenceReconciliationTotals;
   readonly evidenceObservations?: EvidenceObservationTally;
   readonly fitness: FitnessTally;
-  readonly tiersWithoutRunner?: readonly TierWithoutRunner[];
   readonly runnerKeysNotATier?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
   readonly configurationKeysNotRead?: readonly string[];

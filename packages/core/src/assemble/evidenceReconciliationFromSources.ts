@@ -213,7 +213,7 @@ function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  { tiers: runnerTiers, tiersWithoutRunner, unrecognisedKeys }: ResolvedRunners
+  { tiers: runnerTiers, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const scripts = packageJson.scripts ?? {};
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(steps, scripts, runnerTiers, shellReading);
@@ -229,10 +229,10 @@ function withRunnerAccount(
               evidenceObservations,
               reconciliation.ledger,
               behaviouralRunners,
+              runnerTiers,
               steps.map(qualifiedStepName)
             ),
           }),
-      ...(tiersWithoutRunner.length > 0 ? { tiersWithoutRunner } : {}),
       ...(unrecognisedKeys.length > 0 ? { runnerKeysNotATier: unrecognisedKeys } : {}),
     },
   };
