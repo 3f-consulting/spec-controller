@@ -129,7 +129,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing. The JSON report counts them and names them under `steps.plumbing`; the Markdown report counts them and never names them. A plumbing step the manifest also names a non-check is a non-check: it is counted and named with the non-checks. |
 | candidate | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step. Every candidate is a fitness function. |
 | uncited fitness function | A candidate whose step cites no scenario. |
-| step accounting | The report's tally of the steps read, by disposition (candidates, runners, the reconciler, excluded, plumbing), so every step read is accounted for. |
+| step accounting | The report's one account of the CI steps it read: a row per workflow and job counting the steps read by disposition (candidates, runners, the reconciler, excluded, plumbing), a total over the rows, and the steps behind each count except the candidates, listed by name, so every step read is accounted for. |
 | check step | The CI step that already runs a check, carrying the check's `@SCN` as its `id:`. |
 | citation | The `@SCN` on a check step's `id:`: a citation of the scenario, never a definition of the check. |
 | converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's `@SCN` as its `id:`, so `balance` credits its result to that scenario. |

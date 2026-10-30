@@ -613,7 +613,7 @@ Feature: The report renders the ledger as sectioned facts
     the CI steps the run read. Its table has a row per workflow and job read, in the step
     accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners,
     Reconciler, Excluded, GitHub plumbing and Accounted for. When more than one job was read, a
-    Total row follows them. The section then states that every step read is accounted for.
+    Total row follows them. The section then states whether every step read is accounted for.
 
     Beneath the table, each column other than Candidates that counts a step lists the steps
     behind it, under the column's name: Runners, Reconciler, Excluded and GitHub plumbing, in
