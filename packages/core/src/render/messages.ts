@@ -392,17 +392,14 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
   [CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]:
-    "A Reconciliation line is one line of a Quality Check Reconciliation, the evidence of one quality check within a claim, " +
-    "with its own outcome: each Evidence Observation it holds is one, so is its Evidence Obligation when no Evidence Observation " +
-    "that ran answers it, and so is a scenario's quality check that has neither. " +
-    "A scenario whose one Evidence Obligation two passing tests answer adds one to the Claim Reconciliation total " +
-    "and two to the Reconciliation line total.",
+    "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome. " +
+    "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
+    "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
   [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
-    "An Evidence Obligation is what a scenario asks for: one for each quality check its tags name, met by Evidence Observations. " +
-    "A quality check its tags name as pending raises none.",
+    "An Evidence Obligation is a proof a scenario asks for, by the tags it carries, to be met by Evidence Observations.",
   [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
     "An Evidence Observation is one reported result of a test or a fitness function, attributed by the code it cites: " +
-    "to that scenario, to a phantom claim when no scenario carries the code, or to the unnamed claim when it cites none. " +
+    "to the one scenario that carries the code, to a phantom claim when no scenario carries it, and otherwise to the unnamed claim. " +
     "One that never reached its assertions is broken: it was reported, but did not run to a result.",
   [CoreMessage.SubjectColumn]: "Subject",
   [CoreMessage.TotalColumn]: "Total",

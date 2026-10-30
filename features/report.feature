@@ -79,14 +79,13 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "### Evidence reconciliation", four definitions come before the table, one each for a
     Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence
-    Observation. Every run prints the same four, none states a figure from the run, and each
-    is true of every row the table counts.
+    Observation. Every run prints the same four, and none states a figure from the run. Each
+    states what its term is; how many of each a row holds is the rule of the scenarios that
+    count them, so no definition lists the cases a count covers.
 
-    The second definition also says why the two totals differ: a Claim Reconciliation holds a
-    Reconciliation line for each evidence observation, for each evidence obligation that no
-    evidence observation answers, and for a quality check that has neither, so a scenario
-    whose one obligation two passing tests answer adds one to the Claim Reconciliation total
-    and two to the Reconciliation line total.
+    The second definition also says why the two totals differ: no Reconciliation line stands in
+    for another, so a scenario whose one obligation two passing tests answer adds one to the
+    Claim Reconciliation total and two to the Reconciliation line total.
 
     @unit @SCN-RPT-071
     Scenario: the evidence reconciliation section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table
