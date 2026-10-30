@@ -78,8 +78,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
     quality check names the CI steps its counted evidence came from, in step order, where there
     is at least one: a behavioural one the steps that run the runner the manifest declares for
-    it, beside that runner, and fitness the step behind each fitness function that ran, so its
-    steps are as many as its count. Its unit tests hold the assembled summary and the persisted
+    it, beside that runner, and fitness the step behind each fitness function that ran, named
+    workflow:job:step, where a single step carries its code; a fitness function no single step
+    carries is counted and names no step. Its unit tests hold the assembled summary and the persisted
     file in isolation.
 
     @unit @SCN-RMD-005
