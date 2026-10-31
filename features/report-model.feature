@@ -79,9 +79,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     workflow:job:step and each once, where there is at least one: a behavioural one the steps
     that run the runner the target declares for it, and fitness the step behind each fitness
     function that ran, where a single step carries its code; a fitness function no single step
-    carries is counted and names no step. A behavioural quality check names the runner the target declares for it,
-    whatever its count and whatever steps were found: null where the target names none, and no
-    runner where it has not said. Its unit tests hold the assembled summary and the persisted
+    carries is counted and names no step. A behavioural quality check names the runner the
+    target declares for it, whatever its count and whatever steps were found: null where the
+    target names none, and no runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
 
     @unit @SCN-RMD-005

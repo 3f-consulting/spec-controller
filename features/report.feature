@@ -101,7 +101,7 @@ Feature: The report renders the ledger as sectioned facts
     A scenario's feature is the feature code in its @SCN code. The Feature cell reads
     "<file> (<code>)", where the file is the path of the feature file carrying that code under
     the corpus. A code that no feature file carries shows as the bare code. Every code shows bare
-    when the report is re-rendered from saved JSON that carries no feature names.
+    when the report is re-rendered from saved JSON that carries no feature files.
 
     The total line accounts for every out-of-balance row. A phantom claim's row and the
     unnamed claim's row name no feature file, so they are not grouped: the total line states
