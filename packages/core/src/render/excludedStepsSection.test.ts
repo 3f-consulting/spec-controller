@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import {
@@ -33,7 +34,7 @@ jobs:
         run: pnpm typecheck
 `;
 
-function reportLines(notChecks?: readonly string[], ciSource: string = ci): string[] {
+function reportLines(notChecks?: readonly string[], ciSource: string = ci, files: readonly string[] = ["ci.yml"]): string[] {
   const specController = notChecks === undefined ? {} : { notChecks };
   const packageJson = { scripts, specController } as Parameters<
     typeof evidenceReconciliationFromSources
@@ -41,7 +42,7 @@ function reportLines(notChecks?: readonly string[], ciSource: string = ci): stri
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson,
-    ciWorkflows: parsedWorkflows([ciSource], ["ci.yml"]),
+    ciWorkflows: parsedWorkflows(files.map(() => ciSource), files),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -67,14 +68,14 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
       "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
       "",
     ]);
-    expect(section.some((line) => line.includes("matches no step"))).toBe(false);
+    expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it("prints no Excluded label when the target's only entry matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
     expect(section.length).toBeGreaterThan(0);
     expect(section).not.toContain(label);
-    expect(section.some((line) => line.includes("matches no step"))).toBe(false);
+    expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it("lists one line for each step an entry matches", () => {
@@ -104,6 +105,39 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
     expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes("— excluded:") || line.includes("matches no step"))).toBe(false);
+    expect(lines.some((line) => line.includes("— excluded:") || line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+  });
+});
+
+describe("[SCN-RPT-089] a notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, beside the workflows the run read", () => {
+  it.each([
+    {
+      files: ["ci.yml"],
+      notChecks: ["ci.yml:quality:Types", "ci.yaml:quality:Deploy", ".github/workflows/ci.yml:quality:Deploy"],
+      notApplied: ["ci.yaml:quality:Deploy", ".github/workflows/ci.yml:quality:Deploy"],
+    },
+    {
+      files: ["ci.yml", "ci.yml.bak"],
+      notChecks: ["ci.yml.bak:quality:Types", "ci.yml.old:quality:Types"],
+      notApplied: ["ci.yml.old:quality:Types"],
+    },
+  ])("lists $notApplied, reading $files, as not applied", ({ files, notChecks, notApplied }) => {
+    const lines = reportLines(notChecks, ci, files);
+    const section = stepAccounting(lines);
+    const notAppliedLabel = CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel](
+      "`specController.notChecks`",
+      files.map((file) => `\`${file}\``).join(", ")
+    );
+    const start = section.indexOf(notAppliedLabel);
+
+    expect(start).toBeGreaterThan(Math.max(endOfTable(section), section.indexOf(label)));
+    expect(section.slice(start, start + notApplied.length + 2)).toStrictEqual([
+      notAppliedLabel,
+      ...notApplied.map((entry) => `- \`${entry}\``),
+      "",
+    ]);
+    expect(lines.filter((line) => notApplied.some((entry) => line.includes(entry)))).toStrictEqual(
+      notApplied.map((entry) => `- \`${entry}\``)
+    );
   });
 });

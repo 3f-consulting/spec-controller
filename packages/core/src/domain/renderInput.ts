@@ -36,6 +36,7 @@ interface ConfigurationFaults {
   readonly ofWrongKind?: readonly WrongKindEntry[];
   readonly runnerKeysNotATier?: readonly string[];
   readonly nonChecksMatchingNoStep?: readonly string[];
+  readonly nonChecksNotAStepName?: readonly string[];
 }
 
 export interface ErrorsSection {
@@ -52,6 +53,7 @@ export function errorsOf(
     ...nonEmpty("ofWrongKind", summary.configurationOfWrongKind),
     ...nonEmpty("runnerKeysNotATier", summary.runnerKeysNotATier),
     ...nonEmpty("nonChecksMatchingNoStep", summary.nonChecksMatchingNoStep),
+    ...nonEmpty("nonChecksNotAStepName", summary.nonChecksNotAStepName),
   };
   const errors: ErrorsSection = {
     ...nonEmpty("scenarioCodes", scenarioCodeErrors),
@@ -64,7 +66,8 @@ type ConfigurationFaultKey =
   | "configurationKeysNotRead"
   | "configurationOfWrongKind"
   | "runnerKeysNotATier"
-  | "nonChecksMatchingNoStep";
+  | "nonChecksMatchingNoStep"
+  | "nonChecksNotAStepName";
 
 type SummaryStatingNoFault = Omit<Summary, ConfigurationFaultKey>;
 
@@ -73,6 +76,7 @@ export function summaryStatingNoFault({
   configurationOfWrongKind: _ofWrongKind,
   runnerKeysNotATier: _runnerKeysNotATier,
   nonChecksMatchingNoStep: _nonChecksMatchingNoStep,
+  nonChecksNotAStepName: _nonChecksNotAStepName,
   ...summary
 }: Summary): SummaryStatingNoFault {
   return summary;

@@ -2,6 +2,7 @@ import type { RenderInput } from "../domain/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
 import { accountedForOf } from "../domain/uncitedFitnessFunctions.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { codeSpan } from "./codeSpan.js";
 
 type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
 
@@ -60,6 +61,19 @@ const excludedListOf = ({ steps }: StepAccounting): string[] => {
   ];
 };
 
+const workflowsReadOf = ({ byJob }: StepAccounting): string =>
+  [...new Set(byJob.map(({ workflow }) => workflow))].map((workflow) => `\`${workflow}\``).join(", ");
+
+const notAppliedListOf = (accounting: StepAccounting): string[] => {
+  const notApplied = accounting.nonChecksNamingAWorkflowNotRead ?? [];
+  if (notApplied.length === 0) return [];
+  return [
+    CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", workflowsReadOf(accounting)),
+    ...notApplied.map((entry) => `- ${codeSpan(entry)}`),
+    "",
+  ];
+};
+
 const plumbingListOf = ({ steps }: StepAccounting): string[] => {
   const plumbing = steps.plumbing ?? [];
   if (plumbing.length === 0) return [];
@@ -80,6 +94,7 @@ export const stepAccountingSection = (report: RenderInput): string[] => {
     ...runnersListOf(accounting),
     ...reconcilerListOf(accounting),
     ...excludedListOf(accounting),
+    ...notAppliedListOf(accounting),
     ...plumbingListOf(accounting),
   ];
 };

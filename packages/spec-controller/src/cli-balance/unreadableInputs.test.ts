@@ -726,6 +726,7 @@ const SAVED_WITH_SECTIONS = {
       ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
       runnerKeysNotATier: ["smoke"],
       nonChecksMatchingNoStep: ["lint"],
+      nonChecksNotAStepName: ["Deploy"],
     },
   },
   scenarioCodes: { featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [{ feature: "a.feature", scenario: "one" }] },
@@ -754,6 +755,10 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [
       { ...SAVED, errors: { configuration: { nonChecksMatchingNoStep: "x" } } },
       "errors.configuration.nonChecksMatchingNoStep is a string, not a list",
+    ],
+    [
+      { ...SAVED, errors: { configuration: { nonChecksNotAStepName: "x" } } },
+      "errors.configuration.nonChecksNotAStepName is a string, not a list",
     ],
     [{ ...SAVED, scenarioCodes: "x" }, "scenarioCodes is a string, not an object"],
     [{ ...SAVED, runProvenance: { ...SAVED.runProvenance, corpus: undefined } }, "runProvenance.corpus is missing"],

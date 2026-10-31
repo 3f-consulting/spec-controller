@@ -76,3 +76,44 @@ describe("[SCN-RPT-046] the report names a key the specController block does not
     ]);
   });
 });
+
+const codeSpansOf = (line: string): string[] => {
+  const runs = [...line.matchAll(/`+/g)].map((run, i) => ({ fence: run[0], at: run.index, i }));
+  const spans: string[] = [];
+  let resumeAt = 0;
+  for (const open of runs) {
+    if (open.i < resumeAt) continue;
+    const close = runs.find((run) => run.i > open.i && run.fence === open.fence);
+    if (close === undefined) continue;
+    const text = line.slice(open.at + open.fence.length, close.at);
+    spans.push(/^ .*[^ ].* $/s.test(text) ? text.slice(1, -1) : text);
+    resumeAt = close.i + 1;
+  }
+  return spans;
+};
+
+const counts = { stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 };
+
+describe("[SCN-RPT-088] each configuration entry the report quotes is held whole in its code span, a backtick included", () => {
+  it.each([
+    { quoted: "ci.yml:quality:Run `pnpm test`", extra: { nonChecksMatchingNoStep: ["ci.yml:quality:Run `pnpm test`"] } },
+    { quoted: "`Deploy`", extra: { nonChecksNotAStepName: ["`Deploy`"] } },
+    { quoted: "specController.zz``z`", extra: { configurationKeysNotRead: ["zz``z`"] } },
+    { quoted: "specController.runners.`unit", extra: { runnerKeysNotATier: ["`unit"] } },
+    { quoted: "specController.runners.a`b", extra: { configurationOfWrongKind: [{ entry: "specController.runners.a`b", is: "number" as const, reads: "string-or-null" as const }] } },
+    {
+      quoted: "`ci.yaml`:quality:Deploy",
+      extra: {
+        stepAccounting: {
+          byJob: [{ workflow: "ci.yml", job: "quality", ...counts }],
+          total: counts,
+          steps: {},
+          nonChecksNamingAWorkflowNotRead: ["`ci.yaml`:quality:Deploy"],
+        },
+      },
+    },
+  ])("quotes $quoted whole", ({ quoted, extra }) => {
+    const lines = render(extra).split("\n");
+    expect(lines.filter((line) => codeSpansOf(line).includes(quoted))).toHaveLength(1);
+  });
+});

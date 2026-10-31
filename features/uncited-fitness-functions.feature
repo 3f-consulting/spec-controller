@@ -90,7 +90,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     log, and matches that step exactly. There is no wildcard form.
 
     The report names every excluded step. It names as stale every entry that matches no step of
-    the workflows the run read; an entry naming a workflow the run did not read is not judged.
+    the workflows the run read. In a run that read any CI step, an entry naming a workflow the run
+    did not read is listed as not applied, beside the workflows the run read.
 
     @unit @SCN-USG-015
     Scenario: a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped

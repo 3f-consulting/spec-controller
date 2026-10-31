@@ -108,12 +108,14 @@ export enum CoreMessage {
   ReconcilerRecords,
   StepExcluded,
   NotChecksEntryMatchesNoStep,
+  NotChecksEntryNotAStepName,
   StepAccountingHeading,
   StepAccountingTableHeader,
   StepAccountingTotal,
   StepAccountingRunnersLabel,
   StepAccountingReconcilerLabel,
   StepAccountingExcludedLabel,
+  StepAccountingNotAppliedLabel,
   StepAccountingPlumbingLabel,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
@@ -214,7 +216,9 @@ interface CoreMessageParams {
   readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
-  readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [entry: string];
+  readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [key: string, entry: string];
+  readonly [CoreMessage.NotChecksEntryNotAStepName]: [key: string, entry: string];
+  readonly [CoreMessage.StepAccountingNotAppliedLabel]: [key: string, workflowsRead: string];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
@@ -420,8 +424,10 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
   [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",
   [CoreMessage.StepExcluded]: (entry) => `${entry} — excluded: the target names this step a non-check.`,
-  [CoreMessage.NotChecksEntryMatchesNoStep]: (entry) =>
-    `\`specController.notChecks\` entry ${entry} matches no step of the workflows this run read, so it excludes nothing.`,
+  [CoreMessage.NotChecksEntryMatchesNoStep]: (key, entry) =>
+    `${key} entry ${entry} matches no step of the workflows this run read, so it excludes nothing.`,
+  [CoreMessage.NotChecksEntryNotAStepName]: (key, entry) =>
+    `${key} entry ${entry} does not name a step as \`<workflow file>:<job id>:<step name>\`, so it excludes nothing.`,
   [CoreMessage.StepAccountingHeading]: "### Step accounting",
   [CoreMessage.StepAccountingTableHeader]:
     "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
@@ -429,6 +435,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepAccountingRunnersLabel]: "Runners:",
   [CoreMessage.StepAccountingReconcilerLabel]: "Reconciler:",
   [CoreMessage.StepAccountingExcludedLabel]: "Excluded:",
+  [CoreMessage.StepAccountingNotAppliedLabel]: (key, workflowsRead) =>
+    `Not applied, because each ${key} entry below names a workflow this run did not read (this run read ${workflowsRead}):`,
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,

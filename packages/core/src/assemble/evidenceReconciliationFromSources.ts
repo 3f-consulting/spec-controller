@@ -14,7 +14,8 @@ import { commandRuns, shellReading } from "../parse/commandRuns.js";
 import {
   declaredRunnerTest,
   nonChecksApplied,
-  nonChecksMatchingNoStep,
+  nonChecksNotApplied,
+  type NonChecksNotApplied,
   recognisedRunners,
   reconcilerSteps,
   stepAccountOf,
@@ -74,7 +75,7 @@ export interface EvidenceReconciliationSources {
 interface PipelineReadings {
   readonly steps: readonly PipelineStep[];
   readonly runners: ResolvedRunners;
-  readonly matchingNoStep: readonly string[];
+  readonly notApplied: NonChecksNotApplied;
   readonly reconciler: ReconcilerSteps;
   readonly dispositionOf: (step: PipelineStep) => StepDisposition;
 }
@@ -97,7 +98,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   return {
     steps,
     runners,
-    matchingNoStep: nonChecksMatchingNoStep(exclusions, input.ciWorkflows.map(({ file }) => file)),
+    notApplied: nonChecksNotApplied(exclusions.unmatchedEntries, input.ciWorkflows.map(({ file }) => file)),
     reconciler,
     dispositionOf: stepDispositions({
       isReconciler: reconciler.isReconciler,
@@ -122,7 +123,7 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { steps, runners, matchingNoStep, reconciler, dispositionOf } = pipelineReadings(input);
+  const { steps, runners, notApplied, reconciler, dispositionOf } = pipelineReadings(input);
   const isCandidate: StepTest = (step) => dispositionOf(step) === "candidate";
 
   const reconciliation = evidenceReconciliationOf(
@@ -132,7 +133,7 @@ export function evidenceReconciliationFromSources(
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, steps, packageJson, runners, matchingNoStep, reconciler, dispositionOf),
+      withReaderAccounts(reconciliation, steps, packageJson, runners, notApplied, reconciler, dispositionOf),
       packageJson
     ),
     input
@@ -170,15 +171,16 @@ function withReaderAccounts(
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
   runners: ResolvedRunners,
-  matchingNoStep: readonly string[],
+  notApplied: NonChecksNotApplied,
   reconciler: ReconcilerSteps,
   dispositionOf: (step: PipelineStep) => StepDisposition
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), matchingNoStep),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), notApplied),
     steps,
     dispositionOf,
-    reconciler.roleOf
+    reconciler.roleOf,
+    notApplied.namingAWorkflowNotRead
   );
 }
 
@@ -186,26 +188,33 @@ function withStepAccounting(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   dispositionOf: (step: PipelineStep) => StepDisposition,
-  roleOf: ReconcilerRole
+  roleOf: ReconcilerRole,
+  namingAWorkflowNotRead: readonly string[]
 ): EvidenceReconciliation {
   if (steps.length === 0) return reconciliation;
   return {
     ...reconciliation,
     summary: {
       ...reconciliation.summary,
-      stepAccounting: stepAccountOf(steps, dispositionOf, qualifiedStepName, roleOf),
+      stepAccounting: {
+        ...stepAccountOf(steps, dispositionOf, qualifiedStepName, roleOf),
+        ...(namingAWorkflowNotRead.length > 0 ? { nonChecksNamingAWorkflowNotRead: namingAWorkflowNotRead } : {}),
+      },
     },
   };
 }
 
 function withUnmatchedNonChecks(
   reconciliation: EvidenceReconciliation,
-  matchingNoStep: readonly string[]
+  { matchingNoStep, notAStepName }: NonChecksNotApplied
 ): EvidenceReconciliation {
-  if (matchingNoStep.length === 0) return reconciliation;
   return {
     ...reconciliation,
-    summary: { ...reconciliation.summary, nonChecksMatchingNoStep: matchingNoStep },
+    summary: {
+      ...reconciliation.summary,
+      ...(matchingNoStep.length > 0 ? { nonChecksMatchingNoStep: matchingNoStep } : {}),
+      ...(notAStepName.length > 0 ? { nonChecksNotAStepName: notAStepName } : {}),
+    },
   };
 }
 

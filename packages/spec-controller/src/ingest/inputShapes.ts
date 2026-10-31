@@ -93,6 +93,7 @@ export const SAVED_RECONCILIATION: Shape = {
             ofWrongKind: { list: "anything" },
             runnerKeysNotATier: { list: "anything" },
             nonChecksMatchingNoStep: { list: "anything" },
+            nonChecksNotAStepName: { list: "anything" },
           },
         },
       },

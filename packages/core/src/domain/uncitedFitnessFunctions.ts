@@ -65,13 +65,26 @@ export function nonChecksApplied(
   };
 }
 
-export function nonChecksMatchingNoStep(
-  { unmatchedEntries }: Pick<StepExclusions, "unmatchedEntries">,
+const namesAWorkflowRead = (entry: string, workflowsRead: readonly string[]): boolean =>
+  workflowsRead.some((workflow) => entry.startsWith(`${workflow}:`));
+
+const namesAStep = (entry: string): boolean => entry.split(":").length > 2;
+
+export interface NonChecksNotApplied {
+  readonly matchingNoStep: readonly string[];
+  readonly notAStepName: readonly string[];
+  readonly namingAWorkflowNotRead: readonly string[];
+}
+
+export function nonChecksNotApplied(
+  unmatchedEntries: readonly string[],
   workflowsRead: readonly string[]
-): string[] {
-  return unmatchedEntries.filter(
-    (entry) => !entry.includes(":") || workflowsRead.includes(entry.slice(0, entry.indexOf(":")))
-  );
+): NonChecksNotApplied {
+  return {
+    matchingNoStep: unmatchedEntries.filter((entry) => namesAStep(entry) && namesAWorkflowRead(entry, workflowsRead)),
+    notAStepName: unmatchedEntries.filter((entry) => !namesAStep(entry)),
+    namingAWorkflowNotRead: unmatchedEntries.filter((entry) => namesAStep(entry) && !namesAWorkflowRead(entry, workflowsRead)),
+  };
 }
 
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";

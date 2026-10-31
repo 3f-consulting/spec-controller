@@ -32,16 +32,17 @@ function reportOf({ entry, workflowsRead, runners }: Target) {
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const section = (lines: readonly string[]): string[] | undefined => (lines.includes(heading) ? sectionUnder(heading)(lines) : undefined);
 
-const named = (entry: string): string =>
-  `- \`specController.notChecks\` entry \`${entry}\` matches no step of the workflows this run read, so it excludes nothing.`;
+const named = (entry: string): string => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", `\`${entry}\``)}`;
+const notAStepName = (entry: string): string =>
+  `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", `\`${entry}\``)}`;
 const notATier = (): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier]("`specController.runners.lint`")}`;
 
-describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not", () => {
+describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
   it.each([
     { entry: "ci.yml:quality:Deploy", workflowsRead: ["ci.yml"], judged: ["ci.yml:quality:Deploy"] },
     { entry: "ci.yml:quality:Deploy", workflowsRead: [], judged: undefined },
     { entry: "ci.yml:quality:Deploy", workflowsRead: ["release.yml"], judged: undefined },
-    { entry: "Deploy", workflowsRead: [], judged: ["Deploy"] },
+    { entry: "a:b.yml:quality:Deploy", workflowsRead: ["a:b.yml"], judged: ["a:b.yml:quality:Deploy"] },
   ])("judges $entry, reading $workflowsRead, as $judged", ({ entry, workflowsRead, judged }) => {
     const { reconciliation, lines } = reportOf({ entry, workflowsRead });
 
@@ -55,5 +56,19 @@ describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the
     const { lines } = reportOf({ entry: "ci.yml:quality:Deploy", workflowsRead: ["ci.yml"], runners: { unit: "vitest", lint: "eslint" } });
 
     expect(section(lines)?.filter((line) => line.startsWith("- "))).toStrictEqual([notATier(), named("ci.yml:quality:Deploy")]);
+  });
+});
+
+describe("[SCN-RPT-087] a notChecks entry that is not a workflow file, a job and a step name is named under Configuration not read as not naming a step", () => {
+  it.each([
+    { entry: "Deploy", workflowsRead: [] },
+    { entry: "Deploy", workflowsRead: ["ci.yml"] },
+    { entry: "quality:Deploy", workflowsRead: [] },
+    { entry: "quality:Deploy", workflowsRead: ["ci.yml"] },
+  ])("names $entry, reading $workflowsRead, as not naming a step", ({ entry, workflowsRead }) => {
+    const { reconciliation, lines } = reportOf({ entry, workflowsRead });
+
+    expect([reconciliation.summary.nonChecksNotAStepName, reconciliation.summary.nonChecksMatchingNoStep]).toStrictEqual([[entry], undefined]);
+    expect(section(lines)).toStrictEqual([heading, "", CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro], "", notAStepName(entry), ""]);
   });
 });

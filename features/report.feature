@@ -664,7 +664,8 @@ Feature: The report renders the ledger as sectioned facts
 
     Each line under "### Configuration not read" names its entry by its specController path and
     says what this run did with it, and every account in the report is the one the target gives
-    without it.
+    without it. Each entry the report quotes from the configuration, here and in the step
+    accounting, is held whole in its code span, whatever backticks it holds.
 
     @unit @SCN-RPT-045
     Scenario: each specController entry of a kind its reader does not take is named on a line of its own, after the run provenance and before any cut of the reconciliation
@@ -676,7 +677,13 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read
 
     @unit @SCN-RPT-078
-    Scenario: a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not
+    Scenario: a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds
+
+    @unit @SCN-RPT-087
+    Scenario: a notChecks entry that is not a workflow file, a job and a step name is named under Configuration not read as not naming a step
+
+    @unit @SCN-RPT-088
+    Scenario: each configuration entry the report quotes is held whole in its code span, a backtick included
 
   Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job with the steps behind each count listed beneath
 
@@ -691,7 +698,8 @@ Feature: The report renders the ledger as sectioned facts
     that order. A list follows the table's rows, and each job's steps in the order they were
     read. A reconciler step says what it does. An excluded step says the target names it a
     non-check, one line for each step an entry matches. A column that counts no step lists
-    nothing.
+    nothing. After the excluded steps, each notChecks entry naming a workflow the run did not
+    read is listed as not applied, under a label naming the workflows the run read.
 
     The section is absent for a target with no pipeline.
 
@@ -706,6 +714,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-048
     Scenario: the step-accounting section lists each excluded step beneath its table with its reason, and lists none when the target names no non-check
+
+    @unit @SCN-RPT-089
+    Scenario: a notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, beside the workflows the run read
 
     @unit @SCN-RPT-073
     Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing

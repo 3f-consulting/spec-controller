@@ -1,6 +1,7 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ConfigurationKind } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { codeSpan } from "./codeSpan.js";
 
 function kindWords(kind: ConfigurationKind): string {
   switch (kind) {
@@ -24,11 +25,13 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
   const unknownKeys = report.errors?.configuration?.keysNotRead ?? [];
   const runnerKeysNotATier = report.errors?.configuration?.runnerKeysNotATier ?? [];
   const nonChecksMatchingNoStep = report.errors?.configuration?.nonChecksMatchingNoStep ?? [];
+  const nonChecksNotAStepName = report.errors?.configuration?.nonChecksNotAStepName ?? [];
   if (
     wrongKinds.length === 0 &&
     unknownKeys.length === 0 &&
     runnerKeysNotATier.length === 0 &&
-    nonChecksMatchingNoStep.length === 0
+    nonChecksMatchingNoStep.length === 0 &&
+    nonChecksNotAStepName.length === 0
   )
     return [];
   return [
@@ -37,15 +40,20 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
     CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
     "",
     ...wrongKinds.map(
-      ({ entry, is, reads }) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationWrongKind](`\`${entry}\``, kindWords(is), kindWords(reads))}`
+      ({ entry, is, reads }) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationWrongKind](codeSpan(entry), kindWords(is), kindWords(reads))}`
     ),
     ...unknownKeys.map(
-      (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`
+      (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](codeSpan(`specController.${key}`))}`
     ),
     ...runnerKeysNotATier.map(
-      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](`\`specController.runners.${key}\``)}`
+      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](codeSpan(`specController.runners.${key}`))}`
     ),
-    ...nonChecksMatchingNoStep.map((entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep](`\`${entry}\``)}`),
+    ...nonChecksMatchingNoStep.map(
+      (entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", codeSpan(entry))}`
+    ),
+    ...nonChecksNotAStepName.map(
+      (entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", codeSpan(entry))}`
+    ),
     "",
   ];
 };
