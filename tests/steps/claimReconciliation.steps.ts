@@ -87,7 +87,7 @@ const NO_OBLIGATION_PASSED_TEST = "tests/fixtures/no-obligation-status/sound.tes
 function rowItemFor(world: SpecControllerWorld, rowName: string, locator: string): string {
   const row = world.report.split("\n").find((line) => line.startsWith(`| ${rowName} |`));
   assert.ok(row, `expected a ${rowName} row in the report; got:\n${world.report}`);
-  const item = row.split(/; | \| /).find((part) => part.includes(`(${locator})`));
+  const item = row.split(/; | \| /).find((part) => part.includes(`(${locator})`) || part.includes(`(${locator}: `));
   assert.ok(item, `expected the ${rowName} row to list the test at ${locator}; got:\n${row}`);
   return item.replace(/ \|$/, "");
 }
@@ -114,8 +114,8 @@ function argsFor(target: Record<"features" | "vitest" | "packageJson" | "ci", st
 }
 
 function endsWithResult(locator: string, result: string): RegExp {
-  const escaped = `(${locator}) — ${result}`.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`${escaped}$`);
+  const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`${escape(`(${locator}`)}(?:: .*)?${escape(`) — ${result}`)}$`);
 }
 
 Given(

@@ -31,3 +31,8 @@ export function remarkWordsOf({ message, notes = [] }: Remark): string | undefin
   const words = [...(message === undefined ? [] : [message]), ...notes.map(noteWords)];
   return words.length === 0 ? undefined : words.join(" ");
 }
+
+export function remarkHeadlineOf({ message, notes = [] }: Remark): string | undefined {
+  const headline = message?.split("\n").map((line) => line.trim()).find((line) => line.length > 0);
+  return remarkWordsOf({ ...(headline === undefined ? {} : { message: headline }), notes });
+}

@@ -137,3 +137,17 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
   });
 });
+
+describe("[SCN-RPT-085] an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to", () => {
+  const codes = ["SCN-RIN-001", "SCN-RIN-002"];
+  const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-scn-codes", codes }] } as const;
+  const rows: [string, EvidenceObservation][] = [
+    ["a broken item", { qualityCheck: "unit", scnId: null, status: "failed", broken: true, ...said }],
+    ["a file's group on the unnamed claim's row", { qualityCheck: "unit", scnId: null, status: "failed", testName: "t1", ...said }],
+  ];
+  it.each(rows)("%s", (_, observation) => {
+    const item = reconcilingItemsCell(render(observation), UNNAMED_CLAIM_ID);
+    expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](codes)})`);
+    expect(item).not.toContain("at foo");
+  });
+});

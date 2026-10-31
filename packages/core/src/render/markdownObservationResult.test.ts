@@ -58,3 +58,26 @@ describe("[SCN-RPT-035] a test observed at a check its scenario holds no obligat
     expect(row).toContain("unit: Evidence Observation cites a Scenario with no matching Evidence Obligation (src/sound.test.ts) — passed");
   });
 });
+
+describe("[SCN-RPT-086] a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items", () => {
+  let ledger: Ledger;
+  beforeEach(() => {
+    ledger = reconcile(
+      [],
+      [
+        { qualityCheck: "unit", scnId: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "first" },
+        { qualityCheck: "unit", scnId: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "second" },
+      ]
+    );
+  });
+
+  it("names the first test by its file and its test name", () => {
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    expect(row).toContain("unit: Evidence Observation cites an unknown Scenario (src/x.test.ts: first) — failed");
+  });
+
+  it("names the second test by its file and its test name", () => {
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    expect(row).toContain("unit: Evidence Observation cites an unknown Scenario (src/x.test.ts: second) — failed");
+  });
+});

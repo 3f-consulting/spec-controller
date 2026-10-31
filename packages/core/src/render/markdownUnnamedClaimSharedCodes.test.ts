@@ -35,7 +35,7 @@ function unnamedClaimItemsOf(observations: BehaviouralEvidenceObservation[]): st
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
 }
 
-describe("[SCN-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say", () => {
+describe("[SCN-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file", () => {
   it("gives the file one entry per shared code and one for its tests citing nothing, each counting and naming only its own tests", () => {
     const remark = (code: string): string => CORE_MESSAGES[CoreMessage.SharedScnCode](code);
     expect(unnamedClaimItemsOf(mixedFile())).toEqual([
@@ -48,7 +48,11 @@ describe("[SCN-RPT-075] in one file, the tests citing a code more than one scena
 
   it("names the code once, then the first line of each different message its failing tests give", () => {
     const failing = (testName: string, message: string): BehaviouralEvidenceObservation => ({ ...observed("SCN-DUP-001", "failed", testName), message });
-    const said = `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${CORE_MESSAGES[CoreMessage.SharedScnCode]("SCN-DUP-001")}`;
+    const code = CORE_MESSAGES[CoreMessage.SharedScnCode]("SCN-DUP-001");
+    const said = `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${code}`;
+    const one = (o: BehaviouralEvidenceObservation): string[] => unnamedClaimItemsOf([o]).map((item) => item.replace(" — 1 ran, 0 passed, 1 failed (failed: t1)", ""));
+    expect([failing("t1", ""), failing("t1", "   "), { ...failing("t1", ""), locator: "" }].map(one).flat()).toEqual([`${said})`, `${said})`, `unit: ${CITES_NO_SCENARIO} (${code})`]);
+    expect(one({ qualityCheck: "unit", scnId: "SCN-DUP-001", status: "failed", testName: "t1" })).toEqual([`unit: ${CITES_NO_SCENARIO} (${code})`]);
     expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2\n    at foo (x.ts:1)")])).toEqual([
       `${said} / expected 1 to be 2) — 1 ran, 0 passed, 1 failed (failed: t1)`,
     ]);

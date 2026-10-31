@@ -36,21 +36,18 @@ function sharedScnCodeOf(observation: EvidenceObservation): string | null {
   return code;
 }
 
-function keyOf(observation: BehaviouralEvidenceObservation): string {
-  return JSON.stringify([observation.qualityCheck, observation.locator ?? null, sharedScnCodeOf(observation)]);
-}
-
 function remarksOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimRemark[] {
   return observations.flatMap(({ message, notes = [] }) => {
     const kept = notes.filter((note) => note.kind !== "shared-scn-code");
-    return message === undefined && kept.length === 0 ? [] : [{ ...(message !== undefined ? { message } : {}), notes: kept }];
+    return message === undefined && kept.length === 0
+      ? []
+      : [{ ...(message !== undefined ? { message } : {}), ...(kept.length > 0 ? { notes: kept } : {}) }];
   });
 }
 
-function groupOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimFileGroup {
+function groupOf(sharedScnCode: string | null, observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimFileGroup {
   const [first] = observations as [BehaviouralEvidenceObservation, ...BehaviouralEvidenceObservation[]];
   const passed = observations.filter((o) => o.status === "passed").length;
-  const sharedScnCode = sharedScnCodeOf(first);
   return {
     qualityCheck: first.qualityCheck,
     locator: first.locator,
@@ -77,11 +74,12 @@ function stepsGroupsOf(observations: readonly EvidenceObservation[]): UnnamedCla
 
 export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): UnnamedClaimGroup[] {
   const observations = citingNoScenario(lines);
-  const byFile = new Map<string, BehaviouralEvidenceObservation[]>();
+  const byFile = new Map<string, { code: string | null; members: BehaviouralEvidenceObservation[] }>();
   for (const o of observations) {
     if (isFitnessObservation(o)) continue;
-    const key = keyOf(o);
-    byFile.set(key, [...(byFile.get(key) ?? []), o]);
+    const code = sharedScnCodeOf(o);
+    const key = JSON.stringify([o.qualityCheck, o.locator ?? null, code]);
+    byFile.set(key, { code, members: [...(byFile.get(key)?.members ?? []), o] });
   }
-  return [...[...byFile.values()].map(groupOf), ...stepsGroupsOf(observations)];
+  return [...[...byFile.values()].map(({ code, members }) => groupOf(code, members)), ...stepsGroupsOf(observations)];
 }

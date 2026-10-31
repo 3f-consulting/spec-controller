@@ -32,7 +32,7 @@ import { testVolumeSection } from "./testVolume.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import { remarkWordsOf } from "./remarkWords.js";
+import { remarkHeadlineOf, remarkWordsOf } from "./remarkWords.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
 function renderLine(line: ReconciliationLine): string {
@@ -48,7 +48,7 @@ function renderLine(line: ReconciliationLine): string {
 }
 
 function quotedSuffix(parts: readonly (string | undefined)[]): string {
-  const where = parts.flatMap((part) => cellSafe(part ?? "") || []).join(": ");
+  const where = parts.flatMap((part) => part?.trim() || []).join(": ");
   return where === "" ? "" : ` (${where})`;
 }
 
@@ -61,15 +61,11 @@ function scenarioClauseOf({ scenario }: ReconciliationLine): string {
 }
 
 function brokenSuffix(o: EvidenceObservation): string {
-  const remark = remarkWordsOf(o);
-  const where = [o.locator, remark === undefined ? undefined : headlineOf(remark)]
-    .filter((part): part is string => part !== undefined && part.length > 0)
-    .join(": ");
-  return where.length > 0 ? ` (${cellSafe(where)})` : "";
+  return quotedSuffix([o.locator, remarkHeadlineOf(o)]);
 }
 
 function observationSuffix(o: EvidenceObservation): string {
-  return `${quotedSuffix([isFitnessObservation(o) ? o.fitnessFunction : o.locator])}${resultOf(o)}`;
+  return `${namedSuffix(o)}${resultOf(o)}`;
 }
 
 const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
@@ -81,10 +77,6 @@ function resultOf(o: EvidenceObservation): string {
   return o.status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[o.status]]}`;
 }
 
-function headlineOf(message: string): string {
-  return message.split("\n").map((line) => line.trim()).find((line) => line.length > 0) ?? "";
-}
-
 function renderPendingItem(item: PendingItem): string {
   return item.qualityCheck === undefined
     ? CORE_MESSAGES[CoreMessage.PendingItem]
@@ -92,14 +84,13 @@ function renderPendingItem(item: PendingItem): string {
 }
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
-  const remarks = group.remarks.flatMap((remark) => remarkWordsOf(remark) ?? []);
-  const code = group.sharedScnCode === undefined ? [] : [cellSafe(CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode))];
-  const said = [...new Set([...code, ...remarks.map((remark) => cellSafe(headlineOf(remark)))])].join(" / ");
-  const where = group.locator === undefined ? "" : ` (${group.locator}${said === "" ? "" : `: ${said}`})`;
+  const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark) ?? []);
+  const code = group.sharedScnCode === undefined ? [] : [CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)];
+  const said = [...new Set([...code, ...remarks])].filter((part) => part !== "").join(" / ");
   const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
-  const names = group.failedNames.map(cellSafe).filter((name) => name !== "");
+  const names = group.failedNames.map((name) => name.trim()).filter((name) => name !== "");
   const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
-  return `${group.qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${where} — ${counts}${failed}`;
+  return `${group.qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([group.locator, said])} — ${counts}${failed}`;
 }
 
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
@@ -117,7 +108,7 @@ function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[]
 
 function renderRowExceptions(s: ClaimReconciliation): string {
   const items = isUnnamedClaim(s) ? renderUnnamedClaimItems(reconcilingItemsOf(s)) : reconcilingItemsOf(s).map(renderLine);
-  const reconciling = items.join("; ");
+  const reconciling = items.map(cellSafe).join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
   return groups.length === 0 ? "—" : groups.join("; ");

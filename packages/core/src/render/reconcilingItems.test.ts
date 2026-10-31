@@ -8,7 +8,7 @@ import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { specsFeaturesInputs } from "./runContext.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { verdictAndItemsOf as rowFor } from "./claimReconciliationsTable.test-utils.js";
+import { claimReconciliationsTable, RECONCILING_ITEMS_COLUMN, verdictAndItemsOf as rowFor } from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "reconciling-items-target",
@@ -195,7 +195,7 @@ describe("[SCN-RPT-083] a failing or watermelon fitness evidence observation on 
   });
 });
 
-describe("[SCN-RPT-084] an item naming an evidence observation quotes it whole in its cell, a pipe or a line break included, and leaves out a part the run did not give", () => {
+describe("[SCN-RPT-084] every reconciling item quotes what the run reported whole in its cell, a pipe, a backslash or a line break included, and leaves out a part the run did not give", () => {
   it.each([
     ["a test's name holding a pipe", { locator: "src/a.test.ts", testName: "a | b" }, "failing", "src/a.test.ts: a \\| b"],
     ["a test's name holding a line break", { locator: "src/a.test.ts", testName: "renders\n  the header " }, "failing", "src/a.test.ts: renders the header"],
@@ -205,9 +205,19 @@ describe("[SCN-RPT-084] an item naming an evidence observation quotes it whole i
     ["neither a file nor a test name", {}, "failing", undefined],
     ["a fitness function with an empty name", { qualityCheck: "fitness", fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "failing", undefined],
     ["an observation-only item whose file holds a pipe", { scnId: "SCN-GHO-003", locator: "src/a|b.test.ts" }, "cites-unknown-scenario", "src/a\\|b.test.ts", "failed"],
+    ["a test's name holding a backslash and a pipe", { locator: "src/a.test.ts", testName: "a \\| b" }, "failing", "src/a.test.ts: a \\\\\\| b"],
+    ["a file group's file holding a pipe", { scnId: null, status: "passed", locator: "src/a|b.test.ts" }, "cites-no-scenario", "src/a\\|b.test.ts", "1 ran, 1 passed, 0 failed"],
+    ["a CI step's name holding a pipe", { qualityCheck: "fitness", scnId: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: lint \\| x"],
+    ["a broken item whose file is whitespace only", { scnId: null, broken: true, locator: " " }, "broken", undefined],
   ] as const)("%s", (_title, fields, outcome, suffix, result?: string) => {
     const observation = { qualityCheck: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
     const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheck: observation.qualityCheck }] }], [observation]);
-    expect(rowFor(md, String(observation.scnId)).items).toBe(item(outcome, observation.qualityCheck, suffix, result));
+    expect(rowFor(md, observation.scnId ?? UNNAMED_CLAIM_ROW).items).toBe(item(outcome, observation.qualityCheck, suffix, result));
+  });
+
+  it("a shared code's scenario title holding a pipe", () => {
+    const sharer = (title: string): Scenario => ({ scnId: "SCN-DEM-004", evidenceObligations: [{ qualityCheck: "unit" }], feature: "a.feature", title });
+    const rows = claimReconciliationsTable(render([sharer("a | b"), sharer("c")], [])).rowsOf("SCN-DEM-004");
+    expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN))).toContain(item("duplicate-scn-code", "unit") + " — this one is a.feature : a \\| b");
   });
 });

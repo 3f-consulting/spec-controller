@@ -521,8 +521,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: an evidence observation that answers no evidence obligation shows its own result
 
     On a phantom claim's row, and on a scenario's row at a check where the scenario holds no
-    obligation, each observation is listed by its outcome and where it ran. After its quality
-    check and the outcome's sentence, it shows its own result, failed or passed.
+    obligation, each observation is listed by its outcome and where it ran, and a test also by
+    its test name. After its quality check and the outcome's sentence, it shows its own result,
+    failed or passed.
 
     The unnamed claim's row counts its results by file instead, under the Rule below.
 
@@ -540,15 +541,14 @@ Feature: The report renders the ledger as sectioned facts
       Then the scenario's row shows the test that failed as failed
       And the scenario's row shows the test that passed as passed
 
+    @unit @SCN-RPT-086
+    Scenario: a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items
+
   Rule: a failing or watermelon reconciling item names the evidence observation it carries
 
     A failing reconciling item names, after its outcome's sentence, the test that failed by its
     file and its name, or the fitness function that failed by its name. A watermelon item names
     its fitness function. So two failing tests on one scenario read as two different items.
-
-    What an item quotes from the run sits whole in its cell. A pipe or a line break in a file, a
-    test's name or a fitness function's name never splits the row, and a part the run did not
-    give leaves no empty part or separator behind.
 
     @unit @SCN-RPT-082
     Scenario: each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items
@@ -556,8 +556,15 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-083
     Scenario: a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function
 
+  Rule: every reconciling item quotes what the run reported whole in its cell
+
+    What a reconciling item quotes from the run sits whole in its cell: a file, a test's name, a
+    fitness function's name, a CI step's name, a message, and a scenario's feature file and
+    title. A pipe, a backslash or a line break in it never splits the row or changes what it
+    says. A part the run did not give leaves no empty part or separator behind.
+
     @unit @SCN-RPT-084
-    Scenario: an item naming an evidence observation quotes it whole in its cell, a pipe or a line break included, and leaves out a part the run did not give
+    Scenario: every reconciling item quotes what the run reported whole in its cell, a pipe, a backslash or a line break included, and leaves out a part the run did not give
 
   Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
 
@@ -607,10 +614,20 @@ Feature: The report renders the ledger as sectioned facts
       And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
 
     @unit @SCN-RPT-075
-    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say
+    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file
 
     @unit @SCN-RPT-076
     Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code
+
+  Rule: an item quoting what an evidence observation said states the first line of its message and every note it carries
+
+    Where a reconciling item quotes what an evidence observation said, as a broken item does and
+    as a file's group on the unnamed claim's row does, it states the first line of the message
+    that holds text and then the words of each note the observation carries, however many lines
+    the message runs to.
+
+    @unit @SCN-RPT-085
+    Scenario: an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to
 
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
