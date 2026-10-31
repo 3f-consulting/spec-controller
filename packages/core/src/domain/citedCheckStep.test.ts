@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
-import { fitnessObservationsOf, workflowObservationsOf } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
 import type { PipelineStep } from "./pipelineStep.js";
-import { stepDispositions } from "./uncitedFitnessFunctions.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
+import { CHECKOUT, IN_THE_QUALITY_JOB, reconcileTheWorkflow } from "./checkStep.test-utils.js";
 
 const scenarios: Scenario[] = [
   { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
@@ -12,43 +10,13 @@ const scenarios: Scenario[] = [
 ];
 
 const annotatedSteps: PipelineStep[] = [
-  {
-    workflow: "ci.yml",
-    job: "quality",
-    identity: "Checkout",
-    writesStepRecord: false,
-    abortsJob: true,
-    plumbing: true,
-    action: { name: "actions/checkout@v4" },
-  },
-  {
-    workflow: "ci.yml",
-    job: "quality",
-    identity: "Complexity",
-    id: "SCN-CVT-001",
-    writesStepRecord: false,
-    abortsJob: true,
-    plumbing: false,
-    command: "pnpm lint:alpha",
-  },
-  { workflow: "ci.yml", job: "quality", identity: "Traceability", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm lint:beta" },
+  CHECKOUT,
+  { ...IN_THE_QUALITY_JOB, identity: "Complexity", id: "SCN-CVT-001", command: "pnpm lint:alpha" },
+  { ...IN_THE_QUALITY_JOB, identity: "Traceability", command: "pnpm lint:beta" },
 ];
 
 function reconcileAnnotated() {
-  const dispositionOf = stepDispositions({
-    isReconciler: () => false,
-    isNamedANonCheck: (step) => step.identity === "Checkout",
-    runsARunner: () => false,
-  });
-  const rows = new Set(scenarios.map((scenario) => scenario.scnId));
-  const workflow = workflowObservationsOf(
-    annotatedSteps,
-    (step) => dispositionOf(step) === "candidate",
-    (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
-    (step) => step.identity,
-    (_handle, citedByStep) => (citedByStep !== undefined && rows.has(citedByStep) ? { scnId: citedByStep } : null)
-  );
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), []);
+  return reconcileTheWorkflow(scenarios, annotatedSteps);
 }
 
 describe("[SCN-LNT-031] a check step stating its row's code supplies that row's citation", () => {

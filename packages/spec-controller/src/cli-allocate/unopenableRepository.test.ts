@@ -1,24 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { realpathSync } from "node:fs";
 import { join } from "node:path";
-import { git, writeInto, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
+import { taken, withhold, runsAsRoot, repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
-import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-
-function resolvedTemporaryDirectory(): string {
-  return realpathSync(temporaryDirectory("allocate-unopenable-repository-"));
-}
 
 function repositoryCarryingOneCode(): string {
-  const repo = resolvedTemporaryDirectory();
-  git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario SCN-ONE-003\n    Given a step\n");
-  writeInto(repo, "docs/readme.md", "a directory below the top\n");
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", "the corpus"]);
-  return repo;
+  return repositoryHeadedOneCarrying003("allocate-unopenable-repository-", { "docs/readme.md": "a directory below the top\n" });
 }
 
 afterEach(() => {

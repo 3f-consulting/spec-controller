@@ -16,6 +16,19 @@ import { temporaryDirectory, test } from "../temporaryDirectory.test-utils.js";
 
 const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
+function committedRepo(prefix: string, message: string): { repo: string; head: string } {
+  const repo = realpathSync(temporaryDirectory(prefix));
+  const git = (...args: string[]): string =>
+    execFileSync(
+      "git",
+      ["-C", repo, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    ).trim();
+  git("init", "-q");
+  git("commit", "--allow-empty", "-q", "-m", message);
+  return { repo, head: git("rev-parse", "HEAD") };
+}
+
 describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
     const toolDir = process.cwd();
@@ -102,20 +115,12 @@ describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it i
 
 describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules has no SHA of its own, though the tree it sits in is a git repository", () => {
   function consumerRepo(): { repo: string; head: string } {
-    const repo = realpathSync(temporaryDirectory("spec-controller-rpt029-"));
+    const committed = committedRepo("spec-controller-rpt029-", "the consumer's own commit");
     writeFileSync(
-      join(repo, "package.json"),
+      join(committed.repo, "package.json"),
       JSON.stringify({ name: "a-consumer", version: "7.7.7-consumer" }),
     );
-    const git = (...args: string[]): string =>
-      execFileSync(
-        "git",
-        ["-C", repo, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-      ).trim();
-    git("init", "-q");
-    git("commit", "--allow-empty", "-q", "-m", "the consumer's own commit");
-    return { repo, head: git("rev-parse", "HEAD") };
+    return committed;
   }
 
   it("returns a NULL sha for a toolDir under node_modules even though git -C that dir DOES answer with the enclosing repository's HEAD", () => {
@@ -137,16 +142,7 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
   function targetRepo(message = "the target's own commit"): { repo: string; head: string } {
-    const repo = realpathSync(temporaryDirectory("spec-controller-rpt003-"));
-    const git = (...args: string[]): string =>
-      execFileSync(
-        "git",
-        ["-C", repo, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-      ).trim();
-    git("init", "-q");
-    git("commit", "--allow-empty", "-q", "-m", message);
-    return { repo, head: git("rev-parse", "HEAD") };
+    return committedRepo("spec-controller-rpt003-", message);
   }
 
   it("resolves a git target with no override to that target's own HEAD", () => {

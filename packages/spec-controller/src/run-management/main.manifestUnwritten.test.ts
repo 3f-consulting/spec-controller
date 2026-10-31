@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { main } from "../main.js";
 import { RUN_MANIFEST } from "./keptRun.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "../programOutput.test-utils.js";
 
 const TARGET = "every-outcome";
 const RUN_ID = "r1";
@@ -18,21 +19,11 @@ interface Answered {
 }
 
 let scratch: string;
-let stderr: string[];
+
+recordWhatTheProgramWrites();
 
 beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-manifest-unwritten-");
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
 });
 
 function keptRunWithManifestAsDirectory(): Answered {
@@ -53,7 +44,7 @@ function keptRunWithManifestAsDirectory(): Answered {
   } catch (err) {
     threw = err;
   }
-  return { threw, stderr: stderr.join(""), exitCode: process.exitCode, runDir };
+  return { threw, stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode, runDir };
 }
 
 describe("[SCN-CLI-109] a kept run whose manifest cannot be written did not finish, and ends at 6", () => {

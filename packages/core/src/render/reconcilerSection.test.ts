@@ -3,7 +3,7 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { sectionUnder } from "./renderedSection.test-utils.js";
+import { endOfStepAccountingTable as endOfTable, stepAccountingSection as stepAccounting } from "./renderedSection.test-utils.js";
 import { reconcilerCi as ci, ciWithoutReconciler, feature, reconcilerPackageJson as packageJson } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
@@ -26,17 +26,6 @@ const dump = "ci.yml:ci:Dump this run's step record";
 const balance = "ci.yml:ci:Reconciliation";
 const reconciles = CORE_MESSAGES[CoreMessage.ReconcilerReconciles];
 const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
-
-const stepAccounting = (lines: readonly string[]): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(lines);
-
-const endOfTable = (section: readonly string[]): number => {
-  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  const end = section.indexOf("", header);
-  expect(end).toBeGreaterThan(header);
-  return end;
-};
 
 const reconcilerList = (lines: readonly string[]): string[] => {
   const start = lines.indexOf(label);

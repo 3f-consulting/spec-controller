@@ -1,7 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
 const PLANTED = "planted: the reading of this file throws";
 
@@ -51,23 +52,13 @@ interface Answered {
 }
 
 let target: string;
-let stderr: string[];
 
 beforeEach(() => {
   target = temporaryDirectory("spec-controller-own-reading-");
   mkdirSync(join(target, "features"));
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 function writeTarget(feature: string, workflow: string): void {
   writeFileSync(join(target, "features", "part.feature"), feature);
@@ -78,7 +69,7 @@ async function run(argv: string[]): Promise<Answered> {
   vi.resetModules();
   const { main } = await import("./main.js");
   main(argv);
-  return { exitCode: process.exitCode, stderr: stderr.join("") };
+  return { exitCode: process.exitCode, stderr: whatTheProgramWrote().stderr };
 }
 
 function balance(feature: string, workflow: string): Promise<Answered> {

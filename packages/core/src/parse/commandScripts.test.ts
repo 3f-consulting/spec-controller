@@ -7,6 +7,12 @@ import { parsedWorkflows, workflowSteps } from "./parsedWorkflows.test-utils.js"
 const stepRunning = (command: string): string =>
   ["jobs:", "  ci:", "    steps:", "      - name: Check", "        run: |", `          ${command}`].join("\n");
 
+const expectVitestRecognisedAtCheck = (command: string, scripts: Parameters<typeof recognisedRunners>[1]): void => {
+  expect(recognisedRunners(workflowSteps([stepRunning(command)]), scripts, { unit: "vitest" }, shellReading)).toEqual([
+    { tier: "unit", runner: "vitest", step: "Check" },
+  ]);
+};
+
 describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a command runs", () => {
   it.each([
     ["as what echo prints", "echo pnpm check", "check"],
@@ -163,11 +169,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
   });
 
   it("recognises the runner of a script run after && in a step", () => {
-    const ci = [stepRunning("cd packages/core && pnpm check")];
-    const manifest = { scripts: { check: "vitest run" } };
-    expect(recognisedRunners(workflowSteps(ci), manifest.scripts, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck("cd packages/core && pnpm check", { check: "vitest run" });
   });
 
   it("recognises the runner of a script run on the line after a comment ending in a backslash", () => {
@@ -402,10 +404,7 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
   });
 
   it("recognises the unit runner at a step running the test script behind env", () => {
-    const ci = [stepRunning("env CI=1 pnpm test")];
-    expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck("env CI=1 pnpm test", { test: "vitest run" });
   });
 
   it.each([["env CI=1 vitest run"], ["sudo vitest run"], ["yarn exec vitest run"], ["npx -y vitest run"]] as const)(
@@ -476,10 +475,7 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
   ] as const)(
     "recognises the unit runner at a step running the test script as %s",
     (command) => {
-      const ci = [stepRunning(command)];
-      expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-        { tier: "unit", runner: "vitest", step: "Check" },
-      ]);
+      expectVitestRecognisedAtCheck(command, { test: "vitest run" });
     }
   );
 
@@ -491,17 +487,13 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
   );
 
   it("recognises the runner run in a subshell, as script reading reads the subshell", () => {
-    expect(recognisedRunners(workflowSteps([stepRunning("( vitest run )")]), {}, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck("( vitest run )", {});
   });
 
   it.each([["if ! vitest run; then exit 1; fi"], ["! vitest run"]] as const)(
     "recognises the runner at a step running %s, as a ! before a pipeline is the shell's and no word of its command",
     (command) => {
-      expect(recognisedRunners(workflowSteps([stepRunning(command)]), {}, { unit: "vitest" }, shellReading)).toEqual([
-        { tier: "unit", runner: "vitest", step: "Check" },
-      ]);
+      expectVitestRecognisedAtCheck(command, {});
     }
   );
 });
@@ -510,10 +502,7 @@ describe("[SCN-WFS-021] recognisedRunners — npm's test shortcut runs the manif
   it.each([["npm test"], ["npm t"], ["npm tst"], ["cd packages/core && npm test"]] as const)(
     "recognises the unit runner at a step running %s",
     (command) => {
-      const ci = [stepRunning(command)];
-      expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-        { tier: "unit", runner: "vitest", step: "Check" },
-      ]);
+      expectVitestRecognisedAtCheck(command, { test: "vitest run" });
       expect(commandInvokesScript(command, "test")).toBe(true);
     }
   );
@@ -548,10 +537,7 @@ describe("[SCN-WFS-022] commandInvokesScript — npm's run aliases run the scrip
 
 describe("[SCN-WFS-023] recognisedRunners — pnpm's test shortcut runs the manifest's test script", () => {
   it.each([["pnpm test"], ["pnpm t"], ["pnpm tst"]] as const)("recognises the unit runner at a step running %s", (command) => {
-    const ci = [stepRunning(command)];
-    expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck(command, { test: "vitest run" });
   });
 
   it("still reads pnpm t as running a script the manifest names t", () => {
@@ -581,10 +567,7 @@ describe("[SCN-WFS-024] commandInvokesScript — a script run after a pnpm selec
   });
 
   it("recognises the unit runner at a step running the test script through a pnpm filter", () => {
-    const ci = [stepRunning("pnpm --filter core test")];
-    expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck("pnpm --filter core test", { test: "vitest run" });
   });
 
   it.each([
@@ -636,10 +619,7 @@ describe("[SCN-WFS-025] commandInvokesScript — a script run in a yarn workspac
   });
 
   it("recognises the unit runner at a step running the test script in a yarn workspace", () => {
-    const ci = [stepRunning("yarn workspace web test")];
-    expect(recognisedRunners(workflowSteps(ci), { test: "vitest run" }, { unit: "vitest" }, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "Check" },
-    ]);
+    expectVitestRecognisedAtCheck("yarn workspace web test", { test: "vitest run" });
   });
 
   it("never reads the workspace's name as the script it runs", () => {

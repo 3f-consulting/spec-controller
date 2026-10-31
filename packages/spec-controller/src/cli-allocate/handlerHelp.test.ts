@@ -1,20 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { allocateCommand, renderCommandHelp } from "../cli-registry.js";
-import { gitInRepository as git } from "./repository.test-utils.js";
+import { repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-
-function headedOneCarryingThree(): string {
-  const repo = realpathSync(temporaryDirectory("allocate-help-"));
-  git(repo, ["init", "-q", "-b", "main"]);
-  mkdirSync(join(repo, "features"));
-  writeFileSync(join(repo, "features/one.feature"), "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n");
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", "the corpus"]);
-  return repo;
-}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -31,7 +18,7 @@ const HELP_REQUEST: readonly (readonly [request: string, argv: string[]])[] = [
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new, and exits 0 whatever else is given", () => {
   it.each(HELP_REQUEST)("answers with allocate's help and gives no code, asked %s", (_request, argv) => {
-    const answered = allocateIn(headedOneCarryingThree(), argv);
+    const answered = allocateIn(repositoryHeadedOneCarrying003("allocate-help-"), argv);
 
     expect(answered.stdout).toBe(renderCommandHelp(allocateCommand) + "\n");
     expect(answered.stdout).toContain("<FFF>");

@@ -167,8 +167,17 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
   const noScripts = { scripts: {} };
   const asTheRunner = [{ tier: "integration", runner: "cucumber-js", step: "Gate" }];
 
-  it("leaves a check piping the runner's output into another command a candidate", () => {
-    const piped = [stepRunning("pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'")];
+  it.each([
+    [
+      "leaves a check piping the runner's output into another command a candidate",
+      ["pnpm exec cucumber-js --dry-run --format usage-json | jq -r '.[]' | awk '{ print }'"],
+    ],
+    [
+      "leaves a check a candidate where every line pipes, the runner's output piped on a later line",
+      ["git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'"],
+    ],
+  ] as const)("%s", (_title, lines) => {
+    const piped = [stepRunning(...lines)];
     expect(recognisedRunners(workflowSteps(piped), noScripts.scripts, integration, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(piped), noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
       "Gate",
@@ -274,149 +283,127 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
   ] as const)("reads %s as sending the runner's stdout off the pipe, so the step runs the runner", (line) => {
     expect(shellReading.runsAsCommand(line, "vitest run", {})).toBe(true);
   });
+});
 
-  it("leaves a check a candidate where every line pipes, the runner's output piped on a later line", () => {
-    const piped = [stepRunning("git ls-files features | wc -l", "cucumber-js --dry-run | jq -r '.[]'")];
-    expect(recognisedRunners(workflowSteps(piped), noScripts.scripts, integration, shellReading)).toEqual([]);
-    expect(runningFitnessFunctions(parsedWorkflows(piped), noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
-      "Gate",
-    ]);
+const unitTestsStepRunning = (command: string): string =>
+  [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - name: Unit tests",
+    "        run: |",
+    ...command.split("\n").map((line) => `          ${line}`),
+  ].join("\n");
+
+type LaunchedForms = readonly (readonly [form: string, command: string])[];
+
+describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>([
+  [
+    "[SCN-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised",
+    "vitest",
+    [
+      ["directly", "vitest run"],
+      ["after an environment assignment", "CI=true vitest run"],
+      ["after several environment assignments", "CI=true NODE_OPTIONS=--max-old-space-size=4096 vitest run"],
+      ["through timeout with a duration", "timeout 600 vitest run"],
+      ["through timeout with a quoted variable for its duration", 'timeout "$BUDGET" vitest run'],
+      ["through npx", "npx vitest run"],
+      ["through npm exec", "npm exec vitest run"],
+      ["through pnpm exec", "pnpm exec vitest run"],
+      ["through pnpm dlx", "pnpm dlx vitest run"],
+      ["through pnpm", "pnpm vitest run"],
+      ["through yarn", "yarn vitest run"],
+      ["through bunx", "bunx vitest run"],
+      ["through launchers in combination", "timeout 60 pnpm exec vitest run"],
+      ["through launchers after an environment assignment", "CI=true timeout 60 pnpm exec vitest run"],
+      ["as the later command of an && list", "pnpm build && vitest run"],
+      ["as the later command of an || list", "false || vitest run"],
+      ["as the later command of a ; list", "pnpm build; vitest run"],
+      ["as the first command of an && list", "vitest run && echo done"],
+      ["through a launcher in a list", "pnpm build && timeout 60 npx vitest run"],
+      ["through a launcher continued onto the next line after a blank", "npx \\\nvitest run"],
+    ],
+  ],
+  [
+    "[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
+    "pytest",
+    [
+      ["through python -m", "python -m pytest --junitxml=reports/pytest.xml"],
+      ["through python3 -m", "python3 -m pytest"],
+      ["through poetry run", "poetry run pytest"],
+      ["through uv run", "uv run pytest"],
+      ["through pipenv run", "pipenv run pytest"],
+      ["through hatch run", "hatch run pytest"],
+      ["through pdm run", "pdm run pytest"],
+      ["through coverage run -m", "coverage run -m pytest"],
+      ["through a chain of Python launchers", "uv run python -m pytest"],
+      ["through timeout and a Python launcher", "timeout 600 poetry run pytest"],
+      ["through python -m and coverage run -m", "python -m coverage run -m pytest"],
+    ],
+  ],
+  [
+    "[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
+    "rspec",
+    [
+      ["directly", "rspec"],
+      ["through bundle exec", "bundle exec rspec"],
+      ["through bundle exec with the JSON formatter", "bundle exec rspec --format progress --format json --out reports/rspec.json"],
+      ["through timeout and bundle exec", "timeout 600 bundle exec rspec"],
+      ["through bundle exec after an environment assignment", "RAILS_ENV=test bundle exec rspec"],
+      ["through bundle exec later in a command list", "bundle install && bundle exec rspec"],
+    ],
+  ],
+])("%s", (_scenario, runner, forms) => {
+  const unit = { unit: runner };
+  const asTheRunner = [{ tier: "unit", runner, step: "Unit tests" }];
+
+  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), {}, unit, shellReading)).toEqual(asTheRunner);
+  });
+
+  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
   });
 });
 
 describe("[SCN-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
-  const stepRunning = (command: string): string =>
-    [
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      "      - name: Unit tests",
-      "        run: |",
-      ...command.split("\n").map((line) => `          ${line}`),
-    ].join("\n");
-
   const unit = { unit: "vitest" };
-  const asTheRunner = [{ tier: "unit", runner: "vitest", step: "Unit tests" }];
-
-  const forms = [
-    ["directly", "vitest run"],
-    ["after an environment assignment", "CI=true vitest run"],
-    ["after several environment assignments", "CI=true NODE_OPTIONS=--max-old-space-size=4096 vitest run"],
-    ["through timeout with a duration", "timeout 600 vitest run"],
-    ["through timeout with a quoted variable for its duration", 'timeout "$BUDGET" vitest run'],
-    ["through npx", "npx vitest run"],
-    ["through npm exec", "npm exec vitest run"],
-    ["through pnpm exec", "pnpm exec vitest run"],
-    ["through pnpm dlx", "pnpm dlx vitest run"],
-    ["through pnpm", "pnpm vitest run"],
-    ["through yarn", "yarn vitest run"],
-    ["through bunx", "bunx vitest run"],
-    ["through launchers in combination", "timeout 60 pnpm exec vitest run"],
-    ["through launchers after an environment assignment", "CI=true timeout 60 pnpm exec vitest run"],
-    ["as the later command of an && list", "pnpm build && vitest run"],
-    ["as the later command of an || list", "false || vitest run"],
-    ["as the later command of a ; list", "pnpm build; vitest run"],
-    ["as the first command of an && list", "vitest run && echo done"],
-    ["through a launcher in a list", "pnpm build && timeout 60 npx vitest run"],
-    ["through a launcher continued onto the next line after a blank", "npx \\\nvitest run"],
-  ] as const;
-
-  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, unit, shellReading)).toEqual(asTheRunner);
-  });
-
-  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
-  });
-
   const joined = [["a launcher continued onto the next line with no blank, which joins the two into one name", "npx\\\nvitest run"]] as const;
 
   it.each(joined)("reads no runner in the step's own command through %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), {}, unit, shellReading)).toEqual([]);
   });
 
   it.each(joined)("reads no runner in a manifest script the step follows through %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual([]);
   });
 });
 
-describe("[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner", () => {
-  const stepRunning = (line: string): string =>
-    ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
-      "\n"
-    );
+describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>([
+  [
+    "[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
+    "pytest",
+    [
+      ["an option between the launcher and the runner", "uv run --frozen pytest"],
+      ["a project script", "hatch run test"],
+      ["a suite tox starts", "tox -e py312"],
+      ["a suite nox starts", "nox -s tests"],
+    ],
+  ],
+  [
+    "[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
+    "rspec",
+    [
+      ["an option between the launcher and the runner", "bundle exec --keep-file-descriptors rspec"],
+      ["a rake task", "bundle exec rake spec"],
+      ["bundle without exec", "bundle rspec"],
+    ],
+  ],
+])("%s", (_scenario, runner, forms) => {
+  const unit = { unit: runner };
 
-  const unit = { unit: "pytest" };
-  const asTheRunner = [{ tier: "unit", runner: "pytest", step: "Unit tests" }];
-
-  const forms = [
-    ["through python -m", "python -m pytest --junitxml=reports/pytest.xml"],
-    ["through python3 -m", "python3 -m pytest"],
-    ["through poetry run", "poetry run pytest"],
-    ["through uv run", "uv run pytest"],
-    ["through pipenv run", "pipenv run pytest"],
-    ["through hatch run", "hatch run pytest"],
-    ["through pdm run", "pdm run pytest"],
-    ["through coverage run -m", "coverage run -m pytest"],
-    ["through a chain of Python launchers", "uv run python -m pytest"],
-    ["through timeout and a Python launcher", "timeout 600 poetry run pytest"],
-    ["through python -m and coverage run -m", "python -m coverage run -m pytest"],
-  ] as const;
-
-  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, unit, shellReading)).toEqual(asTheRunner);
-  });
-
-  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
-  });
-
-  it.each([
-    ["an option between the launcher and the runner", "uv run --frozen pytest"],
-    ["a project script", "hatch run test"],
-    ["a suite tox starts", "tox -e py312"],
-    ["a suite nox starts", "nox -s tests"],
-  ] as const)("leaves the step a candidate for %s", (_form, line) => {
-    const step = [stepRunning(line)];
-    expect(recognisedRunners(workflowSteps(step), {}, unit, shellReading)).toEqual([]);
-    expect(runningFitnessFunctions(parsedWorkflows(step), { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual([
-      "Unit tests",
-    ]);
-  });
-});
-
-describe("[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner", () => {
-  const stepRunning = (line: string): string =>
-    ["jobs:", "  ci:", "    steps:", "      - name: Unit tests", "        run: |", `          ${line}`].join(
-      "\n"
-    );
-
-  const unit = { unit: "rspec" };
-  const asTheRunner = [{ tier: "unit", runner: "rspec", step: "Unit tests" }];
-
-  const forms = [
-    ["directly", "rspec"],
-    ["through bundle exec", "bundle exec rspec"],
-    ["through bundle exec with the JSON formatter", "bundle exec rspec --format progress --format json --out reports/rspec.json"],
-    ["through timeout and bundle exec", "timeout 600 bundle exec rspec"],
-    ["through bundle exec after an environment assignment", "RAILS_ENV=test bundle exec rspec"],
-    ["through bundle exec later in a command list", "bundle install && bundle exec rspec"],
-  ] as const;
-
-  it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, unit, shellReading)).toEqual(asTheRunner);
-  });
-
-  it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([stepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
-  });
-
-  it.each([
-    ["an option between the launcher and the runner", "bundle exec --keep-file-descriptors rspec"],
-    ["a rake task", "bundle exec rake spec"],
-    ["bundle without exec", "bundle rspec"],
-  ] as const)("leaves the step a candidate for %s", (_form, line) => {
-    const step = [stepRunning(line)];
+  it.each(forms)("leaves the step a candidate for %s", (_form, line) => {
+    const step = [unitTestsStepRunning(line)];
     expect(recognisedRunners(workflowSteps(step), {}, unit, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(step), { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual([
       "Unit tests",

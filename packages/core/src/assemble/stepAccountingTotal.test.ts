@@ -3,6 +3,7 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { JobStepAccount } from "../domain/evidenceReconciliation.js";
 import {
+  everyDispositionPackageJson,
   feature,
   nightly,
   stepAccountingCi as ci,
@@ -11,25 +12,10 @@ import {
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
-const manifest = {
-  scripts: {
-    test: "vitest run",
-    build: "tsc -b",
-    typecheck: "tsc --noEmit",
-    "lint:sweep": "madge --circular",
-    "lint:circular": "madge --circular",
-    "lint:depth": "depcruise src",
-  },
-  specController: {
-    runners: { unit: "vitest" },
-    notChecks: ["ci.yml:ci:Checkout", "ci.yml:ci:Install", "ci.yml:ci:Build"],
-  },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
-
 function reconcileTwoWorkflows(): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    packageJson: manifest,
+    packageJson: everyDispositionPackageJson,
     ciWorkflows: parsedWorkflows([ci, nightly], ["ci.yml", "nightly.yml"]),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],

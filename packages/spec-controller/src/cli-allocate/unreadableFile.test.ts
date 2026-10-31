@@ -1,24 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { git, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
-import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
-import type { Answered } from "./answered.test-utils.js";
-import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-
-function writeInto(root: string, path: string, content: string | Buffer): void {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
-}
+import { git, writeInto, taken, withhold, runsAsRoot, repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
+import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
 
 function repository(): string {
-  const repo = realpathSync(temporaryDirectory("allocate-unreadable-file-"));
-  git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n");
-  writeInto(repo, "docs/notes.md", "Cites SCN-ONE-003.\n");
+  const repo = repositoryHeadedOneCarrying003("allocate-unreadable-file-", { "docs/notes.md": "Cites SCN-ONE-003.\n" });
   mkdirSync(join(repo, "src"));
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", "the corpus"]);
   return repo;
 }
 
@@ -27,16 +15,6 @@ afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });
-
-function refusalReason(answered: Answered, subject: string, path: string): string {
-  expect(answered.stdout).toBe("");
-  expect(answered.exitCode).toBe(2);
-  const opening = `spec-controller allocate: usage error — ${subject} could not be read: ${path} (`;
-  expect(answered.stderr.startsWith(opening)).toBe(true);
-  expect(answered.stderr.endsWith(")\n")).toBe(true);
-  expect(answered.stderr.split("\n")).toHaveLength(2);
-  return answered.stderr.slice(opening.length, -2);
-}
 
 function writeAnUntrackedDraft(repo: string): void {
   writeInto(repo, "drafts/new.md", "Cites SCN-ONE-016.\n");

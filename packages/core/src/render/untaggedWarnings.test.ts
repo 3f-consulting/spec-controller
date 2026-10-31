@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
-import { countScnOccurrences } from "../parse/scenarios.js";
-import { parseScenarios, parseUntaggedScenarios } from "../parse/scenarioReaders.test-utils.js";
+import { readCorpus } from "../parse/scenarioReaders.test-utils.js";
+import { censusBlock } from "./renderedSection.test-utils.js";
 import { evidenceObligations } from "../domain/corpusCounts.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
@@ -37,11 +37,7 @@ const alpha = `Feature: alpha
 `;
 
 function renderCorpus(corpus: readonly { feature: string; source: string }[]): string {
-  const untagged = corpus.flatMap(({ feature, source }) =>
-    parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
-  );
-  const raw = corpus.reduce((n, { source }) => n + countScnOccurrences(source), 0);
-  const scenarios = corpus.flatMap(({ source }) => parseScenarios(source));
+  const { untagged, raw, scenarios } = readCorpus(corpus);
   const ledger = reconcile(
     scenarios,
     [],
@@ -53,14 +49,6 @@ function renderCorpus(corpus: readonly { feature: string; source: string }[]): s
     publishedExitCodeOf,
     evidenceObligations(raw, scenarios.length, untagged)
   );
-}
-
-function censusBlock(md: string): string[] {
-  const lines = md.split("\n");
-  const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);
-  expect(start).toBeGreaterThan(0);
-  const block = lines.slice(start);
-  return block.slice(0, block.indexOf(""));
 }
 
 const corpus = [

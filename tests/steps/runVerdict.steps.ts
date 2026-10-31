@@ -25,12 +25,14 @@ const UNNAMED_CLAIM_ONLY = {
   ci: "tests/fixtures/unnamed-claim-only/ci.yml",
 };
 
-Given("a target with scenarios and a Vitest report of what ran", function (this: SpecControllerWorld) {
+function aBalancedTargetWithAVitestReport(this: SpecControllerWorld): void {
   const root = process.cwd();
   assert.ok(existsSync(join(root, BALANCED_INPUTS.features)), `missing fixture features: ${BALANCED_INPUTS.features}`);
   assert.ok(existsSync(join(root, BALANCED_INPUTS.vitest)), `missing fixture vitest report: ${BALANCED_INPUTS.vitest}`);
   this.invocationArgs = ["--features", BALANCED_INPUTS.features, "--vitest", BALANCED_INPUTS.vitest, "--package-json", BALANCED_INPUTS.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
-});
+}
+
+Given("a target with scenarios and a Vitest report of what ran", aBalancedTargetWithAVitestReport);
 
 When("balance is asked to reconcile that target", function (this: SpecControllerWorld) {
   this.balanceResult = spawnBalance(this, this.invocationArgs);
@@ -44,12 +46,7 @@ Then("the reconciliation reports the target's scenarios", function (this: SpecCo
   assert.match(this.balanceResult.stdout, /\| Claim Reconciliation \| 2 \|/);
 });
 
-Given("a target with scenarios and a Vitest report", function (this: SpecControllerWorld) {
-  const root = process.cwd();
-  assert.ok(existsSync(join(root, BALANCED_INPUTS.features)), `missing fixture features: ${BALANCED_INPUTS.features}`);
-  assert.ok(existsSync(join(root, BALANCED_INPUTS.vitest)), `missing fixture vitest report: ${BALANCED_INPUTS.vitest}`);
-  this.invocationArgs = ["--features", BALANCED_INPUTS.features, "--vitest", BALANCED_INPUTS.vitest, "--package-json", BALANCED_INPUTS.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
-});
+Given("a target with scenarios and a Vitest report", aBalancedTargetWithAVitestReport);
 
 When("balance is asked to reconcile that target without the Cucumber report option", function (this: SpecControllerWorld) {
   assert.ok(!this.invocationArgs.includes("--cucumber"), "fixture invariant: --cucumber must be omitted");
@@ -74,12 +71,7 @@ Given("a target that reconciles out-of-balance", function (this: SpecControllerW
   ];
 });
 
-Given("a target that reconciles all-balanced", function (this: SpecControllerWorld) {
-  const root = process.cwd();
-  assert.ok(existsSync(join(root, BALANCED_INPUTS.features)), `missing fixture features: ${BALANCED_INPUTS.features}`);
-  assert.ok(existsSync(join(root, BALANCED_INPUTS.vitest)), `missing fixture vitest report: ${BALANCED_INPUTS.vitest}`);
-  this.invocationArgs = ["--features", BALANCED_INPUTS.features, "--vitest", BALANCED_INPUTS.vitest, "--package-json", BALANCED_INPUTS.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
-});
+Given("a target that reconciles all-balanced", aBalancedTargetWithAVitestReport);
 
 Given("a target whose vitest report carries a collection-failed suite", function (this: SpecControllerWorld) {
   const root = process.cwd();

@@ -1,18 +1,16 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
 import { modifiersNotTakenRefusal, parseHostInvocation } from "./host.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
 
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
+interface Answered extends Written {
   expectedStderr: string | undefined;
   workingEntries: string[];
 }
@@ -40,26 +38,7 @@ beforeEach(() => {
   if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
 });
 
-let stdout: string[];
-let stderr: string[];
-
-beforeEach(() => {
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 type Refusal = (argv: string[]) => string | undefined;
 
@@ -74,9 +53,7 @@ function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal:
   main(argv);
   const expected = refusal(argv);
   return {
-    stdout: stdout.join(""),
-    stderr: stderr.join(""),
-    exitCode: process.exitCode,
+    ...whatTheProgramWrote(),
     expectedStderr: expected === undefined ? undefined : expected + "\n",
     workingEntries: readdirSync(cwd),
   };

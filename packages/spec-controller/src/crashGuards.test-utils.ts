@@ -19,3 +19,16 @@ export const FIRST_LINE = "write EPIPE";
 export function closedPipe(): Error {
   return Object.assign(new Error(`${FIRST_LINE}\nthe reader closed its end of the pipe`), { code: "EPIPE" });
 }
+
+export const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
+
+interface Raised {
+  proc: EventEmitter;
+  stdout: EventEmitter;
+}
+
+export const ARRIVALS = [
+  { arrival: "an 'error' event on stdout", raise: (g: Raised): boolean => g.stdout.emit("error", closedPipe()) },
+  { arrival: "an uncaught exception", raise: (g: Raised): boolean => g.proc.emit("uncaughtException", closedPipe(), "uncaughtException") },
+  { arrival: "an unhandled rejection", raise: (g: Raised): boolean => g.proc.emit("unhandledRejection", closedPipe(), Promise.resolve()) },
+];

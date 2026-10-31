@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { spawnSync } from "node:child_process";
 import { readFileSync, symlinkSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { freshDirectory, git, writeInto, scenarioBlock } from "./repository.test-utils.js";
-import { allocateIn } from "./answered.test-utils.js";
+import { expectAnsweredWithHistoryUnreadBeforeItsFirstCommit, expectAnsweredWithNoHistoryRead } from "./historyBoundary.test-utils.js";
 
 function corpusCarrying(code: string): string {
   return `@ONE\nFeature: part ONE\n\n${scenarioBlock(code, 1)}`;
@@ -41,31 +40,15 @@ describe("[SCN-ALC-004] With no history to read, a code is still offered and the
   it("in a copy without git holding a symlink to a file that mentions SCN-ONE-900, answers SCN-ONE-002 and states no history was read", () => {
     const outside = freshDirectory("allocate-link-target-");
     writeInto(outside, "far.feature", corpusCarrying("SCN-ONE-900"));
-    const copy = copyWithoutGitLinkingTo(join(outside, "far.feature"));
-    expect(spawnSync("git", ["rev-parse", "--git-dir"], { cwd: copy }).status).not.toBe(0);
 
-    const answered = allocateIn(copy, ["ONE"]);
-
-    expect(answered.stdout).toBe("SCN-ONE-002\n");
-    expect(answered.exitCode).toBeUndefined();
-    expect(answered.stderr).toBe(
-      "history: not a git repository — none read; a code above SCN-ONE-001 may have been used before\n" +
-        "highest seen: SCN-ONE-001, features/one.feature:4\n",
-    );
+    expectAnsweredWithNoHistoryRead(copyWithoutGitLinkingTo(join(outside, "far.feature")));
   });
 
   it("in a linked worktree of a clone one commit deep, where git names the shallow record by absolute path, states history before the clone's first commit was not read", () => {
     const worktree = linkedWorktreeOfShallowClone();
     expect(git(worktree, ["rev-parse", "--is-shallow-repository"]).trim()).toBe("true");
     expect(isAbsolute(git(worktree, ["rev-parse", "--git-path", "shallow"]).trim())).toBe(true);
-    const edge = git(worktree, ["rev-parse", "--short", "HEAD"]).trim();
 
-    const answered = allocateIn(worktree, ["ONE"]);
-
-    expect(answered.stdout).toBe("SCN-ONE-002\n");
-    expect(answered.exitCode).toBeUndefined();
-    expect(answered.stderr.split("\n")[0]).toBe(
-      `history: shallow clone — history before ${edge} unread; a code above SCN-ONE-001 may have been used before`,
-    );
+    expectAnsweredWithHistoryUnreadBeforeItsFirstCommit(worktree);
   });
 });

@@ -1,9 +1,10 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, closeSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
 import { FORMAT_FLAG } from "./support/reportFormat.js";
@@ -17,11 +18,9 @@ const FIXTURE = {
   cucumber: "tests/fixtures/evidence-observation/cucumber.json",
 };
 
-When("the operator asks for the markdown report in a file", function (this: SpecControllerWorld) {
-  const repoRoot = process.cwd();
-  const abs = (p: string): string => join(repoRoot, p);
-  this.markdownDestination = join(this.corpusCwd, "spec-reconciliation.md");
-  this.balanceResult = spawnSync(
+function balanceTheFixtureFromTheCorpus(world: SpecControllerWorld, formatArgs: readonly string[]): void {
+  const abs = (p: string): string => join(process.cwd(), p);
+  world.balanceResult = spawnSync(
     NODE,
     [
       ...SPEC_CONTROLLER_ARGV,
@@ -30,10 +29,15 @@ When("the operator asks for the markdown report in a file", function (this: Spec
       "--vitest", abs(FIXTURE.vitest),
       "--cucumber", abs(FIXTURE.cucumber),
       "--target", "evidence observation-fixture",
-      "--format", `md:${this.markdownDestination}`,
+      ...formatArgs,
     ],
-    { cwd: this.corpusCwd, encoding: "utf8" }
+    { cwd: world.corpusCwd, encoding: "utf8" }
   );
+}
+
+When("the operator asks for the markdown report in a file", function (this: SpecControllerWorld) {
+  this.markdownDestination = join(this.corpusCwd, "spec-reconciliation.md");
+  balanceTheFixtureFromTheCorpus(this, ["--format", `md:${this.markdownDestination}`]);
 });
 
 Then("the markdown report is in that file, and nothing else is reported", function (this: SpecControllerWorld) {
@@ -59,22 +63,7 @@ Given("a target corpus to reconcile", function (this: SpecControllerWorld) {
 });
 
 When("the operator asks for the markdown report and the json report, neither given a file of its own", function (this: SpecControllerWorld) {
-  const repoRoot = process.cwd();
-  const abs = (p: string): string => join(repoRoot, p);
-  this.balanceResult = spawnSync(
-    NODE,
-    [
-      ...SPEC_CONTROLLER_ARGV,
-      "balance",
-      "--features", abs(FIXTURE.features),
-      "--vitest", abs(FIXTURE.vitest),
-      "--cucumber", abs(FIXTURE.cucumber),
-      "--target", "evidence observation-fixture",
-      "--format", "md",
-      "--format", "json",
-    ],
-    { cwd: this.corpusCwd, encoding: "utf8" }
-  );
+  balanceTheFixtureFromTheCorpus(this, ["--format", "md", "--format", "json"]);
 });
 
 Then("the run is rejected", function (this: SpecControllerWorld) {
@@ -115,21 +104,7 @@ Given("a target corpus to reconcile with a destination for the legacy json optio
 });
 
 When("the operator asks for the json report through the removed legacy json option", function (this: SpecControllerWorld) {
-  const repoRoot = process.cwd();
-  const abs = (p: string): string => join(repoRoot, p);
-  this.balanceResult = spawnSync(
-    NODE,
-    [
-      ...SPEC_CONTROLLER_ARGV,
-      "balance",
-      "--features", abs(FIXTURE.features),
-      "--vitest", abs(FIXTURE.vitest),
-      "--cucumber", abs(FIXTURE.cucumber),
-      "--target", "evidence observation-fixture",
-      "--json", this.jsonDestination,
-    ],
-    { cwd: this.corpusCwd, encoding: "utf8" }
-  );
+  balanceTheFixtureFromTheCorpus(this, ["--json", this.jsonDestination]);
 });
 
 Then("the run is rejected and does not create that destination", function (this: SpecControllerWorld) {
@@ -168,21 +143,7 @@ Given("a target corpus to reconcile with an unsupported report format", function
 });
 
 When("the operator asks for the xml report", function (this: SpecControllerWorld) {
-  const repoRoot = process.cwd();
-  const abs = (p: string): string => join(repoRoot, p);
-  this.balanceResult = spawnSync(
-    NODE,
-    [
-      ...SPEC_CONTROLLER_ARGV,
-      "balance",
-      "--features", abs(FIXTURE.features),
-      "--vitest", abs(FIXTURE.vitest),
-      "--cucumber", abs(FIXTURE.cucumber),
-      "--target", "evidence observation-fixture",
-      "--format", "xml",
-    ],
-    { cwd: this.corpusCwd, encoding: "utf8" }
-  );
+  balanceTheFixtureFromTheCorpus(this, ["--format", "xml"]);
 });
 
 Then("the run is rejected for the unknown format", function (this: SpecControllerWorld) {
@@ -314,17 +275,6 @@ function specControllerInTarget(world: SpecControllerWorld, args: readonly strin
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...args], { cwd: world.destinationTargetDir, encoding: "utf8", stdio: ["ignore", stdout, "pipe"] });
   assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
   return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr };
-}
-
-function entriesUnder(dir: string): Map<string, string> {
-  const entries = new Map<string, string>();
-  for (const entry of readdirSync(dir, { recursive: true })) {
-    const path = join(dir, String(entry));
-    const kind = lstatSync(path);
-    if (kind.isSymbolicLink()) entries.set(path, `-> ${readlinkSync(path)}`);
-    else if (kind.isFile()) entries.set(path, readFileSync(path, "latin1"));
-  }
-  return entries;
 }
 
 Given(/^a (balanced|out-of-balance) target the run reads (.+) from$/, function (this: SpecControllerWorld, verdict: string, input: string) {

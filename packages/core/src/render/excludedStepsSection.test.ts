@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { linesOf, sectionUnder } from "./renderedSection.test-utils.js";
+import {
+  endOfStepAccountingTable as endOfTable,
+  linesOf,
+  stepAccountingSection as stepAccounting,
+} from "./renderedSection.test-utils.js";
 import {
   unitTestsAndTypesCi as ci,
   feature,
@@ -46,17 +49,6 @@ function reportLines(notChecks?: readonly string[], ciSource: string = ci): stri
 }
 
 const label = "Excluded:";
-
-const stepAccounting = (lines: readonly string[]): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(lines);
-
-const endOfTable = (section: readonly string[]): number => {
-  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  const end = section.indexOf("", header);
-  expect(end).toBeGreaterThan(header);
-  return end;
-};
 
 const excludedList = (lines: readonly string[], length: number): string[] => {
   const start = lines.indexOf(label);

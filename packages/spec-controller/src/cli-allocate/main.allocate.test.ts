@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main } from "../main.js";
 import { runGit as git } from "./repository.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../programOutput.test-utils.js";
 
 function repositoryHeaded(part: string, code: string): string {
   const repo = realpathSync(temporaryDirectory("main-allocate-"));
@@ -15,37 +16,12 @@ function repositoryHeaded(part: string, code: string): string {
   return repo;
 }
 
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
-}
+recordWhatTheProgramWrites();
 
-let stdout: string[];
-let stderr: string[];
-
-beforeEach(() => {
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
-
-function answerIn(cwd: string, argv: string[]): Answered {
+function answerIn(cwd: string, argv: string[]): Written {
   vi.spyOn(process, "cwd").mockReturnValue(cwd);
   main(argv);
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
+  return whatTheProgramWrote();
 }
 
 describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to three digits", () => {

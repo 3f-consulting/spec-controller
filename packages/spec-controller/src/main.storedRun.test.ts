@@ -1,40 +1,19 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 import { main } from "./main.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
 
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
+interface Answered extends Written {
   runDir: string;
   storeMade: boolean;
   cwdEntries: string[];
 }
 
-let stdout: string[];
-let stderr: string[];
-
-beforeEach(() => {
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 const TARGET = "demo-store";
 const RUN_ID = "r1";
@@ -56,9 +35,7 @@ function ranIn(hostArgvAt: (storeRoot: string) => string[], inspect: (answered: 
   const storeRoot = join(cwd, "store");
   main(hostArgvAt(storeRoot));
   inspect({
-    stdout: stdout.join(""),
-    stderr: stderr.join(""),
-    exitCode: process.exitCode,
+    ...whatTheProgramWrote(),
     runDir: join(storeRoot, TARGET, RUN_ID),
     storeMade: existsSync(storeRoot),
     cwdEntries: readdirSync(cwd),

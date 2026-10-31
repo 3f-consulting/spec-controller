@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
-import { sectionUnder } from "./renderedSection.test-utils.js";
+import { endOfStepAccountingTable as endOfTable, stepAccountingSection } from "./renderedSection.test-utils.js";
 import {
   feature,
   reconcileStepAccounting,
@@ -17,17 +16,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 const label = "Runners:";
 
 const stepAccounting = (reconciliation: EvidenceReconciliation): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(
-    renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n")
-  );
-
-const endOfTable = (section: readonly string[]): number => {
-  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-  expect(header).toBeGreaterThanOrEqual(0);
-  const end = section.indexOf("", header);
-  expect(end).toBeGreaterThan(header);
-  return end;
-};
+  stepAccountingSection(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
 
 const withoutRunners = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({

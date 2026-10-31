@@ -1,25 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-import { block } from "./configurationBlock.test-utils.js";
-import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
-import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
-
-const scripts = { test: "vitest run", typecheck: "tsc --noEmit" };
-
-function reconcile(specController: unknown): EvidenceReconciliation {
-  const packageJson = (specController === undefined ? { scripts } : { scripts, specController }) as Parameters<
-    typeof evidenceReconciliationFromSources
-  >[0]["packageJson"];
-  return evidenceReconciliationFromSources({
-    features: parsedFeatures([feature]),
-    packageJson,
-    ciWorkflows: parsedWorkflows([ci]),
-    behaviouralObservations: [],
-    deferralTags: [],
-  });
-}
+import { block, reconcileConfiguration as reconcile } from "./configurationBlock.test-utils.js";
 
 function withoutWrongKinds(reconciliation: EvidenceReconciliation): EvidenceReconciliation {
   const { configurationOfWrongKind: _named, ...summary } = reconciliation.summary;

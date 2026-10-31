@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
@@ -6,6 +6,7 @@ import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
 import { wrapCommandArgv } from "../host.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites } from "../programOutput.test-utils.js";
 
 const TARGET = "unwritable";
 const RUN_ID = "r1";
@@ -24,20 +25,12 @@ const meta: RunManifestMeta = {
 };
 
 let scratch: string;
-let stderr: string[];
 
 beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-kept-run-");
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+recordWhatTheProgramWrites();
 
 describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create, before the command runs", () => {
   it("creates a root whose missing parents can be created, and runs the command", () => {

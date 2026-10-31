@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { chmodSync, existsSync, fstatSync, lstatSync, mkdirSync, openSync, closeSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
@@ -8,6 +8,7 @@ import { stdoutIdentity as processStdout } from "../../outputLocation.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, stderrWrites } from "../../programOutput.test-utils.js";
 
 const ctx: RunContext = {
   target: "unwritable",
@@ -61,7 +62,6 @@ const toFile = (path: string, fmt: "md" | "json" = "json"): OutputPlan => ({
 });
 
 let scratch: string;
-let stderr: string[];
 
 function volumeIsCaseSensitive(): boolean {
   const dir = temporaryDirectory("spec-controller-case-");
@@ -72,16 +72,11 @@ function volumeIsCaseSensitive(): boolean {
 beforeEach(() => {
   payloads = { balance: evidenceReconciliationOf([], [], []), ctx };
   scratch = temporaryDirectory("spec-controller-writer-");
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 });
 
+recordWhatTheProgramWrites();
+
 afterEach(() => {
-  vi.restoreAllMocks();
   for (const name of ["read-only", "read-only.json"]) {
     if (existsSync(join(scratch, name))) chmodSync(join(scratch, name), 0o755);
   }
@@ -93,7 +88,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
       const path = arrange(scratch);
 
       expect(usageStatusOf(() => writeOutputs(toFile(path), payloads, processStdout, [], noOwnRun))).toBe(2);
-      const refusal = stderr.join("");
+      const refusal = whatTheProgramWrote().stderr;
       expect(refusal).toContain(path);
       expect(refusal).toContain(reason);
       expect(refusal.trimEnd().split("\n")).toHaveLength(1);
@@ -106,7 +101,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     writeFileSync(path, "earlier\n");
 
     expect(usageStatusOf(() => writeOutputs(toFile(path), payloads, processStdout, [], noOwnRun))).toBeUndefined();
-    expect(stderr).toEqual([]);
+    expect(stderrWrites()).toEqual([]);
   });
 });
 
@@ -164,7 +159,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
 
       expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path: markdown } }, jsonFirst), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-      expect(stderr.join("")).toBe(`The json report could not be written: ${json} (ENOTDIR: not a directory, open '${json}')\n`);
+      expect(whatTheProgramWrote().stderr).toBe(`The json report could not be written: ${json} (ENOTDIR: not a directory, open '${json}')\n`);
       expect(process.stdout.write).not.toHaveBeenCalled();
       expect(readdirSync(scratch)).toEqual(["regular"]);
     });
@@ -178,7 +173,7 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
   function refused(plan: OutputPlan, stdoutIdentity?: () => { dev: bigint; ino: bigint } | undefined): string {
     expect(usageStatusOf(() => writeOutputs(plan, payloads, stdoutIdentity ?? processStdout, [], noOwnRun))).toBe(2);
     expect(process.stdout.write).not.toHaveBeenCalled();
-    const refusal = stderr.join("");
+    const refusal = whatTheProgramWrote().stderr;
     expect(refusal.trimEnd().split("\n")).toHaveLength(1);
     return refusal;
   }
@@ -244,7 +239,7 @@ describe("[SCN-FMT-012] a destination that is a link to a file not yet created i
       ),
     ).toBe(2);
 
-    expect(stderr.join("")).toContain("ENOTDIR");
+    expect(whatTheProgramWrote().stderr).toContain("ENOTDIR");
     expect(existsSync(target)).toBe(false);
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
   });

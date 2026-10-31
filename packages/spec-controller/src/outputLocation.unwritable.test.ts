@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { fstatSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { probeDestination, settlingRefusal } from "./outputLocation.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, stderrWrites } from "./programOutput.test-utils.js";
 
 let scratch: string;
-let stderr: string[];
 
 function descriptorsOpenOn(path: string): number {
   const file = statSync(path);
@@ -23,17 +23,9 @@ function descriptorsOpenOn(path: string): number {
 
 beforeEach(() => {
   scratch = realpathSync(temporaryDirectory("spec-controller-unwritable-"));
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
 
@@ -50,7 +42,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
     }
 
     expect(escaped).toBe(failure);
-    expect(stderr).toEqual([]);
+    expect(stderrWrites()).toEqual([]);
     expect(process.exitCode).toBeUndefined();
   });
 

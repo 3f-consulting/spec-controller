@@ -1,44 +1,21 @@
 import { readdirSync } from "node:fs";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 import { main } from "./main.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
 
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
+interface Answered extends Written {
   storeEntries: string[];
 }
 
-let stdout: string[];
-let stderr: string[];
-
-beforeEach(() => {
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 function inTemporaryStore(argvAt: (storeRoot: string) => string[]): Answered {
   const storeRoot = temporaryDirectory("main-top-level-help-");
   main(argvAt(storeRoot));
   return {
-    stdout: stdout.join(""),
-    stderr: stderr.join(""),
-    exitCode: process.exitCode,
+    ...whatTheProgramWrote(),
     storeEntries: readdirSync(storeRoot),
   };
 }

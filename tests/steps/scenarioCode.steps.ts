@@ -531,12 +531,14 @@ Then("the two- and five-character citations open phantom claims", function (this
   assert.equal(rowOf(this, OWN)?.kind, "scenario", `expected the target's own scenario as an account`);
 });
 
+function bothOutsideCitationsPostToTheUnnamedClaim(this: SpecControllerWorld): void {
+  for (const id of OUTSIDE) assert.equal(rowOf(this, id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(this, id))}`);
+  assert.equal(unnamedClaimObservations(this), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind(this, "unnamed-claim"))}`);
+}
+
 Then(
   "the one- and six-character titles cite no scenario, so both evidence observations post to the unnamed claim",
-  function (this: SpecControllerWorld) {
-    for (const id of OUTSIDE) assert.equal(rowOf(this, id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(this, id))}`);
-    assert.equal(unnamedClaimObservations(this), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind(this, "unnamed-claim"))}`);
-  },
+  bothOutsideCitationsPostToTheUnnamedClaim,
 );
 
 Given(
@@ -556,10 +558,7 @@ Given(
 
 Then(
   "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the unnamed claim",
-  function (this: SpecControllerWorld) {
-    for (const id of OUTSIDE) assert.equal(rowOf(this, id), undefined, `expected no row for ${id}; got ${JSON.stringify(rowOf(this, id))}`);
-    assert.equal(unnamedClaimObservations(this), OUTSIDE.length, `expected ${OUTSIDE.length} uncited evidence observations; got ${JSON.stringify(rowsOfKind(this, "unnamed-claim"))}`);
-  },
+  bothOutsideCitationsPostToTheUnnamedClaim,
 );
 
 Given(

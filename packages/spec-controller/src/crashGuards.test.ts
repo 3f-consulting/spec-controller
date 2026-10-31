@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { installCrashGuards, markRunFinished } from "./crashGuards.js";
 import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
-import { closedPipe, FIRST_LINE } from "./crashGuards.test-utils.js";
+import { ARRIVALS, closedPipe, FIRST_LINE, NO_VERDICT_LINE } from "./crashGuards.test-utils.js";
 
 type Happening = { stderr: string } | { exit: unknown };
 
@@ -52,14 +52,7 @@ function refused(): Guarded {
   return g;
 }
 
-const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
 const AFTER_VERDICT_LINE = `spec-controller hit an unexpected error after its verdict: Error: ${FIRST_LINE}\n`;
-
-const ARRIVALS = [
-  { arrival: "an 'error' event on stdout", raise: (g: Guarded): boolean => g.stdout.emit("error", closedPipe()) },
-  { arrival: "an uncaught exception", raise: (g: Guarded): boolean => g.proc.emit("uncaughtException", closedPipe(), "uncaughtException") },
-  { arrival: "an unhandled rejection", raise: (g: Guarded): boolean => g.proc.emit("unhandledRejection", closedPipe(), Promise.resolve()) },
-];
 
 const onStderr = (g: Guarded): boolean => g.stderr.emit("error", closedPipe());
 

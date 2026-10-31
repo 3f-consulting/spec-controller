@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "../programOutput.test-utils.js";
 
 const TARGET = "shared";
 const RUN_ID = "r1";
@@ -20,23 +21,15 @@ let scratch: string;
 let storeRoot: string;
 let runDir: string;
 let runYaml: string;
-let stderr: string[];
 
 beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-kept-shared-");
   storeRoot = join(scratch, "store");
   runDir = join(storeRoot, TARGET, RUN_ID);
   runYaml = join(runDir, "run.yaml");
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+recordWhatTheProgramWrites();
 
 describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own run.yaml, before the command runs", () => {
   it("refuses the run.yaml of a new run, naming it, and writes no run.yaml", () => {
@@ -45,7 +38,7 @@ describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own r
     expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [runYaml] }, meta, route))).toBe(2);
 
     expect(route).not.toHaveBeenCalled();
-    const refusal = stderr.join("");
+    const refusal = whatTheProgramWrote().stderr;
     expect(refusal).toContain(runYaml);
     expect(refusal.trimEnd().split("\n")).toHaveLength(1);
     expect(existsSync(runYaml)).toBe(false);
@@ -60,7 +53,7 @@ describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own r
     expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [join(scratch, "elsewhere.md"), spelling] }, meta, route))).toBe(2);
 
     expect(route).not.toHaveBeenCalled();
-    expect(stderr.join("")).toContain(spelling);
+    expect(whatTheProgramWrote().stderr).toContain(spelling);
     expect(readFileSync(runYaml, "utf8")).toBe("an earlier run's manifest\n");
     expect(existsSync(join(scratch, "elsewhere.md"))).toBe(false);
   });
@@ -86,7 +79,7 @@ describe("[SCN-RMG-010] a --format path is the stored run's own run.yaml only wh
     expect(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, formatPaths: [report] }, meta, route)).toThrow(/EISDIR/);
 
     expect(route).toHaveBeenCalledOnce();
-    expect(stderr.join("")).not.toContain(report);
+    expect(whatTheProgramWrote().stderr).not.toContain(report);
     expect(readdirSync(runYaml)).toEqual([]);
   });
 });

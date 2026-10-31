@@ -113,16 +113,24 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   const citesNoScenario = (qualityCheck: string): string =>
     `${qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}`;
 
-  it("letters a shared code's rows from their obligations alone, and adds no column for a tier only its citing evidence carries, which shows on the unnamed claim", () => {
+  it.each([
+    [
+      "letters a shared code's rows from their obligations alone, and adds no column for a tier only its citing evidence carries, which shows on the unnamed claim",
+      { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
+      ["unit", "integration"],
+    ],
+    [
+      "adds no Fitness column for a fitness observation citing a shared code, which shows on the unnamed claim as a unit test citing it does",
+      { qualityCheck: "fitness", fitnessFunction: "guard-d", scnId: "SCN-D", exists: true, enforcedOverRealSource: true },
+      ["fitness", "unit"],
+    ],
+  ] as const)("%s", (_title, citing, qualityChecks) => {
     const shared = reconcile(
       [
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
       ],
-      [
-        { qualityCheck: "unit", scnId: "SCN-D", status: "passed" },
-        { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
-      ]
+      [{ qualityCheck: "unit", scnId: "SCN-D", status: "passed" }, citing]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table.evidenceColumns).toEqual(["Unit"]);
@@ -131,30 +139,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       ["SCN-D", "U/-"],
       ["(unnamed claim)", "—"],
     ]);
-    expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario("unit"));
-    expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario("integration"));
-  });
-
-  it("adds no Fitness column for a fitness observation citing a shared code, which shows on the unnamed claim as a unit test citing it does", () => {
-    const shared = reconcile(
-      [
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "unit" }] },
-      ],
-      [
-        { qualityCheck: "unit", scnId: "SCN-D", status: "passed" },
-        { qualityCheck: "fitness", fitnessFunction: "guard-d", scnId: "SCN-D", exists: true, enforcedOverRealSource: true },
-      ]
-    );
-    const table = claimReconciliationsTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
-    expect(table.evidenceColumns).toEqual(["Unit"]);
-    expect(evidenceRowsOf(table)).toEqual([
-      ["SCN-D", "U/-"],
-      ["SCN-D", "U/-"],
-      ["(unnamed claim)", "—"],
-    ]);
-    expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario("fitness"));
-    expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario("unit"));
+    for (const qualityCheck of qualityChecks) {
+      expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario(qualityCheck));
+    }
   });
 
   it("adds a Fitness column with a blank cell for the shared code's row whose scenario's fitness obligation is pending", () => {

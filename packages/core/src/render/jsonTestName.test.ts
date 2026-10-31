@@ -4,11 +4,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations } from "../parse/cucumber.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
-import { __er } from "../evidenceReconciliation.test-utils.js";
-
-const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
-const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
-  row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
+import { __er, heldObservationsOf } from "../evidenceReconciliation.test-utils.js";
 
 describe("[SCN-RMD-010] the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike", () => {
   it("carries a Vitest test's name and a Cucumber scenario's name on their evidence observations as testName", () => {

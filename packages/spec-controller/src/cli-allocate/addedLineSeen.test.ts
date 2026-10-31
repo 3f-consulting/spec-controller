@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { realpathSync } from "node:fs";
 import { git, writeInto, commitAllReturningHash as commitAll, lines } from "./repository.test-utils.js";
-import { allocateInGuarded as allocateIn } from "./answered.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {

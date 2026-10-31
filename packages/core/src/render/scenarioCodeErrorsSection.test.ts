@@ -201,6 +201,15 @@ function afterRunVerdictOf(md: string): string[] {
   return lines.slice(start + 3, next);
 }
 
+function statedAloneAfterRunVerdict(report: RenderInput, statement: string): string {
+  const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+  expect(afterRunVerdictOf(md)).toEqual(["", statement, ""]);
+  expect(md.split("\n").filter((line) => line === statement)).toHaveLength(1);
+  expect(md).not.toContain(HEADING);
+  expect(md).not.toContain(DUPLICATE_LINE);
+  return md;
+}
+
 describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict under the summary views, with the run's count of feature files and of feature codes, no scenario code errors section prints, and nothing is stated when no corpus was judged", () => {
   const F = CORE_MESSAGES[CoreMessage.FeatureFileNoun];
   const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
@@ -239,11 +248,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
       expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
-      const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-      expect(afterRunVerdictOf(md)).toEqual(["", statement, ""]);
-      expect(md.split("\n").filter((line) => line === statement)).toHaveLength(1);
-      expect(md).not.toContain(HEADING);
-      expect(md).not.toContain(DUPLICATE_LINE);
+      const md = statedAloneAfterRunVerdict(report, statement);
       expect(md).not.toContain("**SCENARIO CODE ERRORS**");
     });
   }
@@ -274,11 +279,7 @@ describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run v
     const report = newShapeReport(judgedCorpus([], 0));
     expect(report.errors?.scenarioCodes).toBeUndefined();
     expect(report.scenarioCodes).toMatchObject({ featureFiles: 0, featureCodes: 0 });
-    const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-    expect(afterRunVerdictOf(md)).toEqual(["", statement, ""]);
-    expect(md.split("\n").filter((line) => line === statement)).toHaveLength(1);
-    expect(md).not.toContain(HEADING);
-    expect(md).not.toContain(DUPLICATE_LINE);
+    const md = statedAloneAfterRunVerdict(report, statement);
     const cleanOpening = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver]("", "").split(" over ")[0]!;
     expect(md.split("\n").filter((line) => line.startsWith(cleanOpening))).toEqual([]);
   });

@@ -19,13 +19,17 @@ function reconcile(
   });
 }
 
+const nightlyRows = [
+  { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+  { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+];
+
 describe("[SCN-RMD-012] the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, in a settled order, and none for a target with no pipeline", () => {
   it("carries a row for every workflow and job read, with its steps read and each disposition's count, in one settled order", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
     expect(summary.stepAccounting?.byJob).toMatchObject([
       { workflow: "ci.yml", job: "quality", stepsRead: 3, candidates: 1, runners: 1, reconciler: 0, excluded: 0, plumbing: 1 },
-      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
-      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+      ...nightlyRows,
     ]);
   });
 
@@ -36,8 +40,7 @@ describe("[SCN-RMD-012] the step accounting carries a row per workflow and job r
     });
     expect(summary.stepAccounting?.byJob).toMatchObject([
       { workflow: "ci.yml", job: "quality", stepsRead: 3, candidates: 0, runners: 1, reconciler: 0, excluded: 1, plumbing: 1 },
-      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
-      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
+      ...nightlyRows,
     ]);
   });
 

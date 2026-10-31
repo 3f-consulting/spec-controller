@@ -12,13 +12,9 @@ import { reportCtx as ctx } from "./runContext.test-utils.js";
 import { reportLedger } from "./renderInput.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
-import { __er, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
+import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
-
-const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
-const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
-  row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,

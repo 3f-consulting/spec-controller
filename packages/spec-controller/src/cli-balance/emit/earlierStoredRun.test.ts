@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { existsSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
@@ -9,6 +9,7 @@ import { earlierStoredRunDirOf, planRunManifest, serialiseRunManifest } from "..
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, stderrWrites } from "../../programOutput.test-utils.js";
 
 const ctx: RunContext = {
   target: "later",
@@ -28,7 +29,6 @@ let payloads: OutputPayloads;
 let manifest: string;
 let scratch: string;
 let earlierRunDir: string;
-let stderr: string[];
 
 function storeAnEarlierRun(runDir: string): void {
   mkdirSync(runDir, { recursive: true });
@@ -51,17 +51,9 @@ beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-earlier-run-");
   earlierRunDir = join(scratch, "store", "earlier", "r0");
   storeAnEarlierRun(earlierRunDir);
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+recordWhatTheProgramWrites();
 
 describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run is refused naming the file, and that run keeps its files", () => {
   const files: ReadonlyArray<readonly [string, "md" | "json"]> = [
@@ -76,7 +68,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
 
       expect(usageStatusOf(() => writeOutputs(plan(toFile(path, fmt)), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-      const refusal = stderr.join("");
+      const refusal = whatTheProgramWrote().stderr;
       expect(refusal).toContain(path);
       expect(refusal.trimEnd().split("\n")).toHaveLength(1);
       expect(refusal).not.toMatch(/^\s+at /m);
@@ -89,7 +81,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
 
     expect(usageStatusOf(() => writeOutputs(plan(toFile(spelling, "json")), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-    expect(stderr.join("")).toContain(spelling);
+    expect(whatTheProgramWrote().stderr).toContain(spelling);
     expectEarlierRunKept(earlierRunDir);
   });
 
@@ -98,7 +90,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
 
     expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-    expect(stderr.join("")).toContain(path);
+    expect(whatTheProgramWrote().stderr).toContain(path);
     expect(existsSync(path)).toBe(false);
   });
 
@@ -118,7 +110,7 @@ describe("[SCN-RMG-012] the stored run's own run directory is not an earlier sto
 
     expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "json")), payloads, processStdout, [], (path) => earlierStoredRunDirOf(path, earlierRunDir)))).toBeUndefined();
 
-    expect(stderr).toEqual([]);
+    expect(stderrWrites()).toEqual([]);
     expect(readFileSync(path, "utf8")).not.toBe(EARLIER_JSON);
   });
 });
@@ -138,7 +130,7 @@ describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlie
 
       expect(usageStatusOf(() => writeOutputs(plan(toFile(link, fmt)), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-      const refusal = stderr.join("");
+      const refusal = whatTheProgramWrote().stderr;
       expect(refusal).toContain(link);
       expect(refusal).toContain(realpathSync(earlierRunDir));
       expect(refusal.trimEnd().split("\n")).toHaveLength(1);
@@ -183,7 +175,7 @@ describe("[SCN-RMG-013] a --format path beside a run.yaml that is not a run mani
 
         expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, [], noOwnRun))).toBeUndefined();
 
-        expect(stderr).toEqual([]);
+        expect(stderrWrites()).toEqual([]);
         expect(readFileSync(path, "utf8")).toMatch(/^# Evidence Reconciliation/);
       });
     }

@@ -1,21 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { git, writeInto, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
-import { allocateFrom, expectAnsweredWith } from "./answered.test-utils.js";
+import {
+  git,
+  writeInto,
+  freshDirectory,
+  taken,
+  withhold,
+  runsAsRoot,
+  HEADED_ONE_CARRYING_003,
+  repositoryHeadedOneCarrying003,
+} from "./repository.test-utils.js";
+import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 
-const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
-
 function repository(): string {
-  const repo = freshDirectory("allocate-not-permitted-");
-  git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", HEADED_ONE_CARRYING_003);
-  writeInto(repo, "features/nested/two.feature", "@TWO\nFeature: part TWO\n");
-  writeInto(repo, "docs/deep/notes.md", "Cites SCN-ONE-002.\n");
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", "the corpus"]);
-  return repo;
+  return repositoryHeadedOneCarrying003("allocate-not-permitted-", {
+    "features/nested/two.feature": "@TWO\nFeature: part TWO\n",
+    "docs/deep/notes.md": "Cites SCN-ONE-002.\n",
+  });
 }
 
 function copyWithoutGit(): string {
@@ -32,13 +35,7 @@ afterEach(() => {
 });
 
 function expectRefusedNaming(answered: Answered, subject: string, path: string): void {
-  expect(answered.stdout).toBe("");
-  expect(answered.exitCode).toBe(2);
-  const opening = `spec-controller allocate: usage error — ${subject} could not be read: ${path} (`;
-  expect(answered.stderr.startsWith(opening)).toBe(true);
-  expect(answered.stderr.endsWith(")\n")).toBe(true);
-  expect(answered.stderr.split("\n")).toHaveLength(2);
-  expect(answered.stderr.slice(opening.length, -2)).toMatch(/^(EACCES|EPERM): /);
+  expect(refusalReason(answered, subject, path)).toMatch(/^(EACCES|EPERM): /);
 }
 
 interface Withheld {

@@ -6,14 +6,13 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
+import { specsFeaturesInputs } from "./runContext.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { verdictAndItemsOf as rowFor } from "./claimReconciliationsTable.test-utils.js";
 
 const ctx: RunContext = {
   target: "pending-item-row-target",
-  inputs: [{ ...FEATURES, path: "specs/features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
-  corpus: "specs/features",
+  ...specsFeaturesInputs,
   runStart: new Date("2026-10-05T16:00:00.000Z"),
   sourceSha: "1e5f00d0c0ffeeba110000000000000000deadbe",
   toolSha: "4083aaaa71ace511efdb2511276284b4cb50c247",

@@ -4,8 +4,8 @@ import { renderJson } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
-import { countScnOccurrences } from "../parse/scenarios.js";
-import { parseFeatureCounts, parseScenarios, parseUntaggedScenarios } from "../parse/scenarioReaders.test-utils.js";
+import { parseFeatureCounts, readCorpus } from "../parse/scenarioReaders.test-utils.js";
+import { censusBlock as censusBlockOf } from "./renderedSection.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
@@ -87,22 +87,14 @@ const beta = `Feature: beta
 `;
 
 function censusBlock(corpus: readonly { feature: string; source: string }[]): string[] {
-  const untagged = corpus.flatMap(({ feature, source }) =>
-    parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
-  );
-  const raw = corpus.reduce((n, { source }) => n + countScnOccurrences(source), 0);
-  const scenarios = corpus.flatMap(({ source }) => parseScenarios(source));
+  const { untagged, raw, scenarios } = readCorpus(corpus);
   const md = renderMarkdown(
     er(reconcile(scenarios, [])),
     ctx,
     publishedExitCodeOf,
     evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus.map(({ feature, source }) => ({ feature, ...parseFeatureCounts(source) }))))
   );
-  const lines = md.split("\n");
-  const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);
-  expect(start).toBeGreaterThan(0);
-  const block = lines.slice(start);
-  return block.slice(0, block.indexOf(""));
+  return censusBlockOf(md);
 }
 
 describe("[SCN-RPT-064] the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code", () => {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cli-registry.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { readRequest } from "./request.js";
+import { withAllocatePositional } from "./registry.test-utils.js";
 
 function usageErrorOf(argv: readonly string[], registry: CliRegistry = cliRegistry): string {
   const read = readRequest(argv, registry, "0.0.0-test");
@@ -31,15 +32,6 @@ describe("[SCN-ALC-012] a request not in the scenario-code form is refused as a 
       `spec-controller allocate: usage error — ${APP_MESSAGES[AppMessage.ExtraArgument](token, ALLOCATE_SCOPE, takes)}\n` +
       APP_MESSAGES[AppMessage.SeeArguments](ALLOCATE_SCOPE)
     );
-  }
-
-  function withAllocatePositional(positional: PositionalSpec): CliRegistry {
-    return {
-      ...cliRegistry,
-      commands: cliRegistry.commands.map((command) =>
-        command.name === "allocate" ? { ...command, positionals: [...(command.positionals ?? []), positional] } : command,
-      ),
-    };
   }
 
   it("refuses a second part by naming it and the part allocate takes, as the registry names it", () => {

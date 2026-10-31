@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { StepAccounting } from "../domain/evidenceReconciliation.js";
-import { feature, nightly, stepAccountingCi } from "../evidenceReconciliation.test-utils.js";
+import { everyDispositionPackageJson, feature, nightly, stepAccountingCi } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 
@@ -35,21 +35,6 @@ jobs:
 const unitRunner = {
   scripts: { test: "vitest run" },
   specController: { runners: { unit: "vitest" } },
-} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
-
-const everyDisposition = {
-  scripts: {
-    test: "vitest run",
-    build: "tsc -b",
-    typecheck: "tsc --noEmit",
-    "lint:sweep": "madge --circular",
-    "lint:circular": "madge --circular",
-    "lint:depth": "depcruise src",
-  },
-  specController: {
-    runners: { unit: "vitest" },
-    notChecks: ["ci.yml:ci:Checkout", "ci.yml:ci:Install", "ci.yml:ci:Build"],
-  },
 } as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
 
 function reconcile(
@@ -88,7 +73,7 @@ describe("[SCN-RMD-024] the step accounting names the steps behind its runners a
   });
 
   it("holds, in each list, as many steps as the total counts for it, over two workflows and three jobs", () => {
-    const accounting = reconcile(everyDisposition, [stepAccountingCi, nightly], ["ci.yml", "nightly.yml"]).summary
+    const accounting = reconcile(everyDispositionPackageJson, [stepAccountingCi, nightly], ["ci.yml", "nightly.yml"]).summary
       .stepAccounting!;
     const { runners, reconciler, excluded, plumbing } = accounting.total;
     expect({ runners, reconciler, excluded, plumbing }).toStrictEqual({

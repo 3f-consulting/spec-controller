@@ -1,22 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readdirSync, realpathSync, symlinkSync } from "node:fs";
+import { readdirSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
-import { git, writeInto, commitAll, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
-import { allocateFrom } from "./answered.test-utils.js";
+import { git, writeInto, commitAll, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
+import { allocateFrom, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
-import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-
-function resolvedTemporaryDirectory(): string {
-  return realpathSync(temporaryDirectory("allocate-unreadable-history-"));
-}
 
 function scenarioBlock(code: string): string {
   return `  @${code} @unit\n  Scenario: scenario ${code}\n    Given a step\n`;
 }
 
 function repositoryWithADeletedCode(): string {
-  const repo = resolvedTemporaryDirectory();
+  const repo = freshDirectory("allocate-unreadable-history-");
   git(repo, ["init", "-q", "-b", "main"]);
   const path = "features/one.feature";
   writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("SCN-ONE-001")}\n${scenarioBlock("SCN-ONE-005")}`);
@@ -40,13 +35,7 @@ afterEach(() => {
 });
 
 function historyRefusalReason(answered: Answered, path: string): string {
-  expect(answered.stdout).toBe("");
-  expect(answered.exitCode).toBe(2);
-  const opening = `spec-controller allocate: usage error — the repository's history could not be read: ${path} (`;
-  expect(answered.stderr.startsWith(opening)).toBe(true);
-  expect(answered.stderr.endsWith(")\n")).toBe(true);
-  expect(answered.stderr.split("\n")).toHaveLength(2);
-  return answered.stderr.slice(opening.length, -2);
+  return refusalReason(answered, "the repository's history", path);
 }
 
 const NOT_PERMITTED = /^(EACCES|EPERM): /;

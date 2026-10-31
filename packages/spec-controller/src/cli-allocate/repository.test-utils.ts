@@ -13,16 +13,6 @@ export function git(cwd: string, args: readonly string[]): string {
   return result.stdout;
 }
 
-export function gitInRepository(repo: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
-}
-
 export function runGit(repo: string, args: readonly string[]): void {
   const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
     cwd: repo,
@@ -32,7 +22,7 @@ export function runGit(repo: string, args: readonly string[]): void {
   if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
 }
 
-export function writeInto(root: string, path: string, content: string): void {
+export function writeInto(root: string, path: string, content: string | Buffer): void {
   mkdirSync(dirname(join(root, path)), { recursive: true });
   writeFileSync(join(root, path), content);
 }
@@ -46,6 +36,17 @@ export function commitAllReturningHash(repo: string, message: string): string {
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", message]);
   return git(repo, ["log", "-1", "--format=%h"]).trim();
+}
+
+export const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
+
+export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<Record<string, string>> = {}): string {
+  const repo = freshDirectory(prefix);
+  git(repo, ["init", "-q", "-b", "main"]);
+  writeInto(repo, "features/one.feature", HEADED_ONE_CARRYING_003);
+  for (const [path, content] of Object.entries(files)) writeInto(repo, path, content);
+  commitAll(repo, "the corpus");
+  return repo;
 }
 
 export function lines(...texts: string[]): string {

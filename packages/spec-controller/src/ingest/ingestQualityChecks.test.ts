@@ -6,15 +6,15 @@ import { runReconcile } from "./corpusReading.test-utils.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-function unconfiguredTarget(tag: string): string {
+function unconfiguredTarget(tag: string, layer = "unit"): string {
   const root = temporaryDirectory(`scn-pnd-019-${process.pid}-`);
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
   mkdirSync(join(root, "features"));
   writeFileSync(
     join(root, "features", "deferral.feature"),
     "@DFR\nFeature: deferral\n\n" +
-      `  @${tag} @unit @SCN-DFR-001\n  Scenario: the deferred scenario\n    Given a thing\n\n` +
-      "  @unit @SCN-DFR-002\n  Scenario: its untagged twin\n    Given a thing\n"
+      `  @${tag} @${layer} @SCN-DFR-001\n  Scenario: the deferred scenario\n    Given a thing\n\n` +
+      `  @${layer} @SCN-DFR-002\n  Scenario: its untagged twin\n    Given a thing\n`
   );
   return root;
 }
@@ -76,15 +76,7 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
 });
 
 function cucumberReportingTarget(tag: string): string {
-  const root = temporaryDirectory(`scn-pnd-019-${process.pid}-`);
-  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
-  mkdirSync(join(root, "features"));
-  writeFileSync(
-    join(root, "features", "deferral.feature"),
-    "@DFR\nFeature: deferral\n\n" +
-      `  @${tag} @integration @SCN-DFR-001\n  Scenario: the deferred scenario\n    Given a thing\n\n` +
-      "  @integration @SCN-DFR-002\n  Scenario: its untagged twin\n    Given a thing\n"
-  );
+  const root = unconfiguredTarget(tag, "integration");
   const step = (line: number, status: string) => ({
     arguments: [],
     keyword: "Given ",

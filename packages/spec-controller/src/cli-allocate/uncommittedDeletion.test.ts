@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync, realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, lines } from "./repository.test-utils.js";
-import { allocateInGuarded as allocateIn } from "./answered.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {

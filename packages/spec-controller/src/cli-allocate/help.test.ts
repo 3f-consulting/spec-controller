@@ -8,6 +8,7 @@ import {
   type PositionalSpec,
 } from "../cli-registry.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { withAllocatePositional } from "./registry.test-utils.js";
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
   let help: string;
@@ -29,15 +30,6 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new",
     expect(help).toMatch(/^ {2}--new\s+Start a part/m);
     expect(help).toMatch(/^ {2}--help, -h\s+Show this help and exit\.$/m);
   });
-
-  function withAllocatePositional(positional: PositionalSpec): CliRegistry {
-    return {
-      ...cliRegistry,
-      commands: cliRegistry.commands.map((command) =>
-        command.name === "allocate" ? { ...command, positionals: [...(command.positionals ?? []), positional] } : command,
-      ),
-    };
-  }
 
   function argumentsBlockOf(registry: CliRegistry, positionals: readonly PositionalSpec[]): string[] {
     const lines = renderCommandHelp(registry.commands.find((c) => c.name === "allocate") as CommandSpec).split("\n");

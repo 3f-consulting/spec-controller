@@ -2,11 +2,12 @@ import { EventEmitter } from "node:events";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { installCrashGuards } from "./crashGuards.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, forgetWhatTheProgramWrote } from "./programOutput.test-utils.js";
 
 interface ReRendered {
   threw: unknown;
@@ -31,26 +32,11 @@ function fixtureArgv(fixture: string): string[] {
 }
 
 let scratch: string;
-let stdout: string[];
-let stderr: string[];
+
+recordWhatTheProgramWrites();
 
 beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-rerender-after-verdict-");
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
 });
 
 // The saved report is the product's own: a live balance run writing its JSON report.
@@ -59,8 +45,7 @@ function savedReport(fixture: string): { json: string; liveCode: typeof process.
   main(["balance", ...fixtureArgv(fixture), "--format", `json:${json}`]);
   const liveCode = process.exitCode;
   process.exitCode = undefined;
-  stdout.length = 0;
-  stderr.length = 0;
+  forgetWhatTheProgramWrote();
   return { json, liveCode };
 }
 
@@ -82,9 +67,9 @@ function reRender(json: string, flags: string[], stdoutFails: boolean): ReRender
   } catch (err) {
     threw = err;
   }
-  const written = stdout.join("");
+  const written = whatTheProgramWrote().stdout;
   if (stdoutFails) guardedStdout.emit("error", closedPipe());
-  return { threw, stdout: written, stderr: stderr.join(""), exitCode: process.exitCode };
+  return { threw, stdout: written, stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
 }
 
 function afterVerdictLine(): string {

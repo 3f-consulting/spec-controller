@@ -35,6 +35,19 @@ const sharedCodeCorpus = [
   "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: first\n    Given a thing\n\n  @unit @SCN-ONE-001\n  Scenario: second\n    Given a thing\n\n  @unit\n  Scenario: carries no code\n    Given a thing\n",
 ];
 
+const sharedCodeCorpusFacts = {
+  untaggedScenarios: [{ feature: "one.feature", scenario: "carries no code" }],
+  sharedScnCodes: [
+    {
+      scnId: "SCN-ONE-001",
+      scenarios: [
+        { feature: "one.feature", scenario: "first" },
+        { feature: "one.feature", scenario: "second" },
+      ],
+    },
+  ],
+};
+
 describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under scenarioCodes", () => {
   it("states the feature files and codes, the excluded occurrences, the untagged scenarios and the shared codes in one object", () => {
     const report = reportOver(
@@ -66,16 +79,7 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sce
       featureFiles: 2,
       featureCodes: 1,
       excludedOccurrences: 1,
-      untaggedScenarios: [{ feature: "one.feature", scenario: "carries no code" }],
-      sharedScnCodes: [
-        {
-          scnId: "SCN-ONE-001",
-          scenarios: [
-            { feature: "one.feature", scenario: "first" },
-            { feature: "one.feature", scenario: "second" },
-          ],
-        },
-      ],
+      ...sharedCodeCorpusFacts,
     });
   });
 
@@ -105,16 +109,7 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sce
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: false, census: true });
     expect(report.scenarioCodes).toStrictEqual({
       excludedOccurrences: 0,
-      untaggedScenarios: [{ feature: "one.feature", scenario: "carries no code" }],
-      sharedScnCodes: [
-        {
-          scnId: "SCN-ONE-001",
-          scenarios: [
-            { feature: "one.feature", scenario: "first" },
-            { feature: "one.feature", scenario: "second" },
-          ],
-        },
-      ],
+      ...sharedCodeCorpusFacts,
     });
   });
 

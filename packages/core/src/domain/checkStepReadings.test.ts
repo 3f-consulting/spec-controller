@@ -1,18 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf, type EvidenceReconciliation } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
-import type { Scenario } from "./journal.js";
 import { brokenItemsOf, hasBrokenEvidence } from "./ledger.js";
 import { readingsOf } from "./qualityCheckReconciliation.test-utils.js";
 import { linesOf } from "./claimReconciliation.js";
-
-const scenarios: Scenario[] = [
-  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-CVT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-CVT-003", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-CVT-004", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-CVT-005", evidenceObligations: [{ qualityCheck: "fitness" }] },
-];
+import { FITNESS_SCENARIOS } from "./checkStep.test-utils.js";
 
 const recorded: RecordedCheckStep[] = [
   { citedScn: "SCN-CVT-001", report: "succeeded", said: "success" },
@@ -23,7 +15,7 @@ const recorded: RecordedCheckStep[] = [
 ];
 
 function reconcile() {
-  return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
+  return evidenceReconciliationOf(FITNESS_SCENARIOS, fitnessObservationsOf([], recorded), []);
 }
 
 function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, unknown[]][] {

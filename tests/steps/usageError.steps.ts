@@ -267,6 +267,18 @@ Given("a target that reconciles out-of-balance, and an empty run store", functio
   ];
 });
 
+function spawnBesideStore(world: SpecControllerWorld, argv: string[]): SpawnSyncReturns<string> {
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.storeParent, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return result;
+}
+
+function runBesideStore(world: SpecControllerWorld, argv: string[]): void {
+  const result = spawnBesideStore(world, argv);
+  world.hostResult = result;
+  world.balanceResult = result;
+}
+
 const MISSING_MODIFIER_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
   "the store modifier alone": () => ["--store"],
   "the store modifier followed by the run-name modifier": (_store, target) => ["--store", "--run-id", "r1", "balance", ...target],
@@ -278,13 +290,7 @@ const MISSING_MODIFIER_VALUE: Record<string, (store: string, target: string[]) =
 When(/^a stored balance run is asked for with (.+) given no value, (.+)$/, function (this: SpecControllerWorld, modifier: string, shape: string) {
   const argvOf = MISSING_MODIFIER_VALUE[`${modifier} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(this.storeRoot, this.invocationArgs)], {
-    cwd: this.storeParent,
-    encoding: "utf8",
-  });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argvOf(this.storeRoot, this.invocationArgs));
 });
 
 Then("nothing is written to the run store or the working directory", function (this: SpecControllerWorld) {
@@ -304,10 +310,7 @@ When("a stored run is asked for with {}", function (this: SpecControllerWorld, r
   assert.ok(known !== undefined, `no row named "${row}"`);
   this.flagOutOfPlace = known.before[0] ?? "";
   const argv = ["--store", this.storeRoot, ...known.before, known.command, ...this.invocationArgs];
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argv);
 });
 
 Then("the refusal names the flag as given before the command, never as an unknown command", function (this: SpecControllerWorld) {
@@ -321,10 +324,7 @@ Then("the refusal names the flag as given before the command, never as an unknow
 
 When("balance is asked to run with the store modifier given after the command", function (this: SpecControllerWorld) {
   const argv = ["balance", ...this.invocationArgs, "--store", this.storeRoot];
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argv);
 });
 
 Then("the refusal names the store modifier as one that goes before the command", function (this: SpecControllerWorld) {
@@ -363,10 +363,7 @@ When("balance is asked to run with an argument that is no flag, {}", function (t
   assert.ok(rowOf !== undefined, `no row named "${shape}"`);
   const { argv, token } = rowOf(this.storeRoot, this.invocationArgs);
   this.argumentNamed = token;
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argv);
 });
 
 Then("the refusal names that argument as one balance does not take", function (this: SpecControllerWorld) {
@@ -403,10 +400,7 @@ When(/^balance is asked to run with (.+) given the value (\S+), (.+)$/, function
   const argvOf = VALUE_TO_A_FLAG_THAT_TAKES_NONE[shape];
   assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
   const argv = argvOf(this.storeRoot, this.invocationArgs, [flag, value]);
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argv);
 });
 
 Then(
@@ -468,13 +462,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[], world: SpecC
 When(/^a run is asked for with (.+?) given twice, (.+)$/, function (this: SpecControllerWorld, option: string, shape: string) {
   const argvOf = GIVEN_TWICE[`${option} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${option} ${shape}`);
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(this.storeRoot, this.invocationArgs, this)], {
-    cwd: this.storeParent,
-    encoding: "utf8",
-  });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argvOf(this.storeRoot, this.invocationArgs, this));
 });
 
 Then(/^the refusal names (.+) as given more than once$/, function (this: SpecControllerWorld, option: string) {
@@ -529,10 +517,7 @@ When(/^a run is asked for with (.+? joined by an equals sign), (.+)$/, function 
   const argvOf = EQUALS_FORM[shape];
   assert.ok(argvOf !== undefined, `no shape named "${shape}"`);
   const argv = argvOf(this.storeRoot, this.invocationArgs, withStoreRoot(this, written));
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argv);
 });
 
 Then(/^the refusal names (.+? joined by an equals sign) as a form that is not read, and (.+) as the spelling that is$/, function (this: SpecControllerWorld, writtenIntent: string, spellingIntent: string) {
@@ -566,13 +551,7 @@ const COMMAND_AS_VALUE: Record<string, (store: string, target: string[]) => stri
 When(/^a stored run is asked for, with the command given as the value of (.+? modifier), (.+)$/, function (this: SpecControllerWorld, modifier: string, shape: string) {
   const argvOf = COMMAND_AS_VALUE[`${modifier} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifier} ${shape}`);
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(this.storeRoot, this.invocationArgs)], {
-    cwd: this.storeParent,
-    encoding: "utf8",
-  });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argvOf(this.storeRoot, this.invocationArgs));
 });
 
 Then(/^the refusal names (.+) as having taken the command as its value$/, function (this: SpecControllerWorld, intent: string) {
@@ -597,13 +576,7 @@ When(/^the host is asked for nothing but (.+?), (.+)$/, function (this: SpecCont
   const argvOf = MODIFIERS_WITH_NO_COMMAND[`${modifiers} ${shape}`];
   assert.ok(argvOf !== undefined, `no row for ${modifiers} ${shape}`);
   this.modifiersGiven = modifiers.split(" and ").map(optionFlag);
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argvOf(this.storeRoot)], {
-    cwd: this.storeParent,
-    encoding: "utf8",
-  });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argvOf(this.storeRoot));
 });
 
 Then("the refusal names every modifier given, and says no command followed them", function (this: SpecControllerWorld) {
@@ -628,11 +601,6 @@ const HELP_REQUESTS: Record<string, (store: string) => string[]> = {
   "help by its short name after the run-name modifier, given a command as its value": () => ["--run-id", "balance", "-h"],
 };
 
-function spawnBesideStore(world: SpecControllerWorld, argv: string[]): SpawnSyncReturns<string> {
-  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.storeParent, encoding: "utf8" });
-  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
-  return result;
-}
 
 When("spec-controller is asked for {}", function (this: SpecControllerWorld, request: string) {
   const argvOf = HELP_REQUESTS[request];
@@ -719,9 +687,7 @@ function savedReportOf(world: SpecControllerWorld, target: string[]): string {
 When("a run is named with the run-name modifier and given no store modifier, {}", function (this: SpecControllerWorld, shape: string) {
   const argvOf = RUN_ID_WITHOUT_STORE[shape];
   assert.ok(argvOf !== undefined, `no row for ${shape}`);
-  const result = spawnBesideStore(this, argvOf(this.invocationArgs, this));
-  this.hostResult = result;
-  this.balanceResult = result;
+  runBesideStore(this, argvOf(this.invocationArgs, this));
 });
 
 Then("the refusal names the run-name modifier as naming a run that is not kept", function (this: SpecControllerWorld) {

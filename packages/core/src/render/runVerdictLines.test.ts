@@ -4,11 +4,12 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
+import type { EvidenceObservation, Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { passed, pendingScenario, scenario } from "../domain/runVerdict.test-utils.js";
 
 const ctx: RunContext = {
   target: "run-verdict-target",
@@ -43,12 +44,6 @@ const evidenceReconciliation = (ledger: Ledger): EvidenceReconciliation => ({
   ledger,
 });
 
-const scenario: Scenario = { scnId: "SCN-VRD-001", evidenceObligations: [{ qualityCheck: "unit" }] };
-const pendingScenario: Scenario = {
-  scnId: "SCN-VRD-001",
-  evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-};
-const passed: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-VRD-001", status: "passed" };
 
 let BALANCED_LINE: string;
 beforeEach(() => {

@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { isCandidateStep, isExcludedFromDiscovery, runsADeclaredRunner, type ShellReading } from "./uncitedFitnessFunctions.js";
 import type { PipelineStep } from "./pipelineStep.js";
-import { runsAsCommand } from "./shellReading.test-utils.js";
+import { candidatesAmong, IN_THE_CI_JOB as IN_CI_YML } from "./candidateStep.test-utils.js";
 
-const IN_CI_YML = { workflow: "ci.yml", job: "ci", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 const IN_NIGHTLY_YML = { workflow: "nightly.yml", job: "nightly", abortsJob: true, writesStepRecord: false, plumbing: false } as const;
 
 const run = (workflow: typeof IN_CI_YML | typeof IN_NIGHTLY_YML, script: string): PipelineStep => ({
@@ -15,16 +13,7 @@ const run = (workflow: typeof IN_CI_YML | typeof IN_NIGHTLY_YML, script: string)
 const SCRIPTS = { "lint:sweep": "echo sweep", test: "vitest run" };
 const RUNNERS = { unit: "vitest" };
 
-const SHELL: ShellReading = { runsAsCommand };
-
-const candidates = (pipeline: readonly PipelineStep[]): string[] =>
-  pipeline.filter((step) =>
-    isCandidateStep(
-      step,
-      (s) => isExcludedFromDiscovery(s, { isReconciler: () => false }, { isExcluded: () => false }),
-      (s) => runsADeclaredRunner(s, SCRIPTS, RUNNERS, SHELL)
-    )
-  ).map((step) => step.identity);
+const candidates = (pipeline: readonly PipelineStep[]): string[] => candidatesAmong(pipeline, SCRIPTS, RUNNERS);
 
 describe("[SCN-USG-007] an uncited check running in a sibling workflow is a candidate fitness function", () => {
   it("keeps a check run by the first workflow among the candidates", () => {

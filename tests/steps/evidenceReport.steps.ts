@@ -62,6 +62,25 @@ interface ScenarioRow {
   }>;
 }
 
+function reconcileWithTheReports(this: SpecControllerWorld): void {
+  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
+    encoding: "utf8",
+  });
+  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
+}
+
+function satisfiedUnitReconciliationOf(world: SpecControllerWorld, claim: string): ScenarioRow["qualityCheckReconciliations"][number] | undefined {
+  let rows: ScenarioRow[];
+  try {
+    rows = (JSON.parse(world.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
+  } catch {
+    assert.fail(`expected the reconciliation as JSON; got exit ${world.balanceResult.status}\nstdout:\n${world.balanceResult.stdout}\nstderr:\n${world.balanceResult.stderr}`);
+  }
+  const unit = rows.find((row) => row.claim === claim)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${claim}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  return unit;
+}
+
 Given("a target whose unit tests are a Go suite and whose scenario raises a unit evidence obligation", function (this: SpecControllerWorld) {
   const feature = readFileSync(`${GO_TARGET.features}/target.feature`, "utf8");
   assert.match(feature, new RegExp(`@unit @${GO_CITED}\\b`), `fixture invariant: ${GO_CITED} raises a unit obligation`);
@@ -78,22 +97,10 @@ Given("a gotestsum report in which a passing subtest cites that scenario in its 
   this.reportArgs = ["--junit", GO_TARGET.report];
 });
 
-When("balance is asked to reconcile that target with the gotestsum report", function (this: SpecControllerWorld) {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
-    encoding: "utf8",
-  });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-});
+When("balance is asked to reconcile that target with the gotestsum report", reconcileWithTheReports);
 
 Then("the scenario that Go subtest cites reconciles satisfied, by that subtest", function (this: SpecControllerWorld) {
-  let rows: ScenarioRow[];
-  try {
-    rows = (JSON.parse(this.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
-  } catch {
-    assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
-  }
-  const unit = rows.find((row) => row.claim === GO_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${GO_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = satisfiedUnitReconciliationOf(this, GO_CITED);
   assert.equal(
     unit?.evidenceObservations?.[0]?.locator,
     CITING_SUBTEST,
@@ -220,13 +227,6 @@ Given("beside the reports Surefire wrote, that directory holds a report file tha
   this.reportArgs = ["--junit", reports];
 });
 
-function reconcileWithTheReports(this: SpecControllerWorld): void {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
-    encoding: "utf8",
-  });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-}
-
 When("balance is asked to reconcile that target with that Surefire report file", reconcileWithTheReports);
 
 When("balance is asked to reconcile that target with that directory of Surefire reports", reconcileWithTheReports);
@@ -234,14 +234,7 @@ When("balance is asked to reconcile that target with that directory of Surefire 
 When("balance is asked to reconcile that target with that directory of Gradle reports", reconcileWithTheReports);
 
 Then("the scenario that JUnit 5 test cites reconciles satisfied, by that test", function (this: SpecControllerWorld) {
-  let rows: ScenarioRow[];
-  try {
-    rows = (JSON.parse(this.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
-  } catch {
-    assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
-  }
-  const unit = rows.find((row) => row.claim === this.citedScenario)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${this.citedScenario}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = satisfiedUnitReconciliationOf(this, this.citedScenario);
   assert.equal(
     unit?.evidenceObservations?.[0]?.locator,
     this.citingLocator,
@@ -299,22 +292,10 @@ Given("a Jest report in which a passing test cites that scenario in its title", 
   this.reportArgs = ["--jest", JEST_TARGET.report];
 });
 
-When("balance is asked to reconcile that target with the Jest report", function (this: SpecControllerWorld) {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
-    encoding: "utf8",
-  });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-});
+When("balance is asked to reconcile that target with the Jest report", reconcileWithTheReports);
 
 Then("the scenario that Jest test cites reconciles satisfied, by that test", function (this: SpecControllerWorld) {
-  let rows: ScenarioRow[];
-  try {
-    rows = (JSON.parse(this.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
-  } catch {
-    assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
-  }
-  const unit = rows.find((row) => row.claim === JEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${JEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = satisfiedUnitReconciliationOf(this, JEST_CITED);
   assert.equal(
     unit?.evidenceObservations?.[0]?.testName,
     JEST_CITING_TEST,
@@ -348,22 +329,10 @@ Given("a pytest report in which a passing test cites that scenario", function (t
   this.reportArgs = ["--pytest", PYTEST_TARGET.report];
 });
 
-When("balance is asked to reconcile that target with the pytest report", function (this: SpecControllerWorld) {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
-    encoding: "utf8",
-  });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-});
+When("balance is asked to reconcile that target with the pytest report", reconcileWithTheReports);
 
 Then("the scenario reconciles satisfied", function (this: SpecControllerWorld) {
-  let rows: ScenarioRow[];
-  try {
-    rows = (JSON.parse(this.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
-  } catch {
-    assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
-  }
-  const unit = rows.find((row) => row.claim === PYTEST_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${PYTEST_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = satisfiedUnitReconciliationOf(this, PYTEST_CITED);
   assert.match(
     unit?.evidenceObservations?.[0]?.locator ?? "",
     new RegExp(PYTEST_CITING_TEST),
@@ -404,22 +373,10 @@ Given("an RSpec report in which a passing example cites that scenario in its des
   this.reportArgs = ["--rspec", RSPEC_TARGET.report];
 });
 
-When("balance is asked to reconcile that target with the RSpec report", function (this: SpecControllerWorld) {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.targetArgs, ...this.reportArgs, "--format", "json"], {
-    encoding: "utf8",
-  });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-});
+When("balance is asked to reconcile that target with the RSpec report", reconcileWithTheReports);
 
 Then("the scenario that RSpec example cites reconciles satisfied, by that example", function (this: SpecControllerWorld) {
-  let rows: ScenarioRow[];
-  try {
-    rows = (JSON.parse(this.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
-  } catch {
-    assert.fail(`expected the reconciliation as JSON; got exit ${this.balanceResult.status}\nstdout:\n${this.balanceResult.stdout}\nstderr:\n${this.balanceResult.stderr}`);
-  }
-  const unit = rows.find((row) => row.claim === RSPEC_CITED)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
-  assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${RSPEC_CITED}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
+  const unit = satisfiedUnitReconciliationOf(this, RSPEC_CITED);
   assert.equal(
     unit?.evidenceObservations?.[0]?.testName,
     `An RSpec fixture suite ${CITING_EXAMPLE}`,

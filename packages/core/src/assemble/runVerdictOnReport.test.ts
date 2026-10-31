@@ -6,11 +6,12 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import type { RenderInput } from "../domain/renderInput.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
-import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
+import type { EvidenceObservation, Ledger } from "../model.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 import { sectionCtx as ctx } from "../render/runContext.test-utils.js";
+import { passed, pendingScenario, scenario } from "../domain/runVerdict.test-utils.js";
 
 const strictCtx: RunContext = { ...ctx, strict: true };
 
@@ -23,12 +24,6 @@ const HEADLINE: Readonly<Record<RunVerdict, CoreMessage>> = {
   "scenario-code-errors": CoreMessage.ScenarioCodeErrorsHeadline,
 };
 
-const scenario: Scenario = { scnId: "SCN-VRD-001", evidenceObligations: [{ qualityCheck: "unit" }] };
-const pendingScenario: Scenario = {
-  scnId: "SCN-VRD-001",
-  evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
-};
-const passed: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-VRD-001", status: "passed" };
 const broken: EvidenceObservation = {
   qualityCheck: "unit",
   scnId: null,

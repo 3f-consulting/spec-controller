@@ -122,6 +122,19 @@ function lineWithObservationFlipped(outcome: Outcome, profile: OutcomeSides): Fi
   return { outcome, ...obligationSide(profile.obligation), evidenceObservations: [observationLine(answering, true)] };
 }
 
+function expectUnconstructibleBesideAnObservationThatRan(outcome: Outcome): void {
+  const profile = OUTCOME_SIDE_PROFILE[outcome];
+  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+
+  expect(() =>
+    makeQualityCheckReconciliation({
+      outcome,
+      ...obligationSide(profile.obligation),
+      evidenceObservations: [observationLine(answering, true)],
+    })
+  ).toThrow(QualityCheckReconciliationFault);
+}
+
 function sidesOf(line: ReconciliationLine): [Outcome, SidePresence, SidePresence] {
   return [
     line.outcome,
@@ -189,31 +202,13 @@ describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's de
     });
 
     it(`${outcome}: a reconciliation carrying an observation line's outcome as its own is unconstructible beside an observation that ran`, () => {
-      const profile = OUTCOME_SIDE_PROFILE[outcome];
-      const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
-
-      expect(() =>
-        makeQualityCheckReconciliation({
-          outcome,
-          ...obligationSide(profile.obligation),
-          evidenceObservations: [observationLine(answering, true)],
-        })
-      ).toThrow(QualityCheckReconciliationFault);
+      expectUnconstructibleBesideAnObservationThatRan(outcome);
     });
   }
 
   for (const outcome of OBLIGATION_LINE_OUTCOMES) {
     it(`${outcome}: a reconciliation carrying it as its own outcome is unconstructible beside an observation that ran`, () => {
-      const profile = OUTCOME_SIDE_PROFILE[outcome];
-      const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
-
-      expect(() =>
-        makeQualityCheckReconciliation({
-          outcome,
-          ...obligationSide(profile.obligation),
-          evidenceObservations: [observationLine(answering, true)],
-        })
-      ).toThrow(QualityCheckReconciliationFault);
+      expectUnconstructibleBesideAnObservationThatRan(outcome);
     });
   }
 

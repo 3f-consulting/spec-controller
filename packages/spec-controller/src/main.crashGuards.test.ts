@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import * as guards from "./crashGuards.js";
-import { closedPipe, FIRST_LINE, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
+import { ARRIVALS, closedPipe, NO_VERDICT_LINE, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
@@ -28,14 +28,6 @@ function guarded(verdict?: number): Guarded {
   if (verdict !== undefined) guards.markRunFinished();
   return { proc, stdout, stderr };
 }
-
-const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
-
-const ARRIVALS = [
-  { arrival: "an 'error' event on stdout", raise: (g: Guarded): boolean => g.stdout.emit("error", closedPipe()) },
-  { arrival: "an uncaught exception", raise: (g: Guarded): boolean => g.proc.emit("uncaughtException", closedPipe(), "uncaughtException") },
-  { arrival: "an unhandled rejection", raise: (g: Guarded): boolean => g.proc.emit("unhandledRejection", closedPipe(), Promise.resolve()) },
-];
 
 const ON_STDERR = { arrival: "an 'error' event on stderr", raise: (g: Guarded): boolean => g.stderr.emit("error", closedPipe()) };
 

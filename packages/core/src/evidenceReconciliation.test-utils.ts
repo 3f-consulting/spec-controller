@@ -5,6 +5,10 @@ import type { Ledger } from "./model.js";
 import { parsedFeatures } from "./parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "./parse/parsedWorkflows.test-utils.js";
 
+const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
+export const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
+  row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
+
 export const __er = (ledger: Ledger, withEvidenceObservations = false): EvidenceReconciliation => ({
   summary: summaryOf(ledger, withEvidenceObservations),
   ledger,
@@ -142,6 +146,21 @@ export const discoveryScopePackageJson = {
 
 export const reconcilerPackageJson = {
   scripts: { "lint:sweep": "madge --circular" },
+} as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
+
+export const everyDispositionPackageJson = {
+  scripts: {
+    test: "vitest run",
+    build: "tsc -b",
+    typecheck: "tsc --noEmit",
+    "lint:sweep": "madge --circular",
+    "lint:circular": "madge --circular",
+    "lint:depth": "depcruise src",
+  },
+  specController: {
+    runners: { unit: "vitest" },
+    notChecks: ["ci.yml:ci:Checkout", "ci.yml:ci:Install", "ci.yml:ci:Build"],
+  },
 } as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
 
 const stepAccountingPackageJson = {

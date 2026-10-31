@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "../programOutput.test-utils.js";
 
 const TARGET = "reads-its-own";
 const RUN_ID = "r1";
@@ -21,23 +22,15 @@ let scratch: string;
 let storeRoot: string;
 let runDir: string;
 let runYaml: string;
-let stderr: string[];
 
 beforeEach(() => {
   scratch = temporaryDirectory("spec-controller-kept-input-");
   storeRoot = join(scratch, "store");
   runDir = join(storeRoot, TARGET, RUN_ID);
   runYaml = join(runDir, "run.yaml");
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+recordWhatTheProgramWrites();
 
 describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one of the files it reads, before the command runs", () => {
   it("refuses, naming the file and the input it is, and leaves the input as it was", () => {
@@ -48,7 +41,7 @@ describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one o
     expect(usageStatusOf(() => executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID, inputs: [{ subject: "the --ci workflow", path: runYaml }] }, meta, route))).toBe(2);
 
     expect(route).not.toHaveBeenCalled();
-    const refusal = stderr.join("");
+    const refusal = whatTheProgramWrote().stderr;
     expect(refusal).toContain(runYaml);
     expect(refusal).toContain("the --ci workflow");
     expect(refusal.trimEnd().split("\n")).toHaveLength(1);

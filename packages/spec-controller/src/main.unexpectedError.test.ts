@@ -1,9 +1,10 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { main } from "./main.js";
 import { refuse } from "./outputLocation.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
 interface Answered {
   threw: unknown;
@@ -29,20 +30,7 @@ function closedPipe(): Error {
   return Object.assign(new Error(`${FIRST_LINE}\n${SECOND_LINE}`), { code: "EPIPE", errno: -32, syscall: "write" });
 }
 
-let stderr: string[];
-
-beforeEach(() => {
-  stderr = [];
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 function answer(argv: string[], onStdout: (chunk: string | Uint8Array) => boolean): Answered {
   vi.spyOn(process.stdout, "write").mockImplementation(onStdout);
@@ -52,7 +40,7 @@ function answer(argv: string[], onStdout: (chunk: string | Uint8Array) => boolea
   } catch (err) {
     threw = err;
   }
-  return { threw, stderr: stderr.join(""), exitCode: process.exitCode };
+  return { threw, stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
 }
 
 const onAClosedPipe = (): never => {

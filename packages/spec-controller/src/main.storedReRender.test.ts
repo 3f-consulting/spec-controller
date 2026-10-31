@@ -1,18 +1,16 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
 import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cli-registry.js";
 import { answerUnknownCommand } from "./host.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
 
-interface Answered {
-  stdout: string;
-  stderr: string;
-  exitCode: typeof process.exitCode;
+interface Answered extends Written {
   storeMade: boolean;
 }
 
@@ -38,26 +36,7 @@ beforeEach(() => {
   if (!existsSync(savedReport)) throw new Error("the out-of-balance target saved no report to re-render");
 });
 
-let stdout: string[];
-let stderr: string[];
-
-beforeEach(() => {
-  stdout = [];
-  stderr = [];
-  vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stdout.push(String(chunk));
-    return true;
-  });
-  vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  process.exitCode = undefined;
-});
+recordWhatTheProgramWrites();
 
 function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answered {
   const cwd = temporaryDirectory("main-stored-re-render-");
@@ -65,9 +44,7 @@ function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answere
   const storeRoot = join(cwd, "store");
   main(argvAt(storeRoot));
   return {
-    stdout: stdout.join(""),
-    stderr: stderr.join(""),
-    exitCode: process.exitCode,
+    ...whatTheProgramWrote(),
     storeMade: existsSync(storeRoot),
   };
 }

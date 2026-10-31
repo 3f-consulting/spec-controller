@@ -1,10 +1,11 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { parse } from "yaml";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
 import { FORMAT_FLAG } from "./support/reportFormat.js";
@@ -175,17 +176,6 @@ function specControllerInTarget(world: SpecControllerWorld, argv: readonly strin
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.storedRunTargetDir, encoding: "utf8" });
   assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
-}
-
-function entriesUnder(dir: string): Map<string, string> {
-  const entries = new Map<string, string>();
-  for (const entry of readdirSync(dir, { recursive: true })) {
-    const path = join(dir, String(entry));
-    const kind = lstatSync(path);
-    if (kind.isSymbolicLink()) entries.set(path, `-> ${readlinkSync(path)}`);
-    else if (kind.isFile()) entries.set(path, readFileSync(path, "latin1"));
-  }
-  return entries;
 }
 
 function targetArgs(overrides: Readonly<Record<string, string>>): string[] {
