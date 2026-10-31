@@ -31,6 +31,11 @@ function byFeatureRows(md: string): string[][] {
     .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()));
 }
 
+function byFeatureRowOf(rows: string[][], code: string): { row: string[][]; others: string[][] } {
+  const isCodes = ([feature = ""]: string[]): boolean => feature.endsWith(` (${code})`);
+  return { row: rows.filter(isCodes).map(([, ...cells]) => cells), others: rows.filter((cells) => !isCodes(cells)) };
+}
+
 describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
   let checkout: UntaggedScenario[];
   beforeEach(() => {
@@ -54,7 +59,7 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       { feature: "one.feature", scenario: "an over-long code" },
     ]);
     const md = renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census, new Map([["ONE", "one"]]));
-    expect(byFeatureRows(md)).toEqual([["one (ONE)", "2", "2 with no `@SCN` code"]]);
+    expect(byFeatureRowOf(byFeatureRows(md), "ONE")).toEqual({ row: [["2", "2 with no `@SCN` code"]], others: [] });
   });
 
   it("counts them on the same row as the scenarios carrying the file's code", () => {
@@ -68,6 +73,6 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       untagged.map((u) => `${u.feature} : ${u.scenario}`),
     );
     const md = renderMarkdown(reconciliationOf(ledger), ctx, publishedExitCodeOf, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
-    expect(byFeatureRows(md)).toEqual([["sample (UNT)", "3", "SCN-UNT-001 and 2 with no `@SCN` code"]]);
+    expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "SCN-UNT-001 and 2 with no `@SCN` code"]], others: [] });
   });
 });

@@ -75,11 +75,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     A behavioural count is every evidence observation of that quality check, a broken one
     included; the fitness count is every fitness function that ran. The total is the sum of the
     five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
-    quality check names the CI steps its counted evidence came from, in step order, where there
-    is at least one: a behavioural one the steps that run the runner the target declares for
-    it, and fitness the step behind each fitness function that ran, named workflow:job:step,
-    where a single step carries its code; a fitness function no single step carries is counted
-    and names no step. A behavioural quality check names the runner the target declares for it,
+    quality check names the CI steps its counted evidence came from, in step order, each named
+    workflow:job:step and each once, where there is at least one: a behavioural one the steps
+    that run the runner the target declares for it, and fitness the step behind each fitness
+    function that ran, where a single step carries its code; a fitness function no single step
+    carries is counted and names no step. A behavioural quality check names the runner the target declares for it,
     whatever its count and whatever steps were found: null where the target names none, and no
     runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
@@ -91,23 +91,24 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
     @unit @SCN-RMD-015
-    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count
+    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, each once and as workflow, job and step, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count
 
     @unit @SCN-RMD-027
     Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code
 
-  Rule: the summary states the out-of-balance view by feature, each feature named by its title
+  Rule: the summary states the out-of-balance view by feature, each feature named by its feature file
 
     The summary groups each out-of-balance scenario under its feature, in ledger order. An entry
     names its feature by the feature code, or by the feature file for a scenario with no @SCN in
-    a file that carries no code. It carries the feature's title where its file has a code, the
-    out-of-balance @SCN codes, the count of scenarios with no @SCN where there are any, and its
-    total. A phantom claim and the unnamed claim belong to
-    no feature and sit in no entry. The view is absent when no scenario is out of balance. Its
-    unit tests hold the assembled summary and the JSON the CLI writes.
+    a file that carries no code. It carries its feature file, the file's path under the corpus as
+    the rest of the report names a file, where its file has a code, the out-of-balance @SCN codes,
+    the count of scenarios with no @SCN where there are any, and its total. A phantom claim and
+    the unnamed claim belong to no feature and sit in no entry. The view is absent when no
+    scenario is out of balance. Its unit tests hold the assembled summary and the JSON the CLI
+    writes.
 
     @unit @SCN-RMD-006
-    Scenario: the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and title
+    Scenario: the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
 
@@ -117,10 +118,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     exported render-from-JSON function, and the CLI's "--render-from-json <path>" mode, which reads the
     file, prints the regenerated markdown to stdout, and exits before any reconcile, on the code
     the saved verdict names. Drift-equality is the acceptance: the markdown regenerated from the
-    saved JSON EQUALS the markdown rendered directly from the same run, the by-feature titles
-    included. Its unit tests hold the parse→render drift-equality over a corpus spanning
+    saved JSON EQUALS the markdown rendered directly from the same run, the by-feature feature
+    files included. Its unit tests hold the parse→render drift-equality over a corpus spanning
     the whole document (the three-way evidence observations line, the materialised summary totals, and a coded
-    out-of-balance feature, so the by-feature title path has teeth), and the CLI, run over a
+    out-of-balance feature, so the by-feature feature files have teeth), and the CLI, run over a
     fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
     from it the markdown it rendered directly, exiting the code the saved run exited.
 
@@ -178,9 +179,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: the summary's step accounting is a row per workflow and job, with the steps behind each count
 
     The summary's step accounting states every CI step the run read, and what it counted each
-    step as. It holds one row per workflow and job, ordered by workflow and then by job. Each
-    row carries the steps read, and how many of them are candidates, runners, reconciler steps,
-    excluded steps and plumbing. Its total sums each of those counts over the rows.
+    step as. It holds one row per workflow and job, ordered by workflow and then by job, each
+    compared character by character. Each row carries the steps read, and how many of them are
+    candidates, runners, reconciler steps, excluded steps and plumbing. Its total sums each of
+    those counts over the rows.
     It names each reconciler step with its role, each step the target calls a non-check, and
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
     count counts. Each list of steps follows the rows' order, and each job's steps the order
@@ -188,7 +190,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     A target with no pipeline has no step accounting.
 
     @unit @SCN-RMD-012
-    Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, in a settled order, and none for a target with no pipeline
+    Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a target with no pipeline
 
     @unit @SCN-RMD-023
     Scenario: the step accounting's total sums each count over its rows, one per workflow and job

@@ -119,8 +119,10 @@ const jobKeyOf = (step: PipelineStep): string => `${step.workflow}:${step.job}`;
 
 type WorkflowAndJob = Pick<PipelineStep, "workflow" | "job">;
 
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
-  a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job);
+  byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job);
 
 type DispositionCount = "candidates" | "runners" | "reconciler" | "excluded" | "plumbing";
 
@@ -261,6 +263,7 @@ export function runsADeclaredRunner(
 
 export function recognisedRunners(
   steps: readonly PipelineStep[],
+  nameOf: StepName,
   scripts: Scripts,
   runners: RunnerTiers,
   shell: ShellReading
@@ -270,7 +273,7 @@ export function recognisedRunners(
     runnersRunBy(step).map(([tier, runner]) => ({
       tier,
       runner,
-      step: step.identity,
+      step: nameOf(step),
     }))
   );
 }

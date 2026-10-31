@@ -225,7 +225,13 @@ function withRunnerAccount(
   { tiers: runnerTiers, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const scripts = packageJson.scripts ?? {};
-  const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(steps, scripts, runnerTiers, shellReading);
+  const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
+    steps,
+    qualifiedStepName,
+    scripts,
+    runnerTiers,
+    shellReading
+  );
   const { evidenceObservations } = reconciliation.summary;
   return {
     ...reconciliation,

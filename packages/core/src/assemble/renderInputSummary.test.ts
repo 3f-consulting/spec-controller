@@ -76,7 +76,7 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
   });
 });
 
-describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and title", () => {
+describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -105,10 +105,11 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
   const featureNames = new Map([
     ["LDG", "ledger"],
     ["LNT", "fitness-evidence"],
+    ["XYZ", "billing/checkout"],
   ]);
-  const byTitledFeature = [
-    { feature: "LDG", title: "ledger", count: 3, claims: ["SCN-LDG-003", "SCN-LDG-007"], scenariosWithNoScnCode: 1 },
-    { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
+  const byNamedFeature = [
+    { feature: "LDG", featureFile: "ledger.feature", count: 3, claims: ["SCN-LDG-003", "SCN-LDG-007"], scenariosWithNoScnCode: 1 },
+    { feature: "XYZ", featureFile: "billing/checkout.feature", count: 1, claims: ["SCN-XYZ-001"] },
     { feature: "loose.feature", count: 2, claims: [], scenariosWithNoScnCode: 2 },
   ];
   let ledger: Ledger;
@@ -118,10 +119,10 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
 
   it("groups the out-of-balance scenarios by feature in ledger order, a phantom and an unnamed claim in no group", () => {
     const report = assembleRenderInput(__er(ledger), ctx, evidenceObligations, featureNames);
-    expect(report.summary.outOfBalanceByFeature).toEqual(byTitledFeature);
+    expect(report.summary.outOfBalanceByFeature).toEqual(byNamedFeature);
   });
 
-  it("names no feature by its title and keys each scenario with no @SCN by its file when no feature titles are read", () => {
+  it("names no entry's feature file and keys each scenario with no @SCN by its file when no feature files are named", () => {
     const report = assembleRenderInput(__er(ledger), ctx, evidenceObligations);
     expect(report.summary.outOfBalanceByFeature).toEqual([
       { feature: "LDG", count: 2, claims: ["SCN-LDG-003", "SCN-LDG-007"] },
@@ -140,7 +141,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
 
   it("carries the view through the glue-free JSON serialisation", () => {
     const summary = JSON.parse(renderJson(__er(ledger), ctx, evidenceObligations, featureNames)).summary;
-    expect(summary.outOfBalanceByFeature).toEqual(byTitledFeature);
+    expect(summary.outOfBalanceByFeature).toEqual(byNamedFeature);
   });
 });
 

@@ -55,16 +55,30 @@ jobs:
         run: pnpm cucumber
 `;
 
-function tableRows(workflow: string = ci, observations: EvidenceObservation[] = behaviouralObservations): string[][] {
-  const reconciliation = evidenceReconciliationFromSources({
+function assembled(workflow: string = ci, observations: EvidenceObservation[] = behaviouralObservations): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson,
     ciWorkflows: parsedWorkflows([workflow]),
     behaviouralObservations: observations,
     deferralTags: [],
   });
+}
+
+function rowsOf(reconciliation: EvidenceReconciliation): string[][] {
   const lines = sectionUnder("### Evidence observations")(linesOf(reconciliation));
   return lines.filter((line) => line.startsWith("|")).map(cells);
+}
+
+function tableRows(workflow: string = ci, observations: EvidenceObservation[] = behaviouralObservations): string[][] {
+  return rowsOf(assembled(workflow, observations));
+}
+
+function summaryCiSteps(reconciliation: EvidenceReconciliation, qualityCheck: string): readonly string[] {
+  const entry = reconciliation.summary.evidenceObservations?.byQualityCheck.find(
+    (observed) => observed.qualityCheck === qualityCheck
+  );
+  return entry?.ciSteps ?? [];
 }
 
 function fitnessRowWith(fitness: QualityCheckObservations): string[] | undefined {
@@ -102,13 +116,18 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
   });
 
   it("names on each behavioural row with evidence observations its declared runner and every step that runs it, in step order", () => {
-    const rows = tableRows().slice(2);
-    expect(rows.find(([check]) => check === "unit")).toStrictEqual(["unit", "2", "vitest", "Unit tests, Unit tests again"]);
+    const reconciliation = assembled();
+    const rows = rowsOf(reconciliation).slice(2);
+    const unitSteps = summaryCiSteps(reconciliation, "unit");
+    const integrationSteps = summaryCiSteps(reconciliation, "integration");
+    expect(unitSteps).toHaveLength(2);
+    expect(integrationSteps).toHaveLength(1);
+    expect(rows.find(([check]) => check === "unit")).toStrictEqual(["unit", "2", "vitest", unitSteps.join(", ")]);
     expect(rows.find(([check]) => check === "integration")).toStrictEqual([
       "integration",
       "1",
       "cucumber-js",
-      "Cucumber",
+      integrationSteps.join(", "),
     ]);
   });
 
@@ -128,8 +147,11 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
   });
 
   it("names the declared runner and the step that runs it on a quality check with no evidence observations", () => {
-    const rows = tableRows().slice(2);
-    expect(rows.find(([check]) => check === "e2e")).toStrictEqual(["e2e", "0", "playwright", "E2e"]);
+    const reconciliation = assembled();
+    const rows = rowsOf(reconciliation).slice(2);
+    const e2eSteps = summaryCiSteps(reconciliation, "e2e");
+    expect(e2eSteps).toHaveLength(1);
+    expect(rows.find(([check]) => check === "e2e")).toStrictEqual(["e2e", "0", "playwright", e2eSteps.join(", ")]);
   });
 
   it("says no step read runs a declared runner that no step runs, with no evidence observations", () => {
@@ -177,16 +199,18 @@ const unescapedCells = (row: string): string[] =>
     .slice(1, -1)
     .map((cell) => cell.trim().replace(/\\\|/g, "|"));
 
-function rawTableRows(workflow: string, runners: Record<string, string>): string[] {
-  const reconciliation = evidenceReconciliationFromSources({
+function assembledWith(workflow: string, runners: Record<string, string>): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson: { scripts: packageJson.scripts, specController: { runners } },
     ciWorkflows: parsedWorkflows([workflow]),
     behaviouralObservations,
     deferralTags: [],
   });
-  return sectionUnder("### Evidence observations")(linesOf(reconciliation)).filter((line) => line.startsWith("|"));
 }
+
+const rawRowsOf = (reconciliation: EvidenceReconciliation): string[] =>
+  sectionUnder("### Evidence observations")(linesOf(reconciliation)).filter((line) => line.startsWith("|"));
 
 const pipeStepCi = `name: fixture CI
 jobs:
@@ -204,13 +228,15 @@ describe("[SCN-RPT-079] every cell of the evidence observations table holds its 
   const declared = { unit: "vitest", integration: "cucumber-js", e2e: "playwright", performance: "k6 | cloud" };
 
   it("keeps a step name holding a pipe in its CI step cell, the row keeping four cells", () => {
-    const e2e = rawTableRows(pipeStepCi, declared).find((row) => row.startsWith("| e2e "));
-    expect(e2e).toBeDefined();
-    expect(unescapedCells(e2e ?? "")).toStrictEqual(["e2e", "0", "playwright", "E2e | headless"]);
+    const reconciliation = assembledWith(pipeStepCi, declared);
+    const e2eCell = summaryCiSteps(reconciliation, "e2e").join(", ");
+    const e2e = rawRowsOf(reconciliation).find((row) => row.startsWith("| e2e "));
+    expect(e2e).toContain("E2e \\| headless");
+    expect(unescapedCells(e2e ?? "")).toStrictEqual(["e2e", "0", "playwright", e2eCell]);
   });
 
   it("keeps a declared runner holding a pipe in its runner cell, the row keeping four cells", () => {
-    const performance = rawTableRows(pipeStepCi, declared).find((row) => row.startsWith("| performance "));
+    const performance = rawRowsOf(assembledWith(pipeStepCi, declared)).find((row) => row.startsWith("| performance "));
     expect(performance).toBeDefined();
     expect(unescapedCells(performance ?? "")).toStrictEqual([
       "performance",

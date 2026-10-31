@@ -5,7 +5,7 @@ import { featureCodeOf } from "./featureCode.js";
 
 export interface FeatureOutOfBalance {
   readonly feature: string;
-  readonly title?: string;
+  readonly featureFile?: string;
   readonly count: number;
   readonly claims: readonly string[];
   readonly scenariosWithNoScnCode?: number;
@@ -16,7 +16,8 @@ export function outOfBalanceByFeature(
   untagged: readonly UntaggedScenario[],
   featureNames: Readonly<Record<string, string>>,
 ): FeatureOutOfBalance[] {
-  const codeOfFile = new Map(Object.entries(featureNames).map(([code, slug]) => [`${slug}.feature`, code]));
+  const fileOfCode = new Map(Object.entries(featureNames).map(([code, slug]) => [code, `${slug}.feature`]));
+  const codeOfFile = new Map([...fileOfCode].map(([code, file]) => [file, code]));
   const featureOf = new Map(untagged.map((u) => [untaggedScenarioId(u), codeOfFile.get(u.feature) ?? u.feature]));
   const groups = new Map<string, { claims: string[]; noScnCode: number }>();
   for (const s of rows) {
@@ -29,10 +30,10 @@ export function outOfBalanceByFeature(
     groups.set(key, group);
   }
   return [...groups].map(([feature, { claims, noScnCode }]) => {
-    const title = featureNames[feature];
+    const featureFile = fileOfCode.get(feature);
     return {
       feature,
-      ...(title ? { title } : {}),
+      ...(featureFile ? { featureFile } : {}),
       count: claims.length + noScnCode,
       claims,
       ...(noScnCode > 0 ? { scenariosWithNoScnCode: noScnCode } : {}),

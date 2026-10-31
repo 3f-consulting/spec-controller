@@ -4,25 +4,27 @@ import { join } from "node:path";
 import { runBalanceCaptured } from "../../test-support/runBalance.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and title", () => {
-  it("names each coded feature by its code and slug, the coded scenario in a file with no code by its code alone, and that file's scenario with no @SCN by the file", () => {
+describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
+  it("names each coded feature by its code and its file's path under the corpus, the coded scenario in a file with no code by its code alone, and that file's scenario with no @SCN by the file", () => {
     const dir = temporaryDirectory("scn-rmd-006-unit-");
-    mkdirSync(join(dir, "features"));
+    mkdirSync(join(dir, "features", "billing"), { recursive: true });
     writeFileSync(
       join(dir, "features", "config-vocabulary-lint.feature"),
       "@CVL\nFeature: config vocabulary lint\n\n  @unit @SCN-CVL-001\n  Scenario: coded\n"
     );
+    writeFileSync(join(dir, "features", "billing", "checkout.feature"), "@CHK\nFeature: checkout\n\n  @unit @SCN-CHK-001\n  Scenario: nested\n");
     writeFileSync(join(dir, "features", "no-feature-code.feature"), "Feature: a feature file carrying no-feature-code\n\n  @unit @SCN-XYZ-001\n  Scenario: coded, in a file carrying no-feature-code\n\n  @unit\n  Scenario: carrying no @SCN\n");
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
     expect(report.summary.outOfBalanceByFeature).toEqual([
-      { feature: "CVL", title: "config-vocabulary-lint", count: 1, claims: ["SCN-CVL-001"] },
+      { feature: "CHK", featureFile: "billing/checkout.feature", count: 1, claims: ["SCN-CHK-001"] },
+      { feature: "CVL", featureFile: "config-vocabulary-lint.feature", count: 1, claims: ["SCN-CVL-001"] },
       { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
       { feature: "no-feature-code.feature", count: 1, claims: [], scenariosWithNoScnCode: 1 },
     ]);
   });
 
-  it("names each feature by the header code and its slug however the header's tags are laid out, and takes no code from a comment", () => {
+  it("names each feature by the header code and its file however the header's tags are laid out, and takes no code from a comment", () => {
     const dir = temporaryDirectory("scn-rmd-006-header-");
     const features = join(dir, "features");
     mkdirSync(features);
@@ -38,19 +40,19 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
       writeFileSync(join(features, `${slug}.feature`), `${header}\n  @unit\n  Scenario: one\n`);
     }
     const { stdout } = runBalanceCaptured(["--features", features, "--format", "json"]);
-    const named = (feature: string, title?: string) => ({
+    const named = (feature: string, featureFile?: string) => ({
       feature,
-      ...(title ? { title } : {}),
+      ...(featureFile ? { featureFile } : {}),
       count: 1,
       claims: [],
       scenariosWithNoScnCode: 1,
     });
     expect(JSON.parse(stdout).summary.outOfBalanceByFeature).toEqual(
       expect.arrayContaining([
-        named("IND", "indented-feature"),
-        named("BLK", "blank-before-feature"),
-        named("TWO", "two-tag-lines"),
-        named("ITG", "indented-tags"),
+        named("IND", "indented-feature.feature"),
+        named("BLK", "blank-before-feature.feature"),
+        named("TWO", "two-tag-lines.feature"),
+        named("ITG", "indented-tags.feature"),
         named("comment-above-tags.feature"),
         named("trailing-comment.feature"),
       ])
@@ -58,7 +60,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     expect(JSON.parse(stdout).summary.outOfBalanceByFeature).toHaveLength(6);
   });
 
-  it("names each feature by the title read from the working directory's features/ when no directory is given", () => {
+  it("names each feature by its file read from the working directory's features/ when no directory is given", () => {
     const dir = temporaryDirectory("scn-rmd-006-cwd-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "default-corpus.feature"), "@DEF\nFeature: the default corpus\n\n  @unit\n  Scenario: one\n");
@@ -66,7 +68,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     try {
       const { stdout } = runBalanceCaptured(["--format", "json"]);
       expect(JSON.parse(stdout).summary.outOfBalanceByFeature).toEqual([
-        { feature: "DEF", title: "default-corpus", count: 1, claims: [], scenariosWithNoScnCode: 1 },
+        { feature: "DEF", featureFile: "default-corpus.feature", count: 1, claims: [], scenariosWithNoScnCode: 1 },
       ]);
     } finally {
       cwdSpy.mockRestore();

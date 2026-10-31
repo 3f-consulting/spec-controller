@@ -38,6 +38,42 @@ jobs:
         run: pnpm test
 `;
 
+const unitInTwoJobsCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: Lint
+        run: pnpm lint
+  again:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+`;
+
+const unitTwiceInOneJobCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: Unit tests
+        run: pnpm test
+      - name: Lint
+        run: pnpm lint
+`;
+
+const fitnessNameSharedCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Lint
+        run: pnpm lint
+      - name: Lint
+        run: pnpm test
+`;
+
 const scripts = { test: "vitest run", lint: "eslint ." };
 
 const fitnessFeature = `Feature: fixture
@@ -150,7 +186,7 @@ beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count", () => {
+describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, each once and as workflow, job and step, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count", () => {
   it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and names no runner for a target with no runners block", () => {
     const reconciliation = reconcile();
     const unnamedClaimRowItems = reconciliation.ledger.claimReconciliations
@@ -225,7 +261,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       qualityCheck: "unit",
       count: 0,
       runner: "vitest",
-      ciSteps: ["Unit tests"],
+      ciSteps: ["workflow-0.yml:quality:Unit tests"],
     });
     expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheck: "integration", count: 0 });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
@@ -239,18 +275,39 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     });
   });
 
-  it("lists both steps, in step order, for a runner run at two steps", () => {
-    const reconciliation = runnersReconciler(feature, unitTwiceCi, scripts)({ unit: "vitest" });
-    expect(entryFor(reconciliation, "unit")).toStrictEqual({
-      qualityCheck: "unit",
-      count: 0,
-      runner: "vitest",
-      ciSteps: ["Unit tests", "Unit tests again"],
-    });
+  it.each([
+    [
+      "lists both steps, in step order, for a runner run at two steps",
+      unitTwiceCi,
+      ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:again:Unit tests again"],
+    ],
+    [
+      "tells two jobs' runner steps of one name apart by job",
+      unitInTwoJobsCi,
+      ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:again:Unit tests"],
+    ],
+    [
+      "names once a runner run at two steps of one name in one job",
+      unitTwiceInOneJobCi,
+      ["workflow-0.yml:quality:Unit tests"],
+    ],
+    [
+      "names a fitness step once where a runner step in its job shares its name",
+      fitnessNameSharedCi,
+      ["workflow-0.yml:quality:Lint"],
+    ],
+  ])("%s", (_, pipeline, unitSteps) => {
+    const reconciliation = runnersReconciler(feature, pipeline, scripts)({ unit: "vitest" });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
       qualityCheck: "fitness",
       count: 1,
       ciSteps: ["workflow-0.yml:quality:Lint"],
+    });
+    expect(entryFor(reconciliation, "unit")).toStrictEqual({
+      qualityCheck: "unit",
+      count: 0,
+      runner: "vitest",
+      ciSteps: unitSteps,
     });
   });
 
@@ -270,7 +327,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       qualityCheck: "unit",
       count: 0,
       runner: "vitest",
-      ciSteps: ["Unit tests"],
+      ciSteps: ["workflow-0.yml:quality:Unit tests"],
     });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
       qualityCheck: "fitness",

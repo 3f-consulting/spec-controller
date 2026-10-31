@@ -24,6 +24,7 @@ const scenarios: Scenario[] = [
   { scnId: "SCN-TWO-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
   { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+  { scnId: "SCN-BRK-001", evidenceObligations: [{ qualityCheck: "integration" }] },
 ];
 
 const observations: EvidenceObservation[] = [
@@ -82,6 +83,8 @@ const observations: EvidenceObservation[] = [
     enforcedOverRealSource: true,
     status: "passed",
   },
+  { qualityCheck: "integration", scnId: "SCN-BRK-001", status: "passed" },
+  { qualityCheck: "unit", scnId: "SCN-BRK-001", status: "failed", broken: true },
   { qualityCheck: "e2e", scnId: "SCN-GHO-001", status: "passed" },
   { qualityCheck: "integration", scnId: null, status: "passed" },
 ];
@@ -145,6 +148,10 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
 
   it("names the steps of a quality check the row observes without obligating", () => {
     expect(ciStepsOf("SCN-OBS-001")).toBe("Test, Cucumber");
+  });
+
+  it("names the steps of a quality check the row observes only through broken evidence", () => {
+    expect(ciStepsOf("SCN-BRK-001")).toBe("Test, Cucumber");
   });
 
   it("names each fitness observation's step in evidence order, each once", () => {

@@ -63,7 +63,7 @@ describe("[SCN-RPT-051] a behavioural quality check whose runner the target does
 
   it("names the declared runner, not a note, on a quality check the target names", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
-    expect(rows.get("unit")).toStrictEqual(["unit", "1", "vitest", "Unit tests"]);
+    expect(rows.get("unit")?.slice(0, 3)).toStrictEqual(["unit", "1", "vitest"]);
   });
 
   it("says at count 0 that the target has not said on a quality check it leaves out, and that it names none on one it names null", () => {

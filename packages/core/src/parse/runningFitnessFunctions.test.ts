@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
+import { namedByIdentity } from "../domain/stepNaming.test-utils.js";
 import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
 import { shellReading } from "./commandRuns.js";
 import { resolveRunners } from "./targetManifest.js";
@@ -85,7 +86,7 @@ describe("[SCN-WFS-009] test and cucumber CI steps are not candidate fitness fun
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
     const { tiers } = resolveRunners(manifest);
-    expect(recognisedRunners(workflowSteps([ci2]), pkg2.scripts ?? {}, tiers, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([ci2]), namedByIdentity, pkg2.scripts ?? {}, tiers, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "pnpm test" },
       { tier: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
     ]);

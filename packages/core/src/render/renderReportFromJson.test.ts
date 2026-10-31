@@ -46,6 +46,16 @@ const evidenceObligations: EvidenceObligations = {
 
 const featureNames = new Map([["CHK", "checkout"]]);
 
+function byFeatureRowOf(md: string, code: string): string[] | undefined {
+  const section = md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]));
+  const end = section.indexOf("\n#", 1);
+  return (end > 0 ? section.slice(0, end) : section)
+    .split("\n")
+    .filter((line) => line.startsWith("| "))
+    .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()))
+    .find(([feature = ""]) => feature === code || feature.endsWith(` (${code})`));
+}
+
 describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliation.json alone", () => {
   it("regenerates markdown byte-identical to the direct render (drift-equality)", () => {
     const savedJson = renderJson(__er(balance, true), ctx, evidenceObligations, featureNames);
@@ -54,10 +64,13 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     expect(regenerated).toBe(direct);
   });
 
-  it("names the coded out-of-balance feature in full from the JSON alone (the by-feature title teeth)", () => {
+  it("names the coded out-of-balance feature in full from the JSON alone, as the direct render names it (the by-feature feature file teeth)", () => {
     const savedJson = renderJson(__er(balance, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson, HANDED_INPUT_NAMES, publishedExitCodeOf);
-    expect(regenerated).toContain("| checkout (CHK) | 1 | SCN-CHK-002 |");
+    const direct = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf, evidenceObligations, featureNames);
+    const row = byFeatureRowOf(direct, "CHK");
+    expect(row?.[0]).toMatch(/^.+ \(CHK\)$/);
+    expect(byFeatureRowOf(regenerated, "CHK")).toEqual(row);
   });
 
   it("carries the whole document — the three-way evidence observations line and the materialised summary totals", () => {

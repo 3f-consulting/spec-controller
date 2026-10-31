@@ -287,8 +287,8 @@ function reconcile(features: string): CorpusRun {
 
 function judgement({ report }: CorpusRun): Record<string, unknown> {
   const { runProvenance: _provenance, ...judged } = report;
-  const summary = judged["summary"] as { outOfBalanceByFeature?: { title?: string }[] };
-  const byFeature = summary.outOfBalanceByFeature?.map(({ title: _title, ...entry }) => entry);
+  const summary = judged["summary"] as { outOfBalanceByFeature?: { featureFile?: string }[] };
+  const byFeature = summary.outOfBalanceByFeature?.map(({ featureFile: _featureFile, ...entry }) => entry);
   return { ...judged, summary: { ...summary, ...(byFeature ? { outOfBalanceByFeature: byFeature } : {}) } };
 }
 
@@ -392,6 +392,14 @@ Then("the reconciliation names each of those scenarios by its feature file's pat
 });
 
 Then("each of those scenarios is counted against its own feature, not against the other", function (this: SpecControllerWorld) {
-  assert.match(this.sameNameMarkdown, /^\| alpha\/run \(SNA\) \| 1 \|/m, "the alpha file's untagged scenario was not counted against it alone");
-  assert.match(this.sameNameMarkdown, /^\| beta\/run \(SNB\) \| 1 \|/m, "the beta file's untagged scenario was not counted against it alone");
+  assert.ok(this.sameNameJson, "the corpus was not reconciled");
+  const summary = this.sameNameJson["summary"] as { outOfBalanceByFeature: { feature: string; count: number; scenariosWithNoScnCode?: number }[] };
+  assert.deepEqual(
+    summary.outOfBalanceByFeature.map(({ feature, count, scenariosWithNoScnCode }) => ({ feature, count, scenariosWithNoScnCode })),
+    [
+      { feature: "SNA", count: 1, scenariosWithNoScnCode: 1 },
+      { feature: "SNB", count: 1, scenariosWithNoScnCode: 1 },
+    ],
+    "each file's untagged scenario was not counted against its own feature alone",
+  );
 });

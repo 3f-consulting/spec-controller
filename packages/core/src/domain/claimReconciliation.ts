@@ -3,7 +3,7 @@ import type {
   PendingItem,
   QualityCheck,
 } from "./journal.js";
-import { QUALITY_CHECKS, evidenceObligationsOf, isFitnessObservation } from "./journal.js";
+import { QUALITY_CHECKS, evidenceObligationsOf, ranAsFitnessFunction } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
@@ -146,9 +146,10 @@ function stepsAt(
   stepsByQualityCheck: readonly StepsAtQualityCheck[]
 ): readonly string[] {
   if (qualityCheck === "fitness") {
-    return ranObservationsOf(row).flatMap((o) => (isFitnessObservation(o) && o.step !== undefined ? [o.step] : []));
+    return observationsOf(row).flatMap((o) => (ranAsFitnessFunction(o) && o.step !== undefined ? [o.step] : []));
   }
-  if (!namesQualityCheck(row, qualityCheck) && observationCountOf(row, qualityCheck) === 0) return [];
+  const observed = observationsOf(row).some((o) => o.qualityCheck === qualityCheck);
+  if (!namesQualityCheck(row, qualityCheck) && !observed) return [];
   return stepsByQualityCheck.find((entry) => entry.qualityCheck === qualityCheck)?.ciSteps ?? [];
 }
 

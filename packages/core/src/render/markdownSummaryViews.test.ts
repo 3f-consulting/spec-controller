@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
+import { assembleRenderInput } from "../assemble/renderInput.js";
 import { type Ledger } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -10,7 +11,7 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
-describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by feature", () => {
+describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-scn-code", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
@@ -79,17 +80,23 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).not.toContain("## Warnings");
   });
 
-  it("names each feature in full as '<slug> (<FFF>)' when a code→slug map is threaded", () => {
+  it("names each feature as '<file> (<FFF>)', the file read from the summary's by-feature entry, when feature files are threaded", () => {
     const featureNames = new Map([
       ["LDG", "ledger"],
       ["LNT", "fitness-evidence"],
     ]);
     const md = renderMarkdown(__er(spanning, false), ctx, publishedExitCodeOf, undefined, featureNames);
-    expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
+    const files = featureFilesOf(__er(spanning, false), featureNames);
+    expect(md).toContain(`| ${files.get("LDG")} (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |`);
+    expect(md).toContain(`| ${files.get("LNT")} (LNT) | 1 | SCN-LNT-002 |`);
   });
 
   const ledgerHeading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
+
+  function featureFilesOf(reconciliation: ReturnType<typeof __er>, featureNames: ReadonlyMap<string, string>): Map<string, string | undefined> {
+    const byFeature = assembleRenderInput(reconciliation, ctx, undefined, featureNames).summary.outOfBalanceByFeature ?? [];
+    return new Map(byFeature.map((entry) => [entry.feature, entry.featureFile]));
+  }
 
   function byFeatureLines(lines: string[]): string[] {
     const start = lines.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
@@ -102,6 +109,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   it("renders heading, blank, total line, blank, header, separator, one row per out-of-balance feature carrying its ids, then one blank", () => {
     const featureNames = new Map([["LDG", "ledger"]]);
     const lines = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf, undefined, featureNames).split("\n");
+    const files = featureFilesOf(__er(spanning), featureNames);
 
     expect(byFeatureLines(lines)).toEqual([
       CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
@@ -110,7 +118,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
       "",
       CORE_MESSAGES[CoreMessage.ByFeatureTableHeader],
       "| --- | --- | --- |",
-      "| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |",
+      `| ${files.get("LDG")} (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |`,
       "| LNT | 1 | SCN-LNT-002 |",
       "",
     ]);

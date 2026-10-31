@@ -1,3 +1,4 @@
+import { namedByIdentity } from "../domain/stepNaming.test-utils.js";
 import { describe, it, expect } from "vitest";
 import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
@@ -7,8 +8,8 @@ import { parsedWorkflows, workflowSteps } from "./parsedWorkflows.test-utils.js"
 const stepRunning = (command: string): string =>
   ["jobs:", "  ci:", "    steps:", "      - name: Check", "        run: |", `          ${command}`].join("\n");
 
-const expectVitestRecognisedAtCheck = (command: string, scripts: Parameters<typeof recognisedRunners>[1]): void => {
-  expect(recognisedRunners(workflowSteps([stepRunning(command)]), scripts, { unit: "vitest" }, shellReading)).toEqual([
+const expectVitestRecognisedAtCheck = (command: string, scripts: Parameters<typeof recognisedRunners>[2]): void => {
+  expect(recognisedRunners(workflowSteps([stepRunning(command)]), namedByIdentity, scripts, { unit: "vitest" }, shellReading)).toEqual([
     { tier: "unit", runner: "vitest", step: "Check" },
   ]);
 };
@@ -162,7 +163,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     const ci = [stepRunning("echo pnpm check")];
     const manifest = { scripts: { check: "vitest run" } };
     const unit = { unit: "vitest" };
-    expect(recognisedRunners(workflowSteps(ci), manifest.scripts, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(ci), namedByIdentity, manifest.scripts, unit, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(ci), manifest, unit).map((check) => check.fitnessFunction)).toEqual([
       "Check",
     ]);
@@ -410,7 +411,7 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
   it.each([["env CI=1 vitest run"], ["sudo vitest run"], ["yarn exec vitest run"], ["npx -y vitest run"]] as const)(
     "still leaves a step running %s a candidate, since a runner is read through the launchers alone",
     (command) => {
-      expect(recognisedRunners(workflowSteps([stepRunning(command)]), {}, { unit: "vitest" }, shellReading)).toEqual([]);
+      expect(recognisedRunners(workflowSteps([stepRunning(command)]), namedByIdentity, {}, { unit: "vitest" }, shellReading)).toEqual([]);
     }
   );
 });
@@ -596,7 +597,7 @@ describe("[SCN-WFS-024] commandInvokesScript — a script run after a pnpm selec
     const ci = [stepRunning("pnpm build")];
     const manifest = { scripts: { build: "pnpm -r build" } };
     const unit = { unit: "vitest" };
-    expect(recognisedRunners(workflowSteps(ci), manifest.scripts, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(ci), namedByIdentity, manifest.scripts, unit, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(ci), manifest, unit).map((found) => found.fitnessFunction)).toEqual([
       "build",
     ]);

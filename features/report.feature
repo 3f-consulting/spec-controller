@@ -99,8 +99,8 @@ Feature: The report renders the ledger as sectioned facts
     Balanced scenarios are left out.
 
     A scenario's feature is the feature code in its @SCN code. The Feature cell reads
-    "<full name> (<code>)", where the full name is the name of the feature file carrying that
-    code. A code that no feature file carries shows as the bare code. Every code shows bare
+    "<file> (<code>)", where the file is the path of the feature file carrying that code under
+    the corpus. A code that no feature file carries shows as the bare code. Every code shows bare
     when the report is re-rendered from saved JSON that carries no feature names.
 
     The total line accounts for every out-of-balance row. A phantom claim's row and the
@@ -118,7 +118,7 @@ Feature: The report renders the ledger as sectioned facts
     way.
 
     @unit @SCN-RPT-006
-    Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code for a foreign-scn-code
+    Scenario: the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-scn-code
 
     @unit @SCN-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
@@ -250,9 +250,11 @@ Feature: The report renders the ledger as sectioned facts
     Wherever the table has an evidence column, its last column, CI steps, follows Reconciling
     items. It names the CI steps behind each quality check the row obligates or observes, in
     column order, each step once. A behavioural quality check's steps are those that run its
-    runner. A fitness function's step is the one its evidence observation ran at, named by
-    workflow, job and step. The rule is the same on every row: a scenario, each scenario
-    sharing a code, a phantom claim and the unnamed claim.
+    runner, named by workflow, job and step. A behavioural quality check the row observes only
+    through broken evidence counts as observed, so its steps are named. A fitness function's
+    step is the one its evidence observation ran at, named by workflow, job and step. The rule
+    is the same on every row: a scenario, each scenario sharing a code, a phantom claim and the
+    unnamed claim.
 
     A quality check with no known step adds none: a behavioural check no CI step is found
     running, a fitness obligation with no evidence observation, and a fitness observation that

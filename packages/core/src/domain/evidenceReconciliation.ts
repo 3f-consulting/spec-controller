@@ -232,7 +232,11 @@ export interface BehaviouralRunner {
 
 function stepsNamed(running: readonly FitnessEvidenceObservation[], stepsInOrder: readonly string[]): string[] {
   const named = new Set(running.map((observation) => observation.step));
-  return stepsInOrder.filter((step) => named.has(step));
+  return eachOnce(stepsInOrder.filter((step) => named.has(step)));
+}
+
+function eachOnce(steps: readonly string[]): string[] {
+  return [...new Set(steps)];
 }
 
 function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[]): QualityCheckObservations {
@@ -262,7 +266,7 @@ export function ciStepsJoined(
         return withSteps(entry, stepsNamed(runningFitnessObservations(ledger), stepsInOrder));
       }
       const running = runners.filter((row) => row.tier === entry.qualityCheck);
-      return withSteps(withDeclaredRunner(entry, tiers), running.map((row) => row.step));
+      return withSteps(withDeclaredRunner(entry, tiers), eachOnce(running.map((row) => row.step)));
     }),
   };
 }

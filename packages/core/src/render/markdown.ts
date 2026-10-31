@@ -226,7 +226,7 @@ function byFeatureTableLines(groups: readonly FeatureOutOfBalance[]): string[] {
   if (groups.length === 0) return [];
   const lines = [CORE_MESSAGES[CoreMessage.ByFeatureTableHeader], "| --- | --- | --- |"];
   for (const group of groups) {
-    const label = group.title ? `${group.title} (${group.feature})` : group.feature;
+    const label = group.featureFile ? `${group.featureFile} (${group.feature})` : group.feature;
     lines.push(`| ${label} | ${group.count} | ${idsCell(group)} |`);
   }
   lines.push("");

@@ -7,11 +7,10 @@ import {
 } from "./claimReconciliation.js";
 import type {
   BehaviouralQualityCheck,
-  EvidenceObservation,
   FitnessEvidenceObservation,
   QualityCheck,
 } from "./journal.js";
-import { QUALITY_CHECKS, isFitnessObservation } from "./journal.js";
+import { QUALITY_CHECKS, ranAsFitnessFunction } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 
 export interface Ledger {
@@ -176,10 +175,6 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
   const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByBehaviouralQualityCheck[qc], 0);
 
   return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomClaim, onUnnamedClaim };
-}
-
-function ranAsFitnessFunction(observation: EvidenceObservation): observation is FitnessEvidenceObservation {
-  return isFitnessObservation(observation) && observation.broken !== true && observation.exists;
 }
 
 export function runningFitnessObservations(ledger: Ledger): FitnessEvidenceObservation[] {

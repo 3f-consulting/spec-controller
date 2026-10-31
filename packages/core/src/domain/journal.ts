@@ -144,6 +144,10 @@ export function isFitnessObservation(
   return observation.qualityCheck === "fitness";
 }
 
+export function ranAsFitnessFunction(observation: EvidenceObservation): observation is FitnessEvidenceObservation {
+  return isFitnessObservation(observation) && observation.broken !== true && observation.exists;
+}
+
 export type EvidenceObservation = BehaviouralEvidenceObservation | FitnessEvidenceObservation;
 
 export interface PendingItem {

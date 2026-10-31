@@ -1,3 +1,4 @@
+import { namedByIdentity } from "../domain/stepNaming.test-utils.js";
 import { describe, it, expect, beforeEach } from "vitest";
 import { runningFitnessFunctions } from "./runningFitnessFunctions.js";
 import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
@@ -22,23 +23,23 @@ describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step in
     ["recognises the runner however the runner value is padded or spaced", "  vitest   run "],
   ] as const)("%s", (_title, runner) => {
     expect(
-      recognisedRunners(workflowSteps([aliasCi]), { test: "vitest run" }, { unit: runner }, shellReading)
+      recognisedRunners(workflowSteps([aliasCi]), namedByIdentity, { test: "vitest run" }, { unit: runner }, shellReading)
     ).toEqual([{ tier: "unit", runner, step: "Unit tests" }]);
   });
 
   it("recognises nothing from the workflow alone — the measurement that makes the hop the rule", () => {
     expect(aliasCi.includes("vitest")).toBe(false);
-    expect(recognisedRunners(workflowSteps([aliasCi]), {}, { unit: "vitest" }, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([aliasCi]), namedByIdentity, {}, { unit: "vitest" }, shellReading)).toEqual([]);
   });
 
   it("stops following at three hops", () => {
     const scripts = { test: "pnpm a", a: "pnpm b", b: "vitest run" };
-    expect(recognisedRunners(workflowSteps([aliasCi]), scripts, { unit: "vitest" }, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([aliasCi]), namedByIdentity, scripts, { unit: "vitest" }, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "Unit tests" },
     ]);
     expect(
       recognisedRunners(
-        workflowSteps([aliasCi]),
+        workflowSteps([aliasCi]), namedByIdentity,
         { test: "pnpm a", a: "pnpm b", b: "pnpm c", c: "vitest run" },
         { unit: "vitest" },
         shellReading
@@ -54,7 +55,7 @@ describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step in
   ] as const)("%s", (_title, test) => {
     expect(
       recognisedRunners(
-        workflowSteps([aliasCi]),
+        workflowSteps([aliasCi]), namedByIdentity,
         { test },
         { unit: "vitest run" },
         shellReading
@@ -65,7 +66,7 @@ describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step in
   it("recognises nothing where the runner's words fall on two lines", () => {
     expect(
       recognisedRunners(
-        workflowSteps([aliasCi]),
+        workflowSteps([aliasCi]), namedByIdentity,
         { test: "pnpm build --filter vitest\nrun" },
         { unit: "vitest run" },
         shellReading
@@ -75,7 +76,7 @@ describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step in
 
   it("recognises nothing for a blank runner value, leaving the step a candidate", () => {
     const manifest = { scripts: { test: "vitest run " } };
-    expect(recognisedRunners(workflowSteps([aliasCi]), manifest.scripts, { unit: " " }, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([aliasCi]), namedByIdentity, manifest.scripts, { unit: " " }, shellReading)).toEqual([]);
     expect(
       runningFitnessFunctions(parsedWorkflows([aliasCi]), manifest, { unit: " " }).map((check) => check.fitnessFunction)
     ).toContain("test");
@@ -96,7 +97,7 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
       '        run: pnpm lint:rules --outputFile.json="$EVIDENCE_DIR/vitest.json"',
     ].join("\n");
     const manifest = { scripts: { test: "vitest run", "lint:rules": "eslint . --format json" } };
-    expect(recognisedRunners(workflowSteps([both]), manifest.scripts, unit, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([both]), namedByIdentity, manifest.scripts, unit, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "Unit tests" },
     ]);
     expect(runningFitnessFunctions(parsedWorkflows([both]), manifest, unit).map((check) => check.fitnessFunction)).toEqual([
@@ -123,7 +124,7 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
 
   it.each(namings)("leaves a step naming the runner %s in its own command a candidate", (_naming, line) => {
     const ci = [stepRunning(line)];
-    expect(recognisedRunners(workflowSteps(ci), {}, runners, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(ci), namedByIdentity, {}, runners, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(ci), { scripts: {} }, runners).map((check) => check.fitnessFunction)).toEqual([
       "Check",
     ]);
@@ -132,14 +133,14 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
   it.each(namings)("leaves a step naming the runner %s in a manifest script it follows a candidate", (_naming, check) => {
     const ci = [stepRunning("pnpm check")];
     const manifest = { scripts: { check } };
-    expect(recognisedRunners(workflowSteps(ci), manifest.scripts, runners, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(ci), namedByIdentity, manifest.scripts, runners, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(ci), manifest, runners).map((found) => found.fitnessFunction)).toEqual([
       "check",
     ]);
   });
 
   it("still recognises the runner run after a separator outside quotes — the control", () => {
-    expect(recognisedRunners(workflowSteps([stepRunning("echo lint && vitest run")]), {}, runners, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([stepRunning("echo lint && vitest run")]), namedByIdentity, {}, runners, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "Check" },
     ]);
   });
@@ -148,7 +149,7 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
     ["a pipe", "vitest run | tee log"],
     ["a pipe that carries its errors too", "vitest run |& tee log"],
   ] as const)("still leaves a runner whose output %s reads a candidate — the control", (_pipe, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), {}, runners, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([stepRunning(line)]), namedByIdentity, {}, runners, shellReading)).toEqual([]);
   });
 });
 
@@ -178,7 +179,7 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ],
   ] as const)("%s", (_title, lines) => {
     const piped = [stepRunning(...lines)];
-    expect(recognisedRunners(workflowSteps(piped), noScripts.scripts, integration, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(piped), namedByIdentity, noScripts.scripts, integration, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(piped), noScripts, integration).map((check) => check.fitnessFunction)).toEqual([
       "Gate",
     ]);
@@ -187,7 +188,7 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
   it("leaves a check whose pipe follows a line continuation a candidate", () => {
     expect(
       recognisedRunners(
-        workflowSteps([stepRunning("cucumber-js --dry-run --format usage-json \\", "  | jq -r '.[]'")]),
+        workflowSteps([stepRunning("cucumber-js --dry-run --format usage-json \\", "  | jq -r '.[]'")]), namedByIdentity,
         noScripts.scripts,
         integration,
         shellReading
@@ -204,7 +205,7 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ["still recognises the runner in a last stage written hard against the pipe", "echo start |cucumber-js"],
   ] as const)("%s", (_title, line) => {
     expect(
-      recognisedRunners(workflowSteps([stepRunning(line)]), noScripts.scripts, integration, shellReading)
+      recognisedRunners(workflowSteps([stepRunning(line)]), namedByIdentity, noScripts.scripts, integration, shellReading)
     ).toEqual(asTheRunner);
   });
 
@@ -217,12 +218,12 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ["a subshell inside another", ["( (vitest run) ) | tee log"]],
     ["a subshell that runs another command after it", ["(vitest run && echo done) | tee log"]],
   ] as const)("leaves a check piping the output of %s that runs the runner a candidate", (_form, lines) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(...lines)]), noScripts.scripts, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([stepRunning(...lines)]), namedByIdentity, noScripts.scripts, unit, shellReading)).toEqual([]);
   });
 
   it("leaves a check a candidate where the runner is only a line of a here-document's body", () => {
     expect(
-      recognisedRunners(workflowSteps([stepRunning("cat <<EOF > f", "vitest run", "EOF")]), noScripts.scripts, unit, shellReading)
+      recognisedRunners(workflowSteps([stepRunning("cat <<EOF > f", "vitest run", "EOF")]), namedByIdentity, noScripts.scripts, unit, shellReading)
     ).toEqual([]);
   });
 
@@ -233,7 +234,7 @@ describe("[SCN-WFS-007] recognisedRunners — a runner whose output another comm
     ["a pipeline's last stage after a piped subshell", "(echo a) | vitest run"],
     ["a subshell followed by a list whose last command pipes", "(vitest run) && echo done | tee log"],
   ] as const)("still recognises the runner in %s — the control", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([stepRunning(line)]), noScripts.scripts, unit, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps([stepRunning(line)]), namedByIdentity, noScripts.scripts, unit, shellReading)).toEqual([
       { tier: "unit", runner: "vitest", step: "Gate" },
     ]);
   });
@@ -358,11 +359,11 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
   const asTheRunner = [{ tier: "unit", runner, step: "Unit tests" }];
 
   it.each(forms)("recognises the runner in the step's own command %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), {}, unit, shellReading)).toEqual(asTheRunner);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), namedByIdentity, {}, unit, shellReading)).toEqual(asTheRunner);
   });
 
   it.each(forms)("recognises the runner in a manifest script the step follows %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual(asTheRunner);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), namedByIdentity, { test }, unit, shellReading)).toEqual(asTheRunner);
   });
 });
 
@@ -371,11 +372,11 @@ describe("[SCN-WFS-003] recognisedRunners — a runner started through a launche
   const joined = [["a launcher continued onto the next line with no blank, which joins the two into one name", "npx\\\nvitest run"]] as const;
 
   it.each(joined)("reads no runner in the step's own command through %s", (_form, line) => {
-    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), {}, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning(line)]), namedByIdentity, {}, unit, shellReading)).toEqual([]);
   });
 
   it.each(joined)("reads no runner in a manifest script the step follows through %s", (_form, test) => {
-    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), { test }, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps([unitTestsStepRunning("pnpm test")]), namedByIdentity, { test }, unit, shellReading)).toEqual([]);
   });
 });
 
@@ -404,7 +405,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
 
   it.each(forms)("leaves the step a candidate for %s", (_form, line) => {
     const step = [unitTestsStepRunning(line)];
-    expect(recognisedRunners(workflowSteps(step), {}, unit, shellReading)).toEqual([]);
+    expect(recognisedRunners(workflowSteps(step), namedByIdentity, {}, unit, shellReading)).toEqual([]);
     expect(runningFitnessFunctions(parsedWorkflows(step), { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual([
       "Unit tests",
     ]);
@@ -451,7 +452,7 @@ describe("[SCN-WFS-006] recognisedRunners — a runner declared with its test ta
     (_tool, runner, steps, recognised, candidates) => {
       const ci = [ciRunning(...steps)];
       const unit = { unit: runner };
-      expect(recognisedRunners(workflowSteps(ci), {}, unit, shellReading)).toEqual(
+      expect(recognisedRunners(workflowSteps(ci), namedByIdentity, {}, unit, shellReading)).toEqual(
         recognised.map((step) => ({ tier: "unit", runner, step }))
       );
       expect(runningFitnessFunctions(parsedWorkflows(ci), { scripts: {} }, unit).map((check) => check.fitnessFunction)).toEqual(
@@ -464,7 +465,7 @@ describe("[SCN-WFS-006] recognisedRunners — a runner declared with its test ta
     const ci = [ciRunning(["Unit tests", "pnpm test"], ["Static analysis", "pnpm analyse"])];
     const manifest = { scripts: { test: "./gradlew test --info", analyse: "./gradlew detekt" } };
     const unit = { unit: "./gradlew test" };
-    expect(recognisedRunners(workflowSteps(ci), manifest.scripts, unit, shellReading)).toEqual([
+    expect(recognisedRunners(workflowSteps(ci), namedByIdentity, manifest.scripts, unit, shellReading)).toEqual([
       { tier: "unit", runner: "./gradlew test", step: "Unit tests" },
     ]);
     expect(runningFitnessFunctions(parsedWorkflows(ci), manifest, unit).map((check) => check.fitnessFunction)).toEqual(["analyse"]);
