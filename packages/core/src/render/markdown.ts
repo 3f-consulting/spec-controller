@@ -33,6 +33,7 @@ import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { remarkHeadlineOf, remarkWordsOf } from "./remarkWords.js";
+import { fencedBlockLines } from "./codeSpan.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
 function renderLine(line: ReconciliationLine): string {
@@ -138,9 +139,7 @@ const runIntegritySection: SectionEmitter = (report) => {
     const locator = item.locator?.trim() ? item.locator : CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
     lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
     lines.push("");
-    lines.push("```text");
-    lines.push(...(remarkWordsOf(item) ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]).split("\n"));
-    lines.push("```");
+    lines.push(...fencedBlockLines("text", remarkWordsOf(item) ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]));
     lines.push("");
   }
   return lines;

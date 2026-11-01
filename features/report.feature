@@ -424,7 +424,9 @@ Feature: The report renders the ledger as sectioned facts
     message's first line. Where the runner gives its own message, the report shows it
     unchanged. Where it gives none, as for an ambiguous Cucumber step, the report shows a
     diagnosis built from what the runner reported. Either way it names what failed and where,
-    in one shape, and never reports one kind of break as the other.
+    in one shape, and never reports one kind of break as the other. The block's fence is longer
+    than any run of backticks in the message, so the message sits whole inside it. A message
+    that is empty or holds only whitespace reads as no message.
 
     Third, it stamps the run "unsound" under a "## Run integrity: unsound" heading, and tells
     the reader that any missing outcome in the run may be a proof that exists but did not run,

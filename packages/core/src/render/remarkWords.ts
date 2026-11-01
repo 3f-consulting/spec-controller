@@ -28,7 +28,7 @@ function checkStepWords(code: string, outcome: string | undefined): string {
 }
 
 export function remarkWordsOf({ message, notes = [] }: Remark): string | undefined {
-  const words = [...(message === undefined ? [] : [message]), ...notes.map(noteWords)];
+  const words = [...(message === undefined || message.trim() === "" ? [] : [message]), ...notes.map(noteWords)];
   return words.length === 0 ? undefined : words.join(" ");
 }
 

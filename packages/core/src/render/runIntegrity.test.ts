@@ -84,8 +84,19 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     checkDidNotRun = CORE_MESSAGES[CoreMessage.CheckStepSkipped]("SCN-RIN-001");
   });
 
-  it("one broken evidence: the stamp counts one proof, then names its file and prints its error verbatim, each block followed by a blank line", () => {
-    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE));
+  const noMessage = CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage];
+  it.each([
+    ["its error verbatim", COLLECTION_FAILED_MESSAGE, "```", COLLECTION_FAILED_MESSAGE],
+    [
+      "an error holding a line of three backticks verbatim, inside a fence one backtick longer",
+      "Error: bad\n```\n# Heading after fence\nmore",
+      "````",
+      "Error: bad\n```\n# Heading after fence\nmore",
+    ],
+    ["an empty error as no message", "", "```", noMessage],
+    ["an error of whitespace only as no message", "  \n\t", "```", noMessage],
+  ])("one broken evidence: the stamp counts one proof, then names its file and prints %s, each block followed by a blank line", (_, message, fence, shown) => {
+    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message));
     expect(runIntegrityLines(md)).toEqual([
       CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
       "",
@@ -93,8 +104,24 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
       "",
       whatBroke(COLLECTION_FAILED_LOCATOR),
       "",
+      `${fence}text`,
+      ...shown.split("\n"),
+      fence,
+      "",
+    ]);
+  });
+
+  it("a broken item whose error is empty and which carries a note is printed with the note's words alone", () => {
+    const md = render({ ...SKIPPED_CHECK, message: "" });
+    expect(runIntegrityLines(md)).toEqual([
+      CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
+      "",
+      unsoundStamp(CORE_MESSAGES[CoreMessage.OneProofNeverRan]),
+      "",
+      whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]),
+      "",
       "```text",
-      ...COLLECTION_FAILED_MESSAGE.split("\n"),
+      checkDidNotRun,
       "```",
       "",
     ]);

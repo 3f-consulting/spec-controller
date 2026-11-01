@@ -6,10 +6,18 @@ const spanHoldsAsWritten = (text: string): boolean =>
   !/[\n\r]/.test(text) &&
   !(text.startsWith('"') && text.endsWith('"'));
 
+const longestBacktickRun = (text: string): number =>
+  Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+
 export function codeSpan(written: string): string {
   const text = spanHoldsAsWritten(written) ? written : JSON.stringify(written);
-  const longestRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
-  const fence = "`".repeat(longestRun + 1);
+  const fence = "`".repeat(longestBacktickRun(text) + 1);
   const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
   return `${fence}${pad}${text}${pad}${fence}`;
+}
+
+// A closing fence is at least as long as the opening one, so no shorter run inside closes it.
+export function fencedBlockLines(info: string, text: string): readonly string[] {
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(text) + 1));
+  return [`${fence}${info}`, ...text.split("\n"), fence];
 }
