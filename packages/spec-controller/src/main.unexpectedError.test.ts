@@ -37,6 +37,8 @@ function answer(argv: string[], onStdout: (chunk: string | Uint8Array) => boolea
   return { stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
 }
 
+const UNEXPECTED_ERROR_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: ";
+
 const onAClosedPipe = (): never => {
   throw closedPipe();
 };
@@ -53,10 +55,7 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
     });
 
     it("writes one line to stderr, naming the error's class and the first line of its message", () => {
-      const { stderr: said } = answer(argv(), onAClosedPipe);
-      expect(said.split("\n")).toHaveLength(2);
-      expect(said).toMatch(/\n$/);
-      expect(said).toContain(`Error: ${FIRST_LINE}`);
+      expect(answer(argv(), onAClosedPipe).stderr).toBe(`${UNEXPECTED_ERROR_LINE}Error: ${FIRST_LINE}\n`);
     });
   });
 
@@ -72,8 +71,6 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
     });
   });
 });
-
-const UNEXPECTED_ERROR_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: ";
 
 function messageGetterThrows(): Error {
   return Object.defineProperty(new Error("never read"), "message", {

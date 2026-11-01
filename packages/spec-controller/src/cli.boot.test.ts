@@ -105,5 +105,12 @@ describe("[SCN-CLI-106] an error while the program loads ends the run at 6, name
     it("does not import the program statically, so a failure while it loads reaches the guards", () => {
       expect(binSource()).not.toMatch(/\bimport (?:[^;()]*from )?"\.\/main\.js"/);
     });
+
+    it("boots with a loader that imports the program dynamically", () => {
+      const bin = binSource();
+      const boot = bin.indexOf("boot(");
+      expect(boot).toBeGreaterThan(-1);
+      expect(bin.indexOf('() => import("./main.js")', boot)).toBeGreaterThan(boot);
+    });
   });
 });

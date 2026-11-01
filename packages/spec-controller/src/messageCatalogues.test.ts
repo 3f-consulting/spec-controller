@@ -5,7 +5,7 @@ import {
   CoreMessage,
   type CoreMessages,
 } from "@3f-consulting/spec-controller-core/internal";
-import { APP_MESSAGES, AppMessage, type AppMessages } from "./messages.js";
+import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, Unreadable, type AppMessages } from "./messages.js";
 
 function codesOf(codes: object): number[] {
   return Object.values(codes)
@@ -265,5 +265,13 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
     expect(keysOf(APP_MESSAGES)).toEqual(codes);
 
     for (const code of codes as AppMessage[]) expect(renderedApp(code).trim()).not.toBe("");
+  });
+
+  it("holds the app's unreadable subjects to every Unreadable member and nothing else, with no blank subject", () => {
+    const members = codesOf(Unreadable) as Unreadable[];
+    expect(members.length).toBeGreaterThan(0);
+    expect(keysOf(UNREADABLE_SUBJECTS)).toEqual(members);
+
+    for (const member of members) expect(UNREADABLE_SUBJECTS[member].trim()).not.toBe("");
   });
 });
