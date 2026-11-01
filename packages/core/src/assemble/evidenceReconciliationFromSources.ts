@@ -16,7 +16,8 @@ import {
   nonChecksApplied,
   nonChecksNotApplied,
   type NonChecksNotApplied,
-  recognisedRunners,
+  countedRunners,
+  stepsInAccountingOrder,
   reconcilerSteps,
   stepAccountOf,
   stepDispositions,
@@ -177,7 +178,7 @@ function withReaderAccounts(
   { steps, runners, notApplied, workflowsRead, reconciler, dispositionOf }: PipelineReadings
 ): EvidenceReconciliation {
   return withStepAccounting(
-    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), notApplied),
+    withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, dispositionOf, packageJson, runners), notApplied),
     steps,
     dispositionOf,
     reconciler.roleOf,
@@ -223,12 +224,14 @@ function withUnmatchedNonChecks(
 function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
+  dispositionOf: (step: PipelineStep) => StepDisposition,
   packageJson: TargetManifest,
   { layers: runnerLayers, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const scripts = packageJson.scripts ?? {};
-  const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
+  const behaviouralRunners: readonly BehaviouralRunner[] = countedRunners(
     steps,
+    dispositionOf,
     qualifiedStepName,
     scripts,
     runnerLayers,
@@ -247,7 +250,7 @@ function withRunnerAccount(
               reconciliation.ledger,
               behaviouralRunners,
               runnerLayers,
-              steps.map(qualifiedStepName)
+              stepsInAccountingOrder(steps).map(qualifiedStepName)
             ),
           }),
       ...(unrecognisedKeys.length > 0 ? { runnerKeysNotALayer: unrecognisedKeys } : {}),

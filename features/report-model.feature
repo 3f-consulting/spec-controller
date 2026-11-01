@@ -74,12 +74,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     counts on each kind of claim, and a count for each of the five kinds of quality check, fitness last.
     A behavioural count is every evidence observation of that layer, a broken one
     included; the fitness count is every fitness function that ran. The total is the sum of the
-    five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
-    kind of quality check names the CI steps its counted evidence came from, in step order, each named
-    workflow:job:step and each once, where there is at least one: a behavioural one the steps
-    that run the runner the target declares for it, and fitness the step behind each fitness
-    function that ran, where a single step carries its code; a fitness function no single step
-    carries is counted and names no step. A layer names the runner the
+    five counts and the sum of the counts on each kind of claim, on the persisted file too. A layer
+    names the steps the step accounting counts as runners of the runner the target declares for it,
+    one entry for each step and in the step accounting's order, whatever its count. A step the
+    target names a non-check, and the reconciler's own step, is never one of them, whatever it
+    runs. Fitness names the step behind each fitness function that ran, where one step runs it, in
+    the same order; a fitness observation that did not run names no step here. A layer names the runner the
     target declares for it, whatever its count and whatever steps were found: null where the
     target names none, and no runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
@@ -91,7 +91,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
     @unit @SCN-RMD-015
-    Scenario: each quality check in the summary's evidence observations names the CI steps its evidence came from, each once and as workflow, job and step, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count
+    Scenario: each kind of quality check in the summary's evidence observations names its CI steps as the step accounting lists them, one entry for each step and in its order, fitness included: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count
 
     @unit @SCN-RMD-027
     Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code

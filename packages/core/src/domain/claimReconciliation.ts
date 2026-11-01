@@ -3,7 +3,7 @@ import type {
   PendingItem,
   QualityCheckKind,
 } from "./journal.js";
-import { QUALITY_CHECK_KINDS, evidenceObligationsOf, ranAsFitnessFunction } from "./journal.js";
+import { QUALITY_CHECK_KINDS, evidenceObligationsOf, isFitnessObservation } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
@@ -146,7 +146,7 @@ function stepsAt(
   stepsByQualityCheckKind: readonly StepsAtQualityCheckKind[]
 ): readonly string[] {
   if (qualityCheckKind === "fitness") {
-    return observationsOf(row).flatMap((o) => (ranAsFitnessFunction(o) && o.step !== undefined ? [o.step] : []));
+    return observationsOf(row).flatMap((o) => (isFitnessObservation(o) && o.step !== undefined ? [o.step] : []));
   }
   const observed = observationsOf(row).some((o) => o.qualityCheckKind === qualityCheckKind);
   if (!namesQualityCheckKind(row, qualityCheckKind) && !observed) return [];

@@ -157,6 +157,48 @@ function withAnExcludedTwin(): EvidenceReconciliation {
   });
 }
 
+const excludedRunnersCi = `name: fixture CI
+jobs:
+  zeta:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+  alpha:
+    steps:
+      - name: Unit tests not a check
+        run: pnpm test
+      - name: Reconciliation
+        run: pnpm test && pnpm exec spec-controller balance
+      - name: Unit tests
+        run: pnpm test
+`;
+
+const fitnessJobsOutOfOrderCi = `name: fixture CI
+jobs:
+  zeta:
+    steps:
+      - name: Lint
+        run: pnpm lint
+  alpha:
+    steps:
+      - name: Install
+        run: pnpm install --frozen-lockfile
+`;
+
+function withExcludedRunners(): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    features: parsedFeatures([feature]),
+    packageJson: {
+      scripts,
+      specController: { runners: { unit: "vitest" }, notChecks: ["workflow-0.yml:alpha:Unit tests not a check"] },
+    },
+    ciWorkflows: parsedWorkflows([excludedRunnersCi]),
+    reconcilerInvocation: "spec-controller balance",
+    behaviouralObservations: [],
+    deferralTags: [],
+  });
+}
+
 function withObservations(
   specController: Record<string, unknown>,
   behaviouralObservations: readonly BehaviouralEvidenceObservation[]
@@ -186,7 +228,7 @@ beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-RMD-015] each quality check in the summary's evidence observations names the CI steps its evidence came from, each once and as workflow, job and step, fitness included, and a behavioural one the runner the target declares for it, or none where the target names none, whatever its count", () => {
+describe("[SCN-RMD-015] each kind of quality check in the summary's evidence observations names its CI steps as the step accounting lists them, one entry for each step and in its order, fitness included: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count", () => {
   it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and names no runner for a target with no runners block", () => {
     const reconciliation = reconcile();
     const unnamedClaimRowItems = reconciliation.ledger.claimReconciliations
@@ -227,7 +269,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
   });
 
-  it("names a declared runner that no step read runs on its entry, with no CI step, where it has evidence", () => {
+  it("names a declared runner that no step counted as a runner runs on its entry, with no CI step, where it has evidence", () => {
     const reconciliation = withObservations({ runners: { unit: "vitest", e2e: "playwright" } }, [
       { qualityCheckKind: "e2e", scnId: "SCN-FIX-001", status: "passed" },
     ]);
@@ -275,16 +317,36 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
     });
   });
 
+  it("names on a layer the step accounting's runners, entry for entry and in its order, never a non-check or the reconciler's step that runs its runner", () => {
+    const reconciliation = withExcludedRunners();
+    const runners = reconciliation.summary.stepAccounting?.steps.runners;
+    expect(runners).toStrictEqual(["workflow-0.yml:alpha:Unit tests", "workflow-0.yml:zeta:Unit tests"]);
+    expect(entryFor(reconciliation, "unit")).toStrictEqual({
+      qualityCheckKind: "unit",
+      count: 0,
+      runner: "vitest",
+      ciSteps: runners,
+    });
+  });
+
+  it("names on fitness the step behind each fitness function in the step accounting's order, whatever order its jobs are read in", () => {
+    expect(entryFor(runnersReconciler(feature, fitnessJobsOutOfOrderCi, scripts)(), "fitness")).toStrictEqual({
+      qualityCheckKind: "fitness",
+      count: 2,
+      ciSteps: ["workflow-0.yml:alpha:Install", "workflow-0.yml:zeta:Lint"],
+    });
+  });
+
   it.each([
     [
-      "lists both steps, in step order, for a runner run at two steps",
+      "lists both steps, in the step accounting's order, for a runner run at two steps",
       unitTwiceCi,
-      ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:again:Unit tests again"],
+      ["workflow-0.yml:again:Unit tests again", "workflow-0.yml:quality:Unit tests"],
     ],
     [
       "tells two jobs' runner steps of one name apart by job",
       unitInTwoJobsCi,
-      ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:again:Unit tests"],
+      ["workflow-0.yml:again:Unit tests", "workflow-0.yml:quality:Unit tests"],
     ],
     [
       "names once a runner run at two steps of one name in one job",

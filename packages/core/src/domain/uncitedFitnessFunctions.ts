@@ -148,6 +148,9 @@ const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0
 const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
   byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job);
 
+export const stepsInAccountingOrder = (steps: readonly PipelineStep[]): PipelineStep[] =>
+  [...steps].sort(byWorkflowThenJob);
+
 export const workflowsReadInOrder = (files: readonly string[]): string[] => [...files].sort(byCodeUnit);
 
 type DispositionCount = "candidates" | "runners" | "reconciler" | "nonChecks" | "plumbing";
@@ -234,7 +237,7 @@ export function stepAccountOf(
   return {
     byJob,
     total: totalOf(byJob),
-    steps: stepsBehindCounts([...steps].sort(byWorkflowThenJob), dispositionOf, nameOf, roleOf),
+    steps: stepsBehindCounts(stepsInAccountingOrder(steps), dispositionOf, nameOf, roleOf),
   };
 }
 
@@ -302,4 +305,16 @@ export function recognisedRunners(
       step: nameOf(step),
     }))
   );
+}
+
+export function countedRunners(
+  steps: readonly PipelineStep[],
+  dispositionOf: (step: PipelineStep) => StepDisposition,
+  nameOf: StepName,
+  scripts: Scripts,
+  runners: RunnerLayers,
+  shell: ShellReading
+): BehaviouralRunner[] {
+  const counted = stepsInAccountingOrder(steps).filter((step) => dispositionOf(step) === "runner");
+  return recognisedRunners(counted, nameOf, scripts, runners, shell);
 }

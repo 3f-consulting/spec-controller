@@ -6,6 +6,7 @@ import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const feature = `Feature: fixture
 
@@ -50,6 +51,16 @@ jobs:
   quality:
     steps:
       - name: Unit tests
+        run: pnpm test
+      - name: Cucumber
+        run: pnpm cucumber
+`;
+
+const nonCheckRunnerCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests not a check
         run: pnpm test
       - name: Cucumber
         run: pnpm cucumber
@@ -108,14 +119,14 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
     .find(([check]) => check === "fitness");
 }
 
-describe("[SCN-RPT-074] each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
+describe("[SCN-RPT-074] each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
   it("heads the table with the quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
     expect(header).toStrictEqual(["Quality-check", "Evidence observations", "Runner", "CI step"]);
     expect(separator).toStrictEqual(["---", "---", "---", "---"]);
   });
 
-  it("names on each behavioural row with evidence observations its declared runner and every step that runs it, in step order", () => {
+  it("names on each behavioural row with evidence observations its declared runner and the steps the summary names for it", () => {
     const reconciliation = assembled();
     const rows = rowsOf(reconciliation).slice(2);
     const unitSteps = summaryCiSteps(reconciliation, "unit");
@@ -154,17 +165,17 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
     expect(rows.find(([check]) => check === "e2e")).toStrictEqual(["e2e", "0", "playwright", e2eSteps.join(", ")]);
   });
 
-  it("says no step read runs a declared runner that no step runs, with no evidence observations", () => {
+  it("says no step counted as its runner runs a declared runner that no step runs, with no evidence observations", () => {
     const rows = tableRows().slice(2);
     expect(rows.find(([check]) => check === "performance")).toStrictEqual([
       "performance",
       "0",
       "k6",
-      "no step read runs it.",
+      "no step counted as its runner runs it.",
     ]);
   });
 
-  it("says no step read runs a declared runner that no step runs, with evidence observations", () => {
+  it("says no step counted as its runner runs a declared runner that no step runs, with evidence observations", () => {
     const withPerformance: EvidenceObservation[] = [
       ...behaviouralObservations,
       { qualityCheckKind: "performance", scnId: "SCN-FIX-001", status: "passed" },
@@ -174,7 +185,23 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
       "performance",
       "1",
       "k6",
-      "no step read runs it.",
+      "no step counted as its runner runs it.",
+    ]);
+  });
+
+  it("says no step counted as its runner runs a declared runner that only a step named a non-check runs", () => {
+    const reconciliation = evidenceReconciliationFromSources({
+      features: parsedFeatures([feature]),
+      packageJson: { ...packageJson, specController: { ...packageJson.specController, notChecks: ["workflow-0.yml:quality:Unit tests not a check"] } },
+      ciWorkflows: parsedWorkflows([nonCheckRunnerCi]),
+      behaviouralObservations,
+      deferralTags: [],
+    });
+    expect(rowsOf(reconciliation).slice(2).find(([check]) => check === "unit")).toStrictEqual([
+      "unit",
+      "2",
+      "vitest",
+      "no step counted as its runner runs it.",
     ]);
   });
 
@@ -242,7 +269,7 @@ describe("[SCN-RPT-079] every cell of the evidence observations table holds its 
       "performance",
       "0",
       "k6 | cloud",
-      "no step read runs it.",
+      CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt],
     ]);
   });
 });

@@ -191,9 +191,8 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "### Evidence observations", the table has a row per kind of quality check with its count,
     its runner and its CI step. A layer's runner is the one the target
-    declares for it, whatever its count. Its CI step cell names each step where balance found
-    that runner run, directly or through a package.json script, in step order, or says no step
-    read runs it.
+    declares for it, whatever its count. Its CI step cell names the steps the summary names for
+    that layer, or says no step counted as its runner runs it.
 
     The fitness row counts the steps that run its fitness functions, each named on its fitness
     function's row of Claim Reconciliations. The fitness row has blank runner and CI step cells
@@ -210,7 +209,7 @@ Feature: The report renders the ledger as sectioned facts
     There is no Behavioural runners section.
 
     @unit @SCN-RPT-074
-    Scenario: each quality check's row names its runner and the CI steps that run it, whatever its count, says when no step read runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
+    Scenario: each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
     @unit @SCN-RPT-051
     Scenario: a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
@@ -249,12 +248,11 @@ Feature: The report renders the ledger as sectioned facts
 
     Wherever the table has an evidence column, its last column, CI steps, follows Reconciling
     items. It names the CI steps behind each kind of quality check the row obligates or observes, in
-    column order, each step once. A layer's steps are those that run its
-    runner, named by workflow, job and step. A layer the row observes only
-    through broken evidence counts as observed, so its steps are named. A fitness function's
-    step is the one its evidence observation ran at, named by workflow, job and step. The rule
-    is the same on every row: a scenario, each scenario sharing a code, a phantom claim and the
-    unnamed claim.
+    column order, each step once. A layer's steps are the ones the summary names for it. A
+    layer the row observes only through broken evidence counts as observed, so its steps are
+    named. A fitness function's step is the one its evidence observation names, a broken
+    observation's included. The rule is the same on every row: a scenario, each scenario
+    sharing a code, a phantom claim and the unnamed claim.
 
     A kind of quality check with no known step adds none: a layer no CI step is found
     running, a fitness obligation with no evidence observation, and a fitness observation that
@@ -268,7 +266,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
 
     @unit @SCN-RPT-080
-    Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each quality check it obligates or observes, each step once
+    Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included
 
     @unit @SCN-RPT-081
     Scenario: a quality check with no known step adds none to its Claim Reconciliation's CI steps, and a Claim Reconciliation with none has a blank cell

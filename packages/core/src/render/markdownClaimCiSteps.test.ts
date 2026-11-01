@@ -25,6 +25,7 @@ const scenarios: Scenario[] = [
   { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
   { scnId: "SCN-BRK-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+  { scnId: "SCN-FBK-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const observations: EvidenceObservation[] = [
@@ -85,6 +86,15 @@ const observations: EvidenceObservation[] = [
   },
   { qualityCheckKind: "integration", scnId: "SCN-BRK-001", status: "passed" },
   { qualityCheckKind: "unit", scnId: "SCN-BRK-001", status: "failed", broken: true },
+  {
+    qualityCheckKind: "fitness",
+    fitnessFunction: "pnpm lint",
+    scnId: "SCN-FBK-001",
+    step: "ci.yml:checks:Lint",
+    exists: false,
+    enforcedOverRealSource: false,
+    broken: true,
+  },
   { qualityCheckKind: "e2e", scnId: "SCN-GHO-001", status: "passed" },
   { qualityCheckKind: "integration", scnId: null, status: "passed" },
 ];
@@ -124,7 +134,7 @@ const table = (): ClaimReconciliationsTable => tableOf(scenarios, observations);
 
 const ciStepsOf = (claim: string): string => table().rowOf(claim).cell(CI_STEPS_COLUMN);
 
-describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling items, the CI steps behind each quality check it obligates or observes, each step once", () => {
+describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included", () => {
   it("ends the table with the CI steps column, after Reconciling items", () => {
     const header = table().header;
     expect(header.slice(-2)).toStrictEqual([RECONCILING_ITEMS_COLUMN, CI_STEPS_COLUMN]);
@@ -152,6 +162,10 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
 
   it("names the steps of a quality check the row observes only through broken evidence", () => {
     expect(ciStepsOf("SCN-BRK-001")).toBe("Test, Cucumber");
+  });
+
+  it("names the step of a fitness function the row observes only through broken evidence", () => {
+    expect(ciStepsOf("SCN-FBK-001")).toBe("ci.yml:checks:Lint");
   });
 
   it("names each fitness observation's step in evidence order, each once", () => {

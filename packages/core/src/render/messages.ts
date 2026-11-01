@@ -101,7 +101,7 @@ export enum CoreMessage {
   FitnessCiStep,
   RunnerLayerNamesNone,
   RunnerLayerUnnamed,
-  NoStepReadRunsIt,
+  NoStepCountedAsItsRunnerRunsIt,
   RunnerKeyNotALayer,
   ReconcilerStep,
   ReconcilerReconciles,
@@ -417,7 +417,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
   [CoreMessage.RunnerLayerNamesNone]: "no runner: the target names none.",
   [CoreMessage.RunnerLayerUnnamed]: "unnamed: the target has not said.",
-  [CoreMessage.NoStepReadRunsIt]: "no step read runs it.",
+  [CoreMessage.NoStepCountedAsItsRunnerRunsIt]: "no step counted as its runner runs it.",
   [CoreMessage.RunnerKeyNotALayer]: (key) =>
     `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,

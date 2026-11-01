@@ -7,7 +7,7 @@ const runnerCells = ({ qualityCheckKind, count, runner, ciSteps }: QualityCheckK
   if (typeof runner === "string") {
     return [
       cellSafe(runner),
-      ciSteps ? cellSafe(ciSteps.join(", ")) : CORE_MESSAGES[CoreMessage.NoStepReadRunsIt],
+      ciSteps ? cellSafe(ciSteps.join(", ")) : CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt],
     ];
   }
   if (qualityCheckKind === "fitness") {
