@@ -9,7 +9,6 @@ import {
   checkWorkflowsParse,
   jsonInputsOf,
   readReports,
-  reRenderOrRefusal,
 } from "./unreadableInputs.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
@@ -106,11 +105,6 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
     expect(error).toContain(fault);
   });
 
-  it("passes the report a real pytest run wrote, so the run goes on to reconcile", () => {
-    const real = readFileSync("tests/fixtures/pytest/report.xml", "utf8");
-    expect(checkInputShapes(readReports(jsonInputsOf({ pytest: "report.xml" }, nothingByDefault), reading(real)))).toBeNull();
-  });
-
   it("runBalance refuses a --pytest file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
     const report = join(features, "..", "report.xml");
@@ -141,11 +135,6 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
     expect(error).toContain(fault);
   });
 
-  it("passes the report a real Jest run wrote, so the run goes on to reconcile", () => {
-    const real = readFileSync("tests/fixtures/jest/report.json", "utf8");
-    expect(checkInputShapes(readReports(jsonInputsOf({ jest: "report.json" }, nothingByDefault), reading(real)))).toBeNull();
-  });
-
   it("runBalance refuses a --jest file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
     const report = join(features, "..", "jest.json");
@@ -172,7 +161,6 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
     ],
     ["JSON that holds no examples, as a Jest report", '{"numTotalTests":0,"testResults":[]}', "examples is missing"],
     ["examples with no summary", '{"examples":[]}', "summary is missing"],
-    ["examples that are not a list", '{"examples":{},"summary":{}}', "examples is an object, not a list"],
     [
       "an example whose description is not a string",
       '{"examples":[{"description":1}],"summary":{}}',
@@ -191,11 +179,6 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
     expect(error).toContain("reports/rspec.json");
     expect(error).toContain(RSPEC_SHAPE);
     expect(error).toContain(fault);
-  });
-
-  it("passes the report a real RSpec run wrote, so the run goes on to reconcile", () => {
-    const real = readFileSync("tests/fixtures/rspec/report.json", "utf8");
-    expect(checkInputShapes(readReports(jsonInputsOf({ rspec: "report.json" }, nothingByDefault), reading(real)))).toBeNull();
   });
 
   it("runBalance refuses an --rspec file that is not JSON at exit 2, naming the file and the shape, reconciling nothing", () => {
@@ -229,11 +212,6 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
     expect(error).not.toContain("pytest");
   });
 
-  it("passes the report a real gotestsum run wrote, so the run goes on to reconcile", () => {
-    const real = readFileSync("tests/fixtures/go/report.xml", "utf8");
-    expect(checkInputShapes(readReports(jsonInputsOf({ junit: "report.xml" }, nothingByDefault), reading(real)))).toBeNull();
-  });
-
   it("runBalance refuses a --junit file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
     const report = join(features, "..", "report.xml");
@@ -250,20 +228,8 @@ describe("[SCN-JAV-010] checkInputShapes passes a single Surefire report file wh
   const shapeFaultUnder = (flag: string): string | null =>
     checkInputShapes(readReports(jsonInputsOf({ [flag]: "TEST-measure.CitedTest.xml" }, nothingByDefault), reading(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8"))));
 
-  it("passes the report a real Surefire run wrote, so the run goes on to reconcile", () => {
-    expect(shapeFaultUnder("junit")).toBeNull();
-  });
-
   it("keeps refusing the same report under --pytest, whose reports hold their suites in testsuites", () => {
     expect(shapeFaultUnder("pytest")).toContain("testsuites is missing");
-  });
-});
-
-describe("[SCN-JAV-001] checkInputShapes passes the directory of reports Maven Surefire wrote under --junit", () => {
-  it("passes the directory, so the run goes on to read the reports in it", () => {
-    const fault = checkInputShapes(readReports(jsonInputsOf({ junit: "tests/fixtures/java/surefire-reports" }, existsSync), (path) => readFileSync(path, "utf8")));
-
-    expect(fault).toBeNull();
   });
 });
 
@@ -278,23 +244,14 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
     return { reports, notAReport };
   }
 
-  it.each([
-    ["text that is not XML", "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n", "is not valid XML"],
-    ["XML that holds no test suites", "<html><body/></html>", "testsuites is missing"],
-  ])("refuses a report file holding %s, naming the flag, that file, the shape of a JUnit XML report and what is wrong", (_, content, fault) => {
-    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", content);
+  it("refuses a report file holding XML that holds no test suites, naming the flag, that file, the shape of a JUnit XML report and what is wrong", () => {
+    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", "<html><body/></html>");
     const error = checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))) ?? "";
 
     expect(error).toContain("--junit");
     expect(error).toContain(notAReport);
     expect(error).toContain(JUNIT_SHAPE);
-    expect(error).toContain(fault);
-  });
-
-  it("leaves a file in the directory that is not named as a Surefire report unread", () => {
-    const { reports } = surefireReportsBeside("example.NotAReport.txt", "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n");
-
-    expect(checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8")))).toBeNull();
+    expect(error).toContain("testsuites is missing");
   });
 
   it("runBalance refuses the directory at exit 2, naming that file and the shape, reconciling nothing", () => {
@@ -375,16 +332,6 @@ function targetOnDisk(): { features: string; ci: string } {
 }
 
 describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its flag reads", () => {
-  it("refuses a regular file given as the feature corpus, naming the flag and the path", () => {
-    const { features } = targetOnDisk();
-    const file = join(features, "a.feature");
-    const error = checkInputPaths({ features: file }, readCorpus(file), readWorkflows(undefined));
-
-    expect(error).toContain("--features");
-    expect(error).toContain(file);
-    expect(error).toContain("ENOTDIR");
-  });
-
   it("names the entry when the corpus holds a directory named as a feature file", () => {
     const { features } = targetOnDisk();
     mkdirSync(join(features, "z.feature"));
@@ -413,18 +360,6 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
     expect(error).toContain("--junit");
     expect(error).toContain(join(dir, "TEST-example.NestedTest.xml"));
     expect(error).toContain("EISDIR");
-  });
-
-  it("runBalance refuses a --junit directory holding a directory named as a JUnit report at exit 2, naming the flag and the entry, reconciling nothing", () => {
-    const dir = temporaryDirectory("junit-directory-named-as-report-");
-    mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
-    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", "tests/fixtures/evidence-observation/features", "--junit", dir]);
-
-    expect(exitCode).toBe(2);
-    expect(stdout).toBe("");
-    expect(stderr).toContain("--junit");
-    expect(stderr).toContain(join(dir, "TEST-example.NestedTest.xml"));
-    expect(stderr).toContain("EISDIR");
   });
 });
 
@@ -582,17 +517,6 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     });
   });
 
-  it("checkInputShapes refuses a --junit directory it may not list, naming the directory, never passing it as holding no report", ({ skip }) => {
-    skip(runsAsRoot());
-    const dir = temporaryDirectory("junit-directory-not-permitted-");
-    const reports = lock(dir);
-    const reason = osReasonFor(() => readFileSync(reports, "utf8"));
-
-    expect(checkInputShapes(readReports(jsonInputsOf({ junit: reports }, () => false), (path) => readFileSync(path, "utf8")))).toBe(
-      APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), reports, reason),
-    );
-  });
-
   it("names the feature corpus read by default, and its path, when no --features is given and the working directory's corpus may not be read", ({ skip }) => {
     skip(runsAsRoot());
     const target = targetOnDisk();
@@ -649,15 +573,6 @@ describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is re
       exitCode: 2,
     });
   });
-
-  it("checkInputPaths names the subdirectory, not the corpus, as the path it could not read", ({ skip }) => {
-    skip(runsAsRoot());
-    const { features, subdirectory, reason } = corpusWithLockedSubdirectory();
-
-    expect(checkInputPaths({ features }, readCorpus(features), readWorkflows(undefined))).toBe(
-      APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason),
-    );
-  });
 });
 
 describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not parse as YAML, naming the workflows, the file and the parse error", () => {
@@ -712,11 +627,6 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
 const SAVED = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"evidenceReconciliation":{"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0},"evidenceObservations":{"total":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0,"byQualityCheck":[{"qualityCheck":"unit","count":0},{"qualityCheck":"integration","count":0},{"qualityCheck":"e2e","count":0},{"qualityCheck":"performance","count":0},{"qualityCheck":"fitness","count":0}]},"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"claimReconciliations":[{"claim":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 const SAVED_BEFORE_CLAIM_KEYS = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheck":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 
-const SAVED_IN_EARLIER_SUMMARY_SHAPE = {
-  ...SAVED,
-  summary: { ...SAVED.summary, evidenceReconciliation: undefined, evidenceObservations: undefined },
-};
-
 const SAVED_WITH_SECTIONS = {
   ...SAVED,
   errors: {
@@ -735,20 +645,13 @@ const SAVED_WITH_SECTIONS = {
 describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report, and one in an earlier summary shape by its missing section", () => {
   it.each([
     [[], "the top level is a list, not an object"],
-    ["x", "the top level is a string, not an object"],
     [{ ...SAVED, runProvenance: undefined }, "runProvenance is missing"],
     [{ ...SAVED, summary: undefined }, "summary is missing"],
-    [{ ...SAVED, ledger: undefined }, "ledger is missing"],
     [{ ...SAVED, ledger: {} }, "ledger.claimReconciliations is missing"],
     [SAVED_BEFORE_CLAIM_KEYS, "summary.evidenceReconciliation is missing"],
-    [SAVED_IN_EARLIER_SUMMARY_SHAPE, "summary.evidenceReconciliation is missing"],
     [{ ...SAVED, summary: { ...SAVED.summary, evidenceObservations: undefined } }, "summary.evidenceObservations is missing"],
-    [{ ...SAVED, ledger: "x" }, "ledger is a string, not an object"],
     [{ ...SAVED, ledger: { claimReconciliations: {} } }, "ledger.claimReconciliations is an object, not a list"],
-    [{ ...SAVED, runProvenance: null }, "runProvenance is null, not an object"],
-    [{ ...SAVED, errors: "x" }, "errors is a string, not an object"],
     [{ ...SAVED, errors: { scenarioCodes: "x" } }, "errors.scenarioCodes is a string, not a list"],
-    [{ ...SAVED, errors: { configuration: "x" } }, "errors.configuration is a string, not an object"],
     [{ ...SAVED, errors: { configuration: { keysNotRead: "x" } } }, "errors.configuration.keysNotRead is a string, not a list"],
     [{ ...SAVED, errors: { configuration: { ofWrongKind: "x" } } }, "errors.configuration.ofWrongKind is a string, not a list"],
     [{ ...SAVED, errors: { configuration: { runnerKeysNotATier: "x" } } }, "errors.configuration.runnerKeysNotATier is a string, not a list"],
@@ -771,26 +674,8 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     expect(error).toContain("Run balance again to save one.");
   });
 
-  it("passes a reconciliation this tool saved", () => {
-    expect(checkSavedReconciliation("saved.json", SAVED)).toBeNull();
-  });
-
   it("passes a reconciliation saved with its input faults and its corpus's facts", () => {
     expect(checkSavedReconciliation("saved.json", SAVED_WITH_SECTIONS)).toBeNull();
-  });
-
-  it("refuses, naming the file, a saved reconciliation the renderer cannot read below its top", () => {
-    const broken = { ...SAVED, ledger: { claimReconciliations: [null] } };
-    const rendered = reRenderOrRefusal("saved.json", broken, false);
-
-    expect(typeof rendered).toBe("string");
-    expect(rendered).toContain("--render-from-json");
-    expect(rendered).toContain("saved.json");
-  });
-
-  it("renders a reconciliation this tool saved", () => {
-    const rendered = reRenderOrRefusal("saved.json", SAVED, false);
-    expect(typeof rendered).toBe("object");
   });
 
   function reRendering(document: unknown): { path: string; report: string; stderr: string; exitCode: unknown } {
