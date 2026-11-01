@@ -1,0 +1,9 @@
+{
+  "path": ["packages", "tests/steps"],
+  "format": ["typescript"],
+  "pattern": "**/*.{test.ts,test-utils.ts,steps.ts}",
+  "ignore": ["**/node_modules/**", "**/dist/**", "**/fixtures/**"],
+  "minTokens": 50,
+  "minLines": 5,
+  "reporters": ["console"]
+}

@@ -12,6 +12,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test-clones": "jscpd --config .jscpd-tests.json --fail-on-empty --no-tips",
     "mutation": "stryker run",
     "cucumber": "pnpm build && cucumber-js",
     "build": "pnpm -r build",

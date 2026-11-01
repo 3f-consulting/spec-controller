@@ -20,7 +20,7 @@ Name a test file for the behaviour it proves, and put the code of the scenario i
 
 To see a scenario's tests fail before its code is written, run the *Red proof* workflow by hand on your branch, with the scenario's code and its evidence layer.
 
-Put a helper that more than one unit test file uses in a `*.test-utils.ts` file beside them. Do not copy it into each file. No check finds a copied helper; review does.
+Put a helper that more than one unit test file uses in a `*.test-utils.ts` file beside them. Do not copy it into each file. No check finds a copied helper; review does. To count the clones in the test, test-utils and step files, run `pnpm test-clones`. It reads its settings from [`.jscpd-tests.json`](.jscpd-tests.json), counts at jscpd's default thresholds, and exits non-zero only when it finds no file to read, whatever the count.
 
 Before a change that touches only [`doc/`](doc/), [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) or [`LICENSE`](LICENSE), run `pnpm docs:check`. It runs every documentation check and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installs.
 
