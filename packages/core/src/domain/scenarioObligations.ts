@@ -1,6 +1,6 @@
-import type { EvidenceObligation, QualityCheck, BehaviouralQualityCheck } from "./journal.js";
+import type { EvidenceObligation, QualityCheckKind, Layer } from "./journal.js";
 
-const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
+const PENDING_TAG_TO_QUALITY_CHECK_KIND: Record<string, QualityCheckKind> = {
   fitnesspending: "fitness",
   unitpending: "unit",
   integrationpending: "integration",
@@ -8,11 +8,11 @@ const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
   performancepending: "performance",
 };
 
-function pendingQualityCheck(tag: string): QualityCheck | null {
-  return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
+function pendingQualityCheckKind(tag: string): QualityCheckKind | null {
+  return PENDING_TAG_TO_QUALITY_CHECK_KIND[tag] ?? null;
 }
 
-const TAG_TO_QUALITY_CHECK: Record<string, BehaviouralQualityCheck> = {
+const TAG_TO_LAYER: Record<string, Layer> = {
   unit: "unit",
   integration: "integration",
   e2e: "e2e",
@@ -23,7 +23,7 @@ export const FITNESS_AXIS_TAG = "fitness";
 
 function convertedFitnessObligationsOf(tags: readonly string[]): EvidenceObligation[] {
   if (!tags.includes(FITNESS_AXIS_TAG)) return [];
-  return [{ qualityCheck: "fitness" }];
+  return [{ qualityCheckKind: "fitness" }];
 }
 
 export function obligationsRaisedBy(
@@ -31,19 +31,19 @@ export function obligationsRaisedBy(
   deferralTags: readonly string[]
 ): EvidenceObligation[] {
   const evidenceObligations: EvidenceObligation[] = [];
-  const seenQualityChecks = new Set<BehaviouralQualityCheck>();
-  const seenPending = new Set<QualityCheck>();
+  const seenLayers = new Set<Layer>();
+  const seenPending = new Set<QualityCheckKind>();
   for (const t of tags) {
-    const pendingCheck = pendingQualityCheck(t);
+    const pendingCheck = pendingQualityCheckKind(t);
     if (pendingCheck && !seenPending.has(pendingCheck)) {
       seenPending.add(pendingCheck);
-      evidenceObligations.push({ qualityCheck: pendingCheck, pending: true });
+      evidenceObligations.push({ qualityCheckKind: pendingCheck, pending: true });
       continue;
     }
-    const qualityCheck = TAG_TO_QUALITY_CHECK[t];
-    if (qualityCheck && !seenQualityChecks.has(qualityCheck)) {
-      seenQualityChecks.add(qualityCheck);
-      evidenceObligations.push({ qualityCheck });
+    const layer = TAG_TO_LAYER[t];
+    if (layer && !seenLayers.has(layer)) {
+      seenLayers.add(layer);
+      evidenceObligations.push({ qualityCheckKind: layer });
       continue;
     }
   }

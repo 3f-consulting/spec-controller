@@ -46,7 +46,7 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
 
   @unit
   Scenario: no-scn-code — an ordinary scenario carrying no @SCN tag
-    Given a scenario carrying a tier tag but no @SCN
+    Given a scenario carrying an evidence tag but no @SCN
     When it reconciles
     Then its obligation has no code for an observation to link to
 

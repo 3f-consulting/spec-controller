@@ -34,7 +34,7 @@ export function scenarioCodesOf(
 interface ConfigurationFaults {
   readonly keysNotRead?: readonly string[];
   readonly ofWrongKind?: readonly WrongKindEntry[];
-  readonly runnerKeysNotATier?: readonly string[];
+  readonly runnerKeysNotALayer?: readonly string[];
   readonly nonChecksMatchingNoStep?: readonly string[];
   readonly nonChecksNotAStepName?: readonly string[];
 }
@@ -51,7 +51,7 @@ export function errorsOf(
   const configuration: ConfigurationFaults = {
     ...nonEmpty("keysNotRead", summary.configurationKeysNotRead),
     ...nonEmpty("ofWrongKind", summary.configurationOfWrongKind),
-    ...nonEmpty("runnerKeysNotATier", summary.runnerKeysNotATier),
+    ...nonEmpty("runnerKeysNotALayer", summary.runnerKeysNotALayer),
     ...nonEmpty("nonChecksMatchingNoStep", summary.nonChecksMatchingNoStep),
     ...nonEmpty("nonChecksNotAStepName", summary.nonChecksNotAStepName),
   };
@@ -65,7 +65,7 @@ export function errorsOf(
 type ConfigurationFaultKey =
   | "configurationKeysNotRead"
   | "configurationOfWrongKind"
-  | "runnerKeysNotATier"
+  | "runnerKeysNotALayer"
   | "nonChecksMatchingNoStep"
   | "nonChecksNotAStepName";
 
@@ -74,7 +74,7 @@ type SummaryStatingNoFault = Omit<Summary, ConfigurationFaultKey>;
 export function summaryStatingNoFault({
   configurationKeysNotRead: _keysNotRead,
   configurationOfWrongKind: _ofWrongKind,
-  runnerKeysNotATier: _runnerKeysNotATier,
+  runnerKeysNotALayer: _runnerKeysNotALayer,
   nonChecksMatchingNoStep: _nonChecksMatchingNoStep,
   nonChecksNotAStepName: _nonChecksNotAStepName,
   ...summary

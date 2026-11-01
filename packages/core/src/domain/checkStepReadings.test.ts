@@ -44,7 +44,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
       (row) => row.claim === "SCN-CVT-002"
     );
     expect(failed?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
       exists: true,
@@ -95,7 +95,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
   it("counts TWO running fitness functions over a record holding five check steps", () => {
     const reconciliation = reconcile();
     expect(
-      reconciliation.summary.evidenceObservations?.byQualityCheck.find((entry) => entry.qualityCheck === "fitness")?.count
+      reconciliation.summary.evidenceObservations?.byQualityCheckKind.find((entry) => entry.qualityCheckKind === "fitness")?.count
     ).toBe(2);
     expect(reconciliation.ledger.claimReconciliations.filter((row) => row.kind === "unnamed-claim")).toEqual([]);
   });

@@ -10,19 +10,19 @@ import {
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-AAA-004", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-AAA-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheck: "fitness", fitnessFunction: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", fitnessFunction: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
-  { qualityCheck: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {
-    qualityCheck: "unit",
+    qualityCheckKind: "unit",
     scnId: null,
     status: "failed",
     broken: true,
@@ -42,11 +42,11 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   let mixed: Ledger;
   beforeEach(() => {
     mixed = reconcile(
-      [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
-        { qualityCheck: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed" },
       ]
     );
   });
@@ -62,12 +62,12 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
 });
 
 describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
-  const posted = { qualityCheck: "fitness", scnId: "SCN-AAA-001", exists: true } as const;
+  const posted = { qualityCheckKind: "fitness", scnId: "SCN-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
   const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
-    reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] }], observations)
+    reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
       .claimReconciliations.find((r) => r.claim === "SCN-AAA-001")!;
 
   it.each([

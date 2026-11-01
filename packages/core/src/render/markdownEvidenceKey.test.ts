@@ -22,10 +22,10 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
   beforeEach(() => {
     ledger = reconcile(
       [
-        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
   });
   const sectionOf = (md: string): string[] => {

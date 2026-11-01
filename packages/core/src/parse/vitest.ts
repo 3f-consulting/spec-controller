@@ -2,7 +2,7 @@ import type { EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { attributionOf } from "../domain/attribution.js";
-import { evidenceOfRunResult, fallbackQualityCheckOf, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackLayerOf, type RunResult } from "../domain/journal.js";
 
 export interface VitestJsonReport {
   readonly testResults?: ReadonlyArray<{
@@ -18,7 +18,7 @@ export interface VitestJsonReport {
 }
 
 export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
-  const qualityCheck = fallbackQualityCheckOf("test-results");
+  const layer = fallbackLayerOf("test-results");
   const results: EvidenceObservation[] = [];
   for (const file of report.testResults ?? []) {
     const locator = file.name && relativizeToRoot(file.name, root);
@@ -26,7 +26,7 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
     if (file.status === "failed" && assertions.length === 0) {
       const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
       results.push({
-        qualityCheck,
+        qualityCheckKind: layer,
         scnId: null,
         status: evidence.status,
         locator,
@@ -40,7 +40,7 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
       if (evidence === undefined) continue;
       const { scnId, severalCodes } = attributionOf(citingCodesOf(assertion));
       results.push({
-        qualityCheck,
+        qualityCheckKind: layer,
         scnId,
         status: evidence.status,
         locator,

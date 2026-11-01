@@ -40,8 +40,8 @@ const FEATURE = `Feature: pending items on their rows
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-PIR-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "unit", scnId: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-PIR-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
 ];
 
 function render(): string {
@@ -50,8 +50,8 @@ function render(): string {
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
 
-const pendingFor = (qualityCheck: string): string => `pending: ${qualityCheck}`;
-const missing = (qualityCheck: string): string => `${qualityCheck}: ${OUTCOME_DESCRIPTION.missing}`;
+const pendingFor = (qualityCheckKind: string): string => `pending: ${qualityCheckKind}`;
+const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.missing}`;
 
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no quality check carries the bare pending label, and its row still balances", () => {
@@ -69,7 +69,7 @@ describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliati
     expect(rowFor(render(), "SCN-PIR-001").items).not.toBe(rowFor(render(), "SCN-PIR-002").items);
   });
 
-  it("two Pending Items on one row are each labelled, joined in the order their tiers were tagged", () => {
+  it("two Pending Items on one row are each labelled, joined in the order their layers were tagged", () => {
     expect(rowFor(render(), "SCN-PIR-003")).toEqual({
       verdict: "balanced",
       items: [pendingFor("unit"), pendingFor("integration")].join("; "),

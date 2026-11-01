@@ -27,23 +27,23 @@ function totalOf(md: string, subject: string): number {
 describe("[SCN-RPT-071] the evidence reconciliation section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table", () => {
   it("prints the four definitions as a list between the heading and the table, the same on a one-scenario ledger and on one holding every kind of row, with no count and nothing bold", () => {
     const small = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }],
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" }],
     );
     const large = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }] },
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
         { scnId: "SCN-C", evidenceObligations: [] },
-        { scnId: "SCN-S", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-S", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }] },
+        { scnId: "SCN-S", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-S", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
       ],
       [
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-B", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-Z", status: "failed" },
-        { qualityCheck: "unit", scnId: null, status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-S", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-B", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-Z", status: "failed" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-S", status: "passed" },
       ],
       ["fixture.feature : a scenario with no code"],
     );
@@ -56,12 +56,12 @@ describe("[SCN-RPT-071] the evidence reconciliation section says what a Claim Re
     const unnamedObservations = (unnamed?.qualityCheckReconciliations ?? []).flatMap((q) => q.evidenceObservations ?? []);
 
     expect(row("SCN-A")?.verdict).toBe("balanced");
-    expect(row("SCN-B")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    expect(row("SCN-B")?.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
     expect(outcomes("SCN-C")).toEqual(["both-missing"]);
     expect(row("SCN-Z")?.kind).toBe("phantom-claim");
     expect(unnamedObservations.map((o) => o.scnId)).toEqual([null, "SCN-S"]);
     expect(unnamedObservations[1]?.notes).toEqual([{ kind: "shared-scn-code", code: "SCN-S" }]);
-    expect(sharers.map((r) => r.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome]))).toEqual([
+    expect(sharers.map((r) => r.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome]))).toEqual([
       [["unit", "duplicate-scn-code"]],
       [["unit", "duplicate-scn-code"], ["integration", "duplicate-scn-code"]],
     ]);
@@ -81,10 +81,10 @@ describe("[SCN-RPT-071] the evidence reconciliation section says what a Claim Re
 
   it("prints, for the worked example its Reconciliation line definition states, one Claim Reconciliation and two Reconciliation lines", () => {
     const ledger = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
       ],
     );
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);

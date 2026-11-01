@@ -28,9 +28,9 @@ jobs:
 `;
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheck: "e2e", scnId: "SCN-FIX-002", status: "passed" },
-  { qualityCheck: "performance", scnId: "SCN-FIX-003", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "e2e", scnId: "SCN-FIX-002", status: "passed" },
+  { qualityCheckKind: "performance", scnId: "SCN-FIX-003", status: "passed" },
 ];
 
 function rowsOf(specController: { runners?: unknown }): Map<string, string[]> {
@@ -85,7 +85,7 @@ describe("[SCN-RPT-051] a behavioural quality check whose runner the target does
     expect(rowsOf({}).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
   });
 
-  it("says the target has not said, with a blank CI step cell, when its runners block holds only a key that is not a tier", () => {
+  it("says the target has not said, with a blank CI step cell, when its runners block holds only a key that is not a layer", () => {
     expect(rowsByCheck({ lint: "eslint" }).get("unit")).toStrictEqual([
       "unit",
       "1",
@@ -94,7 +94,7 @@ describe("[SCN-RPT-051] a behavioural quality check whose runner the target does
     ]);
   });
 
-  it("says the target has not said, with a blank CI step cell, when it gives a tier a value of the wrong kind", () => {
+  it("says the target has not said, with a blank CI step cell, when it gives a layer a value of the wrong kind", () => {
     expect(rowsByCheck({ unit: 5 }).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
   });
 });

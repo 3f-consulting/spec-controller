@@ -36,9 +36,9 @@ let census: EvidenceObligations;
 beforeEach(() => {
   ledger = reconcile(
     [
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-OWN-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-OWN-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ],
     []
   );
@@ -155,8 +155,8 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
       er(
         reconcile(
           [
-            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
-            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
+            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
+            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
           ],
           []
         )

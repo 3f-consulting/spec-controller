@@ -63,7 +63,7 @@ describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when
       configuration: {
         keysNotRead: ["zzz"],
         ofWrongKind: [{ entry: "specController.deferralTags", is: "object", reads: "list" }],
-        runnerKeysNotATier: ["lint"],
+        runnerKeysNotALayer: ["lint"],
         nonChecksMatchingNoStep: ["ci.yml:quality:Deploy"],
       },
     });

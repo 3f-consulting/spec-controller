@@ -11,18 +11,18 @@ import type {
 describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pending Items does not fail", () => {
   it("is balanced over a WHOLE run whose only exceptions are Pending Items — one-sided, run-neutral", () => {
     const scenarios: Scenario[] = [
-      { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
-      { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+      { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
+      { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
       {
         scnId: "SCN-PDR-003",
         evidenceObligations: [
-          { qualityCheck: "unit" },
-          { qualityCheck: "integration", pending: true },
+          { qualityCheckKind: "unit" },
+          { qualityCheckKind: "integration", pending: true },
         ],
       },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-PDR-003", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-PDR-003", status: "passed" },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 

@@ -42,13 +42,13 @@ const ONE_DEFERRED = `
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
-  { qualityCheck: "unit", scnId: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "unit", scnId: "SCN-ERS-003", status: "failed", locator: "src/c.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-ERS-003", status: "failed", locator: "src/c.test.ts" },
 ];
 
 const DEFERRED_OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-ERS-004", status: "passed", locator: "src/d.test.ts" },
+  { qualityCheckKind: "unit", scnId: "SCN-ERS-004", status: "passed", locator: "src/d.test.ts" },
 ];
 
 function render(feature: string, observations: EvidenceObservation[] = OBSERVATIONS): string {
@@ -70,7 +70,7 @@ const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
 
 function expectedTable(
   scenarios: { total: number; balanced: number; outOfBalance: number },
-  qualityCheckReconciliations: { total: number; satisfied: number },
+  reconciliationLines: { total: number; satisfied: number },
   leafCounts: Partial<Record<Outcome, number>>,
   missingDetail: string
 ): string[] {
@@ -79,7 +79,7 @@ function expectedTable(
     CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
     "",
     `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationClaimReconciliationTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationReconciliationLineTerm]}`,
     `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObligationTerm]}`,
     `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObservationTerm]}`,
     "",
@@ -99,9 +99,9 @@ function expectedTable(
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.QualityCheckReconciliationSubject],
-      String(qualityCheckReconciliations.total),
-      String(qualityCheckReconciliations.satisfied),
+      CORE_MESSAGES[CoreMessage.ReconciliationLineSubject],
+      String(reconciliationLines.total),
+      String(reconciliationLines.satisfied),
       String(outOfBalance),
       "",
     ]),
@@ -132,7 +132,7 @@ describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Item
     expect(sectionLines(render(SETTLED))).toEqual([...settledTable, ""]);
   });
 
-  it("with one Pending Item: a blank line, the tally carrying 1 on its own line, then a blank line; the counts are those of the settled tiers", () => {
+  it("with one Pending Item: a blank line, the tally carrying 1 on its own line, then a blank line; the counts are those of the settled layers", () => {
     expect(sectionLines(render(SETTLED + ONE_DEFERRED, [...OBSERVATIONS, ...DEFERRED_OBSERVATIONS]))).toEqual([
       ...expectedTable(
         { total: 5, balanced: 2, outOfBalance: 3 },

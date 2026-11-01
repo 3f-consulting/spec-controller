@@ -36,7 +36,7 @@ describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an e
 
   it("posts one observation citing no scenario, with a note of both codes", () => {
     expect(observationOf("[SCN-AAA-001] [SCN-AAA-002] two", "group [SCN-AAA-001] [SCN-AAA-002] two")).toEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: null,
       status: "passed",
       locator: "spec/a_spec.rb",
@@ -88,7 +88,7 @@ describe("[SCN-RSP-006] parseRspecEvidenceObservations posts a failing observati
     };
 
     expect(parseRspecEvidenceObservations({ examples: [fixedPending] })).toEqual([{
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: "SCN-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
@@ -112,7 +112,7 @@ describe("[SCN-RSP-007] parseRspecEvidenceObservations posts a failing observati
     };
 
     expect(parseRspecEvidenceObservations({ examples: [stoppedByHook] })).toEqual([{
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: "SCN-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
@@ -133,7 +133,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [message] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "failed", locator, broken: true, message },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", locator, broken: true, message },
     ]);
   });
 
@@ -151,8 +151,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const report: RspecJsonReport = { examples: [passing], summary: { errors_outside_of_examples_count: 1 }, messages: [syntaxError] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
-      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
     ]);
   });
 
@@ -171,8 +171,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: suiteHook },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: suiteHook },
     ]);
   });
 
@@ -182,8 +182,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const observations = parseRspecEvidenceObservations(report);
 
     expect(observations).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: undefined },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: undefined },
     ]);
     expect(observations[1]?.message).toBeUndefined();
   });
@@ -198,8 +198,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheck: "unit", scnId: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
     ]);
   });
 

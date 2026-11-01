@@ -62,7 +62,7 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
 
   it("posts one passing observation per invocation, each citing that scenario and located at its own invocation", () => {
     expect(observationsOf(scenario()!).map(postedOf)).toEqual([1, 2].map((n) => ({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: "SCN-JVF-007",
       status: "passed",
       locator: `example.CitedTest::parameterised(int)[SCN-JVF-007] a parameterised test cites its scenario with ${n}`,
@@ -70,7 +70,7 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
   });
 
   it("reconciles that scenario satisfied", () => {
-    expect(scenario()?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied", "satisfied"]);
+    expect(scenario()?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit")?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied", "satisfied"]);
   });
 });
 

@@ -11,19 +11,19 @@ import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCo
 
 describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted", () => {
   const rmd005Scenarios: Scenario[] = [
-    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }] },
-    { scnId: "SCN-RMD-012", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
+    { scnId: "SCN-RMD-012", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const rmd005Observations: EvidenceObservation[] = [
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-RMD-002", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
-    { qualityCheck: "integration", scnId: null, status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-RMD-002", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "integration", scnId: null, status: "passed" },
   ];
   const evidenceReconciliation = {
     claimReconciliations: { total: 5, balanced: 2, outOfBalance: 3, phantomClaim: 1, unnamedClaim: 1 },
-    qualityCheckReconciliations: {
+    reconciliationLines: {
       total: 5,
       byOutcome: {
         satisfied: 2,
@@ -39,7 +39,7 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
         "both-missing": 0,
       },
       outOfBalance: 3,
-      missingByQualityCheck: [{ subject: "unit", count: 1 }],
+      missingByQualityCheckKind: [{ subject: "unit", count: 1 }],
     },
     pending: 1,
   };
@@ -49,12 +49,12 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
     rmd005Balance = reconcile(rmd005Scenarios, rmd005Observations);
     lintBalance = reconcile(
       [
-        { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "unit" }] },
-        { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
+        { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }, { qualityCheckKind: "unit" }] },
+        { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
       ],
     );
   });
@@ -78,18 +78,18 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
 
 describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-XYZ-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "integration" }] },
+    { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { scnId: "SCN-XYZ-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-    { qualityCheck: "integration", scnId: "SCN-LDG-007", status: "failed" },
-    { qualityCheck: "fitness", fitnessFunction: "lint:guard", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
-    { qualityCheck: "unit", scnId: null, status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" },
+    { qualityCheckKind: "integration", scnId: "SCN-LDG-007", status: "failed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:guard", scnId: "SCN-LNT-002", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "unit", scnId: null, status: "passed" },
   ];
   const untaggedScenarios = [
     { feature: "ledger.feature", scenario: "a ledger scenario with no code" },
@@ -154,7 +154,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
     "    Scenario: a fixture scenario",
   ];
   const brokenFitness: EvidenceObservation = {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:rmd",
     scnId: "SCN-RMD-008",
     exists: false,
@@ -171,21 +171,21 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
           qualityCheckReconciliations: Array<Record<string, unknown>>;
         }>;
       };
-      summary: { evidenceReconciliation: { qualityCheckReconciliations: Record<string, unknown> } };
+      summary: { evidenceReconciliation: { reconciliationLines: Record<string, unknown> } };
     };
 
-  it("carries a fitness reconciliation keyed by qualityCheck 'fitness' alone, its fitness function named only on its observation", () => {
+  it("carries a fitness reconciliation keyed by qualityCheckKind 'fitness' alone, its fitness function named only on its observation", () => {
     const fitness = report()
       .ledger.claimReconciliations.flatMap((s) => s.qualityCheckReconciliations)
-      .filter((o) => o.qualityCheck === "fitness");
+      .filter((o) => o.qualityCheckKind === "fitness");
     expect(fitness).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         outcome: "missing",
-        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObligation: { qualityCheckKind: "fitness" },
         evidenceObservations: [
           {
-            qualityCheck: "fitness",
+            qualityCheckKind: "fitness",
             fitnessFunction: "lint:rmd",
             scnId: "SCN-RMD-008",
             exists: false,
@@ -200,9 +200,9 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
   });
 
   it("counts the missing Reconciliation lines by quality check, an obligation answered only by a broken observation once", () => {
-    const totals = report().summary.evidenceReconciliation.qualityCheckReconciliations;
+    const totals = report().summary.evidenceReconciliation.reconciliationLines;
     expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
-    expect(totals.missingByQualityCheck).toEqual([
+    expect(totals.missingByQualityCheckKind).toEqual([
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
     ]);

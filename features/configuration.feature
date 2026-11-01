@@ -5,7 +5,7 @@ Feature: balance reads the specController block of the target's package.json
 
   Rule: the runner block is keyed by the four tiers and no other
 
-    The tiers are unit, integration, e2e and performance. Any other key is named on the report,
+    The layers are unit, integration, e2e and performance. Any other key is named on the report,
     excludes nothing, and does not stop the run. A check whose script that key names is still
     reported as a fitness function.
 

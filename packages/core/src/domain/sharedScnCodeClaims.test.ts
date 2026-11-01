@@ -8,26 +8,26 @@ const CODE = "SCN-DUP-001";
 
 const letIn: Scenario = {
   scnId: CODE,
-  evidenceObligations: [{ qualityCheck: "unit" }],
+  evidenceObligations: [{ qualityCheckKind: "unit" }],
   feature: "features/login.feature",
   title: "a user with the right password is let in",
 };
 const turnedAway: Scenario = {
   scnId: CODE,
-  evidenceObligations: [{ qualityCheck: "unit" }],
+  evidenceObligations: [{ qualityCheckKind: "unit" }],
   feature: "features/login.feature",
   title: "a user with the wrong password is turned away",
 };
 const lockedOut: Scenario = {
   scnId: CODE,
-  evidenceObligations: [{ qualityCheck: "unit" }],
+  evidenceObligations: [{ qualityCheckKind: "unit" }],
   feature: "features/lockout.feature",
   title: "a user who fails three times is locked out",
 };
 
-const passing: EvidenceObservation = { qualityCheck: "unit", scnId: CODE, status: "passed", locator: "tests/login.test.ts" };
+const passing: EvidenceObservation = { qualityCheckKind: "unit", scnId: CODE, status: "passed", locator: "tests/login.test.ts" };
 const broken: EvidenceObservation = {
-  qualityCheck: "unit", scnId: CODE, status: "failed", broken: true, locator: "tests/login-broken.test.ts",
+  qualityCheckKind: "unit", scnId: CODE, status: "failed", broken: true, locator: "tests/login-broken.test.ts",
 };
 
 const rowsFor = (rows: readonly ClaimReconciliation[], claim: string) => rows.filter((row) => row.claim === claim);
@@ -44,8 +44,8 @@ describe("[SCN-LDG-046] two scenarios sharing one @SCN code are two claims, and 
   it("reconciles each sharer's own obligation duplicate-scn-code, naming the scenario that row reconciles", () => {
     const rows = reconcile([letIn, turnedAway], []).claimReconciliations;
     expect(rowsFor(rows, CODE).map((row) => row.qualityCheckReconciliations)).toEqual([
-      [{ qualityCheck: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "unit" }, scenario: { feature: "features/login.feature", title: "a user with the right password is let in" } }],
-      [{ qualityCheck: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "unit" }, scenario: { feature: "features/login.feature", title: "a user with the wrong password is turned away" } }],
+      [{ qualityCheckKind: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "unit" }, scenario: { feature: "features/login.feature", title: "a user with the right password is let in" } }],
+      [{ qualityCheckKind: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "unit" }, scenario: { feature: "features/login.feature", title: "a user with the wrong password is turned away" } }],
     ]);
   });
 
@@ -63,12 +63,12 @@ describe("[SCN-LDG-046] two scenarios sharing one @SCN code are two claims, and 
     const unnamed = rowsFor(rows, UNNAMED_CLAIM_ID);
     expect(unnamed.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf))).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         outcome: "broken",
         evidenceObservation: { ...broken, notes: [{ kind: "shared-scn-code", code: CODE }], outcome: "broken" },
       },
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         outcome: "cites-no-scenario",
         evidenceObservation: { ...passing, notes: [{ kind: "shared-scn-code", code: CODE }], outcome: "cites-no-scenario" },
       },

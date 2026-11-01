@@ -11,9 +11,9 @@ function savedReport(): RenderInput {
 describe("[SCN-RMD-025] the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it", () => {
   it("reads a pipeline with a reconciler, a non-check, a runner and plumbing, each counted and named in the step accounting", () => {
     const accounting = savedReport().summary.stepAccounting!;
-    expect(accounting.total).toMatchObject({ runners: 1, reconciler: 2, excluded: 3 });
+    expect(accounting.total).toMatchObject({ runners: 1, reconciler: 2, nonChecks: 3 });
     expect(accounting.total.plumbing).toBeGreaterThan(0);
-    expect(Object.keys(accounting.steps).sort()).toStrictEqual(["excluded", "plumbing", "reconciler", "runners"]);
+    expect(Object.keys(accounting.steps).sort()).toStrictEqual(["nonChecks", "plumbing", "reconciler", "runners"]);
   });
 
   it("carries no discovery scope, reconciler steps or excluded steps on the summary", () => {

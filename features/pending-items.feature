@@ -1,10 +1,10 @@
 @PND
 Feature: A pending evidence obligation raises a Pending Item
 
-  A `<quality-check>pending` tag defers that quality check's evidence obligation to later work.
+  A `<quality-check>pending` tag defers that kind of quality check's evidence obligation to later work.
   The scenario still raises the obligation, marked pending, and the ledger shows it as a one-sided
   Pending Item, tallied apart from the verdict, rather than as missing evidence. The suffix is read
-  apart from the bare tier tag, so `@integrationpending` is not `@integration`. Only the five
+  apart from the bare evidence tag, so `@integrationpending` is not `@integration`. Only the five
   `<quality-check>pending` tags carry this meaning: an unknown `<x>pending` tag is ignored, like any
   tag the tool does not recognise. A deferral tag, one of the built-in five (`@wip`, `@ignore`,
   `@skip`, `@todo`, `@pending`) or one the project configures, defers every obligation on its

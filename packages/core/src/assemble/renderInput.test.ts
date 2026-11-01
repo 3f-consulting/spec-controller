@@ -86,7 +86,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(Object.keys(errors.configuration)).toEqual([
       "keysNotRead",
       "ofWrongKind",
-      "runnerKeysNotATier",
+      "runnerKeysNotALayer",
       "nonChecksMatchingNoStep",
     ]);
     expect(report.scenarioCodes).toHaveProperty("sharedScnCodes");
@@ -96,7 +96,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     for (const oldPlace of [
       "configurationKeysNotRead",
       "configurationOfWrongKind",
-      "runnerKeysNotATier",
+      "runnerKeysNotALayer",
       "nonChecksMatchingNoStep",
     ]) {
       expect(report.summary).not.toHaveProperty(oldPlace);
@@ -112,13 +112,13 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
 
   it("materialises the summary totals from the balance", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
-    const { claimReconciliations, qualityCheckReconciliations } = report.summary.evidenceReconciliation;
+    const { claimReconciliations, reconciliationLines } = report.summary.evidenceReconciliation;
     expect(claimReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantomClaim: 0, unnamedClaim: 0 });
-    expect(qualityCheckReconciliations.total).toBe(3);
-    expect(qualityCheckReconciliations.outOfBalance).toBe(2);
-    expect(qualityCheckReconciliations.byOutcome["satisfied"]).toBe(1);
-    expect(qualityCheckReconciliations.byOutcome["missing"]).toBe(2);
-    expect(qualityCheckReconciliations.missingByQualityCheck).toEqual([
+    expect(reconciliationLines.total).toBe(3);
+    expect(reconciliationLines.outOfBalance).toBe(2);
+    expect(reconciliationLines.byOutcome["satisfied"]).toBe(1);
+    expect(reconciliationLines.byOutcome["missing"]).toBe(2);
+    expect(reconciliationLines.missingByQualityCheckKind).toEqual([
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },
     ]);
@@ -126,19 +126,19 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   const twoBalancedScenarios: Scenario[] = [
-    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-    { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const twoPassingTestsAndAnUncitedCheck: EvidenceObservation[] = [
-    { qualityCheck: "unit", scnId: "SCN-TGT-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-TGT-002", status: "passed" },
-    { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "unit", scnId: "SCN-TGT-001", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-TGT-002", status: "passed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
 
   it("counts the phantom claim's reconciliation in the summary totals too — a phantom claim is out-of-balance, not a bucket apart", () => {
     const ledgerWithPhantomClaimRow: Ledger = reconcile(twoBalancedScenarios, [
       ...twoPassingTestsAndAnUncitedCheck,
-      { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(ledgerWithPhantomClaimRow), ctx);
     const t = report.summary.evidenceReconciliation.claimReconciliations;
@@ -200,9 +200,9 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
     const ledger = reconcile(
       parseScenarios(feature),
       [
-        { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
-        { qualityCheck: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed" },
       ],
       [untaggedScenarioId({ feature: "alpha.feature", scenario: "an untagged scenario" })]
     );
@@ -219,22 +219,22 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
 
 describe("[SCN-RMD-003] the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
   const rmd003Scenarios: Scenario[] = [
-    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const rmd003Observations: EvidenceObservation[] = [
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
-    { qualityCheck: "integration", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
-    { qualityCheck: "integration", scnId: null, status: "passed" },
-    { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", fitnessFunction: "lint:qux", scnId: "SCN-RMD-011", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
+    { qualityCheckKind: "integration", scnId: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "integration", scnId: null, status: "passed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:qux", scnId: "SCN-RMD-011", exists: false, enforcedOverRealSource: false },
     {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "lint:quux",
       scnId: "SCN-RMD-010",
       exists: true,
@@ -242,19 +242,19 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
       broken: true,
       locator: ".github/workflows/ci.yml",
     },
-    { qualityCheck: "fitness", fitnessFunction: "lint:baz", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
   const evidenceObservations = {
     total: 9,
     onScenario: 6,
     onPhantomClaim: 1,
     onUnnamedClaim: 2,
-    byQualityCheck: [
-      { qualityCheck: "unit", count: 4 },
-      { qualityCheck: "integration", count: 2 },
-      { qualityCheck: "e2e", count: 0 },
-      { qualityCheck: "performance", count: 0 },
-      { qualityCheck: "fitness", count: 3 },
+    byQualityCheckKind: [
+      { qualityCheckKind: "unit", count: 4 },
+      { qualityCheckKind: "integration", count: 2 },
+      { qualityCheckKind: "e2e", count: 0 },
+      { qualityCheckKind: "performance", count: 0 },
+      { qualityCheckKind: "fitness", count: 3 },
     ],
   };
   let rmd003Balance: Ledger;
@@ -272,7 +272,7 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
     const persisted = parsed.summary.evidenceObservations;
     expect(persisted).toEqual(evidenceObservations);
     expect(parsed).not.toHaveProperty("evidenceObservations");
-    expect(persisted.byQualityCheck.reduce((n: number, { count }: { count: number }) => n + count, 0)).toBe(persisted.total);
+    expect(persisted.byQualityCheckKind.reduce((n: number, { count }: { count: number }) => n + count, 0)).toBe(persisted.total);
     expect(persisted.onScenario + persisted.onPhantomClaim + persisted.onUnnamedClaim).toBe(persisted.total);
   });
 

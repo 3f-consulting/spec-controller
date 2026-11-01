@@ -43,7 +43,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     ];
     const cucumberObs = parseCucumberEvidenceObservations(cucumberReport);
     expect(cucumberObs).toEqual([
-      { qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" },
+      { qualityCheckKind: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" },
     ]);
 
     const balance = reconcile(scenarios, [...vitestObs, ...cucumberObs]);
@@ -53,8 +53,8 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     expect(reconcilingItemsOf(scenario!)).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheck: "unit", evidenceObligation: { qualityCheck: "unit" }, evidenceObservations: [{ qualityCheck: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit tier", outcome: "satisfied" }] },
-        { qualityCheck: "e2e", evidenceObligation: { qualityCheck: "e2e" }, evidenceObservations: [{ qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature", outcome: "satisfied" }] },
+        { qualityCheckKind: "unit", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservations: [{ qualityCheckKind: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit tier", outcome: "satisfied" }] },
+        { qualityCheckKind: "e2e", evidenceObligation: { qualityCheckKind: "e2e" }, evidenceObservations: [{ qualityCheckKind: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature", outcome: "satisfied" }] },
       ])
     );
     expect(scenario?.qualityCheckReconciliations).toHaveLength(2);

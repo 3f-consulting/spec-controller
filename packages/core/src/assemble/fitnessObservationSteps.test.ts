@@ -80,7 +80,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
   it("names the workflow, job and step of the candidate step a workflow observation was read from", () => {
     expect(observedFitness([lintCi], [])).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
@@ -93,7 +93,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
   it("names, over two workflows, each observation's own workflow and job", () => {
     expect(observedFitness([lintCi, nightlyCi], ["ci.yml", "nightly.yml"])).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "audit",
         exists: true,
         enforcedOverRealSource: true,
@@ -101,7 +101,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
         step: "nightly.yml:sweep:Audit",
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
@@ -116,7 +116,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       observedFitness([recordedCi], ["ci.yml"], { "SCN-FIX-002": { outcome: "success", conclusion: "success" } })
     ).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
@@ -124,7 +124,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
         step: "ci.yml:quality:Lint",
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-002",
         scnId: "SCN-FIX-002",
         exists: true,
@@ -141,7 +141,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       observedFitness([recordedCi], ["ci.yml"], { "SCN-FIX-003": { outcome: "failure", conclusion: "failure" } })
     ).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
@@ -149,7 +149,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
         step: "ci.yml:quality:Lint",
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-003",
         scnId: "SCN-FIX-003",
         exists: true,
@@ -165,7 +165,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       observedFitness([twiceRecordedCi], ["ci.yml"], { "SCN-FIX-002": { outcome: "success", conclusion: "success" } })
     ).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-002",
         scnId: "SCN-FIX-002",
         exists: true,

@@ -10,8 +10,8 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-RPT-001", status: "passed" }],
+    [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", scnId: "SCN-RPT-001", status: "passed" }],
   );
 });
 
@@ -57,15 +57,15 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
   beforeEach(() => {
     spanning = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-        { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-        { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
-        { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "integration", scnId: "SCN-A", status: "failed" },
+        { qualityCheckKind: "unit", scnId: "SCN-C", status: "passed" },
+        { qualityCheckKind: "integration", scnId: "SCN-C", status: "passed" },
       ]
     );
   });
@@ -92,7 +92,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
       [
         {
           scnId: "SCN-LNT-099",
-          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "fitness" }],
+          evidenceObligations: [{ qualityCheckKind: "integration" }, { qualityCheckKind: "fitness" }],
         },
       ],
       []
@@ -109,16 +109,16 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
   beforeEach(() => {
     threeScenarioRowsPlusUnnamedClaimRow = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-B", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
-        { qualityCheck: "unit", scnId: null, status: "passed" },
-        { qualityCheck: "integration", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-B", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "integration", scnId: null, status: "passed" },
       ]
     );
   });

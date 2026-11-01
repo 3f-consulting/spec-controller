@@ -68,7 +68,7 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       { feature: "sample.feature", scenario: "an untagged outline with no anchor" },
     ];
     const ledger = reconcile(
-      [{ scnId: "SCN-UNT-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ scnId: "SCN-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [],
       untagged.map((u) => `${u.feature} : ${u.scenario}`),
     );

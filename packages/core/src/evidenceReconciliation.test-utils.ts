@@ -135,7 +135,7 @@ jobs:
         run: pnpm audit --audit-level=high
 `;
 
-export const discoveryScopePackageJson = {
+export const byJobPackageJson = {
   scripts: {
     test: "vitest run",
     "lint:circular": "madge --circular",

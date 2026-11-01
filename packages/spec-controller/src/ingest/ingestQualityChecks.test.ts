@@ -31,11 +31,11 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
       }, resolveTargetRoot({ features: join(root, "features") }));
       const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.claim === scnId);
 
-      expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
+      expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheckKind: "unit" }]);
       expect(reconcilingItemsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
       expect(reconcilingItemsOf(scenario("SCN-DFR-002")!)).toEqual([
-        { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
+        { qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } },
       ]);
     }
   );
@@ -52,17 +52,17 @@ describe("[SCN-CLI-088] a community deferral tag raises the Pending Item, with n
       }, resolveTargetRoot({ features: join(root, "features") }));
       const scenario = (scnId: string) => balance.ledger.claimReconciliations.find((s) => s.claim === scnId);
 
-      expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+      expect(scenario("SCN-DFR-001")?.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
       expect(reconcilingItemsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(observationsOf(scenario("SCN-DFR-001")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.pendingItems).toEqual([]);
       expect(reconcilingItemsOf(scenario("SCN-DFR-002")!)).toEqual([]);
       expect(scenario("SCN-DFR-002")?.qualityCheckReconciliations).toEqual([
         {
-          qualityCheck: "integration",
-          evidenceObligation: { qualityCheck: "integration" },
+          qualityCheckKind: "integration",
+          evidenceObligation: { qualityCheckKind: "integration" },
           evidenceObservations: [{
-            qualityCheck: "integration",
+            qualityCheckKind: "integration",
             scnId: "SCN-DFR-002",
             status: "passed",
             locator: "features/deferral.feature",

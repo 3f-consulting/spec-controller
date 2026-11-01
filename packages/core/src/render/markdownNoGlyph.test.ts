@@ -9,7 +9,7 @@ import { symbolCharactersIn } from "./symbolCharacter.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable, reconcilingItemsOf, type ClaimRow } from "./claimReconciliationsTable.test-utils.js";
 
-const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"];
+const QUALITY_CHECK_KINDS = ["fitness", "unit", "integration", "e2e", "performance"];
 const UNTAGGED = "features/checkout.feature : a scenario with no code";
 
 function ledgerRows(md: string): readonly ClaimRow[] {
@@ -19,7 +19,7 @@ function ledgerRows(md: string): readonly ClaimRow[] {
 function readsInWords(item: string): boolean {
   const sentence = (text: string): boolean => Object.values(OUTCOME_DESCRIPTION).some((s) => text.startsWith(s));
   const colon = item.indexOf(": ");
-  return sentence(item) || (colon > 0 && QUALITY_CHECKS.includes(item.slice(0, colon)) && sentence(item.slice(colon + 2)));
+  return sentence(item) || (colon > 0 && QUALITY_CHECK_KINDS.includes(item.slice(0, colon)) && sentence(item.slice(colon + 2)));
 }
 
 describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either", () => {
@@ -27,23 +27,23 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   beforeEach(() => {
     everyOutcome = reconcile(
       [
-        { scnId: "SCN-NGL-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }] },
-        { scnId: "SCN-NGL-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-NGL-003", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }] },
+        { scnId: "SCN-NGL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+        { scnId: "SCN-NGL-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-NGL-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
         { scnId: "SCN-NGL-004", evidenceObligations: [] },
-        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheck: "unit", scnId: "SCN-NGL-001", status: "passed", locator: "src/a.test.ts" },
-        { qualityCheck: "fitness", fitnessFunction: "lint:sound", scnId: "SCN-NGL-001", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "unit", scnId: "SCN-NGL-002", status: "failed", locator: "src/b.test.ts" },
-        { qualityCheck: "integration", scnId: "SCN-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
-        { qualityCheck: "fitness", fitnessFunction: "lint:fake", scnId: "SCN-NGL-003", exists: true, enforcedOverRealSource: false },
-        { qualityCheck: "unit", scnId: "SCN-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
-        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
-        { qualityCheck: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-        { qualityCheck: "unit", scnId: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
+        { qualityCheckKind: "unit", scnId: "SCN-NGL-001", status: "passed", locator: "src/a.test.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", scnId: "SCN-NGL-001", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "unit", scnId: "SCN-NGL-002", status: "failed", locator: "src/b.test.ts" },
+        { qualityCheckKind: "integration", scnId: "SCN-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", scnId: "SCN-NGL-003", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", scnId: "SCN-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "unit", scnId: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
       ],
       [UNTAGGED],
     );

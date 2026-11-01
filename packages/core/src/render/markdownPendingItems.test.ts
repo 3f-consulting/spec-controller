@@ -21,11 +21,11 @@ describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately fr
       [
         {
           scnId: "SCN-PDX-001",
-          evidenceObligations: [{ qualityCheck: "unit", pending: true }, { qualityCheck: "integration", pending: true }],
+          evidenceObligations: [{ qualityCheckKind: "unit", pending: true }, { qualityCheckKind: "integration", pending: true }],
         },
         {
           scnId: "SCN-PDX-002",
-          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+          evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
       []
@@ -51,10 +51,10 @@ describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished fro
   beforeEach(() => {
     contrastBalance = reconcile(
       [
-        { scnId: "SCN-PDD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-PDD-002", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+        { scnId: "SCN-PDD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-PDD-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
       ],
-      [{ qualityCheck: "unit", scnId: "SCN-PDD-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", scnId: "SCN-PDD-001", status: "passed" }]
     );
   });
 

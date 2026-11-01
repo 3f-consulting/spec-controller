@@ -43,12 +43,12 @@ describe("[SCN-RMD-003] the summary's evidence observations count each of the fi
       onScenario: 2,
       onPhantomClaim: 1,
       onUnnamedClaim: 1,
-      byQualityCheck: [
-        { qualityCheck: "unit", count: 4 },
-        { qualityCheck: "integration", count: 0 },
-        { qualityCheck: "e2e", count: 0 },
-        { qualityCheck: "performance", count: 0 },
-        { qualityCheck: "fitness", count: 0 },
+      byQualityCheckKind: [
+        { qualityCheckKind: "unit", count: 4 },
+        { qualityCheckKind: "integration", count: 0 },
+        { qualityCheckKind: "e2e", count: 0 },
+        { qualityCheckKind: "performance", count: 0 },
+        { qualityCheckKind: "fitness", count: 0 },
       ],
     });
   });

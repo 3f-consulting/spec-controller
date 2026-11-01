@@ -13,16 +13,16 @@ import { HANDED_INPUT_NAMES, FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUM
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-  { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 const observations: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
-  { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", scnId: "SCN-CHK-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-PHX-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 let balance: Ledger;
 beforeEach(() => {
@@ -94,7 +94,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   });
 
   it("regenerates a non-strict report with a pending item exactly as it was rendered", () => {
-    const er = __er(reconcile([{ scnId: "SCN-P", evidenceObligations: [{ qualityCheck: "unit", pending: true }] }], []));
+    const er = __er(reconcile([{ scnId: "SCN-P", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] }], []));
     const regenerated = renderReportFromJson(renderJson(er, ctx), HANDED_INPUT_NAMES, publishedExitCodeOf);
     expect(regenerated).toBe(renderMarkdown(er, ctx, publishedExitCodeOf));
   });

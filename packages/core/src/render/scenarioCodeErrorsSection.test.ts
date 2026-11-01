@@ -34,12 +34,12 @@ const scenarioCodeErrorsOf = (files: readonly CorpusFile[]): ScenarioCodeError[]
 function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(
     [
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ],
     [
-      { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
     ],
     []
   );
@@ -168,7 +168,7 @@ function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconcil
     ),
     packageJson: {},
     ciWorkflows: [],
-    behaviouralObservations: codes.map((code) => ({ qualityCheck: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
+    behaviouralObservations: codes.map((code) => ({ qualityCheckKind: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
     deferralTags: [],
   });
 }

@@ -39,8 +39,8 @@ describe("[SCN-WFS-008] runningFitnessFunctions — the running-guard observer (
     const observed = runningFitnessFunctions(parsedWorkflows([usgCi]), usgPkg, SUITE_RUNNERS);
     const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
     expect(observed.map(withoutStep)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -85,10 +85,10 @@ describe("[SCN-WFS-009] test and cucumber CI steps are not candidate fitness fun
   });
 
   it("names a runner for each suite its CI runs — the Given, read rather than assumed", () => {
-    const { tiers } = resolveRunners(manifest);
-    expect(recognisedRunners(workflowSteps([ci2]), namedByIdentity, pkg2.scripts ?? {}, tiers, shellReading)).toEqual([
-      { tier: "unit", runner: "vitest", step: "pnpm test" },
-      { tier: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
+    const { layers } = resolveRunners(manifest);
+    expect(recognisedRunners(workflowSteps([ci2]), namedByIdentity, pkg2.scripts ?? {}, layers, shellReading)).toEqual([
+      { layer: "unit", runner: "vitest", step: "pnpm test" },
+      { layer: "integration", runner: "cucumber-js", step: "pnpm cucumber" },
     ]);
   });
 });
@@ -144,7 +144,7 @@ describe("[SCN-WFS-011] a fitness function running in ANY of a target's workflow
     const observed = runningFitnessFunctions(parsedWorkflows([ci, nightly]), pkg, SUITE_RUNNERS);
     const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
     expect(observed.map(withoutStep)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheckKind: "fitness", fitnessFunction: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -205,7 +205,7 @@ describe("[SCN-WFS-012] a `uses:` step is a candidate fitness function, reported
     const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
     expect(observed.map(withoutStep)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "github/codeql-action/analyze@v3",
         exists: true,
         enforcedOverRealSource: false,

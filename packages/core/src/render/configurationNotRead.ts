@@ -23,13 +23,13 @@ function kindWords(kind: ConfigurationKind): string {
 export const configurationNotReadSection = (report: RenderInput): string[] => {
   const wrongKinds = report.errors?.configuration?.ofWrongKind ?? [];
   const unknownKeys = report.errors?.configuration?.keysNotRead ?? [];
-  const runnerKeysNotATier = report.errors?.configuration?.runnerKeysNotATier ?? [];
+  const runnerKeysNotALayer = report.errors?.configuration?.runnerKeysNotALayer ?? [];
   const nonChecksMatchingNoStep = report.errors?.configuration?.nonChecksMatchingNoStep ?? [];
   const nonChecksNotAStepName = report.errors?.configuration?.nonChecksNotAStepName ?? [];
   if (
     wrongKinds.length === 0 &&
     unknownKeys.length === 0 &&
-    runnerKeysNotATier.length === 0 &&
+    runnerKeysNotALayer.length === 0 &&
     nonChecksMatchingNoStep.length === 0 &&
     nonChecksNotAStepName.length === 0
   )
@@ -45,8 +45,8 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
     ...unknownKeys.map(
       (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](codeSpan(`specController.${key}`))}`
     ),
-    ...runnerKeysNotATier.map(
-      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](codeSpan(`specController.runners.${key}`))}`
+    ...runnerKeysNotALayer.map(
+      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer](codeSpan(`specController.runners.${key}`))}`
     ),
     ...nonChecksMatchingNoStep.map(
       (entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", codeSpan(entry))}`

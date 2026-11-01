@@ -57,9 +57,9 @@ describe("[SCN-USG-020] the step account's rows, one per workflow and job read, 
       noRole
     );
     expect(byJob).toEqual([
-      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 1, runners: 1, reconciler: 0, excluded: 1, plumbing: 1 },
-      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 },
-      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 1, runners: 0, reconciler: 1, excluded: 0, plumbing: 0 },
+      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 1, runners: 1, reconciler: 0, nonChecks: 1, plumbing: 1 },
+      { workflow: "nightly.yml", job: "audit", stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, nonChecks: 0, plumbing: 0 },
+      { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 1, runners: 0, reconciler: 1, nonChecks: 0, plumbing: 0 },
     ]);
     expect(byJob.map((row) => accountedForOf(row) - row.stepsRead)).toEqual([0, 0, 0]);
   });
@@ -67,7 +67,7 @@ describe("[SCN-USG-020] the step account's rows, one per workflow and job read, 
   it("gives no row for a job that calls a reusable workflow, or for a job with no body", () => {
     const withStepless = [ciYml(), "  reuse:", "    uses: ./.github/workflows/x.yml", "  empty:"].join("\n");
     expect(stepAccountOf(workflowSteps([withStepless], ["ci.yml"]), answering(CHECKOUT_IS_PLUMBING), qualifiedStepName, noRole).byJob).toEqual([
-      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 3, runners: 0, reconciler: 0, excluded: 0, plumbing: 1 },
+      { workflow: "ci.yml", job: "ci", stepsRead: 4, candidates: 3, runners: 0, reconciler: 0, nonChecks: 0, plumbing: 1 },
     ]);
   });
 

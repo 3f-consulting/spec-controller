@@ -134,8 +134,8 @@ describe("[SCN-GRD-004] a scenario tagged with two scenario codes raises no evid
 
   it("raises its obligation under one code, or the same code repeated, as today", () => {
     expect(parseScenarios(source("@SCN-AAA-002"))).toEqual([
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ]);
     expect(parseScenarios(source("@SCN-AAA-002 @SCN-AAA-002")).map((s) => s.scnId)).toEqual([
       "SCN-AAA-001",

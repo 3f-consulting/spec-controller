@@ -56,9 +56,9 @@ function expectCodedFaultWordedByTheCatalogue(refusal: Refusal): void {
 }
 
 describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone", () => {
-  const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
+  const sampleObligation: EvidenceObligation = { qualityCheckKind: "unit" };
   const sampleObservation: ReconciledEvidenceObservation = {
-    qualityCheck: "unit",
+    qualityCheckKind: "unit",
     scnId: "SCN-MSG-001",
     status: "passed",
     outcome: "satisfied",

@@ -3,7 +3,7 @@ import { deferralTagsExtendedBy } from "../domain/pendingItems.js";
 import {
   targetConfigurationOf,
   type ConfigurationTranslation,
-  type RunnerTiers,
+  type RunnerLayers,
   type TargetConfiguration,
 } from "../domain/targetConfiguration.js";
 import type { WrongKindEntry } from "../domain/evidenceReconciliation.js";
@@ -35,7 +35,7 @@ export function resolveDeferralTags(
   return deferralTagsExtendedBy(starterTags, bareTerms(configured(packageJson).deferralTerms));
 }
 
-export type ResolvedRunners = RunnerTiers;
+export type ResolvedRunners = RunnerLayers;
 
 export function resolveRunners(packageJson: {
   specController?: { runners?: unknown };

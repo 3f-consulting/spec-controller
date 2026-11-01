@@ -150,13 +150,13 @@ const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
 
 export const workflowsReadInOrder = (files: readonly string[]): string[] => [...files].sort(byCodeUnit);
 
-type DispositionCount = "candidates" | "runners" | "reconciler" | "excluded" | "plumbing";
+type DispositionCount = "candidates" | "runners" | "reconciler" | "nonChecks" | "plumbing";
 
 const COUNTED_AS: Readonly<Record<StepDisposition, DispositionCount>> = {
   candidate: "candidates",
   runner: "runners",
   reconciler: "reconciler",
-  nonCheck: "excluded",
+  nonCheck: "nonChecks",
   plumbing: "plumbing",
 };
 
@@ -167,7 +167,7 @@ const noStepsOf = ({ workflow, job }: PipelineStep): JobStepAccount => ({
   candidates: 0,
   runners: 0,
   reconciler: 0,
-  excluded: 0,
+  nonChecks: 0,
   plumbing: 0,
 });
 
@@ -175,10 +175,10 @@ export function accountedForOf({
   candidates,
   runners,
   reconciler,
-  excluded,
+  nonChecks,
   plumbing,
 }: Pick<JobStepAccount, DispositionCount>): number {
-  return candidates + runners + reconciler + excluded + plumbing;
+  return candidates + runners + reconciler + nonChecks + plumbing;
 }
 
 function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
@@ -188,7 +188,7 @@ function totalOf(rows: readonly JobStepAccount[]): StepAccountTotal {
     candidates: summed("candidates"),
     runners: summed("runners"),
     reconciler: summed("reconciler"),
-    excluded: summed("excluded"),
+    nonChecks: summed("nonChecks"),
     plumbing: summed("plumbing"),
   };
 }
@@ -208,12 +208,12 @@ function stepsBehindCounts(
   const namesOf = (disposition: StepDisposition): string[] =>
     steps.filter((step) => dispositionOf(step) === disposition).map(nameOf);
   const runners = namesOf("runner");
-  const excluded = namesOf("nonCheck");
+  const nonChecks = namesOf("nonCheck");
   const plumbing = namesOf("plumbing");
   return {
     ...(runners.length > 0 ? { runners } : {}),
     ...(reconciler.length > 0 ? { reconciler } : {}),
-    ...(excluded.length > 0 ? { excluded } : {}),
+    ...(nonChecks.length > 0 ? { nonChecks } : {}),
     ...(plumbing.length > 0 ? { plumbing } : {}),
   };
 }
@@ -255,7 +255,7 @@ export function isCandidateStep(
 }
 
 type Scripts = Readonly<Record<string, string>>;
-export type RunnerTiers = Readonly<Record<string, string | null>>;
+export type RunnerLayers = Readonly<Record<string, string | null>>;
 
 export interface ShellReading {
   readonly runsAsCommand: (commandText: string, invocation: string, scripts: Scripts) => boolean;
@@ -263,7 +263,7 @@ export interface ShellReading {
 
 type RunnersRunBy = (step: PipelineStep) => readonly (readonly [string, string])[];
 
-function declaredRunnersRunBy(scripts: Scripts, runners: RunnerTiers, shell: ShellReading): RunnersRunBy {
+function declaredRunnersRunBy(scripts: Scripts, runners: RunnerLayers, shell: ShellReading): RunnersRunBy {
   return (step) => {
     if (!("command" in step)) return [];
     return Object.entries(runners).filter(
@@ -273,7 +273,7 @@ function declaredRunnersRunBy(scripts: Scripts, runners: RunnerTiers, shell: She
   };
 }
 
-export function declaredRunnerTest(scripts: Scripts, runners: RunnerTiers, shell: ShellReading): StepTest {
+export function declaredRunnerTest(scripts: Scripts, runners: RunnerLayers, shell: ShellReading): StepTest {
   const runnersRunBy = declaredRunnersRunBy(scripts, runners, shell);
   return (step) => runnersRunBy(step).length > 0;
 }
@@ -281,7 +281,7 @@ export function declaredRunnerTest(scripts: Scripts, runners: RunnerTiers, shell
 export function runsADeclaredRunner(
   step: PipelineStep,
   scripts: Scripts,
-  runners: RunnerTiers,
+  runners: RunnerLayers,
   shell: ShellReading
 ): boolean {
   return declaredRunnerTest(scripts, runners, shell)(step);
@@ -291,13 +291,13 @@ export function recognisedRunners(
   steps: readonly PipelineStep[],
   nameOf: StepName,
   scripts: Scripts,
-  runners: RunnerTiers,
+  runners: RunnerLayers,
   shell: ShellReading
 ): BehaviouralRunner[] {
   const runnersRunBy = declaredRunnersRunBy(scripts, runners, shell);
   return steps.flatMap((step) =>
-    runnersRunBy(step).map(([tier, runner]) => ({
-      tier,
+    runnersRunBy(step).map(([layer, runner]) => ({
+      layer,
       runner,
       step: nameOf(step),
     }))

@@ -2,9 +2,9 @@
 Feature: Ledger over obligation-vs-observation evidence
 
   spec-controller is a reconciliation engine, not a spec engine. It sets the evidence
-  obligations a scenario raises through its quality-check tags, the debit side, against the
+  obligations a scenario raises through its tags for kinds of quality check, the debit side, against the
   evidence its tests produce. It reports a ledger: for each scenario, whether the books
-  balance. It matches each evidence obligation on its quality check. Evidence that is
+  balance. It matches each evidence obligation on its kind of quality check. Evidence that is
   present and passes is balanced; present and failing is failing; absent is missing.
 
   A scenario's verdict is binary. A scenario is balanced when every Evidence Obligation it
@@ -69,14 +69,14 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: an evidence observation at a quality-check the scenario never raised is no-evidence-obligation
 
     The bidirectional reconciler also consumes evidence observations that cite a REAL
-    scenario at a quality-check that scenario NEVER raised — a behavioural result attributed to
+    scenario at a layer that scenario NEVER raised — a behavioural result attributed to
     a scenario, but at a level the scenario has no evidence obligation for. Such an evidence observation posts
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes an evidence-observation
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of behavioural observations never silently counts a
-    stray evidence observation at a never-raised quality-check as one that matched an evidence obligation — no-evidence-obligation
+    stray evidence observation at a never-raised layer as one that matched an evidence obligation — no-evidence-obligation
     appears in summary.byOutcome, while the Evidence observations attributed (evidence observations citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
@@ -104,11 +104,11 @@ Feature: Ledger over obligation-vs-observation evidence
 
   Rule: a behavioural observation's level is the cited scenario's own tier tag, not the input source
 
-    An observation is posted at each tier its cited scenario is tagged with, integration, e2e
-    or performance, in tag order and once each. A scenario tagged with no tier beyond @unit has
-    its observation posted at the quality check its report falls back to: unit for a report of
+    An observation is posted at each layer its cited scenario is tagged with, integration, e2e
+    or performance, in tag order and once each. A scenario tagged with no layer beyond @unit has
+    its observation posted at the layer its report falls back to: unit for a report of
     test results, integration for a report of scenario runs. The source that produced an
-    observation never overrides the scenario's own tier.
+    observation never overrides the scenario's own layer.
 
     @unit @SCN-LDG-011
     Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its source's fallback
@@ -141,7 +141,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
     An evidence observation is found once on its account, inside the quality-check reconciliation
-    of its quality check, and nowhere else on the row. A broken evidence observation posts to the
+    of its kind of quality check, and nowhere else on the row. A broken evidence observation posts to the
     claim it names, as every other does, as a broken item carrying it. The obligation it was meant
     to answer reconciles from the evidence that reached its proof.
 

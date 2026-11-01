@@ -36,7 +36,7 @@ const section = (lines: readonly string[]): string[] | undefined => (lines.inclu
 const named = (entry: string): string => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", `\`${entry}\``)}`;
 const notAStepName = (entry: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", codeSpan(entry))}`;
-const notATier = (): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier]("`specController.runners.lint`")}`;
+const notALayer = (): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer]("`specController.runners.lint`")}`;
 
 describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
   it.each([
@@ -53,10 +53,10 @@ describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the
     );
   });
 
-  it("names the entry last, after a runners key outside the four tiers", () => {
+  it("names the entry last, after a runners key outside the four layers", () => {
     const { lines } = reportOf({ entry: "ci.yml:quality:Deploy", workflowsRead: ["ci.yml"], runners: { unit: "vitest", lint: "eslint" } });
 
-    expect(section(lines)?.filter((line) => line.startsWith("- "))).toStrictEqual([notATier(), named("ci.yml:quality:Deploy")]);
+    expect(section(lines)?.filter((line) => line.startsWith("- "))).toStrictEqual([notALayer(), named("ci.yml:quality:Deploy")]);
   });
 });
 

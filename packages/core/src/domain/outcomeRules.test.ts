@@ -13,10 +13,10 @@ import type {
 } from "../model.js";
 
 const observation = (
-  qualityCheck: BehaviouralEvidenceObservation["qualityCheck"],
+  qualityCheckKind: BehaviouralEvidenceObservation["qualityCheckKind"],
   scnId: string | null,
   extra: Partial<BehaviouralEvidenceObservation> = {}
-): BehaviouralEvidenceObservation => ({ qualityCheck, scnId, status: "passed", ...extra });
+): BehaviouralEvidenceObservation => ({ qualityCheckKind, scnId, status: "passed", ...extra });
 
 describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at quality-checks with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
@@ -46,14 +46,14 @@ describe("[SCN-LDG-008] an evidence observation at a quality check the scenario 
   it("holds a behavioural evidence observation from no test file with only the keys it has", () => {
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [observation("e2e", "SCN-AAA-001")], pairs);
     expect(item).toStrictEqual({
-      qualityCheck: "e2e",
-      evidenceObservations: [{ qualityCheck: "e2e", scnId: "SCN-AAA-001", status: "passed", outcome: "no-evidence-obligation" }],
+      qualityCheckKind: "e2e",
+      evidenceObservations: [{ qualityCheckKind: "e2e", scnId: "SCN-AAA-001", status: "passed", outcome: "no-evidence-obligation" }],
     });
   });
 
   it("holds an untagged fitness evidence observation named by its runnable handle, with only the keys it has", () => {
     const untagged: FitnessEvidenceObservation = {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       scnId: "SCN-AAA-001",
       fitnessFunction: "lint:nobody-asked",
       exists: true,
@@ -61,10 +61,10 @@ describe("[SCN-LDG-008] an evidence observation at a quality check the scenario 
     };
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [untagged], pairs);
     expect(item).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       evidenceObservations: [
         {
-          qualityCheck: "fitness",
+          qualityCheckKind: "fitness",
           scnId: "SCN-AAA-001",
           fitnessFunction: "lint:nobody-asked",
           exists: true,
@@ -98,8 +98,8 @@ describe("[SCN-LDG-006] an evidence observation citing a scenario no feature car
     expect(row.verdict).toBe("out-of-balance");
     expect(row.qualityCheckReconciliations).toStrictEqual([
       {
-        qualityCheck: "unit",
-        evidenceObservations: [{ qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed", outcome: "cites-unknown-scenario" }],
+        qualityCheckKind: "unit",
+        evidenceObservations: [{ qualityCheckKind: "unit", scnId: "SCN-ZZZ-009", status: "passed", outcome: "cites-unknown-scenario" }],
       },
     ]);
   });
@@ -108,7 +108,7 @@ describe("[SCN-LDG-006] an evidence observation citing a scenario no feature car
 describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys it has a value for and omits the rest", () => {
   it("carries the locator a citing fitness evidence observation arrived with", () => {
     const guardWithLocator: FitnessEvidenceObservation & { locator: string } = {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
       scnId: "SCN-ZZZ-009",
       exists: true,
@@ -117,10 +117,10 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
     };
     const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       evidenceObservations: [
         {
-          qualityCheck: "fitness",
+          qualityCheckKind: "fitness",
           fitnessFunction: "lint:complexity",
           scnId: "SCN-ZZZ-009",
           exists: true,
@@ -134,7 +134,7 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
 
   it("carries no locator key when the citing fitness evidence observation has none", () => {
     const guard: FitnessEvidenceObservation = {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
       scnId: "SCN-ZZZ-009",
       exists: true,
@@ -142,10 +142,10 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
     };
     const [item] = citesUnknownScenarioReconciliationsOf([guard]);
     expect(item).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       evidenceObservations: [
         {
-          qualityCheck: "fitness",
+          qualityCheckKind: "fitness",
           fitnessFunction: "lint:complexity",
           scnId: "SCN-ZZZ-009",
           exists: true,
@@ -170,7 +170,7 @@ describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
     uncited = observation("unit", null, { locator: "tests/orphan.test.ts" });
   });
   const guard: FitnessEvidenceObservation = {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:nobody-asked",
     exists: true,
     enforcedOverRealSource: true,
@@ -178,7 +178,7 @@ describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
 
   it("holds the unnamed claim's evidence in one reconciliation per quality check, each observation a line in evidence order, a broken one reading broken", () => {
     const row = reconcile([], [guard, uncited, broken]).claimReconciliations.find((r) => r.claim === UNNAMED_CLAIM_ID)!;
-    expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheck, i.outcome, i.evidenceObservations?.map((o) => [o.locator, o.outcome])])).toEqual([
+    expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheckKind, i.outcome, i.evidenceObservations?.map((o) => [o.locator, o.outcome])])).toEqual([
       ["unit", undefined, [["tests/broken.test.ts", "broken"], ["tests/orphan.test.ts", "cites-no-scenario"]]],
       ["fitness", undefined, [[undefined, "cites-no-scenario"]]],
     ]);
@@ -190,8 +190,8 @@ describe("[SCN-LDG-007] an observation on the unnamed claim's row omits the payl
     const silent = observation("unit", null, { broken: true, status: "failed" });
     const [item] = unnamedClaimReconciliationsOf([silent]);
     expect(item).toStrictEqual({
-      qualityCheck: "unit",
-      evidenceObservations: [{ qualityCheck: "unit", scnId: null, status: "failed", broken: true, outcome: "broken" }],
+      qualityCheckKind: "unit",
+      evidenceObservations: [{ qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, outcome: "broken" }],
     });
   });
 
@@ -199,7 +199,7 @@ describe("[SCN-LDG-007] an observation on the unnamed claim's row omits the payl
     const anonymous = observation("integration", null);
     const [item] = unnamedClaimReconciliationsOf([anonymous]);
     expect(item).toStrictEqual({
-      qualityCheck: "integration",
+      qualityCheckKind: "integration",
       evidenceObservations: [{ ...anonymous, outcome: "cites-no-scenario" }],
     });
     expect(item).not.toHaveProperty("locator");

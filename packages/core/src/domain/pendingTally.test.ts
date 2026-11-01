@@ -8,21 +8,21 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
     const tally = ledgerTally(
       reconcile(
         [
-          { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+          { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
             scnId: "SCN-PDR-002",
-            evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+            evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
-          { scnId: "SCN-PDR-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+          { scnId: "SCN-PDR-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
             scnId: "SCN-PDR-004",
-            evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+            evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
         ],
         [
-          { qualityCheck: "unit", scnId: "SCN-PDR-001", status: "passed" },
-          { qualityCheck: "unit", scnId: "SCN-PDR-002", status: "passed" },
-          { qualityCheck: "unit", scnId: "SCN-PDR-004", status: "failed" },
+          { qualityCheckKind: "unit", scnId: "SCN-PDR-001", status: "passed" },
+          { qualityCheckKind: "unit", scnId: "SCN-PDR-002", status: "passed" },
+          { qualityCheckKind: "unit", scnId: "SCN-PDR-004", status: "failed" },
         ]
       )
     );
@@ -38,8 +38,8 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
           {
             scnId: "SCN-PDR-001",
             evidenceObligations: [
-              { qualityCheck: "unit", pending: true },
-              { qualityCheck: "integration", pending: true },
+              { qualityCheckKind: "unit", pending: true },
+              { qualityCheckKind: "integration", pending: true },
             ],
           },
         ],

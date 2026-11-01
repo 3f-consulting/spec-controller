@@ -10,7 +10,7 @@ import type { ScriptCitation } from "./fitnessCitations.js";
 import {
   declaredRunnerTest,
   isCandidateStep,
-  type RunnerTiers,
+  type RunnerLayers,
   type StepTest,
 } from "../domain/uncitedFitnessFunctions.js";
 import { workflowObservationsOf } from "../domain/fitnessReconciliation.js";
@@ -27,7 +27,7 @@ type CitationOf = (script: string, citedByStep?: string) => ScriptCitation | nul
 export function runningFitnessFunctions(
   ciWorkflows: readonly ParsedWorkflow[],
   packageJson: PackageJsonScripts,
-  runners: RunnerTiers,
+  runners: RunnerLayers,
   citedScn: CitationOf = () => null,
   isExcluded: StepTest = () => false
 ): FitnessEvidenceObservation[] {

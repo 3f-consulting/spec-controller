@@ -5,11 +5,11 @@ import { fitnessObservationsOf } from "./fitnessReconciliation.js";
 import type { FitnessEvidenceObservation, Scenario } from "./journal.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const citingStep: FitnessEvidenceObservation = {
-  qualityCheck: "fitness",
+  qualityCheckKind: "fitness",
   fitnessFunction: "lint:alpha",
   exists: true,
   enforcedOverRealSource: true,

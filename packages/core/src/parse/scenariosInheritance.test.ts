@@ -3,7 +3,7 @@ import { parseFeatureCorpus } from "./scenarios.js";
 import { parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
 
 describe("[SCN-GRD-001] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
-  it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
+  it("inherits a layer from the FEATURE — the false-green that reads BALANCED today", () => {
     const source = `@AAA @integration
 Feature: alpha
 
@@ -15,12 +15,12 @@ Feature: alpha
 
     expect(scenario!.scnId).toBe("SCN-AAA-001");
     expect(scenario!.evidenceObligations).toEqual([
-      { qualityCheck: "unit" },
-      { qualityCheck: "integration" },
+      { qualityCheckKind: "unit" },
+      { qualityCheckKind: "integration" },
     ]);
   });
 
-  it("inherits an evidence tier from an enclosing RULE", () => {
+  it("inherits a layer from an enclosing RULE", () => {
     const source = `@AAA
 Feature: alpha
 
@@ -34,8 +34,8 @@ Feature: alpha
     const [scenario] = parseScenarios(source);
 
     expect(scenario!.evidenceObligations).toEqual([
-      { qualityCheck: "unit" },
-      { qualityCheck: "integration" },
+      { qualityCheckKind: "unit" },
+      { qualityCheckKind: "integration" },
     ]);
   });
 
@@ -55,7 +55,7 @@ Feature: alpha
       "fitness",
     ],
     [
-      "passes a Feature's tier through its Background to every scenario, and the Background is no scenario",
+      "passes a Feature's layer through its Background to every scenario, and the Background is no scenario",
       `@integration
 Feature: alpha
 
@@ -72,15 +72,15 @@ Feature: alpha
 `,
       "integration",
     ],
-  ] as const)("%s", (_title, source, qualityCheck) => {
+  ] as const)("%s", (_title, source, qualityCheckKind) => {
     expect(parseScenarios(source)).toEqual([
       {
         scnId: "SCN-AAA-001",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+        evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }],
       },
       {
         scnId: "SCN-AAA-002",
-        evidenceObligations: [{ qualityCheck }],
+        evidenceObligations: [{ qualityCheckKind }],
       },
     ]);
   });
@@ -166,7 +166,7 @@ describe("[SCN-GRD-003] a code a scenario inherits from its Rule or Feature is o
     (ancestor) => {
       const source = underAncestor[ancestor]("@SCN-AAA-001");
       expect(parseScenarios(source)).toEqual([
-        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ]);
       expect(parseUntaggedScenarios(source)).toEqual([]);
     },

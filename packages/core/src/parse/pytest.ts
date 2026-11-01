@@ -1,8 +1,8 @@
-import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
+import type { Layer, EvidenceObservation } from "../model.js";
 import { SCN_CODE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
-import { evidenceOfRunResult, fallbackQualityCheckOf, type RunEvidence, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackLayerOf, type RunEvidence, type RunResult } from "../domain/journal.js";
 
 export interface JunitXmlReport {
   readonly testsuites?: {
@@ -39,11 +39,11 @@ export function parsePytestEvidenceObservations(report: JunitXmlReport): Evidenc
 }
 
 function observationsOf(report: JunitXmlReport, errorResult: RunResult): EvidenceObservation[] {
-  const qualityCheck = fallbackQualityCheckOf("test-results");
+  const layer = fallbackLayerOf("test-results");
   return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
     (suite.testcase ?? []).flatMap((testcase): EvidenceObservation[] => {
       const evidence = evidenceOfRunResult(runResultOf(testcase, errorResult));
-      return evidence === undefined ? [] : [observationOf(suite, testcase, evidence, qualityCheck)];
+      return evidence === undefined ? [] : [observationOf(suite, testcase, evidence, layer)];
     })
   );
 }
@@ -61,19 +61,19 @@ function observationOf(
   suite: JunitTestsuite,
   testcase: JunitTestcase,
   evidence: RunEvidence,
-  qualityCheck: BehaviouralQualityCheck
+  layer: Layer
 ): EvidenceObservation {
-  if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, evidence, qualityCheck);
-  if (isBuildFailure(testcase)) return buildFailureOf(suite, testcase, evidence, qualityCheck);
-  if (isClassSetupFailure(testcase)) return classSetupFailureOf(testcase, evidence, qualityCheck);
+  if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, evidence, layer);
+  if (isBuildFailure(testcase)) return buildFailureOf(suite, testcase, evidence, layer);
+  if (isClassSetupFailure(testcase)) return classSetupFailureOf(testcase, evidence, layer);
   const { scnId: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
   const scnId = soleCode === null ? null : citedCode(soleCode);
   const locator = `${testcase.classname}::${testcase.name}`;
   if (evidence.broken) {
-    return { qualityCheck, scnId, status: evidence.status, locator, broken: evidence.broken, message: errorTextOf(testcase) };
+    return { qualityCheckKind: layer, scnId, status: evidence.status, locator, broken: evidence.broken, message: errorTextOf(testcase) };
   }
   return {
-    qualityCheck,
+    qualityCheckKind: layer,
     scnId,
     status: evidence.status,
     locator,
@@ -108,10 +108,10 @@ function isCollectionFailure(testcase: JunitTestcase): boolean {
 function collectionFailureOf(
   testcase: JunitTestcase,
   evidence: RunEvidence,
-  qualityCheck: BehaviouralQualityCheck
+  layer: Layer
 ): EvidenceObservation {
   return {
-    qualityCheck,
+    qualityCheckKind: layer,
     scnId: null,
     status: evidence.status,
     locator: testcase.name ?? "",
@@ -127,10 +127,10 @@ function isClassSetupFailure(testcase: JunitTestcase): boolean {
 function classSetupFailureOf(
   testcase: JunitTestcase,
   evidence: RunEvidence,
-  qualityCheck: BehaviouralQualityCheck
+  layer: Layer
 ): EvidenceObservation {
   return {
-    qualityCheck,
+    qualityCheckKind: layer,
     scnId: null,
     status: evidence.status,
     locator: testcase.classname,
@@ -149,10 +149,10 @@ function buildFailureOf(
   suite: JunitTestsuite,
   testcase: JunitTestcase,
   evidence: RunEvidence,
-  qualityCheck: BehaviouralQualityCheck
+  layer: Layer
 ): EvidenceObservation {
   return {
-    qualityCheck,
+    qualityCheckKind: layer,
     scnId: null,
     status: evidence.status,
     locator: suite.name,

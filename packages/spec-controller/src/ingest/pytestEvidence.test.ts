@@ -46,7 +46,7 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
 
     expect(phantomClaimRow?.kind).toBe("phantom-claim");
     expect(observationsOf(phantomClaimRow!).map(postedOf)).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
+      { qualityCheckKind: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
     ]);
   });
 });
@@ -56,7 +56,7 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario as i
     const unnamedClaimRow = balance().ledger.claimReconciliations.find((s) => s.kind === "unnamed-claim");
 
     expect(observationsOf(unnamedClaimRow!).map(postedOf)).toContainEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: null,
       status: "passed",
       locator: "test_cases::test_uncited",

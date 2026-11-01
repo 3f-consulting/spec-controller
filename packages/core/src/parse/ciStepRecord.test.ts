@@ -18,7 +18,7 @@ describe("[SCN-WFS-019] each step in the run's record is read by its outcome, ne
     };
     expect(ciStepRecordObservations(record)).toStrictEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIT-001",
         scnId: "SCN-FIT-001",
         exists: true,
@@ -26,7 +26,7 @@ describe("[SCN-WFS-019] each step in the run's record is read by its outcome, ne
         status: "failed",
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIT-002",
         scnId: "SCN-FIT-002",
         exists: true,

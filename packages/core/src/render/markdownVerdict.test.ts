@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObservation, Scenario, BehaviouralQualityCheck } from "../model.js";
+import type { EvidenceObservation, Scenario, Layer } from "../model.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -26,14 +26,14 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   };
 
   const brokenObservation = (
-    qualityCheck: BehaviouralQualityCheck,
+    layer: Layer,
     locator: string,
     message: string
-  ): EvidenceObservation => ({ qualityCheck, scnId: null, status: "passed", broken: true, locator, message });
+  ): EvidenceObservation => ({ qualityCheckKind: layer, scnId: null, status: "passed", broken: true, locator, message });
 
   const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
-      { scnId: "SCN-HNS-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     return reconcile(scenarios, [observation]);
   };
@@ -82,10 +82,10 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 
   const balancedScenario: Scenario = {
     scnId: "SCN-VRD-001",
-    evidenceObligations: [{ qualityCheck: "unit" }],
+    evidenceObligations: [{ qualityCheckKind: "unit" }],
   };
   const balancedObs: EvidenceObservation = {
-    qualityCheck: "unit",
+    qualityCheckKind: "unit",
     scnId: "SCN-VRD-001",
     status: "passed",
   };
@@ -98,7 +98,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       [
         {
           scnId: "SCN-VRD-001",
-          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+          evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
       [balancedObs]
@@ -118,11 +118,11 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
   let scenarioPhantomClaimAndUnnamedClaimRows: Ledger;
   beforeEach(() => {
     scenarioPhantomClaimAndUnnamedClaimRows = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed" },
-        { qualityCheck: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
     );
   });

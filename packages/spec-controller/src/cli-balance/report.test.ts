@@ -49,7 +49,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect({ inputs: report.runProvenance.inputs, observations: heldObservationsOf(integrationRow) }).toEqual({
       inputs: { features: "features", cucumber: "cucumber.json", ci: "workflows", ciSteps: "ci-steps.json" },
       observations: [
-        { qualityCheck: "integration", scnId: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
+        { qualityCheckKind: "integration", scnId: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
       ],
     });
   });

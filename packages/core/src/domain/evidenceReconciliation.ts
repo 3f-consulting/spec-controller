@@ -27,9 +27,9 @@ import {
 } from "./ledger.js";
 import type {
   ClaimReconciliationTotals,
-  QualityCheckReconciliationTotals,
+  ReconciliationLineTotals,
   EvidenceObservationTally,
-  QualityCheckObservations,
+  QualityCheckKindObservations,
 } from "./ledger.js";
 import {
   verdictFor,
@@ -225,7 +225,7 @@ export interface ReconcilerStep {
 }
 
 export interface BehaviouralRunner {
-  readonly tier: string;
+  readonly layer: string;
   readonly runner: string;
   readonly step: string;
 }
@@ -239,34 +239,34 @@ function eachOnce(steps: readonly string[]): string[] {
   return [...new Set(steps)];
 }
 
-function withSteps(entry: QualityCheckObservations, ciSteps: readonly string[]): QualityCheckObservations {
+function withSteps(entry: QualityCheckKindObservations, ciSteps: readonly string[]): QualityCheckKindObservations {
   if (ciSteps.length === 0) return entry;
   return { ...entry, ciSteps };
 }
 
 function withDeclaredRunner(
-  entry: QualityCheckObservations,
-  tiers: Readonly<Record<string, string | null>>
-): QualityCheckObservations {
-  if (!Object.hasOwn(tiers, entry.qualityCheck)) return entry;
-  return { ...entry, runner: tiers[entry.qualityCheck] as string | null };
+  entry: QualityCheckKindObservations,
+  layers: Readonly<Record<string, string | null>>
+): QualityCheckKindObservations {
+  if (!Object.hasOwn(layers, entry.qualityCheckKind)) return entry;
+  return { ...entry, runner: layers[entry.qualityCheckKind] as string | null };
 }
 
 export function ciStepsJoined(
   observations: EvidenceObservationTally,
   ledger: Ledger,
   runners: readonly BehaviouralRunner[],
-  tiers: Readonly<Record<string, string | null>>,
+  layers: Readonly<Record<string, string | null>>,
   stepsInOrder: readonly string[]
 ): EvidenceObservationTally {
   return {
     ...observations,
-    byQualityCheck: observations.byQualityCheck.map((entry) => {
-      if (entry.qualityCheck === "fitness") {
+    byQualityCheckKind: observations.byQualityCheckKind.map((entry) => {
+      if (entry.qualityCheckKind === "fitness") {
         return withSteps(entry, stepsNamed(runningFitnessObservations(ledger), stepsInOrder));
       }
-      const running = runners.filter((row) => row.tier === entry.qualityCheck);
-      return withSteps(withDeclaredRunner(entry, tiers), eachOnce(running.map((row) => row.step)));
+      const running = runners.filter((row) => row.layer === entry.qualityCheckKind);
+      return withSteps(withDeclaredRunner(entry, layers), eachOnce(running.map((row) => row.step)));
     }),
   };
 }
@@ -297,7 +297,7 @@ export interface JobStepAccount {
   readonly candidates: number;
   readonly runners: number;
   readonly reconciler: number;
-  readonly excluded: number;
+  readonly nonChecks: number;
   readonly plumbing: number;
 }
 
@@ -306,7 +306,7 @@ export type StepAccountTotal = Omit<JobStepAccount, "workflow" | "job">;
 export interface StepsBehindCounts {
   readonly runners?: readonly string[];
   readonly reconciler?: readonly ReconcilerStep[];
-  readonly excluded?: readonly string[];
+  readonly nonChecks?: readonly string[];
   readonly plumbing?: readonly string[];
 }
 
@@ -320,14 +320,14 @@ export interface StepAccounting {
 
 interface EvidenceReconciliationTotals {
   readonly claimReconciliations: ClaimReconciliationTotals;
-  readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
+  readonly reconciliationLines: ReconciliationLineTotals;
   readonly pending: number;
 }
 
 export interface Summary {
   readonly evidenceReconciliation: EvidenceReconciliationTotals;
   readonly evidenceObservations?: EvidenceObservationTally;
-  readonly runnerKeysNotATier?: readonly string[];
+  readonly runnerKeysNotALayer?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
   readonly configurationKeysNotRead?: readonly string[];
   readonly nonChecksMatchingNoStep?: readonly string[];
@@ -347,7 +347,7 @@ export function summaryOf(ledger: Ledger, withEvidenceObservations: boolean): Su
   return {
     evidenceReconciliation: {
       claimReconciliations: tally.claimReconciliations,
-      qualityCheckReconciliations: tally.qualityCheckReconciliations,
+      reconciliationLines: tally.reconciliationLines,
       pending: tally.pending,
     },
     ...(withEvidenceObservations

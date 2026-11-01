@@ -10,7 +10,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   A code filed under the wrong class leaves every account reconciling but falsifies the by-feature
   cut, so it is listed as a scenario code error and reds the run.
 
-  WHAT THE LEDGER ALREADY SAYS IS NOT SAID TWICE. A tier-less unparked @SCN scenario reconciles
+  WHAT THE LEDGER ALREADY SAYS IS NOT SAID TWICE. An unparked @SCN scenario with no evidence tag reconciles
   both-missing and is named by id in the report's own cut, and a tag the tool does not
   read is a consumer's own tag, not a fault (the `unrecognised-tag` diagnosis left). The
   `tags` command that ran the older Rules here left the tool with them.
@@ -46,7 +46,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   Rule: an @SCN is one account number, and two scenarios carrying it are two claims that cannot reconcile
 
     Each scenario is a claim. Two scenarios carrying one code are two claims, each its own Claim
-    Reconciliation under the code, and every quality check each one raises reads `duplicate-scn-code`.
+    Reconciliation under the code, and every kind of quality check each one raises reads `duplicate-scn-code`.
     No evidence observation citing that code can be attributed to either of them, so it credits
     neither and posts to the unnamed claim. Each `duplicate-scn-code` is a reconciling item, so each
     claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `broken` —

@@ -15,10 +15,10 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
   it("names fitness, unit, integration, e2e and performance, in that order", () => {
     const tally = ledgerTally(reconcile(parseScenarios(featureLines.join("\n")), []));
 
-    const totals = tally.qualityCheckReconciliations;
+    const totals = tally.reconciliationLines;
     expect(totals).toMatchObject({ total: 5, byOutcome: { missing: 5 } });
 
-    expect(totals.missingByQualityCheck).toEqual([
+    expect(totals.missingByQualityCheckKind).toEqual([
       { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },
@@ -30,17 +30,17 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
   it("counts an obligation answered only by a broken observation as one missing line, beside its broken line", () => {
     const tally = ledgerTally(
       reconcile(
-        [{ scnId: "SCN-RMD-008", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] }],
+        [{ scnId: "SCN-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
         [
-          { qualityCheck: "unit", scnId: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
-          { qualityCheck: "integration", scnId: "SCN-RMD-008", status: "passed" },
+          { qualityCheckKind: "unit", scnId: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
+          { qualityCheckKind: "integration", scnId: "SCN-RMD-008", status: "passed" },
         ]
       )
     );
 
-    const totals = tally.qualityCheckReconciliations;
+    const totals = tally.reconciliationLines;
     expect(totals.total).toBe(3);
     expect(totals.byOutcome).toMatchObject({ missing: 1, broken: 1, satisfied: 1 });
-    expect(totals.missingByQualityCheck).toEqual([{ subject: "unit", count: 1 }]);
+    expect(totals.missingByQualityCheckKind).toEqual([{ subject: "unit", count: 1 }]);
   });
 });

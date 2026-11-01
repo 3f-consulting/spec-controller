@@ -30,14 +30,14 @@ function reportLines(runners: Record<string, string | null>, otherKeys: Record<s
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
-const notATier = (key: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier](`\`specController.runners.${key}\``)}`;
+const notALayer = (key: string): string =>
+  `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer](`\`specController.runners.${key}\``)}`;
 
 const notRead = (key: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`;
 
 describe("[SCN-RPT-053] each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read", () => {
-  it("gives a target whose only unread configuration is a key outside the four tiers the whole section, naming that key", () => {
+  it("gives a target whose only unread configuration is a key outside the four layers the whole section, naming that key", () => {
     const lines = reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" });
 
     expect(section(lines)).toStrictEqual([
@@ -55,7 +55,7 @@ describe("[SCN-RPT-053] each runners key outside the four tiers is named under C
 
     expect(section(lines).filter((line) => line.startsWith("- "))).toStrictEqual([
       notRead("fitnessChecks"),
-      notATier("lint"),
+      notALayer("lint"),
     ]);
   });
 

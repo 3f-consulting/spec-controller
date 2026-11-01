@@ -107,8 +107,8 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         deferralTags: [],
       });
     const bothPassed: EvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
     ];
 
     it("with every account balanced: the scenario-code-error verdict names exit 1 and adds nothing about the accounts", () => {

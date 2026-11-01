@@ -1,8 +1,8 @@
-import type { BehaviouralQualityCheck, EvidenceObservation } from "../model.js";
+import type { Layer, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { scnCitationsOf } from "../lib/scnCitation.js";
 import { attributionOf } from "../domain/attribution.js";
-import { evidenceOfRunResult, fallbackQualityCheckOf, type RunResult } from "../domain/journal.js";
+import { evidenceOfRunResult, fallbackLayerOf, type RunResult } from "../domain/journal.js";
 
 export interface RspecJsonReport {
   readonly examples?: ReadonlyArray<{
@@ -16,14 +16,14 @@ export interface RspecJsonReport {
 }
 
 export function parseRspecEvidenceObservations(report: RspecJsonReport, root?: string): EvidenceObservation[] {
-  const qualityCheck = fallbackQualityCheckOf("test-results");
+  const layer = fallbackLayerOf("test-results");
   const results: EvidenceObservation[] = [];
   for (const example of report.examples ?? []) {
     const evidence = evidenceOfRunResult(runResultOf(example.status));
     if (evidence === undefined) continue;
     const { scnId, severalCodes } = attributionOf(citingCodesOf(example));
     results.push({
-      qualityCheck,
+      qualityCheckKind: layer,
       scnId,
       status: evidence.status,
       locator: example.file_path && locatorOf(example.file_path, root),
@@ -31,12 +31,12 @@ export function parseRspecEvidenceObservations(report: RspecJsonReport, root?: s
       ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
     });
   }
-  return [...results, ...loadErrorsOf(report, qualityCheck, root)];
+  return [...results, ...loadErrorsOf(report, layer, root)];
 }
 
 const LOADED_FILE = /^\s*(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
 
-function loadErrorsOf(report: RspecJsonReport, qualityCheck: BehaviouralQualityCheck, root?: string): EvidenceObservation[] {
+function loadErrorsOf(report: RspecJsonReport, layer: Layer, root?: string): EvidenceObservation[] {
   const count = report.summary?.errors_outside_of_examples_count ?? 0;
   if (count === 0) return [];
   const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
@@ -46,10 +46,10 @@ function loadErrorsOf(report: RspecJsonReport, qualityCheck: BehaviouralQualityC
     const file = LOADED_FILE.exec(message);
     const path = file?.[1] ?? file?.[2];
     if (path === undefined) unnamed.push(message);
-    else broken.push({ qualityCheck, scnId: null, status: evidence.status, locator: locatorOf(path, root), broken: evidence.broken, message });
+    else broken.push({ qualityCheckKind: layer, scnId: null, status: evidence.status, locator: locatorOf(path, root), broken: evidence.broken, message });
   }
   if (count > broken.length) {
-    broken.push({ qualityCheck, scnId: null, status: evidence.status, broken: evidence.broken, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
+    broken.push({ qualityCheckKind: layer, scnId: null, status: evidence.status, broken: evidence.broken, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
   }
   return broken;
 }

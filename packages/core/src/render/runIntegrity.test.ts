@@ -25,7 +25,7 @@ const COLLECTION_FAILED_LOCATOR = "src/collect.test.ts";
 const COLLECTION_FAILED_MESSAGE = "  \n\t\nError:  Cannot   find | package\n    at packageResolve (node:internal)";
 
 const collectionFailed = (locator: string, message?: string): EvidenceObservation => ({
-  qualityCheck: "unit",
+  qualityCheckKind: "unit",
   scnId: null,
   status: "failed",
   locator,
@@ -34,7 +34,7 @@ const collectionFailed = (locator: string, message?: string): EvidenceObservatio
 });
 
 const SKIPPED_CHECK: EvidenceObservation = {
-  qualityCheck: "fitness",
+  qualityCheckKind: "fitness",
   fitnessFunction: "SCN-RIN-001",
   scnId: "SCN-RIN-001",
   exists: false,
@@ -44,8 +44,8 @@ const SKIPPED_CHECK: EvidenceObservation = {
 };
 
 const SCENARIOS: readonly Scenario[] = [
-  { scnId: "SCN-RIN-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-RIN-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+  { scnId: "SCN-RIN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 function render(...broken: readonly EvidenceObservation[]): string {
@@ -70,8 +70,8 @@ function reconcilingItemsCell(md: string, claim: string): string {
 const whatBroke = (locator: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`;
 
-const brokenCell = (qualityCheck: string, where: string): string =>
-  `${qualityCheck}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
+const brokenCell = (qualityCheckKind: string, where: string): string =>
+  `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
 
 const unsoundStamp = (proofs: string): string =>
   `**This run is unsound.** ${proofs} A row reading "Evidence Observation is missing" below may therefore be a ` +
@@ -142,8 +142,8 @@ describe("[SCN-RPT-085] an item quoting what an evidence observation said states
   const codes = ["SCN-RIN-001", "SCN-RIN-002"];
   const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-scn-codes", codes }] } as const;
   const rows: [string, EvidenceObservation][] = [
-    ["a broken item", { qualityCheck: "unit", scnId: null, status: "failed", broken: true, ...said }],
-    ["a file's group on the unnamed claim's row", { qualityCheck: "unit", scnId: null, status: "failed", testName: "t1", ...said }],
+    ["a broken item", { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, ...said }],
+    ["a file's group on the unnamed claim's row", { qualityCheckKind: "unit", scnId: null, status: "failed", testName: "t1", ...said }],
   ];
   it.each(rows)("%s", (_, observation) => {
     const item = reconcilingItemsCell(render(observation), UNNAMED_CLAIM_ID);

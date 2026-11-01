@@ -25,7 +25,7 @@ const HEADLINE: Readonly<Record<RunVerdict, CoreMessage>> = {
 };
 
 const broken: EvidenceObservation = {
-  qualityCheck: "unit",
+  qualityCheckKind: "unit",
   scnId: null,
   status: "passed",
   broken: true,
@@ -47,8 +47,8 @@ const misfiledCorpus = (): EvidenceReconciliation =>
     packageJson: {},
     ciWorkflows: [],
     behaviouralObservations: [
-      { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
     ],
     deferralTags: [],
   });

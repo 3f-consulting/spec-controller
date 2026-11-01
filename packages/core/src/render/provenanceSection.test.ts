@@ -10,8 +10,8 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ scnId: "SCN-RPT-028", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-RPT-028", status: "passed" }],
+    [{ scnId: "SCN-RPT-028", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", scnId: "SCN-RPT-028", status: "passed" }],
   );
 });
 

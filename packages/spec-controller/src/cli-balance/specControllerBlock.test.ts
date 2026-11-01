@@ -67,7 +67,7 @@ describe("[SCN-CFG-006] a specController block whose every entry is a kind its r
     expect(run.stderr).toBe("");
   });
 
-  it("reconciles a target holding a runners key that is not a tier, given a number, naming no entry as the wrong kind and writing nothing to stderr", () => {
+  it("reconciles a target holding a runners key that is not a layer, given a number, naming no entry as the wrong kind and writing nothing to stderr", () => {
     const run = balanceOf({ ...block, runners: { unit: "vitest", lint: 5 } });
     expect(run.report).toContain("## Run provenance");
     expect(run.report.split("\n").filter((line) => /^- `[^`]+` is /.test(line))).toEqual([]);

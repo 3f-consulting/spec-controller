@@ -1,5 +1,5 @@
 import type {
-  QualityCheck,
+  QualityCheckKind,
   EvidenceObligation,
   EvidenceObservation,
 } from "./journal.js";
@@ -19,7 +19,7 @@ declare const qualityCheckReconciliationBrand: unique symbol;
 export type ReconciledEvidenceObservation = EvidenceObservation & { readonly outcome: Outcome };
 
 interface QualityCheckReconciliationFields {
-  readonly qualityCheck?: QualityCheck;
+  readonly qualityCheckKind?: QualityCheckKind;
   readonly outcome?: Outcome;
   readonly evidenceObligation?: EvidenceObligation;
   readonly evidenceObservations?: readonly ReconciledEvidenceObservation[];
@@ -166,34 +166,34 @@ export function reconcileEvidenceObligation(
   evidenceObservations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation {
   const citing = evidenceObservations.filter(
-    (o) => o.qualityCheck === obligation.qualityCheck && o.scnId === scnId
+    (o) => o.qualityCheckKind === obligation.qualityCheckKind && o.scnId === scnId
   );
   const answered = citing.some((o) => o.broken !== true);
   return makeQualityCheckReconciliation({
-    qualityCheck: obligation.qualityCheck,
+    qualityCheckKind: obligation.qualityCheckKind,
     ...(answered ? {} : { outcome: "missing" as const }),
     evidenceObligation: obligation,
     ...observationsField(linesFor(citing, "evidence-obligation")),
   });
 }
 
-function reconciliationsByQualityCheck(
+function reconciliationsByQualityCheckKind(
   observations: readonly EvidenceObservation[],
   answering: LineAnswering
 ): QualityCheckReconciliation[] {
-  const groups = new Map<QualityCheck, EvidenceObservation[]>();
+  const groups = new Map<QualityCheckKind, EvidenceObservation[]>();
   for (const o of observations) {
-    groups.set(o.qualityCheck, [...(groups.get(o.qualityCheck) ?? []), o]);
+    groups.set(o.qualityCheckKind, [...(groups.get(o.qualityCheckKind) ?? []), o]);
   }
-  return [...groups].map(([qualityCheck, group]) =>
-    makeQualityCheckReconciliation({ qualityCheck, evidenceObservations: linesFor(group, answering) })
+  return [...groups].map(([qualityCheckKind, group]) =>
+    makeQualityCheckReconciliation({ qualityCheckKind, evidenceObservations: linesFor(group, answering) })
   );
 }
 
 export function brokenReconciliationsOf(
   postedObservations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
-  return reconciliationsByQualityCheck(postedObservations.filter((o) => o.broken === true), "scenario");
+  return reconciliationsByQualityCheckKind(postedObservations.filter((o) => o.broken === true), "scenario");
 }
 
 export function noEvidenceObligationReconciliationsOf(
@@ -201,9 +201,9 @@ export function noEvidenceObligationReconciliationsOf(
   postedObservations: readonly EvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
 ): QualityCheckReconciliation[] {
-  return reconciliationsByQualityCheck(
+  return reconciliationsByQualityCheckKind(
     postedObservations.filter(
-      (o) => !evidenceObligationPairs.has(evidenceObligationPairKey(scnId, o.qualityCheck))
+      (o) => !evidenceObligationPairs.has(evidenceObligationPairKey(scnId, o.qualityCheckKind))
     ),
     "scenario"
   );
@@ -212,13 +212,13 @@ export function noEvidenceObligationReconciliationsOf(
 export function citesUnknownScenarioReconciliationsOf(
   observations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
-  return reconciliationsByQualityCheck(observations, "phantom-claim");
+  return reconciliationsByQualityCheckKind(observations, "phantom-claim");
 }
 
 export function unnamedClaimReconciliationsOf(
   observations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
-  return reconciliationsByQualityCheck(observations, "unnamed-claim");
+  return reconciliationsByQualityCheckKind(observations, "unnamed-claim");
 }
 
 export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
@@ -230,17 +230,17 @@ export function duplicateScnCodeReconciliationsOf(
   scenario?: ScenarioName
 ): QualityCheckReconciliation[] {
   const naming = scenario === undefined ? {} : { scenario };
-  const firstNaming = new Map<QualityCheck, EvidenceObligation>();
+  const firstNaming = new Map<QualityCheckKind, EvidenceObligation>();
   for (const obligation of obligations) {
-    if (obligation.qualityCheck !== undefined && !firstNaming.has(obligation.qualityCheck)) {
-      firstNaming.set(obligation.qualityCheck, obligation);
+    if (obligation.qualityCheckKind !== undefined && !firstNaming.has(obligation.qualityCheckKind)) {
+      firstNaming.set(obligation.qualityCheckKind, obligation);
     }
   }
   if (firstNaming.size === 0) {
     return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: {}, ...naming })];
   }
-  return [...firstNaming].map(([qualityCheck, evidenceObligation]) =>
-    makeQualityCheckReconciliation({ qualityCheck, outcome: "duplicate-scn-code", evidenceObligation, ...naming })
+  return [...firstNaming].map(([qualityCheckKind, evidenceObligation]) =>
+    makeQualityCheckReconciliation({ qualityCheckKind, outcome: "duplicate-scn-code", evidenceObligation, ...naming })
   );
 }
 

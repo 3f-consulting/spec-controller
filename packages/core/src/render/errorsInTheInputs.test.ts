@@ -11,12 +11,12 @@ const SECTION = "## Errors in the inputs";
 const SCENARIO_CODE_ERRORS = "### Scenario code errors";
 const CONFIGURATION_NOT_READ = "### Configuration not read";
 
-const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
+const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
-const PASSED: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" };
+const PASSED: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" };
 
 const NEVER_RAN: EvidenceObservation = {
-  qualityCheck: "unit",
+  qualityCheckKind: "unit",
   scnId: null,
   status: "failed",
   locator: "src/collect.test.ts",

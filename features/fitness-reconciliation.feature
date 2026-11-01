@@ -26,9 +26,9 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
     @unit @SCN-LNT-004
     Scenario: a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently
-      The tier tag raises the unit obligation and the @fitness tag raises the fitness obligation.
+      The @unit tag raises the unit obligation and the @fitness tag raises the fitness obligation.
       Both Evidence Observations cite the same scenario code and post to the same row, and each
-      obligation is answered only by an observation of its own quality check. One may reconcile while the other does not.
+      obligation is answered only by an observation of its own kind of quality check. One may reconcile while the other does not.
 
   Rule: a fitness Evidence Observation matching no Evidence Obligation lands on the unnamed claim or a phantom claim
 

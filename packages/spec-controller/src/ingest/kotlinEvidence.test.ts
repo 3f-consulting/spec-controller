@@ -13,7 +13,7 @@ describe("[SCN-KOT-001] runReconcile reads the directory of reports Gradle wrote
       junit: `${KOTLIN}/test-results`,
     }, resolveTargetRoot({ features: `${KOTLIN}/features` })).ledger.claimReconciliations
       .find((s) => s.claim === "SCN-KOF-001")
-      ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+      ?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit");
 
     expect(unit?.evidenceObservations?.map((o) => o.outcome)).toEqual(["satisfied"]);
     expect(unit?.evidenceObservations).toMatchObject([{

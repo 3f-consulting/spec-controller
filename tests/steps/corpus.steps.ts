@@ -153,11 +153,11 @@ Then("the uncited evidence observations are posted to the unnamed claim's reconc
     [2, 0, 0, 2],
     `expected both uncited evidence observations on the unnamed claim and none anywhere else; got: ${JSON.stringify(evidenceObservations)}`,
   );
-  const { qualityCheckReconciliations } = summary.evidenceReconciliation;
+  const { reconciliationLines } = summary.evidenceReconciliation;
   assert.equal(
-    qualityCheckReconciliations.byOutcome["cites-no-scenario"],
+    reconciliationLines.byOutcome["cites-no-scenario"],
     2,
-    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(qualityCheckReconciliations)}`,
+    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(reconciliationLines)}`,
   );
 });
 

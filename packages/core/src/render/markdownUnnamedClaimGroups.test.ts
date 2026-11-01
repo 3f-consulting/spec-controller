@@ -12,8 +12,8 @@ const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
 function reportOf(observations: readonly EvidenceObservation[]): string {
   const ledger = reconcile(
-    [{ scnId: "SCN-SGR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
+    [{ scnId: "SCN-SGR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", scnId: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
   );
   return renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 }
@@ -35,7 +35,7 @@ function unnamedClaimCell(md: string): string {
 }
 
 function unit(status: "passed" | "failed", locator: string | undefined, message?: string): BehaviouralEvidenceObservation {
-  return { qualityCheck: "unit", scnId: null, status, locator, ...(message === undefined ? {} : { message }) };
+  return { qualityCheckKind: "unit", scnId: null, status, locator, ...(message === undefined ? {} : { message }) };
 }
 
 function named(status: "passed" | "failed", testName: string | undefined): BehaviouralEvidenceObservation {
@@ -62,7 +62,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   });
 
   it("groups by check as well as file", () => {
-    const items = unnamedClaimItemsOf(reportOf([unit("failed", "src/a.test.ts"), { ...unit("passed", "src/a.test.ts"), qualityCheck: "integration" }]));
+    const items = unnamedClaimItemsOf(reportOf([unit("failed", "src/a.test.ts"), { ...unit("passed", "src/a.test.ts"), qualityCheckKind: "integration" }]));
     expect(items).toEqual([
       `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 0 passed, 1 failed`,
       `integration: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`,
@@ -118,7 +118,7 @@ describe("[SCN-RPT-036] a failed test that cites no scenario is named on the unn
 });
 
 function step(fitnessFunction: string): FitnessEvidenceObservation {
-  return { qualityCheck: "fitness", fitnessFunction, exists: true, enforcedOverRealSource: true };
+  return { qualityCheckKind: "fitness", fitnessFunction, exists: true, enforcedOverRealSource: true };
 }
 
 describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named", () => {

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObservation, QualityCheck, Scenario } from "../model.js";
+import type { EvidenceObservation, QualityCheckKind, Scenario } from "../model.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -16,24 +16,24 @@ import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 const CI_STEPS_COLUMN = "CI steps";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-UNE-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "e2e" }] },
-  { scnId: "SCN-INE-001", evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "e2e" }] },
-  { scnId: "SCN-FFN-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-FAU-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }] },
-  { scnId: "SCN-OBS-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-  { scnId: "SCN-TWO-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-  { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-BRK-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+  { scnId: "SCN-UNE-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "e2e" }] },
+  { scnId: "SCN-INE-001", evidenceObligations: [{ qualityCheckKind: "integration" }, { qualityCheckKind: "e2e" }] },
+  { scnId: "SCN-FFN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-FAU-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-OBS-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { scnId: "SCN-TWO-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+  { scnId: "SCN-BRK-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
 ];
 
 const observations: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-UNE-001", status: "passed" },
-  { qualityCheck: "e2e", scnId: "SCN-UNE-001", status: "passed" },
-  { qualityCheck: "integration", scnId: "SCN-INE-001", status: "passed" },
-  { qualityCheck: "e2e", scnId: "SCN-INE-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-UNE-001", status: "passed" },
+  { qualityCheckKind: "e2e", scnId: "SCN-UNE-001", status: "passed" },
+  { qualityCheckKind: "integration", scnId: "SCN-INE-001", status: "passed" },
+  { qualityCheckKind: "e2e", scnId: "SCN-INE-001", status: "passed" },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm lint",
     scnId: "SCN-FFN-001",
     step: "ci.yml:ci:Lint | strict",
@@ -42,7 +42,7 @@ const observations: EvidenceObservation[] = [
     status: "passed",
   },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm guard",
     scnId: "SCN-FAU-001",
     step: "ci.yml:ci:Guard",
@@ -50,11 +50,11 @@ const observations: EvidenceObservation[] = [
     enforcedOverRealSource: true,
     status: "passed",
   },
-  { qualityCheck: "unit", scnId: "SCN-FAU-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-OBS-001", status: "passed" },
-  { qualityCheck: "integration", scnId: "SCN-OBS-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-FAU-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-OBS-001", status: "passed" },
+  { qualityCheckKind: "integration", scnId: "SCN-OBS-001", status: "passed" },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm types",
     locator: "checks/types-1",
     scnId: "SCN-TWO-001",
@@ -64,7 +64,7 @@ const observations: EvidenceObservation[] = [
     status: "passed",
   },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm types again",
     locator: "checks/types-2",
     scnId: "SCN-TWO-001",
@@ -74,7 +74,7 @@ const observations: EvidenceObservation[] = [
     status: "passed",
   },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm types twice",
     locator: "checks/types-3",
     scnId: "SCN-TWO-001",
@@ -83,13 +83,13 @@ const observations: EvidenceObservation[] = [
     enforcedOverRealSource: true,
     status: "passed",
   },
-  { qualityCheck: "integration", scnId: "SCN-BRK-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-BRK-001", status: "failed", broken: true },
-  { qualityCheck: "e2e", scnId: "SCN-GHO-001", status: "passed" },
-  { qualityCheck: "integration", scnId: null, status: "passed" },
+  { qualityCheckKind: "integration", scnId: "SCN-BRK-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-BRK-001", status: "failed", broken: true },
+  { qualityCheckKind: "e2e", scnId: "SCN-GHO-001", status: "passed" },
+  { qualityCheckKind: "integration", scnId: null, status: "passed" },
 ];
 
-const STEPS: Partial<Record<QualityCheck, readonly string[]>> = {
+const STEPS: Partial<Record<QualityCheckKind, readonly string[]>> = {
   unit: ["Test"],
   integration: ["Cucumber"],
   e2e: ["Cucumber"],
@@ -103,8 +103,8 @@ function withCiSteps(reconciliation: EvidenceReconciliation): EvidenceReconcilia
       ...reconciliation.summary,
       evidenceObservations: {
         ...observed,
-        byQualityCheck: observed.byQualityCheck.map((entry) =>
-          STEPS[entry.qualityCheck] === undefined ? entry : { ...entry, ciSteps: STEPS[entry.qualityCheck]! }
+        byQualityCheckKind: observed.byQualityCheckKind.map((entry) =>
+          STEPS[entry.qualityCheckKind] === undefined ? entry : { ...entry, ciSteps: STEPS[entry.qualityCheckKind]! }
         ),
       },
     },
@@ -173,36 +173,36 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
 });
 
 const unknownStepScenarios: Scenario[] = [
-  { scnId: "SCN-PRF-001", evidenceObligations: [{ qualityCheck: "performance" }] },
-  { scnId: "SCN-MIS-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-NST-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
-  { scnId: "SCN-KUP-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "performance" }] },
-  { scnId: "SCN-KUF-001", evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "unit" }] },
-  { scnId: "SCN-NON-001", evidenceObligations: [{ qualityCheck: "performance" }, { qualityCheck: "fitness" }] },
+  { scnId: "SCN-PRF-001", evidenceObligations: [{ qualityCheckKind: "performance" }] },
+  { scnId: "SCN-MIS-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-NST-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-KUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "performance" }] },
+  { scnId: "SCN-KUF-001", evidenceObligations: [{ qualityCheckKind: "fitness" }, { qualityCheckKind: "unit" }] },
+  { scnId: "SCN-NON-001", evidenceObligations: [{ qualityCheckKind: "performance" }, { qualityCheckKind: "fitness" }] },
 ];
 
 const unknownStepObservations: EvidenceObservation[] = [
-  { qualityCheck: "performance", scnId: "SCN-PRF-001", status: "passed" },
+  { qualityCheckKind: "performance", scnId: "SCN-PRF-001", status: "passed" },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm audit",
     scnId: "SCN-NST-001",
     exists: true,
     enforcedOverRealSource: true,
     status: "passed",
   },
-  { qualityCheck: "unit", scnId: "SCN-KUP-001", status: "passed" },
-  { qualityCheck: "performance", scnId: "SCN-KUP-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-KUP-001", status: "passed" },
+  { qualityCheckKind: "performance", scnId: "SCN-KUP-001", status: "passed" },
   {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "pnpm depcheck",
     scnId: "SCN-KUF-001",
     exists: true,
     enforcedOverRealSource: true,
     status: "passed",
   },
-  { qualityCheck: "unit", scnId: "SCN-KUF-001", status: "passed" },
-  { qualityCheck: "performance", scnId: "SCN-NON-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-KUF-001", status: "passed" },
+  { qualityCheckKind: "performance", scnId: "SCN-NON-001", status: "passed" },
 ];
 
 const UNTAGGED_SCENARIO = "untagged.feature : a scenario with no code";

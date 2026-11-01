@@ -56,7 +56,7 @@ const CITING_SUBTEST = `example.com/gofixture/cited::TestCited/[${GO_CITED}]_a_p
 interface ScenarioRow {
   readonly claim: string;
   readonly qualityCheckReconciliations: ReadonlyArray<{
-    readonly qualityCheck: string;
+    readonly qualityCheckKind: string;
     readonly outcome?: string;
     readonly evidenceObservations?: ReadonlyArray<{ readonly outcome: string; readonly locator?: string; readonly testName?: string }>;
   }>;
@@ -76,7 +76,7 @@ function satisfiedUnitReconciliationOf(world: SpecControllerWorld, claim: string
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${world.balanceResult.status}\nstdout:\n${world.balanceResult.stdout}\nstderr:\n${world.balanceResult.stderr}`);
   }
-  const unit = rows.find((row) => row.claim === claim)?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+  const unit = rows.find((row) => row.claim === claim)?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit");
   assert.deepEqual(unit?.evidenceObservations?.map((o) => o.outcome), ["satisfied"], `expected ${claim}'s unit obligation satisfied; got ${JSON.stringify(unit)}`);
   return unit;
 }

@@ -15,7 +15,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
   });
   const observations: EvidenceObservation[] = entries
     .flatMap(([, { ids }]) => ids)
-    .map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" }));
+    .map((scnId) => ({ qualityCheckKind: "unit", scnId, status: "passed" }));
   return evidenceReconciliationFromSources({
     features: parsedFeatures(sources, entries.map(([slug]) => `${slug}.feature`)),
     packageJson: {},

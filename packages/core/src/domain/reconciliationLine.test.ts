@@ -4,19 +4,19 @@ import { reconcilingItemsOf, UNNAMED_CLAIM_ID } from "./claimReconciliation.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import { brokenItemsOf, hasBrokenEvidence, isBalanced, ledgerTally } from "./ledger.js";
 import type { Ledger } from "./ledger.js";
-import type { EvidenceObservation, QualityCheck, Scenario } from "./journal.js";
+import type { EvidenceObservation, QualityCheckKind, Scenario } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 
 const SCN = "SCN-AAA-001";
 
 const unit = (status: "passed" | "failed", locator: string): EvidenceObservation => ({
-  qualityCheck: "unit",
+  qualityCheckKind: "unit",
   scnId: SCN,
   status,
   locator,
 });
 const brokenUnit = (locator: string): EvidenceObservation => ({
-  qualityCheck: "unit",
+  qualityCheckKind: "unit",
   scnId: SCN,
   status: "failed",
   broken: true,
@@ -27,8 +27,8 @@ function rowOf(ledger: Ledger, claim: string): ClaimReconciliation {
   return ledger.claimReconciliations.find((row) => row.claim === claim)!;
 }
 
-function qcrOf(row: ClaimReconciliation, qualityCheck: QualityCheck): QualityCheckReconciliation[] {
-  return row.qualityCheckReconciliations.filter((qcr) => qcr.qualityCheck === qualityCheck);
+function qcrOf(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): QualityCheckReconciliation[] {
+  return row.qualityCheckReconciliations.filter((qcr) => qcr.qualityCheckKind === qualityCheckKind);
 }
 
 /** The outcomes a reader of the JSON reads off one Quality Check Reconciliation: its own, then each observation's. */
@@ -39,7 +39,7 @@ function lineOutcomesOf(qcr: QualityCheckReconciliation): (string | undefined)[]
   ];
 }
 
-function reconciledOneScenario(observations: EvidenceObservation[], obligations: Scenario["evidenceObligations"] = [{ qualityCheck: "unit" }]) {
+function reconciledOneScenario(observations: EvidenceObservation[], obligations: Scenario["evidenceObligations"] = [{ qualityCheckKind: "unit" }]) {
   const ledger = reconcile([{ scnId: SCN, evidenceObligations: obligations }], observations);
   return { ledger, row: rowOf(ledger, SCN) };
 }
@@ -62,7 +62,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
 
     expect(qcrOf(row, "unit").map(lineOutcomesOf)).toEqual([["satisfied", "failing"]]);
     expect(reconcilingItemsOf(row)).toEqual([
-      { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { ...failed, outcome: "failing" } },
+      { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { ...failed, outcome: "failing" } },
     ]);
     expect(row.verdict).toBe("out-of-balance");
     expect(isBalanced(ledger)).toBe(false);
@@ -94,12 +94,12 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("reads one missing line for an obligation with no observation", () => {
     const { row } = reconciledOneScenario([]);
 
-    expect(qcrOf(row, "unit")).toEqual([{ qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } }]);
-    expect(reconcilingItemsOf(row)).toEqual([{ qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } }]);
+    expect(qcrOf(row, "unit")).toEqual([{ qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } }]);
+    expect(reconcilingItemsOf(row)).toEqual([{ qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } }]);
   });
 
   const fitness = (run: { exists: boolean; enforcedOverRealSource: boolean; status?: "passed" | "failed"; broken?: true }): EvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:a",
     scnId: SCN,
     ...run,
@@ -111,7 +111,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     ["only existing", { exists: true, enforcedOverRealSource: false }, ["watermelon"]],
     ["broken", { exists: false, enforcedOverRealSource: false, broken: true as const }, ["missing", "broken"]],
   ])("reads a fitness observation that %s against its obligation as its own line", (_case, run, lines) => {
-    const { row } = reconciledOneScenario([fitness(run)], [{ qualityCheck: "fitness" }]);
+    const { row } = reconciledOneScenario([fitness(run)], [{ qualityCheckKind: "fitness" }]);
 
     expect(qcrOf(row, "fitness").map(lineOutcomesOf)).toEqual([lines]);
     expect(row.verdict).toBe(lines.every((line) => line === "satisfied") ? "balanced" : "out-of-balance");
@@ -120,7 +120,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("reads failing and satisfied lines, not one pick, for a failed fitness run beside an enforced one", () => {
     const { row } = reconciledOneScenario(
       [fitness({ exists: true, enforcedOverRealSource: true, status: "failed" }), fitness({ exists: true, enforcedOverRealSource: true, status: "passed" })],
-      [{ qualityCheck: "fitness" }]
+      [{ qualityCheckKind: "fitness" }]
     );
 
     expect(qcrOf(row, "fitness").map(lineOutcomesOf)).toEqual([["failing", "satisfied"]]);
@@ -128,7 +128,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
 
   it("reads each observation no obligation asks for as its own no-evidence-obligation line, and a broken one as broken", () => {
     const integration = (status: "passed" | "failed", locator: string, broken?: true): EvidenceObservation => ({
-      qualityCheck: "integration",
+      qualityCheckKind: "integration",
       scnId: SCN,
       status,
       locator,
@@ -147,7 +147,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads each observation on a phantom claim as its own cites-unknown-scenario line", () => {
-    const phantom = (locator: string): EvidenceObservation => ({ qualityCheck: "unit", scnId: "SCN-PHM-999", status: "passed", locator });
+    const phantom = (locator: string): EvidenceObservation => ({ qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed", locator });
     const ledger = reconcile([], [phantom("a.test.ts"), phantom("b.test.ts")]);
     const row = rowOf(ledger, "SCN-PHM-999");
 
@@ -157,7 +157,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
 
   it("reads each observation on the unnamed claim as its own cites-no-scenario line, and a broken one as broken, in one reconciliation per quality check", () => {
     const uncited = (locator: string, broken?: true): EvidenceObservation => ({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: null,
       status: broken ? "failed" : "passed",
       locator,
@@ -171,13 +171,13 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads a pending quality check's observation as one no-evidence-obligation line beside the Pending Item", () => {
-    const observation: EvidenceObservation = { qualityCheck: "integration", scnId: SCN, status: "passed", locator: "a.feature" };
-    const { row } = reconciledOneScenario([observation], [{ qualityCheck: "integration", pending: true }]);
+    const observation: EvidenceObservation = { qualityCheckKind: "integration", scnId: SCN, status: "passed", locator: "a.feature" };
+    const { row } = reconciledOneScenario([observation], [{ qualityCheckKind: "integration", pending: true }]);
 
-    expect(row.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    expect(row.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
     expect(row.qualityCheckReconciliations.map(lineOutcomesOf)).toEqual([["no-evidence-obligation"]]);
     expect(reconcilingItemsOf(row)).toEqual([
-      { qualityCheck: "integration", outcome: "no-evidence-obligation", evidenceObservation: { ...observation, outcome: "no-evidence-obligation" } },
+      { qualityCheckKind: "integration", outcome: "no-evidence-obligation", evidenceObservation: { ...observation, outcome: "no-evidence-obligation" } },
     ]);
     expect(row.verdict).toBe("out-of-balance");
   });
@@ -185,8 +185,8 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("reads one line for a scenario with no @SCN, for a shared code's quality check, and for a scenario with neither side", () => {
     const ledger = reconcile(
       [
-        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         { scnId: "SCN-NON-001", evidenceObligations: [] },
       ],
       [],
@@ -194,7 +194,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     );
 
     expect(reconcilingItemsOf(rowOf(ledger, "a.feature : untagged")).map((line) => line.outcome)).toEqual(["no-scn-code"]);
-    expect(reconcilingItemsOf(rowOf(ledger, "SCN-DUP-001")).map((line) => [line.qualityCheck, line.outcome])).toEqual([
+    expect(reconcilingItemsOf(rowOf(ledger, "SCN-DUP-001")).map((line) => [line.qualityCheckKind, line.outcome])).toEqual([
       ["unit", "duplicate-scn-code"],
     ]);
     expect(reconcilingItemsOf(rowOf(ledger, "SCN-NON-001")).map((line) => line.outcome)).toEqual(["both-missing"]);
@@ -203,17 +203,17 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("counts lines, not reconciliations, in the summary's total and by-outcome tally", () => {
     const ledger = reconcile(
       [
-        { scnId: SCN, evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-BBB-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: SCN, evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-BBB-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
         unit("passed", "a.test.ts"),
         unit("passed", "b.test.ts"),
-        { qualityCheck: "unit", scnId: "SCN-BBB-001", status: "failed", broken: true, locator: "c.test.ts" },
+        { qualityCheckKind: "unit", scnId: "SCN-BBB-001", status: "failed", broken: true, locator: "c.test.ts" },
       ]
     );
 
-    const { total, byOutcome, outOfBalance } = ledgerTally(ledger).qualityCheckReconciliations;
+    const { total, byOutcome, outOfBalance } = ledgerTally(ledger).reconciliationLines;
     expect(total).toBe(4);
     expect(byOutcome.satisfied).toBe(2);
     expect(byOutcome.missing).toBe(1);

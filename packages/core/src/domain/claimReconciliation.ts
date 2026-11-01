@@ -1,9 +1,9 @@
 import type {
   EvidenceObligation,
   PendingItem,
-  QualityCheck,
+  QualityCheckKind,
 } from "./journal.js";
-import { QUALITY_CHECKS, evidenceObligationsOf, ranAsFitnessFunction } from "./journal.js";
+import { QUALITY_CHECK_KINDS, evidenceObligationsOf, ranAsFitnessFunction } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
@@ -24,7 +24,7 @@ export interface ClaimReconciliation {
 
 /** One Reconciliation line of a Quality Check Reconciliation: its obligation's own, or one evidence observation's. */
 export interface ReconciliationLine {
-  readonly qualityCheck?: QualityCheck;
+  readonly qualityCheckKind?: QualityCheckKind;
   readonly outcome: Outcome;
   readonly evidenceObligation?: EvidenceObligation;
   readonly evidenceObservation?: ReconciledEvidenceObservation;
@@ -37,7 +37,7 @@ function observationLineOf(
 ): ReconciliationLine {
   const carriesObligation = carriesEvidenceObligation(reconciliation, observation);
   return {
-    ...(reconciliation.qualityCheck === undefined ? {} : { qualityCheck: reconciliation.qualityCheck }),
+    ...(reconciliation.qualityCheckKind === undefined ? {} : { qualityCheckKind: reconciliation.qualityCheckKind }),
     outcome: observation.outcome,
     ...(carriesObligation ? { evidenceObligation: reconciliation.evidenceObligation } : {}),
     evidenceObservation: observation,
@@ -51,7 +51,7 @@ export function linesOf(reconciliation: QualityCheckReconciliation): Reconciliat
       ? []
       : [
           {
-            ...(reconciliation.qualityCheck === undefined ? {} : { qualityCheck: reconciliation.qualityCheck }),
+            ...(reconciliation.qualityCheckKind === undefined ? {} : { qualityCheckKind: reconciliation.qualityCheckKind }),
             outcome: reconciliation.outcome,
             ...(reconciliation.evidenceObligation === undefined ? {} : { evidenceObligation: reconciliation.evidenceObligation }),
             ...(reconciliation.scenario === undefined ? {} : { scenario: reconciliation.scenario }),
@@ -83,7 +83,7 @@ export function observationsOf(row: ClaimReconciliation): readonly ReconciledEvi
 /** A row's evidence obligations at a quality check, read from its Quality Check Reconciliations: a scenario-scope obligation names none. */
 export function obligationsOf(row: ClaimReconciliation): readonly EvidenceObligation[] {
   return row.qualityCheckReconciliations.flatMap(({ evidenceObligation }) =>
-    evidenceObligation?.qualityCheck === undefined ? [] : [evidenceObligation]
+    evidenceObligation?.qualityCheckKind === undefined ? [] : [evidenceObligation]
   );
 }
 
@@ -115,7 +115,7 @@ export function fitnessFunctionReconciliationsOf(
   row: ClaimReconciliation
 ): QualityCheckReconciliation[] {
   return row.qualityCheckReconciliations.filter(
-    (r) => r.qualityCheck === "fitness" && r.evidenceObligation !== undefined
+    (r) => r.qualityCheckKind === "fitness" && r.evidenceObligation !== undefined
   );
 }
 
@@ -124,41 +124,41 @@ function ranObservationsOf(row: ClaimReconciliation): readonly ReconciledEvidenc
   return observationsOf(row).filter((o) => o.broken !== true);
 }
 
-export function carriesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
+export function carriesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
   return row.qualityCheckReconciliations.some(
-    (r) => r.qualityCheck === qualityCheck && linesOf(r).some((line) => line.outcome !== "broken")
+    (r) => r.qualityCheckKind === qualityCheckKind && linesOf(r).some((line) => line.outcome !== "broken")
   );
 }
 
-export function namesQualityCheck(row: ClaimReconciliation, qualityCheck: QualityCheck): boolean {
-  return evidenceObligationsOf(obligationsOf(row)).some((o) => o.qualityCheck === qualityCheck);
+export function namesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
+  return evidenceObligationsOf(obligationsOf(row)).some((o) => o.qualityCheckKind === qualityCheckKind);
 }
 
-export function observationCountOf(row: ClaimReconciliation, qualityCheck: QualityCheck): number {
-  return ranObservationsOf(row).filter((o) => o.qualityCheck === qualityCheck).length;
+export function observationCountOf(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): number {
+  return ranObservationsOf(row).filter((o) => o.qualityCheckKind === qualityCheckKind).length;
 }
 
-type StepsAtQualityCheck = { readonly qualityCheck: QualityCheck; readonly ciSteps?: readonly string[] };
+type StepsAtQualityCheckKind = { readonly qualityCheckKind: QualityCheckKind; readonly ciSteps?: readonly string[] };
 
 function stepsAt(
   row: ClaimReconciliation,
-  qualityCheck: QualityCheck,
-  stepsByQualityCheck: readonly StepsAtQualityCheck[]
+  qualityCheckKind: QualityCheckKind,
+  stepsByQualityCheckKind: readonly StepsAtQualityCheckKind[]
 ): readonly string[] {
-  if (qualityCheck === "fitness") {
+  if (qualityCheckKind === "fitness") {
     return observationsOf(row).flatMap((o) => (ranAsFitnessFunction(o) && o.step !== undefined ? [o.step] : []));
   }
-  const observed = observationsOf(row).some((o) => o.qualityCheck === qualityCheck);
-  if (!namesQualityCheck(row, qualityCheck) && !observed) return [];
-  return stepsByQualityCheck.find((entry) => entry.qualityCheck === qualityCheck)?.ciSteps ?? [];
+  const observed = observationsOf(row).some((o) => o.qualityCheckKind === qualityCheckKind);
+  if (!namesQualityCheckKind(row, qualityCheckKind) && !observed) return [];
+  return stepsByQualityCheckKind.find((entry) => entry.qualityCheckKind === qualityCheckKind)?.ciSteps ?? [];
 }
 
-/** The CI steps behind each quality check a row obligates or observes, in quality-check order, each step once. */
+/** The CI steps behind each kind of quality check a row obligates or observes, in kind order, each step once. */
 export function ciStepsOf(
   row: ClaimReconciliation,
-  stepsByQualityCheck: readonly StepsAtQualityCheck[]
+  stepsByQualityCheckKind: readonly StepsAtQualityCheckKind[]
 ): readonly string[] {
-  return [...new Set(QUALITY_CHECKS.flatMap((qualityCheck) => stepsAt(row, qualityCheck, stepsByQualityCheck)))];
+  return [...new Set(QUALITY_CHECK_KINDS.flatMap((qualityCheckKind) => stepsAt(row, qualityCheckKind, stepsByQualityCheckKind)))];
 }
 
 export function qualityCheckReconciliationsOf(

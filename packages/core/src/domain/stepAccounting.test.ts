@@ -51,7 +51,7 @@ const named =
 
 const NONE: StepTest = () => false;
 
-const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "excluded", "plumbing"] as const;
+const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "nonChecks", "plumbing"] as const;
 
 const summedOver = (rows: readonly JobStepAccount[], count: (typeof COUNTS)[number]): number =>
   rows.reduce((sum, row) => sum + row[count], 0);
@@ -69,7 +69,7 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
       candidates: 3,
       runners: 2,
       reconciler: 2,
-      excluded: 2,
+      nonChecks: 2,
       plumbing: 4,
     });
     expect(COUNTS.map((count) => account.total[count])).toEqual(COUNTS.map((count) => summedOver(account.byJob, count)));
@@ -94,7 +94,7 @@ describe("[SCN-USG-018] the step account's total sums each count over its rows, 
       candidates: 1,
       runners: 0,
       reconciler: 0,
-      excluded: 0,
+      nonChecks: 0,
       plumbing: 0,
     });
   });

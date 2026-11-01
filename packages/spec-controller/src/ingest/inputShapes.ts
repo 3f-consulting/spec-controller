@@ -91,7 +91,7 @@ export const SAVED_RECONCILIATION: Shape = {
           fields: {
             keysNotRead: { list: "anything" },
             ofWrongKind: { list: "anything" },
-            runnerKeysNotATier: { list: "anything" },
+            runnerKeysNotALayer: { list: "anything" },
             nonChecksMatchingNoStep: { list: "anything" },
             nonChecksNotAStepName: { list: "anything" },
           },

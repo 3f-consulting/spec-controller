@@ -11,8 +11,8 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 let ledger: Ledger;
 beforeEach(() => {
   ledger = reconcile(
-    [{ scnId: "SCN-USG-025", evidenceObligations: [{ qualityCheck: "unit" }] }],
-    [{ qualityCheck: "unit", scnId: "SCN-USG-025", status: "passed" }],
+    [{ scnId: "SCN-USG-025", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", scnId: "SCN-USG-025", status: "passed" }],
   );
 });
 
@@ -92,7 +92,7 @@ const codeSpansOf = (line: string): string[] => {
   return spans;
 };
 
-const counts = { stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 };
+const counts = { stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, nonChecks: 0, plumbing: 0 };
 
 type StepAccountingRows = NonNullable<Summary["stepAccounting"]>;
 
@@ -112,7 +112,7 @@ describe("[SCN-RPT-088] each configuration entry and workflow name the report qu
     { shown: "ci.yml:quality:Run `pnpm test`", extra: { nonChecksMatchingNoStep: ["ci.yml:quality:Run `pnpm test`"] } },
     { shown: "`Deploy`", extra: { nonChecksNotAStepName: ["`Deploy`"] } },
     { shown: "specController.zz``z`", extra: { configurationKeysNotRead: ["zz``z`"] } },
-    { shown: "specController.runners.`unit", extra: { runnerKeysNotATier: ["`unit"] } },
+    { shown: "specController.runners.`unit", extra: { runnerKeysNotALayer: ["`unit"] } },
     { shown: "specController.runners.a`b", extra: { configurationOfWrongKind: [{ entry: "specController.runners.a`b", is: "number" as const, reads: "string-or-null" as const }] } },
     { shown: "`ci.yaml`:quality:Deploy", accounting: { nonChecksNamingAWorkflowNotRead: ["`ci.yaml`:quality:Deploy"] } },
     { shown: " ci.yml:build:Test", accounting: { nonChecksNamingAWorkflowNotRead: [" ci.yml:build:Test"] } },

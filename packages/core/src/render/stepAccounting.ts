@@ -17,7 +17,7 @@ const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
       row.candidates,
       row.runners,
       row.reconciler,
-      row.excluded,
+      row.nonChecks,
       row.plumbing,
       accountedForOf(row),
     ])
@@ -25,8 +25,8 @@ const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
 
 const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
   if (byJob.length < 2) return [];
-  const { stepsRead, candidates, runners, reconciler, excluded, plumbing } = total;
-  const counts = rowOf([stepsRead, candidates, runners, reconciler, excluded, plumbing, accountedForOf(total)]);
+  const { stepsRead, candidates, runners, reconciler, nonChecks, plumbing } = total;
+  const counts = rowOf([stepsRead, candidates, runners, reconciler, nonChecks, plumbing, accountedForOf(total)]);
   return [`| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | ${counts}`];
 };
 
@@ -51,12 +51,12 @@ const reconcilerListOf = ({ steps }: StepAccounting): string[] => {
   ];
 };
 
-const excludedListOf = ({ steps }: StepAccounting): string[] => {
-  const excluded = steps.excluded ?? [];
-  if (excluded.length === 0) return [];
+const nonChecksListOf = ({ steps }: StepAccounting): string[] => {
+  const nonChecks = steps.nonChecks ?? [];
+  if (nonChecks.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel],
-    ...excluded.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](step)}`),
+    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](step)}`),
     "",
   ];
 };
@@ -93,7 +93,7 @@ export const stepAccountingSection = (report: RenderInput): string[] => {
     "",
     ...runnersListOf(accounting),
     ...reconcilerListOf(accounting),
-    ...excludedListOf(accounting),
+    ...nonChecksListOf(accounting),
     ...notAppliedListOf(accounting),
     ...plumbingListOf(accounting),
   ];

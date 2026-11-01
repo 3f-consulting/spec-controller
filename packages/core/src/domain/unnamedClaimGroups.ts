@@ -1,4 +1,4 @@
-import type { BehaviouralQualityCheck, BehaviouralEvidenceObservation, EvidenceObservation, ObservationNote } from "./journal.js";
+import type { Layer, BehaviouralEvidenceObservation, EvidenceObservation, ObservationNote } from "./journal.js";
 import { isFitnessObservation } from "./journal.js";
 import type { ReconciliationLine } from "./claimReconciliation.js";
 
@@ -8,7 +8,7 @@ interface UnnamedClaimRemark {
 }
 
 export interface UnnamedClaimFileGroup {
-  readonly qualityCheck: BehaviouralQualityCheck;
+  readonly qualityCheckKind: Layer;
   readonly locator: string | undefined;
   readonly sharedScnCode?: string;
   readonly remarks: readonly UnnamedClaimRemark[];
@@ -49,7 +49,7 @@ function groupOf(sharedScnCode: string | null, observations: readonly Behavioura
   const [first] = observations as [BehaviouralEvidenceObservation, ...BehaviouralEvidenceObservation[]];
   const passed = observations.filter((o) => o.status === "passed").length;
   return {
-    qualityCheck: first.qualityCheck,
+    qualityCheckKind: first.qualityCheckKind,
     locator: first.locator,
     ...(sharedScnCode === null ? {} : { sharedScnCode }),
     remarks: remarksOf(observations),
@@ -78,7 +78,7 @@ export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): Unna
   for (const o of observations) {
     if (isFitnessObservation(o)) continue;
     const code = sharedScnCodeOf(o);
-    const key = JSON.stringify([o.qualityCheck, o.locator ?? null, code]);
+    const key = JSON.stringify([o.qualityCheckKind, o.locator ?? null, code]);
     byFile.set(key, { code, members: [...(byFile.get(key)?.members ?? []), o] });
   }
   return [...[...byFile.values()].map(({ code, members }) => groupOf(code, members)), ...stepsGroupsOf(observations)];

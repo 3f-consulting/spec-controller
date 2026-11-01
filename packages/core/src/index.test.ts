@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { QualityCheckReconciliation } from "./index.js";
 
 const externallyAssembledQcr = {
-  qualityCheck: "unit" as const,
+  qualityCheckKind: "unit" as const,
   outcome: "satisfied" as const,
 };
 

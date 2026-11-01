@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import type { EvidenceObservation } from "../model.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
-import type { QualityCheckObservations } from "../domain/ledger.js";
+import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
@@ -40,9 +40,9 @@ const packageJson = {
 };
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheck: "integration", scnId: "SCN-FIX-002", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "integration", scnId: "SCN-FIX-002", status: "passed" },
 ];
 
 const runnersOnlyCi = `name: fixture CI
@@ -74,14 +74,14 @@ function tableRows(workflow: string = ci, observations: EvidenceObservation[] = 
   return rowsOf(assembled(workflow, observations));
 }
 
-function summaryCiSteps(reconciliation: EvidenceReconciliation, qualityCheck: string): readonly string[] {
-  const entry = reconciliation.summary.evidenceObservations?.byQualityCheck.find(
-    (observed) => observed.qualityCheck === qualityCheck
+function summaryCiSteps(reconciliation: EvidenceReconciliation, qualityCheckKind: string): readonly string[] {
+  const entry = reconciliation.summary.evidenceObservations?.byQualityCheckKind.find(
+    (observed) => observed.qualityCheckKind === qualityCheckKind
   );
   return entry?.ciSteps ?? [];
 }
 
-function fitnessRowWith(fitness: QualityCheckObservations): string[] | undefined {
+function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undefined {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson,
@@ -97,7 +97,7 @@ function fitnessRowWith(fitness: QualityCheckObservations): string[] | undefined
       ...reconciliation.summary,
       evidenceObservations: observations && {
         ...observations,
-        byQualityCheck: observations.byQualityCheck.map((entry) => (entry.qualityCheck === "fitness" ? fitness : entry)),
+        byQualityCheckKind: observations.byQualityCheckKind.map((entry) => (entry.qualityCheckKind === "fitness" ? fitness : entry)),
       },
     },
   };
@@ -132,7 +132,7 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
   });
 
   it("counts in the fitness row the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
-    const fitness = fitnessRowWith({ qualityCheck: "fitness", count: 3, ciSteps: ["Lint", "Typecheck"] });
+    const fitness = fitnessRowWith({ qualityCheckKind: "fitness", count: 3, ciSteps: ["Lint", "Typecheck"] });
     expect(fitness).toStrictEqual([
       "fitness",
       "3",
@@ -142,7 +142,7 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
   });
 
   it("leaves the CI step cell blank on a fitness row with evidence observations and no steps", () => {
-    const fitness = fitnessRowWith({ qualityCheck: "fitness", count: 2 });
+    const fitness = fitnessRowWith({ qualityCheckKind: "fitness", count: 2 });
     expect(fitness).toStrictEqual(["fitness", "2", "each fitness function's check step", ""]);
   });
 
@@ -167,7 +167,7 @@ describe("[SCN-RPT-074] each quality check's row names its runner and the CI ste
   it("says no step read runs a declared runner that no step runs, with evidence observations", () => {
     const withPerformance: EvidenceObservation[] = [
       ...behaviouralObservations,
-      { qualityCheck: "performance", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "performance", scnId: "SCN-FIX-001", status: "passed" },
     ];
     const rows = tableRows(ci, withPerformance).slice(2);
     expect(rows.find(([check]) => check === "performance")).toStrictEqual([

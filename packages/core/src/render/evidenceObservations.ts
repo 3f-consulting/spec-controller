@@ -1,24 +1,24 @@
 import type { RenderInput } from "../domain/renderInput.js";
-import type { QualityCheckObservations } from "../domain/ledger.js";
+import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { cellSafe } from "./cellSafe.js";
 
-const runnerCells = ({ qualityCheck, count, runner, ciSteps }: QualityCheckObservations): [string, string] => {
+const runnerCells = ({ qualityCheckKind, count, runner, ciSteps }: QualityCheckKindObservations): [string, string] => {
   if (typeof runner === "string") {
     return [
       cellSafe(runner),
       ciSteps ? cellSafe(ciSteps.join(", ")) : CORE_MESSAGES[CoreMessage.NoStepReadRunsIt],
     ];
   }
-  if (qualityCheck === "fitness") {
+  if (qualityCheckKind === "fitness") {
     if (count === 0) return ["", ""];
     return [CORE_MESSAGES[CoreMessage.FitnessRunner], ciSteps ? CORE_MESSAGES[CoreMessage.FitnessCiStep](ciSteps.length) : ""];
   }
-  if (runner === undefined) return [CORE_MESSAGES[CoreMessage.RunnerTierUnnamed], ""];
-  return [CORE_MESSAGES[CoreMessage.RunnerTierNamesNone], ""];
+  if (runner === undefined) return [CORE_MESSAGES[CoreMessage.RunnerLayerUnnamed], ""];
+  return [CORE_MESSAGES[CoreMessage.RunnerLayerNamesNone], ""];
 };
 
-export const testVolumeSection = (report: RenderInput): string[] => {
+export const evidenceObservationsSection = (report: RenderInput): string[] => {
   const observations = report.summary.evidenceObservations;
   if (!observations) return [];
   const lines = [
@@ -34,9 +34,9 @@ export const testVolumeSection = (report: RenderInput): string[] => {
     CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader],
     "| --- | --- | --- | --- |",
   ];
-  for (const entry of observations.byQualityCheck) {
+  for (const entry of observations.byQualityCheckKind) {
     const [runner, ciSteps] = runnerCells(entry);
-    lines.push(`| ${entry.qualityCheck} | ${entry.count} | ${runner} | ${ciSteps} |`);
+    lines.push(`| ${entry.qualityCheckKind} | ${entry.count} | ${runner} | ${ciSteps} |`);
   }
   lines.push("");
   return lines;

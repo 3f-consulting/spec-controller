@@ -18,7 +18,7 @@ export function reconcileFixture(target: string, report: InputPaths): EvidenceRe
 export function unitReconciliationOf(balance: EvidenceReconciliation, scnId: string) {
   return balance.ledger.claimReconciliations
     .find((s) => s.claim === scnId)
-    ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit");
+    ?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit");
 }
 
 type UnitReconciliation = ReturnType<typeof unitReconciliationOf>;

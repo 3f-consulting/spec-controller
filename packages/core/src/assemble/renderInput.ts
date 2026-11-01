@@ -8,8 +8,8 @@ import { outOfBalanceByFeature } from "../domain/outOfBalanceByFeature.js";
 
 export type {
   ClaimReconciliationTotals,
-  QualityCheckReconciliationTotals,
-  MissingByQualityCheck,
+  ReconciliationLineTotals,
+  MissingByQualityCheckKind,
 } from "../domain/ledger.js";
 export type { Summary, EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 

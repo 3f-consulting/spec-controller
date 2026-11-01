@@ -22,7 +22,7 @@ describe("[SCN-CFG-004] a specController entry of a kind its reader does not tak
   it("names exactly what the resolvers read as absent, and they still read the rest", () => {
     const block = { runners: { unit: 5, e2e: "playwright" }, notChecks: ["a", 7], deferralTags: ["x", false] };
     const pkg = { specController: block };
-    expect(resolveRunners(pkg).tiers).toEqual({ e2e: "playwright" });
+    expect(resolveRunners(pkg).layers).toEqual({ e2e: "playwright" });
     expect(resolveNotChecks(pkg)).toEqual(["a"]);
     expect(resolveDeferralTags(pkg, [])).toEqual(["x"]);
     expect(wrongKindsOf(block).map(({ entry }) => entry)).toEqual([

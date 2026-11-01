@@ -10,7 +10,7 @@ const stepRunning = (command: string): string =>
 
 const expectVitestRecognisedAtCheck = (command: string, scripts: Parameters<typeof recognisedRunners>[2]): void => {
   expect(recognisedRunners(workflowSteps([stepRunning(command)]), namedByIdentity, scripts, { unit: "vitest" }, shellReading)).toEqual([
-    { tier: "unit", runner: "vitest", step: "Check" },
+    { layer: "unit", runner: "vitest", step: "Check" },
   ]);
 };
 

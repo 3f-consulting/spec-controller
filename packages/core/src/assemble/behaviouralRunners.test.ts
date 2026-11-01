@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { runnersReconciler } from "./runnerTiers.test-utils.js";
+import { runnersReconciler } from "./runnerLayers.test-utils.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { feature } from "../evidenceReconciliation.test-utils.js";
 import { lineReadingsOf } from "../domain/qualityCheckReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
-import type { QualityCheckObservations } from "../domain/ledger.js";
+import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import type { BehaviouralEvidenceObservation } from "../domain/journal.js";
 
 const ci = `name: fixture CI
@@ -173,12 +173,12 @@ function withObservations(
   });
 }
 
-function entries(reconciliation: EvidenceReconciliation): readonly QualityCheckObservations[] {
-  return reconciliation.summary.evidenceObservations?.byQualityCheck ?? [];
+function entries(reconciliation: EvidenceReconciliation): readonly QualityCheckKindObservations[] {
+  return reconciliation.summary.evidenceObservations?.byQualityCheckKind ?? [];
 }
 
-function entryFor(reconciliation: EvidenceReconciliation, qualityCheck: string): QualityCheckObservations | undefined {
-  return entries(reconciliation).find((entry) => entry.qualityCheck === qualityCheck);
+function entryFor(reconciliation: EvidenceReconciliation, qualityCheckKind: string): QualityCheckKindObservations | undefined {
+  return entries(reconciliation).find((entry) => entry.qualityCheckKind === qualityCheckKind);
 }
 
 let reconcile: ReturnType<typeof runnersReconciler>;
@@ -199,12 +199,12 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       [["test"], "cites-no-scenario"],
     ]);
     expect(entries(reconciliation)).toStrictEqual([
-      { qualityCheck: "unit", count: 0 },
-      { qualityCheck: "integration", count: 0 },
-      { qualityCheck: "e2e", count: 0 },
-      { qualityCheck: "performance", count: 0 },
+      { qualityCheckKind: "unit", count: 0 },
+      { qualityCheckKind: "integration", count: 0 },
+      { qualityCheckKind: "e2e", count: 0 },
+      { qualityCheckKind: "performance", count: 0 },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         count: 4,
         ciSteps: [
           "workflow-0.yml:quality:Install",
@@ -215,12 +215,12 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
       },
     ]);
     expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
-    expect(reconciliation.summary).not.toHaveProperty("runnerKeysNotATier");
+    expect(reconciliation.summary).not.toHaveProperty("runnerKeysNotALayer");
   });
 
-  it("names no runner and no CI step on a behavioural quality check for a runners block that names no tier", () => {
+  it("names no runner and no CI step on a behavioural quality check for a runners block that names no layer", () => {
     const reconciliation = reconcile({});
-    for (const entry of entries(reconciliation).filter((entry) => entry.qualityCheck !== "fitness")) {
+    for (const entry of entries(reconciliation).filter((entry) => entry.qualityCheckKind !== "fitness")) {
       expect(entry).not.toHaveProperty("runner");
       expect(entry).not.toHaveProperty("ciSteps");
     }
@@ -229,28 +229,28 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
 
   it("names a declared runner that no step read runs on its entry, with no CI step, where it has evidence", () => {
     const reconciliation = withObservations({ runners: { unit: "vitest", e2e: "playwright" } }, [
-      { qualityCheck: "e2e", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "e2e", scnId: "SCN-FIX-001", status: "passed" },
     ]);
-    expect(entryFor(reconciliation, "e2e")).toStrictEqual({ qualityCheck: "e2e", count: 1, runner: "playwright" });
+    expect(entryFor(reconciliation, "e2e")).toStrictEqual({ qualityCheckKind: "e2e", count: 1, runner: "playwright" });
   });
 
-  it("names null as the runner of a tier the target names none for, with no CI step, at count 0 and with evidence", () => {
+  it("names null as the runner of a layer the target names none for, with no CI step, at count 0 and with evidence", () => {
     const reconciliation = withObservations({ runners: { unit: "vitest", integration: null, performance: null } }, [
-      { qualityCheck: "performance", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "performance", scnId: "SCN-FIX-001", status: "passed" },
     ]);
-    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheck: "integration", count: 0, runner: null });
-    expect(entryFor(reconciliation, "performance")).toStrictEqual({ qualityCheck: "performance", count: 1, runner: null });
+    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheckKind: "integration", count: 0, runner: null });
+    expect(entryFor(reconciliation, "performance")).toStrictEqual({ qualityCheckKind: "performance", count: 1, runner: null });
     expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
   });
 
-  it("names no runner on a tier the target has not said, left out, of the wrong kind, or with no runners block, where it has evidence", () => {
+  it("names no runner on a layer the target has not said, left out, of the wrong kind, or with no runners block, where it has evidence", () => {
     const unitObservations: BehaviouralEvidenceObservation[] = [
-      { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "passed" },
-      { qualityCheck: "unit", scnId: "SCN-FIX-001", status: "failed" },
+      { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "failed" },
     ];
     for (const specController of [{}, { runners: { e2e: "playwright" } }, { runners: { unit: 5 } }]) {
       const reconciliation = withObservations(specController, unitObservations);
-      expect(entryFor(reconciliation, "unit")).toStrictEqual({ qualityCheck: "unit", count: 2 });
+      expect(entryFor(reconciliation, "unit")).toStrictEqual({ qualityCheckKind: "unit", count: 2 });
       expect(reconciliation.summary).not.toHaveProperty("tiersWithoutRunner");
     }
   });
@@ -258,14 +258,14 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
   it("names the declared runner and the step that runs it on the unit entry once the runners block names it, and that step leaves fitness", () => {
     const reconciliation = reconcile({ unit: "vitest" });
     expect(entryFor(reconciliation, "unit")).toStrictEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       count: 0,
       runner: "vitest",
       ciSteps: ["workflow-0.yml:quality:Unit tests"],
     });
-    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheck: "integration", count: 0 });
+    expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheckKind: "integration", count: 0 });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       count: 3,
       ciSteps: [
         "workflow-0.yml:quality:Install",
@@ -299,12 +299,12 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
   ])("%s", (_, pipeline, unitSteps) => {
     const reconciliation = runnersReconciler(feature, pipeline, scripts)({ unit: "vitest" });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       count: 1,
       ciSteps: ["workflow-0.yml:quality:Lint"],
     });
     expect(entryFor(reconciliation, "unit")).toStrictEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       count: 0,
       runner: "vitest",
       ciSteps: unitSteps,
@@ -314,7 +314,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
   it("names on fitness the step behind each fitness function that ran, in step order, and none behind one the run's record says did not run", () => {
     const fitness = entryFor(withRecordedSteps(), "fitness");
     expect(fitness).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       count: 3,
       ciSteps: ["workflow-0.yml:quality:Types", "workflow-0.yml:quality:Lint", "workflow-0.yml:quality:Other property"],
     });
@@ -324,13 +324,13 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
   it("names on fitness a step that runs a declared runner when the run's record says its fitness function ran there", () => {
     const reconciliation = withARecordedRunnerStep();
     expect(entryFor(reconciliation, "unit")).toStrictEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       count: 0,
       runner: "vitest",
       ciSteps: ["workflow-0.yml:quality:Unit tests"],
     });
     expect(entryFor(reconciliation, "fitness")).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       count: 2,
       ciSteps: ["workflow-0.yml:quality:Unit tests", "workflow-0.yml:quality:Lint"],
     });
@@ -338,7 +338,7 @@ describe("[SCN-RMD-015] each quality check in the summary's evidence observation
 
   it("names on fitness the candidate step behind its fitness function, never an excluded step running the same script before it", () => {
     expect(entryFor(withAnExcludedTwin(), "fitness")).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       count: 1,
       ciSteps: ["workflow-0.yml:quality:Lint"],
     });

@@ -12,15 +12,15 @@ import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
 const sharers: Scenario[] = [
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "fitness" }], feature: "features/ci.feature", title: "the build has no type errors" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheck: "fitness" }], feature: "features/deps.feature", title: "no dependency is unpinned" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheck: "fitness" }], feature: "features/deps.feature", title: "no dependency is unused" },
+  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
+  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no type errors" },
+  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unpinned" },
+  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unused" },
 ];
 
 function step(fitnessFunction: string, scnId?: string): EvidenceObservation {
   return {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction,
     ...(scnId !== undefined ? { scnId } : {}),
     exists: true,
@@ -29,7 +29,7 @@ function step(fitnessFunction: string, scnId?: string): EvidenceObservation {
   };
 }
 
-const uncitedTest: EvidenceObservation = { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests/x.test.ts", testName: "reads the config" };
+const uncitedTest: EvidenceObservation = { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/x.test.ts", testName: "reads the config" };
 
 function unnamedClaimItemsOf(observations: EvidenceObservation[]): string[] {
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");

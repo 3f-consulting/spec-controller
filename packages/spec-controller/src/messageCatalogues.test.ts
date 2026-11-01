@@ -61,7 +61,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.PendingTally]: [1],
   [CoreMessage.EvidenceObservationsSum]: [3, 1, 1, 1],
   [CoreMessage.FitnessCiStep]: [2],
-  [CoreMessage.RunnerKeyNotATier]: ["smoke"],
+  [CoreMessage.RunnerKeyNotALayer]: ["smoke"],
   [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
   [CoreMessage.StepExcluded]: ["ci.yml / build / lint"],
   [CoreMessage.NotChecksEntryMatchesNoStep]: ["`specController.notChecks`", "ci.yml / build / gone"],

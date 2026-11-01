@@ -13,11 +13,11 @@ import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
   it("a missing behavioural reconciliation is its quality check, its evidence obligation and the missing outcome, with no observation list", () => {
-    const obligation: EvidenceObligation = { qualityCheck: "unit" };
+    const obligation: EvidenceObligation = { qualityCheckKind: "unit" };
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-026", obligation, []);
 
     expect(reconciliation).toStrictEqual({
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       outcome: "missing",
       evidenceObligation: obligation,
     });
@@ -26,9 +26,9 @@ describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obli
 
 describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
   it("a fitness missing reconciliation is the fitness quality check, its evidence obligation and the missing outcome, with no observation list", () => {
-    const obligation: EvidenceObligation = { qualityCheck: "fitness" };
+    const obligation: EvidenceObligation = { qualityCheckKind: "fitness" };
     const absentGuard: EvidenceObservation = {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "lint:absent-guard",
       exists: false,
       enforcedOverRealSource: false,
@@ -36,7 +36,7 @@ describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation 
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-028", obligation, [absentGuard]);
 
     expect(reconciliation).toStrictEqual({
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       outcome: "missing",
       evidenceObligation: obligation,
     });
@@ -74,10 +74,10 @@ function flipped(presence: SidePresence): SidePresence {
 
 type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 
-const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
+const sampleObligation: EvidenceObligation = { qualityCheckKind: "unit" };
 
 function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
-  return { qualityCheck: "unit", scnId: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
+  return { qualityCheckKind: "unit", scnId: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
 }
 
 /** The outcomes only an evidence observation's line reads; a reconciliation's own outcome is never one of them. */
@@ -229,9 +229,9 @@ describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's de
 
 describe("[SCN-LDG-035] a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites", () => {
   it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
-    const obligation: EvidenceObligation = { qualityCheck: "fitness" };
+    const obligation: EvidenceObligation = { qualityCheckKind: "fitness" };
     const observation: EvidenceObservation = {
-      qualityCheck: "fitness",
+      qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
       scnId: "SCN-AAA-001",
       exists: true,

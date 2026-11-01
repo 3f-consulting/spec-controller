@@ -1,39 +1,39 @@
-export const QUALITY_CHECKS = ["fitness", "unit", "integration", "e2e", "performance"] as const;
+export const QUALITY_CHECK_KINDS = ["fitness", "unit", "integration", "e2e", "performance"] as const;
 
-export type QualityCheck = (typeof QUALITY_CHECKS)[number];
+export type QualityCheckKind = (typeof QUALITY_CHECK_KINDS)[number];
 
-export type BehaviouralQualityCheck = Exclude<QualityCheck, "fitness">;
+export type Layer = Exclude<QualityCheckKind, "fitness">;
 
 export type EvidenceReportKind = "test-results" | "scenario-runs";
 
-const FALLBACK_QUALITY_CHECK: Readonly<Record<EvidenceReportKind, BehaviouralQualityCheck>> = {
+const FALLBACK_LAYER: Readonly<Record<EvidenceReportKind, Layer>> = {
   "test-results": "unit",
   "scenario-runs": "integration",
 };
 
-export function fallbackQualityCheckOf(kind: EvidenceReportKind): BehaviouralQualityCheck {
-  return FALLBACK_QUALITY_CHECK[kind];
+export function fallbackLayerOf(kind: EvidenceReportKind): Layer {
+  return FALLBACK_LAYER[kind];
 }
 
-const TIERS: ReadonlySet<string> = new Set(
-  QUALITY_CHECKS.filter((qualityCheck) => qualityCheck !== "fitness" && qualityCheck !== "unit")
+const NON_UNIT_LAYERS: ReadonlySet<string> = new Set(
+  QUALITY_CHECK_KINDS.filter((qualityCheckKind) => qualityCheckKind !== "fitness" && qualityCheckKind !== "unit")
 );
 
-export function qualityChecksPostedAt(
+export function layersPostedAt(
   tagNames: readonly string[],
-  fallbackQualityCheck: BehaviouralQualityCheck
-): BehaviouralQualityCheck[] {
-  const qualityChecks: BehaviouralQualityCheck[] = [];
+  fallbackLayer: Layer
+): Layer[] {
+  const layers: Layer[] = [];
   for (const name of tagNames) {
-    if (TIERS.has(name) && !qualityChecks.includes(name as BehaviouralQualityCheck)) {
-      qualityChecks.push(name as BehaviouralQualityCheck);
+    if (NON_UNIT_LAYERS.has(name) && !layers.includes(name as Layer)) {
+      layers.push(name as Layer);
     }
   }
-  return qualityChecks.length > 0 ? qualityChecks : [fallbackQualityCheck];
+  return layers.length > 0 ? layers : [fallbackLayer];
 }
 
 export interface EvidenceObligation {
-  readonly qualityCheck?: QualityCheck;
+  readonly qualityCheckKind?: QualityCheckKind;
   readonly pending?: boolean;
 }
 
@@ -49,7 +49,7 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
       if (obligation.pending === true) continue;
-      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheck));
+      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheckKind));
     }
   }
   return pairs;
@@ -57,9 +57,9 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
 
 export function evidenceObligationPairKey(
   scnId: string,
-  qualityCheck: QualityCheck | undefined
+  qualityCheckKind: QualityCheckKind | undefined
 ): string {
-  return `${scnId} ${qualityCheck}`;
+  return `${scnId} ${qualityCheckKind}`;
 }
 
 export function evidenceObligationsOf(
@@ -71,7 +71,7 @@ export function evidenceObligationsOf(
 export function pendingItemsOf(scenario: Scenario): PendingItem[] {
   return scenario.evidenceObligations
     .filter((obligation) => obligation.pending)
-    .map((obligation) => ({ qualityCheck: obligation.qualityCheck }));
+    .map((obligation) => ({ qualityCheckKind: obligation.qualityCheckKind }));
 }
 
 export type EvidenceStatus = "passed" | "failed";
@@ -113,7 +113,7 @@ interface CheckStepDidNotRunNote {
 export type ObservationNote = SeveralScnCodesNote | SharedScnCodeNote | AmbiguousStepNote | CheckStepDidNotRunNote;
 
 export interface BehaviouralEvidenceObservation {
-  readonly qualityCheck: BehaviouralQualityCheck;
+  readonly qualityCheckKind: Layer;
   readonly scnId: string | null;
   readonly status: EvidenceStatus;
   readonly locator?: string;
@@ -124,7 +124,7 @@ export interface BehaviouralEvidenceObservation {
 }
 
 export interface FitnessEvidenceObservation {
-  readonly qualityCheck: "fitness";
+  readonly qualityCheckKind: "fitness";
   readonly fitnessFunction: string;
   readonly scnId?: string;
   /** The CI step it was observed at, as workflow, job and step. */
@@ -141,7 +141,7 @@ export interface FitnessEvidenceObservation {
 export function isFitnessObservation(
   observation: EvidenceObservation
 ): observation is FitnessEvidenceObservation {
-  return observation.qualityCheck === "fitness";
+  return observation.qualityCheckKind === "fitness";
 }
 
 export function ranAsFitnessFunction(observation: EvidenceObservation): observation is FitnessEvidenceObservation {
@@ -151,5 +151,5 @@ export function ranAsFitnessFunction(observation: EvidenceObservation): observat
 export type EvidenceObservation = BehaviouralEvidenceObservation | FitnessEvidenceObservation;
 
 export interface PendingItem {
-  readonly qualityCheck?: QualityCheck;
+  readonly qualityCheckKind?: QualityCheckKind;
 }

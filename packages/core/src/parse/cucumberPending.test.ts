@@ -19,11 +19,11 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
     ["emits a `failed` observation when a step failed (→ failing downstream)", "failed"],
   ] as const)("%s", (_title, status) => {
     expect(parseCucumberEvidenceObservations(reportWithStep(status))).toEqual([
-      { qualityCheck: "integration", scnId: "SCN-PDN-001", status, locator: "features/pnd013.feature" },
+      { qualityCheckKind: "integration", scnId: "SCN-PDN-001", status, locator: "features/pnd013.feature" },
     ]);
   });
 
-  it("drops an inconclusive scenario at EVERY named tier — the drop is whole-scenario, not per-tier", () => {
+  it("drops an inconclusive scenario at EVERY named layer — the drop is whole-scenario, not per-layer", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/multi.feature",
@@ -55,7 +55,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
       ]
     );
     expect(observations).toEqual([
-      { qualityCheck: "integration", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+      { qualityCheckKind: "integration", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
     ]);
   });
 
@@ -72,7 +72,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
       },
     ]);
     expect(observations).toEqual([
-      { qualityCheck: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+      { qualityCheckKind: "e2e", scnId: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
     ]);
   });
 });

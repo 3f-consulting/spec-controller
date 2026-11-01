@@ -83,7 +83,7 @@ export enum CoreMessage {
   PendingItemsOutstanding,
   EvidenceReconciliationHeading,
   EvidenceReconciliationClaimReconciliationTerm,
-  EvidenceReconciliationQualityCheckReconciliationTerm,
+  EvidenceReconciliationReconciliationLineTerm,
   EvidenceReconciliationEvidenceObligationTerm,
   EvidenceReconciliationEvidenceObservationTerm,
   SubjectColumn,
@@ -92,17 +92,17 @@ export enum CoreMessage {
   OutOfBalanceColumn,
   DetailColumn,
   ClaimReconciliationSubject,
-  QualityCheckReconciliationSubject,
+  ReconciliationLineSubject,
   PendingTally,
   EvidenceObservationsHeading,
   EvidenceObservationsSum,
   EvidenceObservationsTableHeader,
   FitnessRunner,
   FitnessCiStep,
-  RunnerTierNamesNone,
-  RunnerTierUnnamed,
+  RunnerLayerNamesNone,
+  RunnerLayerUnnamed,
   NoStepReadRunsIt,
-  RunnerKeyNotATier,
+  RunnerKeyNotALayer,
   ReconcilerStep,
   ReconcilerReconciles,
   ReconcilerRecords,
@@ -213,7 +213,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessCiStep]: [steps: number];
-  readonly [CoreMessage.RunnerKeyNotATier]: [key: string];
+  readonly [CoreMessage.RunnerKeyNotALayer]: [key: string];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [key: string, entry: string];
@@ -231,7 +231,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.UntaggedScenarios]: [count: number];
   readonly [CoreMessage.SharedScnCodes]: [scenarios: number, codes: number];
   readonly [CoreMessage.SharedScnCodeScenario]: [feature: string, title: string];
-  readonly [CoreMessage.PendingItemFor]: [qualityCheck: string];
+  readonly [CoreMessage.PendingItemFor]: [qualityCheckKind: string];
   readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
   readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
   readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
@@ -389,7 +389,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
-  [CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm]:
+  [CoreMessage.EvidenceReconciliationReconciliationLineTerm]:
     "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome. " +
     "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
     "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
@@ -405,7 +405,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OutOfBalanceColumn]: "Out-of-balance",
   [CoreMessage.DetailColumn]: "Detail",
   [CoreMessage.ClaimReconciliationSubject]: "Claim Reconciliation",
-  [CoreMessage.QualityCheckReconciliationSubject]: "Reconciliation line",
+  [CoreMessage.ReconciliationLineSubject]: "Reconciliation line",
   [CoreMessage.PendingTally]: (pending) =>
     `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
@@ -415,10 +415,10 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.FitnessRunner]: "each fitness function's check step",
   [CoreMessage.FitnessCiStep]: (steps) =>
     `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
-  [CoreMessage.RunnerTierNamesNone]: "no runner: the target names none.",
-  [CoreMessage.RunnerTierUnnamed]: "unnamed: the target has not said.",
+  [CoreMessage.RunnerLayerNamesNone]: "no runner: the target names none.",
+  [CoreMessage.RunnerLayerUnnamed]: "unnamed: the target has not said.",
   [CoreMessage.NoStepReadRunsIt]: "no step read runs it.",
-  [CoreMessage.RunnerKeyNotATier]: (key) =>
+  [CoreMessage.RunnerKeyNotALayer]: (key) =>
     `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
@@ -473,7 +473,7 @@ export const CORE_MESSAGES: CoreMessages = {
     "- In Reconciling items, `—` means the row has no reconciling item.",
   ].join("\n"),
   [CoreMessage.PendingItem]: "pending",
-  [CoreMessage.PendingItemFor]: (qualityCheck) => `pending: ${qualityCheck}`,
+  [CoreMessage.PendingItemFor]: (qualityCheckKind) => `pending: ${qualityCheckKind}`,
   [CoreMessage.CheckStepNoOutcome]: (scnId) =>
     `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`,
   [CoreMessage.CheckStepSkipped]: (scnId) =>

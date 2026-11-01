@@ -6,11 +6,11 @@ import {
   reconcilingItemsOf,
 } from "./claimReconciliation.js";
 import type {
-  BehaviouralQualityCheck,
+  Layer,
   FitnessEvidenceObservation,
-  QualityCheck,
+  QualityCheckKind,
 } from "./journal.js";
-import { QUALITY_CHECKS, ranAsFitnessFunction } from "./journal.js";
+import { QUALITY_CHECK_KINDS, ranAsFitnessFunction } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 
 export interface Ledger {
@@ -49,30 +49,30 @@ export interface ClaimReconciliationTotals {
   readonly unnamedClaim: number;
 }
 
-export interface MissingByQualityCheck {
+export interface MissingByQualityCheckKind {
   readonly subject: string;
   readonly count: number;
 }
 
-export interface QualityCheckReconciliationTotals {
+export interface ReconciliationLineTotals {
   readonly total: number;
   readonly byOutcome: Record<Outcome, number>;
   readonly outOfBalance: number;
-  readonly missingByQualityCheck: readonly MissingByQualityCheck[];
+  readonly missingByQualityCheckKind: readonly MissingByQualityCheckKind[];
 }
 
 export interface LedgerTally {
   readonly claimReconciliations: ClaimReconciliationTotals;
-  readonly qualityCheckReconciliations: QualityCheckReconciliationTotals;
+  readonly reconciliationLines: ReconciliationLineTotals;
   readonly pending: number;
 }
 
 export function ledgerTally(ledger: Ledger): LedgerTally {
   const { claimReconciliations, pending } = claimReconciliationTally(ledger);
-  const qualityCheckReconciliations = qualityCheckReconciliationTotals(ledger);
+  const reconciliationLines = reconciliationLineTotals(ledger);
   return {
     claimReconciliations,
-    qualityCheckReconciliations,
+    reconciliationLines,
     pending,
   };
 }
@@ -103,7 +103,7 @@ function claimReconciliationTally(ledger: Ledger): {
   };
 }
 
-function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconciliationTotals {
+function reconciliationLineTotals(ledger: Ledger): ReconciliationLineTotals {
   const byOutcome: Record<Outcome, number> = {
     satisfied: 0,
     "missing": 0,
@@ -121,8 +121,8 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
   for (const s of ledger.claimReconciliations) {
     for (const line of s.qualityCheckReconciliations.flatMap(linesOf)) {
       byOutcome[line.outcome]++;
-      if (line.outcome === "missing" && line.qualityCheck) {
-        missing.set(line.qualityCheck, (missing.get(line.qualityCheck) ?? 0) + 1);
+      if (line.outcome === "missing" && line.qualityCheckKind) {
+        missing.set(line.qualityCheckKind, (missing.get(line.qualityCheckKind) ?? 0) + 1);
       }
     }
   }
@@ -131,20 +131,20 @@ function qualityCheckReconciliationTotals(ledger: Ledger): QualityCheckReconcili
     total,
     byOutcome,
     outOfBalance: total - byOutcome.satisfied,
-    missingByQualityCheck: QUALITY_CHECKS.filter((s) => (missing.get(s) ?? 0) > 0).map(
+    missingByQualityCheckKind: QUALITY_CHECK_KINDS.filter((s) => (missing.get(s) ?? 0) > 0).map(
       (subject) => ({ subject, count: missing.get(subject)! })
     ),
   };
 }
 
-export const BEHAVIOURAL_QUALITY_CHECKS: readonly BehaviouralQualityCheck[] = QUALITY_CHECKS.filter(
-  (qualityCheck): qualityCheck is BehaviouralQualityCheck => qualityCheck !== "fitness"
+export const LAYERS: readonly Layer[] = QUALITY_CHECK_KINDS.filter(
+  (qualityCheckKind): qualityCheckKind is Layer => qualityCheckKind !== "fitness"
 );
 
-export const TIER_ORDER_FITNESS_LAST: readonly QualityCheck[] = [...BEHAVIOURAL_QUALITY_CHECKS, "fitness"];
+export const LAYER_ORDER_FITNESS_LAST: readonly QualityCheckKind[] = [...LAYERS, "fitness"];
 
 export interface BehaviouralObservationTally {
-  readonly rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number>;
+  readonly rawByLayer: Record<Layer, number>;
   readonly total: number;
   readonly onScenario: number;
   readonly onPhantomClaim: number;
@@ -152,7 +152,7 @@ export interface BehaviouralObservationTally {
 }
 
 export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservationTally {
-  const rawByBehaviouralQualityCheck: Record<BehaviouralQualityCheck, number> = {
+  const rawByLayer: Record<Layer, number> = {
     unit: 0,
     integration: 0,
     e2e: 0,
@@ -164,17 +164,17 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
 
   for (const row of ledger.claimReconciliations) {
     for (const observation of observationsOf(row)) {
-      if (observation.qualityCheck === "fitness") continue;
-      rawByBehaviouralQualityCheck[observation.qualityCheck]++;
+      if (observation.qualityCheckKind === "fitness") continue;
+      rawByLayer[observation.qualityCheckKind]++;
       if (row.kind === "phantom-claim") onPhantomClaim++;
       else if (row.kind === "unnamed-claim") onUnnamedClaim++;
       else onScenario++;
     }
   }
 
-  const total = BEHAVIOURAL_QUALITY_CHECKS.reduce((n, qc) => n + rawByBehaviouralQualityCheck[qc], 0);
+  const total = LAYERS.reduce((n, qc) => n + rawByLayer[qc], 0);
 
-  return { rawByBehaviouralQualityCheck, total, onScenario, onPhantomClaim, onUnnamedClaim };
+  return { rawByLayer, total, onScenario, onPhantomClaim, onUnnamedClaim };
 }
 
 export function runningFitnessObservations(ledger: Ledger): FitnessEvidenceObservation[] {
@@ -202,8 +202,8 @@ export function fitnessFunctionTally(ledger: Ledger): FitnessFunctionTally {
   return { runningFitnessFunctionCount, uncitedFitnessFunctionCount };
 }
 
-export interface QualityCheckObservations {
-  readonly qualityCheck: QualityCheck;
+export interface QualityCheckKindObservations {
+  readonly qualityCheckKind: QualityCheckKind;
   readonly count: number;
   readonly runner?: string | null;
   readonly ciSteps?: readonly string[];
@@ -214,7 +214,7 @@ export interface EvidenceObservationTally {
   readonly onScenario: number;
   readonly onPhantomClaim: number;
   readonly onUnnamedClaim: number;
-  readonly byQualityCheck: readonly QualityCheckObservations[];
+  readonly byQualityCheckKind: readonly QualityCheckKindObservations[];
 }
 
 export function evidenceObservationTally(ledger: Ledger): EvidenceObservationTally {
@@ -230,9 +230,9 @@ export function evidenceObservationTally(ledger: Ledger): EvidenceObservationTal
     onScenario: behavioural.onScenario + ranByKind.scenario,
     onPhantomClaim: behavioural.onPhantomClaim + ranByKind["phantom-claim"],
     onUnnamedClaim: behavioural.onUnnamedClaim + ranByKind["unnamed-claim"],
-    byQualityCheck: TIER_ORDER_FITNESS_LAST.map((qualityCheck) => ({
-      qualityCheck,
-      count: qualityCheck === "fitness" ? ran : behavioural.rawByBehaviouralQualityCheck[qualityCheck],
+    byQualityCheckKind: LAYER_ORDER_FITNESS_LAST.map((qualityCheckKind) => ({
+      qualityCheckKind,
+      count: qualityCheckKind === "fitness" ? ran : behavioural.rawByLayer[qualityCheckKind],
     })),
   };
 }

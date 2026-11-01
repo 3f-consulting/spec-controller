@@ -64,8 +64,8 @@ Feature: The report renders the ledger as sectioned facts
     reading the outcome's sentence alone. The cause rows fill only the out-of-balance column,
     always show even at zero, and sum to that count.
 
-    The missing cause row's Detail splits the missing Reconciliation lines by quality check,
-    fitness first: a behavioural check by its bare level, a fitness check as "fitness".
+    The missing cause row's Detail splits the missing Reconciliation lines by kind of quality check,
+    fitness first: a layer by its tag word, fitness as "fitness".
 
     The two out-of-balance counts differ in granularity: a scenario with two missing arms is
     one out-of-balance Claim Reconciliation and two out-of-balance Reconciliation lines.
@@ -162,8 +162,8 @@ Feature: The report renders the ledger as sectioned facts
 
     This layout is markdown only; the JSON is unaffected.
 
-    Every reconciling item is labelled by its tag: the bare level for a behavioural check
-    (unit, integration, …) and "fitness" for a fitness check, never an internal kind.
+    Every reconciling item is labelled by its tag: the bare tag word for a layer
+    (unit, integration, …) and "fitness" for fitness, never an internal kind.
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the Claim Reconciliations last
@@ -171,17 +171,17 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report reconciles the evidence observations — raw = attributed + phantom claim + unnamed claim
 
     Under "## Summary views", the "### Evidence observations" cut counts the evidence
-    observations of every quality check, fitness included. It opens with the identity
+    observations of every kind of quality check, fitness included. It opens with the identity
     "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c citing no scenario",
     which always balances.
 
     A phantom claim is an @SCN code no scenario carries; the unnamed claim holds observations
     with no @SCN code.
 
-    A table by quality check follows, always listing all five, with fitness last at the count
-    of fitness functions that ran, and a quality check with no evidence observation at zero.
+    A table by kind of quality check follows, always listing all five, with fitness last at the count
+    of fitness functions that ran, and a kind of quality check with no evidence observation at zero.
 
-    The per-quality-check counts and the three per-account counts are also in the JSON; the
+    The counts per kind of quality check and the three per-account counts are also in the JSON; the
     identity line is markdown only.
 
     @unit @SCN-RPT-010
@@ -189,8 +189,8 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the evidence observations table names, beside each quality check's count, the runner that produced its evidence and the CI step that runs it
 
-    Under "### Evidence observations", the table has a row per quality check with its count,
-    its runner and its CI step. A behavioural quality check's runner is the one the target
+    Under "### Evidence observations", the table has a row per kind of quality check with its count,
+    its runner and its CI step. A layer's runner is the one the target
     declares for it, whatever its count. Its CI step cell names each step where balance found
     that runner run, directly or through a package.json script, in step order, or says no step
     read runs it.
@@ -199,9 +199,9 @@ Feature: The report renders the ledger as sectioned facts
     function's row of Claim Reconciliations. The fitness row has blank runner and CI step cells
     when no fitness function ran.
 
-    A behavioural quality check whose runner the target does not declare says so in its
+    A layer whose runner the target does not declare says so in its
     runner cell, whatever its count: no runner where the target names none, unnamed where the
-    target has not said. The target has not said when it leaves the tier out, gives the tier a
+    target has not said. The target has not said when it leaves the layer out, gives the layer a
     value of the wrong kind, or has no runners block. Its CI step cell is blank.
 
     Each cell holds its text whole, so a runner or a step name holding a pipe stays in its
@@ -222,13 +222,13 @@ Feature: The report renders the ledger as sectioned facts
 
     Each ledger row has evidence columns between Scenario and Verdict: Fitness first, then
     Unit, Integration, E2e and Performance. Each column is present only when some scenario in
-    the run obligates or observes that check.
+    the run obligates or observes that kind of quality check.
 
-    Each cell is two-sided, `<obligation>/<observation>`. The left side is the check's letter
-    (F, U, I, E or P) when the scenario obligates that check, else `-`. The right side is the
-    number of evidence observations posted at that check, passing or failing, else `-`. So
+    Each cell is two-sided, `<obligation>/<observation>`. The left side is the kind's letter
+    (F, U, I, E or P) when the scenario obligates that kind, else `-`. The right side is the
+    number of evidence observations posted at that kind, passing or failing, else `-`. So
     `letter/N` is obligated and observed, `letter/-` is obligated and missing, `-/N` is
-    observed at a check the scenario never named, and a cell with neither is blank.
+    observed at a kind the scenario never named, and a cell with neither is blank.
 
     The cell counts backing, not quality: a failing observation still counts, and its failure
     shows in the Verdict and Reconciling-items columns.
@@ -240,7 +240,7 @@ Feature: The report renders the ledger as sectioned facts
     A key to the cells precedes the table wherever it has an evidence column. The columns are
     markdown only.
 
-    A `-/N` cell counts every observation that ran at that check for the scenario, duplicate
+    A `-/N` cell counts every observation that ran at that kind for the scenario, duplicate
     citations included. An observation citing a pending obligation, such as @unitpending,
     reconciles the same way and also renders `-/N`.
 
@@ -248,15 +248,15 @@ Feature: The report renders the ledger as sectioned facts
     citing a shared code credits neither scenario and shows on the unnamed claim.
 
     Wherever the table has an evidence column, its last column, CI steps, follows Reconciling
-    items. It names the CI steps behind each quality check the row obligates or observes, in
-    column order, each step once. A behavioural quality check's steps are those that run its
-    runner, named by workflow, job and step. A behavioural quality check the row observes only
+    items. It names the CI steps behind each kind of quality check the row obligates or observes, in
+    column order, each step once. A layer's steps are those that run its
+    runner, named by workflow, job and step. A layer the row observes only
     through broken evidence counts as observed, so its steps are named. A fitness function's
     step is the one its evidence observation ran at, named by workflow, job and step. The rule
     is the same on every row: a scenario, each scenario sharing a code, a phantom claim and the
     unnamed claim.
 
-    A quality check with no known step adds none: a behavioural check no CI step is found
+    A kind of quality check with no known step adds none: a layer no CI step is found
     running, a fitness obligation with no evidence observation, and a fitness observation that
     names no step. A row with no known step, and a scenario with no @SCN, has a blank CI steps
     cell.
@@ -315,10 +315,10 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report's evidence-observation views level a behavioural observation by the cited scenario's tag
 
-    A behavioural observation is levelled by the cited scenario's own tier tag, in the
+    A behavioural observation is levelled by the cited scenario's own evidence tag, in the
     report's views as in the reconciliation. A Cucumber run of an @e2e scenario counts at e2e
     in Evidence observations and in the scenario's E2e cell. A Cucumber run of a scenario tagged
-    both @integration and @e2e counts in both tiers.
+    both @integration and @e2e counts in both layers.
 
     @unit @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
@@ -360,9 +360,9 @@ Feature: The report renders the ledger as sectioned facts
 
     A ledger row's Verdict cell reads "balanced" or "out-of-balance" alone.
 
-    A reconciling item reads its quality check, a colon and its outcome's sentence, as
+    A reconciling item reads its kind of quality check, a colon and its outcome's sentence, as
     "unit: Evidence Observation is missing" or "fitness: Evidence Observation is missing". An
-    item with no quality check reads the sentence alone. Where an item names what the run
+    item with no kind of quality check reads the sentence alone. Where an item names what the run
     reported, such as the test that failed, that follows in parentheses, quoted as the run gave it.
 
     The report puts no symbol of its own beside a verdict or an outcome.
@@ -374,7 +374,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The report's own words are the wording it writes itself: headings, labels, verdicts,
     outcome sentences, tallies and notes. A Pending Item reads "pending", or
-    "pending" and its quality check. The Pending Items tally and the outstanding note open with
+    "pending" and its kind of quality check. The Pending Items tally and the outstanding note open with
     their words. The unsound stamp opens "This run is unsound.". Each cause row of the
     Evidence reconciliation summary reads its outcome's sentence alone.
 
@@ -462,7 +462,7 @@ Feature: The report renders the ledger as sectioned facts
     A behavioural evidence observation counts whether it passed, failed or is broken. A fitness
     evidence observation counts when its fitness function ran, on the kind of row it sits on, so
     an uncited one counts on the unnamed claim. A broken fitness evidence observation does not
-    count. The total is the sum of the five quality checks' counts and the sum of the counts on
+    count. The total is the sum of the counts of the five kinds of quality check and the sum of the counts on
     each kind of claim.
 
     @unit @SCN-RPT-023
@@ -522,9 +522,9 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: an evidence observation that answers no evidence obligation shows its own result
 
-    On a phantom claim's row, and on a scenario's row at a check where the scenario holds no
+    On a phantom claim's row, and on a scenario's row at a kind of quality check where the scenario holds no
     obligation, each observation is listed by its outcome and where it ran, and a test also by
-    its test name. After its quality check and the outcome's sentence, it shows its own result,
+    its test name. After its kind of quality check and the outcome's sentence, it shows its own result,
     failed or passed.
 
     The unnamed claim's row counts its results by file instead, under the Rule below.

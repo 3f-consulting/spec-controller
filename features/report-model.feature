@@ -68,18 +68,18 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The numbers the markdown prints are model data, not renderer arithmetic. The summary states
     the evidence reconciliation as one section: the Claim Reconciliations counted by verdict and
     by kind of claim, the Quality Check Reconciliations counted by outcome with the missing ones
-    by quality check, and the pending items counted. No fitness-only tally stands beside it: the
+    by kind of quality check, and the pending items counted. No fitness-only tally stands beside it: the
     fitness Quality Check Reconciliations are counted there with the rest. The summary states
     its evidence observations as one section: the total, the
-    counts on each kind of claim, and a count for each of the five quality checks, fitness last.
-    A behavioural count is every evidence observation of that quality check, a broken one
+    counts on each kind of claim, and a count for each of the five kinds of quality check, fitness last.
+    A behavioural count is every evidence observation of that layer, a broken one
     included; the fitness count is every fitness function that ran. The total is the sum of the
     five counts and the sum of the counts on each kind of claim, on the persisted file too. Each
-    quality check names the CI steps its counted evidence came from, in step order, each named
+    kind of quality check names the CI steps its counted evidence came from, in step order, each named
     workflow:job:step and each once, where there is at least one: a behavioural one the steps
     that run the runner the target declares for it, and fitness the step behind each fitness
     function that ran, where a single step carries its code; a fitness function no single step
-    carries is counted and names no step. A behavioural quality check names the runner the
+    carries is counted and names no step. A layer names the runner the
     target declares for it, whatever its count and whatever steps were found: null where the
     target names none, and no runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
@@ -130,16 +130,16 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: each evidence sub-row is keyed by one flat quality-check coordinate
 
-    The evidence coordinate is ONE flat quality-check ∈ {fitness, unit, integration, e2e,
-    performance}: fitness is one quality-check value, not a second axis. So each sub-row of
-    ledger.claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheck alone,
-    and the summary's missing split, missingByQualityCheck under the qualityCheckReconciliations
+    The evidence coordinate is ONE flat kind of quality check ∈ {fitness, unit, integration, e2e,
+    performance}: fitness is one kind of quality check, not a second axis. So each sub-row of
+    ledger.claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheckKind alone,
+    and the summary's missing split, missingByQualityCheckKind under the reconciliationLines
     of the summary's evidence reconciliation, counts the missing Reconciliation lines by the same flat
-    quality-check: an obligation answered only by a broken observation is one missing line
+    kind of quality check: an obligation answered only by a broken observation is one missing line
     beside the broken one, so it counts once. One reconcile function
-    serves every quality check, and the fitness value is what tells a watermelon apart. The
-    glossary names the quality check fitness, and lint is on its Double-check line
-    (doc/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the quality-check
+    serves every kind of quality check, and the fitness value is what tells a watermelon apart. The
+    glossary names the kind of quality check fitness, and lint is on its Double-check line
+    (doc/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the kind of quality check
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
     isolation.
 
@@ -150,7 +150,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     A runner decides the order its report lists files in, and vitest's changes between two runs
     over one unchanged tree. So the books read the evidence in an order the evidence itself
-    fixes: quality check in tier order with fitness last, then location, then the scenario cited,
+    fixes: kind of quality check in layer order with fitness last, then location, then the scenario cited,
     then everything else the evidence observation says. A row's posted evidence observations, and the evidence observation a reconciliation
     names (the first FAILED evidence observation in evidence order or, where none failed, the first), are then
     a function of what was observed, never of the order it arrived in.

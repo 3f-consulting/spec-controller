@@ -14,10 +14,10 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
   beforeEach(() => {
     ledger = reconcile(
       [
-        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+        { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         {
           scnId: "SCN-DUP-001",
-          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration", pending: true }],
+          evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
       []
@@ -31,7 +31,7 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
   it("reads duplicate-scn-code at every quality check each scenario raises, the deferred one included", () => {
     expect(
       accountsFor(ledger, "SCN-DUP-001").map((account) =>
-        account.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])
+        account.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome])
       )
     ).toEqual([
       [["unit", "duplicate-scn-code"]],
@@ -79,8 +79,8 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two
 
   it("holds exactly two claims under the code, each reading duplicate-scn-code at its own quality check and naming its own scenario", () => {
     expect(accountsFor(ledger, "SCN-ONE-001").map((account) => account.qualityCheckReconciliations)).toEqual([
-      [{ qualityCheck: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "unit" }, scenario: { feature: "features/one.feature", title: "in one" } }],
-      [{ qualityCheck: "integration", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheck: "integration" }, scenario: { feature: "features/two.feature", title: "in two" } }],
+      [{ qualityCheckKind: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "unit" }, scenario: { feature: "features/one.feature", title: "in one" } }],
+      [{ qualityCheckKind: "integration", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "integration" }, scenario: { feature: "features/two.feature", title: "in two" } }],
     ]);
   });
 
@@ -95,12 +95,12 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
   beforeEach(() => {
     ledger = reconcile(
       [
-        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { scnId: "SCN-DIS-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
       ],
       [
-        { qualityCheck: "unit", scnId: "SCN-DIS-001", status: "passed", locator: "dis.test.ts" },
-        { qualityCheck: "integration", scnId: "SCN-DIS-001", status: "passed", locator: "dis.feature" },
+        { qualityCheckKind: "unit", scnId: "SCN-DIS-001", status: "passed", locator: "dis.test.ts" },
+        { qualityCheckKind: "integration", scnId: "SCN-DIS-001", status: "passed", locator: "dis.feature" },
       ]
     );
   });
@@ -113,7 +113,7 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
   it("reads duplicate-scn-code on each claim at its own quality check only", () => {
     expect(
       accountsFor(ledger, "SCN-DIS-001").map((account) =>
-        account.qualityCheckReconciliations.map((q) => [q.qualityCheck, q.outcome])
+        account.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome])
       )
     ).toEqual([[["unit", "duplicate-scn-code"]], [["integration", "duplicate-scn-code"]]]);
   });

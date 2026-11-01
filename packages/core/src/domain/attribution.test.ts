@@ -10,7 +10,7 @@ const LOCATOR = "/r/several.test.ts";
 function observationCiting(codes: readonly string[]): BehaviouralEvidenceObservation {
   const { scnId, severalCodes } = attributionOf(codes);
   return {
-    qualityCheck: "unit",
+    qualityCheckKind: "unit",
     scnId,
     status: "passed",
     locator: LOCATOR,
@@ -37,15 +37,15 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
     const ledgerOf = (codes: readonly string[]) =>
       reconcile(
         [
-          { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-          { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+          { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         ],
         [observationCiting(codes)]
       );
     const unitOutcomeOf = (codes: readonly string[], scnId: string) =>
       ledgerOf(codes)
         .claimReconciliations.find((row) => row.claim === scnId)
-        ?.qualityCheckReconciliations.find((q) => q.qualityCheck === "unit")?.outcome;
+        ?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit")?.outcome;
     const unnamedClaimGroups = (codes: readonly string[]) => {
       const row = ledgerOf(codes).claimReconciliations.find(isUnnamedClaim);
       return unnamedClaimGroupsOf(row === undefined ? [] : reconcilingItemsOf(row));
@@ -58,7 +58,7 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
     it("posts the observation to one group on the unnamed claim's row whose remark names both codes", () => {
       expect(unnamedClaimGroups(["SCN-AAA-001", "SCN-AAA-002"])).toEqual([
         {
-          qualityCheck: "unit",
+          qualityCheckKind: "unit",
           locator: LOCATOR,
           remarks: [{ notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }] }],
           ran: 1,

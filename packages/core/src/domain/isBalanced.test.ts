@@ -9,8 +9,8 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-const unitScenario = (scnId: string): Scenario => ({ scnId, evidenceObligations: [{ qualityCheck: "unit" }] });
-const unitObservation = (scnId: string): EvidenceObservation => ({ qualityCheck: "unit", scnId, status: "passed" });
+const unitScenario = (scnId: string): Scenario => ({ scnId, evidenceObligations: [{ qualityCheckKind: "unit" }] });
+const unitObservation = (scnId: string): EvidenceObservation => ({ qualityCheckKind: "unit", scnId, status: "passed" });
 
 describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanced run is not reded", () => {
 
@@ -26,7 +26,7 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
 describe("[SCN-CLI-011] hasPendingItems + the --strict pending escalation", () => {
   it("hasPendingItems is true when any row carries a Pending Item (real reconcile output)", () => {
     const balance = reconcile(
-      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
+      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
       [],
     );
     expect(hasPendingItems(balance)).toBe(true);
@@ -34,8 +34,8 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict pending escalation", () =
 
   it("hasPendingItems is false when no row carries a Pending Item (real reconcile output)", () => {
     const balance = reconcile(
-      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
-      [{ qualityCheck: "unit", scnId: "SCN-PDR-001", status: "passed" }],
+      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", scnId: "SCN-PDR-001", status: "passed" }],
     );
     expect(hasPendingItems(balance)).toBe(false);
   });
@@ -43,8 +43,8 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict pending escalation", () =
   it("out-of-balance DOMINATES: an out-of-balance run carrying Pending Items is named out-of-balance under --strict, never pending", () => {
     const balance = reconcile(
       [
-        { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration" }] },
-        { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+        { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
       ],
       [],
     );
@@ -67,8 +67,8 @@ describe("[SCN-CLI-020] a corpus-less run carrying uncited evidence observations
     reconcile(
       [],
       [
-        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
-        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
+        { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
       ],
     );
 

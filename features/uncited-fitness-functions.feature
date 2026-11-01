@@ -36,8 +36,8 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: a step invoking a runner the manifest names is not a candidate fitness function
 
-    The manifest names one runner per tier. A step that invokes that runner, directly or through
-    a manifest script, is that tier's runner and is not a fitness function.
+    The manifest names one runner per layer. A step that invokes that runner, directly or through
+    a manifest script, is that layer's runner and is not a fitness function.
 
     @unit @SCN-USG-003
     Scenario: test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners

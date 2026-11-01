@@ -17,7 +17,7 @@ describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness fun
 
     const postings = balance.ledger.claimReconciliations.flatMap((row) =>
       observationsOf(row)
-        .filter((o) => o.qualityCheck === "fitness")
+        .filter((o) => o.qualityCheckKind === "fitness")
         .map((o) => [row.kind, o.fitnessFunction])
     );
     expect(postings).toEqual([

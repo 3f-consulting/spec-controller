@@ -10,13 +10,13 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
       {
         scnId: "SCN-LNT-026",
         evidenceObligations: [
-          { qualityCheck: "fitness" },
+          { qualityCheckKind: "fitness" },
         ],
       },
     ];
     const evidenceObservations: EvidenceObservation[] = [
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "traceability",
         scnId: "SCN-LNT-026",
         exists: true,
@@ -36,12 +36,12 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
       row?.qualityCheckReconciliations.flatMap(linesOf),
     ).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         outcome: "missing",
-        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObligation: { qualityCheckKind: "fitness" },
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         outcome: "broken",
         evidenceObservation: { ...evidenceObservations[0], outcome: "broken" },
       },

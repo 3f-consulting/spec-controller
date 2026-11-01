@@ -14,21 +14,21 @@ exceptions:
   - excludedOccurrences
   - featureNames
   - fitnessFunctions
-  - missingByQualityCheck
+  - missingByQualityCheckKind
   - onPhantomClaim
   - onScenario
   - onUnnamedClaim
   - outOfBalance
   - phantomClaim
-  - qualityCheck
+  - qualityCheckKind
   - qualityCheckReconciliations
-  - rawByBehaviouralQualityCheck
+  - rawByLayer
+  - reconciliationLines
   - runningFitnessFunctionCount
   - runProvenance
   - scenarioCodes
   - scnId
   - sourceSha
-  - testVolume
   - uncitedFitnessFunctionCount
   - unnamedClaim
   - untaggedScenarios

@@ -6,19 +6,19 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-VOL-001", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
+  { scnId: "SCN-VOL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
 ];
 
 const observations: EvidenceObservation[] = [
-  { qualityCheck: "unit", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheck: "integration", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheck: "unit", scnId: "SCN-VOL-404", status: "passed" },
-  { qualityCheck: "e2e", scnId: null, status: "passed" },
-  { qualityCheck: "e2e", scnId: null, status: "failed" },
-  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", scnId: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "integration", scnId: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", scnId: "SCN-VOL-404", status: "passed" },
+  { qualityCheckKind: "e2e", scnId: null, status: "passed" },
+  { qualityCheckKind: "e2e", scnId: null, status: "failed" },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
 const heading = "### Evidence observations";
@@ -28,7 +28,7 @@ const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 // The runner and CI step cells are asserted by the scenarios that own them.
-function qualityCheckAndCount(row: string): string[] {
+function qualityCheckKindAndCount(row: string): string[] {
   return row.split("|").slice(1, 3).map((cell) => cell.trim());
 }
 
@@ -52,7 +52,7 @@ describe("[SCN-RPT-010] the report renders the Evidence observations cut over ev
     });
     const lines = section(linesOf(reconciliation));
     expect(lines.slice(0, 6)).toStrictEqual([heading, "", sum(8, 5, 1, 2), "", tableHeader, "| --- | --- | --- | --- |"]);
-    expect(lines.slice(6, -1).map(qualityCheckAndCount)).toStrictEqual([
+    expect(lines.slice(6, -1).map(qualityCheckKindAndCount)).toStrictEqual([
       ["unit", "3"],
       ["integration", "1"],
       ["e2e", "2"],

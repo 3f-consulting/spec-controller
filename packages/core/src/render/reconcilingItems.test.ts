@@ -61,10 +61,10 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
   describe("an observation the obligations do not ask for names where it came from", () => {
     it("a behavioural evidence observation on a scenario with no matching obligation names its locator", () => {
       const md = render(
-        [{ scnId: "SCN-RCI-003", evidenceObligations: [{ qualityCheck: "unit" }] }],
+        [{ scnId: "SCN-RCI-003", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
         [
-          { qualityCheck: "unit", scnId: "SCN-RCI-003", status: "passed", locator: "src/c.test.ts" },
-          { qualityCheck: "integration", scnId: "SCN-RCI-003", status: "passed", locator: "tests/steps/c.steps.ts" },
+          { qualityCheckKind: "unit", scnId: "SCN-RCI-003", status: "passed", locator: "src/c.test.ts" },
+          { qualityCheckKind: "integration", scnId: "SCN-RCI-003", status: "passed", locator: "tests/steps/c.steps.ts" },
         ]
       );
       expect(rowFor(md, "SCN-RCI-003")).toEqual({
@@ -75,11 +75,11 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
 
     it("a fitness-function evidence observation on a scenario with no fitness obligation names its fitness function", () => {
       const md = render(
-        [{ scnId: "SCN-RCI-004", evidenceObligations: [{ qualityCheck: "unit" }] }],
+        [{ scnId: "SCN-RCI-004", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
         [
-          { qualityCheck: "unit", scnId: "SCN-RCI-004", status: "passed", locator: "src/d.test.ts" },
+          { qualityCheckKind: "unit", scnId: "SCN-RCI-004", status: "passed", locator: "src/d.test.ts" },
           {
-            qualityCheck: "fitness",
+            qualityCheckKind: "fitness",
             fitnessFunction: "lint:rci",
             scnId: "SCN-RCI-004",
             exists: true,
@@ -96,7 +96,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     it("a behavioural evidence observation citing an unknown scenario names its locator on the phantom claim's row", () => {
       const md = render(
         [],
-        [{ qualityCheck: "unit", scnId: "SCN-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
+        [{ qualityCheckKind: "unit", scnId: "SCN-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
       );
       expect(rowFor(md, "SCN-GHO-001")).toEqual({
         verdict: "out-of-balance",
@@ -105,7 +105,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     });
 
     it("a behavioural evidence observation citing an unknown scenario with no locator names no locator", () => {
-      const md = render([], [{ qualityCheck: "unit", scnId: "SCN-GHO-002", status: "passed" }]);
+      const md = render([], [{ qualityCheckKind: "unit", scnId: "SCN-GHO-002", status: "passed" }]);
       expect(rowFor(md, "SCN-GHO-002")).toEqual({
         verdict: "out-of-balance",
         items: item("cites-unknown-scenario", "unit", undefined, "passed"),
@@ -113,7 +113,7 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
     });
 
     it("a behavioural evidence observation citing no scenario names its check, outcome and file on the unnamed claim's row, and that it passed", () => {
-      const md = render([], [{ qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
+      const md = render([], [{ qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" }]);
       const { verdict, items } = rowFor(md, UNNAMED_CLAIM_ROW);
       expect(verdict).toBe("out-of-balance");
       const [named, result, ...rest] = items.split(" — ");
@@ -170,9 +170,9 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
 describe("[SCN-RPT-082] each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items", () => {
   it("two failing tests in one file read as two items, each naming the file and its test name", () => {
     const ran = (testName: string, status: "failed" | "passed" = "failed"): EvidenceObservation =>
-      ({ qualityCheck: "unit", scnId: "SCN-DEM-001", status, locator: "src/widget.test.ts", testName });
+      ({ qualityCheckKind: "unit", scnId: "SCN-DEM-001", status, locator: "src/widget.test.ts", testName });
     const md = render(
-      [{ scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [ran("renders the header"), ran("renders the body", "passed"), ran("renders the footer")]
     );
     expect(rowFor(md, "SCN-DEM-001")).toEqual({
@@ -188,8 +188,8 @@ describe("[SCN-RPT-083] a failing or watermelon fitness evidence observation on 
     ["watermelon", { status: "passed", enforcedOverRealSource: false }],
   ] as const)("a %s fitness item names its fitness function", (outcome, ran) => {
     const md = render(
-      [{ scnId: "SCN-DEM-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
-      [{ qualityCheck: "fitness", fitnessFunction: "lint:demo", scnId: "SCN-DEM-002", exists: true, ...ran }]
+      [{ scnId: "SCN-DEM-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
+      [{ qualityCheckKind: "fitness", fitnessFunction: "lint:demo", scnId: "SCN-DEM-002", exists: true, ...ran }]
     );
     expect(rowFor(md, "SCN-DEM-002")).toEqual({ verdict: "out-of-balance", items: item(outcome, "fitness", "lint:demo") });
   });
@@ -203,20 +203,20 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
     ["a test name and a file that is empty once made safe", { locator: " ", testName: "renders" }, "failing", "renders"],
     ["a test name and no file", { testName: "renders" }, "failing", "renders"],
     ["neither a file nor a test name", {}, "failing", undefined],
-    ["a fitness function with an empty name", { qualityCheck: "fitness", fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "failing", undefined],
+    ["a fitness function with an empty name", { qualityCheckKind: "fitness", fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "failing", undefined],
     ["an observation-only item whose file holds a pipe", { scnId: "SCN-GHO-003", locator: "src/a|b.test.ts" }, "cites-unknown-scenario", "src/a\\|b.test.ts", "failed"],
     ["a test's name holding a backslash and a pipe", { locator: "src/a.test.ts", testName: "a \\| b" }, "failing", "src/a.test.ts: a \\\\\\| b"],
     ["a file group's file holding a pipe", { scnId: null, status: "passed", locator: "src/a|b.test.ts" }, "cites-no-scenario", "src/a\\|b.test.ts", "1 ran, 1 passed, 0 failed"],
-    ["a CI step's name holding a pipe", { qualityCheck: "fitness", scnId: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: lint \\| x"],
+    ["a CI step's name holding a pipe", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: lint \\| x"],
     ["a broken item whose file is whitespace only", { scnId: null, broken: true, locator: " " }, "broken", undefined],
   ] as const)("%s", (_title, fields, outcome, suffix, result?: string) => {
-    const observation = { qualityCheck: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
-    const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheck: observation.qualityCheck }] }], [observation]);
-    expect(rowFor(md, observation.scnId ?? UNNAMED_CLAIM_ROW).items).toBe(item(outcome, observation.qualityCheck, suffix, result));
+    const observation = { qualityCheckKind: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
+    const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheckKind: observation.qualityCheckKind }] }], [observation]);
+    expect(rowFor(md, observation.scnId ?? UNNAMED_CLAIM_ROW).items).toBe(item(outcome, observation.qualityCheckKind, suffix, result));
   });
 
   it("a shared code's scenario title holding a pipe", () => {
-    const sharer = (title: string): Scenario => ({ scnId: "SCN-DEM-004", evidenceObligations: [{ qualityCheck: "unit" }], feature: "a.feature", title });
+    const sharer = (title: string): Scenario => ({ scnId: "SCN-DEM-004", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "a.feature", title });
     const rows = claimReconciliationsTable(render([sharer("a | b"), sharer("c")], [])).rowsOf("SCN-DEM-004");
     expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN))).toContain(item("duplicate-scn-code", "unit") + " — this one is a.feature : a \\| b");
   });

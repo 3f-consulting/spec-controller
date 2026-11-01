@@ -1,26 +1,26 @@
-import type { ClaimReconciliation, QualityCheck } from "../model.js";
-import { QUALITY_CHECKS } from "../domain/journal.js";
+import type { ClaimReconciliation, QualityCheckKind } from "../model.js";
+import { QUALITY_CHECK_KINDS } from "../domain/journal.js";
 import {
   isScenario,
-  carriesQualityCheck,
-  namesQualityCheck,
+  carriesQualityCheckKind,
+  namesQualityCheckKind,
   observationCountOf,
 } from "../domain/claimReconciliation.js";
 
-export type EvidenceColumn = QualityCheck;
+export type EvidenceColumn = QualityCheckKind;
 
 export function evidenceColumns(
   claims: readonly ClaimReconciliation[]
 ): EvidenceColumn[] {
   const scenarioRows = claims.filter(isScenario);
-  return QUALITY_CHECKS.filter((qualityCheck) => scenarioRows.some((row) => carriesQualityCheck(row, qualityCheck)));
+  return QUALITY_CHECK_KINDS.filter((qualityCheckKind) => scenarioRows.some((row) => carriesQualityCheckKind(row, qualityCheckKind)));
 }
 
-export function columnHeader(qualityCheck: EvidenceColumn): string {
-  return qualityCheck.charAt(0).toUpperCase() + qualityCheck.slice(1);
+export function columnHeader(qualityCheckKind: EvidenceColumn): string {
+  return qualityCheckKind.charAt(0).toUpperCase() + qualityCheckKind.slice(1);
 }
 
-const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
+const QUALITY_CHECK_KIND_LETTER: Record<QualityCheckKind, string> = {
   fitness: "F",
   unit: "U",
   integration: "I",
@@ -30,11 +30,11 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
 
 export function evidenceCell(
   s: ClaimReconciliation,
-  qualityCheck: EvidenceColumn
+  qualityCheckKind: EvidenceColumn
 ): string {
   if (!isScenario(s)) return "—";
-  const left = namesQualityCheck(s, qualityCheck) ? QUALITY_CHECK_LETTER[qualityCheck] : "-";
-  const observed = observationCountOf(s, qualityCheck);
+  const left = namesQualityCheckKind(s, qualityCheckKind) ? QUALITY_CHECK_KIND_LETTER[qualityCheckKind] : "-";
+  const observed = observationCountOf(s, qualityCheckKind);
   const right = observed > 0 ? String(observed) : "-";
   return left === "-" && right === "-" ? "" : `${left}/${right}`;
 }

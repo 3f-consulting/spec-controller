@@ -15,13 +15,13 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
       [
         {
           scnId: "SCN-A",
-          evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }],
+          evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }],
         },
         { scnId: "SCN-B", evidenceObligations: [] },
       ],
       [
-        { qualityCheck: "fitness", fitnessFunction: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
-        { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
+        { qualityCheckKind: "fitness", fitnessFunction: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
       ]
     );
   });

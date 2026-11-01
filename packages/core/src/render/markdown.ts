@@ -11,7 +11,7 @@ import { cellSafe } from "./cellSafe.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
 import { type SharedScnCode } from "../domain/corpusCounts.js";
-import { brokenItemsOf, type QualityCheckObservations } from "../domain/ledger.js";
+import { brokenItemsOf, type QualityCheckKindObservations } from "../domain/ledger.js";
 import {
   isScenario,
   ciStepsOf,
@@ -28,7 +28,7 @@ import { scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { errorsInTheInputsSection } from "./errorsInTheInputs.js";
 import { stepAccountingSection } from "./stepAccounting.js";
-import { testVolumeSection } from "./testVolume.js";
+import { evidenceObservationsSection } from "./evidenceObservations.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
@@ -37,10 +37,10 @@ import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGrou
 
 function renderLine(line: ReconciliationLine): string {
   const sentence = `${OUTCOME_DESCRIPTION[line.outcome]}${scenarioClauseOf(line)}`;
-  if (line.outcome === "both-missing" || line.outcome === "no-scn-code" || line.qualityCheck === undefined) {
+  if (line.outcome === "both-missing" || line.outcome === "no-scn-code" || line.qualityCheckKind === undefined) {
     return sentence;
   }
-  const head = `${line.qualityCheck}: ${sentence}`;
+  const head = `${line.qualityCheckKind}: ${sentence}`;
   const observation = line.evidenceObservation;
   if (observation === undefined) return head;
   if (!isObservationOnly(line.outcome)) return `${head}${namedSuffix(observation)}`;
@@ -78,9 +78,9 @@ function resultOf(o: EvidenceObservation): string {
 }
 
 function renderPendingItem(item: PendingItem): string {
-  return item.qualityCheck === undefined
+  return item.qualityCheckKind === undefined
     ? CORE_MESSAGES[CoreMessage.PendingItem]
-    : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheck);
+    : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheckKind);
 }
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
@@ -90,7 +90,7 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
   const names = group.failedNames.map((name) => name.trim()).filter((name) => name !== "");
   const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
-  return `${group.qualityCheck}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([group.locator, said])} — ${counts}${failed}`;
+  return `${group.qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([group.locator, said])} — ${counts}${failed}`;
 }
 
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
@@ -158,15 +158,15 @@ const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
 
 const EVIDENCE_RECONCILIATION_TERMS = [
   CoreMessage.EvidenceReconciliationClaimReconciliationTerm,
-  CoreMessage.EvidenceReconciliationQualityCheckReconciliationTerm,
+  CoreMessage.EvidenceReconciliationReconciliationLineTerm,
   CoreMessage.EvidenceReconciliationEvidenceObligationTerm,
   CoreMessage.EvidenceReconciliationEvidenceObservationTerm,
 ] as const;
 
 const evidenceReconciliationSection: SectionEmitter = (report) => {
-  const { claimReconciliations, qualityCheckReconciliations, pending } = report.summary.evidenceReconciliation;
+  const { claimReconciliations, reconciliationLines, pending } = report.summary.evidenceReconciliation;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
-  const missingSplit = qualityCheckReconciliations.missingByQualityCheck
+  const missingSplit = reconciliationLines.missingByQualityCheckKind
     .map(({ subject, count }) => `${count} ${subject}`)
     .join(" + ");
   const lines = [
@@ -184,16 +184,16 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.QualityCheckReconciliationSubject],
-      String(qualityCheckReconciliations.total),
-      String(qualityCheckReconciliations.byOutcome.satisfied),
-      String(qualityCheckReconciliations.outOfBalance),
+      CORE_MESSAGES[CoreMessage.ReconciliationLineSubject],
+      String(reconciliationLines.total),
+      String(reconciliationLines.byOutcome.satisfied),
+      String(reconciliationLines.outOfBalance),
       "",
     ]),
   ];
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    lines.push(row([OUTCOME_DESCRIPTION[outcome], "", "", String(qualityCheckReconciliations.byOutcome[outcome]), detail]));
+    lines.push(row([OUTCOME_DESCRIPTION[outcome], "", "", String(reconciliationLines.byOutcome[outcome]), detail]));
   }
   lines.push(...pendingTally(pending));
   lines.push("");
@@ -271,7 +271,7 @@ const ledgerSection: SectionEmitter = (report) => {
     ...censusLines(report.scenarioCodes, scenarioRows.length),
     "",
     ...evidenceKeyLines(columns),
-    ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheck ?? []),
+    ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheckKind ?? []),
     "",
   ];
 };
@@ -316,7 +316,7 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number)
 function ledgerTableLines(
   claims: readonly ClaimReconciliation[],
   columns: readonly EvidenceColumn[],
-  stepsByQualityCheck: readonly QualityCheckObservations[]
+  stepsByQualityCheckKind: readonly QualityCheckKindObservations[]
 ): string[] {
   const withSteps = columns.length > 0;
   const headers = [
@@ -330,7 +330,7 @@ function ledgerTableLines(
   for (const s of claims) {
     const cells = columns.map((col) => evidenceCell(s, col));
     const items = renderRowExceptions(s);
-    const steps = withSteps ? [cellSafe(ciStepsOf(s, stepsByQualityCheck).join(", "))] : [];
+    const steps = withSteps ? [cellSafe(ciStepsOf(s, stepsByQualityCheckKind).join(", "))] : [];
     lines.push(
       `| ${[s.claim, ...cells, s.verdict, items, ...steps].join(" | ")} |`
     );
@@ -347,7 +347,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   scenarioCodesCleanStatement,
   evidenceReconciliationSection,
-  testVolumeSection,
+  evidenceObservationsSection,
   stepAccountingSection,
   byFeatureSection,
   ledgerSection,

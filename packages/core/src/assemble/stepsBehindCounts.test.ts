@@ -52,11 +52,11 @@ function reconcile(
   });
 }
 
-function listLengths({ steps }: StepAccounting): Record<"runners" | "reconciler" | "excluded" | "plumbing", number> {
+function listLengths({ steps }: StepAccounting): Record<"runners" | "reconciler" | "nonChecks" | "plumbing", number> {
   return {
     runners: steps.runners?.length ?? 0,
     reconciler: steps.reconciler?.length ?? 0,
-    excluded: steps.excluded?.length ?? 0,
+    nonChecks: steps.nonChecks?.length ?? 0,
     plumbing: steps.plumbing?.length ?? 0,
   };
 }
@@ -75,14 +75,14 @@ describe("[SCN-RMD-024] the step accounting names the steps behind its runners a
   it("holds, in each list, as many steps as the total counts for it, over two workflows and three jobs", () => {
     const accounting = reconcile(everyDispositionPackageJson, [stepAccountingCi, nightly], ["ci.yml", "nightly.yml"]).summary
       .stepAccounting!;
-    const { runners, reconciler, excluded, plumbing } = accounting.total;
-    expect({ runners, reconciler, excluded, plumbing }).toStrictEqual({
+    const { runners, reconciler, nonChecks, plumbing } = accounting.total;
+    expect({ runners, reconciler, nonChecks, plumbing }).toStrictEqual({
       runners: 1,
       reconciler: 2,
-      excluded: 3,
+      nonChecks: 3,
       plumbing: 5,
     });
-    expect(listLengths(accounting)).toStrictEqual({ runners, reconciler, excluded, plumbing });
+    expect(listLengths(accounting)).toStrictEqual({ runners, reconciler, nonChecks, plumbing });
     expect(accounting.steps.plumbing).toStrictEqual([
       "ci.yml:ci:Checkout tools",
       "ci.yml:ci:Setup Node",
@@ -159,7 +159,7 @@ describe("[SCN-RMD-026] every list of the steps behind a count follows the step 
       { step: "ci.yml:quality:Reconciliation", role: "reconciles" },
       { step: "nightly.yml:audit:Reconciliation", role: "reconciles" },
     ]);
-    expect(accounting.steps.excluded).toStrictEqual(["ci.yml:quality:Install", "nightly.yml:audit:Install"]);
+    expect(accounting.steps.nonChecks).toStrictEqual(["ci.yml:quality:Install", "nightly.yml:audit:Install"]);
     expect(accounting.steps.plumbing).toStrictEqual([
       "ci.yml:quality:Setup Node",
       "ci.yml:quality:Checkout",

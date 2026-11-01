@@ -29,7 +29,7 @@ Feature: Term spelling — a term names the same pair however its author spelled
 
   Rule: a term names the same pair however its author spaced it around the sigil
 
-    ONE TIER, AT EACH PORT. @unit proves the reading at each port that stores a term as a
+    ONE LAYER, AT EACH PORT. @unit proves the reading at each port that stores a term as a
     key: a configured deferral tag, a check step's id:, and each tag the Gherkin parser hands
     the corpus read. Each port is a pure function, so the padded, empty and doubled-sigil
     spellings are held where the term is read.

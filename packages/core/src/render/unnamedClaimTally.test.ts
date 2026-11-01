@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { tallyBlockOf } from "./tallyBlock.test-utils.js";
 
-const scenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
-const known: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" };
-const phantomClaimObservation: EvidenceObservation = { qualityCheck: "unit", scnId: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
+const scenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+const known: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" };
+const phantomClaimObservation: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
 
 function uncitedObservation(locator: string): EvidenceObservation {
-  return { qualityCheck: "unit", scnId: null, status: "passed", locator };
+  return { qualityCheckKind: "unit", scnId: null, status: "passed", locator };
 }
 
 const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);

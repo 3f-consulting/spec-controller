@@ -14,10 +14,10 @@ const SCN = "SCN-AAA-001";
 
 describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance", () => {
   const rowNamingCheck: Scenario[] = [
-    { scnId: SCN, evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: SCN, evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const fitnessFunctionObservation = (fitnessFunction: string, status: "passed" | "failed"): EvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction,
     scnId: SCN,
     exists: true,
@@ -30,7 +30,7 @@ describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing o
   it("holds both observations in one fitness reconciliation, the passing one a satisfied line and the failed one a failing line, with the row and the run out of balance", () => {
     const ledger = reconcile(rowNamingCheck, [passing(), failed()]);
     const row = ledger.claimReconciliations.find((r) => r.claim === SCN)!;
-    expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheck, i.outcome, i.evidenceObservations])).toEqual([
+    expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheckKind, i.outcome, i.evidenceObservations])).toEqual([
       ["fitness", undefined, [{ ...passing(), outcome: "satisfied" }, { ...failed(), outcome: "failing" }]],
     ]);
     expect(row.verdict).toBe("out-of-balance");
@@ -39,10 +39,10 @@ describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing o
 });
 
 describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
-  const obligation = { qualityCheck: "fitness" } as const;
+  const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
@@ -52,7 +52,7 @@ describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired
   const itemOf = (observations: EvidenceObservation[]) => {
     const ledger = reconcile(rowNamingCheck, observations);
     const row = ledger.claimReconciliations.find((r) => r.claim === SCN)!;
-    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
+    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheckKind === "fitness")!;
     return { outcome: item.outcome, carried: item.evidenceObservations, verdict: row.verdict, balanced: isBalanced(ledger) };
   };
 
@@ -81,10 +81,10 @@ describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired
 });
 
 describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first", () => {
-  const obligation = { qualityCheck: "fitness" } as const;
+  const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
@@ -93,7 +93,7 @@ describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelo
     locator,
   });
   const severedRun = (locator: string): EvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
     scnId: SCN,
     exists: true,
@@ -109,7 +109,7 @@ describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelo
     const severed = { ...severedRun(severedLocator), outcome: "watermelon" };
     const ledger = reconcile(rowNamingCheck, [severedRun(severedLocator), failedRun(failedLocator)]);
     const row = ledger.claimReconciliations.find((r) => r.claim === SCN)!;
-    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
+    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheckKind === "fitness")!;
     const failedFirst = failedLocator < severedLocator;
     expect([item.outcome, item.evidenceObservations, row.verdict, isBalanced(ledger)]).toEqual([
       undefined,

@@ -1,8 +1,8 @@
-import { BEHAVIOURAL_QUALITY_CHECKS } from "./ledger.js";
+import { LAYERS } from "./ledger.js";
 import type { ConfigurationKind, WrongKindEntry } from "./evidenceReconciliation.js";
 
-export interface RunnerTiers {
-  readonly tiers: Readonly<Record<string, string | null>>;
+export interface RunnerLayers {
+  readonly layers: Readonly<Record<string, string | null>>;
   readonly unrecognisedKeys: readonly string[];
 }
 
@@ -10,18 +10,18 @@ function isBlock(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-const isTier = (key: string): boolean => (BEHAVIOURAL_QUALITY_CHECKS as readonly string[]).includes(key);
+const isLayer = (key: string): boolean => (LAYERS as readonly string[]).includes(key);
 
 const isRunner = (value: unknown): value is string | null => typeof value === "string" || value === null;
 
-function runnerTiersOf(value: unknown): RunnerTiers {
-  if (!isBlock(value)) return { tiers: {}, unrecognisedKeys: [] };
-  const tiers: Readonly<Record<string, string | null>> = Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, string | null] => isTier(entry[0]) && isRunner(entry[1]))
+function runnerLayersOf(value: unknown): RunnerLayers {
+  if (!isBlock(value)) return { layers: {}, unrecognisedKeys: [] };
+  const layers: Readonly<Record<string, string | null>> = Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, string | null] => isLayer(entry[0]) && isRunner(entry[1]))
   );
   return {
-    tiers,
-    unrecognisedKeys: Object.keys(value).filter((key) => !isTier(key)),
+    layers,
+    unrecognisedKeys: Object.keys(value).filter((key) => !isLayer(key)),
   };
 }
 
@@ -33,7 +33,7 @@ export interface ConfigurationTranslation {
 }
 
 export interface TargetConfiguration {
-  readonly runners: RunnerTiers;
+  readonly runners: RunnerLayers;
   readonly nonChecks: readonly string[];
   readonly deferralTerms: readonly string[];
   readonly wrongKinds: readonly WrongKindEntry[];
@@ -64,7 +64,7 @@ function wrongKindsInList(value: unknown, at: string): WrongKindEntry[] {
 function wrongKindsInRunners(value: unknown, at: string): WrongKindEntry[] {
   if (!isBlock(value)) return [wrongKind(at, value, "object")];
   return Object.entries(value)
-    .filter(([key, runner]) => isTier(key) && !isRunner(runner))
+    .filter(([key, runner]) => isLayer(key) && !isRunner(runner))
     .map(([key, runner]) => wrongKind(`${at}.${key}`, runner, "string-or-null"));
 }
 
@@ -80,7 +80,7 @@ function configurationRead(
   unknownKeys: readonly string[]
 ): TargetConfiguration {
   return {
-    runners: runnerTiersOf(values.runners),
+    runners: runnerLayersOf(values.runners),
     nonChecks: [...new Set(listOf(values.nonChecks))],
     deferralTerms: listOf(values.deferralTags),
     wrongKinds,

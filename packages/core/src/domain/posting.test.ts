@@ -11,20 +11,20 @@ describe("[SCN-LDG-001] postingOf routes a BEHAVIOURAL evidence observation by i
     ["posts an evidence observation citing an UNKNOWN @SCN to a phantom claim's row", "SCN-ZZZ-009", { kind: "phantom-claim", scnId: "SCN-ZZZ-009" }],
   ])("%s", (_title, scnId, expected) => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", scnId, status: "passed" }, namedScenarioIds)
     ).toEqual(expected);
   });
 
   it("posts an UNCITED evidence observation (scnId null) to the unnamed claim, never a phantom claim", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", scnId: null, status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "unnamed-claim", posted: "cites-nothing" });
   });
 });
 
 describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its citation, the same rule", () => {
   const check = (fitnessFunction: string, scnId?: string): FitnessEvidenceObservation => ({
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction,
     exists: true,
     enforcedOverRealSource: true,
@@ -52,11 +52,11 @@ describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its c
 
 describe("[SCN-LDG-022] postingOf routes a BROKEN evidence observation by its citation, as every other", () => {
   const brokenTest = (scnId: string | null) =>
-    postingOf({ qualityCheck: "unit", scnId, status: "failed", broken: true }, namedScenarioIds);
+    postingOf({ qualityCheckKind: "unit", scnId, status: "failed", broken: true }, namedScenarioIds);
   const brokenCheck = (scnId?: string) =>
     postingOf(
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:named",
         exists: false,
         enforcedOverRealSource: false,

@@ -7,7 +7,7 @@ import { stepDispositions } from "./uncitedFitnessFunctions.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const partlyAnnotatedSteps: PipelineStep[] = [

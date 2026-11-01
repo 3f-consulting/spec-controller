@@ -44,14 +44,14 @@ describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles 
     const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
     expect(observed.map(withoutStep)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:alpha",
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-CVT-001",
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:beta",
         exists: true,
         enforcedOverRealSource: false,

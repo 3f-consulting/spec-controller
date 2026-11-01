@@ -23,7 +23,7 @@ function reconcileTwoWorkflows(): EvidenceReconciliation {
   });
 }
 
-const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "excluded", "plumbing"] as const;
+const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "nonChecks", "plumbing"] as const;
 
 type Counts = Record<(typeof COUNTS)[number], number>;
 
@@ -48,7 +48,7 @@ describe("[SCN-RMD-023] the step accounting's total sums each count over its row
       candidates: 7,
       runners: 1,
       reconciler: 2,
-      excluded: 3,
+      nonChecks: 3,
       plumbing: 5,
     });
     expect(countsOf(accounting.total)).toStrictEqual(summedOver(accounting.byJob));

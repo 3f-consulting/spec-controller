@@ -12,14 +12,14 @@ import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
 
 const sharers: Scenario[] = [
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "features/login.feature", title: "the right password lets a user in" },
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheck: "unit" }], feature: "features/login.feature", title: "the wrong password turns a user away" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheck: "unit" }], feature: "features/lockout.feature", title: "three failures lock a user out" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheck: "unit" }], feature: "features/lockout.feature", title: "a locked user is told why" },
+  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/login.feature", title: "the right password lets a user in" },
+  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/login.feature", title: "the wrong password turns a user away" },
+  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/lockout.feature", title: "three failures lock a user out" },
+  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/lockout.feature", title: "a locked user is told why" },
 ];
 
 function observed(scnId: string | null, status: "passed" | "failed", testName: string, locator = "tests/x.test.ts"): BehaviouralEvidenceObservation {
-  return { qualityCheck: "unit", scnId, status, locator, testName };
+  return { qualityCheckKind: "unit", scnId, status, locator, testName };
 }
 
 const mixedFile = (): BehaviouralEvidenceObservation[] => [
@@ -52,7 +52,7 @@ describe("[SCN-RPT-075] in one file, the tests citing a code more than one scena
     const said = `unit: ${CITES_NO_SCENARIO} (tests/x.test.ts: ${code}`;
     const one = (o: BehaviouralEvidenceObservation): string[] => unnamedClaimItemsOf([o]).map((item) => item.replace(" — 1 ran, 0 passed, 1 failed (failed: t1)", ""));
     expect([failing("t1", ""), failing("t1", "   "), { ...failing("t1", ""), locator: "" }].map(one).flat()).toEqual([`${said})`, `${said})`, `unit: ${CITES_NO_SCENARIO} (${code})`]);
-    expect(one({ qualityCheck: "unit", scnId: "SCN-DUP-001", status: "failed", testName: "t1" })).toEqual([`unit: ${CITES_NO_SCENARIO} (${code})`]);
+    expect(one({ qualityCheckKind: "unit", scnId: "SCN-DUP-001", status: "failed", testName: "t1" })).toEqual([`unit: ${CITES_NO_SCENARIO} (${code})`]);
     expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2\n    at foo (x.ts:1)")])).toEqual([
       `${said} / expected 1 to be 2) — 1 ran, 0 passed, 1 failed (failed: t1)`,
     ]);

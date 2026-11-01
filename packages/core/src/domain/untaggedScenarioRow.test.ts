@@ -9,12 +9,12 @@ const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, 
 const UNTAGGED = "beta must never lose the money";
 
 const namedScenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
 ];
 
 const observed: EvidenceObservation[] = [
-  { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+  { scnId: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
 ];
 
 describe("[SCN-LDG-021] the untagged scenario's row carries no evidence observation and no Pending Item", () => {

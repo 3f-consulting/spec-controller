@@ -1,6 +1,6 @@
 export type {
-  QualityCheck,
-  BehaviouralQualityCheck,
+  QualityCheckKind,
+  Layer,
   EvidenceStatus,
   EvidenceObligation,
   Scenario,
@@ -65,8 +65,8 @@ export type {
   EvidenceReconciliation,
   Summary,
   ClaimReconciliationTotals,
-  QualityCheckReconciliationTotals,
-  MissingByQualityCheck,
+  ReconciliationLineTotals,
+  MissingByQualityCheckKind,
 } from "./assemble/renderInput.js";
 
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";

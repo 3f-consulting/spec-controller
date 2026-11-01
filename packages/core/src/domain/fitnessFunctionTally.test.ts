@@ -20,15 +20,15 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
 
 describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function evidence observations, filtered to what ran", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "fitness" }] },
-    { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheck: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "fitness", fitnessFunction: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", fitnessFunction: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
-    { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
   let tally: ReturnType<typeof fitnessFunctionTally>;
   beforeEach(() => {
@@ -45,7 +45,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
 
   it("counts no behavioural evidence observation, whatever fields it arrives carrying", () => {
     const behaviouralCarryingGuardFields = {
-      qualityCheck: "unit" as const,
+      qualityCheckKind: "unit" as const,
       scnId: "SCN-A",
       status: "passed" as const,
       exists: true,
@@ -79,7 +79,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   ];
 
   const fitness: Scenario[] = [
-    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
 
   const citedScn = (script: string): ScriptCitation | null =>
@@ -99,7 +99,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
     const withoutStep = ({ step: _step, ...rest }: (typeof citedObservations)[number] & { step?: string }) => rest;
     expect(citedObservations.map(withoutStep)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:foo",
         exists: true,
         enforcedOverRealSource: true,
@@ -107,14 +107,14 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
       },
     ]);
     expect(uncitedObservations.map(withoutStep)).toEqual([
-      { qualityCheck: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
   it("banks the uncited evidence observation on the unnamed claim's row as cites-no-scenario, naming the handle that ran", () => {
     expect(rowFor(ledger, "(unnamed claim)")?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         evidenceObservations: [{ ...uncitedObservations[0], outcome: "cites-no-scenario" }],
       },
     ]);
@@ -145,7 +145,7 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
   const fitness: Scenario[] = [
     {
       scnId: "SCN-GRD-001",
-      evidenceObligations: [{ qualityCheck: "fitness" }],
+      evidenceObligations: [{ qualityCheckKind: "fitness" }],
     },
   ];
   let observations: ReturnType<typeof runningFitnessFunctions>;

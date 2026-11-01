@@ -13,10 +13,10 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
     outOfBalance = {
       ...evidenceReconciliationOf(
         [
-          { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheck: "unit" }] },
-          { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+          { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         ],
-        [{ qualityCheck: "unit", scnId: "SCN-ONE-001", status: "passed" }],
+        [{ qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" }],
         []
       ),
       scenarioCodeErrors: [FOREIGN],

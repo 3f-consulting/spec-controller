@@ -10,10 +10,10 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
 
   it("the untagged scenario's one reconciliation is the no-scn-code outcome and its scenario-scope obligation {}, with no observation list, and the row's obligation census stays empty", () => {
     const namedScenarios: Scenario[] = [
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const observed: EvidenceObservation[] = [
-      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+      { scnId: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
     ];
 
     const reconciliation = reconcile(namedScenarios, observed, ["beta must never lose the money"]);

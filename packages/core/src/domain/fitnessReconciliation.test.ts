@@ -71,7 +71,7 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
     expect(observationsOf(phantomClaimRow!)).toEqual([{ ...observation, outcome: "cites-unknown-scenario" }]);
     expect(phantomClaimRow?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         evidenceObservations: [{ ...observation, outcome: "cites-unknown-scenario" }],
       },
     ]);
@@ -103,14 +103,14 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     const scenarios = parseScenarios(
       corpus);
     expect(scenarios.map((s) => s.evidenceObligations)).toEqual([
-      [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }],
+      [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }],
     ]);
 
     const citedScn = (script: string): ScriptCitation | null =>
       script === SEVERED_SCRIPT ? { scnId: "SCN-AAA-001" } : null;
 
     const unitObservation: EvidenceObservation = {
-      qualityCheck: "unit",
+      qualityCheckKind: "unit",
       scnId: "SCN-AAA-001",
       status: "passed",
     };
@@ -123,7 +123,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     const withoutStep = ({ step: _step, ...rest }: (typeof fitnessObservations)[number] & { step?: string }) => rest;
     expect(fitnessObservations.map(withoutStep)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: SEVERED_SCRIPT,
         exists: true,
         enforcedOverRealSource: false,
@@ -139,22 +139,22 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     const watermelonObservation = { ...fitnessObservations[0]!, outcome: "watermelon" };
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "unit",
-        evidenceObligation: { qualityCheck: "unit" },
+        qualityCheckKind: "unit",
+        evidenceObligation: { qualityCheckKind: "unit" },
         evidenceObservations: [{ ...unitObservation, outcome: "satisfied" }],
       },
       {
-        qualityCheck: "fitness",
-        evidenceObligation: { qualityCheck: "fitness" },
+        qualityCheckKind: "fitness",
+        evidenceObligation: { qualityCheckKind: "fitness" },
         evidenceObservations: [watermelonObservation],
       },
     ]);
 
     expect(reconcilingItemsOf(scenario!)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         outcome: "watermelon",
-        evidenceObligation: { qualityCheck: "fitness" },
+        evidenceObligation: { qualityCheckKind: "fitness" },
         evidenceObservation: watermelonObservation,
       },
     ]);

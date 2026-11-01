@@ -21,7 +21,7 @@ describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase
 
   it("emits one passed unit observation citing that code, located at the test", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "tests.test_widget::test_the_widget_turns" },
+      { qualityCheckKind: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "tests.test_widget::test_the_widget_turns" },
     ]);
   });
 });
@@ -46,7 +46,7 @@ describe("[SCN-PYT-002] parsePytestEvidenceObservations posts a failing testcase
 
   it("emits one failed unit observation citing that code, located at the test", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "tests.test_widget::test_the_widget_jams" },
+      { qualityCheckKind: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "tests.test_widget::test_the_widget_jams" },
     ]);
   });
 });
@@ -87,7 +87,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
 
   it("emits one unit observation citing no scenario for a testcase with no scn property", () => {
     expect(parsePytestEvidenceObservations(reportOf())).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+      { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 
@@ -95,7 +95,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "scn", value: "FOO-005" }] }))
     ).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+      { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 
@@ -103,7 +103,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }))
     ).toEqual([
-      { qualityCheck: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+      { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 });
@@ -133,7 +133,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   it("emits one unit observation citing no scenario, with a note of both codes and no message", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: null,
         status: "passed",
         locator: "tests.test_widget::test_the_widget_spins_and_turns",
@@ -171,7 +171,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     };
 
     expect(parsePytestEvidenceObservations(repeated)).toEqual([
-      { qualityCheck: "unit", scnId: "SCN-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+      { qualityCheckKind: "unit", scnId: "SCN-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 });
@@ -199,7 +199,7 @@ describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failu
   it("emits one broken unit observation citing no scenario, located at the module, carrying the error text", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: null,
         status: "failed",
         locator: "test_widget",
@@ -234,7 +234,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
   it("emits one broken unit observation citing that code, located at the test, carrying the error text", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: "SCN-FOO-008",
         status: "failed",
         locator: "tests.test_widget::test_the_widget_needs_a_resource",
@@ -256,7 +256,7 @@ describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that f
   ])("reads gotestsum's build-failure row as broken, %s", (_how, failure) => {
     expect(observationsOf({ classname: "", name: "TestMain", failure })).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: null,
         status: "failed",
         locator: "example.com/m/broken",
@@ -294,13 +294,13 @@ describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5
   it("credits a test that cites a code of its own to that code, and a test that cites none to its class's code", () => {
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: "SCN-JVF-003",
         status: "passed",
         locator: `${classname}::[SCN-JVF-003] a test whose own display name cites a scenario`,
       },
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: "SCN-JVF-013",
         status: "passed",
         locator: `${classname}::a test in the outer class whose own display name cites nothing`,
@@ -352,7 +352,7 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
   it("emits one failing unit observation citing that code, located at the test, never broken", () => {
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: "SCN-JVF-010",
         status: "failed",
         locator: "example.CitedTest::[SCN-JVF-010] a test that throws cites its scenario",
@@ -388,7 +388,7 @@ describe("[SCN-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class who
   it("emits one broken observation located at the class, carrying the error that stopped it", () => {
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
-        qualityCheck: "unit",
+        qualityCheckKind: "unit",
         scnId: null,
         status: "failed",
         locator: "[SCN-JVF-014] a class that cites a scenario",

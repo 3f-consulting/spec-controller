@@ -24,7 +24,7 @@ function markdownOf(files: readonly File[]): string {
       features: parsedFeatures(files.map(source), files.map(({ slug }) => `${slug}.feature`)),
       packageJson: {},
       ciWorkflows: [],
-      behaviouralObservations: codes.map((scnId) => ({ qualityCheck: "unit", scnId, status: "passed" })),
+      behaviouralObservations: codes.map((scnId) => ({ qualityCheckKind: "unit", scnId, status: "passed" })),
       deferralTags: [],
     }),
     ctx,

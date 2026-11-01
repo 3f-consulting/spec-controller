@@ -22,7 +22,7 @@ type CitationOf = (handle: string, citedByStep?: string) => Citation | null;
 
 function namedOf({ citedScn, step }: RecordedCheckStep) {
   return {
-    qualityCheck: "fitness",
+    qualityCheckKind: "fitness",
     fitnessFunction: citedScn,
     scnId: citedScn,
     ...(step === undefined ? {} : { step }),
@@ -68,7 +68,7 @@ export function workflowObservationsOf(
       const fitnessFunction = handleOf(step);
       const citation = citationOf(fitnessFunction, step.id);
       return {
-        qualityCheck: "fitness" as const,
+        qualityCheckKind: "fitness" as const,
         fitnessFunction,
         step: stepNameOf(step),
         exists: true,

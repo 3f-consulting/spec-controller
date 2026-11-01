@@ -51,7 +51,7 @@ function reconcileUncited() {
     () => null
   );
   return evidenceReconciliationOf(
-    [{ scnId: "SCN-TSC-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [{ scnId: "SCN-TSC-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
     fitnessObservationsOf(workflow, undefined),
     []
   );
@@ -66,13 +66,13 @@ describe("[SCN-LNT-033] the fitness-function census counts a check whose red its
     const withoutStep = ({ step: _step, ...rest }: (typeof observed)[number] & { step?: string }) => rest;
     expect(observed.map(withoutStep)).toEqual([
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:advisory",
         exists: true,
         enforcedOverRealSource: false,
       },
       {
-        qualityCheck: "fitness",
+        qualityCheckKind: "fitness",
         fitnessFunction: "lint:enforced",
         exists: true,
         enforcedOverRealSource: true,

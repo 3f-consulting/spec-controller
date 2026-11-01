@@ -96,7 +96,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
     commandRuns(command, invocation, scripts)
   );
 
-  const runsARunner = declaredRunnerTest(scripts, runners.tiers, shellReading);
+  const runsARunner = declaredRunnerTest(scripts, runners.layers, shellReading);
 
   return {
     steps,
@@ -224,14 +224,14 @@ function withRunnerAccount(
   reconciliation: EvidenceReconciliation,
   steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  { tiers: runnerTiers, unrecognisedKeys }: ResolvedRunners
+  { layers: runnerLayers, unrecognisedKeys }: ResolvedRunners
 ): EvidenceReconciliation {
   const scripts = packageJson.scripts ?? {};
   const behaviouralRunners: readonly BehaviouralRunner[] = recognisedRunners(
     steps,
     qualifiedStepName,
     scripts,
-    runnerTiers,
+    runnerLayers,
     shellReading
   );
   const { evidenceObservations } = reconciliation.summary;
@@ -246,11 +246,11 @@ function withRunnerAccount(
               evidenceObservations,
               reconciliation.ledger,
               behaviouralRunners,
-              runnerTiers,
+              runnerLayers,
               steps.map(qualifiedStepName)
             ),
           }),
-      ...(unrecognisedKeys.length > 0 ? { runnerKeysNotATier: unrecognisedKeys } : {}),
+      ...(unrecognisedKeys.length > 0 ? { runnerKeysNotALayer: unrecognisedKeys } : {}),
     },
   };
 }
