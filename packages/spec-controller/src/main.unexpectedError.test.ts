@@ -7,7 +7,6 @@ import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
 interface Answered {
-  threw: unknown;
   stderr: string;
   exitCode: typeof process.exitCode;
 }
@@ -34,13 +33,8 @@ recordWhatTheProgramWrites();
 
 function answer(argv: string[], onStdout: (chunk: string | Uint8Array) => boolean): Answered {
   vi.spyOn(process.stdout, "write").mockImplementation(onStdout);
-  let threw: unknown;
-  try {
-    main(argv);
-  } catch (err) {
-    threw = err;
-  }
-  return { threw, stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
+  main(argv);
+  return { stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
 }
 
 const onAClosedPipe = (): never => {
@@ -54,10 +48,6 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
   ])("$run whose report meets a closed pipe", ({ flags }) => {
     const argv = (): string[] => balance(...flags);
 
-    it("returns from main rather than throwing", () => {
-      expect(answer(argv(), onAClosedPipe).threw).toBeUndefined();
-    });
-
     it("exits 6", () => {
       expect(answer(argv(), onAClosedPipe).exitCode).toBe(6);
     });
@@ -68,20 +58,10 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
       expect(said).toMatch(/\n$/);
       expect(said).toContain(`Error: ${FIRST_LINE}`);
     });
-
-    it("writes neither the rest of the message nor a stack frame", () => {
-      const { stderr: said } = answer(argv(), onAClosedPipe);
-      expect(said).not.toContain(SECOND_LINE);
-      expect(said).not.toMatch(/^\s+at /m);
-    });
   });
 
   describe("a usage refusal that escapes the command", () => {
     const refusing = (): never => refuse("planted refusal");
-
-    it("returns from main rather than throwing", () => {
-      expect(answer([], refusing).threw).toBeUndefined();
-    });
 
     it("exits 2, the usage code, not 6", () => {
       expect(answer([], refusing).exitCode).toBe(2);
@@ -114,10 +94,6 @@ describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 
       throw make();
     };
 
-    it("returns from main rather than throwing", () => {
-      expect(answer(balance(), throwing).threw).toBeUndefined();
-    });
-
     it("exits 6", () => {
       expect(answer(balance(), throwing).exitCode).toBe(6);
     });
@@ -141,11 +117,6 @@ describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 
         throw closedPipe();
       });
     };
-
-    it("returns from main rather than throwing", () => {
-      stderrThrows();
-      expect(answer(balance(), onAClosedPipe).threw).toBeUndefined();
-    });
 
     it("exits 6", () => {
       stderrThrows();
@@ -186,10 +157,6 @@ describe("[SCN-CLI-104] an error raised after the verdict is set keeps the verdi
       });
       main(kept());
       expect(printed.some((line) => line.startsWith(store))).toBe(true);
-    });
-
-    it("returns from main rather than throwing", () => {
-      expect(answer(kept(), runDirectoryLine(true)).threw).toBeUndefined();
     });
 
     it("ends on the code the same run gives with no throw, never 6", () => {

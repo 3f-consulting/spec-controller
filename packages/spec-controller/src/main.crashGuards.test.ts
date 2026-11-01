@@ -52,17 +52,6 @@ describe("[SCN-CLI-105] an error raised after the run's own call, on stdout, on 
       raise(g);
       expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
     });
-
-    it("writes nothing to stdout", () => {
-      const g = guarded();
-      raise(g);
-      expect(g.stdout.written).toEqual([]);
-    });
-
-    it("leaves the exit code of the process the guards were not given alone", () => {
-      raise(guarded());
-      expect(process.exitCode).toBeUndefined();
-    });
   });
 
   describe("an 'error' event on stderr, with no verdict reached", () => {

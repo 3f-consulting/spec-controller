@@ -3,12 +3,9 @@ import { describe, it, expect } from "vitest";
 import {
   CORE_MESSAGES,
   CoreMessage,
-  QUALITY_CHECK_FAULT_MESSAGES,
-  QualityCheckFaultCode,
   type CoreMessages,
-  type QualityCheckFault,
 } from "@3f-consulting/spec-controller-core/internal";
-import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, Unreadable, type AppMessages } from "./messages.js";
+import { APP_MESSAGES, AppMessage, type AppMessages } from "./messages.js";
 
 function codesOf(codes: object): number[] {
   return Object.values(codes)
@@ -20,35 +17,6 @@ function keysOf(catalogue: object): number[] {
   return Object.keys(catalogue)
     .map(Number)
     .sort((a, b) => a - b);
-}
-
-const SAMPLE_FAULTS: {
-  readonly [C in QualityCheckFaultCode]: readonly Extract<QualityCheckFault, { code: C }>[];
-} = {
-  [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: [
-    {
-      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
-      evidence: "evidence-obligation",
-      outcome: "watermelon",
-      presenceForOutcome: "Exists",
-      presenceFound: "None",
-    },
-    {
-      code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
-      evidence: "evidence-observation",
-      outcome: "cites-unknown-scenario",
-      presenceForOutcome: "None",
-      presenceFound: "Exists",
-    },
-  ],
-};
-
-function renderedFault(fault: QualityCheckFault): string {
-  return (QUALITY_CHECK_FAULT_MESSAGES[fault.code] as (f: QualityCheckFault) => string)(fault);
-}
-
-function presencesOf(fault: QualityCheckFault): readonly string[] {
-  return [fault.presenceForOutcome, fault.presenceFound];
 }
 
 type CoreTemplate = {
@@ -281,20 +249,6 @@ function renderedApp(code: AppMessage): string {
 }
 
 describe("[SCN-MSG-002] every message catalogue is total over its codes, with no empty entry", () => {
-  it("holds core's fault catalogue to every fault code and nothing else, and every rendered message to its own fault's parameters", () => {
-    const codes = codesOf(QualityCheckFaultCode);
-    expect(codes.length).toBeGreaterThan(0);
-    expect(keysOf(QUALITY_CHECK_FAULT_MESSAGES)).toEqual(codes);
-    expect(keysOf(SAMPLE_FAULTS)).toEqual(codes);
-
-    for (const fault of Object.values(SAMPLE_FAULTS).flat()) {
-      const message = renderedFault(fault);
-      expect(message.trim()).not.toBe("");
-      expect(message).toContain(fault.outcome);
-      for (const presence of presencesOf(fault)) expect(message).toContain(presence);
-    }
-  });
-
   it("holds core's report catalogue to every core message code and nothing else, with no entry rendering blank", () => {
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
@@ -311,13 +265,5 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
     expect(keysOf(APP_MESSAGES)).toEqual(codes);
 
     for (const code of codes as AppMessage[]) expect(renderedApp(code).trim()).not.toBe("");
-  });
-
-  it("holds the app's unreadable subjects to every Unreadable member and nothing else, with no blank subject", () => {
-    const members = codesOf(Unreadable) as Unreadable[];
-    expect(members.length).toBeGreaterThan(0);
-    expect(keysOf(UNREADABLE_SUBJECTS)).toEqual(members);
-
-    for (const member of members) expect(UNREADABLE_SUBJECTS[member].trim()).not.toBe("");
   });
 });

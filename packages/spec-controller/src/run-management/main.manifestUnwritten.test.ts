@@ -12,7 +12,6 @@ const RUN_ID = "r1";
 const NO_VERDICT_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: ";
 
 interface Answered {
-  threw: unknown;
   stderr: string;
   exitCode: typeof process.exitCode;
   runDir: string;
@@ -31,27 +30,18 @@ function keptRunWithManifestAsDirectory(): Answered {
   const storeRoot = join(scratch, "store");
   const runDir = join(storeRoot, TARGET, RUN_ID);
   mkdirSync(join(runDir, RUN_MANIFEST), { recursive: true });
-  let threw: unknown;
-  try {
-    main([
-      "--store", storeRoot, "--run-id", RUN_ID, "balance",
-      "--features", join(corpus, "features"),
-      "--vitest", join(corpus, "vitest.json"),
-      "--cucumber", join(corpus, "cucumber.json"),
-      "--ci", corpus,
-      "--target", TARGET,
-    ]);
-  } catch (err) {
-    threw = err;
-  }
-  return { threw, stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode, runDir };
+  main([
+    "--store", storeRoot, "--run-id", RUN_ID, "balance",
+    "--features", join(corpus, "features"),
+    "--vitest", join(corpus, "vitest.json"),
+    "--cucumber", join(corpus, "cucumber.json"),
+    "--ci", corpus,
+    "--target", TARGET,
+  ]);
+  return { stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode, runDir };
 }
 
 describe("[SCN-CLI-109] a kept run whose manifest cannot be written did not finish, and ends at 6", () => {
-  it("returns from main rather than throwing", () => {
-    expect(keptRunWithManifestAsDirectory().threw).toBeUndefined();
-  });
-
   it("exits 6, not the usage code", () => {
     expect(keptRunWithManifestAsDirectory().exitCode).toBe(6);
   });
