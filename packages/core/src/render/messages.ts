@@ -504,7 +504,11 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ObservationPassed]: "passed",
   [CoreMessage.ObservationFailed]: "failed",
   [CoreMessage.UnnamedClaimGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
-  [CoreMessage.UnnamedClaimCiSteps]: (names) => `${names.length} CI step${names.length === 1 ? "" : "s"}: ${names.join(", ")}`,
+  [CoreMessage.UnnamedClaimCiSteps]: (names) => {
+    const named = names.map((name) => name.trim()).filter((name) => name !== "");
+    const listed = named.length === 0 ? "" : `: ${named.join(", ")}`;
+    return `${names.length} CI step${names.length === 1 ? "" : "s"}${listed}`;
+  },
   [CoreMessage.UnnamedClaimFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
   [CoreMessage.SeveralScnCodes]: (codes) =>
     `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,

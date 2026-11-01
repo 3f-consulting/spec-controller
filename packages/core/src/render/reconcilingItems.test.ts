@@ -209,10 +209,18 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
     ["a file group's file holding a pipe", { scnId: null, status: "passed", locator: "src/a|b.test.ts" }, "cites-no-scenario", "src/a\\|b.test.ts", "1 ran, 1 passed, 0 failed"],
     ["a CI step's name holding a pipe", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: lint \\| x"],
     ["a broken item whose file is whitespace only", { scnId: null, broken: true, locator: " " }, "broken", undefined],
+    ["a CI step whose name is empty", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
+    ["a CI step whose name is whitespace only", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: " ", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
   ] as const)("%s", (_title, fields, outcome, suffix, result?: string) => {
     const observation = { qualityCheckKind: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
     const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheckKind: observation.qualityCheckKind }] }], [observation]);
     expect(rowFor(md, observation.scnId ?? UNNAMED_CLAIM_ROW).items).toBe(item(outcome, observation.qualityCheckKind, suffix, result));
+  });
+
+  it("a CI step with a blank name beside one named lint", () => {
+    const step = (fitnessFunction: string): EvidenceObservation => ({ qualityCheckKind: "fitness", fitnessFunction, exists: true, enforcedOverRealSource: true });
+    const md = render([], [step(""), step("lint")]);
+    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("cites-no-scenario", "fitness", undefined, "2 CI steps: lint"));
   });
 
   it("a shared code's scenario title holding a pipe", () => {

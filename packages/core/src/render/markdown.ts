@@ -135,7 +135,7 @@ const runIntegritySection: SectionEmitter = (report) => {
     "",
   ];
   for (const item of brokenObservations) {
-    const locator = item.locator ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
+    const locator = item.locator?.trim() ? item.locator : CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
     lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
     lines.push("");
     lines.push("```text");

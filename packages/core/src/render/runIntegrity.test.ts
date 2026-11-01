@@ -136,6 +136,11 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     const md = render(collectionFailed(" spaced/collect.test.ts"));
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
   });
+
+  it("a broken file whose locator is whitespace only is listed as unnamed, as one with no locator is", () => {
+    const md = render(collectionFailed("  ", COLLECTION_FAILED_MESSAGE));
+    expect(runIntegrityLines(md)).toContain(whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]));
+  });
 });
 
 describe("[SCN-RPT-085] an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to", () => {
@@ -149,5 +154,13 @@ describe("[SCN-RPT-085] an item quoting what an evidence observation said states
     const item = reconcilingItemsCell(render(observation), UNNAMED_CLAIM_ID);
     expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](codes)})`);
     expect(item).not.toContain("at foo");
+  });
+
+  it("a file's group states a headline once when its tests' messages differ only in their spacing", () => {
+    const failing = (testName: string, message: string): EvidenceObservation =>
+      ({ qualityCheckKind: "unit", scnId: null, status: "failed", locator: "x.test.ts", testName, message });
+    const item = reconcilingItemsCell(render(failing("t1", "expected\t1  to be 2"), failing("t2", "expected 1 to be 2")), UNNAMED_CLAIM_ID);
+    expect(item).toContain("(x.test.ts: expected 1 to be 2)");
+    expect(item.split("expected 1 to be 2")).toHaveLength(2);
   });
 });

@@ -33,6 +33,6 @@ export function remarkWordsOf({ message, notes = [] }: Remark): string | undefin
 }
 
 export function remarkHeadlineOf({ message, notes = [] }: Remark): string | undefined {
-  const headline = message?.split("\n").map((line) => line.trim()).find((line) => line.length > 0);
+  const headline = message?.split("\n").map((line) => line.replace(/\s+/g, " ").trim()).find((line) => line.length > 0);
   return remarkWordsOf({ ...(headline === undefined ? {} : { message: headline }), notes });
 }

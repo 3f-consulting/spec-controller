@@ -626,7 +626,7 @@ Feature: The report renders the ledger as sectioned facts
     Where a reconciling item quotes what an evidence observation said, as a broken item does and
     as a file's group on the unnamed claim's row does, it states the first line of the message
     that holds text and then the words of each note the observation carries, however many lines
-    the message runs to.
+    the message runs to. A file's group states each such line once, however the run spaced it.
 
     @unit @SCN-RPT-085
     Scenario: an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to
