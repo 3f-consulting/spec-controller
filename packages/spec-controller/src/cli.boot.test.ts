@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import * as guards from "./crashGuards.js";
 import { standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
@@ -106,11 +106,26 @@ describe("[SCN-CLI-106] an error while the program loads ends the run at 6, name
       expect(binSource()).not.toMatch(/\bimport (?:[^;()]*from )?"\.\/main\.js"/);
     });
 
-    it("boots with a loader that imports the program dynamically", () => {
-      const bin = binSource();
-      const boot = bin.indexOf("boot(");
-      expect(boot).toBeGreaterThan(-1);
-      expect(bin.indexOf('() => import("./main.js")', boot)).toBeGreaterThan(boot);
+    it("boots the guards on the real process, its streams and argv, with a loader that loads the program", async () => {
+      const boot = vi.fn();
+      const program = { main: (): void => {} };
+      vi.resetModules();
+      vi.doMock("./crashGuards.js", () => ({ boot }));
+      vi.doMock("./main.js", () => program);
+      try {
+        await import("./cli.js");
+        expect(boot).toHaveBeenCalledTimes(1);
+        const [proc, stdout, stderr, argv, load] = boot.mock.calls[0] as [unknown, unknown, unknown, unknown, () => Promise<{ main?: unknown }>];
+        expect(proc).toBe(process);
+        expect(stdout).toBe(process.stdout);
+        expect(stderr).toBe(process.stderr);
+        expect(argv).toEqual(process.argv.slice(2));
+        expect((await load()).main).toBe(program.main);
+      } finally {
+        vi.doUnmock("./crashGuards.js");
+        vi.doUnmock("./main.js");
+        vi.resetModules();
+      }
     });
   });
 });

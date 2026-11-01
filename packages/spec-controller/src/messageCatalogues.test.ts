@@ -3,7 +3,10 @@ import { describe, it, expect } from "vitest";
 import {
   CORE_MESSAGES,
   CoreMessage,
+  QUALITY_CHECK_FAULT_MESSAGES,
+  QualityCheckFaultCode,
   type CoreMessages,
+  type QualityCheckFault,
 } from "@3f-consulting/spec-controller-core/internal";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, Unreadable, type AppMessages } from "./messages.js";
 
@@ -248,6 +251,20 @@ function renderedApp(code: AppMessage): string {
   return (APP_MESSAGES[code] as (...params: unknown[]) => string)(...SAMPLE_APP_PARAMS[code]);
 }
 
+const SAMPLE_FAULTS: { readonly [C in QualityCheckFaultCode]: Extract<QualityCheckFault, { readonly code: C }> } = {
+  [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: {
+    code: QualityCheckFaultCode.EvidenceDivergesFromOutcome,
+    evidence: "evidence-obligation",
+    outcome: "satisfied",
+    presenceForOutcome: "Exists",
+    presenceFound: "None",
+  },
+};
+
+function renderedFault(code: QualityCheckFaultCode): string {
+  return (QUALITY_CHECK_FAULT_MESSAGES[code] as (fault: QualityCheckFault) => string)(SAMPLE_FAULTS[code]);
+}
+
 describe("[SCN-MSG-002] every message catalogue is total over its codes, with no empty entry", () => {
   it("holds core's report catalogue to every core message code and nothing else, with no entry rendering blank", () => {
     const codes = codesOf(CoreMessage);
@@ -267,11 +284,21 @@ describe("[SCN-MSG-002] every message catalogue is total over its codes, with no
     for (const code of codes as AppMessage[]) expect(renderedApp(code).trim()).not.toBe("");
   });
 
-  it("holds the app's unreadable subjects to every Unreadable member and nothing else, with no blank subject", () => {
+  it("holds core's fault catalogue to every fault code and nothing else, with no fault rendering blank", () => {
+    const codes = codesOf(QualityCheckFaultCode);
+    expect(codes.length).toBeGreaterThan(0);
+    expect(keysOf(QUALITY_CHECK_FAULT_MESSAGES)).toEqual(codes);
+
+    for (const code of codes as QualityCheckFaultCode[]) expect(renderedFault(code).trim()).not.toBe("");
+  });
+
+  it("holds the app's unreadable subjects to every Unreadable member and nothing else, each its own and none blank", () => {
     const members = codesOf(Unreadable) as Unreadable[];
     expect(members.length).toBeGreaterThan(0);
     expect(keysOf(UNREADABLE_SUBJECTS)).toEqual(members);
 
-    for (const member of members) expect(UNREADABLE_SUBJECTS[member].trim()).not.toBe("");
+    const subjects = members.map((member) => UNREADABLE_SUBJECTS[member]);
+    expect(new Set(subjects).size).toBe(members.length);
+    for (const subject of subjects) expect(subject.trim()).not.toBe("");
   });
 });
