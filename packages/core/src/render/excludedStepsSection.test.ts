@@ -140,4 +140,20 @@ describe("[SCN-RPT-089] a notChecks entry naming a workflow the run did not read
       notApplied.map((entry) => `- \`${entry}\``)
     );
   });
+
+  it("lists nothing as not applied when every notChecks entry names a workflow the run read", () => {
+    const section = stepAccounting(reportLines(["ci.yml:quality:Types"]));
+    const notAppliedLabel = CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", "`ci.yml`");
+
+    expect(section).not.toContain(notAppliedLabel);
+    expect(section.slice(endOfTable(section))).toStrictEqual([
+      "",
+      "Excluded:",
+      "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
+      "",
+      "GitHub plumbing:",
+      "- ci.yml:quality:Checkout",
+      "",
+    ]);
+  });
 });
