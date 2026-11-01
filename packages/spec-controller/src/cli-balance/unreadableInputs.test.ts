@@ -105,6 +105,15 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
     expect(error).toContain(fault);
   });
 
+  it("refuses a single Surefire report whose root is one test suite, which --junit reads, as XML that holds no test suites", () => {
+    const error = refusalOf(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8")) ?? "";
+
+    expect(error).toContain("--pytest");
+    expect(error).toContain("reports/report.xml");
+    expect(error).toContain(PYTEST_SHAPE);
+    expect(error).toContain("testsuites is missing");
+  });
+
   it("runBalance refuses a --pytest file that is not XML at exit 2, naming the file and the shape, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
     const report = join(features, "..", "report.xml");
@@ -224,28 +233,19 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
   });
 });
 
-describe("[SCN-JAV-010] checkInputShapes passes a single Surefire report file whose root is one test suite under --junit", () => {
-  const shapeFaultUnder = (flag: string): string | null =>
-    checkInputShapes(readReports(jsonInputsOf({ [flag]: "TEST-measure.CitedTest.xml" }, nothingByDefault), reading(readFileSync("tests/fixtures/surefire-single-report/report.xml", "utf8"))));
-
-  it("keeps refusing the same report under --pytest, whose reports hold their suites in testsuites", () => {
-    expect(shapeFaultUnder("pytest")).toContain("testsuites is missing");
-  });
-});
-
 describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit directory that is not a JUnit XML report, naming that file", () => {
   const JUNIT_SHAPE = "in the shape of a JUnit XML report";
 
-  function surefireReportsBeside(name: string, content: string): { reports: string; notAReport: string } {
+  function surefireReportsBeside(content: string): { reports: string; notAReport: string } {
     const reports = temporaryDirectory("surefire-reports-");
     cpSync("tests/fixtures/java/surefire-reports", reports, { recursive: true });
-    const notAReport = join(reports, name);
+    const notAReport = join(reports, "TEST-example.NotAReport.xml");
     writeFileSync(notAReport, content);
     return { reports, notAReport };
   }
 
   it("refuses a report file holding XML that holds no test suites, naming the flag, that file, the shape of a JUnit XML report and what is wrong", () => {
-    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", "<html><body/></html>");
+    const { reports, notAReport } = surefireReportsBeside("<html><body/></html>");
     const error = checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))) ?? "";
 
     expect(error).toContain("--junit");
@@ -256,7 +256,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 
   it("runBalance refuses the directory at exit 2, naming that file and the shape, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
-    const { reports, notAReport } = surefireReportsBeside("TEST-example.NotAReport.xml", "not xml\n");
+    const { reports, notAReport } = surefireReportsBeside("not xml\n");
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--junit", reports]);
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
@@ -332,6 +332,19 @@ function targetOnDisk(): { features: string; ci: string } {
 }
 
 describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its flag reads", () => {
+  it.each([
+    ["a regular file", "notes.txt", "notes\n"],
+    ["a single feature file", "z.feature", "Feature: z\n"],
+  ])("names --features and the path when the corpus given is %s", (_kind, name, content) => {
+    const { features } = targetOnDisk();
+    const file = join(features, name);
+    writeFileSync(file, content);
+    const error = checkInputPaths({ features: file }, readCorpus(file), readWorkflows(undefined));
+    const refusal = APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), file, "ENOTDIR");
+
+    expect(error).toContain(refusal.slice(0, -")".length));
+  });
+
   it("names the entry when the corpus holds a directory named as a feature file", () => {
     const { features } = targetOnDisk();
     mkdirSync(join(features, "z.feature"));
