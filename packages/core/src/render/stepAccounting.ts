@@ -61,12 +61,12 @@ const excludedListOf = ({ steps }: StepAccounting): string[] => {
   ];
 };
 
-const workflowsReadOf = ({ byJob }: StepAccounting): string =>
-  [...new Set(byJob.map(({ workflow }) => workflow))].map((workflow) => `\`${workflow}\``).join(", ");
+const workflowsReadOf = ({ workflowsRead, byJob }: StepAccounting): string =>
+  [...new Set(workflowsRead ?? byJob.map(({ workflow }) => workflow))].map((workflow) => codeSpan(workflow)).join(", ");
 
 const notAppliedListOf = (accounting: StepAccounting): string[] => {
-  const notApplied = accounting.nonChecksNamingAWorkflowNotRead ?? [];
-  if (notApplied.length === 0) return [];
+  const notApplied = accounting.nonChecksNamingAWorkflowNotRead;
+  if (notApplied === undefined) return [];
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", workflowsReadOf(accounting)),
     ...notApplied.map((entry) => `- ${codeSpan(entry)}`),

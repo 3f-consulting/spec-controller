@@ -94,26 +94,48 @@ const codeSpansOf = (line: string): string[] => {
 
 const counts = { stepsRead: 1, candidates: 1, runners: 0, reconciler: 0, excluded: 0, plumbing: 0 };
 
-describe("[SCN-RPT-088] each configuration entry the report quotes is held whole in its code span, a backtick included", () => {
+type StepAccountingRows = NonNullable<Summary["stepAccounting"]>;
+
+const withNotApplied = (rows: Partial<StepAccountingRows>): Partial<Summary> => ({
+  stepAccounting: {
+    byJob: [{ workflow: "ci.yml", job: "quality", ...counts }],
+    total: counts,
+    steps: {},
+    workflowsRead: ["ci.yml"],
+    nonChecksNamingAWorkflowNotRead: ["other.yml:build:Test"],
+    ...rows,
+  },
+});
+
+describe("[SCN-RPT-088] each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string", () => {
   it.each([
-    { quoted: "ci.yml:quality:Run `pnpm test`", extra: { nonChecksMatchingNoStep: ["ci.yml:quality:Run `pnpm test`"] } },
-    { quoted: "`Deploy`", extra: { nonChecksNotAStepName: ["`Deploy`"] } },
-    { quoted: "specController.zz``z`", extra: { configurationKeysNotRead: ["zz``z`"] } },
-    { quoted: "specController.runners.`unit", extra: { runnerKeysNotATier: ["`unit"] } },
-    { quoted: "specController.runners.a`b", extra: { configurationOfWrongKind: [{ entry: "specController.runners.a`b", is: "number" as const, reads: "string-or-null" as const }] } },
-    {
-      quoted: "`ci.yaml`:quality:Deploy",
-      extra: {
-        stepAccounting: {
-          byJob: [{ workflow: "ci.yml", job: "quality", ...counts }],
-          total: counts,
-          steps: {},
-          nonChecksNamingAWorkflowNotRead: ["`ci.yaml`:quality:Deploy"],
-        },
-      },
-    },
-  ])("quotes $quoted whole", ({ quoted, extra }) => {
-    const lines = render(extra).split("\n");
-    expect(lines.filter((line) => codeSpansOf(line).includes(quoted))).toHaveLength(1);
+    { shown: "ci.yml:quality:Run `pnpm test`", extra: { nonChecksMatchingNoStep: ["ci.yml:quality:Run `pnpm test`"] } },
+    { shown: "`Deploy`", extra: { nonChecksNotAStepName: ["`Deploy`"] } },
+    { shown: "specController.zz``z`", extra: { configurationKeysNotRead: ["zz``z`"] } },
+    { shown: "specController.runners.`unit", extra: { runnerKeysNotATier: ["`unit"] } },
+    { shown: "specController.runners.a`b", extra: { configurationOfWrongKind: [{ entry: "specController.runners.a`b", is: "number" as const, reads: "string-or-null" as const }] } },
+    { shown: "`ci.yaml`:quality:Deploy", accounting: { nonChecksNamingAWorkflowNotRead: ["`ci.yaml`:quality:Deploy"] } },
+    { shown: " ci.yml:build:Test", accounting: { nonChecksNamingAWorkflowNotRead: [" ci.yml:build:Test"] } },
+    { shown: "ci.yml:build:Test ", accounting: { nonChecksNamingAWorkflowNotRead: ["ci.yml:build:Test "] } },
+    { shown: '"ci.yml:build:Test', extra: { nonChecksMatchingNoStep: ['"ci.yml:build:Test'] } },
+    { shown: 'ci.yml:build:Run "lint"', extra: { nonChecksMatchingNoStep: ['ci.yml:build:Run "lint"'] } },
+    { shown: "c`i.yml", accounting: { workflowsRead: ["c`i.yml"] } },
+  ])("shows $shown as written", ({ shown, extra, accounting }) => {
+    const lines = render(accounting === undefined ? extra : withNotApplied(accounting)).split("\n");
+    expect(lines.filter((line) => codeSpansOf(line).includes(shown))).toHaveLength(1);
+  });
+
+  it.each([
+    { written: "", shown: '""', extra: { nonChecksNotAStepName: [""] } },
+    { written: "   ", shown: '"   "', extra: { nonChecksNotAStepName: ["   "] } },
+    { written: "a\nb", shown: '"a\\nb"', extra: { nonChecksMatchingNoStep: ["a\nb"] } },
+    { written: "a\rb", shown: '"a\\rb"', extra: { nonChecksMatchingNoStep: ["a\rb"] } },
+    { written: '"ci.yml:build:Test"', shown: '"\\"ci.yml:build:Test\\""', extra: { nonChecksMatchingNoStep: ['"ci.yml:build:Test"'] } },
+    { written: " ci.yml:build:Test ", shown: '" ci.yml:build:Test "', accounting: { nonChecksNamingAWorkflowNotRead: [" ci.yml:build:Test "] } },
+    { written: "c\ni.yml", shown: '"c\\ni.yml"', accounting: { workflowsRead: ["c\ni.yml"] } },
+  ])("shows $written as its quoted string $shown", ({ written, shown, extra, accounting }) => {
+    const lines = render(accounting === undefined ? extra : withNotApplied(accounting)).split("\n");
+    expect(lines.filter((line) => codeSpansOf(line).includes(shown))).toHaveLength(1);
+    expect(JSON.parse(shown)).toBe(written);
   });
 });

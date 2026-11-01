@@ -24,6 +24,7 @@ import {
   type ReconcilerSteps,
   type StepDisposition,
   type StepTest,
+  workflowsReadInOrder,
 } from "../domain/uncitedFitnessFunctions.js";
 import {
   configurationNotRead,
@@ -76,6 +77,7 @@ interface PipelineReadings {
   readonly steps: readonly PipelineStep[];
   readonly runners: ResolvedRunners;
   readonly notApplied: NonChecksNotApplied;
+  readonly workflowsRead: readonly string[];
   readonly reconciler: ReconcilerSteps;
   readonly dispositionOf: (step: PipelineStep) => StepDisposition;
 }
@@ -83,6 +85,7 @@ interface PipelineReadings {
 function pipelineReadings(input: EvidenceReconciliationSources): PipelineReadings {
   const { packageJson } = input;
   const steps = pipelineStepsOf(input.ciWorkflows);
+  const workflowsRead = workflowsReadInOrder(input.ciWorkflows.map(({ file }) => file));
   const exclusions = nonChecksApplied(steps, qualifiedStepName, resolveNotChecks(packageJson));
 
   const runners = resolveRunners(packageJson);
@@ -98,7 +101,8 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
   return {
     steps,
     runners,
-    notApplied: nonChecksNotApplied(exclusions.unmatchedEntries, input.ciWorkflows.map(({ file }) => file)),
+    notApplied: nonChecksNotApplied(exclusions.unmatchedEntries, workflowsRead),
+    workflowsRead,
     reconciler,
     dispositionOf: stepDispositions({
       isReconciler: reconciler.isReconciler,
@@ -123,7 +127,8 @@ export function evidenceReconciliationFromSources(
     resolveDeferralTags(packageJson, input.deferralTags)
   );
 
-  const { steps, runners, notApplied, reconciler, dispositionOf } = pipelineReadings(input);
+  const readings = pipelineReadings(input);
+  const { steps, dispositionOf } = readings;
   const isCandidate: StepTest = (step) => dispositionOf(step) === "candidate";
 
   const reconciliation = evidenceReconciliationOf(
@@ -133,7 +138,7 @@ export function evidenceReconciliationFromSources(
   );
   return withScenarioCodeErrors(
     withConfigurationAccount(
-      withReaderAccounts(reconciliation, steps, packageJson, runners, notApplied, reconciler, dispositionOf),
+      withReaderAccounts(reconciliation, packageJson, readings),
       packageJson
     ),
     input
@@ -168,19 +173,15 @@ function withScenarioCodeErrors(
 
 function withReaderAccounts(
   reconciliation: EvidenceReconciliation,
-  steps: readonly PipelineStep[],
   packageJson: TargetManifest,
-  runners: ResolvedRunners,
-  notApplied: NonChecksNotApplied,
-  reconciler: ReconcilerSteps,
-  dispositionOf: (step: PipelineStep) => StepDisposition
+  { steps, runners, notApplied, workflowsRead, reconciler, dispositionOf }: PipelineReadings
 ): EvidenceReconciliation {
   return withStepAccounting(
     withUnmatchedNonChecks(withRunnerAccount(reconciliation, steps, packageJson, runners), notApplied),
     steps,
     dispositionOf,
     reconciler.roleOf,
-    notApplied.namingAWorkflowNotRead
+    { namingAWorkflowNotRead: notApplied.namingAWorkflowNotRead, workflowsRead }
   );
 }
 
@@ -189,7 +190,7 @@ function withStepAccounting(
   steps: readonly PipelineStep[],
   dispositionOf: (step: PipelineStep) => StepDisposition,
   roleOf: ReconcilerRole,
-  namingAWorkflowNotRead: readonly string[]
+  { namingAWorkflowNotRead, workflowsRead }: { namingAWorkflowNotRead: readonly string[]; workflowsRead: readonly string[] }
 ): EvidenceReconciliation {
   if (steps.length === 0) return reconciliation;
   return {
@@ -199,6 +200,7 @@ function withStepAccounting(
       stepAccounting: {
         ...stepAccountOf(steps, dispositionOf, qualifiedStepName, roleOf),
         ...(namingAWorkflowNotRead.length > 0 ? { nonChecksNamingAWorkflowNotRead: namingAWorkflowNotRead } : {}),
+        workflowsRead,
       },
     },
   };

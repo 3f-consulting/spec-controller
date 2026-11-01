@@ -315,6 +315,7 @@ export interface StepAccounting {
   readonly total: StepAccountTotal;
   readonly steps: StepsBehindCounts;
   readonly nonChecksNamingAWorkflowNotRead?: readonly string[];
+  readonly workflowsRead?: readonly string[];
 }
 
 interface EvidenceReconciliationTotals {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
@@ -34,7 +35,7 @@ const section = (lines: readonly string[]): string[] | undefined => (lines.inclu
 
 const named = (entry: string): string => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", `\`${entry}\``)}`;
 const notAStepName = (entry: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", `\`${entry}\``)}`;
+  `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", codeSpan(entry))}`;
 const notATier = (): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotATier]("`specController.runners.lint`")}`;
 
 describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
@@ -59,16 +60,44 @@ describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the
   });
 });
 
-describe("[SCN-RPT-087] a notChecks entry that is not a workflow file, a job and a step name is named under Configuration not read as not naming a step", () => {
+describe("[SCN-RPT-087] a notChecks entry that does not name a workflow, a job and a step is named under Configuration not read as not naming a step", () => {
   it.each([
     { entry: "Deploy", workflowsRead: [] },
     { entry: "Deploy", workflowsRead: ["ci.yml"] },
     { entry: "quality:Deploy", workflowsRead: [] },
     { entry: "quality:Deploy", workflowsRead: ["ci.yml"] },
+    { entry: "quality:Run: tests", workflowsRead: ["ci.yml"] },
+    { entry: "a:b.yml:Deploy", workflowsRead: ["a:b.yml"] },
+    { entry: "Makefile:build:x", workflowsRead: ["ci.yml"] },
+    { entry: "", workflowsRead: ["ci.yml"] },
+    { entry: "ci.yml::Test", workflowsRead: ["ci.yml"] },
+    { entry: "ci.yml:build:", workflowsRead: ["ci.yml"] },
+    { entry: "other.yml:build", workflowsRead: ["ci.yml"] },
+    { entry: "a.yml:b.yml:quality", workflowsRead: ["a.yml", "a.yml:b.yml"] },
   ])("names $entry, reading $workflowsRead, as not naming a step", ({ entry, workflowsRead }) => {
     const { reconciliation, lines } = reportOf({ entry, workflowsRead });
+    const { nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting } = reconciliation.summary;
 
-    expect([reconciliation.summary.nonChecksNotAStepName, reconciliation.summary.nonChecksMatchingNoStep]).toStrictEqual([[entry], undefined]);
+    expect([nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting?.nonChecksNamingAWorkflowNotRead]).toStrictEqual([[entry], undefined, undefined]);
     expect(section(lines)).toStrictEqual([heading, "", CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro], "", notAStepName(entry), ""]);
+  });
+
+  it.each([
+    { entry: "ci.yml:build:Test:", workflowsRead: ["ci.yml"], lands: { matchingNoStep: ["ci.yml:build:Test:"], notApplied: undefined } },
+    { entry: "ci.yml:build::", workflowsRead: ["ci.yml"], lands: { matchingNoStep: ["ci.yml:build::"], notApplied: undefined } },
+    { entry: "ci.yml:build:Run: lint", workflowsRead: ["ci.yml"], lands: { matchingNoStep: ["ci.yml:build:Run: lint"], notApplied: undefined } },
+    { entry: "x.yaml:build:Test", workflowsRead: ["ci.yml"], lands: { matchingNoStep: undefined, notApplied: ["x.yaml:build:Test"] } },
+    { entry: "x.yml:b:Test", workflowsRead: ["ci.yml"], lands: { matchingNoStep: undefined, notApplied: ["x.yml:b:Test"] } },
+    { entry: "a.yml:b.yml:job:step", workflowsRead: ["a.yml"], lands: { matchingNoStep: ["a.yml:b.yml:job:step"], notApplied: undefined } },
+  ])("does not name $entry, reading $workflowsRead, as not naming a step", ({ entry, workflowsRead, lands }) => {
+    const { reconciliation, lines } = reportOf({ entry, workflowsRead });
+    const { nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting } = reconciliation.summary;
+
+    expect({
+      notAStepName: nonChecksNotAStepName,
+      matchingNoStep: nonChecksMatchingNoStep,
+      notApplied: stepAccounting?.nonChecksNamingAWorkflowNotRead,
+    }).toStrictEqual({ notAStepName: undefined, ...lands });
+    expect(section(lines) ?? []).not.toContain(notAStepName(entry));
   });
 });

@@ -65,25 +65,49 @@ export function nonChecksApplied(
   };
 }
 
-const namesAWorkflowRead = (entry: string, workflowsRead: readonly string[]): boolean =>
-  workflowsRead.some((workflow) => entry.startsWith(`${workflow}:`));
-
-const namesAStep = (entry: string): boolean => entry.split(":").length > 2;
-
 export interface NonChecksNotApplied {
   readonly matchingNoStep: readonly string[];
   readonly notAStepName: readonly string[];
   readonly namingAWorkflowNotRead: readonly string[];
 }
 
+type NotApplied = keyof NonChecksNotApplied;
+
+const WORKFLOW_FILE_THEN_COLON = /\.ya?ml:/;
+
+function workflowReadNamedBy(entry: string, workflowsRead: readonly string[]): string | undefined {
+  return workflowsRead
+    .filter((workflow) => entry.startsWith(`${workflow}:`))
+    .sort((a, b) => b.length - a.length)[0];
+}
+
+function workflowFileNamedBy(entry: string): string | undefined {
+  const end = WORKFLOW_FILE_THEN_COLON.exec(entry);
+  return end === null ? undefined : entry.slice(0, end.index + end[0].length - 1);
+}
+
+function namesAJobAndAStep(remainder: string): boolean {
+  const jobEnd = remainder.indexOf(":");
+  return jobEnd > 0 && jobEnd < remainder.length - 1;
+}
+
+function notAppliedAs(entry: string, workflowsRead: readonly string[]): NotApplied {
+  const read = workflowReadNamedBy(entry, workflowsRead);
+  const workflow = read ?? workflowFileNamedBy(entry);
+  if (workflow === undefined || !namesAJobAndAStep(entry.slice(workflow.length + 1))) return "notAStepName";
+  return read === undefined ? "namingAWorkflowNotRead" : "matchingNoStep";
+}
+
 export function nonChecksNotApplied(
   unmatchedEntries: readonly string[],
   workflowsRead: readonly string[]
 ): NonChecksNotApplied {
+  const as = (reason: NotApplied): string[] =>
+    unmatchedEntries.filter((entry) => notAppliedAs(entry, workflowsRead) === reason);
   return {
-    matchingNoStep: unmatchedEntries.filter((entry) => namesAStep(entry) && namesAWorkflowRead(entry, workflowsRead)),
-    notAStepName: unmatchedEntries.filter((entry) => !namesAStep(entry)),
-    namingAWorkflowNotRead: unmatchedEntries.filter((entry) => namesAStep(entry) && !namesAWorkflowRead(entry, workflowsRead)),
+    matchingNoStep: as("matchingNoStep"),
+    notAStepName: as("notAStepName"),
+    namingAWorkflowNotRead: as("namingAWorkflowNotRead"),
   };
 }
 
@@ -123,6 +147,8 @@ const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0
 
 const byWorkflowThenJob = (a: WorkflowAndJob, b: WorkflowAndJob): number =>
   byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job);
+
+export const workflowsReadInOrder = (files: readonly string[]): string[] => [...files].sort(byCodeUnit);
 
 type DispositionCount = "candidates" | "runners" | "reconciler" | "excluded" | "plumbing";
 
