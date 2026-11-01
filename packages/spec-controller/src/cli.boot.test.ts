@@ -1,6 +1,4 @@
 import { EventEmitter } from "node:events";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as guards from "./crashGuards.js";
 import { standInStream, type StandInStream } from "./crashGuards.test-utils.js";
@@ -41,10 +39,6 @@ function moduleNotFound(): Error {
 const failingLoad = (): Promise<unknown> => Promise.reject(moduleNotFound());
 
 const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
-
-function binSource(): string {
-  return readFileSync(fileURLToPath(new URL("./cli.ts", import.meta.url)), "utf8").replace(/\s+/g, " ");
-}
 
 afterEach(() => {
   process.exitCode = undefined;
@@ -102,26 +96,40 @@ describe("[SCN-CLI-106] an error while the program loads ends the run at 6, name
   });
 
   describe("the bin", () => {
-    it("does not import the program statically, so a failure while it loads reaches the guards", () => {
-      expect(binSource()).not.toMatch(/\bimport (?:[^;()]*from )?"\.\/main\.js"/);
-    });
-
-    it("boots the guards on the real process, its streams and argv, with a loader that loads the program", async () => {
+    it("loads the program only when boot calls the loader, and boots on the real process, its streams and the arguments after the script", async () => {
+      const watched: [EventEmitter, string][] = [
+        [process, "uncaughtException"],
+        [process, "unhandledRejection"],
+        [process.stdout, "error"],
+        [process.stderr, "error"],
+      ];
+      const before = watched.map(([emitter, event]) => emitter.listeners(event));
+      const argv = process.argv;
+      process.argv = ["node", "spec-controller", "balance", "--exit-zero"];
       const boot = vi.fn();
-      const program = { main: (): void => {} };
+      const main = (): void => {};
+      const loadProgram = vi.fn(() => ({ main }));
       vi.resetModules();
       vi.doMock("./crashGuards.js", () => ({ boot }));
-      vi.doMock("./main.js", () => program);
+      vi.doMock("./main.js", loadProgram);
       try {
         await import("./cli.js");
+        expect(loadProgram).not.toHaveBeenCalled();
         expect(boot).toHaveBeenCalledTimes(1);
-        const [proc, stdout, stderr, argv, load] = boot.mock.calls[0] as [unknown, unknown, unknown, unknown, () => Promise<{ main?: unknown }>];
+        const [proc, stdout, stderr, args, load] = boot.mock.calls[0] as [unknown, unknown, unknown, unknown, () => Promise<{ main?: unknown }>];
         expect(proc).toBe(process);
         expect(stdout).toBe(process.stdout);
         expect(stderr).toBe(process.stderr);
-        expect(argv).toEqual(process.argv.slice(2));
-        expect((await load()).main).toBe(program.main);
+        expect(args).toEqual(["balance", "--exit-zero"]);
+        expect((await load()).main).toBe(main);
+        expect(loadProgram).toHaveBeenCalledTimes(1);
       } finally {
+        process.argv = argv;
+        watched.forEach(([emitter, event], i) => {
+          for (const listener of emitter.listeners(event)) {
+            if (!before[i]?.includes(listener)) emitter.removeListener(event, listener as (...a: unknown[]) => void);
+          }
+        });
         vi.doUnmock("./crashGuards.js");
         vi.doUnmock("./main.js");
         vi.resetModules();
