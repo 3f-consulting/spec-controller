@@ -170,7 +170,7 @@ jobs:
       - name: Import boundaries
         id: SCN-FIT-009
         if: always()
-        run: node_modules/.bin/depcruise --config config/.dependency-cruiser.js packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
+        run: node_modules/.bin/depcruise packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
 
       - name: Every production source file is in a mutation scope or on the recorded list
         id: SCN-FIT-040
@@ -186,7 +186,6 @@ jobs:
           git ls-files -- ':(glob)packages/*/src/**/*.ts' ':(exclude,glob)packages/**/*.test.ts' ':(exclude,glob)packages/**/*.test-utils.ts' "${excludes[@]}" \
             | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
 
-      # The ceiling and the sets it counts live in config/cloc.ratio.js.
       - name: Test code stays within the declared ceiling ratio to production code
         id: SCN-FIT-043
         if: always()
@@ -319,6 +318,7 @@ jobs:
 
       - name: Reconciliation
         if: always()
+        # $(…) is unquoted, and .github/actionlint.yaml ignores SC2046 for it: it must split into --ci-steps and its path, or add nothing when no step record was written.
         run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
 
       - name: Hand the built packages to the release

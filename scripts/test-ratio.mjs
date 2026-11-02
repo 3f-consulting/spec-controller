@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import * as config from "../config/cloc.ratio.js";
+import * as config from "./test-ratio.config.js";
 
 const scratch = mkdtempSync(join(tmpdir(), "test-ratio-"));
 

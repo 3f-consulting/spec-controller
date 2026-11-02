@@ -88,7 +88,7 @@ Its headings are the standard's sub-characteristics of maintainability.
 | Import boundaries | 4 |
 | ESLint: the engine's idiom, core's domain language and where a domain rule's unit test lives, seven rules | 1 |
 
-Import boundaries runs dependency-cruiser over [`config/.dependency-cruiser.js`](../config/.dependency-cruiser.js), and its output names the rule that failed. Two of its rules keep each input format's parser in its homes in the packages' source. The repository's ESLint configuration lies outside them, and also reads the scenarios' tags with the Gherkin parser. In the counting window each rule was a check of its own, so each keeps its own count:
+Import boundaries runs dependency-cruiser over [`.dependency-cruiser.js`](../.dependency-cruiser.js), and its output names the rule that failed. Two of its rules keep each input format's parser in its homes in the packages' source. The repository's ESLint configuration lies outside them, and also reads the scenarios' tags with the Gherkin parser. In the counting window each rule was a check of its own, so each keeps its own count:
 
 | Rule | Real catches |
 |---|---|
