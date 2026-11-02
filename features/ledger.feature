@@ -102,7 +102,7 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-009
     Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
 
-  Rule: a behavioural observation's level is the cited scenario's own tier tag, not the input source
+  Rule: a behavioural observation's layer is the cited scenario's own layer tag, not its report's
 
     An observation is posted at each layer its cited scenario is tagged with, integration, e2e
     or performance, in tag order and once each. A scenario tagged with no layer beyond @unit has
@@ -111,7 +111,7 @@ Feature: Ledger over obligation-vs-observation evidence
     observation never overrides the scenario's own layer.
 
     @unit @SCN-LDG-011
-    Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its source's fallback
+    Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its report's fallback
 
     @unit @SCN-LDG-012
     Scenario: an observation of a scenario tagged @integration is posted at integration
@@ -123,7 +123,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Scenario: an observation of a scenario tagged @integration and @e2e is posted at both
 
     @unit @SCN-LDG-015
-    Scenario: an observation of a scenario carrying no tier tag beyond @unit is posted at its source's fallback
+    Scenario: an observation of a scenario carrying no layer tag beyond @unit is posted at its report's fallback
 
     @unit @SCN-LDG-045
     Scenario: a report of test results falls back to unit, and a report of scenario runs to integration
