@@ -467,9 +467,9 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ExcludedScnOccurrences]: (count) =>
     `${count} @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, ` +
     "a comment or step text rather than as a tag, so it marks no scenario and raises no claim",
-  [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
+  [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN code`,
   [CoreMessage.SharedScnCodes]: (scenarios, codes) =>
-    `The corpus holds ${scenarios} scenarios — ${codes} @SCN code(s) carried by more than one scenario:`,
+    `The corpus holds ${scenarios} scenarios — ${codes} @SCN code(s) carried by more than one scenario, each scenario named as \`feature file : scenario title\`:`,
   [CoreMessage.SharedScnCodeScenario]: (feature, title) => `this one is ${feature} : ${title}`,
   [CoreMessage.ClaimColumn]: "Claim",
   [CoreMessage.VerdictColumn]: "Verdict",
@@ -477,11 +477,14 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.CiStepsColumn]: "CI steps",
   [CoreMessage.EvidenceCellKey]: [
     "Key: each evidence cell reads *obligation*/*observations*.",
-    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.",
+    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. The table has a column only for a kind some row obligates or observes. `-` means none is raised, or the obligation is pending.",
     "- The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.",
     "- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence, or whose unit evidence is pending.",
     "- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.",
-    "- In Reconciling items, `—` means the row has no reconciling item.",
+    "- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.",
+    "- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means the scenario carries no tag that raises an Evidence Obligation, though it may carry an @SCN code.",
+    "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests; a broken item stands alone and is counted in none.",
+    "- CI steps names the CI steps behind each kind of quality check the row obligates or observes, whether or not any Evidence Observation of that kind ran for the row: `U/-` beside a step names the step that runs unit tests, none of which answered this row.",
   ].join("\n"),
   [CoreMessage.PendingItem]: "pending",
   [CoreMessage.PendingItemFor]: (qualityCheckKind) => `pending: ${qualityCheckKind}`,

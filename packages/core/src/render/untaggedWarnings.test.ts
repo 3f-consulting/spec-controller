@@ -66,7 +66,7 @@ describe("[SCN-RPT-014] the ledger summary counts the untagged scenarios, and ea
   it("states the untagged count in the ledger summary, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      "- 3 scenario(s) carry no @SCN tag",
+      "- 3 scenario(s) carry no @SCN code",
     ]);
   });
 

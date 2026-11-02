@@ -101,7 +101,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
   it.each([
     [
       "states that the corpus holds three scenarios, one code carried by more than one of them",
-      "- The corpus holds 3 scenarios — 1 @SCN code(s) carried by more than one scenario:",
+      "- The corpus holds 3 scenarios — 1 @SCN code(s) carried by more than one scenario, each scenario named as `feature file : scenario title`:",
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
