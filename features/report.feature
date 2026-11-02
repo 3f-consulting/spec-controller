@@ -144,9 +144,10 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 
     The report states "N @SCN ids seen in non-tag context, excluded": the raw @SCN code
-    occurrences in the feature source (in prose, comments and step text) minus the codes read
-    as scenarios. It appears on both surfaces: as a bullet in the markdown ledger summary, and
-    in the JSON evidence-obligations object.
+    occurrences in the feature source (in prose, comments and step text) minus the codes
+    written as tags. A code written as a tag counts once, on whatever it tags, however many
+    scenarios inherit it, so the figure is never negative. It appears on both surfaces: as a
+    bullet in the markdown ledger summary, and in the JSON evidence-obligations object.
 
     @unit @SCN-RPT-008
     Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces

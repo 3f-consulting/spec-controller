@@ -22,6 +22,7 @@ export interface EvidenceObligations {
 
 export interface ParsedFeatureCounts {
   readonly rawScnOccurrences: number;
+  readonly tagScnOccurrences: number;
   readonly taggedScenarios: readonly { readonly scnId: string; readonly name: string }[];
   readonly untaggedScenarios: readonly string[];
 }
@@ -48,22 +49,24 @@ export function sharedScnCodesOf(
 export function corpusCountsOf(files: readonly ParsedFeature[]): EvidenceObligations {
   const raw = files.reduce((n, f) => n + f.rawScnOccurrences, 0);
   const scenarioCount = files.reduce((n, f) => n + f.taggedScenarios.length, 0);
+  const tagOccurrences = files.reduce((n, f) => n + f.tagScnOccurrences, 0);
   const untagged = files
     .flatMap(({ feature, untaggedScenarios }) => untaggedScenarios.map((scenario) => ({ feature, scenario })))
     .sort((a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario));
-  return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files));
+  return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files), tagOccurrences);
 }
 
 export function evidenceObligations(
   raw: number,
   scenarioCount: number,
   untaggedScenarios: UntaggedScenario[] = [],
-  sharedScnCodes: SharedScnCode[] = []
+  sharedScnCodes: SharedScnCode[] = [],
+  tagOccurrences: number = scenarioCount
 ): EvidenceObligations {
   return {
     rawScnOccurrences: raw,
     scenarioCount,
-    excludedOccurrences: raw - scenarioCount,
+    excludedOccurrences: raw - tagOccurrences,
     untaggedScenarios,
     sharedScnCodes,
   };

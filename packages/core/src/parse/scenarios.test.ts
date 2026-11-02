@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { countScnOccurrences } from "./scenarios.js";
+import { corpusCountsOfFeatures, countScnOccurrences } from "./scenarios.js";
 import { parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
+import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
   let source: string;
@@ -22,6 +23,42 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
 
   it("returns 0 for a source with no @SCN occurrences", () => {
     expect(countScnOccurrences("Feature: nothing\n  Scenario: blank")).toBe(0);
+  });
+});
+
+describe("[SCN-RPT-008] the excluded figure counts only the @SCN codes not written as tags", () => {
+  it.each([
+    {
+      shape: "a scenario carrying several codes, none in prose",
+      source:
+        "Feature: two\n\n  @unit @SCN-TWO-001\n  Scenario: one code\n    Given a step\n\n  @unit @SCN-TWO-002 @SCN-TWO-003\n  Scenario: two codes\n    Given a step\n",
+      excluded: 0,
+    },
+    {
+      shape: "a code on a Rule over three scenarios carrying none",
+      source:
+        "Feature: rule\n\n  @SCN-RUL-001\n  Rule: tagged\n\n    Scenario: a\n      Given a step\n\n    Scenario: b\n      Given a step\n\n    Scenario: c\n      Given a step\n",
+      excluded: 0,
+    },
+    {
+      shape: "a code on a Feature over two scenarios carrying none",
+      source: "@FEA @SCN-FEA-001\nFeature: feature\n\n  Scenario: a\n    Given a step\n\n  Scenario: b\n    Given a step\n",
+      excluded: 0,
+    },
+    {
+      shape: "a code on an Examples block under a tagged Scenario Outline",
+      source:
+        "Feature: examples\n\n  @unit @SCN-EXA-001\n  Scenario Outline: outline\n    Given a <thing>\n\n    @SCN-EXA-002\n    Examples:\n      | thing |\n      | one   |\n",
+      excluded: 0,
+    },
+    {
+      shape: "one code in a step and one in a comment",
+      source:
+        "Feature: prose\n\n  @unit @SCN-PRO-001\n  Scenario: mentions\n    # see @SCN-PRO-008\n    Given the rule @SCN-PRO-009 is cited\n",
+      excluded: 2,
+    },
+  ])("$shape", ({ source, excluded }) => {
+    expect(corpusCountsOfFeatures(parsedFeatures([source])).excludedOccurrences).toBe(excluded);
   });
 });
 
