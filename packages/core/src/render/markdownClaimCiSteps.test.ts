@@ -26,6 +26,8 @@ const scenarios: Scenario[] = [
   { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
   { scnId: "SCN-BRK-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
   { scnId: "SCN-FBK-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { scnId: "SCN-SEP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }, { qualityCheckKind: "unit" }] },
+  { scnId: "SCN-SPB-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const observations: EvidenceObservation[] = [
@@ -94,6 +96,25 @@ const observations: EvidenceObservation[] = [
     exists: false,
     enforcedOverRealSource: false,
     broken: true,
+  },
+  {
+    qualityCheckKind: "fitness",
+    fitnessFunction: "pnpm pack",
+    scnId: "SCN-SEP-001",
+    step: "ci.yml:ci:Pack both packages, once",
+    exists: true,
+    enforcedOverRealSource: true,
+    status: "passed",
+  },
+  { qualityCheckKind: "unit", scnId: "SCN-SEP-001", status: "passed" },
+  {
+    qualityCheckKind: "fitness",
+    fitnessFunction: "pnpm e2e",
+    scnId: "SCN-SPB-001",
+    step: "ci.yml:ci:E2e, headless \\ cloud | ci",
+    exists: true,
+    enforcedOverRealSource: true,
+    status: "passed",
   },
   { qualityCheckKind: "e2e", scnId: "SCN-GHO-001", status: "passed" },
   { qualityCheckKind: "integration", scnId: null, status: "passed" },
@@ -170,6 +191,14 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
 
   it("names each fitness observation's step in evidence order, each once", () => {
     expect(ciStepsOf("SCN-TWO-001")).toBe("ci.yml:ci:Types, nightly.yml:nightly:Types");
+  });
+
+  it("quotes a step name holding a row separator in its code span, once, beside a step that holds none", () => {
+    expect(ciStepsOf("SCN-SEP-001")).toBe("`ci.yml:ci:Pack both packages, once`, Test");
+  });
+
+  it("keeps the pipe escaped and a backslash as written inside the code span of a step name holding a row separator", () => {
+    expect(ciStepsOf("SCN-SPB-001")).toBe("`ci.yml:ci:E2e, headless \\ cloud \\| ci`");
   });
 
   it("names each sharer of a shared code's steps from its own obligations", () => {

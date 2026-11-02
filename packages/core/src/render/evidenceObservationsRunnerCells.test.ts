@@ -251,6 +251,20 @@ jobs:
         run: pnpm e2e
 `;
 
+const separatorStepCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: Pack both packages, once
+        run: pnpm test
+      - name: Cucumber
+        run: pnpm cucumber
+      - name: 'E2e, headless \\ cloud | ci'
+        run: pnpm e2e
+`;
+
 describe("[SCN-RPT-079] every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included", () => {
   const declared = { unit: "vitest", integration: "cucumber-js", e2e: "playwright", performance: "k6 | cloud" };
 
@@ -260,6 +274,16 @@ describe("[SCN-RPT-079] every cell of the evidence observations table holds its 
     const e2e = rawRowsOf(reconciliation).find((row) => row.startsWith("| e2e "));
     expect(e2e).toContain("E2e \\| headless");
     expect(unescapedCells(e2e ?? "")).toStrictEqual(["e2e", "0", "playwright", e2eCell]);
+  });
+
+  it("quotes a step name holding a row separator in its code span, beside a step that holds none", () => {
+    const unit = rawRowsOf(assembledWith(separatorStepCi, declared)).find((row) => row.startsWith("| unit "));
+    expect(unit).toBe("| unit | 2 | vitest | workflow-0.yml:quality:Unit tests, `workflow-0.yml:quality:Pack both packages, once` |");
+  });
+
+  it("keeps the pipe escaped and a backslash as written inside the code span of a step name holding a row separator", () => {
+    const e2e = rawRowsOf(assembledWith(separatorStepCi, declared)).find((row) => row.startsWith("| e2e "));
+    expect(e2e).toBe("| e2e | 0 | playwright | `workflow-0.yml:quality:E2e, headless \\ cloud \\| ci` |");
   });
 
   it("keeps a declared runner holding a pipe in its runner cell, the row keeping four cells", () => {

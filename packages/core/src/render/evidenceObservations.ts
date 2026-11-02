@@ -1,13 +1,14 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import { cellSafe } from "./cellSafe.js";
+import { cellSafe, cellSafeKeepingCodeSpans } from "./cellSafe.js";
+import { reportedName } from "./reportedName.js";
 
 const runnerCells = ({ qualityCheckKind, count, runner, ciSteps }: QualityCheckKindObservations): [string, string] => {
   if (typeof runner === "string") {
     return [
       cellSafe(runner),
-      ciSteps ? cellSafe(ciSteps.join(", ")) : CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt],
+      ciSteps ? cellSafeKeepingCodeSpans(ciSteps.map(reportedName).join(", ")) : CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt],
     ];
   }
   if (qualityCheckKind === "fitness") {

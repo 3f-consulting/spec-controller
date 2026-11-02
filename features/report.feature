@@ -205,7 +205,8 @@ Feature: The report renders the ledger as sectioned facts
     value of the wrong kind, or has no runners block. Its CI step cell is blank.
 
     Each cell holds its text whole, so a runner or a step name holding a pipe stays in its
-    cell.
+    cell. A step name holding one of the row's separators sits in its code span, so the cell
+    reads it as one step.
 
     There is no Behavioural runners section.
 
@@ -258,7 +259,8 @@ Feature: The report renders the ledger as sectioned facts
     A kind of quality check with no known step adds none: a layer no CI step is found
     running, a fitness obligation with no evidence observation, and a fitness observation that
     names no step. A row with no known step, and a scenario with no @SCN, has a blank CI steps
-    cell.
+    cell. A step name holding one of the row's separators sits in its code span, so the cell
+    reads it as one step.
 
     @unit @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding, and a shared code's row is lettered from its obligations alone, its citing evidence on the unnamed claim

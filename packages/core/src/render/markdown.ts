@@ -7,7 +7,7 @@ import type {
 } from "../model.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
-import { cellSafe, cellSafeKeepingCodeSpans } from "./cellSafe.js";
+import { cellSafeKeepingCodeSpans } from "./cellSafe.js";
 import { reportedName } from "./reportedName.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
@@ -332,7 +332,7 @@ function ledgerTableLines(
   for (const s of claims) {
     const cells = columns.map((col) => evidenceCell(s, col));
     const items = renderRowExceptions(s);
-    const steps = withSteps ? [cellSafe(ciStepsOf(s, stepsByQualityCheckKind).join(", "))] : [];
+    const steps = withSteps ? [cellSafeKeepingCodeSpans(ciStepsOf(s, stepsByQualityCheckKind).map(reportedName).join(", "))] : [];
     lines.push(
       `| ${[s.claim, ...cells, s.verdict, items, ...steps].join(" | ")} |`
     );
