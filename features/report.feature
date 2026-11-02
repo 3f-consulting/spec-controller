@@ -73,13 +73,14 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-004
     Scenario: the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns
 
-  Rule: the evidence reconciliation section says what it counts before its table
+  Rule: the evidence reconciliation section defines its terms before its table
 
-    Under "### Evidence reconciliation", four definitions come before the table, one each for a
-    Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence
-    Observation. Every run prints the same four, and none states a figure from the run. Each
-    states what its term is; how many of each a row holds is the rule of the scenarios that
-    count them, so no definition lists the cases a count covers.
+    Four definitions come before the Evidence reconciliation table, one each for a Claim
+    Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation.
+    Every run prints the same four, and none states a figure from the run. Each states what its
+    term is, and what each term it uses means unless the report says so elsewhere. A sentence
+    about which rows or lines a term covers holds for every kind of row the report can show, or
+    the definition leaves it out.
 
     The second definition also says why the two totals differ: no Reconciliation line stands in
     for another, so a scenario whose one obligation two passing tests answer adds one to the
@@ -113,8 +114,8 @@ Feature: The report renders the ledger as sectioned facts
 
     A scenario with no @SCN code counts on the row of the feature file it sits in: under the
     file's header code when the file has one, and under the file's name when it has none. Its
-    cell states how many such scenarios the row holds rather than naming them; the
-    untagged-scenario list names each one. A re-render from saved JSON groups them the same
+    cell states how many such scenarios the row holds rather than naming them; the list of
+    scenarios with no @SCN code names each one. A re-render from saved JSON groups them the same
     way.
 
     @unit @SCN-RPT-006
@@ -282,7 +283,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-069
     Scenario: the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column
 
-  Rule: the ledger summary counts the untagged scenarios, and each is listed once, on its own ledger row
+  Rule: the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row
 
     The ledger summary states how many scenarios carry no @SCN code. Each is named once, by its
     `feature-file : scenario` locator, on its own ledger row.
@@ -290,11 +291,11 @@ Feature: The report renders the ledger as sectioned facts
     Every scenario header counts, including outlines, templates and examples; an Examples data
     table does not.
 
-    The JSON evidence-obligations object carries the untagged scenarios beside the excluded
-    occurrences.
+    The JSON evidence-obligations object carries the scenarios with no @SCN code beside the
+    excluded occurrences.
 
     @unit @SCN-RPT-014
-    Scenario: the ledger summary counts the untagged scenarios, and each is named once, on its own ledger row
+    Scenario: the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
@@ -666,6 +667,7 @@ Feature: The report renders the ledger as sectioned facts
 
     After the section's tally lines and before its table, a key reads each evidence cell as
     obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean.
+    Each line of the key holds for every kind of row the table can show.
 
     A table with no evidence column carries no key.
 

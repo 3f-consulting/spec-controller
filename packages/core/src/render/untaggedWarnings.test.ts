@@ -62,8 +62,8 @@ const untaggedLocators = [
   "zeta.feature : untagged scenario b",
 ];
 
-describe("[SCN-RPT-014] the ledger summary counts the untagged scenarios, and each is named once, on its own ledger row", () => {
-  it("states the untagged count in the ledger summary, naming none of them there", () => {
+describe("[SCN-RPT-014] the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row", () => {
+  it("states the count of scenarios with no @SCN code in the ledger summary, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
       "- 3 scenario(s) carry no @SCN code",

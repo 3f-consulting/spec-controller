@@ -5,6 +5,9 @@ import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { stepAccountingSection } from "./renderedSection.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
+import { qualifiedStepName } from "../parse/stepNames.js";
+import { runningFitnessObservations } from "../domain/ledger.js";
 import {
   stepAccountingCi as ci,
   nightly,
@@ -12,12 +15,37 @@ import {
 } from "../evidenceReconciliation.test-utils.js";
 
 const DEFINITIONS = [
-  "- A Candidate is a step read that is not a Runner, Reconciler, Excluded or GitHub plumbing step. It is read as a fitness function: its result is an Evidence Observation named, with its step, on the row of Claim Reconciliations it posts to, so no list below names it.",
+  "- A Candidate is a step read that is not a Runner, Reconciler, Excluded or GitHub plumbing step. It is read as a fitness function, and no list below names it.",
   "- A Reconciler step runs this reconciliation or writes the step record it reads.",
-  "- An Excluded step is one the target names a non-check under `specController.notChecks`, a GitHub plumbing step included.",
-  "- A GitHub plumbing step only sets up the job: it uses one of GitHub's own actions that check out the source, cache, set up a toolchain or move artefacts between jobs. A step that runs a command, an install included, is never plumbing.",
+  "- An Excluded step is one the target names a non-check under `specController.notChecks` and that is not a Reconciler step, a GitHub plumbing step included.",
+  "- A GitHub plumbing step is one that is neither a Reconciler nor an Excluded step and uses one of GitHub's own actions `actions/checkout`, `actions/cache`, `actions/upload-artifact`, `actions/download-artifact` or `actions/setup-*`. A step that runs a command, an install included, is never plumbing.",
   "- Accounted for is the sum of the five columns from Candidates to GitHub plumbing, in which each step read is counted once.",
 ];
+
+const everyKindOfStepCi = `name: fixture CI
+jobs:
+  ci:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Publish pages
+        uses: actions/upload-pages-artifact@v3
+      - name: Unit tests
+        run: pnpm test
+      - name: Reconciliation
+        run: pnpm exec spec-controller balance --features features --ci .github/workflows
+      - name: Sweep check
+        run: pnpm lint:sweep
+`;
+
+const everyKindOfStepManifest = {
+  scripts: { test: "vitest run", "lint:sweep": "madge --circular" },
+  specController: { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Setup Node", "ci.yml:ci:Reconciliation"] },
+};
+
+const PLUMBING_ACTION = /^actions\/(checkout|cache|upload-artifact|download-artifact|setup-[^/@]+)[/@]/;
 
 const runnerAndTypesCi = `name: fixture CI
 jobs:
@@ -89,5 +117,31 @@ describe("[SCN-RPT-092] the step-accounting section defines its Candidates, Reco
     expect(section).toContain("- `deploy.yml:release:Ship`");
     expect(section).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
     for (const definition of DEFINITIONS) expect(section).not.toContain(definition);
+  });
+  it("holds each definition's claim about which steps it covers over a run holding a Reconciler and a plumbing step the target names a non-check, and a GitHub action outside the plumbing list", () => {
+    const reconciliation = reconcile([everyKindOfStepCi], ["ci.yml"], everyKindOfStepManifest);
+    const steps = workflowSteps([everyKindOfStepCi], ["ci.yml"]);
+    const account = reconciliation.summary.stepAccounting!;
+    const notChecks = everyKindOfStepManifest.specController.notChecks;
+    const reconcilers = (account.steps.reconciler ?? []).map(({ step }) => step);
+    const actionOf = (name: string) => {
+      const step = steps.find((s) => qualifiedStepName(s) === name);
+      return step !== undefined && "action" in step ? step.action.name : "";
+    };
+
+    expect(account.steps.nonChecks).toStrictEqual(["ci.yml:ci:Setup Node"]);
+    for (const step of account.steps.nonChecks ?? []) expect([notChecks.includes(step), reconcilers.includes(step)]).toStrictEqual([true, false]);
+    expect(reconcilers).toContain("ci.yml:ci:Reconciliation");
+    expect(account.steps.plumbing).toStrictEqual(["ci.yml:ci:Checkout"]);
+    for (const step of account.steps.plumbing ?? []) expect(actionOf(step)).toMatch(PLUMBING_ACTION);
+
+    const listed = new Set([...(account.steps.runners ?? []), ...reconcilers, ...(account.steps.nonChecks ?? []), ...(account.steps.plumbing ?? [])]);
+    const candidates = steps.map(qualifiedStepName).filter((name) => !listed.has(name));
+    expect(candidates).toStrictEqual(["ci.yml:ci:Publish pages", "ci.yml:ci:Sweep check"]);
+    expect(actionOf("ci.yml:ci:Publish pages")).not.toMatch(PLUMBING_ACTION);
+    expect(account.total.candidates).toBe(candidates.length);
+    const readAsFitness = runningFitnessObservations(reconciliation.ledger).map((o) => o.step);
+    for (const step of candidates) expect(readAsFitness).toContain(step);
+    expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS, ""]);
   });
 });

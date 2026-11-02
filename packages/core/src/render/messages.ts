@@ -396,9 +396,9 @@ export const CORE_MESSAGES: CoreMessages = {
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
-    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, reconciled kind by kind of quality check in its Quality Check Reconciliations. " +
+    "A Claim Reconciliation is one row of the ledger: one claim, reconciled in its Quality Check Reconciliations. " +
     "A claim is a scenario, a phantom claim (a code that evidence cites and no scenario carries, which the table below calls an unknown Scenario) " +
-    "or the unnamed claim (the one row for evidence that names no one scenario).",
+    "or the unnamed claim (the one row for the evidence that no scenario or phantom claim takes).",
   [CoreMessage.EvidenceReconciliationReconciliationLineTerm]:
     "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome: each Evidence Observation it holds is one line, " +
     "its Evidence Obligation is one more when no Evidence Observation that ran answers it, and one holding neither is a single line. " +
@@ -406,12 +406,12 @@ export const CORE_MESSAGES: CoreMessages = {
     "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
   [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
     "An Evidence Obligation is a proof a scenario asks for, by the tags it carries, to be met by Evidence Observations. " +
-    "A Pending Item is a proof a scenario defers, by a pending tag such as `@unitpending` or a deferral tag such as `@wip`: " +
-    "it raises no Evidence Obligation, is tallied apart, and never puts its claim out of balance.",
+    "A Pending Item is a proof a scenario defers, by a pending tag such as `@unitpending` or a deferral tag such as `@wip`, " +
+    "tallied apart from balanced and out-of-balance.",
   [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
-    "An Evidence Observation is one reported result of a test or a fitness function, attributed by the code it cites: " +
-    "to the one scenario that carries the code, to a phantom claim when no scenario carries it, and to the unnamed claim " +
-    "when it cites no code or a code more than one scenario carries, because no one scenario can take it. " +
+    "An Evidence Observation is one reported result of a test or a fitness function, attributed by the codes it cites: " +
+    "to the one scenario that carries its one code, to a phantom claim when no scenario carries its one code, " +
+    "and otherwise to the unnamed claim, because no one scenario can take it. " +
     "One that never reached its assertions is broken: it was reported, but did not run to a result.",
   [CoreMessage.SubjectColumn]: "Subject",
   [CoreMessage.TotalColumn]: "Total",
@@ -457,15 +457,16 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
   [CoreMessage.StepAccountingCandidatesTerm]:
     "A Candidate is a step read that is not a Runner, Reconciler, Excluded or GitHub plumbing step. " +
-    "It is read as a fitness function: its result is an Evidence Observation named, with its step, " +
-    "on the row of Claim Reconciliations it posts to, so no list below names it.",
+    "It is read as a fitness function, and no list below names it.",
   [CoreMessage.StepAccountingReconcilerTerm]:
     "A Reconciler step runs this reconciliation or writes the step record it reads.",
   [CoreMessage.StepAccountingExcludedTerm]:
-    "An Excluded step is one the target names a non-check under `specController.notChecks`, a GitHub plumbing step included.",
+    "An Excluded step is one the target names a non-check under `specController.notChecks` and that is not a Reconciler step, " +
+    "a GitHub plumbing step included.",
   [CoreMessage.StepAccountingPlumbingTerm]:
-    "A GitHub plumbing step only sets up the job: it uses one of GitHub's own actions that check out the source, " +
-    "cache, set up a toolchain or move artefacts between jobs. A step that runs a command, an install included, is never plumbing.",
+    "A GitHub plumbing step is one that is neither a Reconciler nor an Excluded step and uses one of GitHub's own actions " +
+    "`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `actions/download-artifact` or `actions/setup-*`. " +
+    "A step that runs a command, an install included, is never plumbing.",
   [CoreMessage.StepAccountingAccountedForTerm]:
     "Accounted for is the sum of the five columns from Candidates to GitHub plumbing, in which each step read is counted once.",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
@@ -498,14 +499,14 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.CiStepsColumn]: "CI steps",
   [CoreMessage.EvidenceCellKey]: [
     "Key: each evidence cell reads *obligation*/*observations*.",
-    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. The table has a column only for a kind some row obligates or observes. `-` means none is raised, or the obligation is pending.",
-    "- The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.",
+    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.",
+    "- The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.",
     "- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence, or whose unit evidence is pending.",
-    "- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.",
+    "- A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.",
     "- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.",
-    "- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means the scenario carries no tag that raises an Evidence Obligation, though it may carry an @SCN code.",
-    "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests; a broken item stands alone and is counted in none.",
-    "- CI steps names the CI steps behind each kind of quality check the row obligates or observes, whether or not any Evidence Observation of that kind ran for the row: `U/-` beside a step names the step that runs unit tests, none of which answered this row.",
+    "- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries an @SCN code and no tag that raises an Evidence Obligation.",
+    "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone and is counted in none.",
+    "- CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.",
   ].join("\n"),
   [CoreMessage.PendingItem]: "pending",
   [CoreMessage.PendingItemFor]: (qualityCheckKind) => `pending: ${qualityCheckKind}`,
