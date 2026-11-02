@@ -260,6 +260,7 @@ const DUPLICATE_SCN_CODE = "Evidence Obligation's @SCN code is carried by anothe
 const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
 const CITING_NO_SCENARIO = "evidence observations citing no scenario";
 
+const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
 const foreignOpening = (file: string, featureCode: string, scnId: string, named: string): string =>
@@ -428,8 +429,10 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.FitnessRunner]: "each fitness function's check step",
   [CoreMessage.FitnessCiStep]: (steps) =>
     `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
-  [CoreMessage.RunnerLayerNamesNone]: "no runner: the target names none.",
-  [CoreMessage.RunnerLayerUnnamed]: "unnamed: the target has not said.",
+  [CoreMessage.RunnerLayerNamesNone]:
+    `no runner: the target declares this layer has none, by setting it to \`null\` under ${RUNNERS_PLACE}.`,
+  [CoreMessage.RunnerLayerUnnamed]:
+    `unnamed: the target leaves this layer's runner undeclared: ${RUNNERS_PLACE} is missing or not a block, leaves the layer out, or gives it a value that is neither a string nor \`null\`. A string there names the layer's runner.`,
   [CoreMessage.NoStepCountedAsItsRunnerRunsIt]: "no step counted as its runner runs it.",
   [CoreMessage.RunnerKeyNotALayer]: (key) =>
     `${key} — not a layer: the runner block is keyed by the four layers, and this key excludes nothing.`,

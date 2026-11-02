@@ -197,10 +197,10 @@ Feature: The report renders the ledger as sectioned facts
     function's row of Claim Reconciliations. The fitness row has blank runner and CI step cells
     when no fitness function ran.
 
-    A layer whose runner the target does not declare says so in its
-    runner cell, whatever its count: no runner where the target names none, unnamed where the
-    target has not said. The target has not said when it leaves the layer out, gives the layer a
-    value of the wrong kind, or has no runners block. Its CI step cell is blank.
+    A layer the target gives no runner's name reads `no runner` in its runner cell where the
+    target declares the layer has none, and `unnamed` where the target leaves the layer out, gives
+    it a value of the wrong kind, or has no runners block or one of the wrong kind. Its CI step
+    cell is blank.
 
     Each cell holds its text whole, so a runner or a step name holding a pipe stays in its
     cell. A step name holding one of the row's separators sits in its code span, so the cell
@@ -212,7 +212,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
     @unit @SCN-RPT-051
-    Scenario: a layer whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
+    Scenario: a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count
 
     @unit @SCN-RPT-079
     Scenario: every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included

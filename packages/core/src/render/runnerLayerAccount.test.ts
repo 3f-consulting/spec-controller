@@ -33,16 +33,27 @@ const behaviouralObservations: EvidenceObservation[] = [
   { qualityCheckKind: "performance", scnId: "SCN-FIX-003", status: "passed" },
 ];
 
-function rowsOf(specController: { runners?: unknown }): Map<string, string[]> {
+const NO_RUNNER =
+  "no runner: the target declares this layer has none, by setting it to `null` under `specController.runners` in its `package.json`.";
+const UNNAMED =
+  "unnamed: the target leaves this layer's runner undeclared: `specController.runners` in its `package.json` is missing or not a block, leaves the layer out, or gives it a value that is neither a string nor `null`. A string there names the layer's runner.";
+
+function rowsOf(specController?: { runners?: unknown }): Map<string, string[]> {
   const reconciliation = evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    packageJson: { scripts: { test: "vitest run", cucumber: "cucumber-js" }, specController },
+    packageJson: {
+      scripts: { test: "vitest run", cucumber: "cucumber-js" },
+      ...(specController === undefined ? {} : { specController }),
+    },
     ciWorkflows: parsedWorkflows([ci]),
     behaviouralObservations,
     deferralTags: [],
   });
   const lines = sectionUnder("### Evidence observations")(linesOf(reconciliation));
-  const rows = lines.filter((line) => line.startsWith("|")).map(cells).slice(2);
+  const rows = lines
+    .filter((line) => line.startsWith("|"))
+    .map(cells)
+    .slice(2);
   return new Map(rows.map((row) => [row[0] ?? "", row]));
 }
 
@@ -50,15 +61,19 @@ function rowsByCheck(runners: unknown): Map<string, string[]> {
   return rowsOf({ runners });
 }
 
-describe("[SCN-RPT-051] a layer whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included", () => {
-  it("says in the runner cell of a layer the target names null that the target names none, with a blank CI step cell", () => {
+describe("[SCN-RPT-051] a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count", () => {
+  it("says in the runner cell of a layer the target sets to null that the target declares it has none, and where, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
-    expect(rows.get("performance")).toStrictEqual(["performance", "1", "no runner: the target names none.", ""]);
+    expect(rows.get("performance")).toStrictEqual(["performance", "1", NO_RUNNER, ""]);
   });
 
-  it("says in the runner cell of a layer the target omits that the target has not said, with a blank CI step cell", () => {
-    const rows = rowsByCheck({ unit: "vitest", performance: null });
-    expect(rows.get("e2e")).toStrictEqual(["e2e", "1", "unnamed: the target has not said.", ""]);
+  it("says at count 0 that the target declares a layer it sets to null has none", () => {
+    expect(rowsByCheck({ unit: "vitest", integration: null }).get("integration")).toStrictEqual([
+      "integration",
+      "0",
+      NO_RUNNER,
+      "",
+    ]);
   });
 
   it("names the declared runner, not a note, on a layer the target names", () => {
@@ -66,35 +81,20 @@ describe("[SCN-RPT-051] a layer whose runner the target does not declare says in
     expect(rows.get("unit")?.slice(0, 3)).toStrictEqual(["unit", "1", "vitest"]);
   });
 
-  it("says at count 0 that the target has not said on a layer it leaves out, and that it names none on one it names null", () => {
-    expect(rowsByCheck({ unit: "vitest", performance: null }).get("integration")).toStrictEqual([
-      "integration",
-      "0",
-      "unnamed: the target has not said.",
-      "",
-    ]);
-    expect(rowsByCheck({ unit: "vitest", integration: null }).get("integration")).toStrictEqual([
-      "integration",
-      "0",
-      "no runner: the target names none.",
-      "",
-    ]);
-  });
-
-  it("says the target has not said, with a blank CI step cell, when the target has no runners block", () => {
-    expect(rowsOf({}).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
-  });
-
-  it("says the target has not said, with a blank CI step cell, when its runners block holds only a key that is not a layer", () => {
-    expect(rowsByCheck({ lint: "eslint" }).get("unit")).toStrictEqual([
-      "unit",
-      "1",
-      "unnamed: the target has not said.",
-      "",
-    ]);
-  });
-
-  it("says the target has not said, with a blank CI step cell, when it gives a layer a value of the wrong kind", () => {
-    expect(rowsByCheck({ unit: 5 }).get("unit")).toStrictEqual(["unit", "1", "unnamed: the target has not said.", ""]);
-  });
+  const leftOut = { runners: { unit: "vitest", performance: null } };
+  it.each<[string, { runners?: unknown } | undefined, string, string]>([
+    ["leaves out a layer with evidence", leftOut, "e2e", "1"],
+    ["leaves out a layer at count 0", leftOut, "integration", "0"],
+    ["has no specController block, as with no package.json", undefined, "unit", "1"],
+    ["has no runners block", {}, "unit", "1"],
+    ["has a runners block holding only a key that is not a layer", { runners: { lint: "eslint" } }, "unit", "1"],
+    ["gives a layer a value of the wrong kind", { runners: { unit: 5 } }, "unit", "1"],
+    ["has a runners block that is a string", { runners: "vitest" }, "unit", "1"],
+    ["has a runners block that is a list", { runners: ["vitest"] }, "unit", "1"],
+  ])(
+    "says the layer's runner is undeclared, where a string names it, with a blank CI step cell, when the target %s",
+    (_target, specController, layer, count) => {
+      expect(rowsOf(specController).get(layer)).toStrictEqual([layer, count, UNNAMED, ""]);
+    }
+  );
 });
