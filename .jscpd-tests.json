@@ -1,8 +1,7 @@
 {
-  "path": ["packages", "tests/steps"],
+  "path": ["."],
   "format": ["typescript"],
-  "pattern": "**/*.{test.ts,test-utils.ts,steps.ts}",
-  "ignore": ["**/node_modules/**", "**/dist/**", "**/fixtures/**"],
+  "pattern": "{packages/**/*.{test,test-utils}.ts,tests/steps/**/*.ts}",
   "minTokens": 50,
   "minLines": 5,
   "reporters": ["console"]
