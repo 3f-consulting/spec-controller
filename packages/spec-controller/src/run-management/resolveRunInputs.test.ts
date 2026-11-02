@@ -446,21 +446,26 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["/srv/git/veggies.git", "/srv/git/veggies.git", []],
     ["file:///srv/git/veggies.git", "file:///srv/git/veggies.git", []],
     ["https://github.com/veggies.git", "https://github.com/veggies.git", []],
+    ["http://deploy:s3cret@git.example.com/ekino/veggies", "http://git.example.com/ekino/veggies", ["deploy", "s3cret"]],
     ["https://x-token:s3cret@github.com/veggies.git", "https://github.com/veggies.git", ["x-token", "s3cret"]],
     ["https://gitlab.com/ekino/greens/veggies.git", "greens/veggies", []],
     ["git+ssh://git@github.com/ekino/veggies.git", "git+ssh://github.com/ekino/veggies.git", ["git@"]],
     ["http://deploy@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies", ["deploy"]],
     ["https://x-token:s3cret@github.com/ekino/veggies.git", "ekino/veggies", ["x-token", "s3cret"]],
+    ["https://deploy@github.com/ekino/veggies.git", "ekino/veggies", ["deploy"]],
     ["https://deploy:p@ss@github.com/ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
     ["https://host/ekino/veggies.git?private_token=abc", "ekino/veggies", ["private_token", "abc"]],
     ["https://github.com/ekino/veggies.git#s3cret", "ekino/veggies", ["s3cret"]],
     ["https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", "ekino/veggies", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
+    ["ssh://deploy:s3cret@host/ekino/veggies.git", "ekino/veggies", ["deploy", "s3cret"]],
     ["ssh://deploy:p@ss@host/ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
     ["ssh://host/ekino/veggies.git?private_token=abc", "ekino/veggies", ["private_token", "abc"]],
     ["ssh://host/ekino/veggies.git#s3cret", "ekino/veggies", ["s3cret"]],
+    ["deploy:s3cret@host:ekino/veggies.git", "ekino/veggies", ["deploy", "s3cret"]],
     ["deploy:p@ss@host:ekino/veggies.git", "ekino/veggies", ["deploy", "p@ss", "ss@"]],
     ["deploy@host:ekino/veggies.git?private_token=abc", "ekino/veggies", ["deploy", "private_token", "abc"]],
     ["deploy@host:ekino/veggies.git#s3cret", "ekino/veggies", ["deploy", "s3cret"]],
+    ["deploy@host:veggies.git", "host:veggies.git", ["deploy"]],
     ["deploy:s3cret@host:veggies.git", "host:veggies.git", ["deploy", "s3cret"]],
     ["https://deploy@github.com/veggies.git", "https://github.com/veggies.git", ["deploy"]],
     ["https://deploy:p@ss@github.com/veggies.git", "https://github.com/veggies.git", ["deploy", "p@ss", "ss@"]],
@@ -480,18 +485,19 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     expect(named).toBe(shown);
   });
 
+  const everyDelimiter = ["@", ":", "/", "?", "#", "%40", " ", "&", "="];
   describe.each([
-    ["https://usrK7:{password}@github.com/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"], ["@"]],
-    ["https://usrK7:{password}@github.com/veggies.git", "https://github.com/veggies.git", ["/", "?", "#"], ["@", ":", "/"]],
-    ["http://usrK7:{password}@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies", ["/", "?", "#"], ["@", ":"]],
-    ["ssh://usrK7:{password}@host/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"], ["@"]],
-    ["git+ssh://usrK7:{password}@host/ekino/veggies.git", "git+ssh://host/ekino/veggies.git", ["/", "?", "#"], ["@", ":"]],
-    ["persistent-https::https://usrK7:{password}@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["/", "?", "#"], ["@", ":"]],
-    ["usrK7:{password}@host:ekino/veggies.git", "ekino/veggies", [], ["@"]],
-    ["usrK7:{password}@host:veggies.git", "host:veggies.git", [], ["@", ":"]],
-    ["https://usrK7:{password}@github.com/ekino/veggies.git?private_token=Tk3#Fr4", "ekino/veggies", ["/", "?", "#"], ["@"]],
-  ])("a remote of the form %s, named %s unless its password holds one of %j", (form, shown, unread, delimiters) => {
-    test.for(delimiters)("with %j in its password, names what it reads and puts no part of its user, password or token in the name", (delimiter, { sharedDirectory }) => {
+    ["https://usrK7:{password}@github.com/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"]],
+    ["https://usrK7:{password}@github.com/veggies.git", "https://github.com/veggies.git", ["/", "?", "#"]],
+    ["http://usrK7:{password}@git.example.com:8080/ekino/veggies", "http://git.example.com:8080/ekino/veggies", ["/", "?", "#"]],
+    ["ssh://usrK7:{password}@host/ekino/veggies.git", "ekino/veggies", ["/", "?", "#"]],
+    ["git+ssh://usrK7:{password}@host/ekino/veggies.git", "git+ssh://host/ekino/veggies.git", ["/", "?", "#"]],
+    ["persistent-https::https://usrK7:{password}@host/ekino/veggies.git", "persistent-https::https://host/ekino/veggies.git", ["/", "?", "#"]],
+    ["usrK7:{password}@host:ekino/veggies.git", "ekino/veggies", []],
+    ["usrK7:{password}@host:veggies.git", "host:veggies.git", []],
+    ["https://usrK7:{password}@github.com/ekino/veggies.git?private_token=Tk3#Fr4", "ekino/veggies", ["/", "?", "#"]],
+  ])("a remote of the form %s, named %s unless its password holds one of %j", (form, shown, unread) => {
+    test.for(everyDelimiter)("with %j in its password, names what it reads and puts no part of its user, password or token in the name", (delimiter, { sharedDirectory }) => {
       const named = nameOf(sharedDirectory, form.replace("{password}", `Zq1${delimiter}Xw9`));
       for (const secret of ["usrK7", "Zq1", "Xw9", "Tk3", "Fr4"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
       expect(named).toBe(unread.includes(delimiter) ? null : shown);
@@ -499,9 +505,10 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
   });
 
   describe.each([
-    ["usrK7::{password}@host:veggies.git", ["@"]],
-  ])("a remote of the form %s", (form, delimiters) => {
-    test.for(delimiters)("with %j in its password, names no origin and puts no part of its user or password in the name", (delimiter, { sharedDirectory }) => {
+    ["file://usrK7:{password}@host/srv/x"],
+    ["usrK7::{password}@host:veggies.git"],
+  ])("a remote of the form %s", (form) => {
+    test.for(everyDelimiter)("with %j in its password, names no origin and puts no part of its user or password in the name", (delimiter, { sharedDirectory }) => {
       const named = nameOf(sharedDirectory, form.replace("{password}", `Zq1${delimiter}Xw9`));
       for (const secret of ["usrK7", "Zq1", "Xw9"]) expect(named ?? "", `${secret} reached the name`).not.toContain(secret);
       expect(named).toBeNull();
@@ -512,6 +519,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
     ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git"],
     ["https://usrK7:Zq1?Xw9@github.com/veggies.git"],
     ["https://usrK7:Zq1#Xw9@github.com/veggies.git"],
+    ["ssh://usrK7:Zq1/Xw9@host/ekino/veggies.git"],
     ["https://host/ekino/veggies.git?e=a@b.example"],
     ["https://usrK7:Zq1Xw9@/ekino/veggies.git"],
     ["git@host:repo@v2.git"],
