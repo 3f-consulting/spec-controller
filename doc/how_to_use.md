@@ -121,7 +121,7 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tier tag says which kind of run answers the obligation; whether that run really is end-to-end is the test's job.
+A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tag naming a kind of quality check says which kind of run answers the obligation; whether that run really is end-to-end is the test's job.
 
 A whole feature file is its header code on the line above `Feature:`, then its Rules and scenarios, each scenario carrying its own code:
 
@@ -533,7 +533,7 @@ All configuration sits under `specController` in the target's `package.json`, wh
   "runners": {
     "unit": "vitest",             // the command your CI runs for @unit
     "integration": "cucumber-js", // for @integration
-    "e2e": "cucumber-js",         // two tiers, one runner, which is normal
+    "e2e": "cucumber-js",         // two layers, one runner, which is normal
     "performance": null           // we have no performance runner
   },
   "notChecks": [
@@ -547,12 +547,12 @@ All configuration sits under `specController` in the target's `package.json`, wh
 
 Discovery is not Node-shaped: it does not match `package.json` script names against prefixes. A pipeline with a bare `run: ruff` and no `package.json` script is discovered like any other.
 
-**You do not name a list of checks.** You name the commands that run your behavioural suites, a closed set of four, one per tier. **Every other step of the workflows `--ci` names is a candidate fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
+**You do not name a list of checks.** You name the commands that run your behavioural suites, a closed set of four, one per layer. **Every other step of the workflows `--ci` names is a candidate fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
 
 ### Naming your runners — `runners`
 
-- **`runners` is keyed by the four tiers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
-- **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this tier*. The report tells it apart from an omitted key, which it reads as *you have not told us*.
+- **`runners` is keyed by the four layers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
+- **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. The report tells it apart from an omitted key, which it reads as *you have not told us*.
 - **A key outside the four** is reported as unrecognised, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
 - **A runner is recognised only as the command a step runs.** That is the first word of each command in an `&&`, `||` or `;` list (or its opening words, for a runner named in several words, below), after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. This holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
@@ -601,7 +601,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 - **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named under `### Configuration not read`.
 - **A tag in neither list never defers the whole scenario**, however much it looks like a deferral tag.
 
-**A deferral tag is scenario scope. `@<check>pending` is not.** `@integrationpending` defers only the integration obligation on its scenario, so a passing `@unit` beside it still reconciles satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending Item from each.
+**A deferral tag is scenario scope. `@<quality-check-kind>pending` is not.** `@integrationpending` defers only the integration obligation on its scenario, so a passing `@unit` beside it still reconciles satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending Item from each.
 
 `balance --help` prints the key and the built-in set.
 
@@ -609,7 +609,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 - **An entry of a kind its reader does not take** (a `notChecks` written as one string, a runner written as a number) is read as absent.
 - **A key the block does not read at all** (a misspelling, or a key an older version read) is passed over.
-- **A `runners` key that is not one of the four tiers** excludes nothing.
+- **A `runners` key that is not one of the four layers** excludes nothing.
 - **A `notChecks` entry that matches no step of a workflow the run read** excludes nothing.
 
 None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
@@ -745,7 +745,7 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into per-quality-check **Quality Check Reconciliations**, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
+- **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into **Quality Check Reconciliations**, one per kind of quality check, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `scenario-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger.
 
 The JSON's structure is stated by a JSON Schema the package ships, as `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). It names every key the JSON may carry and refuses any other. So validate a report you are handed against the schema of the version that wrote it, which the report's provenance names, and read a change to the JSON's structure as a change to the schema.
@@ -756,7 +756,7 @@ Both carry a **provenance** header recording what was reconciled (target, source
 
 1. It parses your Gherkin scenarios and their `@`-tags into **evidence obligations**: the debit, what is specified.
 2. It parses the evidence reports you passed (Vitest, Cucumber, and the fitness functions in CI and `package.json`) into **evidence observations**: the credit, what actually ran.
-3. It reconciles evidence obligations against evidence observations, per scenario, quality check by quality check.
+3. It reconciles evidence obligations against evidence observations, per scenario, one kind of quality check at a time.
 4. It assembles the **Evidence Reconciliation** and renders it.
 
 ### Report rows to know
@@ -782,7 +782,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
-- Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every quality check it raises reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
+- Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
 - The report names each shared code with the file and the name of every scenario carrying it (`scenarioCodes.sharedScnCodes` in the JSON).

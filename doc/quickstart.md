@@ -73,7 +73,7 @@ Every CI step is listed as a check, except a declared runner and GitHub's own ch
   "runners": {
     "unit": "vitest",             // the command your CI runs for @unit
     "integration": "cucumber-js", // for @integration
-    "e2e": "cucumber-js",         // two tiers, one runner, which is normal
+    "e2e": "cucumber-js",         // two layers, one runner, which is normal
     "performance": null           // we have no performance runner
   },
   "notChecks": [
@@ -83,7 +83,7 @@ Every CI step is listed as a check, except a declared runner and GitHub's own ch
 }
 ```
 
-- **`runners`** declares the command each test tier runs, so that step is read as your test suite and not as a check. `null` means *we have no runner for this tier*.
+- **`runners`** declares the command each layer of tests runs, so that step is read as your test suite and not as a check. `null` means *we have no runner for this layer*.
 - **`notChecks`** lists steps that do work but check nothing, such as publishing. Each entry is `<workflow file>:<job id>:<step name>`, matched exactly.
 
 See [Naming your runners — `runners`](./how_to_use.md#naming-your-runners--runners) and [Excluding steps that are not checks — `notChecks`](./how_to_use.md#excluding-steps-that-are-not-checks--notchecks).

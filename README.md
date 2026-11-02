@@ -63,9 +63,9 @@ Each kind of disagreement has its own outcome, and every outcome except `satisfi
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
 | Let a CI check step run under `continue-on-error` | without the run's step record: `watermelon`, green but unable to fail the build. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
-| Copy a scenario and keep its `@SCN` code | both copies share one row, and every quality check on it reads `duplicate-scn-code`: no evidence can be credited to either |
+| Copy a scenario and keep its `@SCN` code | both copies share one row, and every kind of quality check it names reads `duplicate-scn-code`: no evidence can be credited to either |
 | Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
-| Remove a scenario's quality-check tags while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
+| Remove the tags naming a scenario's kinds of quality check while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
 | Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
 
 To remove a behaviour cleanly, you change both places: the scenario and its evidence. That change shows in the diff, and review judges it.
@@ -96,7 +96,7 @@ Each link between them needs something to hold it:
 | spec ↔ checks | **Nothing but care.** The spec says one thing, the checks prove another, and nothing notices when they drift |
 | spec ↔ application | only through the other two |
 
-`balance` makes the checks ↔ application link hold for every kind of check, not only unit tests. It never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
+`balance` makes the checks ↔ application link hold for every kind of quality check, not only unit tests. It never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
 
 ## Reading the full report
 
@@ -159,18 +159,18 @@ The report keeps its exact terms, and they read plainly once named:
 
 ## Why not coverage or mutation testing?
 
-Both answer their own questions well, and both live at the unit tier:
+Both answer their own questions well, and both live at the unit layer:
 
-| Tier | Coverage | Mutation testing | `spec-controller` |
+| Kind of quality check | Coverage | Mutation testing | `spec-controller` |
 |---|---|---|---|
 | `@unit` | yes | yes | yes |
 | `@integration`, `@e2e` | rarely collected, and counts lines | possible, slow, rare | yes |
 | `@performance` | no such idea | no such idea | yes |
 | `@fitness` (lint, complexity, type checks, any CI check) | no such idea | no such idea | yes |
 
-Coverage and mutation testing tell you how much of the application the unit tests reach, and whether those tests would notice the application change. Neither knows which behaviours your scenarios name. So neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` keeps one ledger across all five tiers.
+Coverage and mutation testing tell you how much of the application the unit tests reach, and whether those tests would notice the application change. Neither knows which behaviours your scenarios name. So neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` keeps one ledger across all five kinds of quality check.
 
-**For a team already well tested at the unit tier, it adds hygiene, not discovery.** Above the unit tier, once behaviours are named, nothing else holds the link. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
+**For a team already well tested at the unit layer, it adds hygiene, not discovery.** Above the unit layer, once behaviours are named, nothing else holds the link. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
 
 ## Who it fits
 
