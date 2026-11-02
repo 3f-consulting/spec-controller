@@ -50,12 +50,26 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
     ]);
   });
 
-  it("renders no section, and nothing in its place, where the run read no CI configuration", () => {
-    const lines = renderMarkdown(reconcile([]), ctx, publishedExitCodeOf).split("\n");
-    expect(lines).not.toContain(heading);
-    expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-    const headings = lines.flatMap((line, i) => (i > 0 && line.startsWith("#") ? [i] : []));
-    expect(headings.length).toBeGreaterThan(0);
-    for (const i of headings) expect(lines[i - 1]).toBe("");
+  it("renders no section, and nothing in its place, where the run read no CI configuration and has no notChecks, or read only a workflow with no step that its notChecks alone name", () => {
+    const runners = { unit: "vitest" };
+    const runs = [
+      { workflows: [], files: [], packageJson: { scripts: { test: "vitest run" }, specController: { runners } } },
+      {
+        workflows: ["jobs:\n  release:\n    uses: ./.github/workflows/reuse.yml\n"],
+        files: ["release.yml"],
+        packageJson: {
+          scripts: { test: "vitest run" },
+          specController: { runners, notChecks: ["release.yml:release:Ship"] },
+        },
+      },
+    ];
+    for (const { workflows, files, packageJson } of runs) {
+      const lines = renderMarkdown(reconcile(workflows, files, packageJson), ctx, publishedExitCodeOf).split("\n");
+      expect(lines).not.toContain(heading);
+      expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+      const headings = lines.flatMap((line, i) => (i > 0 && line.startsWith("#") ? [i] : []));
+      expect(headings.length).toBeGreaterThan(0);
+      for (const i of headings) expect(lines[i - 1]).toBe("");
+    }
   });
 });

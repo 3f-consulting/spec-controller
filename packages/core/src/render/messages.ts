@@ -116,6 +116,7 @@ export enum CoreMessage {
   StepAccountingReconcilerLabel,
   StepAccountingExcludedLabel,
   StepAccountingNotAppliedLabel,
+  StepAccountingNoWorkflowRead,
   StepAccountingPlumbingLabel,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
@@ -437,6 +438,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.StepAccountingExcludedLabel]: "Excluded:",
   [CoreMessage.StepAccountingNotAppliedLabel]: (key, workflowsRead) =>
     `Not applied, because each ${key} entry below names a workflow this run did not read (this run read ${workflowsRead}):`,
+  [CoreMessage.StepAccountingNoWorkflowRead]: "no workflow",
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,

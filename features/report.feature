@@ -722,7 +722,9 @@ Feature: The report renders the ledger as sectioned facts
     nothing. After the excluded steps, each notChecks entry naming a workflow the run did not
     read is listed as not applied, under a label naming the workflows the run read.
 
-    The section is absent for a target with no pipeline.
+    When the run reads no CI step, the section holds the not-applied list alone, with no table.
+    Its label names the workflows the run read, or says it read none. The section is absent when
+    the run reads no CI step and has nothing to list as not applied.
 
     @unit @SCN-RPT-052
     Scenario: the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read
@@ -741,6 +743,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-089
     Scenario: a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read
+
+    @unit @SCN-RPT-091
+    Scenario: a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none
 
     @unit @SCN-RPT-073
     Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing

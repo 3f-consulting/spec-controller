@@ -30,6 +30,17 @@ const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
   return [`| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | ${counts}`];
 };
 
+const tableOf = (accounting: StepAccounting): string[] => {
+  if (accounting.byJob.length === 0) return [];
+  return [
+    CORE_MESSAGES[CoreMessage.StepAccountingTableHeader],
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ...jobRowsOf(accounting),
+    ...totalRowOf(accounting),
+    "",
+  ];
+};
+
 const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
   reconciles: CORE_MESSAGES[CoreMessage.ReconcilerReconciles],
   records: CORE_MESSAGES[CoreMessage.ReconcilerRecords],
@@ -61,8 +72,11 @@ const nonChecksListOf = ({ steps }: StepAccounting): string[] => {
   ];
 };
 
-const workflowsReadOf = ({ workflowsRead, byJob }: StepAccounting): string =>
-  [...new Set(workflowsRead ?? byJob.map(({ workflow }) => workflow))].map((workflow) => codeSpan(workflow)).join(", ");
+const workflowsReadOf = ({ workflowsRead, byJob }: StepAccounting): string => {
+  const workflows = [...new Set(workflowsRead ?? byJob.map(({ workflow }) => workflow))];
+  if (workflows.length === 0) return CORE_MESSAGES[CoreMessage.StepAccountingNoWorkflowRead];
+  return workflows.map((workflow) => codeSpan(workflow)).join(", ");
+};
 
 const notAppliedListOf = (accounting: StepAccounting): string[] => {
   const notApplied = accounting.nonChecksNamingAWorkflowNotRead;
@@ -86,11 +100,7 @@ export const stepAccountingSection = (report: RenderInput): string[] => {
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingHeading],
     "",
-    CORE_MESSAGES[CoreMessage.StepAccountingTableHeader],
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-    ...jobRowsOf(accounting),
-    ...totalRowOf(accounting),
-    "",
+    ...tableOf(accounting),
     ...runnersListOf(accounting),
     ...reconcilerListOf(accounting),
     ...nonChecksListOf(accounting),

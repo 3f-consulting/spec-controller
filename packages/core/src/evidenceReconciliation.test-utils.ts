@@ -179,11 +179,12 @@ const stepAccountingPackageJson = {
 
 export function reconcileStepAccounting(
   workflowSources: readonly string[],
-  files: readonly string[] = ["ci.yml"]
+  files: readonly string[] = ["ci.yml"],
+  packageJson: Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"] = stepAccountingPackageJson
 ): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
-    packageJson: stepAccountingPackageJson,
+    packageJson,
     ciWorkflows: parsedWorkflows(workflowSources, files),
     reconcilerInvocation: "spec-controller balance",
     behaviouralObservations: [],

@@ -187,10 +187,14 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
     count counts. Each list of steps follows the rows' order, and each job's steps the order
     they were read. The summary states the CI steps the run read there alone.
-    A target with no pipeline has no step accounting.
+    A run that reads no CI step has a step accounting only when a notChecks entry names a workflow
+    it did not read. It then holds those entries, the workflows read, no row and a zero total.
 
     @unit @SCN-RMD-012
-    Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a target with no pipeline
+    Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a run that reads no CI step and has no notChecks entry naming a workflow it did not read
+
+    @unit @SCN-RMD-028
+    Scenario: a run that reads no CI step carries each notChecks entry naming a workflow it did not read in its step accounting, with every workflow it read, no row and a zero total
 
     @unit @SCN-RMD-023
     Scenario: the step accounting's total sums each count over its rows, one per workflow and job

@@ -193,7 +193,7 @@ function withStepAccounting(
   roleOf: ReconcilerRole,
   { namingAWorkflowNotRead, workflowsRead }: { namingAWorkflowNotRead: readonly string[]; workflowsRead: readonly string[] }
 ): EvidenceReconciliation {
-  if (steps.length === 0) return reconciliation;
+  if (steps.length === 0 && namingAWorkflowNotRead.length === 0) return reconciliation;
   return {
     ...reconciliation,
     summary: {

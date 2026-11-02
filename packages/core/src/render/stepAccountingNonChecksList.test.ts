@@ -7,6 +7,7 @@ import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import {
   endOfStepAccountingTable as endOfTable,
   linesOf,
+  sectionUnder,
   stepAccountingSection as stepAccounting,
 } from "./renderedSection.test-utils.js";
 import {
@@ -185,6 +186,31 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
     const notAppliedLabel = notAppliedLabelOf(["ci.yml"]);
 
     expect(section.slice(section.indexOf(notAppliedLabel))).toStrictEqual([notAppliedLabel, "- `deploy.yml:release:Ship`", "", "GitHub plumbing:", "- ci.yml:quality:Checkout", ""]);
+  });
+});
+
+const configurationNotRead = (lines: readonly string[]): string[] =>
+  sectionUnder(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading])(lines);
+
+describe("[SCN-RPT-091] a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none", () => {
+  it.each<{ case: string; workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; workflowsRead: string; malformed: readonly string[] }>([
+    { case: "reads no workflow", workflows: {}, notChecks: ["deploy.yml:release:Ship", "ci.yml:build"], workflowsRead: "no workflow", malformed: ["ci.yml:build"] },
+    { case: "reads one workflow whose only job calls another", workflows: { "release.yml": callsAnotherWorkflowCi }, notChecks: ["deploy.yml:release:Ship"], workflowsRead: "`release.yml`", malformed: [] },
+  ])("holds only the not-applied list for a run that $case", ({ workflows, notChecks, workflowsRead, malformed }) => {
+    const lines = reportLines(notChecks, workflows);
+    const notAppliedLabel = CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", workflowsRead);
+
+    expect(stepAccounting(lines)).toStrictEqual([
+      CORE_MESSAGES[CoreMessage.StepAccountingHeading],
+      "",
+      notAppliedLabel,
+      "- `deploy.yml:release:Ship`",
+      "",
+    ]);
+    for (const entry of malformed) {
+      expect(lines.filter((line) => line.includes(entry))).toStrictEqual(configurationNotRead(lines).filter((line) => line.includes(entry)));
+      expect(configurationNotRead(lines).filter((line) => line.includes(entry))).toHaveLength(1);
+    }
   });
 });
 
