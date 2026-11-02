@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - "doc/**"
+      - "docs/**"
       - "README.md"
       - "CONTRIBUTING.md"
       - "LICENSE"
@@ -196,7 +196,7 @@ jobs:
       # repository file, so every such reference is a link remark checks.
       # The probe reds the step unless Vale raises on a line naming a repository file: exit 0 means the rule is gone, 2 that Vale failed.
       # Both scripts run whatever the first returns, so one run prints every broken reference.
-      # A doc-only push to main skips this step and the Vale steps; pnpm docs:check runs them all before such a push.
+      # A docs-only push to main skips this step and the Vale steps; pnpm docs:check runs them all before such a push.
       - name: Every reference in a current-state document resolves
         id: SCN-FIT-059
         if: always()

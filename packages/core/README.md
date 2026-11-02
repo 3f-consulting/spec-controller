@@ -61,7 +61,7 @@ The types these functions take and return are exported alongside them, so a cons
 
 ## Stability
 
-What the entrypoint exports is the whole public surface, and the contract you build on. **Nothing checks it for drift.** The surface is not checked against a written list, so adding a symbol to the barrel or dropping one turns no build red. A generated API report will be adopted at `1.0`, with a compatibility promise. The package is at a `0.x` version and makes no compatibility promise; see [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md). Pin an exact version.
+What the entrypoint exports is the whole public surface, and the contract you build on. **Nothing checks it for drift.** The surface is not checked against a written list, so adding a symbol to the barrel or dropping one turns no build red. A generated API report will be adopted at `1.0`, with a compatibility promise. The package is at a `0.x` version and makes no compatibility promise; see [`docs/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/docs/compatibility.md). Pin an exact version.
 
 Source, issues and history: [github.com/3f-consulting/spec-controller](https://github.com/3f-consulting/spec-controller).
 

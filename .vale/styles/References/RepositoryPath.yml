@@ -5,4 +5,4 @@ level: error
 scope: raw
 nonword: true
 tokens:
-  - '(?<!\[)`(?:(?:\.semgrep|\.vale|config|doc|packages|scripts|tests)/[^`*?{}\s]*|\.github/(?!workflows`)[^`*?{}\s]*|features/[^`*?{}\s]+|CONTRIBUTING\.md|LICENSE|pnpm-lock\.yaml|pnpm-workspace\.yaml|eslint\.config\.js|cucumber\.js|stryker\.config\.js|tsconfig\.json|vitest\.config\.ts|knip\.jsonc|\.jscpd\.json|\.jscpd-tests\.json|\.vale\.ini)`'
+  - '(?<!\[)`(?:(?:\.semgrep|\.vale|config|docs|packages|scripts|tests)/[^`*?{}\s]*|\.github/(?!workflows`)[^`*?{}\s]*|features/[^`*?{}\s]+|CONTRIBUTING\.md|LICENSE|pnpm-lock\.yaml|pnpm-workspace\.yaml|eslint\.config\.js|cucumber\.js|stryker\.config\.js|tsconfig\.json|vitest\.config\.ts|knip\.jsonc|\.jscpd\.json|\.jscpd-tests\.json|\.vale\.ini)`'

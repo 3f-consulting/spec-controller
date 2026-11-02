@@ -113,8 +113,8 @@ spec-controller balance --features ./features \
 
 ## Where to go next
 
-- **Full flags, worked examples and CI wiring**: [`doc/how_to_use.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/how_to_use.md)
-- **Why `0.x` promises nothing, and what changes at `1.0`**: [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md)
+- **Full flags, worked examples and CI wiring**: [`docs/user-guide.md`](https://github.com/3f-consulting/spec-controller/blob/main/docs/user-guide.md)
+- **Why `0.x` promises nothing, and what changes at `1.0`**: [`docs/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/docs/compatibility.md)
 - **Building your own tooling on the engine instead of running a command**: [`@3f-consulting/spec-controller-core`](https://www.npmjs.com/package/@3f-consulting/spec-controller-core), the same reconciliation logic as a pure library with no CLI and no I/O.
 
 Source, issues and history: [github.com/3f-consulting/spec-controller](https://github.com/3f-consulting/spec-controller).

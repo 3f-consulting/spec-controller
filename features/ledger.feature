@@ -198,7 +198,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: an evidence observation that cites more than one scenario credits none of them, whatever the runner
 
     A test cites exactly one scenario. One that cites several credits none of them and posts to the unnamed claim,
-    naming every code, so no reader picks one (doc/ubiquitous-language.md, Attribution).
+    naming every code, so no reader picks one (docs/ubiquitous-language.md, Attribution).
 
     @unit @SCN-LDG-042
     Scenario: an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes

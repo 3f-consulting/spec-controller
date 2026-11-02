@@ -2,7 +2,7 @@
 
 The words spec-controller's code, scenarios, report and help use, and what each means. A review checks spec-controller against this file. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from the methodology**, which are named here and used as the methodology spec-controller implements defines them.
 
-Each definition below restates what spec-controller already says in [`how_to_use.md`](./how_to_use.md), its feature files or its report; the evidence model's definitions also state the reconciliation model those follow. If the two ever disagree, the behaviour wins and this file is corrected.
+Each definition below restates what spec-controller already says in [`user-guide.md`](./user-guide.md), its feature files or its report; the evidence model's definitions also state the reconciliation model those follow. If the two ever disagree, the behaviour wins and this file is corrected.
 
 **One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. A machine key is language you read as much as prose is; it gets no private dialect. **One term, three forms — the form follows the surface, the word never changes, and a term from this file is `backticked` wherever it appears.** Prose spells it out (`static check`, `phantom claim`); a handle hyphenates it (`static-check`, `phantom-claim`, `quality-check-kind`, `both-missing`); a code identifier camel-cases it (`staticCheck`). A handle is not a licence to abbreviate: `check` is not a short `static-check`, it is a different word.
 
@@ -200,7 +200,7 @@ The terms above are exact, and the code, the report and the help use them as the
 
 ## Borrowed from the methodology
 
-Named here, and used as the methodology defines them; [`how_to_use.md`](./how_to_use.md) describes each as spec-controller reads it.
+Named here, and used as the methodology defines them; [`user-guide.md`](./user-guide.md) describes each as spec-controller reads it.
 
 - **Kinds of quality check**:
   - the kinds of quality check `@unit`, `@integration`, `@e2e`, `@performance` and `@fitness`, the first four the layers;

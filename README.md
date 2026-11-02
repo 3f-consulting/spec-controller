@@ -155,7 +155,7 @@ The report keeps its exact terms, and they read plainly once named:
 - A test that names no scenario at all lands on the *unnamed claim*.
 - A *watermelon* is a check that passes but could not have failed the build.
 
-[`doc/ubiquitous-language.md`](./doc/ubiquitous-language.md) has the rest.
+[`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md) has the rest.
 
 ## Why not coverage or mutation testing?
 
@@ -208,15 +208,15 @@ spec-controller balance \
   --cucumber ./cucumber-report.json
 ```
 
-Pass whichever reports you have. The *What you need* section of [`doc/how_to_use.md`](./doc/how_to_use.md) says how to produce each one.
+Pass whichever reports you have. The *What you need* section of [`docs/user-guide.md`](./docs/user-guide.md) says how to produce each one.
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`. You get the same report, but an out-of-balance verdict exits `0`. Remove the flag when you are ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
 **Before you name anything, it lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI does not already show. It is a starting inventory; the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
 
-[`doc/quickstart.md`](./doc/quickstart.md) takes you from nothing to a first run in CI. [`doc/how_to_use.md`](./doc/how_to_use.md) is the full reference: every flag, every runner, and the CI wiring in detail.
+[`docs/quickstart.md`](./docs/quickstart.md) takes you from nothing to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) is the full reference: every flag, every runner, and the CI wiring in detail.
 
-At `0.x`, nothing is promised between versions ([`doc/compatibility.md`](./doc/compatibility.md)). Pin an exact version.
+At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)). Pin an exact version.
 
 ## Starting from an existing codebase
 
@@ -236,7 +236,7 @@ The repository holds itself to the same discipline it asks of you. Its own CI re
 - code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code.
 
-**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Most gates automate a kind of feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself. [`doc/fitness-functions.md`](./doc/fitness-functions.md) names the review comment each gate automates, and how many real problems it caught last quarter.
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Most gates automate a kind of feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself. [`docs/fitness-functions.md`](./docs/fitness-functions.md) names the review comment each gate automates, and how many real problems it caught last quarter.
 
 The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the first limit above in practice: a change made in both places balances, and review is what judges it.
 

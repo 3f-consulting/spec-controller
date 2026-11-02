@@ -24,7 +24,7 @@ completes on `main`. Its `release` job goes on when that CI run succeeded and wa
 pending run cancels it (*Two merges close together*, below). This includes a merge that touches only
 [`features/`](../features/), [`tests/`](../tests/), [`.github/`](../.github/) or the lockfile.
 
-A push that changes only `doc/**`, the root [`README.md`](../README.md),
+A push that changes only `docs/**`, the root [`README.md`](../README.md),
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) or [`LICENSE`](../LICENSE) does not run CI at all
 (`paths-ignore` in `ci.yml`). It publishes nothing.
 
@@ -329,7 +329,7 @@ lands as a **parallel change** (*expand–migrate–contract*) over three merges
    release hours old.
 3. **Migrate.** With the new reader pinned, the tree drops the old shape.
 4. **Contract.** The reader stops accepting the old shape **only once no adopter still writes it**.
-   [`doc/how_to_use.md`](how_to_use.md) says so in the same merge.
+   [`docs/user-guide.md`](user-guide.md) says so in the same merge.
 
 **Step 4 is a deliberate step, never a consequence of step 3.** The reader dropping a shape is what
 breaks an adopter's next pin bump, and adopters move on their own clock. The tree can be clean of

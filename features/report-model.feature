@@ -24,7 +24,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     And its summary totals count EVERY Claim Reconciliation. The Evidence
     Reconciliation is all Claim Reconciliations assembled, and the summary is its
-    totals (doc/ubiquitous-language.md, The evidence model). Three claim kinds — scenario, phantom
+    totals (docs/ubiquitous-language.md, The evidence model). Three claim kinds — scenario, phantom
     claim, unnamed claim — and a phantom claim's or the unnamed claim's reconciliation is ALWAYS
     out-of-balance, so they count into the total and into out-of-balance; `phantomClaim` /
     `unnamedClaim` survive as sub-counts, a BREAKDOWN of the total rather than a bucket outside it
@@ -139,7 +139,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     beside the broken one, so it counts once. One reconcile function
     serves every kind of quality check, and the fitness value is what tells a watermelon apart. The
     glossary names the kind of quality check fitness, and lint is on its Double-check line
-    (doc/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the kind of quality check
+    (docs/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the kind of quality check
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
     isolation.
 

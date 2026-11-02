@@ -315,7 +315,7 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.HelpHostModifiers]: () => "Host modifiers (before the command):",
   [AppMessage.HelpOptions]: () => "Options:",
   [AppMessage.HelpArguments]: () => "Arguments:",
-  [AppMessage.HelpPointer]: () => "Full flags, examples, and CI wiring: doc/how_to_use.md.",
+  [AppMessage.HelpPointer]: () => "Full flags, examples, and CI wiring: docs/user-guide.md.",
   [AppMessage.HelpFlag]: () => "Show this help and exit.",
   [AppMessage.StoreModifier]: () =>
     "Store the run: write <root>/<target>/<run-id>/ with the reconciliation outputs + a run.yaml manifest. " +

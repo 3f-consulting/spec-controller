@@ -162,11 +162,11 @@ const EXTERNAL =
 
 const NAME_TRANSLATE =
   "is named for another tool or its format, and core's domain speaks its own language. Name it with the term " +
-  "doc/ubiquitous-language.md gives, and let the adapter that reads the format translate into it.";
+  "docs/ubiquitous-language.md gives, and let the adapter that reads the format translate into it.";
 
 const LITERAL_TRANSLATE =
   "names another tool, its format, a flag or a syntax, and core's domain speaks its own language. Let the adapter " +
-  "that reads the format translate it into the term doc/ubiquitous-language.md gives.";
+  "that reads the format translate it into the term docs/ubiquitous-language.md gives.";
 
 // A feature is a domain concept when core's domain has a module named for it; its scenarios carry the concept's code.
 const FEATURES = new URL("features/", import.meta.url);

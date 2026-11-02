@@ -1,7 +1,7 @@
 import type { ExitCodeOf } from "../domain/renderInput.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
 
-// The codes doc/how_to_use.md publishes, so core's tests read the verdict line without importing the app's map.
+// The codes docs/user-guide.md publishes, so core's tests read the verdict line without importing the app's map.
 const PUBLISHED: Readonly<Record<RunVerdict, number>> = {
   balanced: 0,
   "out-of-balance": 1,
