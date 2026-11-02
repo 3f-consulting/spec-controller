@@ -3,7 +3,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
-describe("[SCN-RMD-008] the missing split counts the missing Reconciliation lines by quality check, in canonical order", () => {
+describe("[SCN-RMD-008] the missing split counts the missing Reconciliation lines by kind of quality check, in canonical order", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",

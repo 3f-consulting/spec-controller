@@ -42,7 +42,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
       The Evidence Observation is never dropped: it posts to the phantom claim's row carrying the check
       that ran, and the row is out of balance.
 
-  Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
+  Rule: a @fitness scenario is one check: its kind of quality check is fitness, and its obligation is raised by its tag and keyed by its own @SCN
 
     The scenario's title says what the check is about. No manifest list or characteristic word
     stands between the tag and the obligation.

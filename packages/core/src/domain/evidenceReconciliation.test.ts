@@ -93,7 +93,7 @@ describe("[SCN-LDG-005] an out-of-balance scenario carries its reconciling items
   });
 });
 
-describe("[SCN-LDG-027] a quality-check reconciliation carries every evidence observation of its quality check on its claim", () => {
+describe("[SCN-LDG-027] a quality-check reconciliation carries every evidence observation of its kind of quality check on its claim", () => {
   const REMOVED_KEYS = ["evidenceObservation", "locator", "message", "notes", "fitnessFunction"];
 
   const first: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-LDG-027", status: "passed", locator: "a.test.ts" };

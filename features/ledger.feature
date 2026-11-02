@@ -66,7 +66,7 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-007
     Scenario: an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance
 
-  Rule: an evidence observation at a quality-check the scenario never raised is no-evidence-obligation
+  Rule: an evidence observation at a kind of quality check the scenario never raised is no-evidence-obligation
 
     The bidirectional reconciler also consumes evidence observations that cite a REAL
     scenario at a layer that scenario NEVER raised — a behavioural result attributed to
@@ -81,7 +81,7 @@ Feature: Ledger over obligation-vs-observation evidence
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @SCN-LDG-008
-    Scenario: an evidence observation at a quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation
+    Scenario: an evidence observation at a kind of quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation
 
     @unit @SCN-LDG-010
     Scenario: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing
@@ -102,13 +102,13 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-009
     Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
 
-  Rule: a behavioural observation's layer is the cited scenario's own layer tag, not its report's
+  Rule: a behavioural observation from a report of scenario runs is posted at each layer beyond @unit that its scenario's tags name, or at integration when there are none; one from a report of test results is posted at unit
 
-    An observation is posted at each layer its cited scenario is tagged with, integration, e2e
-    or performance, in tag order and once each. A scenario tagged with no layer beyond @unit has
-    its observation posted at the layer its report falls back to: unit for a report of
-    test results, integration for a report of scenario runs. The source that produced an
-    observation never overrides the scenario's own layer.
+    An observation read from a report of scenario runs is posted at each layer beyond @unit that
+    its cited scenario is tagged with, integration, e2e or performance, in tag order and once each.
+    A scenario tagged with no layer beyond @unit has it posted at integration, the layer that
+    report falls back to. An observation read from a report of test results is posted at unit,
+    the layer that report falls back to, whatever its scenario's tags.
 
     @unit @SCN-LDG-011
     Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its report's fallback
@@ -117,7 +117,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Scenario: an observation of a scenario tagged @integration is posted at integration
 
     @unit @SCN-LDG-013
-    Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both tiers
+    Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both layers
 
     @unit @SCN-LDG-014
     Scenario: an observation of a scenario tagged @integration and @e2e is posted at both
@@ -146,7 +146,7 @@ Feature: Ledger over obligation-vs-observation evidence
     to answer reconciles from the evidence that reached its proof.
 
     @unit @SCN-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is found once there, inside the quality-check reconciliation of its quality check, a broken one on the claim it names
+    Scenario: every evidence observation posts to exactly one ledger account and is found once there, inside the quality-check reconciliation of its kind of quality check, a broken one on the claim it names
 
     @unit @SCN-LDG-035
     Scenario: a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites
@@ -156,19 +156,19 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-025
     Scenario: a corpus whose only fitness evidence observation is one satisfied citation-routed check reconciles balanced with no row for the unnamed claim, so summary.outOfBalance agrees with the balanced verdict
 
-  Rule: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
+  Rule: the evidence obligations a scenario raises post to its ledger account, keyed by kind of quality check
 
     @unit @SCN-LDG-023
-    Scenario: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
+    Scenario: the evidence obligations a scenario raises post to its ledger account, keyed by kind of quality check
 
   Rule: a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)
     @unit @SCN-LDG-026
     Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation, read from its observation list
 
-  Rule: a Quality Check Reconciliation carries every evidence observation of its quality check on its claim
+  Rule: a Quality Check Reconciliation carries every evidence observation of its kind of quality check on its claim
 
     @unit @SCN-LDG-027
-    Scenario: a quality-check reconciliation carries every evidence observation of its quality check on its claim
+    Scenario: a quality-check reconciliation carries every evidence observation of its kind of quality check on its claim
 
   Rule: a fitness missing reconciliation carries its obligation and no observation — an absent check is an absence
 

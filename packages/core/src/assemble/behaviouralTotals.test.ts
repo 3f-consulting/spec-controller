@@ -36,8 +36,8 @@ function assembled(): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-RMD-003] the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
-  it("states the evidence observations it was handed on its summary, a count for each of the five quality checks with fitness last", () => {
+describe("[SCN-RMD-003] the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
+  it("states the evidence observations it was handed on its summary, a count for each of the five kinds of quality check with fitness last", () => {
     expect(assembled().summary.evidenceObservations).toStrictEqual({
       total: 4,
       onScenario: 2,

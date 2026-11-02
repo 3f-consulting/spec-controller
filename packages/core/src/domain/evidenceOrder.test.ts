@@ -53,7 +53,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     expect(ledgers.size).toBe(1);
   });
 
-  it("reads a row's evidence observations by quality check in layer order, fitness last, then by location", () => {
+  it("reads a row's evidence observations by kind of quality check in layer order, fitness last, then by location", () => {
     expect(coordinates(observationsOf(rowOf([fitness, performance, e2e, integration, unitZ, unitA])))).toEqual([
       ["unit", "a.test.ts"],
       ["unit", "z.test.ts"],
@@ -64,7 +64,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     ]);
   });
 
-  it("reads an evidence observation with no location before every located evidence observation of its quality check", () => {
+  it("reads an evidence observation with no location before every located evidence observation of its kind of quality check", () => {
     const unlocated: EvidenceObservation = { qualityCheckKind: "unit", scnId: SCN, status: "passed" };
     const capitalised: EvidenceObservation = { ...unitA, locator: "A.test.ts" };
     expect(coordinates(observationsOf(rowOf([unitA, capitalised, unlocated])))).toEqual([
@@ -90,7 +90,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
     expect(inEvidenceOrder([citing, citingNone]).map((o) => o.scnId)).toEqual([null, "SCN-CITED-001"]);
   });
 
-  it("orders evidence observations alike in check, location and scenario by what else they say, however their objects were built", () => {
+  it("orders evidence observations alike in kind of quality check, location and scenario by what else they say, however their objects were built", () => {
     const saysA: EvidenceObservation = { qualityCheckKind: "unit", scnId: SCN, status: "failed", locator: "a.test.ts", message: "a" };
     const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", scnId: SCN, qualityCheckKind: "unit" };
     expect(observationsOf(rowOf([saysB, saysA])).map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { obligationsRaisedBy } from "./scenarioObligations.js";
 
-describe("[SCN-PND-001] a <quality-check>pending tag raises a pending obligation of its quality-check", () => {
+describe("[SCN-PND-001] a <quality-check-kind>pending tag raises a pending obligation of its kind of quality check", () => {
   it.each([
     ["fitnesspending", "fitness"],
     ["unitpending", "unit"],
@@ -12,7 +12,7 @@ describe("[SCN-PND-001] a <quality-check>pending tag raises a pending obligation
     expect(obligationsRaisedBy([tag], [])).toEqual([{ qualityCheckKind, pending: true }]);
   });
 
-  it("a <x>pending tag naming no quality-check raises nothing", () => {
+  it("a <x>pending tag naming no kind of quality check raises nothing", () => {
     expect(obligationsRaisedBy(["lintpending"], [])).toEqual([]);
   });
 });

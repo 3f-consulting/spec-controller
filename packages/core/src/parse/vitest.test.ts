@@ -7,7 +7,7 @@ import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 
-describe("[SCN-VIT-006] every observation read from a Vitest report is posted at unit, because a Vitest report is a report of test results and carries no tier tags", () => {
+describe("[SCN-VIT-006] every observation read from a Vitest report is posted at unit, because a Vitest report is a report of test results and carries no layer tags", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
@@ -20,7 +20,7 @@ describe("[SCN-VIT-006] every observation read from a Vitest report is posted at
     ],
   };
 
-  it("posts every observation at unit, with no quality check handed in", () => {
+  it("posts every observation at unit, with no layer handed in", () => {
     expect(parseVitestEvidenceObservations(report)).toEqual([
       { qualityCheckKind: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "/r/a.test.ts", testName: "[SCN-FOO-001] does a thing" },
       { qualityCheckKind: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-002] does another" },

@@ -6,7 +6,7 @@ Feature: balance reads each scenario's tags from its feature file
   Rule: a scenario's tags include the ones it inherits from its Feature and Rule
 
     @unit @SCN-GRD-001
-    Scenario Outline: an evidence tier tagged on the <ancestor> is named of the scenarios beneath it
+    Scenario Outline: a layer tag on the <ancestor> is named of the scenarios beneath it
 
       Examples:
         | ancestor |

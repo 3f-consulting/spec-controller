@@ -39,8 +39,8 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at integration, the fallback of a report of scenario runs, since a pending tag is no tier tag", () => {
-  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the report's fallback, integration, with no quality check handed in", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at integration, the fallback of a report of scenario runs, since a pending tag is no layer tag", () => {
+  it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the report's fallback, integration, with no layer handed in", () => {
     const observations = parseCucumberEvidenceObservations(
       [
         {

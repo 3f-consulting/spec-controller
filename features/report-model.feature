@@ -63,7 +63,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-020
     Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's @SCN, a phantom claim's cited code, the unnamed claim, and a scenario with no @SCN by its feature and title
 
-  Rule: the summary states its evidence reconciliation, and its evidence observations over every quality check
+  Rule: the summary states its evidence reconciliation, and its evidence observations over every kind of quality check
 
     The numbers the markdown prints are model data, not renderer arithmetic. The summary states
     the evidence reconciliation as one section: the Claim Reconciliations counted by verdict and
@@ -88,7 +88,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted
 
     @unit @SCN-RMD-003
-    Scenario: the summary's evidence observations count each of the five quality checks', fitness included, by the kind of claim each posts to, and their total is the five counts' sum
+    Scenario: the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
     @unit @SCN-RMD-015
     Scenario: each kind of quality check in the summary's evidence observations names its CI steps as the step accounting lists them, one entry for each step and in its order, fitness included: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count
@@ -128,7 +128,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-007
     Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
 
-  Rule: each evidence sub-row is keyed by one flat quality-check coordinate
+  Rule: each evidence sub-row is keyed by one flat coordinate, its kind of quality check
 
     The evidence coordinate is ONE flat kind of quality check ∈ {fitness, unit, integration, e2e,
     performance}: fitness is one kind of quality check, not a second axis. So each sub-row of
@@ -139,12 +139,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     beside the broken one, so it counts once. One reconcile function
     serves every kind of quality check, and the fitness value is what tells a watermelon apart. The
     glossary names the kind of quality check fitness, and lint is on its Double-check line
-    (docs/ubiquitous-language.md, Quality Check). The markdown labels each item by its tag word, which IS the kind of quality check
+    (docs/ubiquitous-language.md, Kind of quality check). The markdown labels each item by its tag word, which IS the kind of quality check
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
     isolation.
 
     @unit @SCN-RMD-008
-    Scenario: each quality-check reconciliation carries a single quality-check coordinate, and the missing split counts the missing Reconciliation lines by it
+    Scenario: each quality-check reconciliation carries a single kind of quality check as its coordinate, and the missing split counts the missing Reconciliation lines by it
 
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
 
@@ -156,7 +156,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     a function of what was observed, never of the order it arrived in.
 
     @unit @SCN-RMD-009
-    Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location
+    Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence ordered by kind of quality check then by location
 
   Rule: a behavioural evidence observation carries the name its runner gave the test
 
@@ -176,7 +176,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
 
-  Rule: the summary's step accounting is a row per workflow and job, with the steps behind each count
+  Rule: the summary's step accounting holds a row per workflow and job read, with the steps behind each count but its candidates
 
     The summary's step accounting states every CI step the run read, and what it counted each
     step as. It holds one row per workflow and job, ordered by workflow and then by job, each

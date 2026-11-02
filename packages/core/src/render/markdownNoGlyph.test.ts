@@ -22,7 +22,7 @@ function readsInWords(item: string): boolean {
   return sentence(item) || (colon > 0 && QUALITY_CHECK_KINDS.includes(item.slice(0, colon)) && sentence(item.slice(colon + 2)));
 }
 
-describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either", () => {
+describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconciling item reads its kind of quality check and its outcome's sentence, with no symbol beside either", () => {
   let everyOutcome: Ledger;
   beforeEach(() => {
     everyOutcome = reconcile(
@@ -62,7 +62,7 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     expect(new Set(verdicts)).toEqual(new Set(["balanced", "out-of-balance"]));
   });
 
-  it("reads each reconciling item as its quality check and its outcome's sentence, or the sentence alone", () => {
+  it("reads each reconciling item as its kind of quality check and its outcome's sentence, or the sentence alone", () => {
     const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf))
       .map((row) => row.cell(RECONCILING_ITEMS_COLUMN))
       .filter((cell) => cell !== "—")
@@ -74,7 +74,7 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     expect(items.some((item) => item.startsWith(`unit: ${OUTCOME_DESCRIPTION.failing}`))).toBe(true);
   });
 
-  it("reads each fitness evidence obligation's reconciling item on its claim's row as its quality check and its outcome's sentence, with no symbol", () => {
+  it("reads each fitness evidence obligation's reconciling item on its claim's row as its kind of quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
     const watermelon = reconcilingItemsOf(md, "SCN-NGL-003");
     expect(watermelon.some((item) => item.startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`))).toBe(true);

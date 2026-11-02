@@ -279,7 +279,7 @@ describe("[SCN-RMD-015] each kind of quality check in the summary's evidence obs
     expect(reconciliation.summary).not.toHaveProperty("runnerKeysNotALayer");
   });
 
-  it("names no runner and no CI step on a behavioural quality check for a runners block that names no layer", () => {
+  it("names no runner and no CI step on a layer for a runners block that names no layer", () => {
     const reconciliation = reconcile({});
     for (const entry of entries(reconciliation).filter((entry) => entry.qualityCheckKind !== "fitness")) {
       expect(entry).not.toHaveProperty("runner");
@@ -392,7 +392,7 @@ describe("[SCN-RMD-015] each kind of quality check in the summary's evidence obs
     });
   });
 
-  it("names on fitness the step behind each fitness function that ran, in step order, and none behind one the run's record says did not run", () => {
+  it("names on fitness the step behind each fitness function that ran, in the step accounting's order, and none behind one the run's record says did not run", () => {
     const fitness = entryFor(withRecordedSteps(), "fitness");
     expect(fitness).toStrictEqual({
       qualityCheckKind: "fitness",

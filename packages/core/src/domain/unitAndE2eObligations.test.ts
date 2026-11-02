@@ -5,7 +5,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
-describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both tiers satisfied", () => {
+describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both layers satisfied", () => {
   it("balances both obligations — vitest discharges @unit, cucumber (derived) discharges @e2e — from a real scenario and both real readers", () => {
     const scenarios = parseScenarios(
       [
@@ -23,7 +23,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
         {
           name: "src/unitAndE2e.test.ts",
           assertionResults: [
-            { fullName: "[SCN-LDG-013] the unit substrate proves the unit tier", status: "passed" },
+            { fullName: "[SCN-LDG-013] the unit substrate proves the unit layer", status: "passed" },
           ],
         },
       ],
@@ -53,7 +53,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     expect(reconcilingItemsOf(scenario!)).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheckKind: "unit", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservations: [{ qualityCheckKind: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit tier", outcome: "satisfied" }] },
+        { qualityCheckKind: "unit", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservations: [{ qualityCheckKind: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit layer", outcome: "satisfied" }] },
         { qualityCheckKind: "e2e", evidenceObligation: { qualityCheckKind: "e2e" }, evidenceObservations: [{ qualityCheckKind: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature", outcome: "satisfied" }] },
       ])
     );

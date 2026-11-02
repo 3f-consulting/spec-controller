@@ -3,14 +3,14 @@ Feature: balance reads the specController block of the target's package.json
 
   The specController block in the target's package.json names its test runners, the steps that are not checks, and extra deferral tags. This feature states how balance reads it.
 
-  Rule: the runner block is keyed by the four tiers and no other
+  Rule: the runner block is keyed by the four layers and no other
 
     The layers are unit, integration, e2e and performance. Any other key is named on the report,
     excludes nothing, and does not stop the run. A check whose script that key names is still
     reported as a fitness function.
 
     @unit @SCN-CFG-003
-    Scenario: a runners key that is not one of the four tiers is reported, never silently honoured
+    Scenario: a runners key that is not one of the four layers is reported, never silently honoured
 
   Rule: a specController entry the tool cannot use is named on the report, and the run is not refused over it
 

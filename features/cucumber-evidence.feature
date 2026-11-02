@@ -15,10 +15,10 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
     @unit @SCN-CUC-005
     Scenario: a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that do
 
-  Rule: a Cucumber scenario's observations are posted at the quality checks its own tags decide
+  Rule: a Cucumber scenario's observations are posted at the layers its own tags decide
 
     @unit @SCN-CUC-002
-    Scenario: the tags a Cucumber scenario carries, its own and those it inherits, decide each quality check its observations are posted at, and with no tier tag they are posted at integration, because a Cucumber report is a report of scenario runs
+    Scenario: the tags a Cucumber scenario carries, its own and those it inherits, decide each layer its observations are posted at, and with no layer tag they are posted at integration, because a Cucumber report is a report of scenario runs
 
   Rule: an ambiguous Cucumber step is broken, not absent
 
@@ -28,4 +28,4 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
   Rule: a Cucumber scenario's step results give its run result: passed when every step passed, failed when one failed, inconclusive when one was skipped
 
     @unit @SCN-CUC-004
-    Scenario: a Cucumber scenario whose steps all passed posts a passed observation, one with a failed step posts a failed one, and one with a skipped step posts nothing at any of its quality checks
+    Scenario: a Cucumber scenario whose steps all passed posts a passed observation, one with a failed step posts a failed one, and one with a skipped step posts nothing at any of its layers

@@ -120,9 +120,9 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
 }
 
 describe("[SCN-RPT-074] each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
-  it("heads the table with the quality check, its count, its runner and its CI step", () => {
+  it("heads the table with the kind of quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
-    expect(header).toStrictEqual(["Quality-check", "Evidence observations", "Runner", "CI step"]);
+    expect(header).toStrictEqual(["Kind of quality check", "Evidence observations", "Runner", "CI step"]);
     expect(separator).toStrictEqual(["---", "---", "---", "---"]);
   });
 
@@ -157,7 +157,7 @@ describe("[SCN-RPT-074] each kind of quality check's row names its runner and th
     expect(fitness).toStrictEqual(["fitness", "2", "each fitness function's check step", ""]);
   });
 
-  it("names the declared runner and the step that runs it on a quality check with no evidence observations", () => {
+  it("names the declared runner and the step that runs it on a kind of quality check with no evidence observations", () => {
     const reconciliation = assembled();
     const rows = rowsOf(reconciliation).slice(2);
     const e2eSteps = summaryCiSteps(reconciliation, "e2e");
@@ -209,7 +209,7 @@ describe("[SCN-RPT-074] each kind of quality check's row names its runner and th
     expect(tableRows(runnersOnlyCi).at(-1)).toStrictEqual(["fitness", "0", "", ""]);
   });
 
-  it("keeps a row per quality check, fitness last", () => {
+  it("keeps a row per kind of quality check, fitness last", () => {
     expect(tableRows().slice(2).map(([check]) => check)).toStrictEqual([
       "unit",
       "integration",

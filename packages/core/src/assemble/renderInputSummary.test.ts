@@ -145,7 +145,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
   });
 });
 
-describe("[SCN-RMD-008] each quality-check reconciliation carries a single quality-check coordinate, and the missing split counts the missing Reconciliation lines by it", () => {
+describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind of quality check as its coordinate, and the missing split counts the missing Reconciliation lines by it", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",
@@ -199,7 +199,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single quali
     ]);
   });
 
-  it("counts the missing Reconciliation lines by quality check, an obligation answered only by a broken observation once", () => {
+  it("counts the missing Reconciliation lines by kind of quality check, an obligation answered only by a broken observation once", () => {
     const totals = report().summary.evidenceReconciliation.reconciliationLines;
     expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
     expect(totals.missingByQualityCheckKind).toEqual([

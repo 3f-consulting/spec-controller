@@ -9,7 +9,7 @@ function accountsFor(ledger: Ledger, scnId: string): ClaimReconciliation[] {
   return ledger.claimReconciliations.filter((r) => r.claim === scnId);
 }
 
-describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises", () => {
+describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
@@ -28,7 +28,7 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
     expect(accountsFor(ledger, "SCN-DUP-001").map((account) => account.kind)).toEqual(["scenario", "scenario"]);
   });
 
-  it("reads duplicate-scn-code at every quality check each scenario raises, the deferred one included", () => {
+  it("reads duplicate-scn-code at every kind of quality check each scenario raises, the deferred one included", () => {
     expect(
       accountsFor(ledger, "SCN-DUP-001").map((account) =>
         account.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome])
@@ -51,7 +51,7 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
     expect(isBalanced(ledger)).toBe(false);
   });
 
-  it("with no quality check named at all, carries ONE duplicate-scn-code sub-row on each claim, never both-missing", () => {
+  it("with no kind of quality check named at all, carries ONE duplicate-scn-code sub-row on each claim, never both-missing", () => {
     const bare = reconcile(
       [
         { scnId: "SCN-DUP-002", evidenceObligations: [] },
@@ -68,7 +68,7 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
   });
 });
 
-describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises", () => {
+describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises", () => {
   const one = "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: in one\n    Given a thing\n";
   const two = "@TWO\nFeature: two\n\n  @integration @SCN-ONE-001\n  Scenario: in two\n    Given a thing\n";
   let ledger: Ledger;
@@ -77,7 +77,7 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two
     ledger = reconcile(corpus.scenarios, []);
   });
 
-  it("holds exactly two claims under the code, each reading duplicate-scn-code at its own quality check and naming its own scenario", () => {
+  it("holds exactly two claims under the code, each reading duplicate-scn-code at its own kind of quality check and naming its own scenario", () => {
     expect(accountsFor(ledger, "SCN-ONE-001").map((account) => account.qualityCheckReconciliations)).toEqual([
       [{ qualityCheckKind: "unit", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "unit" }, scenario: { feature: "features/one.feature", title: "in one" } }],
       [{ qualityCheckKind: "integration", outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: "integration" }, scenario: { feature: "features/two.feature", title: "in two" } }],
@@ -90,7 +90,7 @@ describe("[SCN-STG-014] two scenarios in different files sharing an @SCN are two
   });
 });
 
-describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality checks still never balance, on either claim", () => {
+describe("[SCN-STG-015] scenarios sharing a code but naming disjoint kinds of quality check still never balance, on either claim", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
@@ -110,7 +110,7 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint quality che
     expect(isBalanced(ledger)).toBe(false);
   });
 
-  it("reads duplicate-scn-code on each claim at its own quality check only", () => {
+  it("reads duplicate-scn-code on each claim at its own kind of quality check only", () => {
     expect(
       accountsFor(ledger, "SCN-DIS-001").map((account) =>
         account.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome])

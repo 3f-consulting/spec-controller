@@ -165,7 +165,7 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
     expect(ciStepsOf("SCN-UNE-001")).toBe("Test, Cucumber");
   });
 
-  it("names a step that runs two of a row's quality checks once", () => {
+  it("names a step that runs two of a row's layers once", () => {
     expect(ciStepsOf("SCN-INE-001")).toBe("Cucumber");
   });
 
@@ -177,11 +177,11 @@ describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling i
     expect(ciStepsOf("SCN-FAU-001")).toBe("ci.yml:ci:Guard, Test");
   });
 
-  it("names the steps of a quality check the row observes without obligating", () => {
+  it("names the steps of a layer the row observes without obligating", () => {
     expect(ciStepsOf("SCN-OBS-001")).toBe("Test, Cucumber");
   });
 
-  it("names the steps of a quality check the row observes only through broken evidence", () => {
+  it("names the steps of a layer the row observes only through broken evidence", () => {
     expect(ciStepsOf("SCN-BRK-001")).toBe("Test, Cucumber");
   });
 
@@ -253,8 +253,8 @@ const UNTAGGED_SCENARIO = "untagged.feature : a scenario with no code";
 const unknownStepsOf = (claim: string): string =>
   tableOf(unknownStepScenarios, unknownStepObservations, [UNTAGGED_SCENARIO]).rowOf(claim).cell(CI_STEPS_COLUMN);
 
-describe("[SCN-RPT-081] a quality check with no known step adds none to its Claim Reconciliation's CI steps, and a Claim Reconciliation with none has a blank cell", () => {
-  it("adds nothing for a behavioural quality check whose summary names no CI step", () => {
+describe("[SCN-RPT-081] a kind of quality check with no known step adds no CI step to any Claim Reconciliation, and a Claim Reconciliation with none has a blank cell", () => {
+  it("adds nothing for a layer whose summary names no CI step", () => {
     expect(unknownStepsOf("SCN-PRF-001")).toBe("");
   });
 

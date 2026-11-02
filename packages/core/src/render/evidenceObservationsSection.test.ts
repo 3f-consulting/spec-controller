@@ -41,8 +41,8 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
   for (const i of headings) expect(lines[i - 1]).toBe("");
 }
 
-describe("[SCN-RPT-010] the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction", () => {
-  it("renders heading, blank, the identity line, blank, the four-column table with a row per quality check and fitness last at the running count, then one blank", () => {
+describe("[SCN-RPT-010] the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction", () => {
+  it("renders heading, blank, the identity line, blank, the four-column table with a row per kind of quality check and fitness last at the running count, then one blank", () => {
     const reconciliation = evidenceReconciliationOf(scenarios, observations, []);
     expect(reconciliation.summary.evidenceObservations).toMatchObject({
       total: 8,

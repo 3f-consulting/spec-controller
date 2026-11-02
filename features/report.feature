@@ -186,9 +186,9 @@ Feature: The report renders the ledger as sectioned facts
     identity line is markdown only.
 
     @unit @SCN-RPT-010
-    Scenario: the report renders the Evidence observations cut over every quality check, fitness included, and the evidence observation identity balances by construction
+    Scenario: the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction
 
-  Rule: the evidence observations table names, beside each quality check's count, the runner that produced its evidence and the CI step that runs it
+  Rule: the evidence observations table names, beside each kind of quality check's count, its runner, if it has one, and the CI steps that run it
 
     Under "### Evidence observations", the table has a row per kind of quality check with its count,
     its runner and its CI step. A layer's runner is the one the target
@@ -214,7 +214,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
     @unit @SCN-RPT-051
-    Scenario: a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
+    Scenario: a layer whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
 
     @unit @SCN-RPT-079
     Scenario: every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included
@@ -272,7 +272,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included
 
     @unit @SCN-RPT-081
-    Scenario: a quality check with no known step adds none to its Claim Reconciliation's CI steps, and a Claim Reconciliation with none has a blank cell
+    Scenario: a kind of quality check with no known step adds no CI step to any Claim Reconciliation, and a Claim Reconciliation with none has a blank cell
 
   Rule: the evidence grid counts the evidence observations that ran
 
@@ -325,7 +325,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
 
     @unit @SCN-RPT-018
-    Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
+    Scenario: an @integration @e2e-via-cucumber observation is counted in both layers across the views
 
   Rule: the Quality Check Reconciliation out-of-balance decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
@@ -369,7 +369,7 @@ Feature: The report renders the ledger as sectioned facts
     The report puts no symbol of its own beside a verdict or an outcome.
 
     @unit @SCN-RPT-066
-    Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its quality check and its outcome's sentence, with no symbol beside either
+    Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its kind of quality check and its outcome's sentence, with no symbol beside either
 
   Rule: the markdown report's own words carry no symbol
 
@@ -656,7 +656,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown shows each Pending Item, labelled apart from a Reconciling Item and tallied apart from the verdict counts
 
     @unit @SCN-RPT-041
-    Scenario: a row's exceptions cell labels each Pending Item, naming its quality check when it has one, after the row's Reconciling Items
+    Scenario: a row's exceptions cell labels each Pending Item, naming its kind of quality check when it has one, after the row's Reconciling Items
 
     @unit @SCN-RPT-042
     Scenario: the evidence reconciliation summary tallies the Pending Items on a line of their own after its table, and shows no tally line when there are none
@@ -700,7 +700,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: each key the specController block does not read is named in one sentence, after the entries of the wrong kind
 
     @unit @SCN-RPT-053
-    Scenario: each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read
+    Scenario: each runners key outside the four layers is named under Configuration not read, after the keys the specController block does not read
 
     @unit @SCN-RPT-078
     Scenario: a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds
@@ -711,7 +711,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-088
     Scenario: each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string
 
-  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job with the steps behind each count listed beneath
+  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind each count but Candidates listed beneath
 
     Under "## Summary views", the "### Step accounting" section is the report's one section about
     the CI steps the run read. Its table has a row per workflow and job read, in the step

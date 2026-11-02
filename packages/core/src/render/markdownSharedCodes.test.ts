@@ -120,7 +120,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
     expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 
-  it("renders an account whose sharers name no quality check by its outcome alone, never an undefined subject", () => {
+  it("renders an account whose sharers name no kind of quality check by its outcome alone, never an undefined subject", () => {
     const bare = reconcile(
       [
         { scnId: "SCN-ONE-001", evidenceObligations: [] },

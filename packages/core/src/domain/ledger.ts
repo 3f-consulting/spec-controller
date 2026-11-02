@@ -141,7 +141,7 @@ export const LAYERS: readonly Layer[] = QUALITY_CHECK_KINDS.filter(
   (qualityCheckKind): qualityCheckKind is Layer => qualityCheckKind !== "fitness"
 );
 
-export const LAYER_ORDER_FITNESS_LAST: readonly QualityCheckKind[] = [...LAYERS, "fitness"];
+export const QUALITY_CHECK_KINDS_FITNESS_LAST: readonly QualityCheckKind[] = [...LAYERS, "fitness"];
 
 export interface BehaviouralObservationTally {
   readonly rawByLayer: Record<Layer, number>;
@@ -230,7 +230,7 @@ export function evidenceObservationTally(ledger: Ledger): EvidenceObservationTal
     onScenario: behavioural.onScenario + ranByKind.scenario,
     onPhantomClaim: behavioural.onPhantomClaim + ranByKind["phantom-claim"],
     onUnnamedClaim: behavioural.onUnnamedClaim + ranByKind["unnamed-claim"],
-    byQualityCheckKind: LAYER_ORDER_FITNESS_LAST.map((qualityCheckKind) => ({
+    byQualityCheckKind: QUALITY_CHECK_KINDS_FITNESS_LAST.map((qualityCheckKind) => ({
       qualityCheckKind,
       count: qualityCheckKind === "fitness" ? ran : behavioural.rawByLayer[qualityCheckKind],
     })),

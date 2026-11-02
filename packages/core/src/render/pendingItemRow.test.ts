@@ -24,16 +24,16 @@ const DEFERRAL_TAG = "@deferred";
 const FEATURE = `Feature: pending items on their rows
 
   @SCN-PIR-001 ${DEFERRAL_TAG}
-  Scenario: deferred whole, with no tier named
+  Scenario: deferred whole, with no layer named
 
   @unit @SCN-PIR-002 @integrationpending
-  Scenario: one tier deferred, the other proved
+  Scenario: one layer deferred, the other proved
 
   @unit @integration @SCN-PIR-003 ${DEFERRAL_TAG}
-  Scenario: every named tier deferred
+  Scenario: every named layer deferred
 
   @unit @integration @SCN-PIR-004 @e2epending @performancepending
-  Scenario: two tiers unproved and two deferred
+  Scenario: two layers unproved and two deferred
 
   @unit @SCN-PIR-005
   Scenario: proved, with nothing deferred
@@ -54,14 +54,14 @@ const pendingFor = (qualityCheckKind: string): string => `pending: ${qualityChec
 const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.missing}`;
 
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
-  it("a Pending Item with no quality check carries the bare pending label, and its row still balances", () => {
+  it("a Pending Item with no kind of quality check carries the bare pending label, and its row still balances", () => {
     expect(rowFor(render(), "SCN-PIR-001")).toEqual({
       verdict: "balanced",
       items: "pending",
     });
   });
 
-  it("a Pending Item with a quality check carries the label that names it", () => {
+  it("a Pending Item with a kind of quality check carries the label that names it", () => {
     expect(rowFor(render(), "SCN-PIR-002")).toEqual({
       verdict: "balanced",
       items: pendingFor("integration"),

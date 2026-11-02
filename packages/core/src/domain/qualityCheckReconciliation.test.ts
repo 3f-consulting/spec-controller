@@ -12,7 +12,7 @@ import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFau
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
-  it("a missing behavioural reconciliation is its quality check, its evidence obligation and the missing outcome, with no observation list", () => {
+  it("a missing behavioural reconciliation is its kind of quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheckKind: "unit" };
     const reconciliation = reconcileEvidenceObligation("SCN-LDG-026", obligation, []);
 
@@ -25,7 +25,7 @@ describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obli
 });
 
 describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
-  it("a fitness missing reconciliation is the fitness quality check, its evidence obligation and the missing outcome, with no observation list", () => {
+  it("a fitness missing reconciliation is the fitness kind of quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheckKind: "fitness" };
     const absentGuard: EvidenceObservation = {
       qualityCheckKind: "fitness",

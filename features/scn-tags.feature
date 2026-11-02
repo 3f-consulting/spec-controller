@@ -57,13 +57,13 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     reconciling exactly as it would without it.
 
     @unit @SCN-STG-013
-    Scenario: two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises
+    Scenario: two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises
 
     @unit @SCN-STG-014
-    Scenario: two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every quality check it raises
+    Scenario: two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises
 
     @unit @SCN-STG-015
-    Scenario: scenarios sharing a code but naming disjoint quality checks still never balance, on either claim
+    Scenario: scenarios sharing a code but naming disjoint kinds of quality check still never balance, on either claim
 
   Rule: an @SCN is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 

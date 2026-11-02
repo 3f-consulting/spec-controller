@@ -155,7 +155,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     expect(reconcilingItemsOf(row).map((line) => line.outcome)).toEqual(["cites-unknown-scenario", "cites-unknown-scenario"]);
   });
 
-  it("reads each observation on the unnamed claim as its own cites-no-scenario line, and a broken one as broken, in one reconciliation per quality check", () => {
+  it("reads each observation on the unnamed claim as its own cites-no-scenario line, and a broken one as broken, in one reconciliation per kind of quality check", () => {
     const uncited = (locator: string, broken?: true): EvidenceObservation => ({
       qualityCheckKind: "unit",
       scnId: null,
@@ -170,7 +170,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     expect(reconcilingItemsOf(row).map((line) => line.outcome)).toEqual(["cites-no-scenario", "cites-no-scenario", "broken"]);
   });
 
-  it("reads a pending quality check's observation as one no-evidence-obligation line beside the Pending Item", () => {
+  it("reads a pending kind of quality check's observation as one no-evidence-obligation line beside the Pending Item", () => {
     const observation: EvidenceObservation = { qualityCheckKind: "integration", scnId: SCN, status: "passed", locator: "a.feature" };
     const { row } = reconciledOneScenario([observation], [{ qualityCheckKind: "integration", pending: true }]);
 
@@ -182,7 +182,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     expect(row.verdict).toBe("out-of-balance");
   });
 
-  it("reads one line for a scenario with no @SCN, for a shared code's quality check, and for a scenario with neither side", () => {
+  it("reads one line for a scenario with no @SCN, for a shared code's kind of quality check, and for a scenario with neither side", () => {
     const ledger = reconcile(
       [
         { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },

@@ -1,51 +1,51 @@
 @PND
 Feature: A pending evidence obligation raises a Pending Item
 
-  A `<quality-check>pending` tag defers that kind of quality check's evidence obligation to later work.
+  A `<quality-check-kind>pending` tag defers that kind of quality check's evidence obligation to later work.
   The scenario still raises the obligation, marked pending, and the ledger shows it as a one-sided
   Pending Item, tallied apart from the verdict, rather than as missing evidence. The suffix is read
   apart from the bare evidence tag, so `@integrationpending` is not `@integration`. Only the five
-  `<quality-check>pending` tags carry this meaning: an unknown `<x>pending` tag is ignored, like any
+  `<quality-check-kind>pending` tags carry this meaning: an unknown `<x>pending` tag is ignored, like any
   tag the tool does not recognise. A deferral tag, one of the built-in five (`@wip`, `@ignore`,
   `@skip`, `@todo`, `@pending`) or one the project configures, defers every obligation on its
   scenario, as the Rules below state.
 
-  Rule: A `<quality-check>pending` tag parses as a pending evidence obligation
+  Rule: A `<quality-check-kind>pending` tag parses as a pending evidence obligation
 
     @unit @SCN-PND-001
-    Scenario Outline: <tag> raises a pending <quality-check> obligation
+    Scenario Outline: <tag> raises a pending <quality-check-kind> obligation
 
       Examples:
-        | tag                 | quality-check |
-        | @fitnesspending     | fitness       |
-        | @unitpending        | unit          |
-        | @integrationpending | integration   |
-        | @e2epending         | e2e           |
-        | @performancepending | performance   |
+        | tag                 | quality-check-kind |
+        | @fitnesspending     | fitness            |
+        | @unitpending        | unit               |
+        | @integrationpending | integration        |
+        | @e2epending         | e2e                |
+        | @performancepending | performance        |
 
     @unit @SCN-PND-002
     Scenario: `@integrationpending` is not read as `@integration` — the suffix is significant
 
     @unit @SCN-PND-003
-    Scenario: an unrecognised `<x>pending` (no such quality-check) is passed through, ignored like any unrecognised tag
+    Scenario: an unrecognised `<x>pending` (no such kind of quality check) is passed through, ignored like any unrecognised tag
 
   Rule: The pending result of an obligation
 
     @unit @SCN-PND-004
-    Scenario Outline: <quality-check> — obligation raised pending → Pending Item (a raised, deferred IOU)
+    Scenario Outline: <quality-check-kind> — obligation raised pending → Pending Item (a raised, deferred IOU)
 
       Examples:
-        | quality-check |
-        | fitness       |
-        | unit          |
-        | integration   |
-        | e2e           |
-        | performance   |
+        | quality-check-kind |
+        | fitness            |
+        | unit               |
+        | integration        |
+        | e2e                |
+        | performance        |
 
-  Rule: A Pending Item is one-sided: it never affects the verdict itself, and an evidence observation at its deferred check is no-evidence-obligation
+  Rule: A Pending Item is one-sided: it never affects the verdict itself, and an evidence observation at its deferred kind of quality check is no-evidence-obligation
 
     @unit @SCN-PND-005
-    Scenario: a passing observation at a deferred quality check is no-evidence-obligation — the Pending Item stands and the row is out of balance until the deferral tag is removed
+    Scenario: a passing observation at a deferred kind of quality check is no-evidence-obligation — the Pending Item stands and the row is out of balance until the deferral tag is removed
 
     @unit @SCN-PND-006
     Scenario: a Pending Item is not a Reconciling Item (it is not an error)

@@ -36,7 +36,7 @@ const notALayer = (key: string): string =>
 const notRead = (key: string): string =>
   `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`;
 
-describe("[SCN-RPT-053] each runners key outside the four tiers is named under Configuration not read, after the keys the specController block does not read", () => {
+describe("[SCN-RPT-053] each runners key outside the four layers is named under Configuration not read, after the keys the specController block does not read", () => {
   it("gives a target whose only unread configuration is a key outside the four layers the whole section, naming that key", () => {
     const lines = reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" });
 
@@ -45,7 +45,7 @@ describe("[SCN-RPT-053] each runners key outside the four tiers is named under C
       "",
       CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
       "",
-      "- `specController.runners.lint` — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.",
+      "- `specController.runners.lint` — not a layer: the runner block is keyed by the four layers, and this key excludes nothing.",
       "",
     ]);
   });

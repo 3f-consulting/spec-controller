@@ -9,7 +9,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 
-describe("[SCN-CUC-002] the tags a Cucumber scenario carries, its own and those it inherits, decide each quality check its observations are posted at, and with no tier tag they are posted at integration, because a Cucumber report is a report of scenario runs", () => {
+describe("[SCN-CUC-002] the tags a Cucumber scenario carries, its own and those it inherits, decide each layer its observations are posted at, and with no layer tag they are posted at integration, because a Cucumber report is a report of scenario runs", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",
@@ -19,14 +19,14 @@ describe("[SCN-CUC-002] the tags a Cucumber scenario carries, its own and those 
     },
   ];
 
-  it("posts an untagged scenario's observation at integration, with no quality check handed in", () => {
+  it("posts an untagged scenario's observation at integration, with no layer handed in", () => {
     expect(parseCucumberEvidenceObservations(report)).toEqual([
       { qualityCheckKind: "integration", scnId: "SCN-FOO-003", status: "passed", locator: "features/x.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives the level from the scenario's named tier tag", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives the layer from the scenario's named layer tag", () => {
   it("stamps an @e2e-tagged scenario's observation e2e — the tag, not the report's fallback", () => {
     const report: CucumberJsonReport = [
       {
@@ -45,7 +45,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives the level from
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the tier its tag names, not the report's fallback", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its tag names, not the report's fallback", () => {
 
   it("reads an @e2e scenario failed when one step failed, whatever its other steps did", () => {
     const report: CucumberJsonReport = [
@@ -96,7 +96,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the tier its 
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations emits one observation per named non-unit tier", () => {
+describe("[SCN-CUC-002] parseCucumberEvidenceObservations emits one observation per named non-unit layer", () => {
   it("emits BOTH an integration and an e2e observation from ONE cucumber pass of an @integration @e2e scenario", () => {
     const report: CucumberJsonReport = [
       {

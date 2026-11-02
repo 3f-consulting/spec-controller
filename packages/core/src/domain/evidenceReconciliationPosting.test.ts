@@ -45,7 +45,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
   });
 });
 
-describe("[SCN-LDG-022] reconcile — every evidence observation is found once, inside the quality-check reconciliation of its quality check", () => {
+describe("[SCN-LDG-022] reconcile — every evidence observation is found once, inside the quality-check reconciliation of its kind of quality check", () => {
   const scenarios: Scenario[] = [
     { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
@@ -75,7 +75,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation is found once, 
       (reconciliation.evidenceObservations ?? []).map((held) => ({ reconciliation, held }))
     );
 
-  it("finds each evidence observation exactly once, inside a reconciliation of its own quality check", () => {
+  it("finds each evidence observation exactly once, inside a reconciliation of its own kind of quality check", () => {
     const held = rows().flatMap(heldBy);
     for (const observation of everyObservation) {
       const found = held.filter(({ held: reconciled }) => {

@@ -6,7 +6,7 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const TERMS = [
-  "- A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
+  "- A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled for each kind of quality check.",
   "- A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome. No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
   "- An Evidence Obligation is a proof a scenario asks for, by the tags it carries, to be met by Evidence Observations.",
   "- An Evidence Observation is one reported result of a test or a fitness function, attributed by the code it cites: to the one scenario that carries the code, to a phantom claim when no scenario carries it, and otherwise to the unnamed claim. One that never reached its assertions is broken: it was reported, but did not run to a result.",

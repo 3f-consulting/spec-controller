@@ -389,7 +389,7 @@ export const CORE_MESSAGES: CoreMessages = {
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
-    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled quality check by quality check.",
+    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled for each kind of quality check.",
   [CoreMessage.EvidenceReconciliationReconciliationLineTerm]:
     "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome. " +
     "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
@@ -412,7 +412,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
   [CoreMessage.EvidenceObservationsSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
     `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
-  [CoreMessage.EvidenceObservationsTableHeader]: "| Quality-check | Evidence observations | Runner | CI step |",
+  [CoreMessage.EvidenceObservationsTableHeader]: "| Kind of quality check | Evidence observations | Runner | CI step |",
   [CoreMessage.FitnessRunner]: "each fitness function's check step",
   [CoreMessage.FitnessCiStep]: (steps) =>
     `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
@@ -420,7 +420,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.RunnerLayerUnnamed]: "unnamed: the target has not said.",
   [CoreMessage.NoStepCountedAsItsRunnerRunsIt]: "no step counted as its runner runs it.",
   [CoreMessage.RunnerKeyNotALayer]: (key) =>
-    `${key} — not a tier: the runner block is keyed by the four tiers, and this key excludes nothing.`,
+    `${key} — not a layer: the runner block is keyed by the four layers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
   [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",

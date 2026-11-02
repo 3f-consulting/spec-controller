@@ -50,23 +50,23 @@ function rowsByCheck(runners: unknown): Map<string, string[]> {
   return rowsOf({ runners });
 }
 
-describe("[SCN-RPT-051] a behavioural quality check whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included", () => {
-  it("says in the runner cell of a quality check the target names null that the target names none, with a blank CI step cell", () => {
+describe("[SCN-RPT-051] a layer whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included", () => {
+  it("says in the runner cell of a layer the target names null that the target names none, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
     expect(rows.get("performance")).toStrictEqual(["performance", "1", "no runner: the target names none.", ""]);
   });
 
-  it("says in the runner cell of a quality check the target omits that the target has not said, with a blank CI step cell", () => {
+  it("says in the runner cell of a layer the target omits that the target has not said, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
     expect(rows.get("e2e")).toStrictEqual(["e2e", "1", "unnamed: the target has not said.", ""]);
   });
 
-  it("names the declared runner, not a note, on a quality check the target names", () => {
+  it("names the declared runner, not a note, on a layer the target names", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
     expect(rows.get("unit")?.slice(0, 3)).toStrictEqual(["unit", "1", "vitest"]);
   });
 
-  it("says at count 0 that the target has not said on a quality check it leaves out, and that it names none on one it names null", () => {
+  it("says at count 0 that the target has not said on a layer it leaves out, and that it names none on one it names null", () => {
     expect(rowsByCheck({ unit: "vitest", performance: null }).get("integration")).toStrictEqual([
       "integration",
       "0",

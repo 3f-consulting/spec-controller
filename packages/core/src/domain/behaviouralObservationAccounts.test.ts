@@ -55,7 +55,7 @@ function rowOf(claim: string, kind: ClaimKind, evidenceObservations: readonly Ev
 }
 
 describe("the behavioural-observation tally reports the raw counts and the invented accounts", () => {
-  it("[SCN-RPT-017] counts raw per quality-check over ALL behavioural evidence observations, SKIPPING the fitness evidence observation", () => {
+  it("[SCN-RPT-017] counts raw per layer over ALL behavioural evidence observations, SKIPPING the fitness evidence observation", () => {
     expect(tallyOfEveryObservationKind().rawByLayer).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 

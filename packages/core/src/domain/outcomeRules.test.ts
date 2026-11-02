@@ -18,7 +18,7 @@ const observation = (
   extra: Partial<BehaviouralEvidenceObservation> = {}
 ): BehaviouralEvidenceObservation => ({ qualityCheckKind, scnId, status: "passed", ...extra });
 
-describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at quality-checks with no evidence obligation", () => {
+describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at kinds of quality check with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
   it("skips an evidence observation at a NAMED pair — that one reconciles as a matched obligation", () => {
@@ -27,7 +27,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence obs
     ).toEqual([]);
   });
 
-  it("lists an evidence observation at a quality-check with NO evidence obligation, evidence observation only, carrying its locator", () => {
+  it("lists an evidence observation at a kind of quality check with NO evidence obligation, evidence observation only, carrying its locator", () => {
     const items = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
       [observation("e2e", "SCN-AAA-001", { locator: "tests/a.e2e.ts" })],
@@ -40,7 +40,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence obs
   });
 });
 
-describe("[SCN-LDG-008] an evidence observation at a quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation", () => {
+describe("[SCN-LDG-008] an evidence observation at a kind of quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
   it("holds a behavioural evidence observation from no test file with only the keys it has", () => {
@@ -176,7 +176,7 @@ describe("[SCN-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
     enforcedOverRealSource: true,
   };
 
-  it("holds the unnamed claim's evidence in one reconciliation per quality check, each observation a line in evidence order, a broken one reading broken", () => {
+  it("holds the unnamed claim's evidence in one reconciliation per kind of quality check, each observation a line in evidence order, a broken one reading broken", () => {
     const row = reconcile([], [guard, uncited, broken]).claimReconciliations.find((r) => r.claim === UNNAMED_CLAIM_ID)!;
     expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheckKind, i.outcome, i.evidenceObservations?.map((o) => [o.locator, o.outcome])])).toEqual([
       ["unit", undefined, [["tests/broken.test.ts", "broken"], ["tests/orphan.test.ts", "cites-no-scenario"]]],
