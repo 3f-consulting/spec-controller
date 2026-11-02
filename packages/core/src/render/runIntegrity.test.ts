@@ -150,9 +150,10 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 
   it("each row headlines its broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped, the skipped check's on the scenario it names", () => {
-    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
+    const message = "  \n\t\nCannot   find | package\n    at packageResolve (node:internal)";
+    const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message), SKIPPED_CHECK);
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(
-      brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Error: Cannot find \\| package`),
+      brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Cannot find \\| package`),
     );
     expect(reconcilingItemsCell(md, "SCN-RIN-001")).toBe(
       [`fitness: ${OUTCOME_DESCRIPTION.missing}`, brokenCell("fitness", checkDidNotRun)].join("; "),

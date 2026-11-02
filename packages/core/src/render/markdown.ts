@@ -7,7 +7,8 @@ import type {
 } from "../model.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
-import { cellSafe } from "./cellSafe.js";
+import { cellSafe, cellSafeKeepingCodeSpans } from "./cellSafe.js";
+import { reportedName } from "./reportedName.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
 import { type SharedScnCode } from "../domain/corpusCounts.js";
@@ -53,16 +54,18 @@ function quotedSuffix(parts: readonly (string | undefined)[]): string {
   return where === "" ? "" : ` (${where})`;
 }
 
+const reported = (part: string | undefined): string | undefined => (part === undefined ? undefined : reportedName(part));
+
 function namedSuffix(o: EvidenceObservation): string {
-  return quotedSuffix(isFitnessObservation(o) ? [o.fitnessFunction] : [o.locator, o.testName]);
+  return quotedSuffix((isFitnessObservation(o) ? [o.fitnessFunction] : [o.locator, o.testName]).map(reported));
 }
 
 function scenarioClauseOf({ scenario }: ReconciliationLine): string {
-  return scenario === undefined ? "" : ` — ${CORE_MESSAGES[CoreMessage.SharedScnCodeScenario](scenario.feature, scenario.title)}`;
+  return scenario === undefined ? "" : ` — ${CORE_MESSAGES[CoreMessage.SharedScnCodeScenario](reportedName(scenario.feature), reportedName(scenario.title))}`;
 }
 
 function brokenSuffix(o: EvidenceObservation): string {
-  return quotedSuffix([o.locator, remarkHeadlineOf(o)]);
+  return quotedSuffix([reported(o.locator), remarkHeadlineOf(o, reportedName)]);
 }
 
 function observationSuffix(o: EvidenceObservation): string {
@@ -85,18 +88,18 @@ function renderPendingItem(item: PendingItem): string {
 }
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
-  const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark) ?? []);
+  const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark, reportedName) ?? []);
   const code = group.sharedScnCode === undefined ? [] : [CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)];
   const said = [...new Set([...code, ...remarks])].filter((part) => part !== "").join(" / ");
   const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
-  const names = group.failedNames.map((name) => name.trim()).filter((name) => name !== "");
+  const names = group.failedNames.map(reportedName).filter((name) => name !== "");
   const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
-  return `${group.qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([group.locator, said])} — ${counts}${failed}`;
+  return `${group.qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
 }
 
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
-  const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names);
+  const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names.map(reportedName));
   const remark =
     group.sharedScnCode === undefined ? "" : ` (${CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)})`;
   return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${remark} — ${steps}`;
@@ -109,7 +112,7 @@ function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[]
 
 function renderRowExceptions(s: ClaimReconciliation): string {
   const items = isUnnamedClaim(s) ? renderUnnamedClaimItems(reconcilingItemsOf(s)) : reconcilingItemsOf(s).map(renderLine);
-  const reconciling = items.map(cellSafe).join("; ");
+  const reconciling = items.map(cellSafeKeepingCodeSpans).join("; ");
   const pending = s.pendingItems.map(renderPendingItem).join("; ");
   const groups = [reconciling, pending].filter((g) => g.length > 0);
   return groups.length === 0 ? "—" : groups.join("; ");

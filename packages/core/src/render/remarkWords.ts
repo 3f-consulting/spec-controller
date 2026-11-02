@@ -32,7 +32,7 @@ export function remarkWordsOf({ message, notes = [] }: Remark): string | undefin
   return words.length === 0 ? undefined : words.join(" ");
 }
 
-export function remarkHeadlineOf({ message, notes = [] }: Remark): string | undefined {
+export function remarkHeadlineOf({ message, notes = [] }: Remark, quote: (line: string) => string): string | undefined {
   const headline = message?.split("\n").map((line) => line.replace(/\s+/g, " ").trim()).find((line) => line.length > 0);
-  return remarkWordsOf({ ...(headline === undefined ? {} : { message: headline }), notes });
+  return remarkWordsOf({ ...(headline === undefined ? {} : { message: quote(headline) }), notes });
 }

@@ -4,6 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { remarkWordsOf } from "./remarkWords.js";
 import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { specsFeaturesInputs } from "./runContext.test-utils.js";
@@ -128,11 +129,11 @@ describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation 
 
     it("a file that failed to collect, with its error, names the locator and the error joined by a colon", () => {
       const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "src/broken.test.ts", status: "failed", message: "Error: Cannot find module './gone.js'" }] }
+        { testResults: [{ name: "src/broken.test.ts", status: "failed", message: "Cannot find module './gone.js'" }] }
       );
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
-        items: item("broken", "unit", "src/broken.test.ts: Error: Cannot find module './gone.js'"),
+        items: item("broken", "unit", "src/broken.test.ts: Cannot find module './gone.js'"),
       });
     });
 
@@ -211,6 +212,16 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
     ["a broken item whose file is whitespace only", { scnId: null, broken: true, locator: " " }, "broken", undefined],
     ["a CI step whose name is empty", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
     ["a CI step whose name is whitespace only", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: " ", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
+    ["a test's name holding a semicolon", { locator: "src/a.test.ts", testName: "a; b" }, "failing", "src/a.test.ts: `a; b`"],
+    ["a file holding a colon", { locator: "src/a: b.test.ts" }, "failing", "`src/a: b.test.ts`"],
+    ["a fitness function holding a comma", { qualityCheckKind: "fitness", fitnessFunction: "lint, x", exists: true, enforcedOverRealSource: true }, "failing", "`lint, x`"],
+    ["a CI step's name holding a slash", { qualityCheckKind: "fitness", scnId: null, fitnessFunction: "lint / x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: `lint / x`"],
+    ["a file group's failed test name holding a slash", { scnId: null, locator: "src/a.test.ts", testName: "a / b" }, "cites-no-scenario", "src/a.test.ts", "1 ran, 0 passed, 1 failed (failed: `a / b`)"],
+    ["a broken item's message holding a colon", { scnId: null, broken: true, locator: "src/a.test.ts", message: "Error: gone" }, "broken", "src/a.test.ts: `Error: gone`"],
+    ["a file group's message holding a colon", { scnId: null, status: "passed", locator: "src/a.test.ts", message: "Error: gone" }, "cites-no-scenario", "src/a.test.ts: `Error: gone`", "1 ran, 1 passed, 0 failed"],
+    ["a test's name holding a semicolon and a backslash", { locator: "src/a.test.ts", testName: "a; b\\c" }, "failing", "src/a.test.ts: `a; b\\c`"],
+    ["a test's name holding a semicolon and a pipe", { locator: "src/a.test.ts", testName: "a; b | c" }, "failing", "src/a.test.ts: `a; b \\| c`"],
+    ["a test's name holding a semicolon, a backtick and a backslash", { locator: "src/a.test.ts", testName: "a`b; c\\d" }, "failing", "src/a.test.ts: ``a`b; c\\d``"],
   ] as const)("%s", (_title, fields, outcome, suffix, result?: string) => {
     const observation = { qualityCheckKind: "unit", scnId: "SCN-DEM-003", status: "failed", ...fields } as EvidenceObservation;
     const md = render([{ scnId: "SCN-DEM-003", evidenceObligations: [{ qualityCheckKind: observation.qualityCheckKind }] }], [observation]);
@@ -223,9 +234,20 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
     expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("cites-no-scenario", "fitness", undefined, "2 CI steps: lint"));
   });
 
-  it("a shared code's scenario title holding a pipe", () => {
+  it.each([
+    ["a pipe", "a | b", "a \\| b"],
+    ["a semicolon", "a; b", "`a; b`"],
+  ])("a shared code's scenario title holding %s", (_title, title, quoted) => {
     const sharer = (title: string): Scenario => ({ scnId: "SCN-DEM-004", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "a.feature", title });
-    const rows = claimReconciliationsTable(render([sharer("a | b"), sharer("c")], [])).rowsOf("SCN-DEM-004");
-    expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN))).toContain(item("duplicate-scn-code", "unit") + " — this one is a.feature : a \\| b");
+    const rows = claimReconciliationsTable(render([sharer(title), sharer("c")], [])).rowsOf("SCN-DEM-004");
+    expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN))).toContain(item("duplicate-scn-code", "unit") + ` — this one is a.feature : ${quoted}`);
+  });
+
+  it.each([
+    ["several scenario codes", { kind: "several-scn-codes", codes: ["SCN-A", "SCN-B"] }, { kind: "several-scn-codes", codes: ["SCN-A", "SCN-B"] }],
+    ["an ambiguous step whose name holds a line break", { kind: "ambiguous-step", step: "run\n  lint" }, { kind: "ambiguous-step", step: "run lint" }],
+  ] as const)("a broken item's message holding no separator, with a note on %s, reads as written and leaves the note's words outside any code span", (_title, note, shown) => {
+    const md = render([], [{ qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, locator: "src/a.test.ts", message: "gone", notes: [note] }]);
+    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("broken", "unit", `src/a.test.ts: gone ${remarkWordsOf({ notes: [shown] })}`));
   });
 });

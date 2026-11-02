@@ -564,7 +564,10 @@ Feature: The report renders the ledger as sectioned facts
     What a reconciling item quotes from the run sits whole in its cell: a file, a test's name, a
     fitness function's name, a CI step's name, a message, and a scenario's feature file and
     title. A pipe, a backslash or a line break in it never splits the row or changes what it
-    says. A part the run did not give leaves no empty part or separator behind.
+    says. A part the run did not give leaves no empty part or separator behind. A part that
+    holds one of the row's separators, a semicolon, a colon, a slash or a comma followed by a
+    space, sits in its code span, so it reads as one item and one part. One that holds none
+    reads as written.
 
     @unit @SCN-RPT-084
     Scenario: every reconciling item quotes what the run reported whole in its cell, a pipe, a backslash or a line break included, and leaves out a part the run did not give
