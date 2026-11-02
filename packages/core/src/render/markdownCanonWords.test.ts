@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderJson, renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -70,10 +71,9 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
-    expect(md).toContain(
-      'A row reading "Evidence Observation is missing" below may therefore be a BROKEN proof rather than an absent one'
-    );
-    expect(md).toContain(`A row reading "${OUTCOME_DESCRIPTION.missing}" below`);
+    const stamp = CORE_MESSAGES[CoreMessage.RunUnsound](CORE_MESSAGES[CoreMessage.OneProofNeverRan]);
+    expect(md.split("\n")).toContain(stamp);
+    expect(stamp).toContain(`"${OUTCOME_DESCRIPTION.missing}"`);
     expect(md).not.toContain("`missing`");
   });
 

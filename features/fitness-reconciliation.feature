@@ -5,8 +5,9 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   CI step whose id: is that scenario's code answers it with one Evidence Observation.
 
   A @fitness scenario has a title and tags and no steps, and nothing runs it. Its obligation is
-  satisfied only by a run: step in the CI config over the real tree; a check that exists but is
-  not wired into CI reconciles as watermelon. No other key or tag names a check: a
+  satisfied only by a run: step in the CI config over the real tree. A check that is not wired
+  into CI leaves its obligation missing, and one whose CI step or job sets `continue-on-error`
+  reconciles as watermelon. No other key or tag names a check: a
   specController.checkRegistry key settles nothing and is reported under "Configuration not
   read" like any key the block does not read, and a tag carrying a bare check word raises no
   obligation.

@@ -769,14 +769,14 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 | phantom claim | Claim Reconciliation(s) for cited scenario ids with no real scenario | |
 | `missing` | Evidence Observation is missing | |
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
-| `watermelon` | Evidence Observation is passing but its check could not fail its job | see below |
+| `watermelon` | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run | see below |
 | `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [the quick start](#when-a-row-reads-no-evidence-obligation) |
 | `duplicate-scn-code` | Evidence Obligation's @SCN code is carried by another Scenario | see below |
 | `no-scn-code` | Evidence Obligation has no @SCN code for an Evidence Observation to link to | |
 
 ### Watermelons
 
-The outcome to watch for is the **watermelon**: a fitness function that is green but could not have failed its job. It is a check step whose red `continue-on-error` would have swallowed, which makes a green CI lie. A watermelon is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
+The outcome to watch for is the **watermelon**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A watermelon is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
 ### Duplicate `@SCN` codes
 

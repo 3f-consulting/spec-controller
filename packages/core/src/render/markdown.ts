@@ -280,7 +280,7 @@ const ledgerSection: SectionEmitter = (report) => {
 
 function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
   if (columns.length === 0) return [];
-  return [...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"), ""];
+  return [...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"), CORE_MESSAGES[CoreMessage.WatermelonItemKey], ""];
 }
 
 function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {

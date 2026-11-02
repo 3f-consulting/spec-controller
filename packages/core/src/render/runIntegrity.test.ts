@@ -73,10 +73,7 @@ const whatBroke = (locator: string): string =>
 const brokenCell = (qualityCheckKind: string, where: string): string =>
   `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
 
-const unsoundStamp = (proofs: string): string =>
-  `**This run is unsound.** ${proofs} A row reading "Evidence Observation is missing" below may therefore be a ` +
-  'BROKEN proof rather than an absent one — it cannot be read as "write the test", because the test may ' +
-  "already be there. Fix the harness and regenerate.";
+const unsoundStamp = (proofs: string): string => CORE_MESSAGES[CoreMessage.RunUnsound](proofs);
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;

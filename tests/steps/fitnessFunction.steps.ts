@@ -8,7 +8,17 @@ import { claimReconciliationCell } from "./support/claimReconciliationsTable.js"
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { FitnessTarget, SpecControllerWorld } from "./support/world.js";
 
-const WATERMELON = "Evidence Observation is passing but its check could not fail its job";
+type OutcomeCarrier = { readonly outcome?: string };
+type JsonReport = {
+  readonly summary: { readonly evidenceReconciliation: { readonly reconciliationLines: { readonly byOutcome: Readonly<Record<string, number>> } } };
+  readonly ledger: {
+    readonly claimReconciliations: readonly {
+      readonly claim: string;
+      readonly kind: string;
+      readonly qualityCheckReconciliations: readonly (OutcomeCarrier & { readonly evidenceObservations?: readonly OutcomeCarrier[] })[];
+    }[];
+  };
+};
 
 const LINT_CHECKS_TARGET: FitnessTarget = {
   features: "tests/fixtures/two-lint-checks-one-cited/features",
@@ -105,6 +115,7 @@ When(
     const repoRoot = process.cwd();
     const abs = (p: string): string => join(repoRoot, p);
     const reportPath = join(this.outDir, "spec-reconciliation.md");
+    const jsonPath = join(this.outDir, "spec-reconciliation.json");
     const result = spawnSync(
       NODE,
       [
@@ -115,6 +126,7 @@ When(
         "--package-json", abs(this.fitnessTarget.packageJson),
         "--target", "fitness-check-in-sibling-workflow",
         "--format", `md:${reportPath}`,
+        "--format", `json:${jsonPath}`,
       ],
       { cwd: this.outDir, encoding: "utf8" },
     );
@@ -125,6 +137,7 @@ When(
     );
     this.siblingStatus = result.status;
     this.markdown = readFileSync(reportPath, "utf8");
+    this.jsonText = readFileSync(jsonPath, "utf8");
   },
 );
 
@@ -191,24 +204,24 @@ Then(
       !reconcilingItems.split("; ").some((item) => item.startsWith("fitness:")),
       `expected SCN-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
     );
-    const watermelonRow = this.markdown.split("\n").find((line) => line.startsWith(`| ${WATERMELON} |`));
-    assert.ok(
-      watermelonRow,
-      `expected the Evidence reconciliation summary's watermelon row, which is printed even at ` +
-        `zero; without it this check cannot tell no watermelon from a reworded one. Report:\n${this.markdown}`,
-    );
-    const outOfBalance = watermelonRow.split("|").map((cell) => cell.trim())[4];
+    const report = JSON.parse(this.jsonText) as JsonReport;
+    const watermelons = report.summary.evidenceReconciliation.reconciliationLines.byOutcome.watermelon;
     assert.equal(
-      outOfBalance,
-      "0",
-      `expected NO watermelon in the summary: a watermelon says a cited check is passing but ` +
-        `fabricated, and this one genuinely runs. Report:\n${this.markdown}`,
+      watermelons,
+      0,
+      `expected NO watermelon in the summary, whose count of watermelon lines is present even at zero: a ` +
+        `watermelon says a cited check is passing but fabricated, and this one genuinely runs. Report:\n${this.jsonText}`,
     );
-    assert.ok(
-      !this.markdown.split("\n").some((line) => line.startsWith("| SCN-") && line.includes(WATERMELON)),
+    const onScenarios = report.ledger.claimReconciliations
+      .filter((row) => row.kind === "scenario")
+      .flatMap((row) => row.qualityCheckReconciliations.flatMap((line) => [line, ...(line.evidenceObservations ?? [])]))
+      .filter((carrier) => carrier.outcome === "watermelon");
+    assert.deepEqual(
+      onScenarios,
+      [],
       `expected NO watermelon on any scenario's row: a watermelon says a cited check is passing but ` +
         `fabricated, and this one genuinely runs. Accusing a real gate of being fake is ` +
-        `worse than missing it. Report:\n${this.markdown}`,
+        `worse than missing it. Report:\n${this.jsonText}`,
     );
     assert.equal(
       this.siblingStatus,

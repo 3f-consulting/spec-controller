@@ -12,16 +12,9 @@ import { UNNAMED_CLAIM_ID, obligationsOf, reconcilingItemsOf } from "../domain/c
 import { QUALITY_CHECK_KINDS } from "../domain/journal.js";
 import { SCN_CODE } from "../domain/featureCode.js";
 
-const KEY = [
-  "Key: each evidence cell reads *obligation*/*observations*.",
-  "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.",
-  "- The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.",
-  "- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence, or whose unit evidence is pending.",
-  "- A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.",
-  "- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.",
-  "- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries an @SCN code and no tag that raises an Evidence Obligation.",
-  "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone and is counted in none.",
-  "- CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.",
+const keyLines = (): string[] => [
+  ...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"),
+  CORE_MESSAGES[CoreMessage.WatermelonItemKey],
 ];
 
 const heldOf = (row: ClaimReconciliation) => row.qualityCheckReconciliations.flatMap((q) => q.evidenceObservations ?? []);
@@ -67,16 +60,17 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
     const section = sectionOf(renderMarkdown(__er(ledger, true), ctx, publishedExitCodeOf));
-    expect(section.slice(0, 14)).toEqual([
+    const expected = [
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
       "",
       `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
       "",
-      ...KEY,
+      ...keyLines(),
       "",
-    ]);
+    ];
+    expect(section.slice(0, expected.length)).toEqual(expected);
     const table = claimReconciliationsTable(section);
-    expect(table.start).toBe(14);
+    expect(table.start).toBe(expected.length);
     expect(table.evidenceColumns).toEqual(["Unit"]);
   });
 
@@ -85,7 +79,7 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
     const table = claimReconciliationsTable(sectionOf(md));
     expect(table.start).toBe(4);
     expect(table.evidenceColumns).toEqual([]);
-    for (const line of KEY) expect(md).not.toContain(line);
+    for (const line of keyLines()) expect(md).not.toContain(line);
   });
   it("holds each line of the key, cell by cell, on a ledger holding every kind of row the table can show", () => {
     const reconciliation = everyRowKind();

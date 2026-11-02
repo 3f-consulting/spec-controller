@@ -145,6 +145,7 @@ export enum CoreMessage {
   ReconcilingItemsColumn,
   CiStepsColumn,
   EvidenceCellKey,
+  WatermelonItemKey,
   PendingItem,
   PendingItemFor,
   CheckStepNoOutcome,
@@ -297,9 +298,13 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OneProofNeverRan]: "1 proof never ran, so the behaviour it proves was never exercised.",
   [CoreMessage.ProofsNeverRan]: (count) => `${count} proofs never ran, so the behaviours they prove were never exercised.`,
   [CoreMessage.RunUnsound]: (proofs) =>
-    `**This run is unsound.** ${proofs} A row reading "${MISSING}" ` +
-    "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
-    `"write the test", because the test may already be there. Fix the harness and regenerate.`,
+    `**This run is unsound.** ${proofs} A broken proof sits on the row of the claim it names, as every ` +
+    "Evidence Observation does. On a scenario's row, an Evidence Obligation of its kind of quality check " +
+    `that no other proof answers reads "${MISSING}", though its test may already be written. A broken ` +
+    "proof on the row of a phantom claim or of the unnamed claim may be the proof behind any item of its " +
+    `kind of quality check that reads "${MISSING}", on any row. Fix what stopped each proof listed below ` +
+    "from running, such as its test, the code it loads, its step definitions, its runner or the CI job " +
+    "that runs it. Then run them again and regenerate this report.",
   [CoreMessage.BrokenEvidenceNotNamed]: "(evidence not named by the runner)",
   [CoreMessage.BrokenEvidenceWhatBroke]: (locator) => `${locator} — what broke:`,
   [CoreMessage.BrokenEvidenceNoMessage]: "(no message reported by the runner)",
@@ -508,6 +513,8 @@ export const CORE_MESSAGES: CoreMessages = {
     "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone and is counted in none.",
     "- CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.",
   ].join("\n"),
+  [CoreMessage.WatermelonItemKey]:
+    "- Where a row carries a watermelon item, the name in parentheses after it is its fitness function. Remove `continue-on-error` from its CI step and from its job, or set it to false, and the check's red fails the CI run.",
   [CoreMessage.PendingItem]: "pending",
   [CoreMessage.PendingItemFor]: (qualityCheckKind) => `pending: ${qualityCheckKind}`,
   [CoreMessage.CheckStepNoOutcome]: (scnId) =>
@@ -527,14 +534,14 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.OutcomeSatisfied]: SATISFIED,
   [CoreMessage.OutcomeMissing]: MISSING,
   [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",
-  [CoreMessage.OutcomeWatermelon]: "Evidence Observation is passing but its check could not fail its job",
+  [CoreMessage.OutcomeWatermelon]:
+    "Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run",
   [CoreMessage.OutcomeNoScnCode]: "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
   [CoreMessage.OutcomeDuplicateScnCode]: DUPLICATE_SCN_CODE,
   [CoreMessage.OutcomeCitesUnknownScenario]: "Evidence Observation cites an unknown Scenario",
   [CoreMessage.OutcomeCitesNoScenario]: "Evidence Observation cites no Scenario",
   [CoreMessage.OutcomeNoEvidenceObligation]: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
-  [CoreMessage.OutcomeBroken]:
-    "Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)",
+  [CoreMessage.OutcomeBroken]: "Evidence Observation is broken because its proof never ran to a result",
   [CoreMessage.OutcomeBothMissing]:
     "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
   [CoreMessage.ObservationPassed]: "passed",

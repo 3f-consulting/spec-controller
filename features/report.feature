@@ -348,8 +348,8 @@ Feature: The report renders the ledger as sectioned facts
 
     The "missing" cause row reads "Evidence Observation is missing". A reconciling item for a
     missing unit observation reads "unit: Evidence Observation is missing". A reconciling item
-    for a "watermelon" fitness observation opens with "fitness: Evidence Observation is passing
-    but its check could not fail its job", and its fitness function follows.
+    for a "watermelon" fitness observation opens with "fitness: " and the watermelon outcome's
+    sentence, and its fitness function follows.
 
     The Detail column shows no sentence. The JSON keeps the bare handle.
 
@@ -401,16 +401,16 @@ Feature: The report renders the ledger as sectioned facts
         | satisfied              | Evidence Observation satisfies its Evidence Obligation                                                                    |
         | missing                | Evidence Observation is missing                                                                                          |
         | failing                | Evidence Observation is failing                                                                                          |
-        | watermelon             | Evidence Observation is passing but its check could not fail its job                                                      |
+        | watermelon             | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run |
         | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
         | duplicate-scn-code     | Evidence Obligation's @SCN code is carried by another Scenario                                                            |
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
         | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
         | no-evidence-obligation             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
-        | broken                 | Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)                                     |
+        | broken                 | Evidence Observation is broken because its proof never ran to a result                                                   |
         | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
 
-  Rule: the report surfaces broken evidence as a harness failure, and stamps the run unsound
+  Rule: the report surfaces broken evidence as a proof that never ran, and stamps the run unsound
 
     A broken observation is a proof that never ran, such as a Vitest suite that failed to
     collect or a Cucumber step that two step definitions match. The markdown does three things
@@ -428,12 +428,16 @@ Feature: The report renders the ledger as sectioned facts
     than any run of backticks in the message, so the message sits whole inside it. A message
     that is empty or holds only whitespace reads as no message.
 
-    Third, it stamps the run "unsound" under a "## Run integrity: unsound" heading, and tells
-    the reader that any missing outcome in the run may be a proof that exists but did not run,
-    not a test still to write.
+    Third, it stamps the run "unsound" under a "## Run integrity: unsound" heading. It tells the
+    reader that a broken proof sits on the row of the claim it names, where an Evidence
+    Obligation of its kind of quality check that no other proof answers reads as missing. A
+    broken proof on the row of a phantom claim or of the unnamed claim may be the proof behind
+    any missing item of its kind of quality check, on any row, rather than a test still to
+    write.
 
     The report names what broke and prints the message without prescribing a cure. Its one
-    remedy is to fix the harness and regenerate.
+    remedy is to fix what stopped each proof from running, such as its test, the code it loads,
+    its step definitions, its runner or the CI job that runs it, and regenerate.
 
     A run with no broken evidence has no run-integrity section. The section is markdown only.
 
@@ -663,11 +667,14 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-043
     Scenario: a balanced row carrying a Pending Item reads differently from a clean-balanced row
 
-  Rule: the markdown report explains its evidence cells in a key under the Claim Reconciliations heading
+  Rule: the markdown report explains the Claim Reconciliations table's cells in a key under its heading
 
     After the section's tally lines and before its table, a key reads each evidence cell as
-    obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean.
-    Each line of the key holds for every kind of row the table can show.
+    obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean. It
+    also reads the Reconciling items and CI steps cells. Where a row carries a watermelon item,
+    the key says what the item's parentheses name, and what the reader removes or sets to false
+    so the check's red fails the CI run. Each line of the key holds for every kind of row the
+    table can show.
 
     A table with no evidence column carries no key.
 

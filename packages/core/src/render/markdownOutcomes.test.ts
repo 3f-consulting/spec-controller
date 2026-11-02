@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -58,27 +59,27 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
 });
 
 describe("[SCN-RPT-025] every outcome glosses as its sentence, verbatim", () => {
-  const OUTCOME_SENTENCES = [
-    ["satisfied", "Evidence Observation satisfies its Evidence Obligation"],
-    ["missing", "Evidence Observation is missing"],
-    ["failing", "Evidence Observation is failing"],
-    ["watermelon", "Evidence Observation is passing but its check could not fail its job"],
-    ["no-scn-code", "Evidence Obligation has no @SCN code for an Evidence Observation to link to"],
-    ["duplicate-scn-code", "Evidence Obligation's @SCN code is carried by another Scenario"],
-    ["cites-unknown-scenario", "Evidence Observation cites an unknown Scenario"],
-    ["cites-no-scenario", "Evidence Observation cites no Scenario"],
-    ["no-evidence-obligation", "Evidence Observation cites a Scenario with no matching Evidence Obligation"],
-    ["broken", "Evidence Observation ATTEMPT errored before its proof ran (behaviour never exercised)"],
-    ["both-missing", "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"],
-  ] as const satisfies readonly (readonly [Outcome, string])[];
-  // A new outcome fails the typecheck here until its sentence has a row.
-  const everyOutcomeHasARow: [Exclude<Outcome, (typeof OUTCOME_SENTENCES)[number][0]>] extends [never] ? true : never = true;
+  const OUTCOME_ENTRIES = [
+    ["satisfied", CoreMessage.OutcomeSatisfied],
+    ["missing", CoreMessage.OutcomeMissing],
+    ["failing", CoreMessage.OutcomeFailing],
+    ["watermelon", CoreMessage.OutcomeWatermelon],
+    ["no-scn-code", CoreMessage.OutcomeNoScnCode],
+    ["duplicate-scn-code", CoreMessage.OutcomeDuplicateScnCode],
+    ["cites-unknown-scenario", CoreMessage.OutcomeCitesUnknownScenario],
+    ["cites-no-scenario", CoreMessage.OutcomeCitesNoScenario],
+    ["no-evidence-obligation", CoreMessage.OutcomeNoEvidenceObligation],
+    ["broken", CoreMessage.OutcomeBroken],
+    ["both-missing", CoreMessage.OutcomeBothMissing],
+  ] as const satisfies readonly (readonly [Outcome, CoreMessage])[];
+  // A new outcome fails the typecheck here until its entry has a row.
+  const everyOutcomeHasARow: [Exclude<Outcome, (typeof OUTCOME_ENTRIES)[number][0]>] extends [never] ? true : never = true;
   void everyOutcomeHasARow;
 
-  it.each(OUTCOME_SENTENCES)(
+  it.each(OUTCOME_ENTRIES)(
     'the "%s" outcome glosses as its sentence, verbatim',
-    (handle, sentence) => {
-      expect(OUTCOME_DESCRIPTION[handle]).toBe(sentence);
+    (handle, entry) => {
+      expect(OUTCOME_DESCRIPTION[handle]).toBe(CORE_MESSAGES[entry]);
     }
   );
 });
