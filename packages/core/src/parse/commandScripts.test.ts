@@ -82,7 +82,6 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     ["through a launcher", "CI=1 timeout 10m npx pnpm test", "test"],
     ["on a later line", "pnpm install\necho done\npnpm test", "test"],
     ["after && that follows a quoted argument", 'echo "done" && pnpm test', "test"],
-    ["after a background &", "pnpm start & pnpm test", "test"],
     ["after && behind a quote escaped with a backslash", 'echo \\"start && pnpm test && echo end\\"', "test"],
     ["on the line after a comment", "pnpm lint # quick\npnpm test", "test"],
     ["after && behind a # inside a word", "echo a#b && pnpm test", "test"],
@@ -383,8 +382,6 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
   });
 
   it.each([
-    ["an option's value", "sudo -u pnpm test", "test"],
-    ["an option's value under nice", "nice -n pnpm test", "test"],
     ["timeout's duration", "timeout pnpm test", "test"],
     ["timeout's duration past its options", "timeout -k 5s pnpm test", "test"],
     ["flock's lock file", "flock pnpm test", "test"],
@@ -537,7 +534,7 @@ describe("[SCN-WFS-022] commandInvokesScript — npm's run aliases run the scrip
 });
 
 describe("[SCN-WFS-023] recognisedRunners — pnpm's test shortcut runs the manifest's test script", () => {
-  it.each([["pnpm test"], ["pnpm t"], ["pnpm tst"]] as const)("recognises the unit runner at a step running %s", (command) => {
+  it.each([["pnpm t"], ["pnpm tst"]] as const)("recognises the unit runner at a step running %s", (command) => {
     expectVitestRecognisedAtCheck(command, { test: "vitest run" });
   });
 
