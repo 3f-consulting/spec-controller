@@ -118,6 +118,11 @@ export enum CoreMessage {
   StepAccountingNotAppliedLabel,
   StepAccountingNoWorkflowRead,
   StepAccountingPlumbingLabel,
+  StepAccountingCandidatesTerm,
+  StepAccountingReconcilerTerm,
+  StepAccountingExcludedTerm,
+  StepAccountingPlumbingTerm,
+  StepAccountingAccountedForTerm,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
@@ -447,6 +452,19 @@ export const CORE_MESSAGES: CoreMessages = {
     `Not applied, because each ${key} entry below names a workflow this run did not read (this run read ${workflowsRead}):`,
   [CoreMessage.StepAccountingNoWorkflowRead]: "no workflow",
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
+  [CoreMessage.StepAccountingCandidatesTerm]:
+    "A Candidate is a step read that is not a Runner, Reconciler, Excluded or GitHub plumbing step. " +
+    "It is read as a fitness function: its result is an Evidence Observation named, with its step, " +
+    "on the row of Claim Reconciliations it posts to, so no list below names it.",
+  [CoreMessage.StepAccountingReconcilerTerm]:
+    "A Reconciler step runs this reconciliation or writes the step record it reads.",
+  [CoreMessage.StepAccountingExcludedTerm]:
+    "An Excluded step is one the target names a non-check under `specController.notChecks`, a GitHub plumbing step included.",
+  [CoreMessage.StepAccountingPlumbingTerm]:
+    "A GitHub plumbing step only sets up the job: it uses one of GitHub's own actions that check out the source, " +
+    "cache, set up a toolchain or move artefacts between jobs. A step that runs a command, an install included, is never plumbing.",
+  [CoreMessage.StepAccountingAccountedForTerm]:
+    "Accounted for is the sum of the five columns from Candidates to GitHub plumbing, in which each step read is counted once.",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",

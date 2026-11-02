@@ -756,6 +756,9 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-073
     Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing
 
+    @unit @SCN-RPT-092
+    Scenario: the step-accounting section defines its Candidates, Reconciler, Excluded, GitHub plumbing and Accounted for columns before its table, and prints no definition when it prints no table
+
   Rule: the report lists each scenario code error under Scenario code errors, only when the corpus holds one, worded from the error's own values
 
     @unit @SCN-RPT-055

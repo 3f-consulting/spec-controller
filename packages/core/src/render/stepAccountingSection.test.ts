@@ -22,13 +22,11 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
     const end = lines.indexOf("", header);
     expect(end).toBeGreaterThan(header);
     expect(lines[end + 1]).toBe(CORE_MESSAGES[CoreMessage.StepAccountingRunnersLabel]);
-    return lines.slice(0, end + 1);
+    return lines.slice(header, end + 1);
   };
 
   it("tables the one job read as one row, with no total row, and the lists follow the table", () => {
     expect(throughTable(reconcile([ci]))).toStrictEqual([
-      "### Step accounting",
-      "",
       "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
       "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
       "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
@@ -38,8 +36,6 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
 
   it("tables each job read as a row, by workflow then job, then a total row, and the lists follow the table", () => {
     expect(throughTable(reconcile([nightly, ci], ["nightly.yml", "ci.yml"]))).toStrictEqual([
-      "### Step accounting",
-      "",
       "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
       "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
       "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
@@ -60,7 +56,7 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
     const source = ci.replace("\n  ci:\n", `\n  ${jobKey}:\n`);
     const packageJson = { scripts: { test: "vitest run" }, specController: { runners: { unit: "vitest" } } };
     const table = throughTable(reconcile([source], [file], packageJson));
-    const rows = table.slice(4, -1);
+    const rows = table.slice(2, -1);
     expect(rows).toStrictEqual([`| ${workflow} | ${job} | 15 | 6 | 1 | 2 | 0 | 6 | 15 |`]);
     expect((rows[0] ?? "").split(/(?<!\\)\|/).slice(1, -1)).toHaveLength(9);
   });

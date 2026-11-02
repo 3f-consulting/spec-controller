@@ -31,9 +31,19 @@ const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
   return [`| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | ${counts}`];
 };
 
+const STEP_ACCOUNTING_TERMS = [
+  CoreMessage.StepAccountingCandidatesTerm,
+  CoreMessage.StepAccountingReconcilerTerm,
+  CoreMessage.StepAccountingExcludedTerm,
+  CoreMessage.StepAccountingPlumbingTerm,
+  CoreMessage.StepAccountingAccountedForTerm,
+] as const;
+
 const tableOf = (accounting: StepAccounting): string[] => {
   if (accounting.byJob.length === 0) return [];
   return [
+    ...STEP_ACCOUNTING_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
+    "",
     CORE_MESSAGES[CoreMessage.StepAccountingTableHeader],
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...jobRowsOf(accounting),
