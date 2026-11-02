@@ -91,7 +91,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
     @unit @SCN-RMD-015
-    Scenario: each kind of quality check in the summary's evidence observations names its CI steps as the step accounting lists them, one entry for each step and in its order, fitness included: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count
+    Scenario: each kind of quality check in the summary's evidence observations names its CI steps in the step accounting's order, one entry for each step: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count; fitness the step behind each fitness function that ran
 
     @unit @SCN-RMD-027
     Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code
@@ -176,7 +176,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
 
-  Rule: the summary's step accounting holds a row per workflow and job read, with the steps behind each count but its candidates
+  Rule: the summary's step accounting holds a row per workflow and job read, with the steps behind its runners, reconciler, excluded and plumbing counts
 
     The summary's step accounting states every CI step the run read, and what it counted each
     step as. It holds one row per workflow and job, ordered by workflow and then by job, each

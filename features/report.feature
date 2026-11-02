@@ -188,7 +188,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-010
     Scenario: the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction
 
-  Rule: the evidence observations table names, beside each kind of quality check's count, its runner, if it has one, and the CI steps that run it
+  Rule: the evidence observations table names, beside each kind of quality check's count, its runner, if it has one, and for a layer the CI steps counted as running its declared runner, or for fitness how many steps run its fitness functions
 
     Under "### Evidence observations", the table has a row per kind of quality check with its count,
     its runner and its CI step. A layer's runner is the one the target
@@ -211,7 +211,7 @@ Feature: The report renders the ledger as sectioned facts
     There is no Behavioural runners section.
 
     @unit @SCN-RPT-074
-    Scenario: each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
+    Scenario: each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
     @unit @SCN-RPT-051
     Scenario: a layer whose runner the target does not declare says in its runner cell that the target names none, or that it has not said, whatever its count, a target with no runners block included
@@ -314,9 +314,9 @@ Feature: The report renders the ledger as sectioned facts
       When balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON
       Then the saved reconciliation, in both markdown and JSON, carries none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root
 
-  Rule: the report's evidence-observation views level a behavioural observation by the cited scenario's tag
+  Rule: the report's evidence-observation views level a behavioural observation at each layer it was posted at
 
-    A behavioural observation is levelled by the cited scenario's own evidence tag, in the
+    A behavioural observation is levelled at each layer it was posted at, in the
     report's views as in the reconciliation. A Cucumber run of an @e2e scenario counts at e2e
     in Evidence observations and in the scenario's E2e cell. A Cucumber run of a scenario tagged
     both @integration and @e2e counts in both layers.
@@ -711,7 +711,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-088
     Scenario: each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string
 
-  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind each count but Candidates listed beneath
+  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind its Runners, Reconciler, Excluded and GitHub plumbing counts listed beneath
 
     Under "## Summary views", the "### Step accounting" section is the report's one section about
     the CI steps the run read. Its table has a row per workflow and job read, in the step

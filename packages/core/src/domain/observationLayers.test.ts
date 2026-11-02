@@ -2,34 +2,33 @@ import { describe, it, expect } from "vitest";
 
 import { fallbackLayerOf, layersPostedAt } from "./journal.js";
 
-describe("[SCN-LDG-012] an observation of a scenario tagged @integration is posted at integration", () => {
+describe("[SCN-LDG-012] an observation from a report of scenario runs is posted at integration when its scenario is tagged @integration", () => {
   it.each([
-    ["the tag's layer, not the report's fallback", ["integration", "SCN-LDG-012"], "e2e"],
-    ["integration once, when the tag is inherited beside the scenario's own", ["integration", "integration", "SCN-LDG-012"], "e2e"],
-    ["integration alone, beside @unit", ["unit", "integration", "SCN-LDG-012"], "unit"],
-  ] as const)("is posted at %s", (_title, tagNames, fallback) => {
-    expect(layersPostedAt(tagNames, fallback)).toEqual(["integration"]);
+    ["integration, by its own tag", ["integration", "SCN-LDG-012"]],
+    ["integration once, when the tag is inherited beside the scenario's own", ["integration", "integration", "SCN-LDG-012"]],
+    ["integration alone, beside @unit", ["unit", "integration", "SCN-LDG-012"]],
+  ] as const)("is posted at %s", (_title, tagNames) => {
+    expect(layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"))).toEqual(["integration"]);
   });
 });
 
-describe("[SCN-LDG-011] an observation of a scenario tagged @e2e is posted at e2e, whatever its report's fallback", () => {
-  it.each(["integration", "unit", "e2e", "performance"] as const)("is posted at e2e when its report's fallback is %s", (fallback) => {
-    expect(layersPostedAt(["e2e", "SCN-LDG-011"], fallback)).toEqual(["e2e"]);
-  });
-
-  it("is posted at e2e alone, beside @unit", () => {
-    expect(layersPostedAt(["unit", "e2e", "SCN-LDG-011"], "integration")).toEqual(["e2e"]);
+describe("[SCN-LDG-011] an observation from a report of scenario runs is posted at e2e when its scenario is tagged @e2e", () => {
+  it.each([
+    ["e2e, by its own tag", ["e2e", "SCN-LDG-011"]],
+    ["e2e alone, beside @unit", ["unit", "e2e", "SCN-LDG-011"]],
+  ] as const)("is posted at %s", (_title, tagNames) => {
+    expect(layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"))).toEqual(["e2e"]);
   });
 });
 
-describe("[SCN-LDG-014] an observation of a scenario tagged @integration and @e2e is posted at both", () => {
+describe("[SCN-LDG-014] an observation from a report of scenario runs is posted at integration and at e2e when its scenario is tagged @integration and @e2e", () => {
   it.each([
     ["integration then e2e, in tag order", ["integration", "e2e", "SCN-LDG-014"], ["integration", "e2e"]],
     ["e2e then integration, in tag order", ["e2e", "integration", "SCN-LDG-014"], ["e2e", "integration"]],
     ["each once, when a tag is repeated", ["integration", "e2e", "integration", "e2e", "SCN-LDG-014"], ["integration", "e2e"]],
     ["both alone, beside @unit", ["unit", "integration", "e2e", "SCN-LDG-014"], ["integration", "e2e"]],
   ] as const)("is posted at %s", (_title, tagNames, expected) => {
-    expect(layersPostedAt(tagNames, "unit")).toEqual(expected);
+    expect(layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"))).toEqual(expected);
   });
 });
 

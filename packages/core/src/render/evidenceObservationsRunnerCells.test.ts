@@ -119,7 +119,7 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
     .find(([check]) => check === "fitness");
 }
 
-describe("[SCN-RPT-074] each kind of quality check's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
+describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
   it("heads the table with the kind of quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
     expect(header).toStrictEqual(["Kind of quality check", "Evidence observations", "Runner", "CI step"]);

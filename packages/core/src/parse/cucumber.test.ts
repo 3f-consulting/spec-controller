@@ -9,7 +9,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 
-describe("[SCN-CUC-002] the tags a Cucumber scenario carries, its own and those it inherits, decide each layer its observations are posted at, and with no layer tag they are posted at integration, because a Cucumber report is a report of scenario runs", () => {
+describe("[SCN-CUC-002] a Cucumber scenario tagged @e2e, by its own tag or one it inherits, is posted at e2e, and one tagged only @unit, or with no layer tag, at integration", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",

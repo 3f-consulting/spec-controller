@@ -247,7 +247,7 @@ beforeEach(() => {
   reconcile = runnersReconciler(feature, ci, scripts);
 });
 
-describe("[SCN-RMD-015] each kind of quality check in the summary's evidence observations names its CI steps as the step accounting lists them, one entry for each step and in its order, fitness included: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count", () => {
+describe("[SCN-RMD-015] each kind of quality check in the summary's evidence observations names its CI steps in the step accounting's order, one entry for each step: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count; fitness the step behind each fitness function that ran", () => {
   it("posts every step of the pipeline but its checkout to the unnamed claim's row, each counted run and uncited, and names no runner for a target with no runners block", () => {
     const reconciliation = reconcile();
     const unnamedClaimRowItems = reconciliation.ledger.claimReconciliations

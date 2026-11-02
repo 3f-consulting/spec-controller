@@ -105,22 +105,22 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a behavioural observation from a report of scenario runs is posted at each layer beyond @unit that its scenario's tags name, or at integration when there are none; one from a report of test results is posted at unit
 
     An observation read from a report of scenario runs is posted at each layer beyond @unit that
-    its cited scenario is tagged with, integration, e2e or performance, in tag order and once each.
-    A scenario tagged with no layer beyond @unit has it posted at integration, the layer that
-    report falls back to. An observation read from a report of test results is posted at unit,
-    the layer that report falls back to, whatever its scenario's tags.
+    the scenario the report says ran is tagged with, integration, e2e or performance, in tag order
+    and once each. A scenario tagged with no layer beyond @unit has it posted at integration, the
+    layer that report falls back to. An observation read from a report of test results is posted
+    at unit, the layer that report falls back to, whatever its scenario's tags.
 
     @unit @SCN-LDG-011
-    Scenario: an observation of a scenario tagged @e2e is posted at e2e, whatever its report's fallback
+    Scenario: an observation from a report of scenario runs is posted at e2e when its scenario is tagged @e2e
 
     @unit @SCN-LDG-012
-    Scenario: an observation of a scenario tagged @integration is posted at integration
+    Scenario: an observation from a report of scenario runs is posted at integration when its scenario is tagged @integration
 
     @unit @SCN-LDG-013
     Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both layers
 
     @unit @SCN-LDG-014
-    Scenario: an observation of a scenario tagged @integration and @e2e is posted at both
+    Scenario: an observation from a report of scenario runs is posted at integration and at e2e when its scenario is tagged @integration and @e2e
 
     @unit @SCN-LDG-015
     Scenario: an observation of a scenario carrying no layer tag beyond @unit is posted at its report's fallback
