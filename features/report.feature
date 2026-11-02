@@ -565,8 +565,8 @@ Feature: The report renders the ledger as sectioned facts
     fitness function's name, a CI step's name, a message, and a scenario's feature file and
     title. A pipe, a backslash or a line break in it never splits the row or changes what it
     says. A part the run did not give leaves no empty part or separator behind. A part that
-    holds one of the row's separators, a semicolon, a colon, a slash or a comma followed by a
-    space, sits in its code span, so it reads as one item and one part. One that holds none
+    holds one of the row's separators, a semicolon, a colon or a comma followed by a space, or a
+    slash with a space on each side, sits in its code span, so it reads as one item and one part. One that holds none
     reads as written.
 
     @unit @SCN-RPT-084
