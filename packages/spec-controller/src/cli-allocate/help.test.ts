@@ -6,7 +6,7 @@ import {
   type CliRegistry,
   type CommandSpec,
   type PositionalSpec,
-} from "../cli-registry.js";
+} from "../cliRegistry.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { withAllocatePositional } from "./registry.test-utils.js";
 

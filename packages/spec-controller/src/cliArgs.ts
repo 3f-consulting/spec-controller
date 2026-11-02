@@ -1,4 +1,4 @@
-import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cli-registry.js";
+import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cliRegistry.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 export function asksForHelp(argv: readonly string[]): boolean {

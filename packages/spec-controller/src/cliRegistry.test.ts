@@ -8,7 +8,7 @@ import {
   type CliRegistry,
   type CommandSpec,
   type FlagSpec,
-} from "./cli-registry.js";
+} from "./cliRegistry.js";
 import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 

@@ -5,8 +5,8 @@ import {
   checkUnknownFlags,
   parseArgs,
   positionalArguments,
-} from "../cli-args.js";
-import type { CliRegistry } from "../cli-registry.js";
+} from "../cliArgs.js";
+import type { CliRegistry } from "../cliRegistry.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 export interface AllocateRequest {

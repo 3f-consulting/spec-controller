@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cli-registry.js";
+import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cliRegistry.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { readRequest } from "./request.js";
 import { withAllocatePositional } from "./registry.test-utils.js";

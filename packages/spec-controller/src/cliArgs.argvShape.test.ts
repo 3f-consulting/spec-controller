@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cli-registry.js";
-import { checkArgvShape, positionalArguments } from "./cli-args.js";
+import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cliRegistry.js";
+import { checkArgvShape, positionalArguments } from "./cliArgs.js";
 import { formatFilePaths } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { runBalanceCaptured } from "./runBalance.test-utils.js";

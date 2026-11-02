@@ -2,7 +2,7 @@ import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
 import { inputsReadBy, NODE_INPUT_READER } from "./cli-balance/inputsRead.js";
-import { parseArgs } from "./cli-args.js";
+import { parseArgs } from "./cliArgs.js";
 import { runAllocate } from "./cli-allocate/cli.js";
 import { resolveSourceSha, resolveToolIdentity } from "./run-management/resolveRunInputs.js";
 import {
@@ -21,7 +21,7 @@ import {
   modifiersNotTakenRefusal,
   type HostInvocation,
 } from "./host.js";
-import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
+import { cliRegistry, renderTopLevelHelp } from "./cliRegistry.js";
 import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { settlingRefusal } from "./outputLocation.js";
 import { beginRun, markRunFinished, settleUnexpectedError } from "./crashGuards.js";

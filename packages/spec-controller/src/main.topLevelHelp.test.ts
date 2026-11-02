@@ -1,6 +1,6 @@
 import { readdirSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
+import { cliRegistry, renderTopLevelHelp } from "./cliRegistry.js";
 import { main } from "./main.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";

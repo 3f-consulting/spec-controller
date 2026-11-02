@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
-import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cli-registry.js";
+import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cliRegistry.js";
 import { answerUnknownCommand } from "./host.js";
 import { main } from "./main.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";

@@ -7,8 +7,8 @@ import {
   missingValueRefusal,
   valueFlagsOf,
   type ValueFlagSpec,
-} from "./cli-args.js";
-import { cliRegistry, type CommandSpec, type FlagSpec } from "./cli-registry.js";
+} from "./cliArgs.js";
+import { cliRegistry, type CommandSpec, type FlagSpec } from "./cliRegistry.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { USAGE_EXIT_CODE } from "./exitCode.js";
 

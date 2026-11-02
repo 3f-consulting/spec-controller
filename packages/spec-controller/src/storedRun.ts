@@ -1,5 +1,5 @@
-import { asksForHelp } from "./cli-args.js";
-import { cliRegistry, type CommandSpec } from "./cli-registry.js";
+import { asksForHelp } from "./cliArgs.js";
+import { cliRegistry, type CommandSpec } from "./cliRegistry.js";
 import type { HostInvocation } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 

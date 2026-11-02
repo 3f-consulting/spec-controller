@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { allocateCommand, renderCommandHelp } from "../cli-registry.js";
+import { allocateCommand, renderCommandHelp } from "../cliRegistry.js";
 import { repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
 

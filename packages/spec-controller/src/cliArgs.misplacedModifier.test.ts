@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry } from "./cli-registry.js";
-import { checkMisplacedHostModifiers } from "./cli-args.js";
+import { cliRegistry } from "./cliRegistry.js";
+import { checkMisplacedHostModifiers } from "./cliArgs.js";
 
 describe("[SCN-CLI-061] a host modifier given after the command is refused as out of place, with no pin advice", () => {
   for (const { name: modifier } of cliRegistry.global) {

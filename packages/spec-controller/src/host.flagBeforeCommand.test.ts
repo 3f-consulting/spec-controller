@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry } from "./cli-registry.js";
+import { cliRegistry } from "./cliRegistry.js";
 import { parseHostInvocation } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 

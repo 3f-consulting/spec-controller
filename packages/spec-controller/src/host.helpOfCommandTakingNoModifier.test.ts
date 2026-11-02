@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry } from "./cli-registry.js";
-import { valueFlagsOf } from "./cli-args.js";
+import { cliRegistry } from "./cliRegistry.js";
+import { valueFlagsOf } from "./cliArgs.js";
 import { parseHostInvocation, modifiersNotTakenRefusal } from "./host.js";
 
 const modifiers = [...new Set([...valueFlagsOf(cliRegistry.global).values()].map((flag) => flag.name))];

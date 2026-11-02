@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { cliRegistry, type CommandSpec } from "./cli-registry.js";
-import { checkUnknownFlags } from "./cli-args.js";
+import { cliRegistry, type CommandSpec } from "./cliRegistry.js";
+import { checkUnknownFlags } from "./cliArgs.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 const REFUSING_TOOL_VERSION = "9.9.9-test";

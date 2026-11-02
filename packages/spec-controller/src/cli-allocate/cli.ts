@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { nextScnCode, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
-import { allocateCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import { allocateCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readHeaderCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";

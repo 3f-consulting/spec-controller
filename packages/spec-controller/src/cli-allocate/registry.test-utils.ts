@@ -1,4 +1,4 @@
-import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cli-registry.js";
+import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cliRegistry.js";
 
 export function withAllocatePositional(positional: PositionalSpec): CliRegistry {
   return {

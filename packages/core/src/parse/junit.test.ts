@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseJunitEvidenceObservations, parsePytestEvidenceObservations, type JunitXmlReport } from "./pytest.js";
+import { parseJunitEvidenceObservations, parsePytestEvidenceObservations, type JunitXmlReport } from "./junit.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 
 describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {

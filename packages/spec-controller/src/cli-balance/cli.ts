@@ -39,7 +39,7 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { earlierStoredRunDirOf } from "../run-management/keptRun.js";
-import { balanceCommand, cliRegistry, renderCommandHelp } from "../cli-registry.js";
+import { balanceCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import {
   asksForHelp,
   parseArgs,
@@ -47,7 +47,7 @@ import {
   checkUnknownFlags,
   checkMissingValues,
   checkMisplacedHostModifiers,
-} from "../cli-args.js";
+} from "../cliArgs.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
