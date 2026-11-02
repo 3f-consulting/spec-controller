@@ -11,7 +11,7 @@ const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObserv
 
 describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target verbatim", () => {
   it("returns the --target value verbatim when given", () => {
-    expect(sourceTarget({ target: "an-adopters-repository" })).toBe("an-adopters-repository");
+    expect(sourceTarget({ target: "sample-target" })).toBe("sample-target");
     expect(sourceTarget({ target: "some/scoped-name" })).toBe("some/scoped-name");
   });
 
@@ -25,7 +25,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     const dir = temporaryDirectory("scn-rpt-002-unit-");
     cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });
     cpSync("tests/fixtures/evidence-observation/cucumber.json", join(dir, "cucumber.json"));
-    cpSync("tests/fixtures/rpt-streams/ci-steps.json", join(dir, "ci-steps.json"));
+    cpSync("tests/fixtures/ci-steps-passing/ci-steps.json", join(dir, "ci-steps.json"));
     mkdirSync(join(dir, "workflows"));
     writeFileSync(join(dir, "workflows", "ci.yml"), "jobs: {}\n");
     const reportPath = join(dir, "spec-reconciliation.json");

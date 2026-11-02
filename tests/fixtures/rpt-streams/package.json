@@ -1,8 +1,0 @@
-{
-  "name": "streams-provenance-target-repo-fixture",
-  "private": true,
-  "scripts": {
-    "build": "tsc"
-  },
-  "specController": {}
-}

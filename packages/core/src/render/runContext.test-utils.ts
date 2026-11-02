@@ -2,9 +2,9 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 export const sampleReportCtx: RunContext = {
-  target: "an-adopters-repository",
-  inputs: [{ ...FEATURES, path: "../an-adopters-repository/features" }, { ...VITEST, path: "../an-adopters-repository/vitest-report.json" }, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
-  corpus: "../an-adopters-repository/features",
+  target: "sample-target",
+  inputs: [{ ...FEATURES, path: "../sample-target/features" }, { ...VITEST, path: "../sample-target/vitest-report.json" }, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
+  corpus: "../sample-target/features",
   runStart: new Date("2026-06-27T08:17:53.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
   toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",

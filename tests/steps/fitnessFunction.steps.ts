@@ -11,15 +11,15 @@ import type { FitnessTarget, SpecControllerWorld } from "./support/world.js";
 const WATERMELON = "Evidence Observation is passing but its check could not fail its job";
 
 const LINT_CHECKS_TARGET: FitnessTarget = {
-  features: "tests/fixtures/usg/features",
-  ci: "tests/fixtures/usg/ci.yml",
-  packageJson: "tests/fixtures/usg/package.json",
+  features: "tests/fixtures/two-lint-checks-one-cited/features",
+  ci: "tests/fixtures/two-lint-checks-one-cited/ci.yml",
+  packageJson: "tests/fixtures/two-lint-checks-one-cited/package.json",
 };
 
 const NIGHTLY_LINT_TARGET: FitnessTarget = {
-  features: "tests/fixtures/usg-sibling/features",
-  ci: "tests/fixtures/usg-sibling/workflows",
-  packageJson: "tests/fixtures/usg-sibling/package.json",
+  features: "tests/fixtures/fitness-check-in-sibling-workflow/features",
+  ci: "tests/fixtures/fitness-check-in-sibling-workflow/workflows",
+  packageJson: "tests/fixtures/fitness-check-in-sibling-workflow/package.json",
 };
 
 Given("a target whose CI runs the lint:foo and lint:bar checks", function (this: SpecControllerWorld) {
@@ -113,7 +113,7 @@ When(
         "--features", abs(this.fitnessTarget.features),
         "--ci", abs(this.fitnessTarget.ci),
         "--package-json", abs(this.fitnessTarget.packageJson),
-        "--target", "usg-sibling-fixture",
+        "--target", "fitness-check-in-sibling-workflow",
         "--format", `md:${reportPath}`,
       ],
       { cwd: this.outDir, encoding: "utf8" },
@@ -129,9 +129,9 @@ When(
 );
 
 const NIGHTLY_SWEEP_TARGET: FitnessTarget = {
-  features: "tests/fixtures/usg-sibling-uncited/features",
-  ci: "tests/fixtures/usg-sibling-uncited/workflows",
-  packageJson: "tests/fixtures/usg-sibling-uncited/package.json",
+  features: "tests/fixtures/uncited-fitness-check-in-sibling-workflow/features",
+  ci: "tests/fixtures/uncited-fitness-check-in-sibling-workflow/workflows",
+  packageJson: "tests/fixtures/uncited-fitness-check-in-sibling-workflow/package.json",
 };
 
 Given(

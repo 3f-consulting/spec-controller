@@ -105,7 +105,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
 
   it("renames the provenance section to runProvenance carrying the run facts", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
-    expect(report.runProvenance.target).toBe("an-adopters-repository");
+    expect(report.runProvenance.target).toBe("sample-target");
     expect(report.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
     expect(report.runProvenance.runTimestamp).toBe("2026-07-02T08:17:53Z");
   });

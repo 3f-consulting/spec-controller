@@ -10,7 +10,7 @@ Feature: a fixture target whose uncited fitness function runs in a sibling workf
   uncited: no `specController.fitnessChecks` row names sweep's scenario and no CI step
   states a row's code, so the seam that would resolve a citation has nothing to resolve.
 
-  The mirror of the usg-sibling fixture, and kept separate from it: that one's check IS
+  The mirror of the fitness-check-in-sibling-workflow fixture, and kept separate from it: that one's check IS
   cited, so it reconciles balanced, and adding an uncited check to it would fold the
   unnamed claim's row onto a target asserted to exit 0.
 

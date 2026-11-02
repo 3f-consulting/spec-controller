@@ -93,7 +93,7 @@ describe("[SCN-CLI-078] a CI step record is read only as a record of step outcom
   });
 
   it("names a fault in a step past the first, when the steps before it are well-formed", () => {
-    const record = JSON.parse(readFileSync(join(fixtures, "scn-lnt-026", "ci-steps.json"), "utf8"));
+    const record = JSON.parse(readFileSync(join(fixtures, "ci-steps-four-outcomes", "ci-steps.json"), "utf8"));
     record["SCN-CVT-002"].outcome = 7;
     expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("SCN-CVT-002.outcome is a number, not a string");
   });

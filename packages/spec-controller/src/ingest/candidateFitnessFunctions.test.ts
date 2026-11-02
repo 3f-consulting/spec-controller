@@ -10,10 +10,10 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 describe("[SCN-CLI-089] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   it("posts lint:foo and lint:bar alone as fitness functions when the manifest names the runners test and cucumber run", () => {
     const balance = runReconcile({
-      features: "tests/fixtures/usg/features",
-      ci: "tests/fixtures/usg/ci.yml",
-      packageJson: "tests/fixtures/usg/package.json",
-    }, resolveTargetRoot({ features: "tests/fixtures/usg/features" }));
+      features: "tests/fixtures/two-lint-checks-one-cited/features",
+      ci: "tests/fixtures/two-lint-checks-one-cited/ci.yml",
+      packageJson: "tests/fixtures/two-lint-checks-one-cited/package.json",
+    }, resolveTargetRoot({ features: "tests/fixtures/two-lint-checks-one-cited/features" }));
 
     const postings = balance.ledger.claimReconciliations.flatMap((row) =>
       observationsOf(row)

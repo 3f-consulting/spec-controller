@@ -20,9 +20,9 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
 
     expect(md).toContain("## Run provenance");
-    expect(md).toContain("an-adopters-repository");
+    expect(md).toContain("sample-target");
     expect(md).toContain("--features");
-    expect(md).toContain("../an-adopters-repository/features");
+    expect(md).toContain("../sample-target/features");
     expect(md).toContain("--vitest");
     expect(md).toContain("2026-06-27T08:17:53Z");
     expect(md).toContain("905a987c0ffeeba110000000000000000deadbeef");
