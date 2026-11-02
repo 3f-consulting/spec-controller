@@ -28,6 +28,10 @@ A push that changes only `docs/**`, the root [`README.md`](../README.md),
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) or [`LICENSE`](../LICENSE) does not run CI at all
 (`paths-ignore` in `ci.yml`). It publishes nothing.
 
+Each package ships its own copy of the licence, [`packages/core/LICENSE`](../packages/core/LICENSE)
+and [`packages/spec-controller/LICENSE`](../packages/spec-controller/LICENSE). A change to the
+licence edits those copies as well as the root's, which runs CI and publishes.
+
 `release.yml` has no `workflow_dispatch` trigger. A CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so every published version is one
 that `main` contained.
