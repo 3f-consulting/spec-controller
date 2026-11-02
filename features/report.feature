@@ -161,8 +161,6 @@ Feature: The report renders the ledger as sectioned facts
     last. "## Claim Reconciliations" comes last, with its summary lines on top: the
     verdict tally and the excluded-occurrence bullet.
 
-    This layout is markdown only; the JSON is unaffected.
-
     Every reconciling item is labelled by its tag: the bare tag word for a layer
     (unit, integration, …) and "fitness" for fitness, never an internal kind.
 

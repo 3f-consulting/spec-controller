@@ -18,7 +18,8 @@ export type UnconcludedSummary = Omit<RenderInput["summary"], "runVerdict"> & {
 };
 
 export function concludedSummary(summary: UnconcludedSummary, verdictInputs: VerdictInputs): RenderInput["summary"] {
-  return { ...summary, runVerdict: runVerdict(verdictInputs) };
+  const { runVerdict: _saved, ...rest } = summary;
+  return { runVerdict: runVerdict(verdictInputs), ...rest };
 }
 
 export function assembleRenderInput(

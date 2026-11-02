@@ -36,6 +36,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-001
     Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model that states each fact once, whose summary totals count every Claim Reconciliation
 
+    @unit @SCN-RMD-029
+    Scenario: the JSON report's summary states the run verdict first, on a fresh run and on a saved report concluded again
+
   Rule: the ledger is the detail beside the summary's totals
 
     The document IS the Evidence Reconciliation, so a root
