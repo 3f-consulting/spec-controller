@@ -102,8 +102,8 @@ importers:
         specifier: ^34.0.1
         version: 34.0.1
       unbash:
-        specifier: 6.0.1
-        version: 6.0.1
+        specifier: 6.0.2
+        version: 6.0.2
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -3216,8 +3216,8 @@ packages:
     resolution: {integrity: sha512-PnKvRX+Fbxl/usVlTr/31tXIOVAH+8OdC9qaxUQcvurwEnoc3Vk/ipi2Ce8IjMxzK9byfSGdsUBjqqJGc1o5lw==}
     engines: {node: '>=14'}
 
-  unbash@6.0.1:
-    resolution: {integrity: sha512-0db9eS5iqybux41zLkX69nk90KTci7F7eZ+gXzEG/Q7E0tAqEBhRh5fkZvk1N7jT7QkGWqq34i8SFGPFEe1V8A==}
+  unbash@6.0.2:
+    resolution: {integrity: sha512-UhcFfg9u8OpFPnUqdXSKgbGHwk2iEHaEePfpHylako6i4rpdmfoOgCVBBlou4WugaFfNunIHby01mKssJzVTCA==}
     engines: {node: '>=14'}
 
   underscore@1.13.8:
@@ -6651,7 +6651,7 @@ snapshots:
 
   unbash@4.0.12: {}
 
-  unbash@6.0.1: {}
+  unbash@6.0.2: {}
 
   underscore@1.13.8: {}
 

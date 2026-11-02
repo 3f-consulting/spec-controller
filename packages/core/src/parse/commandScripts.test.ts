@@ -192,7 +192,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
     expect(shellReading.runsAsCommand(command, "vitest run", {})).toBe(false);
   });
 
-  it.fails("reads a script run after a command substitution holding a parameter that removes a <<, though unbash 6.0.1 does not yet read it so", () => {
+  it("reads a script run after a command substitution holding a parameter that removes a <<", () => {
     expect(commandInvokesScript("x=$(echo ${x#<<}\necho hi\n)\npnpm test", "test")).toBe(true);
   });
 });
