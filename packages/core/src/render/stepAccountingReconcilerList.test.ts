@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { endOfStepAccountingTable as endOfTable, stepAccountingSection as stepAccounting } from "./renderedSection.test-utils.js";
@@ -27,6 +28,16 @@ const balance = "ci.yml:ci:Reconciliation";
 const reconciles = CORE_MESSAGES[CoreMessage.ReconcilerReconciles];
 const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
 
+const spanStepsCi = `name: fixture CI
+jobs:
+  ci:
+    steps:
+      - name: "Run \`balance\`"
+        run: pnpm exec spec-controller balance --features features --ci .github/workflows
+      - name: "Two\\nlines"
+        run: pnpm exec spec-controller balance --features features --ci .github/workflows
+`;
+
 const reconcilerList = (lines: readonly string[]): string[] => {
   const start = lines.indexOf(label);
   expect(start).toBeGreaterThanOrEqual(0);
@@ -42,16 +53,26 @@ describe("[SCN-RPT-050] the step-accounting section lists each reconciler step b
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
     expect(reconcilerList(section)).toStrictEqual([
       "Reconciler:",
-      "- ci.yml:ci:Dump this run's step record — the reconciler: this step writes the step record the reconciliation reads.",
-      "- ci.yml:ci:Reconciliation — the reconciler: this step runs the reconciliation this report is.",
+      "- `ci.yml:ci:Dump this run's step record` — the reconciler: this step writes the step record the reconciliation reads.",
+      "- `ci.yml:ci:Reconciliation` — the reconciler: this step runs the reconciliation this report is.",
       "",
     ]);
+  });
+
+  it.each([
+    { step: "ci.yml:ci:Run `balance`", item: "- `` ci.yml:ci:Run `balance` `` — the reconciler: this step runs the reconciliation this report is." },
+    { step: "ci.yml:ci:Two\nlines", item: '- `"ci.yml:ci:Two\\nlines"` — the reconciler: this step runs the reconciliation this report is.' },
+  ])("lists the reconciler step $step whole in its code span, as $item", ({ item }) => {
+    const section = stepAccounting(reportLines(spanStepsCi));
+    const start = section.indexOf(label);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(section.slice(start)).toContain(item);
   });
 
   it("lists neither reconciler step as excluded", () => {
     const lines = reportLines(ci);
     for (const step of [dump, balance]) {
-      expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.StepExcluded](step)}`);
+      expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.StepExcluded](codeSpan(step))}`);
     }
   });
 

@@ -712,7 +712,8 @@ Feature: The report renders the ledger as sectioned facts
     the CI steps the run read. Its table has a row per workflow and job read, in the step
     accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners,
     Reconciler, Excluded, GitHub plumbing and Accounted for. When more than one job was read, a
-    Total row follows them.
+    Total row follows them. Each Workflow and Job cell holds its name whole, a pipe or a backslash
+    escaped and a run of whitespace read as one space.
 
     Beneath the table, each column other than Candidates that counts a step lists the steps
     behind it, under the column's name: Runners, Reconciler, Excluded and GitHub plumbing, in
@@ -720,7 +721,9 @@ Feature: The report renders the ledger as sectioned facts
     read. A reconciler step says what it does. An excluded step says the target names it a
     non-check, one line for each step an entry matches. A column that counts no step lists
     nothing. After the excluded steps, each notChecks entry naming a workflow the run did not
-    read is listed as not applied, under a label naming the workflows the run read.
+    read is listed as not applied, under a label naming the workflows the run read. Each step a
+    list names is shown whole in its code span: as written, or as its quoted string where a code
+    span cannot hold it as written.
 
     When the run reads no CI step, the section holds the not-applied list alone, with no table.
     Its label names the workflows the run read, or says it read none. The section is absent when

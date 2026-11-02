@@ -15,6 +15,18 @@ jobs:
         run: pnpm exec spec-controller balance --features features --ci .github/workflows
 `;
 
+const spanStepsCi = `name: fixture CI
+jobs:
+  ci:
+    steps:
+      - name: "Checkout \`tools\`"
+        uses: actions/checkout@v4
+      - name: "Two\\nlines"
+        uses: actions/setup-node@v4
+      - name: Unit tests
+        run: pnpm test
+`;
+
 const stepAccounting = (workflow: string): string[] =>
   sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(
     linesOf(reconcileStepAccounting([workflow]))
@@ -30,13 +42,23 @@ describe("[SCN-RPT-073] the step-accounting section lists each GitHub plumbing s
     expect(start).toBeGreaterThan(excluded);
     expect(section.slice(start)).toStrictEqual([
       "GitHub plumbing:",
-      "- ci.yml:ci:Checkout tools",
-      "- ci.yml:ci:Setup Node",
-      "- ci.yml:ci:Cache store",
-      "- ci.yml:ci:Download build",
-      "- ci.yml:ci:Upload report",
+      "- `ci.yml:ci:Checkout tools`",
+      "- `ci.yml:ci:Setup Node`",
+      "- `ci.yml:ci:Cache store`",
+      "- `ci.yml:ci:Download build`",
+      "- `ci.yml:ci:Upload report`",
       "",
     ]);
+  });
+
+  it.each([
+    { step: "ci.yml:ci:Checkout `tools`", item: "- `` ci.yml:ci:Checkout `tools` ``" },
+    { step: "ci.yml:ci:Two\nlines", item: '- `"ci.yml:ci:Two\\nlines"`' },
+  ])("lists the GitHub plumbing step $step whole in its code span, as $item", ({ item }) => {
+    const section = stepAccounting(spanStepsCi);
+    const start = section.indexOf(label);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(section.slice(start)).toContain(item);
   });
 
   it("prints no GitHub plumbing label, and lists no plumbing step, for a pipeline with no plumbing step", () => {

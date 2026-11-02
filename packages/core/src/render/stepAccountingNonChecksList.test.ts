@@ -57,6 +57,18 @@ function reportLines(notChecks?: readonly string[], workflows?: Readonly<Record<
   return renderMarkdown(reconciliationOf(notChecks, workflows), ctx, publishedExitCodeOf).split("\n");
 }
 
+const spanStepsCi = `name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Unit tests
+        run: pnpm test
+      - name: "Run \`pnpm lint\`"
+        run: pnpm lint
+      - name: "Two\\nlines"
+        run: pnpm typecheck
+`;
+
 const label = "Excluded:";
 
 const excludedList = (lines: readonly string[], length: number): string[] => {
@@ -73,10 +85,18 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
     expect(excludedList(section, 3)).toStrictEqual([
       "Excluded:",
-      "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
+      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
       "",
     ]);
     expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+  });
+
+  it.each([
+    { entry: "ci.yml:quality:Run `pnpm lint`", item: "- `` ci.yml:quality:Run `pnpm lint` `` — excluded: the target names this step a non-check." },
+    { entry: "ci.yml:quality:Two\nlines", item: '- `"ci.yml:quality:Two\\nlines"` — excluded: the target names this step a non-check.' },
+  ])("lists the excluded step $entry whole in its code span, as $item", ({ entry, item }) => {
+    const section = stepAccounting(reportLines([entry], { "ci.yml": spanStepsCi }));
+    expect(excludedList(section, 3)).toStrictEqual(["Excluded:", item, ""]);
   });
 
   it("prints no Excluded label when the target's only entry matches no step", () => {
@@ -90,8 +110,8 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const section = stepAccounting(reportLines(["ci.yml:quality:Types"], { "ci.yml": twoTypesStepsCi }));
     expect(excludedList(section, 4)).toStrictEqual([
       "Excluded:",
-      "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
-      "- ci.yml:quality:Types — excluded: the target names this step a non-check.",
+      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
+      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
       "",
     ]);
   });
@@ -102,9 +122,9 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     expect(section.indexOf(label)).toBeGreaterThan(section.indexOf("Reconciler:"));
     expect(excludedList(section, 5)).toStrictEqual([
       "Excluded:",
-      "- ci.yml:ci:Checkout — excluded: the target names this step a non-check.",
-      "- ci.yml:ci:Install — excluded: the target names this step a non-check.",
-      "- ci.yml:ci:Build — excluded: the target names this step a non-check.",
+      "- `ci.yml:ci:Checkout` — excluded: the target names this step a non-check.",
+      "- `ci.yml:ci:Install` — excluded: the target names this step a non-check.",
+      "- `ci.yml:ci:Build` — excluded: the target names this step a non-check.",
       "",
     ]);
   });
@@ -173,7 +193,7 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
 
     expect(section.length).toBeGreaterThan(0);
     expect(section.filter((line) => line.startsWith(labelOpening))).toStrictEqual([]);
-    expect(section.filter((line) => line.startsWith("- `"))).toStrictEqual([]);
+    expect(section.filter((line) => (notChecks ?? []).some((entry) => line === `- \`${entry}\``))).toStrictEqual([]);
   });
 
   it("names the workflows of the steps read, for a saved report that records no workflows read", () => {
@@ -185,7 +205,9 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
     const section = stepAccounting(linesOf(saved));
     const notAppliedLabel = notAppliedLabelOf(["ci.yml"]);
 
-    expect(section.slice(section.indexOf(notAppliedLabel))).toStrictEqual([notAppliedLabel, "- `deploy.yml:release:Ship`", "", "GitHub plumbing:", "- ci.yml:quality:Checkout", ""]);
+    const start = section.indexOf(notAppliedLabel);
+
+    expect(section.slice(start, start + 3)).toStrictEqual([notAppliedLabel, "- `deploy.yml:release:Ship`", ""]);
   });
 });
 
@@ -232,11 +254,13 @@ describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a c
     const reconciliation = reconciliationOf([entry], workflows);
     const { nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting: accounting } = reconciliation.summary;
     const lines = renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
-    const excludedLine = `- ${entry} — excluded: the target names this step a non-check.`;
+    const [, excludedItem, afterItem] = excludedList(stepAccounting(lines), 3);
 
+    expect(accounting?.steps.nonChecks).toStrictEqual([entry]);
     expect([nonChecksNotAStepName, nonChecksMatchingNoStep, accounting?.nonChecksNamingAWorkflowNotRead]).toStrictEqual([undefined, undefined, undefined]);
-    expect(excludedList(stepAccounting(lines), 3)).toStrictEqual([label, excludedLine, ""]);
-    expect(lines.filter((line) => line.includes(entry) || line.includes("— excluded:"))).toStrictEqual([excludedLine]);
+    expect(excludedItem).toContain(entry);
+    expect(afterItem).toBe("");
+    expect(lines.filter((line) => line.includes(entry) || line.includes("— excluded:"))).toStrictEqual([excludedItem]);
     expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
   });
 });

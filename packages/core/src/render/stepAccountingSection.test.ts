@@ -50,6 +50,21 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
     ]);
   });
 
+  it.each([
+    { name: "a workflow file named with a pipe", file: "a|b.yml", jobKey: "ci", workflow: "a\\|b.yml", job: "ci" },
+    { name: "a job id holding a pipe", file: "ci.yml", jobKey: '"a|b"', workflow: "ci.yml", job: "a\\|b" },
+    { name: "a workflow file named with a backslash", file: "a\\b.yml", jobKey: "ci", workflow: "a\\\\b.yml", job: "ci" },
+    { name: "a job id holding a line break", file: "ci.yml", jobKey: '"a\\nb"', workflow: "ci.yml", job: "a b" },
+    { name: "a workflow file named with a line break", file: "a\nb.yml", jobKey: "ci", workflow: "a b.yml", job: "ci" },
+  ])("tables $name as one row of nine cells, its Workflow and Job cells holding the names whole", ({ file, jobKey, workflow, job }) => {
+    const source = ci.replace("\n  ci:\n", `\n  ${jobKey}:\n`);
+    const packageJson = { scripts: { test: "vitest run" }, specController: { runners: { unit: "vitest" } } };
+    const table = throughTable(reconcile([source], [file], packageJson));
+    const rows = table.slice(4, -1);
+    expect(rows).toStrictEqual([`| ${workflow} | ${job} | 15 | 6 | 1 | 2 | 0 | 6 | 15 |`]);
+    expect((rows[0] ?? "").split(/(?<!\\)\|/).slice(1, -1)).toHaveLength(9);
+  });
+
   it("renders no section, and nothing in its place, where the run read no CI configuration and has no notChecks, or read only a workflow with no step that its notChecks alone name", () => {
     const runners = { unit: "vitest" };
     const runs = [

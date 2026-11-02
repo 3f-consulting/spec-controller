@@ -15,6 +15,16 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const label = "Runners:";
 
+const spanStepsCi = `name: fixture CI
+jobs:
+  ci:
+    steps:
+      - name: "Run \`pnpm test\`"
+        run: pnpm test
+      - name: "Two\\nlines"
+        run: pnpm test
+`;
+
 const stepAccounting = (reconciliation: EvidenceReconciliation): string[] =>
   stepAccountingSection(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
 
@@ -39,16 +49,26 @@ describe("[SCN-RPT-072] the step-accounting section lists each step that runs a 
     expect(start).toBeGreaterThan(tableEnd);
     expect(section.slice(start, start + 4)).toStrictEqual([
       "Runners:",
-      "- ci.yml:ci:Unit tests",
+      "- `ci.yml:ci:Unit tests`",
       "",
       "Reconciler:",
     ]);
+  });
+
+  it.each([
+    { step: "ci.yml:ci:Run `pnpm test`", item: "- `` ci.yml:ci:Run `pnpm test` ``" },
+    { step: "ci.yml:ci:Two\nlines", item: '- `"ci.yml:ci:Two\\nlines"`' },
+  ])("lists the runner step $step whole in its code span, as $item", ({ item }) => {
+    const section = stepAccounting(reconcileStepAccounting([spanStepsCi]));
+    const start = section.indexOf(label);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(section.slice(start)).toContain(item);
   });
 
   it("prints no Runners label, and lists no runner step, where the target declares no runner", () => {
     const section = stepAccounting(withoutRunners());
     expect(section.length).toBeGreaterThan(0);
     expect(section).not.toContain(label);
-    expect(section).not.toContain("- ci.yml:ci:Unit tests");
+    expect(section).not.toContain("- `ci.yml:ci:Unit tests`");
   });
 });

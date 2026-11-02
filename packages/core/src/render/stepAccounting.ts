@@ -2,6 +2,7 @@ import type { RenderInput } from "../domain/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
 import { accountedForOf } from "../domain/uncitedFitnessFunctions.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { cellSafe } from "./cellSafe.js";
 import { codeSpan } from "./codeSpan.js";
 
 type StepAccounting = NonNullable<RenderInput["summary"]["stepAccounting"]>;
@@ -11,8 +12,8 @@ const rowOf = (cells: readonly (string | number)[]): string => `| ${cells.join("
 const jobRowsOf = ({ byJob }: StepAccounting): string[] =>
   byJob.map((row) =>
     rowOf([
-      row.workflow,
-      row.job,
+      cellSafe(row.workflow),
+      cellSafe(row.job),
       row.stepsRead,
       row.candidates,
       row.runners,
@@ -49,7 +50,7 @@ const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
 const runnersListOf = ({ steps }: StepAccounting): string[] => {
   const runners = steps.runners ?? [];
   if (runners.length === 0) return [];
-  return [CORE_MESSAGES[CoreMessage.StepAccountingRunnersLabel], ...runners.map((step) => `- ${step}`), ""];
+  return [CORE_MESSAGES[CoreMessage.StepAccountingRunnersLabel], ...runners.map((step) => `- ${codeSpan(step)}`), ""];
 };
 
 const reconcilerListOf = ({ steps }: StepAccounting): string[] => {
@@ -57,7 +58,7 @@ const reconcilerListOf = ({ steps }: StepAccounting): string[] => {
   if (reconciler.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel],
-    ...reconciler.map(({ step, role }) => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](step, WHAT_IT_IS[role])}`),
+    ...reconciler.map(({ step, role }) => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](codeSpan(step), WHAT_IT_IS[role])}`),
     "",
   ];
 };
@@ -67,7 +68,7 @@ const nonChecksListOf = ({ steps }: StepAccounting): string[] => {
   if (nonChecks.length === 0) return [];
   return [
     CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel],
-    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](step)}`),
+    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](codeSpan(step))}`),
     "",
   ];
 };
@@ -91,7 +92,7 @@ const notAppliedListOf = (accounting: StepAccounting): string[] => {
 const plumbingListOf = ({ steps }: StepAccounting): string[] => {
   const plumbing = steps.plumbing ?? [];
   if (plumbing.length === 0) return [];
-  return [CORE_MESSAGES[CoreMessage.StepAccountingPlumbingLabel], ...plumbing.map((step) => `- ${step}`), ""];
+  return [CORE_MESSAGES[CoreMessage.StepAccountingPlumbingLabel], ...plumbing.map((step) => `- ${codeSpan(step)}`), ""];
 };
 
 export const stepAccountingSection = (report: RenderInput): string[] => {
