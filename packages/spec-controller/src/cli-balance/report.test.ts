@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalance, sourceTarget } from "./cli.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;

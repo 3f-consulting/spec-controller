@@ -7,7 +7,7 @@ import { cliRegistry } from "../cli-registry.js";
 import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 

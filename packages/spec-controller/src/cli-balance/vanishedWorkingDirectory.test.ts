@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
+import { runBalanceCaptured, type BalanceRun } from "../runBalance.test-utils.js";
 import { removedWorkingDirectory } from "../vanishedWorkingDirectory.test-utils.js";
 
 function balanceWhereCwdThrows(thrown: Error): BalanceRun {

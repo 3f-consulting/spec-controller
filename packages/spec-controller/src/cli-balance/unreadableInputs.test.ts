@@ -14,7 +14,7 @@ import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
 import { reRender } from "./reRender.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 const nothingByDefault = (): boolean => false;

@@ -11,6 +11,14 @@ export const sampleReportCtx: RunContext = {
   toolVersion: "0.1.0",
 };
 
+export const reportCtx: RunContext = {
+  target: "sample-target",
+  inputs: [{ ...FEATURES, path: "../sample-target/features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
+  corpus: "../sample-target/features",
+  runStart: new Date("2026-07-02T08:17:53.000Z"),
+  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+};
+
 export const specsFeaturesInputs: Pick<RunContext, "inputs" | "corpus"> = {
   inputs: [{ ...FEATURES, path: "specs/features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "specs/features",

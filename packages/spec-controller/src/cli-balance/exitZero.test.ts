@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {

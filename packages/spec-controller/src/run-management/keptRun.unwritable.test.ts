@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST, type RunManifestMeta } from "./keptRun.js";
 import { usageStatusOf } from "../usageStatus.test-utils.js";
-import { runBalanceCaptured, type BalanceRun } from "../../test-support/runBalance.js";
+import { runBalanceCaptured, type BalanceRun } from "../runBalance.test-utils.js";
 import { wrapCommandArgv } from "../host.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites } from "../programOutput.test-utils.js";

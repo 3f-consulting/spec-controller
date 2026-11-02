@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { checkLegacyJson } from "./cli.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-FMT-006] balance rejects the removed --json flag with a migration hint", () => {

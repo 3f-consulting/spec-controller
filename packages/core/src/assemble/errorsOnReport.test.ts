@@ -5,7 +5,7 @@ import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { unitTestsAndLintCi as ci } from "../evidenceReconciliation.test-utils.js";
-import { reportCtx as ctx } from "./runContext.test-utils.js";
+import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import type { RenderInput } from "../domain/renderInput.js";
 
 const coded = "@FIX\nFeature: fixture\n\n  @unit @SCN-FIX-001\n  Scenario: a fixture behaviour\n    Given a fixture\n";

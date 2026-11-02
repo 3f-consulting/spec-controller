@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { balanceCommand } from "../cli-registry.js";
 import { headlineExit } from "./balanceRun.test-utils.js";
 import { liveSaver, runPinned } from "./savedRun.test-utils.js";

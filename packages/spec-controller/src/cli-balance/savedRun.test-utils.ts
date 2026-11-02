@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { join } from "node:path";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 
 export function runPinned(argv: readonly string[]): { stdout: string; exitCode: number } {
   vi.useFakeTimers({ toFake: ["Date"] });

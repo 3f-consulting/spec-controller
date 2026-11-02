@@ -5,7 +5,7 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { reportCtx as ctx } from "./runContext.test-utils.js";
+import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 

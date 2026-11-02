@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { runnersReconciler } from "./runnerLayers.test-utils.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { feature } from "../evidenceReconciliation.test-utils.js";
 import { lineReadingsOf } from "../domain/qualityCheckReconciliation.test-utils.js";
@@ -8,6 +7,26 @@ import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import type { BehaviouralEvidenceObservation } from "../domain/journal.js";
+
+function runnersReconciler(
+  feature: string,
+  ci: string,
+  scripts: Record<string, string>,
+): (runners?: Record<string, string | null>) => EvidenceReconciliation {
+  return (runners) => {
+    const specController = runners === undefined ? {} : { runners };
+    const packageJson = { scripts, specController } as Parameters<
+      typeof evidenceReconciliationFromSources
+    >[0]["packageJson"];
+    return evidenceReconciliationFromSources({
+      features: parsedFeatures([feature]),
+      packageJson,
+      ciWorkflows: parsedWorkflows([ci]),
+      behaviouralObservations: [],
+      deferralTags: [],
+    });
+  };
+}
 
 const ci = `name: fixture CI
 jobs:

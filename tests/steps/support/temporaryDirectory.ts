@@ -1,7 +1,8 @@
 import { After } from "@cucumber/cucumber";
-import { chmodSync, lstatSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { giveOwnerAccessBack } from "./ownerAccess.js";
 import type { SpecControllerWorld } from "./world.js";
 
 export function temporaryDirectory(world: SpecControllerWorld, prefix: string): string {
@@ -18,12 +19,3 @@ After(function (this: SpecControllerWorld) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
-
-// A scenario that strips a mode and fails before restoring it would otherwise leave entries rmSync cannot read or unlink.
-function giveOwnerAccessBack(path: string): void {
-  const entry = lstatSync(path, { throwIfNoEntry: false });
-  if (entry === undefined || entry.isSymbolicLink()) return;
-  chmodSync(path, (entry.mode & 0o7777) | 0o700);
-  if (!entry.isDirectory()) return;
-  for (const name of readdirSync(path)) giveOwnerAccessBack(join(path, name));
-}

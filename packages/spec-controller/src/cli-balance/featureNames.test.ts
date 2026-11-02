@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {

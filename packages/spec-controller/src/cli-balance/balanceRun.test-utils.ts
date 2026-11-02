@@ -1,4 +1,4 @@
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 
 export function captured(argv: string[]): { report: string; stderr: string; exitCode: unknown } {
   const { stdout, stderr, exitCode } = runBalanceCaptured(argv);

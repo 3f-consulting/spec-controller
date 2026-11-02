@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { runBalance } from "../src/cli-balance/cli.js";
+import { runBalance } from "./cli-balance/cli.js";
 
 export interface BalanceRun {
   stdout: string;
@@ -8,7 +8,6 @@ export interface BalanceRun {
   wrote: boolean;
 }
 
-// Outside src/ so no mutation scope reads it as product code and the build never ships it.
 export function runBalanceCaptured(argv: readonly string[]): BalanceRun {
   const savedExitCode = process.exitCode;
   process.exitCode = undefined;

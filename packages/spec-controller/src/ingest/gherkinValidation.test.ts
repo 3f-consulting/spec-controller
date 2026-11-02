@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { readCorpus } from "./ingestQualityChecks.js";

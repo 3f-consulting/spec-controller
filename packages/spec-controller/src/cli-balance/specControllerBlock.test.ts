@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 

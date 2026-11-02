@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { planOutput, type OutputPlan } from "./format.js";
 import { APP_MESSAGES, AppMessage } from "../../messages.js";
-import { runBalanceCaptured } from "../../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../../runBalance.test-utils.js";
 
 function planOf(result: ReturnType<typeof planOutput>): OutputPlan {
   if (!result.ok) throw new Error(`expected a plan, got error: ${result.error}`);

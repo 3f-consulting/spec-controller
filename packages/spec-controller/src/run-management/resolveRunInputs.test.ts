@@ -6,7 +6,7 @@ import { join, dirname, resolve } from "node:path";
 import { runReconcile } from "../ingest/corpusReading.test-utils.js";
 import { runReconcile as reconcileReadInputs } from "../ingest/ingestQualityChecks.js";
 import { runBalance, runContextOf } from "../cli-balance/cli.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { inputPathsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";

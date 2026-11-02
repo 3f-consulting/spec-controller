@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { runBalanceCaptured } from "../../test-support/runBalance.js";
+import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { readFeatureSources } from "../ingest/ingestScenarios.js";
 import { inputsReadBy, NODE_INPUT_READER, type InputReader } from "./inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";

@@ -8,13 +8,22 @@ import { isBalanced } from "../domain/ledger.js";
 import type { Ledger } from "../model.js";
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { reportCtx as ctx } from "./runContext.test-utils.js";
-import { reportLedger } from "./renderInput.test-utils.js";
+import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
+
+function reportLedger(): Ledger {
+  return reconcile(
+    [
+      { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+    ],
+    [{ qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" }],
+  );
+}
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 10,

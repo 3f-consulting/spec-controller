@@ -3,7 +3,7 @@ import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./
 import { checkArgvShape, positionalArguments } from "./cli-args.js";
 import { formatFilePaths } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
-import { runBalanceCaptured } from "../test-support/runBalance.js";
+import { runBalanceCaptured } from "./runBalance.test-utils.js";
 
 const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 

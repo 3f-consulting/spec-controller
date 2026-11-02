@@ -1,14 +1,29 @@
 import { describe, it, expect } from "vitest";
 
-import { evidenceObservationTally } from "./ledger.js";
-import { tallyOfEveryObservationKind } from "./behaviouralObservationTally.test-utils.js";
+import { behaviouralObservationTally, evidenceObservationTally } from "./ledger.js";
+import { reconcile } from "./evidenceReconciliation.js";
 import {
   citesUnknownScenarioReconciliationsOf,
   noEvidenceObligationReconciliationsOf,
   unnamedClaimReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import { UNNAMED_CLAIM_ID } from "../model.js";
-import type { ClaimKind, ClaimReconciliation, EvidenceObservation, Ledger } from "../model.js";
+import type { ClaimKind, ClaimReconciliation, EvidenceObservation, Ledger, Scenario } from "../model.js";
+
+const tallyOfEveryObservationKind = () => {
+  const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+  const observations: EvidenceObservation[] = [
+    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheckKind: "integration", scnId: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "integration", scnId: null, status: "passed" },
+    { qualityCheckKind: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" },
+    { qualityCheckKind: "fitness", fitnessFunction: "guard-x", exists: true, enforcedOverRealSource: true },
+  ];
+  const ledger: Ledger = reconcile(scenarios, observations);
+  return behaviouralObservationTally(ledger);
+};
 
 const fitnessObservationOf = (scnId?: string, ran: { exists?: boolean; broken?: true } = {}): EvidenceObservation => ({
   qualityCheckKind: "fitness",

@@ -3,7 +3,7 @@ import { assembleRenderInput } from "./renderInput.js";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
-import { reportCtx as ctx } from "./runContext.test-utils.js";
+import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import type { RenderInput } from "../domain/renderInput.js";
 
 interface Given {

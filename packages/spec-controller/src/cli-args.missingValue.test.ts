@@ -2,7 +2,7 @@ import { beforeEach, describe, it, expect } from "vitest";
 import { balanceCommand, cliRegistry, type FlagSpec } from "./cli-registry.js";
 import { checkMissingValues } from "./cli-args.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
-import { runBalanceCaptured } from "../test-support/runBalance.js";
+import { runBalanceCaptured } from "./runBalance.test-utils.js";
 
 const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
