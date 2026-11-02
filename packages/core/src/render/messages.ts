@@ -316,7 +316,8 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.FeatureCodeNoun]: "feature code",
   [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so no scenario code is vouched for.",
   [CoreMessage.ScenarioCodesCleanOver]: (featureFiles, featureCodes) =>
-    `Scenario codes are clean over ${featureFiles} carrying ${featureCodes}`,
+    `Scenario codes are clean over ${featureFiles} carrying ${featureCodes} ` +
+    "(a feature code is the tag heading a feature file, the `<FFF>` that each `@SCN-<FFF>-<NNN>` code in that file repeats)",
   [CoreMessage.CleanNoCodedScenario]: (over, them) => `${over}: no scenario in ${them} carries an @SCN code to misfile.`,
   [CoreMessage.CleanEachFileOwnCode]: (over) => `${over}: each file carries a code of its own, and ${IN_ITS_FILE}.`,
   [CoreMessage.CleanOthersNoFeatureCode]: (over, noFeatureCode, hold) =>
@@ -389,16 +390,22 @@ export const CORE_MESSAGES: CoreMessages = {
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
   [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
-    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, a scenario, a phantom claim or the unnamed claim, reconciled for each kind of quality check.",
+    "A Claim Reconciliation is one row of the ledger: the evidence for one claim, reconciled kind by kind of quality check in its Quality Check Reconciliations. " +
+    "A claim is a scenario, a phantom claim (a code that evidence cites and no scenario carries, which the table below calls an unknown Scenario) " +
+    "or the unnamed claim (the one row for evidence that names no one scenario).",
   [CoreMessage.EvidenceReconciliationReconciliationLineTerm]:
-    "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome. " +
+    "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome: each Evidence Observation it holds is one line, " +
+    "its Evidence Obligation is one more when no Evidence Observation that ran answers it, and one holding neither is a single line. " +
     "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
     "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
   [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
-    "An Evidence Obligation is a proof a scenario asks for, by the tags it carries, to be met by Evidence Observations.",
+    "An Evidence Obligation is a proof a scenario asks for, by the tags it carries, to be met by Evidence Observations. " +
+    "A Pending Item is a proof a scenario defers, by a pending tag such as `@unitpending` or a deferral tag such as `@wip`: " +
+    "it raises no Evidence Obligation, is tallied apart, and never puts its claim out of balance.",
   [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
     "An Evidence Observation is one reported result of a test or a fitness function, attributed by the code it cites: " +
-    "to the one scenario that carries the code, to a phantom claim when no scenario carries it, and otherwise to the unnamed claim. " +
+    "to the one scenario that carries the code, to a phantom claim when no scenario carries it, and to the unnamed claim " +
+    "when it cites no code or a code more than one scenario carries, because no one scenario can take it. " +
     "One that never reached its assertions is broken: it was reported, but did not run to a result.",
   [CoreMessage.SubjectColumn]: "Subject",
   [CoreMessage.TotalColumn]: "Total",
@@ -457,7 +464,9 @@ export const CORE_MESSAGES: CoreMessages = {
     `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
   [CoreMessage.UnnamedClaimTally]: (count) =>
     `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
-  [CoreMessage.ExcludedScnOccurrences]: (count) => `${count} @SCN ids seen in non-tag context, excluded`,
+  [CoreMessage.ExcludedScnOccurrences]: (count) =>
+    `${count} @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, ` +
+    "a comment or step text rather than as a tag, so it marks no scenario and raises no claim",
   [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN tag`,
   [CoreMessage.SharedScnCodes]: (scenarios, codes) =>
     `The corpus holds ${scenarios} scenarios — ${codes} @SCN code(s) carried by more than one scenario:`,

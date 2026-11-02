@@ -236,7 +236,9 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
     expect(md).toContain("## Claim Reconciliations");
-    expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
+    expect(md.split("\n")).toContain(
+      "- 3 @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim"
+    );
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {

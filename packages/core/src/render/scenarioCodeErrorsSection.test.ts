@@ -245,6 +245,9 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     const files = codes.length + plain;
     it(`states the codes clean over ${files} files carrying ${codes.length} codes after the run verdict, and prints no scenario code errors section`, () => {
       const statement = statements()[row]!;
+      expect(statement).toContain(
+        "(a feature code is the tag heading a feature file, the `<FFF>` that each `@SCN-<FFF>-<NNN>` code in that file repeats)"
+      );
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
       expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
