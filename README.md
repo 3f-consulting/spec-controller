@@ -236,7 +236,7 @@ The repository holds itself to the same discipline it asks of you. Its own CI re
 - code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code.
 
-**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Most gates automate a kind of feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself.
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. These gates are meant to take over the routine feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself.
 
 The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the first limit above in practice: a change made in both places balances, and review is what judges it.
 
