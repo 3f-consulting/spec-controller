@@ -5,6 +5,7 @@ import { readHistory } from "./readHistory.js";
 import { git, writeInto, commitAll, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
 import { allocateFrom, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 function scenarioBlock(code: string): string {
   return `  @${code} @unit\n  Scenario: scenario ${code}\n    Given a step\n`;
@@ -35,7 +36,7 @@ afterEach(() => {
 });
 
 function historyRefusalReason(answered: Answered, path: string): string {
-  return refusalReason(answered, "the repository's history", path);
+  return refusalReason(answered, APP_MESSAGES[AppMessage.History](), path);
 }
 
 const NOT_PERMITTED = /^(EACCES|EPERM): /;
@@ -92,6 +93,6 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
       process.env.PATH = path;
     }
 
-    expect(thrown).toMatchObject({ name: "UnreadableInput", subject: "the repository's history", path: "git" });
+    expect(thrown).toMatchObject({ name: "UnreadableInput", subject: APP_MESSAGES[AppMessage.History](), path: "git" });
   });
 });

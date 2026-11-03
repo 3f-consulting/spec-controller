@@ -66,7 +66,7 @@ describe("[SCN-RPT-014] the ledger summary counts the scenarios with no @SCN cod
   it("states the count of scenarios with no @SCN code in the ledger summary, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      "- 3 scenario(s) carry no @SCN code",
+      `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](3)}`,
     ]);
   });
 

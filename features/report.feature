@@ -389,27 +389,6 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-067
     Scenario: the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity
 
-  Rule: the gloss for every outcome is its sentence, verbatim
-
-    Every outcome has a gloss, and the gloss is the outcome's sentence, verbatim.
-
-    @unit @SCN-RPT-025
-    Scenario Outline: the <handle> outcome glosses as its sentence, verbatim
-
-      Examples:
-        | handle                 | sentence                                                                                                                 |
-        | satisfied              | Evidence Observation satisfies its Evidence Obligation                                                                    |
-        | missing                | Evidence Observation is missing                                                                                          |
-        | failing                | Evidence Observation is failing                                                                                          |
-        | watermelon             | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run |
-        | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
-        | duplicate-scn-code     | Evidence Obligation's @SCN code is carried by another Scenario                                                            |
-        | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
-        | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
-        | no-evidence-obligation             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
-        | broken                 | Evidence Observation is broken because its proof never ran to a result                                                   |
-        | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
-
   Rule: the report surfaces broken evidence as a proof that never ran, and stamps the run unsound
 
     A broken observation is a proof that never ran, such as a Vitest suite that failed to

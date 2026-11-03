@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { runBalanceCaptured, type BalanceRun } from "../runBalance.test-utils.js";
 import { removedWorkingDirectory } from "../vanishedWorkingDirectory.test-utils.js";
 
@@ -24,6 +25,6 @@ describe("[SCN-CLI-100] a run from a working directory that no longer exists is 
 
     expect(answered?.stdout).toBe("");
     expect(answered?.exitCode).toBe(2);
-    expect(answered?.stderr).toBe(`The feature corpus read by default could not be read: features (${thrown.message})\n`);
+    expect(answered?.stderr).toBe(`${APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), "features", thrown.message)}\n`);
   });
 });

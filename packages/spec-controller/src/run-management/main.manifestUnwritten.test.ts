@@ -4,12 +4,12 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
 import { main } from "../main.js";
 import { RUN_MANIFEST } from "./keptRun.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote } from "../programOutput.test-utils.js";
 
 const TARGET = "every-outcome";
 const RUN_ID = "r1";
-const NO_VERDICT_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: ";
 
 interface Answered {
   stderr: string;
@@ -49,7 +49,7 @@ describe("[SCN-CLI-109] a kept run whose manifest cannot be written did not fini
   it("writes one line to stderr, the no-verdict line naming the write's EISDIR", () => {
     const { stderr: said } = keptRunWithManifestAsDirectory();
     expect(said.split("\n")).toHaveLength(2);
-    expect(said.slice(0, NO_VERDICT_LINE.length)).toBe(NO_VERDICT_LINE);
+    expect(said.startsWith(APP_MESSAGES[AppMessage.UnexpectedError]("Error", ""))).toBe(true);
     expect(said).toContain("EISDIR");
   });
 

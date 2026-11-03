@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
@@ -69,7 +70,11 @@ jobs:
         run: pnpm typecheck
 `;
 
-const label = "Excluded:";
+const label = CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel];
+
+const excluded = (span: string): string => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](span)}`;
+
+const excludedMark = (): string => `${CORE_MESSAGES[CoreMessage.StepExcluded]("").split(":")[0]!.trim()}:`;
 
 const excludedList = (lines: readonly string[], length: number): string[] => {
   const start = lines.indexOf(label);
@@ -83,20 +88,16 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const tableEnd = endOfTable(section);
 
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
-    expect(excludedList(section, 3)).toStrictEqual([
-      "Excluded:",
-      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
-      "",
-    ]);
+    expect(excludedList(section, 3)).toStrictEqual([label, excluded(codeSpan("ci.yml:quality:Types")), ""]);
     expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it.each([
-    { entry: "ci.yml:quality:Run `pnpm lint`", item: "- `` ci.yml:quality:Run `pnpm lint` `` — excluded: the target names this step a non-check." },
-    { entry: "ci.yml:quality:Two\nlines", item: '- `"ci.yml:quality:Two\\nlines"` — excluded: the target names this step a non-check.' },
+    { entry: "ci.yml:quality:Run `pnpm lint`", item: "`` ci.yml:quality:Run `pnpm lint` ``" },
+    { entry: "ci.yml:quality:Two\nlines", item: '`"ci.yml:quality:Two\\nlines"`' },
   ])("lists the excluded step $entry whole in its code span, as $item", ({ entry, item }) => {
     const section = stepAccounting(reportLines([entry], { "ci.yml": spanStepsCi }));
-    expect(excludedList(section, 3)).toStrictEqual(["Excluded:", item, ""]);
+    expect(excludedList(section, 3)).toStrictEqual([label, excluded(item), ""]);
   });
 
   it("prints no Excluded label when the target's only entry matches no step", () => {
@@ -108,23 +109,20 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
 
   it("lists one line for each step an entry matches", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types"], { "ci.yml": twoTypesStepsCi }));
-    expect(excludedList(section, 4)).toStrictEqual([
-      "Excluded:",
-      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
-      "- `ci.yml:quality:Types` — excluded: the target names this step a non-check.",
-      "",
-    ]);
+    const types = excluded(codeSpan("ci.yml:quality:Types"));
+    expect(excludedList(section, 4)).toStrictEqual([label, types, types, ""]);
   });
 
   it("lists the excluded steps after the reconciler steps, in the order the steps were read", () => {
     const section = stepAccounting(linesOf(reconcileStepAccounting([stepAccountingCi])));
-    expect(section.indexOf("Reconciler:")).toBeGreaterThanOrEqual(0);
-    expect(section.indexOf(label)).toBeGreaterThan(section.indexOf("Reconciler:"));
+    const reconcilerLabel = CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel];
+    expect(section.indexOf(reconcilerLabel)).toBeGreaterThanOrEqual(0);
+    expect(section.indexOf(label)).toBeGreaterThan(section.indexOf(reconcilerLabel));
     expect(excludedList(section, 5)).toStrictEqual([
-      "Excluded:",
-      "- `ci.yml:ci:Checkout` — excluded: the target names this step a non-check.",
-      "- `ci.yml:ci:Install` — excluded: the target names this step a non-check.",
-      "- `ci.yml:ci:Build` — excluded: the target names this step a non-check.",
+      label,
+      excluded(codeSpan("ci.yml:ci:Checkout")),
+      excluded(codeSpan("ci.yml:ci:Install")),
+      excluded(codeSpan("ci.yml:ci:Build")),
       "",
     ]);
   });
@@ -133,7 +131,7 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
     expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes("— excluded:") || line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(lines.some((line) => line.includes(excludedMark()) || line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 });
 
@@ -260,7 +258,7 @@ describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a c
     expect([nonChecksNotAStepName, nonChecksMatchingNoStep, accounting?.nonChecksNamingAWorkflowNotRead]).toStrictEqual([undefined, undefined, undefined]);
     expect(excludedItem).toContain(entry);
     expect(afterItem).toBe("");
-    expect(lines.filter((line) => line.includes(entry) || line.includes("— excluded:"))).toStrictEqual([excludedItem]);
+    expect(lines.filter((line) => line.includes(entry) || line.includes(excludedMark()))).toStrictEqual([excludedItem]);
     expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
   });
 });

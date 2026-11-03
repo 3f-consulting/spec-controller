@@ -6,6 +6,9 @@ import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+
+const notSupplied = (flags: string): string => `- ${CORE_MESSAGES[CoreMessage.ProvenanceNotSupplied](flags)}`;
 
 let balance: Ledger;
 beforeEach(() => {
@@ -26,15 +29,15 @@ const handed = (inputs: RunInputs): RunContext => ({
 });
 
 const notSuppliedLine = (md: string): string | null =>
-  md.split("\n").find((line) => line.startsWith("- Not supplied:")) ?? null;
+  md.split("\n").find((line) => line.startsWith(notSupplied(""))) ?? null;
 
 describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run did not receive", () => {
   it("names the flags with no value on a line of their own, beneath the Inputs list", () => {
     const md = renderMarkdown(er(balance), handed({ features: "features", ciSteps: "ci-steps.json" }), publishedExitCodeOf);
-    expect(notSuppliedLine(md)).toBe("- Not supplied: `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`");
+    expect(notSuppliedLine(md)).toBe(notSupplied("`--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`"));
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeGreaterThan(-1);
-    expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeLessThan(md.indexOf("- Not supplied:"));
-    expect(md.indexOf("- Not supplied:")).toBeLessThan(md.indexOf("- Run timestamp (UTC):"));
+    expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeLessThan(md.indexOf(notSupplied("")));
+    expect(md.indexOf(notSupplied(""))).toBeLessThan(md.indexOf(`- ${CORE_MESSAGES[CoreMessage.ProvenanceRunTimestamp]("")}`));
   });
 
   it("says nothing about absence when the run was handed every canonical stream", () => {
@@ -59,9 +62,9 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
 
   it("keeps the none-specified Inputs branch reachable, and names every canonical flag beside it", () => {
     const md = renderMarkdown(er(balance), handed({}), publishedExitCodeOf);
-    expect(md.split("\n")).toContain("- Inputs: none specified");
+    expect(md.split("\n")).toContain(`- ${CORE_MESSAGES[CoreMessage.ProvenanceNoInputs]}`);
     expect(notSuppliedLine(md)).toBe(
-      "- Not supplied: `--features`, `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"
+      notSupplied("`--features`, `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`")
     );
   });
 });

@@ -6,10 +6,13 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import type { ScenarioCodeError } from "../domain/scnTags.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-const SECTION = "## Errors in the inputs";
-const SCENARIO_CODE_ERRORS = "### Scenario code errors";
-const CONFIGURATION_NOT_READ = "### Configuration not read";
+const SECTION = CORE_MESSAGES[CoreMessage.ErrorsInTheInputsHeading];
+const SCENARIO_CODE_ERRORS = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
+const CONFIGURATION_NOT_READ = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+const RUN_PROVENANCE = CORE_MESSAGES[CoreMessage.RunProvenanceHeading];
+const SUMMARY_VIEWS = CORE_MESSAGES[CoreMessage.SummaryViewsHeading];
 
 const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
@@ -71,16 +74,16 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
 describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
   it("states scenario code errors alone under Scenario code errors, right after the run provenance and before the summary views", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
-    expect(before).toBe("## Run provenance");
-    expect(after).toBe("## Summary views");
+    expect(before).toBe(RUN_PROVENANCE);
+    expect(after).toBe(SUMMARY_VIEWS);
     expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS]);
     expect(body.filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
   it("states configuration faults alone under Configuration not read, right after the run provenance and before the summary views", () => {
     const { before, body, after } = errorSectionOf(reportLines({ configuration: KEY_NOT_READ }));
-    expect(before).toBe("## Run provenance");
-    expect(after).toBe("## Summary views");
+    expect(before).toBe(RUN_PROVENANCE);
+    expect(after).toBe(SUMMARY_VIEWS);
     expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ]);
     expect(body.filter((line) => line.startsWith("- `specController.zzz` "))).toHaveLength(1);
   });
@@ -88,8 +91,8 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
   it("states scenario code errors before configuration faults, in one section ahead of the run integrity stamp", () => {
     const lines = reportLines({ codeErrors: [FOREIGN], configuration: KEY_NOT_READ, unsound: true });
     const { before, body, after } = errorSectionOf(lines);
-    expect(before).toBe("## Run provenance");
-    expect(after).toBe("## Run integrity: unsound");
+    expect(before).toBe(RUN_PROVENANCE);
+    expect(after).toBe(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
     expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS, CONFIGURATION_NOT_READ]);
     expect(lines.filter((line) => line === SECTION)).toHaveLength(1);
   });
@@ -97,7 +100,8 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
   it("prints no such section when the inputs hold no fault, and nothing in its place", () => {
     const clean = reportLines({});
     expect(clean).not.toContain(SECTION);
-    expect(clean.filter((line) => /^#+ (Scenario code errors|Configuration not read)$/.test(line))).toEqual([]);
+    const partWords = [SCENARIO_CODE_ERRORS, CONFIGURATION_NOT_READ].map((part) => part.replace(/^#+ /, ""));
+    expect(clean.filter((line) => /^#+ /.test(line) && partWords.includes(line.replace(/^#+ /, "")))).toEqual([]);
     expect(withoutErrorSection(reportLines({ configuration: KEY_NOT_READ }))).toEqual(clean);
   });
 });

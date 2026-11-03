@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { executeKeptRun, RUN_MANIFEST } from "./keptRun.js";
@@ -33,7 +34,7 @@ describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored
       reconciliationJsonPath: join(runDir, "spec-reconciliation.json"),
     });
     expect(readdirSync(runDir).sort()).toEqual([RUN_MANIFEST, "spec-reconciliation.json", "spec-reconciliation.md"]);
-    expect(readFileSync(join(runDir, "spec-reconciliation.md"), "utf8")).toMatch(/^# Evidence Reconciliation\n/);
+    expect(readFileSync(join(runDir, "spec-reconciliation.md"), "utf8").slice(0, CORE_MESSAGES[CoreMessage.ReportTitle].length + 1)).toBe(`${CORE_MESSAGES[CoreMessage.ReportTitle]}\n`);
     const json = JSON.parse(readFileSync(join(runDir, "spec-reconciliation.json"), "utf8")) as Record<string, unknown>;
     expect(json).toHaveProperty("runProvenance");
   });

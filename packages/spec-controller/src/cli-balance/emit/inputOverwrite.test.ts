@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inputOverwriteRefusal, type FileIdentity, type IdentifiedInput } from "./format.js";
+import { APP_MESSAGES, AppMessage } from "../../messages.js";
 import { toFile, toStdout, fileIdentity as id, identifiedAs as at } from "./plannedOutput.test-utils.js";
 
 const input = (subject: string, path: string, identity: FileIdentity | undefined): IdentifiedInput => ({ subject, path, identity });
@@ -8,9 +9,7 @@ describe("[SCN-FMT-013] an output on the regular file an input is refused, namin
   it("refuses an output on the file an input names, naming the output as given and the input by its subject and path", () => {
     const refusal = inputOverwriteRefusal([at(toFile("json", "vitest.json"), id(1n, 7n))], [input("the --vitest report", "vitest.json", id(1n, 7n))]);
 
-    expect(refusal).toBe(
-      "An output would overwrite a file this run reads: json:vitest.json is the --vitest report, vitest.json. Give the report a file of its own.",
-    );
+    expect(refusal).toBe(APP_MESSAGES[AppMessage.OutputOverwritesInput]("json:vitest.json", "the --vitest report", "vitest.json"));
   });
 
   it("names the output that lands on an input whichever position it has among the outputs", () => {

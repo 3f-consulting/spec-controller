@@ -26,24 +26,24 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
       { subject: "the --cucumber report", path: "c.json" },
       { subject: "the --package-json manifest", path: "p.json" },
       { subject: "the --ci-steps record", path: "s.json" },
-      { subject: "a feature file of the --features corpus", path: "f/a.feature" },
-      { subject: "the --ci workflow", path: "w.yml" },
+      { subject: APP_MESSAGES[AppMessage.FlaggedCorpusFeatureFile](), path: "f/a.feature" },
+      { subject: APP_MESSAGES[AppMessage.FlaggedCiWorkflow](), path: "w.yml" },
     ]);
   });
 
   it("names the inputs read by default, when the run was not pointed elsewhere", () => {
     expect(inputsReadBy({}, reader)).toEqual([
       { subject: "the package.json read by default", path: "package.json" },
-      { subject: "a feature file of the corpus read by default", path: "features/a.feature" },
-      { subject: "a CI workflow read by default", path: ".github/workflows/ci.yml" },
-      { subject: "a CI workflow read by default", path: ".github/workflows/nightly.yaml" },
+      { subject: APP_MESSAGES[AppMessage.DefaultCorpusFeatureFile](), path: "features/a.feature" },
+      { subject: APP_MESSAGES[AppMessage.DefaultCiWorkflow](), path: ".github/workflows/ci.yml" },
+      { subject: APP_MESSAGES[AppMessage.DefaultCiWorkflow](), path: ".github/workflows/nightly.yaml" },
     ]);
   });
 
   it("names every workflow of a folder the run was pointed at", () => {
     expect(inputsReadBy({ ci: "workflows" }, reader).filter((i) => i.subject.includes("workflow"))).toEqual([
-      { subject: "a workflow of the --ci folder", path: "workflows/ci.yml" },
-      { subject: "a workflow of the --ci folder", path: "workflows/nightly.yaml" },
+      { subject: APP_MESSAGES[AppMessage.FlaggedCiFolderWorkflow](), path: "workflows/ci.yml" },
+      { subject: APP_MESSAGES[AppMessage.FlaggedCiFolderWorkflow](), path: "workflows/nightly.yaml" },
     ]);
   });
 });
@@ -77,7 +77,7 @@ describe("[SCN-FMT-013] balance refuses a --format naming one of the feature fil
 
     expect(captured(["--features", features, "--ci", ci, "--format", `md:${output}`])).toEqual({
       stdout: "",
-      stderr: APP_MESSAGES[AppMessage.OutputOverwritesInput](`md:${output}`, "a feature file of the --features corpus", output) + "\n",
+      stderr: APP_MESSAGES[AppMessage.OutputOverwritesInput](`md:${output}`, APP_MESSAGES[AppMessage.FlaggedCorpusFeatureFile](), output) + "\n",
       exitCode: 2,
     });
     expect(contentsOf(features)).toEqual(before);

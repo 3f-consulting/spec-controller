@@ -2,7 +2,8 @@ import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { installCrashGuards, markRunFinished } from "./crashGuards.js";
 import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
-import { ARRIVALS, closedPipe, FIRST_LINE, NO_VERDICT_LINE } from "./crashGuards.test-utils.js";
+import { ARRIVALS, closedPipe, FIRST_LINE, noVerdictLine } from "./crashGuards.test-utils.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 type Happening = { stderr: string } | { exit: unknown };
 
@@ -52,7 +53,7 @@ function refused(): Guarded {
   return g;
 }
 
-const AFTER_VERDICT_LINE = `spec-controller hit an unexpected error after its verdict: Error: ${FIRST_LINE}\n`;
+const afterVerdictLine = (): string => `${APP_MESSAGES[AppMessage.UnexpectedErrorAfterVerdict]("Error", FIRST_LINE)}\n`;
 
 const onStderr = (g: Guarded): boolean => g.stderr.emit("error", closedPipe());
 
@@ -74,7 +75,7 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
         const g = guarded();
         raiseFirst(g);
         raiseSecond(g);
-        expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
+        expect(g.stderr.written).toEqual([noVerdictLine()]);
       });
     });
   });
@@ -94,7 +95,7 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
       onStderr(g);
       raise(g);
       expect(g.proc.exitCode).toBe(6);
-      expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
+      expect(g.stderr.written).toEqual([noVerdictLine()]);
     });
   });
 
@@ -109,7 +110,7 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
       const g = refused();
       raise(g);
       raise(g);
-      expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
+      expect(g.stderr.written).toEqual([noVerdictLine()]);
     });
   });
 
@@ -120,7 +121,7 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
       raise(g);
       raise(g);
       expect(g.proc.exitCode).toBe(verdict);
-      expect(g.stderr.written).toEqual([AFTER_VERDICT_LINE]);
+      expect(g.stderr.written).toEqual([afterVerdictLine()]);
     });
   });
 
@@ -131,7 +132,7 @@ describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a r
     const g = guarded();
     ARRIVALS[0]!.raise(g);
     expect(g.proc.exitCode).toBe(6);
-    expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
+    expect(g.stderr.written).toEqual([noVerdictLine()]);
   });
 });
 
@@ -143,27 +144,27 @@ describe("[SCN-CLI-108] an uncaught error ends the process once its line is writ
   it("with no verdict reached, ends the process at 6, once, after the no-verdict line", () => {
     const g = guarded();
     uncaught(g);
-    expect(g.happened).toEqual([{ stderr: NO_VERDICT_LINE }, { exit: 6 }]);
+    expect(g.happened).toEqual([{ stderr: noVerdictLine() }, { exit: 6 }]);
   });
 
   it.each([0, 1, 3, 4, 5])("after the run finished on its verdict, ends the process on the verdict's %i, once, after the after-verdict line", (verdict) => {
     const g = guarded(verdict);
     markRunFinished();
     uncaught(g);
-    expect(g.happened).toEqual([{ stderr: AFTER_VERDICT_LINE }, { exit: verdict }]);
+    expect(g.happened).toEqual([{ stderr: afterVerdictLine() }, { exit: verdict }]);
   });
 
   it("after a refusal's 2, ends the process on 2, once, after the no-verdict line", () => {
     const g = refused();
     uncaught(g);
-    expect(g.happened).toEqual([{ stderr: NO_VERDICT_LINE }, { exit: 2 }]);
+    expect(g.happened).toEqual([{ stderr: noVerdictLine() }, { exit: 2 }]);
   });
 
   it("after an earlier error already wrote the run's line, ends the process at 6 with no second line", () => {
     const g = guarded();
     ARRIVALS[0]!.raise(g);
     uncaught(g);
-    expect(g.happened).toEqual([{ stderr: NO_VERDICT_LINE }, { exit: 6 }]);
+    expect(g.happened).toEqual([{ stderr: noVerdictLine() }, { exit: 6 }]);
   });
 
   it("when stderr cannot be written, still ends the process at 6", () => {

@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { main } from "./main.js";
 import { refuse } from "./outputLocation.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
@@ -37,8 +38,6 @@ function answer(argv: string[], onStdout: (chunk: string | Uint8Array) => boolea
   return { stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode };
 }
 
-const UNEXPECTED_ERROR_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: ";
-
 const onAClosedPipe = (): never => {
   throw closedPipe();
 };
@@ -55,7 +54,7 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
     });
 
     it("writes one line to stderr, naming the error's class and the first line of its message", () => {
-      expect(answer(argv(), onAClosedPipe).stderr).toBe(`${UNEXPECTED_ERROR_LINE}Error: ${FIRST_LINE}\n`);
+      expect(answer(argv(), onAClosedPipe).stderr).toBe(`${APP_MESSAGES[AppMessage.UnexpectedError]("Error", FIRST_LINE)}\n`);
     });
   });
 
@@ -82,11 +81,11 @@ function messageGetterThrows(): Error {
 
 describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 6, named on one line", () => {
   describe.each([
-    { thrown: "a null-prototype object", make: (): unknown => Object.create(null), named: "object: " },
-    { thrown: "an Error whose message getter throws", make: messageGetterThrows, named: "Error: " },
-    { thrown: "an Error whose message is not a string", make: (): unknown => Object.assign(new Error(), { message: 42 }), named: "Error: " },
-    { thrown: "an Error whose name is a symbol", make: (): unknown => Object.assign(new Error("boom"), { name: Symbol("planted") }), named: "Error: boom" },
-  ])("a balance run whose report throws $thrown", ({ make, named }) => {
+    { thrown: "a null-prototype object", make: (): unknown => Object.create(null), name: "object", firstLine: "" },
+    { thrown: "an Error whose message getter throws", make: messageGetterThrows, name: "Error", firstLine: "" },
+    { thrown: "an Error whose message is not a string", make: (): unknown => Object.assign(new Error(), { message: 42 }), name: "Error", firstLine: "" },
+    { thrown: "an Error whose name is a symbol", make: (): unknown => Object.assign(new Error("boom"), { name: Symbol("planted") }), name: "Error", firstLine: "boom" },
+  ])("a balance run whose report throws $thrown", ({ make, name, firstLine }) => {
     const throwing = (): never => {
       throw make();
     };
@@ -99,12 +98,12 @@ describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 
       const { stderr: said } = answer(balance(), throwing);
       expect(said.split("\n")).toHaveLength(2);
       expect(said).toMatch(/\n$/);
-      expect(said.startsWith(UNEXPECTED_ERROR_LINE)).toBe(true);
+      expect(said.startsWith(APP_MESSAGES[AppMessage.UnexpectedError](name, firstLine))).toBe(true);
       expect(said).not.toMatch(/^\s+at /m);
     });
 
     it("names what it can read of the error and nothing it cannot", () => {
-      expect(answer(balance(), throwing).stderr).toBe(`${UNEXPECTED_ERROR_LINE}${named}\n`);
+      expect(answer(balance(), throwing).stderr).toBe(`${APP_MESSAGES[AppMessage.UnexpectedError](name, firstLine)}\n`);
     });
   });
 
@@ -166,7 +165,7 @@ describe("[SCN-CLI-104] an error raised after the verdict is set keeps the verdi
 
     it("names the error on one line, saying it came after the verdict and never that the run gives none", () => {
       const { stderr: said } = answer(kept(), runDirectoryLine(true));
-      expect(said).toBe(`spec-controller hit an unexpected error after its verdict: Error: ${FIRST_LINE}\n`);
+      expect(said).toBe(`${APP_MESSAGES[AppMessage.UnexpectedErrorAfterVerdict]("Error", FIRST_LINE)}\n`);
       expect(said).not.toContain("gives no verdict");
     });
   });

@@ -5,7 +5,6 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObservation, Outcome } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
@@ -68,6 +67,20 @@ function sectionLines(md: string): string[] {
 
 const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
 
+const CAUSE_ROW_SENTENCE: Record<Outcome, string> = {
+  satisfied: CORE_MESSAGES[CoreMessage.OutcomeSatisfied],
+  missing: CORE_MESSAGES[CoreMessage.OutcomeMissing],
+  failing: CORE_MESSAGES[CoreMessage.OutcomeFailing],
+  watermelon: CORE_MESSAGES[CoreMessage.OutcomeWatermelon],
+  "no-scn-code": CORE_MESSAGES[CoreMessage.OutcomeNoScnCode],
+  "duplicate-scn-code": CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode],
+  "cites-unknown-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesUnknownScenario],
+  "cites-no-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario],
+  "no-evidence-obligation": CORE_MESSAGES[CoreMessage.OutcomeNoEvidenceObligation],
+  broken: CORE_MESSAGES[CoreMessage.OutcomeBroken],
+  "both-missing": CORE_MESSAGES[CoreMessage.OutcomeBothMissing],
+};
+
 function expectedTable(
   scenarios: { total: number; balanced: number; outOfBalance: number },
   reconciliationLines: { total: number; satisfied: number },
@@ -107,7 +120,7 @@ function expectedTable(
     ]),
     ...OUT_OF_BALANCE_OUTCOMES.map((outcome) =>
       row([
-        OUTCOME_DESCRIPTION[outcome],
+        CAUSE_ROW_SENTENCE[outcome],
         "",
         "",
         String(leafCounts[outcome] ?? 0),
@@ -141,7 +154,7 @@ describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Item
         "1 unit + 1 integration"
       ),
       "",
-      "1 Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.",
+      CORE_MESSAGES[CoreMessage.PendingTally](1),
       "",
     ]);
   });

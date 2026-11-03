@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 import { type Ledger } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
@@ -46,9 +45,11 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
   it("renders an '### Out-of-balance by feature' table grouping the out-of-balance scenarios under their feature code", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
 
-    expect(md).toContain("### Out-of-balance by feature");
-    expect(md).toContain("3 of 5 Claim Reconciliation(s) of scenarios out of balance, grouped by feature.");
-    expect(md).toContain("| Feature | Count | Out-of-balance `@SCN` ids |");
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    expect(md).toContain(
+      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`
+    );
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.ByFeatureTableHeader]);
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
@@ -59,8 +60,9 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
     const md = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf);
-    expect(md).not.toContain("### Out-of-balance by feature");
-    expect(md).not.toContain("Claim Reconciliation(s) of scenarios out of balance");
+    expect(md).not.toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    const wordsAfterTheCounts = CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](NaN, NaN).split("NaN").at(-1)?.trim();
+    expect(md).not.toContain(wordsAfterTheCounts);
   });
 
   it("slots the by-feature section after the Evidence observations and before the Claim Reconciliations (no warnings section)", () => {
@@ -69,9 +71,9 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       [{ qualityCheckKind: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
-    const iObservations = md.indexOf("### Evidence observations");
-    const iByFeature = md.indexOf("### Out-of-balance by feature");
-    const iLedger = md.indexOf("## Claim Reconciliations");
+    const iObservations = md.indexOf(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading]);
+    const iByFeature = md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    const iLedger = md.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(iObservations).toBeGreaterThanOrEqual(0);
     expect(iByFeature).toBeGreaterThanOrEqual(0);
     expect(iLedger).toBeGreaterThanOrEqual(0);
@@ -147,7 +149,7 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   const uncitedObservation = { qualityCheckKind: "unit" as const, scnId: null, status: "passed" as const };
   const byFeature = (ledger: Ledger): string => {
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
-    const at = md.indexOf("### Out-of-balance by feature");
+    const at = md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
     return at < 0 ? "" : md.slice(at, md.indexOf("\n## ", at));
   };
   const phantomClaimAndUnnamedClaimReconciliations = (): string =>
@@ -209,17 +211,17 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections).toEqual([
-      "## Run provenance",
-      "## Summary views",
-      "## Claim Reconciliations",
+      CORE_MESSAGES[CoreMessage.RunProvenanceHeading],
+      CORE_MESSAGES[CoreMessage.SummaryViewsHeading],
+      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     ]);
   });
 
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
-    expect(md).toContain("- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.");
+    expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](3, 1, 2)}`);
     expect(md).toContain("SCN-C");
-    expect(md).toContain(`| out-of-balance | ${OUTCOME_DESCRIPTION["both-missing"]} |`);
+    expect(md).toContain(`| out-of-balance | ${CORE_MESSAGES[CoreMessage.OutcomeBothMissing]} |`);
   });
 });
 
@@ -235,10 +237,8 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
-    expect(md).toContain("## Claim Reconciliations");
-    expect(md.split("\n")).toContain(
-      "- 3 @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim"
-    );
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
+    expect(md.split("\n")).toContain(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](3)}`);
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
@@ -279,9 +279,9 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
     const table = claimReconciliationsTable(md);
     expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN)).toBe(`unit: ${OUTCOME_DESCRIPTION.missing}`);
+    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN)).toBe(`unit: ${CORE_MESSAGES[CoreMessage.OutcomeMissing]}`);
     expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN).startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`)).toBe(true);
+    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN).startsWith(`fitness: ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]}`)).toBe(true);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });
@@ -336,7 +336,7 @@ describe("[SCN-RPT-010] the markdown report renders the Evidence observations re
 
   it("[SCN-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
-    expect(md).toContain("### Evidence observations");
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading]);
     expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](8, 4, 1, 3));
   });
 });

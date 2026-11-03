@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { git, writeInto, commitAll } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { APP_MESSAGES, AppMessage } from "../messages.js";
 
 function featureFile(part: string, codes: readonly string[]): string {
   const scenarios = codes.map((code, i) => `  @${code} @unit\n  Scenario: scenario ${i + 1}\n    Given a step\n`);
@@ -57,9 +58,6 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    expect(answered.stderr).toBe(
-      "spec-controller allocate: unknown part — no feature file's header carries ZZZ.\n" +
-        "The parts this corpus's feature files carry: ONE, TWO.\n",
-    );
+    expect(answered.stderr).toBe(`${APP_MESSAGES[AppMessage.UnknownPartRefused]("ZZZ", "ONE, TWO")}\n`);
   });
 });

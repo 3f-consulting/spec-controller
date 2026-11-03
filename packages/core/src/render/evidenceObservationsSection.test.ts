@@ -21,7 +21,7 @@ const observations: EvidenceObservation[] = [
   { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
-const heading = "### Evidence observations";
+const heading = CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading];
 const sum = CORE_MESSAGES[CoreMessage.EvidenceObservationsSum];
 const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
 

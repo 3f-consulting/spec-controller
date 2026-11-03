@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { git, writeInto, taken, withhold, runsAsRoot, repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
+import { APP_MESSAGES, AppMessage, Unreadable } from "../messages.js";
 
 function repository(): string {
   const repo = repositoryHeadedOneCarrying003("allocate-unreadable-file-", { "docs/notes.md": "Cites SCN-ONE-003.\n" });
@@ -47,7 +48,7 @@ interface Row {
   withheld: (repo: string, file: string) => [path: string, mode: number];
   where: "its top" | "a subdirectory";
   named: (repo: string) => string;
-  subject: string;
+  subject: Unreadable;
 }
 
 function theFile(repo: string, file: string): [path: string, mode: number] {
@@ -81,7 +82,7 @@ const EXAMPLES: readonly Row[] = [
     withheld: theFile,
     where: "its top",
     named: theDraft,
-    subject: "a file in the tree",
+    subject: Unreadable.TreeFile,
   },
   {
     file: "an untracked file, drafts/new.md",
@@ -89,7 +90,7 @@ const EXAMPLES: readonly Row[] = [
     withheld: itsDirectory,
     where: "its top",
     named: theDraftsDirectory,
-    subject: "a directory in the tree",
+    subject: Unreadable.TreeDirectory,
   },
   {
     file: "an untracked file, drafts/new.md",
@@ -97,7 +98,7 @@ const EXAMPLES: readonly Row[] = [
     withheld: itsDirectoryListedButNotEntered,
     where: "its top",
     named: theDraftsDirectory,
-    subject: "a directory in the tree",
+    subject: Unreadable.TreeDirectory,
   },
   {
     file: "a tracked file with an edit not yet committed, docs/notes.md",
@@ -105,7 +106,7 @@ const EXAMPLES: readonly Row[] = [
     withheld: theFile,
     where: "its top",
     named: theNotes,
-    subject: "a file in the tree",
+    subject: Unreadable.TreeFile,
   },
   {
     file: "the feature file, with an edit not yet committed",
@@ -113,7 +114,7 @@ const EXAMPLES: readonly Row[] = [
     withheld: (repo) => [repo, 0o100],
     where: "a subdirectory",
     named: (repo) => repo,
-    subject: "a directory in the tree",
+    subject: Unreadable.TreeDirectory,
   },
 ];
 
@@ -132,7 +133,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
 
       const answered = allocateFrom(where === "its top" ? repo : join(repo, "src"));
 
-      expect(refusalReason(answered, subject, named(repo))).toMatch(/^(EACCES|EPERM): /);
+      expect(refusalReason(answered, APP_MESSAGES[subject](), named(repo))).toMatch(/^(EACCES|EPERM): /);
     },
   );
 
@@ -140,7 +141,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     const repo = repository();
     writeFileSync(join(repo, ".git", "index"), "not an index\n");
 
-    expect(refusalReason(allocateFrom(repo), "the tree", repo)).toMatch(/^git ls-files exited 128: \S/);
+    expect(refusalReason(allocateFrom(repo), APP_MESSAGES[AppMessage.Tree](), repo)).toMatch(/^git ls-files exited 128: \S/);
   });
 
   it("answers ONE past a code in the last of a listing many kilobytes long, read whole", () => {

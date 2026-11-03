@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
   const EXAMPLES = [
@@ -63,7 +64,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
 
       expect(without.exitCode).toBe(example.code);
       expect(withFlag.exitCode).toBe(0);
-      expect(without.stdout).toMatch(/^# Evidence Reconciliation/m);
+      expect(`\n${without.stdout}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
       expect(withFlag.stdout).toBe(without.stdout);
     });
   }

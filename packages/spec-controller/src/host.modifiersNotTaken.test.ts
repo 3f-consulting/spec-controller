@@ -3,7 +3,7 @@ import { parseHostInvocation, modifiersNotTakenRefusal } from "./host.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 const notTaken = (command: string, given: readonly string[]): string =>
-  `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ModifiersNotTaken](command, given.join(", "))}\n` +
+  `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ModifiersNotTaken](command, given.join(", ")))}\n` +
   APP_MESSAGES[AppMessage.RunWithoutModifiers](command);
 
 describe("[SCN-ALC-014] a host modifier before allocate is refused, and nothing is stored", () => {

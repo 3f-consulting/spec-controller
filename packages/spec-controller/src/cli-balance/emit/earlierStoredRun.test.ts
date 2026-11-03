@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { existsSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-controller-core";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
@@ -176,7 +177,7 @@ describe("[SCN-RMG-013] a --format path beside a run.yaml that is not a run mani
         expect(usageStatusOf(() => writeOutputs(plan(toFile(path, "md")), payloads, processStdout, [], noOwnRun))).toBeUndefined();
 
         expect(stderrWrites()).toEqual([]);
-        expect(readFileSync(path, "utf8")).toMatch(/^# Evidence Reconciliation/);
+        expect(readFileSync(path, "utf8").slice(0, CORE_MESSAGES[CoreMessage.ReportTitle].length)).toBe(CORE_MESSAGES[CoreMessage.ReportTitle]);
       });
     }
   }

@@ -45,7 +45,7 @@ describe("[SCN-RPT-053] each runners key outside the four layers is named under 
       "",
       CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
       "",
-      "- `specController.runners.lint` — not a layer: the runner block is keyed by the four layers, and this key excludes nothing.",
+      notALayer("lint"),
       "",
     ]);
   });

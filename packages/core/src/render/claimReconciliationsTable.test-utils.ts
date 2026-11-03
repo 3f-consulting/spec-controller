@@ -5,6 +5,7 @@ const CLAIM_COLUMN = CORE_MESSAGES[CoreMessage.ClaimColumn];
 export const VERDICT_COLUMN = CORE_MESSAGES[CoreMessage.VerdictColumn];
 export const RECONCILING_ITEMS_COLUMN = CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn];
 const CLAIM_TABLE_START = `| ${CLAIM_COLUMN} |`;
+const CLAIM_RECONCILIATIONS_HEADING = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
 
 export interface ClaimRow {
   readonly claim: string;
@@ -44,10 +45,10 @@ function claimRow(header: readonly string[], line: string): ClaimRow {
 }
 
 function tableStart(lines: readonly string[]): number {
-  const section = lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
-  expect(section, "expected the Claim Reconciliations heading").toBeGreaterThanOrEqual(0);
+  const section = lines.indexOf(CLAIM_RECONCILIATIONS_HEADING);
+  expect(section, `expected the heading ${CLAIM_RECONCILIATIONS_HEADING}`).toBeGreaterThanOrEqual(0);
   const start = lines.findIndex((line, i) => i > section && line.startsWith(CLAIM_TABLE_START));
-  expect(start, "expected the Claim Reconciliations table").toBeGreaterThan(section);
+  expect(start, `expected the table under ${CLAIM_RECONCILIATIONS_HEADING}`).toBeGreaterThan(section);
   return start;
 }
 

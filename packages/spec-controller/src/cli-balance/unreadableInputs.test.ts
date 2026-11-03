@@ -87,7 +87,6 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
 });
 
 describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
-  const PYTEST_SHAPE = "the JUnit XML report pytest --junitxml writes";
   const refusalOf = (content: string): string | null =>
     checkInputShapes(readReports(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content)));
 
@@ -101,7 +100,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect(error).toContain("--pytest");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(PYTEST_SHAPE);
+    expect(error).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
     expect(error).toContain(fault);
   });
 
@@ -110,7 +109,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect(error).toContain("--pytest");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(PYTEST_SHAPE);
+    expect(error).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
     expect(error).toContain("testsuites is missing");
   });
 
@@ -122,12 +121,11 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(PYTEST_SHAPE);
+    expect(stderr).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
   });
 });
 
 describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
-  const JEST_SHAPE = "the JSON report jest --json writes";
   const refusalOf = (content: string): string | null =>
     checkInputShapes(readReports(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content)));
 
@@ -140,7 +138,7 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 
     expect(error).toContain("--jest");
     expect(error).toContain("reports/jest.json");
-    expect(error).toContain(JEST_SHAPE);
+    expect(error).toContain(APP_MESSAGES[AppMessage.JestReportShape]());
     expect(error).toContain(fault);
   });
 
@@ -152,12 +150,11 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(JEST_SHAPE);
+    expect(stderr).toContain(APP_MESSAGES[AppMessage.JestReportShape]());
   });
 });
 
 describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
-  const RSPEC_SHAPE = "the JSON report rspec --format json writes";
   const refusalOf = (content: string): string | null =>
     checkInputShapes(readReports(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content)));
 
@@ -186,7 +183,7 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 
     expect(error).toContain("--rspec");
     expect(error).toContain("reports/rspec.json");
-    expect(error).toContain(RSPEC_SHAPE);
+    expect(error).toContain(APP_MESSAGES[AppMessage.RspecReportShape]());
     expect(error).toContain(fault);
   });
 
@@ -198,12 +195,11 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(RSPEC_SHAPE);
+    expect(stderr).toContain(APP_MESSAGES[AppMessage.RspecReportShape]());
   });
 });
 
 describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
-  const JUNIT_SHAPE = "in the shape of a JUnit XML report";
   const refusalOf = (content: string): string | null =>
     checkInputShapes(readReports(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content)));
 
@@ -216,7 +212,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
     expect(error).toContain("--junit");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(JUNIT_SHAPE);
+    expect(error).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
     expect(error).toContain(fault);
     expect(error).not.toContain("pytest");
   });
@@ -229,12 +225,11 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(JUNIT_SHAPE);
+    expect(stderr).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
   });
 });
 
 describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit directory that is not a JUnit XML report, naming that file", () => {
-  const JUNIT_SHAPE = "in the shape of a JUnit XML report";
 
   function surefireReportsBeside(content: string): { reports: string; notAReport: string } {
     const reports = temporaryDirectory("surefire-reports-");
@@ -250,7 +245,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 
     expect(error).toContain("--junit");
     expect(error).toContain(notAReport);
-    expect(error).toContain(JUNIT_SHAPE);
+    expect(error).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
     expect(error).toContain("testsuites is missing");
   });
 
@@ -261,7 +256,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(notAReport);
-    expect(stderr).toContain(JUNIT_SHAPE);
+    expect(stderr).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
   });
 });
 
@@ -602,7 +597,7 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
   }
 
   const refusal = (workflows: string, file: string): string =>
-    `${workflows} contain a workflow that is not valid YAML: ${file}\n${parseErrorOf(NOT_YAML)}`;
+    APP_MESSAGES[AppMessage.WorkflowNotYaml](workflows, file, parseErrorOf(NOT_YAML));
 
   it("refuses a --ci workflow file that does not parse, naming --ci, the file and the parser's error", () => {
     const { ci } = targetOnDisk();

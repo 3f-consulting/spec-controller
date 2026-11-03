@@ -5,11 +5,13 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
   const evidenceReconciliationSection = (md: string): string => {
-    const i = md.indexOf("### Evidence reconciliation");
-    expect(i, "expected the Evidence reconciliation section").toBeGreaterThanOrEqual(0);
+    const heading = CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading];
+    const i = md.indexOf(heading);
+    expect(i, `expected the section ${heading}`).toBeGreaterThanOrEqual(0);
     const rest = md.slice(i + 1);
     const next = rest.search(/\n#{2,3} /);
     return next >= 0 ? rest.slice(0, next) : rest;

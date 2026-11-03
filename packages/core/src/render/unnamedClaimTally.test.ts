@@ -31,21 +31,21 @@ const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlock
 
 describe('[SCN-RPT-024] the verdict tally names the collection "Claim Reconciliation(s)" and counts every row: scenario, phantom claim and unnamed claim', () => {
   it("states only the total when every evidence observation cites a scenario", () => {
-    expect(tallyBlock([known])).toEqual(["- 1 Claim Reconciliation(s): 1 balanced, 0 out-of-balance."]);
+    expect(tallyBlock([known])).toEqual([`- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](1, 1, 0)}`]);
   });
 
   it("follows the total with the unnamed claim's count when one evidence observation cites no scenario", () => {
     expect(tallyBlock([known, uncitedObservation("src/a.test.ts")])).toEqual([
-      "- 2 Claim Reconciliation(s): 1 balanced, 1 out-of-balance.",
-      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
+      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
+      `- ${CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1)}`,
     ]);
   });
 
   it("counts the real, phantom claims' and unnamed claim's rows in the total, then the phantom claims' count, then the unnamed claim's one row however many evidence observations cite no scenario", () => {
     expect(tallyBlock([known, phantomClaimObservation, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
-      "- 3 Claim Reconciliation(s): 1 balanced, 2 out-of-balance.",
-      "- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.",
-      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".',
+      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](3, 1, 2)}`,
+      `- ${CORE_MESSAGES[CoreMessage.PhantomClaimTally](1)}`,
+      `- ${CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1)}`,
     ]);
   });
 });

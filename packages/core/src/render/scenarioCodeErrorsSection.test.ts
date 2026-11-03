@@ -245,14 +245,12 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     const files = codes.length + plain;
     it(`states the codes clean over ${files} files carrying ${codes.length} codes after the run verdict, and prints no scenario code errors section`, () => {
       const statement = statements()[row]!;
-      expect(statement).toContain(
-        "(a feature code is the tag heading a feature file, the `<FFF>` that each `@SCN-<FFF>-<NNN>` code in that file repeats)"
-      );
+      expect(statement).toContain(over("\0", "\0").split("\0").at(-1));
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
       expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
       const md = statedAloneAfterRunVerdict(report, statement);
-      expect(md).not.toContain("**SCENARIO CODE ERRORS**");
+      expect(md).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline]);
     });
   }
 
@@ -276,7 +274,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
 });
 
 describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean", () => {
-  const statement = "No feature file was judged, so no scenario code is vouched for.";
+  const statement = CORE_MESSAGES[CoreMessage.NoFeatureFileJudged];
 
   it("says no feature file was judged after the run verdict, prints no scenario code errors section, and states nothing clean", () => {
     const report = newShapeReport(judgedCorpus([], 0));

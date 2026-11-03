@@ -50,7 +50,7 @@ function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answere
 }
 
 function refusalNaming(modifiers: string, closing: string): string {
-  return `spec-controller: usage error — ${APP_MESSAGES[AppMessage.ReRenderNotStored](modifiers)}\n${closing}\n`;
+  return `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ReRenderNotStored](modifiers))}\n${closing}\n`;
 }
 
 const NAMING_THE_STORE = (): string => refusalNaming("--store", APP_MESSAGES[AppMessage.ReRenderWithoutIt]());

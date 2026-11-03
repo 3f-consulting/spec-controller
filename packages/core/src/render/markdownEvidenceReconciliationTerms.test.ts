@@ -64,7 +64,7 @@ describe("[SCN-RPT-071] the evidence reconciliation section says what a Claim Re
     );
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 
-    expect(totalOf(md, "Claim Reconciliation")).toBe(1);
-    expect(totalOf(md, "Reconciliation line")).toBe(2);
+    expect(totalOf(md, CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject])).toBe(1);
+    expect(totalOf(md, CORE_MESSAGES[CoreMessage.ReconciliationLineSubject])).toBe(2);
   });
 });

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { main } from "./main.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
@@ -63,7 +64,7 @@ describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored
     it("leaves the saved reconciliation, in markdown and in JSON, and the run manifest in that run directory", () => {
       ranIn(STORED, ({ runDir }) => {
         expect(readdirSync(runDir).sort()).toEqual(["run.yaml", "spec-reconciliation.json", "spec-reconciliation.md"]);
-        expect(readFileSync(join(runDir, "spec-reconciliation.md"), "utf8")).toMatch(/^# Evidence Reconciliation\n/);
+        expect(readFileSync(join(runDir, "spec-reconciliation.md"), "utf8").slice(0, CORE_MESSAGES[CoreMessage.ReportTitle].length + 1)).toBe(`${CORE_MESSAGES[CoreMessage.ReportTitle]}\n`);
         expect(JSON.parse(readFileSync(join(runDir, "spec-reconciliation.json"), "utf8"))).toHaveProperty("runProvenance");
       });
     });
@@ -82,7 +83,7 @@ describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored
   describe("the same balance with no store modifier", () => {
     it("prints the report alone, naming no run directory, and stores nothing", () => {
       ranIn(UNSTORED, ({ stdout: printed, exitCode, runDir, storeMade, cwdEntries }) => {
-        expect(printed).toMatch(/^# Evidence Reconciliation\n/);
+        expect(printed.slice(0, CORE_MESSAGES[CoreMessage.ReportTitle].length + 1)).toBe(`${CORE_MESSAGES[CoreMessage.ReportTitle]}\n`);
         expect(printed).not.toContain(runDir);
         expect(exitCode).toBe(1);
         expect(storeMade).toBe(false);

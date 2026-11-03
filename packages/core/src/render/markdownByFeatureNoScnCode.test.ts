@@ -6,6 +6,7 @@ import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const ctx: RunContext = {
   target: "by-feature-no-scn-code",
@@ -23,7 +24,7 @@ function noScnCodeCorpus(untagged: UntaggedScenario[]): { reconciliation: Eviden
 }
 
 function byFeatureRows(md: string): string[][] {
-  const section = md.slice(md.indexOf("### Out-of-balance by feature"));
+  const section = md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]));
   const end = section.indexOf("\n#", 1);
   return (end > 0 ? section.slice(0, end) : section)
     .split("\n")

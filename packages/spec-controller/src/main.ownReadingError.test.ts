@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 const PLANTED = "planted: the reading of this file throws";
 
@@ -36,7 +37,7 @@ vi.mock("yaml", async (importOriginal) => {
   return { ...real, parse };
 });
 
-const UNEXPECTED_ERROR_LINE = "spec-controller stopped on an unexpected error, and gives no verdict: TypeError: ";
+const unexpectedErrorLine = (): string => APP_MESSAGES[AppMessage.UnexpectedError]("TypeError", "");
 
 const FEATURE = "@AB\nFeature: a part\n\n  @unit @SCN-AB-001\n  Scenario: a scenario\n";
 const PLANTED_FEATURE = `# ${PLANTED}\n${FEATURE}`;
@@ -96,7 +97,7 @@ describe("[SCN-CLI-111] an error in reading a feature file or workflow the parse
     it("writes one line to stderr, naming the error as unexpected", async () => {
       const said = (await answer()).stderr;
       expect(said.split("\n")).toHaveLength(2);
-      expect(said.startsWith(UNEXPECTED_ERROR_LINE)).toBe(true);
+      expect(said.startsWith(unexpectedErrorLine())).toBe(true);
     });
 
     it("never says the file could not be parsed", async () => {
@@ -136,7 +137,7 @@ describe("[SCN-CLI-111] an error in reading a feature file or workflow the parse
       const said = (await answer()).stderr;
       expect(said).toContain(join(target, file === "ci.yml" ? file : join("features", file)));
       expect(said).toContain(parserSaid);
-      expect(said).not.toContain(UNEXPECTED_ERROR_LINE);
+      expect(said).not.toContain(unexpectedErrorLine());
     });
   });
 });

@@ -22,11 +22,13 @@ function reportLines(ciSource: string): string[] {
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
-const label = "Reconciler:";
+const label = CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel];
 const dump = "ci.yml:ci:Dump this run's step record";
 const balance = "ci.yml:ci:Reconciliation";
 const reconciles = CORE_MESSAGES[CoreMessage.ReconcilerReconciles];
 const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
+
+const reconcilerItem = (span: string, whatItIs: string): string => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](span, whatItIs)}`;
 
 const spanStepsCi = `name: fixture CI
 jobs:
@@ -51,22 +53,17 @@ describe("[SCN-RPT-050] the step-accounting section lists each reconciler step b
 
     expect(reconciles).not.toBe(records);
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
-    expect(reconcilerList(section)).toStrictEqual([
-      "Reconciler:",
-      "- `ci.yml:ci:Dump this run's step record` — the reconciler: this step writes the step record the reconciliation reads.",
-      "- `ci.yml:ci:Reconciliation` — the reconciler: this step runs the reconciliation this report is.",
-      "",
-    ]);
+    expect(reconcilerList(section)).toStrictEqual([label, reconcilerItem(codeSpan(dump), records), reconcilerItem(codeSpan(balance), reconciles), ""]);
   });
 
   it.each([
-    { step: "ci.yml:ci:Run `balance`", item: "- `` ci.yml:ci:Run `balance` `` — the reconciler: this step runs the reconciliation this report is." },
-    { step: "ci.yml:ci:Two\nlines", item: '- `"ci.yml:ci:Two\\nlines"` — the reconciler: this step runs the reconciliation this report is.' },
+    { step: "ci.yml:ci:Run `balance`", item: "`` ci.yml:ci:Run `balance` ``" },
+    { step: "ci.yml:ci:Two\nlines", item: '`"ci.yml:ci:Two\\nlines"`' },
   ])("lists the reconciler step $step whole in its code span, as $item", ({ item }) => {
     const section = stepAccounting(reportLines(spanStepsCi));
     const start = section.indexOf(label);
     expect(start).toBeGreaterThanOrEqual(0);
-    expect(section.slice(start)).toContain(item);
+    expect(section.slice(start)).toContain(reconcilerItem(item, reconciles));
   });
 
   it("lists neither reconciler step as excluded", () => {

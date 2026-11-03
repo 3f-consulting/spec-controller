@@ -87,6 +87,6 @@ describe("[SCN-FMT-011] planOutput counts a --format path naming standard output
     const result = planOutput(["md", "json:/dev/fd/1"], namesStdout);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("More than one output routes to stdout (md, json)");
+    if (!result.ok) expect(result.error).toBe(APP_MESSAGES[AppMessage.MoreThanOneToStdout]("md, json"));
   });
 });

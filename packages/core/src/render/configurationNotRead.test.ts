@@ -32,6 +32,10 @@ const render = (extra: Partial<Summary>): string => {
 };
 
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+const wrongKind = CORE_MESSAGES[CoreMessage.ConfigurationWrongKind];
+const unknownKey = CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey];
+const notChecksAsAString = (): string =>
+  `- ${wrongKind("`specController.notChecks`", CORE_MESSAGES[CoreMessage.ManifestKindString], CORE_MESSAGES[CoreMessage.ManifestKindList])}`;
 
 const section = (md: string): string[] => {
   const lines = md.split("\n");
@@ -52,14 +56,14 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
     expect(section(md)).toEqual([
       heading,
       "",
-      "The target's package.json holds configuration this run could not use. Each line below says what this run did with its entry, and every account in this report is the one the target gives without it.",
+      CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
       "",
-      "- `specController.notChecks` is a string where a list is read, so this run read it as absent.",
-      "- `specController.runners.unit` is a number where a string or null is read, so this run read it as absent.",
+      notChecksAsAString(),
+      `- ${wrongKind("`specController.runners.unit`", CORE_MESSAGES[CoreMessage.ManifestKindOfType]("number"), CORE_MESSAGES[CoreMessage.ManifestKindStringOrNull])}`,
       "",
     ]);
-    expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf(heading));
-    expect(md.indexOf(heading)).toBeLessThan(md.indexOf("## Summary views"));
+    expect(md.indexOf(CORE_MESSAGES[CoreMessage.RunProvenanceHeading])).toBeLessThan(md.indexOf(heading));
+    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]));
   });
 });
 
@@ -70,9 +74,9 @@ describe("[SCN-RPT-046] the report names a key the specController block does not
       configurationKeysNotRead: ["fitnessChecks", "zzz"],
     });
     expect(section(md).filter((l) => l.startsWith("- "))).toEqual([
-      "- `specController.notChecks` is a string where a list is read, so this run read it as absent.",
-      "- `specController.fitnessChecks` is not a key the specController block reads, so this run read nothing from it.",
-      "- `specController.zzz` is not a key the specController block reads, so this run read nothing from it.",
+      notChecksAsAString(),
+      `- ${unknownKey("`specController.fitnessChecks`")}`,
+      `- ${unknownKey("`specController.zzz`")}`,
     ]);
   });
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
-import { observationsOf } from "@3f-consulting/spec-controller-core/internal";
+import { CORE_MESSAGES, CoreMessage, observationsOf } from "@3f-consulting/spec-controller-core/internal";
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
@@ -551,7 +551,9 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
       const { md, json, rerendered, leaked } = reportOf(dir, root, balance);
       for (const secret of secrets) expect(leaked(secret), `${secret} reached a surface`).toBeUndefined();
       expect(namedOrigin(json)).toBe(shown ?? undefined);
-      expect(targetRepo(md)).toBe(shown === null ? "- Target repo: unknown-target" : `- Target repo: unknown-target (no --target given; origin is ${shown})`);
+      expect(targetRepo(md)).toBe(
+        `- ${shown === null ? CORE_MESSAGES[CoreMessage.ProvenanceTargetRepo]("unknown-target") : CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted]("unknown-target", shown)}`,
+      );
       expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });
@@ -563,7 +565,7 @@ describe("[SCN-RPT-001] a run with no --target names the target's git origin bes
       for (const text of [md, readFileSync(saved, "utf8"), rerendered]) {
         for (const secret of ["deploy", "p@ss", "private_token", "qwz", "s3cret"]) expect(text.replaceAll(dir, "")).not.toContain(secret);
       }
-      expect(targetRepo(md)).toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
+      expect(targetRepo(md)).toBe(`- ${CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted]("unknown-target", "ekino/veggies")}`);
       expect({ target: json["target"], targetOrigin: json["targetOrigin"] }).toEqual({ target: "unknown-target", targetOrigin: "ekino/veggies" });
       expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });

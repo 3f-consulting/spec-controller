@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import * as guards from "./crashGuards.js";
-import { ARRIVALS, closedPipe, NO_VERDICT_LINE, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
+import { ARRIVALS, closedPipe, noVerdictLine, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
@@ -50,7 +50,7 @@ describe("[SCN-CLI-105] an error raised after the run's own call, on stdout, on 
     it("writes one line to stderr, naming the error, with no stack frame", () => {
       const g = guarded();
       raise(g);
-      expect(g.stderr.written).toEqual([NO_VERDICT_LINE]);
+      expect(g.stderr.written).toEqual([noVerdictLine()]);
     });
 
     it("writes nothing to stdout", () => {

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { BehaviouralEvidenceObservation, Scenario } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
@@ -9,7 +8,7 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
-const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
+const CITES_NO_SCENARIO = CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario];
 
 const sharers: Scenario[] = [
   { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/login.feature", title: "the right password lets a user in" },
@@ -59,11 +58,5 @@ describe("[SCN-RPT-075] in one file, the tests citing a code more than one scena
     expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2"), failing("t2", "expected 3 to be 4")])).toEqual([
       `${said} / expected 1 to be 2 / expected 3 to be 4) — 2 ran, 0 passed, 2 failed (failed: t1 / t2)`,
     ]);
-  });
-
-  it("says that evidence citing the shared code credits none of the scenarios carrying it", () => {
-    expect(CORE_MESSAGES[CoreMessage.SharedScnCode]("SCN-DUP-001")).toBe(
-      "SCN-DUP-001 is carried by more than one scenario, so evidence citing it credits none of them."
-    );
   });
 });

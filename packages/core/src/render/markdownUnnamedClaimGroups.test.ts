@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { EvidenceObservation, BehaviouralEvidenceObservation, FitnessEvidenceObservation } from "../domain/journal.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { RECONCILING_ITEMS_COLUMN, claimReconciliationsTable, reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
-const CITES_NO_SCENARIO = OUTCOME_DESCRIPTION["cites-no-scenario"];
+const CITES_NO_SCENARIO = CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario];
 
 function reportOf(observations: readonly EvidenceObservation[]): string {
   const ledger = reconcile(
@@ -56,7 +56,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   it("counts tests that ran adding up to the count of evidence observations that cite no scenario", () => {
     const md = mixedReport();
     const ran = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) ran,/.exec(item)![1]));
-    const uncited = Number(rowCells(md, "Evidence Observation cites no Scenario")[3]);
+    const uncited = Number(rowCells(md, CITES_NO_SCENARIO)[3]);
     expect(ran.reduce((a, b) => a + b, 0)).toBe(uncited);
     expect(uncited).toBe(3);
   });
@@ -91,7 +91,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
     ]));
     expect(cell).toBe(
-      `unit: ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
+      `unit: ${CORE_MESSAGES[CoreMessage.OutcomeBroken]} (src/broken.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`
     );
   });
@@ -136,7 +136,7 @@ describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together 
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
     ]));
     expect(cell).toBe(
-      `unit: ${OUTCOME_DESCRIPTION.broken} (src/broken.test.ts: Cannot find module); ` +
+      `unit: ${CORE_MESSAGES[CoreMessage.OutcomeBroken]} (src/broken.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness: ${CITES_NO_SCENARIO} — 1 CI step: lint:uncited`
     );
   });
@@ -148,7 +148,7 @@ describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together 
   it("counts what ran adding up to the count of evidence observations that cite no scenario", () => {
     const md = reportOf([step("lint:bar"), step("lint:foo"), unit("failed", "src/a.test.ts"), unit("passed", "src/b.test.ts")]);
     const counted = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)![1]));
-    const uncited = Number(rowCells(md, "Evidence Observation cites no Scenario")[3]);
+    const uncited = Number(rowCells(md, CITES_NO_SCENARIO)[3]);
     expect(counted.reduce((a, b) => a + b, 0)).toBe(uncited);
     expect(uncited).toBe(4);
   });

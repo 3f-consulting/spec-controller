@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { type Ledger } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+
+const SUBJECT = CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject];
 
 let balance: Ledger;
 beforeEach(() => {
@@ -34,13 +36,13 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     const targetRepo = (md: string) => md.split("\n").find((line) => line.startsWith("- Target repo:"));
     const untargeted = { ...ctx, target: "unknown-target" };
     expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "ekino/veggies" }, publishedExitCodeOf)))
-      .toBe("- Target repo: unknown-target (no --target given; origin is ekino/veggies)");
+      .toBe(`- ${CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted]("unknown-target", "ekino/veggies")}`);
     expect(targetRepo(renderMarkdown(__er(balance), untargeted, publishedExitCodeOf))).toBe("- Target repo: unknown-target");
   });
 
   it("positions the provenance header above the claim table (sectioned-renderer order)", () => {
     const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
-    expect(md.indexOf("# Evidence Reconciliation")).toBeLessThan(md.indexOf("## Run provenance"));
+    expect(md.indexOf(CORE_MESSAGES[CoreMessage.ReportTitle])).toBeLessThan(md.indexOf("## Run provenance"));
     expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("| Claim | Verdict | Reconciling items |"));
   });
 
@@ -72,19 +74,19 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
 
   it("renders a '### Evidence reconciliation' table with subjects as rows and balanced / out-of-balance as columns", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
-    expect(md).toContain("### Evidence reconciliation");
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]);
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
-    expect(md).toContain("| Claim Reconciliation | 3 | 0 | 3 |");
+    expect(md).toContain(`| ${SUBJECT} | 3 | 0 | 3 |`);
     expect(md).toContain("| Reconciliation line | 6 | 2 | 4 |");
   });
 
   it("decomposes the Reconciliation line out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
-    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.missing} |`);
+    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeMissing]} |`);
     expect(md).toContain("1 unit + 1 integration");
-    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.failing} |`);
-    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.watermelon} |`);
+    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeFailing]} |`);
+    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]} |`);
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
@@ -99,7 +101,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     );
     const md = renderMarkdown(__er(lintAndBehavioural), ctx, publishedExitCodeOf);
     expect(md).toContain("1 fitness + 1 integration");
-    const missingCause = `\n| ${OUTCOME_DESCRIPTION.missing} |`;
+    const missingCause = `\n| ${CORE_MESSAGES[CoreMessage.OutcomeMissing]} |`;
     const afterMissingCause = md.slice(md.indexOf(missingCause) + missingCause.length);
     expect(md).toContain(missingCause);
     expect(afterMissingCause).toMatch(/^[^\d]*2 \|/);
@@ -125,7 +127,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
 
   it("counts the unnamed claim's reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx, publishedExitCodeOf);
-    expect(md).toContain("| Claim Reconciliation | 4 | 3 | 1 |");
-    expect(md).not.toContain("| Claim Reconciliation | 3 | 3 | 0 |");
+    expect(md).toContain(`| ${SUBJECT} | 4 | 3 | 1 |`);
+    expect(md).not.toContain(`| ${SUBJECT} | 3 | 3 | 0 |`);
   });
 });

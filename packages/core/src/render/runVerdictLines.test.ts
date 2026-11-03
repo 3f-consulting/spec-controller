@@ -63,8 +63,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       "",
       BALANCED_LINE,
       "",
-      "Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
-        "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
+      CORE_MESSAGES[CoreMessage.PendingItemsOutstanding],
       "",
     ]);
   });

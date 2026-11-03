@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as guards from "./crashGuards.js";
 import { standInStream, type StandInStream } from "./crashGuards.test-utils.js";
+import { APP_MESSAGES, AppMessage } from "./messages.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
@@ -38,7 +39,7 @@ function moduleNotFound(): Error {
 
 const failingLoad = (): Promise<unknown> => Promise.reject(moduleNotFound());
 
-const NO_VERDICT_LINE = `spec-controller stopped on an unexpected error, and gives no verdict: Error: ${FIRST_LINE}\n`;
+const noVerdictLine = (): string => `${APP_MESSAGES[AppMessage.UnexpectedError]("Error", FIRST_LINE)}\n`;
 
 afterEach(() => {
   process.exitCode = undefined;
@@ -53,7 +54,7 @@ describe("[SCN-CLI-106] an error while the program loads ends the run at 6, name
 
     it("writes one line to stderr, naming the error, with no stack frame", async () => {
       const b = await booted(failingLoad);
-      expect(b.stderr.written).toEqual([NO_VERDICT_LINE]);
+      expect(b.stderr.written).toEqual([noVerdictLine()]);
     });
 
     it("writes nothing to stdout", async () => {

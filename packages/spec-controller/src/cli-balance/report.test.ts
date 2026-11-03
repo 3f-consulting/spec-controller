@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalance, sourceTarget } from "./cli.js";
@@ -57,7 +58,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
 
 describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
   function byFeatureRows(md: string): string[][] {
-    const section = md.slice(md.indexOf("### Out-of-balance by feature"));
+    const section = md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]));
     const end = section.indexOf("\n#", 1);
     return (end > 0 ? section.slice(0, end) : section)
       .split("\n")

@@ -13,6 +13,7 @@ import {
 } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { APP_MESSAGES, Unreadable } from "../messages.js";
 
 function repository(): string {
   return repositoryHeadedOneCarrying003("allocate-not-permitted-", {
@@ -34,22 +35,22 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-function expectRefusedNaming(answered: Answered, subject: string, path: string): void {
-  expect(refusalReason(answered, subject, path)).toMatch(/^(EACCES|EPERM): /);
+function expectRefusedNaming(answered: Answered, subject: Unreadable, path: string): void {
+  expect(refusalReason(answered, APP_MESSAGES[subject](), path)).toMatch(/^(EACCES|EPERM): /);
 }
 
 interface Withheld {
   copy: "repository" | "copy without git";
   path: string;
-  subject: string;
+  subject: Unreadable;
 }
 
 const EXAMPLES: readonly Withheld[] = [
-  { copy: "repository", path: "features/one.feature", subject: "a feature file" },
-  { copy: "repository", path: "features", subject: "the feature corpus" },
-  { copy: "repository", path: "features/nested", subject: "the feature corpus" },
-  { copy: "copy without git", path: "docs/notes.md", subject: "a file in the tree" },
-  { copy: "copy without git", path: "docs", subject: "a directory in the tree" },
+  { copy: "repository", path: "features/one.feature", subject: Unreadable.FeatureFile },
+  { copy: "repository", path: "features", subject: Unreadable.FeatureCorpus },
+  { copy: "repository", path: "features/nested", subject: Unreadable.FeatureCorpus },
+  { copy: "copy without git", path: "docs/notes.md", subject: Unreadable.TreeFile },
+  { copy: "copy without git", path: "docs", subject: Unreadable.TreeDirectory },
 ];
 
 describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
@@ -68,7 +69,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     const repo = repository();
     withhold(join(repo, dir), 0o000);
 
-    expectRefusedNaming(allocateFrom(repo), "a directory in the tree", join(repo, dir));
+    expectRefusedNaming(allocateFrom(repo), Unreadable.TreeDirectory, join(repo, dir));
   });
 
   it("refuses a directory git does not ignore, though an ignored file is named as it is with one character more", () => {
@@ -77,7 +78,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     writeInto(repo, "docs~", "a backup\n");
     withhold(join(repo, "docs"), 0o000);
 
-    expectRefusedNaming(allocateFrom(repo), "a directory in the tree", join(repo, "docs"));
+    expectRefusedNaming(allocateFrom(repo), Unreadable.TreeDirectory, join(repo, "docs"));
   });
 
   it("answers ONE, refusing nothing, when the directory it may not enter is one git ignores", () => {

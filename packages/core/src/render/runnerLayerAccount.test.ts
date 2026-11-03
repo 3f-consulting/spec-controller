@@ -4,6 +4,7 @@ import type { EvidenceObservation } from "../model.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
+import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
 const feature = `Feature: fixture
 
@@ -33,10 +34,8 @@ const behaviouralObservations: EvidenceObservation[] = [
   { qualityCheckKind: "performance", scnId: "SCN-FIX-003", status: "passed" },
 ];
 
-const NO_RUNNER =
-  "no runner: the target declares this layer has none, by setting it to `null` under `specController.runners` in its `package.json`.";
-const UNNAMED =
-  "unnamed: the target leaves this layer's runner undeclared: `specController.runners` in its `package.json` is missing or not a block, leaves the layer out, or gives it a value that is neither a string nor `null`. A string there names the layer's runner.";
+const NO_RUNNER = CORE_MESSAGES[CoreMessage.RunnerLayerNamesNone];
+const UNNAMED = CORE_MESSAGES[CoreMessage.RunnerLayerUnnamed];
 
 function rowsOf(specController?: { runners?: unknown }): Map<string, string[]> {
   const reconciliation = evidenceReconciliationFromSources({
@@ -49,7 +48,7 @@ function rowsOf(specController?: { runners?: unknown }): Map<string, string[]> {
     behaviouralObservations,
     deferralTags: [],
   });
-  const lines = sectionUnder("### Evidence observations")(linesOf(reconciliation));
+  const lines = sectionUnder(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading])(linesOf(reconciliation));
   const rows = lines
     .filter((line) => line.startsWith("|"))
     .map(cells)

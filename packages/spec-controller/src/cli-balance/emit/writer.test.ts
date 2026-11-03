@@ -5,6 +5,7 @@ import { evidenceReconciliationOf, type RunContext } from "@3f-consulting/spec-c
 import { writeOutputs, type OutputPayloads } from "./writer.js";
 import type { OutputPlan, PlannedOutput } from "./format.js";
 import { stdoutIdentity as processStdout } from "../../outputLocation.js";
+import { APP_MESSAGES, AppMessage } from "../../messages.js";
 import { usageStatusOf } from "../../usageStatus.test-utils.js";
 import { noOwnRun } from "./earlierStoredRun.test-utils.js";
 import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
@@ -159,7 +160,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
 
       expect(usageStatusOf(() => writeOutputs(both({ fmt: "md", dest: { kind: "file", path: markdown } }, jsonFirst), payloads, processStdout, [], noOwnRun))).toBe(2);
 
-      expect(whatTheProgramWrote().stderr).toBe(`The json report could not be written: ${json} (ENOTDIR: not a directory, open '${json}')\n`);
+      expect(whatTheProgramWrote().stderr).toBe(`${APP_MESSAGES[AppMessage.ReportNotWritten]("json")}: ${json} (ENOTDIR: not a directory, open '${json}')\n`);
       expect(process.stdout.write).not.toHaveBeenCalled();
       expect(readdirSync(scratch)).toEqual(["regular"]);
     });

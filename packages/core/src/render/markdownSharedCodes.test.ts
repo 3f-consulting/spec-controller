@@ -7,7 +7,6 @@ import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js
 import { parseFeatureCounts, readCorpus } from "../parse/scenarioReaders.test-utils.js";
 import { censusBlock as censusBlockOf } from "./renderedSection.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -101,15 +100,15 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
   it.each([
     [
       "states that the corpus holds three scenarios, one code carried by more than one of them",
-      "- The corpus holds 3 scenarios — 1 @SCN code(s) carried by more than one scenario, each scenario named as `feature file : scenario title`:",
+      () => `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](3, 1)}`,
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
-      "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
+      () => "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
     ],
   ])("%s", (_title, line) => {
     const md = renderMarkdown(er(ledger), ctx, publishedExitCodeOf, census);
-    expect(md).toContain(line);
+    expect(md).toContain(line());
   });
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {
@@ -130,7 +129,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
     );
     const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("SCN-ONE-001");
     expect(row?.cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(row?.cell(RECONCILING_ITEMS_COLUMN).startsWith("Evidence Obligation's @SCN code is carried by another Scenario")).toBe(true);
+    expect(row?.cell(RECONCILING_ITEMS_COLUMN).startsWith(CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode])).toBe(true);
     expect(row?.cells.join(" | ")).not.toContain("undefined");
   });
 
@@ -172,7 +171,7 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
   ])("names %s in its sharer's reconciling items", (scenario) => {
     const rows = sharerRowsOf();
     expect(rows).toHaveLength(2);
-    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN) === `unit: ${OUTCOME_DESCRIPTION["duplicate-scn-code"]} — this one is ${scenario}`)).toHaveLength(1);
+    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN) === `unit: ${CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode]} — this one is ${scenario}`)).toHaveLength(1);
   });
 
   it("renders the two sharers' rows alike but for the scenario each names", () => {

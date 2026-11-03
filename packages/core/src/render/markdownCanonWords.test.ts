@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { renderJson, renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -16,34 +15,30 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 
   it("tallies each row kind by its definition", () => {
     const md = renderMarkdown(__er(unbalanced()), ctx, publishedExitCodeOf);
-    expect(md).toContain("- 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.\n");
-    expect(md).toContain(
-      '- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".\n'
-    );
+    expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.PhantomClaimTally](1)}\n`);
+    expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1)}\n`);
   });
 
   it("states the rows no feature groups by their definitions", () => {
     const md = renderMarkdown(__er(unbalanced()), ctx, publishedExitCodeOf);
-    expect(md).toContain(
-      "1 Claim Reconciliation(s) for cited scenario ids with no real scenario and " +
-        "1 Claim Reconciliation(s) for evidence observations citing no scenario " +
-        "out of balance, not grouped by feature (no feature file names them)"
-    );
+    const ungrouped = [
+      CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](1),
+      CORE_MESSAGES[CoreMessage.UnnamedClaimReconciliations](1),
+    ].join(CORE_MESSAGES[CoreMessage.AndJoiner]);
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.NotGroupedByFeature](ungrouped));
   });
 
   it("sums the test volume over scenarios, cited scenario ids with no real scenario, and observations citing no scenario", () => {
     const md = renderMarkdown(__er(unbalanced(), true), ctx, publishedExitCodeOf);
-    expect(md).toContain(
-      "3 evidence observations = 1 on scenarios + 1 on cited scenario ids with no real scenario + 1 citing no scenario."
-    );
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](3, 1, 1, 1));
   });
 
   it("glosses a balanced run with the satisfied outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [provenObservation])), ctx, publishedExitCodeOf);
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.BalancedGloss]);
     expect(md).toContain(
-      "every Claim Reconciliation balances: every Evidence Observation satisfies its Evidence Obligation."
+      `every ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} balances: every ${CORE_MESSAGES[CoreMessage.OutcomeSatisfied]}.`
     );
-    expect(md).toContain(`every Claim Reconciliation balances: every ${OUTCOME_DESCRIPTION.satisfied}.`);
   });
 
   it("keeps the terms phantom-claim and unnamed-claim as the JSON's row kinds", () => {
@@ -73,7 +68,7 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
     const stamp = CORE_MESSAGES[CoreMessage.RunUnsound](CORE_MESSAGES[CoreMessage.OneProofNeverRan]);
     expect(md.split("\n")).toContain(stamp);
-    expect(stamp).toContain(`"${OUTCOME_DESCRIPTION.missing}"`);
+    expect(stamp).toContain(`"${CORE_MESSAGES[CoreMessage.OutcomeMissing]}"`);
     expect(md).not.toContain("`missing`");
   });
 
@@ -87,11 +82,8 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
       ctx,
       publishedExitCodeOf
     );
-    expect(md).toContain(
-      "A duplicated @SCN code is not listed here: it is reported on its account's rows, as " +
-        '"Evidence Obligation\'s @SCN code is carried by another Scenario".'
-    );
-    expect(md).toContain(`as "${OUTCOME_DESCRIPTION["duplicate-scn-code"]}".`);
+    expect(md).toContain(CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed]);
+    expect(md).toContain(`as "${CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode]}".`);
     expect(md).not.toContain("`duplicate-scn-code`");
   });
 });

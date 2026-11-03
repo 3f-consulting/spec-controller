@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import type { Ledger, Outcome } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { OUT_OF_BALANCE_OUTCOMES, type Ledger, type Outcome } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
@@ -27,40 +26,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     );
   });
 
-  it("renders every summary cause row as the outcome's sentence alone, and no bare handle", () => {
-    const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
-    expect(md).toContain("\n| Evidence Observation is missing |");
-    expect(md).toContain("\n| Evidence Observation is failing |");
-    expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION.watermelon} |`);
-    expect(md).toContain("\n| Evidence Observation cites an unknown Scenario |");
-    expect(md).toContain("\n| Evidence Observation cites no Scenario |");
-    expect(md).toContain("\n| Evidence Observation cites a Scenario with no matching Evidence Obligation |");
-    expect(md).toContain(
-      "\n| Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited |"
-    );
-    for (const handle of [
-      "missing",
-      "failing",
-      "watermelon",
-      "cites-unknown-scenario",
-      "cites-no-scenario",
-      "no-evidence-obligation",
-      "both-missing",
-    ]) {
-      expect(md).not.toContain(`\n| ${handle} |`);
-    }
-  });
-
-  it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
-    const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
-    expect(items.some((item) => item.startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`))).toBe(true);
-    expect(items.some((item) => item.startsWith("fitness: watermelon"))).toBe(false);
-  });
-});
-
-describe("[SCN-RPT-025] every outcome glosses as its sentence, verbatim", () => {
-  const OUTCOME_ENTRIES = [
-    ["satisfied", CoreMessage.OutcomeSatisfied],
+  const CAUSE_ROW_ENTRIES = [
     ["missing", CoreMessage.OutcomeMissing],
     ["failing", CoreMessage.OutcomeFailing],
     ["watermelon", CoreMessage.OutcomeWatermelon],
@@ -72,14 +38,33 @@ describe("[SCN-RPT-025] every outcome glosses as its sentence, verbatim", () => 
     ["broken", CoreMessage.OutcomeBroken],
     ["both-missing", CoreMessage.OutcomeBothMissing],
   ] as const satisfies readonly (readonly [Outcome, CoreMessage])[];
-  // A new outcome fails the typecheck here until its entry has a row.
-  const everyOutcomeHasARow: [Exclude<Outcome, (typeof OUTCOME_ENTRIES)[number][0]>] extends [never] ? true : never = true;
-  void everyOutcomeHasARow;
+  // A new out-of-balance outcome fails the typecheck here until its entry has a row.
+  const everyCauseHasARow: [Exclude<Outcome, "satisfied" | (typeof CAUSE_ROW_ENTRIES)[number][0]>] extends [never]
+    ? true
+    : never = true;
+  void everyCauseHasARow;
 
-  it.each(OUTCOME_ENTRIES)(
-    'the "%s" outcome glosses as its sentence, verbatim',
-    (handle, entry) => {
-      expect(OUTCOME_DESCRIPTION[handle]).toBe(CORE_MESSAGES[entry]);
+  it("renders every summary cause row as its own outcome's sentence, and no bare handle", () => {
+    const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
+    const lines = md.split("\n");
+    const lineSubjectRow = lines.findIndex((line) =>
+      line.startsWith(`| ${CORE_MESSAGES[CoreMessage.ReconciliationLineSubject]} |`)
+    );
+    expect(lineSubjectRow).toBeGreaterThanOrEqual(0);
+    expect([...OUT_OF_BALANCE_OUTCOMES].sort()).toEqual(CAUSE_ROW_ENTRIES.map(([handle]) => handle).sort());
+    const causeRows = lines.slice(lineSubjectRow + 1, lineSubjectRow + 1 + OUT_OF_BALANCE_OUTCOMES.length);
+    const entryOf = new Map<Outcome, CoreMessage>(CAUSE_ROW_ENTRIES);
+    expect(causeRows.map((line) => line.split(" | ")[0])).toEqual(
+      OUT_OF_BALANCE_OUTCOMES.map((outcome) => `| ${CORE_MESSAGES[entryOf.get(outcome)!]}`)
+    );
+    for (const [handle] of CAUSE_ROW_ENTRIES) {
+      expect(md).not.toContain(`\n| ${handle} |`);
     }
-  );
+  });
+
+  it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
+    const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
+    expect(items.some((item) => item.startsWith(`fitness: ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]}`))).toBe(true);
+    expect(items.some((item) => item.startsWith("fitness: watermelon"))).toBe(false);
+  });
 });

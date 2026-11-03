@@ -11,13 +11,14 @@ import {
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const heading = CORE_MESSAGES[CoreMessage.StepAccountingHeading];
+const TABLE_HEADER = CORE_MESSAGES[CoreMessage.StepAccountingTableHeader];
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 describe("[SCN-RPT-052] the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read", () => {
   const throughTable = (reconciliation: ReturnType<typeof reconcile>): string[] => {
     const lines = section(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
-    const header = lines.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+    const header = lines.indexOf(TABLE_HEADER);
     expect(header).toBeGreaterThan(0);
     const end = lines.indexOf("", header);
     expect(end).toBeGreaterThan(header);
@@ -27,7 +28,7 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
 
   it("tables the one job read as one row, with no total row, and the lists follow the table", () => {
     expect(throughTable(reconcile([ci]))).toStrictEqual([
-      "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
+      TABLE_HEADER,
       "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
       "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
       "",
@@ -36,12 +37,12 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
 
   it("tables each job read as a row, by workflow then job, then a total row, and the lists follow the table", () => {
     expect(throughTable(reconcile([nightly, ci], ["nightly.yml", "ci.yml"]))).toStrictEqual([
-      "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
+      TABLE_HEADER,
       "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
       "| ci.yml | ci | 15 | 4 | 1 | 2 | 3 | 5 | 15 |",
       "| nightly.yml | audit | 1 | 1 | 0 | 0 | 0 | 0 | 1 |",
       "| nightly.yml | sweep | 2 | 2 | 0 | 0 | 0 | 0 | 2 |",
-      "| Total | | 18 | 7 | 1 | 2 | 3 | 5 | 18 |",
+      `| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | | 18 | 7 | 1 | 2 | 3 | 5 | 18 |`,
       "",
     ]);
   });
@@ -77,7 +78,7 @@ describe("[SCN-RPT-052] the step-accounting section tables a row per workflow an
     for (const { workflows, files, packageJson } of runs) {
       const lines = renderMarkdown(reconcile(workflows, files, packageJson), ctx, publishedExitCodeOf).split("\n");
       expect(lines).not.toContain(heading);
-      expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+      expect(lines).not.toContain(TABLE_HEADER);
       const headings = lines.flatMap((line, i) => (i > 0 && line.startsWith("#") ? [i] : []));
       expect(headings.length).toBeGreaterThan(0);
       for (const i of headings) expect(lines[i - 1]).toBe("");

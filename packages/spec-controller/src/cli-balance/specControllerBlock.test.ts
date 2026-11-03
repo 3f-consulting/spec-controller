@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
@@ -97,7 +98,7 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
     writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController: { ...block, [key]: ["x"] } }));
     const run = captured([...inputsOf(dir), "--format", "md"]);
     expect(run.report.split("\n").filter((line) => line.startsWith("- `specController."))).toEqual([
-      `- \`specController.${key}\` is not a key the specController block reads, so this run read nothing from it.`,
+      `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`,
     ]);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(without.exitCode);
