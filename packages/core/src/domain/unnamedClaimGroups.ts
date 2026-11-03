@@ -67,7 +67,7 @@ function stepsGroupsOf(observations: readonly EvidenceObservation[]): UnnamedCla
   for (const o of observations) {
     if (!isFitnessObservation(o)) continue;
     const code = sharedScnCodeOf(o);
-    byCode.set(code, [...(byCode.get(code) ?? []), o.fitnessFunction]);
+    byCode.set(code, [...(byCode.get(code) ?? []), o.step ?? o.fitnessFunction]);
   }
   return [...byCode].map(([code, names]) => (code === null ? { names } : { names, sharedScnCode: code }));
 }

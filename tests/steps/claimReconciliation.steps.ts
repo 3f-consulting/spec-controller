@@ -68,7 +68,7 @@ const PASSING_FILE = { locator: "tests/fixtures/unnamed-claim-status/sound.test.
 
 const UNCITED_OUTCOME_ROW = "Evidence Observation cites no Scenario";
 
-const UNCITED_STEPS = ["lint:bar", "lint:foo"];
+const UNCITED_STEPS = ["ci.yml:ci:pnpm lint:bar", "ci.yml:ci:pnpm lint:foo"];
 
 const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
 

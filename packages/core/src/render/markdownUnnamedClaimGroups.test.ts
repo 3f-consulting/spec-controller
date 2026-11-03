@@ -117,36 +117,36 @@ describe("[SCN-RPT-036] a failed test that cites no scenario is named on the unn
   });
 });
 
-function step(fitnessFunction: string): FitnessEvidenceObservation {
-  return { qualityCheckKind: "fitness", fitnessFunction, exists: true, enforcedOverRealSource: true };
+function step(fitnessFunction: string, at: string): FitnessEvidenceObservation {
+  return { qualityCheckKind: "fitness", fitnessFunction, step: at, exists: true, enforcedOverRealSource: true };
 }
 
 describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named", () => {
   it("lists the CI steps once, after the file groups, naming each", () => {
-    expect(unnamedClaimItemsOf(reportOf([step("lint:bar"), step("lint:foo"), unit("passed", "src/a.test.ts")]))).toEqual([
+    expect(unnamedClaimItemsOf(reportOf([step("lint:bar", "ci.yml:ci:pnpm lint:bar"), step("lint:foo", "ci.yml:ci:pnpm lint:foo"), unit("passed", "src/a.test.ts")]))).toEqual([
       `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`,
-      `fitness: ${CITES_NO_SCENARIO} — 2 CI steps: lint:bar, lint:foo`,
+      `fitness: ${CITES_NO_SCENARIO} — 2 CI steps: ci.yml:ci:pnpm lint:bar, ci.yml:ci:pnpm lint:foo`,
     ]);
   });
 
   it("lists the CI steps after a broken item and the file groups", () => {
     const cell = unnamedClaimCell(reportOf([
-      step("lint:uncited"),
+      step("lint:uncited", "ci.yml:ci:pnpm lint:uncited"),
       unit("passed", "src/a.test.ts"),
       { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
     ]));
     expect(cell).toBe(
       `unit: ${CORE_MESSAGES[CoreMessage.OutcomeBroken]} (src/broken.test.ts: Cannot find module); ` +
-        `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness: ${CITES_NO_SCENARIO} — 1 CI step: lint:uncited`
+        `unit: ${CITES_NO_SCENARIO} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness: ${CITES_NO_SCENARIO} — 1 CI step: ci.yml:ci:pnpm lint:uncited`
     );
   });
 
   it("names a lone CI step as one step", () => {
-    expect(unnamedClaimItemsOf(reportOf([step("lint:solo")]))).toEqual([`fitness: ${CITES_NO_SCENARIO} — 1 CI step: lint:solo`]);
+    expect(unnamedClaimItemsOf(reportOf([step("lint:solo", "ci.yml:ci:pnpm lint:solo")]))).toEqual([`fitness: ${CITES_NO_SCENARIO} — 1 CI step: ci.yml:ci:pnpm lint:solo`]);
   });
 
   it("counts what ran adding up to the count of evidence observations that cite no scenario", () => {
-    const md = reportOf([step("lint:bar"), step("lint:foo"), unit("failed", "src/a.test.ts"), unit("passed", "src/b.test.ts")]);
+    const md = reportOf([step("lint:bar", "ci.yml:ci:pnpm lint:bar"), step("lint:foo", "ci.yml:ci:pnpm lint:foo"), unit("failed", "src/a.test.ts"), unit("passed", "src/b.test.ts")]);
     const counted = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)![1]));
     const uncited = Number(rowCells(md, CITES_NO_SCENARIO)[3]);
     expect(counted.reduce((a, b) => a + b, 0)).toBe(uncited);
