@@ -93,8 +93,6 @@ export enum AppMessage {
   ShapeWrongKind,
   ShapeFieldMissing,
   HelpUsageLine,
-  UnexpectedError,
-  UnexpectedErrorAfterVerdict,
   UsageError = "usage-error",
   SeeCommandsAndModifiers = "see-commands-and-modifiers",
   SeeModifiers = "see-modifiers",
@@ -150,7 +148,14 @@ export enum AppError {
   UnknownPartRefused = "unknown-part-refused",
   NoFeaturePartGiven = "no-feature-part-given",
   NotAFeaturePart = "not-a-feature-part",
+  UnexpectedError = "unexpected-error",
+  UnexpectedErrorAfterVerdict = "unexpected-error-after-verdict",
 }
+
+// A crash line is worded by the table below, so the crash guards read it without loading the data file's formatter.
+type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdict;
+
+export type RefusalError = Exclude<AppError, CrashError>;
 
 interface AppMessageParams {
   [AppMessage.CouldNotBeRead]: [subject: string, reason: string];
@@ -187,14 +192,14 @@ interface AppMessageParams {
   [AppMessage.ShapeWrongKind]: [where: string, found: string, expected: string];
   [AppMessage.ShapeFieldMissing]: [path: string];
   [AppMessage.HelpUsageLine]: [modifierUsage: string];
-  [AppMessage.UnexpectedError]: [name: string, firstLine: string];
-  [AppMessage.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
+  [AppError.UnexpectedError]: [name: string, firstLine: string];
+  [AppError.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
 }
 
 // A handle whose value is a string is worded by the data file; the others, by the table below.
 export type WordedAppMessage = Extract<AppMessage, string>;
 
-type TabledAppMessage = Extract<AppMessage, number>;
+type TabledAppMessage = Extract<AppMessage, number> | CrashError;
 
 export interface AppMessageValues {
   [AppMessage.UsageError]: { command: string; message: string };
@@ -381,8 +386,10 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.ShapeWrongKind]: (where, found, expected) => `${where} is ${found}, not ${expected}`,
   [AppMessage.ShapeFieldMissing]: (path) => `${path} is missing`,
   [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
-  [AppMessage.UnexpectedError]: (name, firstLine) => `spec-controller stopped on an unexpected error, and gives no verdict: ${name}: ${firstLine}`,
-  [AppMessage.UnexpectedErrorAfterVerdict]: (name, firstLine) => `spec-controller hit an unexpected error after its verdict: ${name}: ${firstLine}`,
+  [AppError.UnexpectedError]: (name, firstLine) =>
+    `spec-controller stopped on an unexpected error [${AppError.UnexpectedError}], and gives no verdict: ${name}: ${firstLine}`,
+  [AppError.UnexpectedErrorAfterVerdict]: (name, firstLine) =>
+    `spec-controller hit an unexpected error [${AppError.UnexpectedErrorAfterVerdict}] after its verdict: ${name}: ${firstLine}`,
 };
 
 export const Unreadable = {

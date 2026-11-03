@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { APP_MESSAGES, AppError } from "./messages.js";
 
 export interface StandInStream extends EventEmitter {
   readonly written: string[];
@@ -21,7 +21,10 @@ export function closedPipe(): Error {
   return Object.assign(new Error(`${FIRST_LINE}\nthe reader closed its end of the pipe`), { code: "EPIPE" });
 }
 
-export const noVerdictLine = (): string => `${APP_MESSAGES[AppMessage.UnexpectedError]("Error", FIRST_LINE)}\n`;
+export const crashLine = (name: string, firstLine: string, afterVerdict: boolean): string =>
+  APP_MESSAGES[afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError](name, firstLine);
+
+export const noVerdictLine = (): string => `${crashLine("Error", FIRST_LINE, false)}\n`;
 
 interface Raised {
   proc: EventEmitter;

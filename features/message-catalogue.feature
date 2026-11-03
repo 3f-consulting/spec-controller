@@ -94,11 +94,14 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
     Scenario Outline: an error shows its reader the error code of what went wrong — <error>
 
       Examples:
-        | error                                         | what went wrong                    |
-        | a flag the command does not take              | the flag unknown to the command    |
-        | a flag the command has retired                | the retired flag                   |
-        | a command the tool does not have              | the unknown command                |
-        | a request for a scenario code not in its form | the request not in the code's form |
+        | error                                         | what went wrong                      |
+        | a flag the command does not take              | the flag unknown to the command      |
+        | a flag the command has retired                | the retired flag                     |
+        | a command the tool does not have              | the unknown command                  |
+        | a request for a scenario code not in its form | the request not in the code's form   |
+        | an unexpected error before its verdict        | the unexpected error                 |
+        | an unexpected error that cannot be formatted  | the unexpected error                 |
+        | an unexpected error after its verdict         | the unexpected error after a verdict |
 
     @unit @SCN-MSG-011
     Scenario: a balanced run shows no error code

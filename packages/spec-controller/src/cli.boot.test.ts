@@ -1,8 +1,7 @@
 import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as guards from "./crashGuards.js";
-import { standInStream, type StandInStream } from "./crashGuards.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { crashLine, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 
 interface StandInProcess extends EventEmitter {
   exitCode: number | undefined;
@@ -39,7 +38,7 @@ function moduleNotFound(): Error {
 
 const failingLoad = (): Promise<unknown> => Promise.reject(moduleNotFound());
 
-const noVerdictLine = (): string => `${APP_MESSAGES[AppMessage.UnexpectedError]("Error", FIRST_LINE)}\n`;
+const noVerdictLine = (): string => `${crashLine("Error", FIRST_LINE, false)}\n`;
 
 afterEach(() => {
   process.exitCode = undefined;

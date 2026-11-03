@@ -857,11 +857,11 @@ The tool judges scenario code errors only over the corpus that `--features` name
 
 When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A stored run that cannot write its `run.yaml` does not finish, so it exits `6`, and the reports it has already written stay in the run directory. A run already refused as a usage error keeps `2` if an error follows.
 
-An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
+An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
 ### Error codes
 
-**A refusal of a flag, a command or an argument carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below refuses the command as given, a usage error, and the run exits `2`.
+**A refusal of a flag, a command or an argument carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`.
 
 | Code | Meaning |
 |---|---|
@@ -893,6 +893,8 @@ An error after the run reaches its verdict does not change the exit code. One li
 | `unknown-part-refused` | `allocate` was given a feature part no feature file's header carries |
 | `no-feature-part-given` | `allocate` was given no feature part |
 | `not-a-feature-part` | `allocate` was given a feature part not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
+| `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `6`, or keeps `2` if it was already refused as a usage error |
+| `unexpected-error-after-verdict` | an unexpected error came after the run's verdict; the run exits with the verdict's code |
 
 ---
 

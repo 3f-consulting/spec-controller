@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
 import { installCrashGuards } from "./crashGuards.js";
 import { main } from "./main.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { crashLine } from "./crashGuards.test-utils.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, forgetWhatTheProgramWrote } from "./programOutput.test-utils.js";
 
@@ -73,7 +73,7 @@ function reRender(json: string, flags: string[], stdoutFails: boolean): ReRender
 }
 
 function afterVerdictLine(): string {
-  return `${APP_MESSAGES[AppMessage.UnexpectedErrorAfterVerdict]("Error", FIRST_LINE)}\n`;
+  return `${crashLine("Error", FIRST_LINE, true)}\n`;
 }
 
 describe("[SCN-CLI-110] an error after a re-rendered report's verdict keeps that verdict, named on one line", () => {

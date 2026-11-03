@@ -1,16 +1,16 @@
 import { message } from "./appText.js";
-import { AppMessage, type AppError, type AppErrorValues } from "./messages.js";
+import { AppMessage, type AppErrorValues, type RefusalError } from "./messages.js";
 import type { RefusalLines } from "./standardError.js";
 
-type ValuesOf<C extends AppError> = C extends keyof AppErrorValues ? AppErrorValues[C] : Readonly<Record<never, never>>;
+type ValuesOf<C extends RefusalError> = C extends keyof AppErrorValues ? AppErrorValues[C] : Readonly<Record<never, never>>;
 
 export type Refusal = {
-  readonly [C in AppError]: {
+  readonly [C in RefusalError]: {
     readonly code: C;
     readonly values: ValuesOf<C>;
     readonly pointers: readonly string[];
   };
-}[AppError] &
+}[RefusalError] &
   RefusalLines;
 
 // An error given as its words carries no code, and is printed as it is.
@@ -26,13 +26,13 @@ const PRINTED_REFUSAL: RefusalLines = {
   },
 };
 
-export function refusal<C extends AppError>(code: C, values: ValuesOf<C>, pointers: readonly string[] = []): Refusal {
+export function refusal<C extends RefusalError>(code: C, values: ValuesOf<C>, pointers: readonly string[] = []): Refusal {
   return Object.assign(Object.create(PRINTED_REFUSAL) as RefusalLines, { code, values, pointers }) as Refusal;
 }
 
-const words = message as (code: AppError, values: object) => string;
+const words = message as (code: RefusalError, values: object) => string;
 
-function openingLine(code: AppError, text: string, command: string | undefined): string {
+function openingLine(code: RefusalError, text: string, command: string | undefined): string {
   return command === undefined
     ? message(AppMessage.CodedHostUsageError, { code, message: text })
     : message(AppMessage.CodedUsageError, { command, code, message: text });

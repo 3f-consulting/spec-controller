@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { crashLine } from "./crashGuards.test-utils.js";
 
 const PLANTED = "planted: the reading of this file throws";
 
@@ -37,7 +37,7 @@ vi.mock("yaml", async (importOriginal) => {
   return { ...real, parse };
 });
 
-const unexpectedErrorLine = (): string => APP_MESSAGES[AppMessage.UnexpectedError]("TypeError", "");
+const unexpectedErrorLine = (): string => crashLine("TypeError", "", false);
 
 const FEATURE = "@AB\nFeature: a part\n\n  @unit @SCN-AB-001\n  Scenario: a scenario\n";
 const PLANTED_FEATURE = `# ${PLANTED}\n${FEATURE}`;

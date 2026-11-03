@@ -2,8 +2,7 @@ import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { installCrashGuards, markRunFinished } from "./crashGuards.js";
 import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
-import { ARRIVALS, closedPipe, FIRST_LINE, noVerdictLine } from "./crashGuards.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { ARRIVALS, closedPipe, crashLine, FIRST_LINE, noVerdictLine } from "./crashGuards.test-utils.js";
 
 type Happening = { stderr: string } | { exit: unknown };
 
@@ -53,7 +52,7 @@ function refused(): Guarded {
   return g;
 }
 
-const afterVerdictLine = (): string => `${APP_MESSAGES[AppMessage.UnexpectedErrorAfterVerdict]("Error", FIRST_LINE)}\n`;
+const afterVerdictLine = (): string => `${crashLine("Error", FIRST_LINE, true)}\n`;
 
 const onStderr = (g: Guarded): boolean => g.stderr.emit("error", closedPipe());
 

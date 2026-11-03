@@ -339,8 +339,8 @@ const SAMPLE_APP_PARAMS: { readonly [C in keyof AppMessages]: Parameters<AppMess
   [AppMessage.ShapeWrongKind]: ["testResults", "an object", "a list"],
   [AppMessage.ShapeFieldMissing]: ["ledger.claimReconciliations"],
   [AppMessage.HelpUsageLine]: ["[--store <dir>] [--run-id <id>]"],
-  [AppMessage.UnexpectedError]: ["Error", "write EPIPE"],
-  [AppMessage.UnexpectedErrorAfterVerdict]: ["Error", "write EPIPE"],
+  [AppError.UnexpectedError]: ["Error", "write EPIPE"],
+  [AppError.UnexpectedErrorAfterVerdict]: ["Error", "write EPIPE"],
 };
 
 type AppValues = AppMessageValues & AppErrorValues;
@@ -387,11 +387,13 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
 };
 
 function renderedApp(code: AppMessage | AppError): string {
-  if (typeof code === "string") {
-    const values = (SAMPLE_APP_VALUES as Partial<Record<WordedAppMessage | AppError, MessageValues>>)[code];
-    return (message as (code: WordedAppMessage | AppError, values?: MessageValues) => string)(code, values);
+  if (code in APP_MESSAGES) {
+    const tabled = code as keyof AppMessages;
+    return (APP_MESSAGES[tabled] as (...params: unknown[]) => string)(...SAMPLE_APP_PARAMS[tabled]);
   }
-  return (APP_MESSAGES[code] as (...params: unknown[]) => string)(...SAMPLE_APP_PARAMS[code]);
+  const worded = code as WordedAppMessage | AppError;
+  const values = (SAMPLE_APP_VALUES as Partial<Record<WordedAppMessage | AppError, MessageValues>>)[worded];
+  return (message as (code: WordedAppMessage | AppError, values?: MessageValues) => string)(worded, values);
 }
 
 const SAMPLE_FAULTS: { readonly [C in QualityCheckFaultCode]: Extract<QualityCheckFault, { readonly code: C }> } = {
