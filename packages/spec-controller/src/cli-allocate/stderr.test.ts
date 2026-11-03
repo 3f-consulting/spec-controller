@@ -1,7 +1,9 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
+import { shownText } from "../shownText.test-utils.js";
 
 function nextScnCode(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
   const answer = answerFor(request, occurrences);
@@ -68,14 +70,14 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
 
 describe("[SCN-ALC-010] a part no feature file's header carries is refused as an unknown part", () => {
   it("says it is an unknown part, and lists the header codes and nothing else", () => {
-    expect(unknownPartRefusal({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] })).toBe(
-      APP_MESSAGES[AppMessage.UnknownPartRefused]("ZZZ", "ONE, TWO"),
+    expect(shownText(unknownPartRefusal({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] }))).toBe(
+      message(AppError.UnknownPartRefused, { part: "ZZZ", parts: "ONE, TWO" }),
     );
   });
 
   it("says so when the corpus has no feature file headed at all", () => {
-    expect(unknownPartRefusal({ kind: "unknown-part", part: "ZZZ", headerCodes: [] })).toBe(
-      APP_MESSAGES[AppMessage.UnknownPartRefused]("ZZZ", APP_MESSAGES[AppMessage.NoPartsCarried]()),
+    expect(shownText(unknownPartRefusal({ kind: "unknown-part", part: "ZZZ", headerCodes: [] }))).toBe(
+      message(AppError.UnknownPartRefused, { part: "ZZZ", parts: message(AppMessage.NoPartsCarried) }),
     );
   });
 });

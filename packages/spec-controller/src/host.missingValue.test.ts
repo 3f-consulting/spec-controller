@@ -1,7 +1,9 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { cliRegistry, type FlagSpec } from "./cliRegistry.js";
 import { parseHostInvocation } from "./host.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
+import { withShownRefusal } from "./shownText.test-utils.js";
 
 let valueModifiers: FlagSpec[];
 
@@ -28,12 +30,12 @@ describe("[SCN-CLI-059] the host refuses a modifier given no value as a usage fa
     if (flag.arg === undefined) continue;
     for (const [shape, argvOf] of MISSING) {
       it(`refuses ${flag.name} ${shape} as a value missing at the host, before any command is taken`, () => {
-        const inv = parseHostInvocation(argvOf(flag.name));
+        const inv = withShownRefusal(parseHostInvocation(argvOf(flag.name)));
         expect(inv).toEqual({
           commandArgs: [],
           refusal:
-            `${APP_MESSAGES[AppMessage.MissingValue](flag.name, "spec-controller", flag.arg ?? "")}\n` +
-            APP_MESSAGES[AppMessage.SeeFlagsAndValues]("spec-controller"),
+            `${message(AppError.MissingValue, { flag: flag.name, scope: "spec-controller", arg: flag.arg ?? "" })}\n` +
+            message(AppMessage.SeeFlagsAndValues, { scope: "spec-controller" }),
         });
       });
     }

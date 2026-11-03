@@ -1,9 +1,6 @@
 import { endRunOn, forgetRunEnding, UNEXPECTED_ERROR, usageRefusalSet, type ExitCodeHolder } from "./exitCode.js";
 import { APP_MESSAGES, AppMessage } from "./messages.js";
-
-interface LineWriter {
-  write(chunk: string): unknown;
-}
+import { standardError, type LineWriter } from "./standardError.js";
 
 interface CrashingProcess extends ExitCodeHolder {
   on(event: "uncaughtException" | "unhandledRejection", listener: (err: unknown) => void): unknown;
@@ -78,7 +75,7 @@ export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr
   run.lineWritten = true;
   settleExitCode(proc);
   try {
-    stderr.write(unexpectedErrorLine(err, run.finished) + "\n");
+    standardError(stderr).error(unexpectedErrorLine(err, run.finished));
   } catch {
     // stderr is what failed, and the exit code already says the run stopped.
   }

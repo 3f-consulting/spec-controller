@@ -508,6 +508,15 @@ export default [
   },
 
   {
+    files: ["packages/*/src/messages.*.json"],
+    plugins: { json },
+    language: "json/json",
+    rules: {
+      "json/no-duplicate-keys": "error",
+    },
+  },
+
+  {
     files: [COMMAND_MANIFEST],
     plugins: { json },
     language: "json/json",

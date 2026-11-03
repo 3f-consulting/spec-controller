@@ -26,6 +26,8 @@ import { dispatchesUnstored, storedReRenderRefusal, unstoredRunIdRefusal } from 
 import { settlingRefusal } from "./outputLocation.js";
 import { beginRun, markRunFinished, settleUnexpectedError } from "./crashGuards.js";
 import { endRunOn, USAGE_REFUSAL } from "./exitCode.js";
+import { standardError } from "./standardError.js";
+import type { Refusal } from "./refusal.js";
 
 function runCommand(command: string, argv: string[], ownRunDir?: string): boolean {
   switch (command) {
@@ -36,7 +38,7 @@ function runCommand(command: string, argv: string[], ownRunDir?: string): boolea
       return false;
     default: {
       const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
-      process.stderr.write(answer.stderr);
+      standardError(process.stderr).error(answer.refusal);
       endRunOn({ kind: "answer", code: answer.exitCode });
       return false;
     }
@@ -46,12 +48,12 @@ function runCommand(command: string, argv: string[], ownRunDir?: string): boolea
 function refuseLeadingFaults(inv: HostInvocation): boolean {
   const refusal = leadingRefusal(inv);
   if (refusal === undefined) return false;
-  process.stderr.write(refusal + "\n");
+  standardError(process.stderr).error(refusal);
   endRunOn(USAGE_REFUSAL);
   return true;
 }
 
-function leadingRefusal(inv: HostInvocation): string | undefined {
+function leadingRefusal(inv: HostInvocation): Refusal | undefined {
   return inv.refusal ?? modifiersNotTakenRefusal(inv) ?? storedReRenderRefusal(inv) ?? unstoredRunIdRefusal(inv);
 }
 

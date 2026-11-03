@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { planOutput, type OutputPlan } from "./format.js";
-import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { AppError } from "../../messages.js";
+import { message } from "../../appText.js";
 import { runBalanceCaptured } from "../../runBalance.test-utils.js";
+import { errorText } from "../../standardError.js";
+import { printedRefusal, shownText } from "../../shownText.test-utils.js";
 
 function planOf(result: ReturnType<typeof planOutput>): OutputPlan {
-  if (!result.ok) throw new Error(`expected a plan, got error: ${result.error}`);
+  if (!result.ok) throw new Error(`expected a plan, got error: ${errorText(result.error)}`);
   return result.plan;
 }
 
@@ -51,8 +54,8 @@ describe("[SCN-FMT-005] planOutput rejects more than one output routed to stdout
     const result = planOutput(["md", "json"], () => false);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("unreachable: expected a stdout-collision error");
-    expect(result.error).toMatch(/stdout/i);
-    expect(result.error).toMatch(/:<path>/);
+    expect(errorText(result.error)).toMatch(/stdout/i);
+    expect(errorText(result.error)).toMatch(/:<path>/);
   });
 });
 
@@ -67,16 +70,14 @@ describe("[SCN-FMT-007] balance rejects an unknown format with a hint listing md
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(APP_MESSAGES[AppMessage.UnknownFormat]("xml", "md, json") + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.UnknownFormat, message(AppError.UnknownFormat, { formats: "xml", supported: "md, json" }), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
   it("names each unknown format once, in the order first given, however often and wherever it is routed", () => {
     const result = planOutput(["xml", "xml:a.out", "yaml"], () => false);
-    expect(result).toEqual({
-      ok: false,
-      error: APP_MESSAGES[AppMessage.UnknownFormat]("xml, yaml", "md, json"),
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(shownText(result.error)).toBe(message(AppError.UnknownFormat, { formats: "xml, yaml", supported: "md, json" }));
   });
 });
 
@@ -87,6 +88,6 @@ describe("[SCN-FMT-011] planOutput counts a --format path naming standard output
     const result = planOutput(["md", "json:/dev/fd/1"], namesStdout);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toBe(APP_MESSAGES[AppMessage.MoreThanOneToStdout]("md, json"));
+    if (!result.ok) expect(shownText(result.error)).toBe(message(AppError.MoreThanOneToStdout, { formats: "md, json" }));
   });
 });

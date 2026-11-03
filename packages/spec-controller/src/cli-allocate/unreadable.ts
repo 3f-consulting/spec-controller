@@ -1,5 +1,6 @@
 import type { SourceFault } from "@3f-consulting/spec-controller-core";
 import { APP_MESSAGES, AppMessage, UNREADABLE_SUBJECTS, type Unreadable } from "../messages.js";
+import { message } from "../appText.js";
 
 export class UnreadableInput extends Error {
   override readonly name = "UnreadableInput";
@@ -49,7 +50,7 @@ export function refuse(what: Unreadable, path: string, err: unknown): never {
 }
 
 export function refusalLine(refusal: UnreadableInput | UnparseableFeatureFiles): string {
-  return APP_MESSAGES[AppMessage.UsageError]("allocate", refusal.message);
+  return message(AppMessage.UsageError, { command: "allocate", message: refusal.message });
 }
 
 export function firstLine(text: string): string {

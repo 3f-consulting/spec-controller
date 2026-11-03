@@ -4,6 +4,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { shownEntry, showsEntry } from "./support/catalogue.js";
 import { allocate, git } from "./support/codeAllocation.js";
 import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -221,11 +222,12 @@ Given("a repository whose feature files are headed ONE and TWO, where {}", funct
 Then("it is refused as an unknown part, and no code is given", function (this: SpecControllerWorld) {
   assert.equal(this.answer.status, 2, `expected the usage status, got ${this.answer.status}\n${this.answer.stderr}`);
   assert.equal(this.answer.stdout, "");
-  assert.match(this.answer.stderr, /unknown part/);
+  assert.ok(showsEntry(this.answer.stderr, "unknown-part-refused"), `expected an unknown-part refusal; got:\n${this.answer.stderr}`);
 });
 
 Then("the refusal lists ONE and TWO as the parts the corpus carries, and no other part", function (this: SpecControllerWorld) {
-  assert.match(this.answer.stderr, /^The parts this corpus's feature files carry: ONE, TWO\.$/m);
+  const carried = shownEntry(this.answer.stderr, "unknown-part-refused")?.["parts"];
+  assert.equal(carried, "ONE, TWO", `expected the refusal to list ONE and TWO; got:\n${this.answer.stderr}`);
 });
 
 When("the author asks for the next code for {word}, as a new part", function (this: SpecControllerWorld, part: string) {
@@ -257,10 +259,14 @@ Given("in that repository {word} is {}", function (this: SpecControllerWorld, pa
   make(join(this.repository, path));
 });
 
+function allocateUsageError(result: SpawnSyncReturns<string>): string {
+  return shownEntry(result.stderr, "usage-error", { command: "allocate" })?.["message"] ?? "";
+}
+
 function refusalOf(result: SpawnSyncReturns<string>): string {
-  const line = /^spec-controller allocate: usage error — .+ could not be read.*$/m.exec(result.stderr);
-  assert.ok(line !== null, `expected a refusal naming what could not be read; got:\n${result.stderr}`);
-  return line[0];
+  const refusal = allocateUsageError(result);
+  assert.match(refusal, /.+ could not be read/, `expected a refusal naming what could not be read; got:\n${result.stderr}`);
+  return refusal;
 }
 
 Then("it is refused as a path allocate cannot read, and no code is given", function (this: SpecControllerWorld) {
@@ -280,8 +286,8 @@ Then("allocate's refusal names {word}", function (this: SpecControllerWorld, pat
 });
 
 Then("allocate's refusal names {word} and the parser's own words", function (this: SpecControllerWorld, path: string) {
-  const named = new RegExp(`^spec-controller allocate: usage error — .+ could not be parsed: .*/${path}$`, "m");
-  assert.match(this.answer.stderr, named, `expected the refusal to name ${path}; got:\n${this.answer.stderr}`);
+  const named = new RegExp(`.+ could not be parsed: .*/${path}$`);
+  assert.match(allocateUsageError(this.answer), named, `expected the refusal to name ${path}; got:\n${this.answer.stderr}`);
   assert.match(this.answer.stderr, /^\(1:1\): expected: .*got 'not gherkin at all \{\{\{'$/m, `expected the parser's own words; got:\n${this.answer.stderr}`);
 });
 

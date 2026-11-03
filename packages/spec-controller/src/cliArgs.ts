@@ -1,5 +1,7 @@
 import type { CliRegistry, CommandSpec, FlagSpec, PositionalSpec } from "./cliRegistry.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
+import { refusal, type Refusal } from "./refusal.js";
 
 export function asksForHelp(argv: readonly string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
@@ -46,7 +48,7 @@ export function checkMissingValues(
   argv: readonly string[],
   registry: CliRegistry,
   command: string,
-): string | null {
+): Refusal | null {
   const valueFlags = valueFlagsOf(commandEntry(registry, command).flags);
   for (const [i, token] of argv.entries()) {
     const flag = valueFlags.get(token);
@@ -57,21 +59,18 @@ export function checkMissingValues(
   return null;
 }
 
-export function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string): string {
-  return (
-    `${APP_MESSAGES[AppMessage.MissingValue](given, scope, flag.arg)}\n` +
-    APP_MESSAGES[AppMessage.SeeFlagsAndValues](scope)
-  );
+export function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string): Refusal {
+  return refusal(AppError.MissingValue, { flag: given, scope, arg: flag.arg }, [message(AppMessage.SeeFlagsAndValues, { scope })]);
 }
 
-export function checkArgvShape(argv: readonly string[], registry: CliRegistry, command: string): string | null {
+export function checkArgvShape(argv: readonly string[], registry: CliRegistry, command: string): Refusal | null {
   const scope = flagScopeOf(registry, command);
   const seen = new Set<FlagSpec>();
   const positionals = positionalsOf(registry, command);
   const walk: Walk = { scope, seen, positionals, slotsLeft: positionals.length };
   for (let i = 0; i < argv.length; i++) {
     const read = readToken(argv, i, walk, command);
-    if (typeof read === "string") return read;
+    if (typeof read !== "number") return read;
     i += read;
   }
   return null;
@@ -109,7 +108,7 @@ export function positionalArguments(argv: readonly string[], registry: CliRegist
   return words;
 }
 
-function readToken(argv: readonly string[], i: number, walk: Walk, command: string): string | number {
+function readToken(argv: readonly string[], i: number, walk: Walk, command: string): Refusal | number {
   const token = argv[i] ?? "";
   const next = argv[i + 1];
   if (isEqualsForm(token)) return equalsFormRefusal(token, walk.scope, `spec-controller ${command}`);
@@ -125,7 +124,7 @@ function registeredFlagRefusal(
   next: string | undefined,
   walk: Walk,
   command: string,
-): string | undefined {
+): Refusal | undefined {
   if (walk.seen.has(flag) && flag.repeatable !== true) return givenTwiceRefusal(token, `spec-controller ${command}`);
   walk.seen.add(flag);
   if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && !walk.scope.has(next) && walk.slotsLeft === 0) {
@@ -134,8 +133,8 @@ function registeredFlagRefusal(
   return undefined;
 }
 
-export function givenTwiceRefusal(given: string, scope: string): string {
-  return `${APP_MESSAGES[AppMessage.GivenTwice](given, scope)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
+export function givenTwiceRefusal(given: string, scope: string): Refusal {
+  return refusal(AppError.GivenTwice, { flag: given, scope }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
 function flagScopeOf(registry: CliRegistry, command: string): Map<string, FlagSpec> {
@@ -154,14 +153,14 @@ export function isEqualsForm(token: string): boolean {
   return isFlagShaped(token) && token.includes("=");
 }
 
-export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, FlagSpec>, scope: string): string {
+export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, FlagSpec>, scope: string): Refusal {
   const at = token.indexOf("=");
   const name = token.slice(0, at);
   const value = token.slice(at + 1);
   const flag = flags.get(name);
   const spelling =
     flag !== undefined && flag.arg === undefined ? name : `${name} ${value === "" ? (flag?.arg ?? "<value>") : value}`;
-  return `${APP_MESSAGES[AppMessage.EqualsForm](token, scope, spelling)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
+  return refusal(AppError.EqualsForm, { token, scope, spelling }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
 function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined): number {
@@ -169,15 +168,12 @@ function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined):
   return flag === undefined || flag.arg !== undefined ? 1 : 0;
 }
 
-function takesNoValueRefusal(flag: string, value: string, command: string): string {
+function takesNoValueRefusal(flag: string, value: string, command: string): Refusal {
   const scope = `spec-controller ${command}`;
-  return (
-    `${APP_MESSAGES[AppMessage.TakesNoValue](flag, scope, value)}\n` +
-    APP_MESSAGES[AppMessage.SeeFlagsAndValues](scope)
-  );
+  return refusal(AppError.TakesNoValue, { flag, scope, value }, [message(AppMessage.SeeFlagsAndValues, { scope })]);
 }
 
-function positionalRead(token: string, walk: Walk, command: string): string | number {
+function positionalRead(token: string, walk: Walk, command: string): Refusal | number {
   if (walk.slotsLeft === 0) {
     return walk.positionals.length === 0 ? notAFlagRefusal(token, command) : extraPositionalRefusal(token, walk, command);
   }
@@ -185,26 +181,26 @@ function positionalRead(token: string, walk: Walk, command: string): string | nu
   return 0;
 }
 
-function extraPositionalRefusal(token: string, walk: Walk, command: string): string {
+function extraPositionalRefusal(token: string, walk: Walk, command: string): Refusal {
   const takes = walk.positionals.map((positional) => positional.name).join(" ");
   const scope = `spec-controller ${command}`;
-  return `${APP_MESSAGES[AppMessage.ExtraArgument](token, scope, takes)}\n${APP_MESSAGES[AppMessage.SeeArguments](scope)}`;
+  return refusal(AppError.ExtraArgument, { token, scope, takes }, [message(AppMessage.SeeArguments, { scope })]);
 }
 
-function notAFlagRefusal(token: string, command: string): string {
+function notAFlagRefusal(token: string, command: string): Refusal {
   const scope = `spec-controller ${command}`;
-  return `${APP_MESSAGES[AppMessage.NotAFlag](token, scope)}\n${APP_MESSAGES[AppMessage.SeeFlags](scope)}`;
+  return refusal(AppError.NotAFlag, { token, scope }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
 export function checkMisplacedHostModifiers(
   args: Record<string, string>,
   registry: CliRegistry,
   command: string,
-): string | null {
+): Refusal | null {
   const modifiers = new Set(registry.global.map((flag) => bareName(flag.name)));
   const key = Object.keys(args).find((k) => modifiers.has(k));
   if (key === undefined) return null;
-  return `${APP_MESSAGES[AppMessage.MisplacedModifier](`--${key}`, command)}\n${APP_MESSAGES[AppMessage.SeeModifiers]()}`;
+  return refusal(AppError.MisplacedModifier, { modifier: `--${key}`, command }, [message(AppMessage.SeeModifiers)]);
 }
 
 export function checkUnknownFlags(
@@ -212,7 +208,7 @@ export function checkUnknownFlags(
   registry: CliRegistry,
   command: string,
   toolVersion: string,
-): string | null {
+): Refusal | null {
   const entry = commandEntry(registry, command);
   const accepted = new Set<string>();
   for (const flag of entry.flags) {
@@ -227,13 +223,12 @@ export function checkUnknownFlags(
   return null;
 }
 
-function unknownFlagRefusal(flag: string, command: string, toolVersion: string): string {
+function unknownFlagRefusal(flag: string, command: string, toolVersion: string): Refusal {
   const scope = `spec-controller ${command}`;
-  return (
-    `${APP_MESSAGES[AppMessage.UnknownFlag](flag, scope, toolVersion, command)}\n` +
-    `${APP_MESSAGES[AppMessage.PinDrifted](command, flag)}\n` +
-    APP_MESSAGES[AppMessage.OtherwiseSeeFlags](scope)
-  );
+  return refusal(AppError.UnknownFlag, { flag, scope, toolVersion, command }, [
+    message(AppMessage.PinDrifted, { command, flag }),
+    message(AppMessage.OtherwiseSeeFlags, { scope }),
+  ]);
 }
 
 function retiredFlagRefusal(
@@ -241,13 +236,12 @@ function retiredFlagRefusal(
   key: string,
   command: string,
   toolVersion: string,
-): string | undefined {
+): Refusal | undefined {
   const retired = entry.retiredFlags?.find((flag) => bareName(flag.name) === key);
   if (retired === undefined) return undefined;
   const scope = `spec-controller ${command}`;
-  return (
-    `${APP_MESSAGES[AppMessage.RetiredFlag](retired.name, scope, retired.retiredIn, toolVersion)}\n` +
-    `${APP_MESSAGES[AppMessage.DoNotPinRetired]()} ${retired.replacement}\n` +
-    APP_MESSAGES[AppMessage.SeeFlags](scope)
-  );
+  return refusal(AppError.RetiredFlag, { flag: retired.name, scope, retiredIn: retired.retiredIn, toolVersion }, [
+    `${message(AppMessage.DoNotPinRetired)} ${retired.replacement}`,
+    message(AppMessage.SeeFlags, { scope }),
+  ]);
 }

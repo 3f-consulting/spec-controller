@@ -6,9 +6,11 @@ import { runBalance } from "./cli-balance/cli.js";
 import { balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cliRegistry.js";
 import { answerUnknownCommand } from "./host.js";
 import { main } from "./main.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
+import { errorText } from "./standardError.js";
 
 interface Answered extends Written {
   storeMade: boolean;
@@ -50,11 +52,11 @@ function underAStoreNotYetMade(argvAt: (storeRoot: string) => string[]): Answere
 }
 
 function refusalNaming(modifiers: string, closing: string): string {
-  return `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ReRenderNotStored](modifiers))}\n${closing}\n`;
+  return `${message(AppMessage.CodedHostUsageError, { code: AppError.ReRenderNotStored, message: message(AppError.ReRenderNotStored, { modifiers }) })}\n${closing}\n`;
 }
 
-const NAMING_THE_STORE = (): string => refusalNaming("--store", APP_MESSAGES[AppMessage.ReRenderWithoutIt]());
-const NAMING_BOTH = (): string => refusalNaming("--store, --run-id", APP_MESSAGES[AppMessage.ReRenderWithoutThem]());
+const NAMING_THE_STORE = (): string => refusalNaming("--store", message(AppMessage.ReRenderWithoutIt));
+const NAMING_BOTH = (): string => refusalNaming("--store, --run-id", message(AppMessage.ReRenderWithoutThem));
 
 const missingFromSavedDir = (): string[] => ["--render-from-json", join(savedDir, "missing.json")];
 
@@ -112,15 +114,15 @@ describe("[SCN-RMG-007] main refuses a stored --render-from-json re-render namin
     it("allocate is refused for taking no host modifier, not as a stored re-render", () => {
       const answered = underAStoreNotYetMade((store) => ["--store", store, "allocate", "--render-from-json", savedReport]);
 
-      expect(answered.stderr).toContain(APP_MESSAGES[AppMessage.RunWithoutModifiers]("allocate"));
-      expect(answered.stderr).not.toContain(APP_MESSAGES[AppMessage.ReRenderNotStored]("--store"));
+      expect(answered.stderr).toContain(message(AppMessage.RunWithoutModifiers, { command: "allocate" }));
+      expect(answered.stderr).not.toContain(message(AppError.ReRenderNotStored, { modifiers: "--store" }));
       expect(answered.exitCode).toBe(2);
     });
 
     it("an unknown command is answered as unknown, not as a stored re-render", () => {
       const answered = underAStoreNotYetMade((store) => ["--store", store, "blance", "--render-from-json", savedReport]);
 
-      expect(answered.stderr).toBe(answerUnknownCommand("blance", renderTopLevelHelp(cliRegistry)).stderr);
+      expect(answered.stderr).toBe(`${errorText(answerUnknownCommand("blance", renderTopLevelHelp(cliRegistry)).refusal)}\n`);
       expect(answered.exitCode).toBe(2);
     });
   });

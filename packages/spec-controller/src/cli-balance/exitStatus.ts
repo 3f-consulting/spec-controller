@@ -1,6 +1,6 @@
 import type { ExitCodeOf, RunVerdict } from "@3f-consulting/spec-controller-core";
 
-const EXIT_CODE: Readonly<Record<RunVerdict, number>> = {
+export const EXIT_CODE: Readonly<Record<RunVerdict, number>> = {
   balanced: 0,
   "out-of-balance": 1,
   "scenario-code-errors": 1,

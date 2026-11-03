@@ -9,7 +9,9 @@ import {
   type ValueFlagSpec,
 } from "./cliArgs.js";
 import { cliRegistry, type CommandSpec, type FlagSpec } from "./cliRegistry.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
+import { refusal, type Refusal } from "./refusal.js";
 import { USAGE_EXIT_CODE } from "./exitCode.js";
 
 export interface HostInvocation {
@@ -17,7 +19,7 @@ export interface HostInvocation {
   runId?: string;
   command?: string;
   commandArgs: string[];
-  refusal?: string;
+  refusal?: Refusal;
 }
 
 export function parseHostInvocation(
@@ -70,7 +72,7 @@ interface HostRead {
   commands: readonly string[];
 }
 
-type ModifierRead = { value: string } | { refusal: string };
+type ModifierRead = { value: string } | { refusal: Refusal };
 
 function readModifier(
   token: string,
@@ -87,26 +89,22 @@ function readModifier(
   return { value };
 }
 
-function noCommandRefusal(given: readonly string[]): string {
-  return (
-    `${APP_MESSAGES[AppMessage.NoCommandAfterModifiers](given.join(", "))}\n` +
-    APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()
-  );
+function noCommandRefusal(given: readonly string[]): Refusal {
+  return refusal(AppError.NoCommandAfterModifiers, { modifiers: given.join(", ") }, [message(AppMessage.SeeCommandsAndModifiers)]);
 }
 
-function commandAsValueRefusal(token: string, modifier: ValueFlagSpec, command: string): string {
-  return (
-    `${APP_MESSAGES[AppMessage.ModifierTookCommand](token, command)}\n` +
-    `${APP_MESSAGES[AppMessage.GiveModifierItsOwnValue](token, modifier.arg, command)} ` +
-    APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()
-  );
+function commandAsValueRefusal(token: string, modifier: ValueFlagSpec, command: string): Refusal {
+  return refusal(AppError.ModifierTookCommand, { modifier: token, command }, [
+    `${message(AppMessage.GiveModifierItsOwnValue, { modifier: token, arg: modifier.arg, command })} ` +
+      message(AppMessage.SeeCommandsAndModifiers),
+  ]);
 }
 
 function leadingFlagRefusal(
   token: string,
   modifiers: ReadonlyMap<string, FlagSpec>,
   globalFlags: readonly FlagSpec[],
-): string | undefined {
+): Refusal | undefined {
   if (isEqualsForm(token)) return equalsFormRefusal(token, modifiers, "spec-controller");
   if (isFlagOutOfPlace(token)) return flagBeforeCommandRefusal(token, globalFlags);
   return undefined;
@@ -118,9 +116,9 @@ function isFlagOutOfPlace(token: string): boolean {
   return token.length > 1 && token.startsWith("-") && !TOP_LEVEL_HELP.has(token);
 }
 
-function flagBeforeCommandRefusal(flag: string, globalFlags: readonly FlagSpec[]): string {
+function flagBeforeCommandRefusal(flag: string, globalFlags: readonly FlagSpec[]): Refusal {
   const modifiers = globalFlags.map((modifier) => modifier.name).join(", ");
-  return `${APP_MESSAGES[AppMessage.FlagBeforeCommand](flag, modifiers)}\n${APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]()}`;
+  return refusal(AppError.FlagBeforeCommand, { flag, modifiers }, [message(AppMessage.SeeCommandsAndModifiers)]);
 }
 
 export function wrapCommandArgv(commandArgs: readonly string[], formatSpecs: readonly string[]): string[] {
@@ -140,27 +138,28 @@ export function peekFlag(argv: readonly string[], name: string): string | undefi
 
 export interface UnknownCommandAnswer {
   exitCode: number;
-  stderr: string;
+  refusal: Refusal;
 }
 
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {
     exitCode: USAGE_EXIT_CODE,
-    stderr: `spec-controller: ${APP_MESSAGES[AppMessage.UnknownCommand](command)}\n\n${help}\n`,
+    refusal: refusal(AppError.UnknownCommand, { command }, ["", help]),
   };
 }
 
 export function modifiersNotTakenRefusal(
   inv: HostInvocation,
   commands: readonly CommandSpec[] = cliRegistry.commands,
-): string | undefined {
+): Refusal | undefined {
   const entry = commands.find((command) => command.name === inv.command);
   if (entry?.acceptsHostModifiers !== false || asksForHelp(inv.commandArgs)) return undefined;
   const given = [inv.store === undefined ? [] : ["--store"], inv.runId === undefined ? [] : ["--run-id"]].flat();
   if (given.length === 0) return undefined;
-  return (
-    `${APP_MESSAGES[AppMessage.HostUsageError](APP_MESSAGES[AppMessage.ModifiersNotTaken](entry.name, given.join(", ")))}\n` +
-    APP_MESSAGES[AppMessage.RunWithoutModifiers](entry.name)
+  return refusal(
+    AppError.ModifiersNotTaken,
+    { command: entry.name, modifiers: given.join(", ") },
+    [message(AppMessage.RunWithoutModifiers, { command: entry.name })],
   );
 }
 

@@ -3,7 +3,9 @@ import { realpathSync } from "node:fs";
 import { git, writeInto, commitAll } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError } from "../messages.js";
+import { message } from "../appText.js";
+import { printedRefusal } from "../shownText.test-utils.js";
 
 function featureFile(part: string, codes: readonly string[]): string {
   const scenarios = codes.map((code, i) => `  @${code} @unit\n  Scenario: scenario ${i + 1}\n    Given a step\n`);
@@ -58,6 +60,6 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    expect(answered.stderr).toBe(`${APP_MESSAGES[AppMessage.UnknownPartRefused]("ZZZ", "ONE, TWO")}\n`);
+    expect(answered.stderr).toBe(`${printedRefusal(AppError.UnknownPartRefused, message(AppError.UnknownPartRefused, { part: "ZZZ", parts: "ONE, TWO" }), "allocate")}\n`);
   });
 });

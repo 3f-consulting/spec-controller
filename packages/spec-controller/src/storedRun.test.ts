@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseHostInvocation } from "./host.js";
 import { dispatchesUnstored, storedReRenderRefusal } from "./storedRun.js";
+import { shownText } from "./shownText.test-utils.js";
 
 describe("[SCN-RMG-006] the host answers a stored command's help before the store is touched", () => {
   it("dispatches unstored when there is no --store", () => {
@@ -14,7 +15,7 @@ describe("[SCN-RMG-007] the host refuses a stored re-render, naming the store an
   const SAVED = ["balance", "--render-from-json", "saved.json"];
 
   it("names --store, and never --format", () => {
-    const refusal = storedReRenderRefusal(parseHostInvocation(["--store", "/s", ...SAVED]));
+    const refusal = shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", ...SAVED])));
 
     expect(refusal).toContain("--store");
     expect(refusal).not.toContain("--format");
@@ -22,8 +23,8 @@ describe("[SCN-RMG-007] the host refuses a stored re-render, naming the store an
   });
 
   it("refuses nothing without --store, without --render-from-json, or when help is asked for", () => {
-    expect(storedReRenderRefusal(parseHostInvocation(SAVED))).toBeUndefined();
-    expect(storedReRenderRefusal(parseHostInvocation(["--store", "/s", "balance", "--features", "f"]))).toBeUndefined();
-    expect(storedReRenderRefusal(parseHostInvocation(["--store", "/s", ...SAVED, "--help"]))).toBeUndefined();
+    expect(shownText(storedReRenderRefusal(parseHostInvocation(SAVED)))).toBeUndefined();
+    expect(shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", "balance", "--features", "f"])))).toBeUndefined();
+    expect(shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", ...SAVED, "--help"])))).toBeUndefined();
   });
 });

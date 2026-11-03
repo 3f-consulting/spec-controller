@@ -2,10 +2,11 @@ import { beforeEach, describe, it, expect } from "vitest";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
-import { balanceCommand } from "../cliRegistry.js";
+import { allocateCommand, balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "../cliRegistry.js";
 import { headlineExit } from "./balanceRun.test-utils.js";
 import { liveSaver, runPinned } from "./savedRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { errorCodesShown } from "../shownText.test-utils.js";
 
 let scratch: string;
 let saveLive: ReturnType<typeof liveSaver>;
@@ -113,4 +114,38 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
       expect(existsSync(join(scratch, "refused-out.json"))).toBe(false);
     });
   }
+});
+
+describe("[SCN-MSG-011] a balanced run shows no error code", () => {
+  const NONE = { opening: [], after: [] };
+  const VERDICTS = [
+    { verdict: "balanced", fixture: "balanced", code: 0 },
+    { verdict: "out-of-balance", fixture: "evidence-observation", code: 1 },
+    { verdict: "unsound", fixture: "broken", code: 4 },
+  ] as const;
+
+  for (const { verdict, fixture, code } of VERDICTS) {
+    it(`the live ${verdict} report, and what the run writes beside it, shows no error code`, () => {
+      const live = runBalanceCaptured(fixtureArgv(fixture));
+      expect(live.exitCode).toBe(code);
+      expect(live.stdout).not.toBe("");
+      expect(errorCodesShown(live.stdout)).toEqual(NONE);
+      expect(errorCodesShown(live.stderr)).toEqual(NONE);
+    });
+
+    it(`the ${verdict} report re-rendered, and what the re-render writes beside it, shows no error code`, () => {
+      const saved = saveLive(`no-code-${fixture}`, fixtureArgv(fixture));
+      const regenerated = runBalanceCaptured(["--render-from-json", saved.json]);
+      expect(regenerated.exitCode).toBe(code);
+      expect(regenerated.stdout).not.toBe("");
+      expect(errorCodesShown(regenerated.stdout)).toEqual(NONE);
+      expect(errorCodesShown(regenerated.stderr)).toEqual(NONE);
+    });
+  }
+
+  it("the tool's help, and each command's, shows no error code", () => {
+    for (const help of [renderTopLevelHelp(cliRegistry), renderCommandHelp(balanceCommand), renderCommandHelp(allocateCommand)]) {
+      expect(errorCodesShown(help)).toEqual(NONE);
+    }
+  });
 });

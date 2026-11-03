@@ -1,4 +1,6 @@
-import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { AppError, AppMessage } from "../../messages.js";
+import { message } from "../../appText.js";
+import { refusal, type Refusal } from "../../refusal.js";
 
 export type OutputFormat = "md" | "json";
 
@@ -23,7 +25,7 @@ export interface OutputPlan {
 
 export type PlanResult =
   | { readonly ok: true; readonly plan: OutputPlan }
-  | { readonly ok: false; readonly error: string };
+  | { readonly ok: false; readonly error: Refusal };
 
 export function planOutput(
   formatSpecs: readonly string[],
@@ -43,7 +45,7 @@ export function planOutput(
     const bad = [...new Set(unknown.map((o) => o.fmt))].join(", ");
     return {
       ok: false,
-      error: APP_MESSAGES[AppMessage.UnknownFormat](bad, SUPPORTED_FORMATS.join(", ")),
+      error: refusal(AppError.UnknownFormat, { formats: bad, supported: SUPPORTED_FORMATS.join(", ") }),
     };
   }
 
@@ -52,7 +54,7 @@ export function planOutput(
     const fmts = stdoutBound.map((o) => o.fmt).join(", ");
     return {
       ok: false,
-      error: APP_MESSAGES[AppMessage.MoreThanOneToStdout](fmts),
+      error: refusal(AppError.MoreThanOneToStdout, { formats: fmts }),
     };
   }
 
@@ -69,12 +71,12 @@ export interface IdentifiedOutput {
   readonly identity: FileIdentity | undefined;
 }
 
-export function sharedFileRefusal(outputs: readonly IdentifiedOutput[]): string | undefined {
+export function sharedFileRefusal(outputs: readonly IdentifiedOutput[]): Refusal | undefined {
   const onFiles = outputs.filter((o): o is IdentifiedOutput & { identity: FileIdentity } => o.identity !== undefined);
   for (const [index, first] of onFiles.entries()) {
     const second = onFiles.slice(index + 1).find((o) => sameFile(o.identity, first.identity));
     if (second !== undefined) {
-      return APP_MESSAGES[AppMessage.OutputsShareFile](asGiven(first.output), asGiven(second.output));
+      return refusal(AppError.OutputsShareFile, { first: asGiven(first.output), second: asGiven(second.output) });
     }
   }
   return undefined;
@@ -86,12 +88,12 @@ export interface IdentifiedInput {
   readonly identity: FileIdentity | undefined;
 }
 
-export function inputOverwriteRefusal(outputs: readonly IdentifiedOutput[], inputs: readonly IdentifiedInput[]): string | undefined {
+export function inputOverwriteRefusal(outputs: readonly IdentifiedOutput[], inputs: readonly IdentifiedInput[]): Refusal | undefined {
   for (const { output, identity } of outputs) {
     if (identity === undefined) continue;
     const read = inputs.find((input) => input.identity !== undefined && sameFile(input.identity, identity));
     if (read !== undefined) {
-      return APP_MESSAGES[AppMessage.OutputOverwritesInput](asGiven(output), read.subject, read.path);
+      return refusal(AppError.OutputOverwritesInput, { output: asGiven(output), subject: read.subject, path: read.path });
     }
   }
   return undefined;
@@ -102,5 +104,5 @@ function sameFile(a: FileIdentity, b: FileIdentity): boolean {
 }
 
 function asGiven(output: PlannedOutput): string {
-  return output.dest.kind === "stdout" ? APP_MESSAGES[AppMessage.FormatOnStandardOutput](output.fmt) : `${output.fmt}:${output.dest.path}`;
+  return output.dest.kind === "stdout" ? message(AppMessage.FormatOnStandardOutput, { fmt: output.fmt }) : `${output.fmt}:${output.dest.path}`;
 }

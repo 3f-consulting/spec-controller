@@ -2,8 +2,10 @@ import { beforeEach, describe, it, expect } from "vitest";
 import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cliRegistry.js";
 import { checkArgvShape, positionalArguments } from "./cliArgs.js";
 import { formatFilePaths } from "./host.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 import { runBalanceCaptured } from "./runBalance.test-utils.js";
+import { printedRefusal, shownText } from "./shownText.test-utils.js";
 
 const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
@@ -25,7 +27,7 @@ function withBalanceFlag(flag: FlagSpec): CliRegistry {
 describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a flag's value, naming it", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const notAFlag = (token: string): string =>
-    `${APP_MESSAGES[AppMessage.NotAFlag](token, BALANCE_SCOPE)}\n${APP_MESSAGES[AppMessage.SeeFlags](BALANCE_SCOPE)}`;
+    `${message(AppError.NotAFlag, { token, scope: BALANCE_SCOPE })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;
 
   const NOT_A_FLAG: [string, { argv: string[]; token: string }][] = [
     ["a directory with no flag before it", { argv: ["features"], token: "features" }],
@@ -37,7 +39,7 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
 
   for (const [shape, { argv, token }] of NOT_A_FLAG) {
     it(`refuses ${shape} at balance's scope, naming it as not a flag`, () => {
-      expect(checkArgvShape(argv, cliRegistry, "balance")).toBe(notAFlag(token));
+      expect(shownText(checkArgvShape(argv, cliRegistry, "balance"))).toBe(notAFlag(token));
     });
   }
 
@@ -52,18 +54,18 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(notAFlag("extra") + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.NotAFlag, notAFlag("extra"), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
   it("accepts every registered flag given once, each value flag with its value", () => {
     expect(wellFormed.length).toBeGreaterThan(balanceFlags.length);
-    expect(checkArgvShape(wellFormed, cliRegistry, "balance")).toBeNull();
+    expect(shownText(checkArgvShape(wellFormed, cliRegistry, "balance"))).toBeNull();
   });
 
   it("refuses the stray word after a value flag given by its alias, and not the alias's value", () => {
     const grown = withBalanceFlag({ name: "--later", aliases: ["-l"], arg: "<x>", description: "added later" });
-    expect(checkArgvShape(["-l", "v", "stray"], grown, "balance")).toBe(notAFlag("stray"));
+    expect(shownText(checkArgvShape(["-l", "v", "stray"], grown, "balance"))).toBe(notAFlag("stray"));
   });
 
   it("reads as balance's arguments only the words no value flag consumed", () => {
@@ -75,48 +77,48 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
     ["accepts a value that is a command's name, --target balance", ["--target", "balance"]],
     ["leaves an unregistered flag and the word after it to @SCN-CLI-009", ["--bogus", "value"]],
   ] as const)("%s", (_title, argv) => {
-    expect(checkArgvShape(argv, cliRegistry, "balance")).toBeNull();
+    expect(shownText(checkArgvShape(argv, cliRegistry, "balance"))).toBeNull();
   });
 });
 
 describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none, naming both", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const refusalFor = (flag: string, value: string): string =>
-    `${APP_MESSAGES[AppMessage.TakesNoValue](flag, BALANCE_SCOPE, value)}\n` +
-    APP_MESSAGES[AppMessage.SeeFlagsAndValues](BALANCE_SCOPE);
+    `${message(AppError.TakesNoValue, { flag, scope: BALANCE_SCOPE, value })}\n` +
+    message(AppMessage.SeeFlagsAndValues, { scope: BALANCE_SCOPE });
 
   for (const { name: flag, arg } of balanceFlags) {
     if (arg !== undefined) continue;
     it(`refuses ${flag} given a value at balance's scope, naming the flag and the value`, () => {
-      expect(checkArgvShape(["--features", "f", flag, "foo"], cliRegistry, "balance")).toBe(refusalFor(flag, "foo"));
+      expect(shownText(checkArgvShape(["--features", "f", flag, "foo"], cliRegistry, "balance"))).toBe(refusalFor(flag, "foo"));
     });
   }
 
   it("reads a flag after a value flag as a flag, so --features --strict yes refuses the value given to --strict", () => {
-    expect(checkArgvShape(["--features", "--strict", "yes"], cliRegistry, "balance")).toBe(refusalFor("--strict", "yes"));
+    expect(shownText(checkArgvShape(["--features", "--strict", "yes"], cliRegistry, "balance"))).toBe(refusalFor("--strict", "yes"));
   });
 });
 
 describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const givenTwice = (flag: string): string =>
-    `${APP_MESSAGES[AppMessage.GivenTwice](flag, BALANCE_SCOPE)}\n${APP_MESSAGES[AppMessage.SeeFlags](BALANCE_SCOPE)}`;
+    `${message(AppError.GivenTwice, { flag, scope: BALANCE_SCOPE })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;
 
   for (const flag of balanceFlags) {
     if (flag.repeatable === true) continue;
     const given = flag.arg === undefined ? [flag.name] : [flag.name, "v"];
     it(`refuses ${flag.name} given twice, equal values and all, naming it at balance's scope`, () => {
-      expect(checkArgvShape([...given, "--features", "f", ...given], cliRegistry, "balance")).toBe(givenTwice(flag.name));
+      expect(shownText(checkArgvShape([...given, "--features", "f", ...given], cliRegistry, "balance"))).toBe(givenTwice(flag.name));
     });
   }
 
   it("refuses a flag given by its name and then by its alias", () => {
-    expect(checkArgvShape(["--help", "-h"], cliRegistry, "balance")).toBe(givenTwice("-h"));
+    expect(shownText(checkArgvShape(["--help", "-h"], cliRegistry, "balance"))).toBe(givenTwice("-h"));
   });
 
   it("reads --format given twice as the list it is, both values read", () => {
     const argv = ["--format", "json:a.json", "--format", "md:b.md"];
-    expect(checkArgvShape(argv, cliRegistry, "balance")).toBeNull();
+    expect(shownText(checkArgvShape(argv, cliRegistry, "balance"))).toBeNull();
     expect(formatFilePaths(argv)).toEqual(["a.json", "b.md"]);
   });
 });
@@ -124,13 +126,13 @@ describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused nam
 describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const equalsForm = (written: string, spelling: string): string =>
-    `${APP_MESSAGES[AppMessage.EqualsForm](written, BALANCE_SCOPE, spelling)}\n${APP_MESSAGES[AppMessage.SeeFlags](BALANCE_SCOPE)}`;
+    `${message(AppError.EqualsForm, { token: written, scope: BALANCE_SCOPE, spelling })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;
 
   for (const flag of balanceFlags) {
     const written = `${flag.name}=v`;
     const spelling = flag.arg === undefined ? flag.name : `${flag.name} v`;
     it(`refuses ${written} at balance's scope, giving '${spelling}'`, () => {
-      expect(checkArgvShape(["--features", "f", written], cliRegistry, "balance")).toBe(equalsForm(written, spelling));
+      expect(shownText(checkArgvShape(["--features", "f", written], cliRegistry, "balance"))).toBe(equalsForm(written, spelling));
     });
   }
 
@@ -139,7 +141,7 @@ describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form a
     ["gives the registry's value placeholder for a form written with no value", "--features=", "--features <dir>"],
     ["refuses the form of a flag the scope does not have, before the unknown-flag check can advise a pin", "--store=/s", "--store /s"],
   ] as const)("%s", (_title, written, spelling) => {
-    expect(checkArgvShape([written], cliRegistry, "balance")).toBe(equalsForm(written, spelling));
+    expect(shownText(checkArgvShape([written], cliRegistry, "balance"))).toBe(equalsForm(written, spelling));
   });
 
   it.each([
@@ -147,6 +149,6 @@ describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form a
     ["refuses --unknown=x, a flag no scope registers, giving '--unknown x'", "--unknown=x", "--unknown x"],
     ["gives a generic value placeholder for an unregistered flag written with no value", "--unknown=", "--unknown <value>"],
   ] as const)("%s", (_title, written, spelling) => {
-    expect(checkArgvShape(["--features", "f", written], cliRegistry, "balance")).toBe(equalsForm(written, spelling));
+    expect(shownText(checkArgvShape(["--features", "f", written], cliRegistry, "balance"))).toBe(equalsForm(written, spelling));
   });
 });

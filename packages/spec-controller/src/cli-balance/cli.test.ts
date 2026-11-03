@@ -6,11 +6,13 @@ import { checkInputsExist, checkInputsParse } from "./cli.js";
 import { jsonInputsOf, readReports } from "./unreadableInputs.js";
 import { cliRegistry } from "../cliRegistry.js";
 import { checkUnknownFlags, parseArgs } from "../cliArgs.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { errorCodesShown, printedRefusal, shownText } from "../shownText.test-utils.js";
 
 describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
   const flags = ["vitest", "pytest", "jest", "junit", "rspec", "cucumber", "features", "ci", "package-json"] as const;
@@ -179,17 +181,17 @@ const REFUSING_TOOL_VERSION = "9.9.9-test";
 describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
 
   it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
-    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+    const bogus = shownText(checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION));
     expect(bogus).not.toBeNull();
     expect(bogus).toContain("--bogus");
 
-    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+    const typo = shownText(checkUnknownFlags({ strcit: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION));
     expect(typo).not.toBeNull();
     expect(typo).toContain("--strcit");
   });
 
   it("names the version that refused and the bump as the cure, so a pinned reader's skew is legible", () => {
-    const refusal = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+    const refusal = shownText(checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION));
     expect(refusal).not.toBeNull();
     expect(refusal).toContain(REFUSING_TOOL_VERSION);
     expect(refusal).toMatch(/bump the pin/i);
@@ -210,8 +212,11 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
       expect(runRefused(["--features", "dir", modifier.name, "x"]), modifier.name).toEqual({
         stdout: "",
         stderr:
-          `${APP_MESSAGES[AppMessage.MisplacedModifier](modifier.name, "balance")}\n` +
-          `${APP_MESSAGES[AppMessage.SeeModifiers]()}\n`,
+          printedRefusal(
+            AppError.MisplacedModifier,
+            `${message(AppError.MisplacedModifier, { modifier: modifier.name, command: "balance" })}\n${message(AppMessage.SeeModifiers)}`,
+            "balance",
+          ) + "\n",
         exitCode: 2,
       });
     }
@@ -222,11 +227,30 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     expect(runRefused(["--nosuch"])).toEqual({
       stdout: "",
       stderr:
-        `${APP_MESSAGES[AppMessage.UnknownFlag]("--nosuch", scope, resolveToolIdentity().toolVersion, "balance")}\n` +
-        `${APP_MESSAGES[AppMessage.PinDrifted]("balance", "--nosuch")}\n` +
-        `${APP_MESSAGES[AppMessage.OtherwiseSeeFlags](scope)}\n`,
+        printedRefusal(
+          AppError.UnknownFlag,
+          `${message(AppError.UnknownFlag, { flag: "--nosuch", scope, toolVersion: resolveToolIdentity().toolVersion, command: "balance" })}\n` +
+            `${message(AppMessage.PinDrifted, { command: "balance", flag: "--nosuch" })}\n` +
+            message(AppMessage.OtherwiseSeeFlags, { scope }),
+          "balance",
+        ) + "\n",
       exitCode: 2,
     });
+  });
+});
+
+describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a flag the command does not take", () => {
+  it("prints balance's refusal of --nosuch with [unknown-flag] once, after the usage-error prefix, and no code on its pointer lines", () => {
+    const { stderr, exitCode } = runBalanceCaptured(["--nosuch"]);
+    const words = message(AppError.UnknownFlag, {
+      flag: "--nosuch",
+      scope: "spec-controller balance",
+      toolVersion: resolveToolIdentity().toolVersion,
+      command: "balance",
+    });
+    expect(exitCode).toBe(2);
+    expect(errorCodesShown(stderr)).toEqual({ opening: ["unknown-flag"], after: [] });
+    expect(stderr.split("\n")[0]).toBe(`spec-controller balance: usage error [unknown-flag] — ${words}`);
   });
 });
 

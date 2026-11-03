@@ -30,7 +30,7 @@ import {
 } from "./unreadableInputs.js";
 import { readDocument } from "../ingest/reportReading.js";
 import { exitCodeOf } from "./exitStatus.js";
-import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
+import { endRunOn } from "../exitCode.js";
 import {
   assembleRenderInput,
   corpusCountsOfFeatures,
@@ -49,16 +49,17 @@ import {
   checkMisplacedHostModifiers,
 } from "../cliArgs.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { refusal, type Refusal } from "../refusal.js";
 
 function collectFormatSpecs(argv: string[]): string[] {
   // checkMissingValues has already refused a --format given no value.
   return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
 }
 
-export function checkLegacyJson(args: Record<string, string>): string | null {
+export function checkLegacyJson(args: Record<string, string>): Refusal | null {
   if (args["json"] !== undefined) {
-    return APP_MESSAGES[AppMessage.LegacyJsonRemoved]();
+    return refusal(AppError.LegacyJsonRemoved, {});
   }
   return null;
 }
@@ -113,11 +114,7 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   if (shapeError) refuse(shapeError);
 
   const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
-  if (unknownFlagError) {
-    process.stderr.write(unknownFlagError + "\n");
-    endRunOn(USAGE_REFUSAL);
-    return false;
-  }
+  if (unknownFlagError) refuse(unknownFlagError);
 
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
   if (missingValueError) refuse(missingValueError);

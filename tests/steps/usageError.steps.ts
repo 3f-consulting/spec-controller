@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { NO_WORKFLOWS, OUT_OF_BALANCE_INPUTS, spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { firstShown, shownEntry, showsEntry } from "./support/catalogue.js";
 import { allocate, git } from "./support/codeAllocation.js";
 import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -62,6 +63,14 @@ function spawnController(args: string[]): SpawnSyncReturns<string> {
 
 Given("the spec-controller host", function (this: SpecControllerWorld) {});
 
+const PIN = ["pin-drifted", "do-not-pin-retired"];
+
+const PIN_OR_UNKNOWN = [...PIN, "unknown-flag", "unknown-command", "unknown-format", "unknown-part-refused"];
+
+const BEFORE_THE_COMMAND = ["flag-before-command", "misplaced-modifier"];
+
+const OTHER_HOST_FAULTS = ["unknown-command", ...BEFORE_THE_COMMAND, "modifier-took-command", "missing-value"];
+
 const UNKNOWN_COMMAND_REQUESTS: Record<string, { argv: string[]; command: string; stored: boolean }> = {
   "a typo of a command": { argv: ["blance"], command: "blance", stored: false },
   "a name that is no command": { argv: ["nosuchcommand"], command: "nosuchcommand", stored: false },
@@ -95,8 +104,8 @@ Then("the invocation is refused as a usage error", function (this: SpecControlle
 
 Then("it names the command it does not know", function (this: SpecControllerWorld) {
   assert.ok(
-    this.hostResult.stderr.includes(`"${this.unknownCommand}"`),
-    `expected stderr to name "${this.unknownCommand}"; got:\n${this.hostResult.stderr}`,
+    showsEntry(this.hostResult.stderr, "unknown-command", { command: this.unknownCommand }),
+    `expected stderr to name "${this.unknownCommand}" as an unknown command; got:\n${this.hostResult.stderr}`,
   );
 });
 
@@ -150,9 +159,8 @@ Then(
       this.balanceResult.stderr.includes(toolVersion),
       `expected the refusal to name the version that refused (${toolVersion}); got:\n${this.balanceResult.stderr}`,
     );
-    assert.match(
-      this.balanceResult.stderr,
-      /bump the pin/i,
+    assert.ok(
+      showsEntry(this.balanceResult.stderr, "pin-drifted"),
       `expected the refusal to name the bump as the cure; got:\n${this.balanceResult.stderr}`,
     );
   },
@@ -176,9 +184,8 @@ Then("balance refuses the run as a usage fault and reconciles nothing", function
 });
 
 Then("the refusal names the flag as retired, with the version that retired it", function (this: SpecControllerWorld) {
-  assert.match(
-    this.retiredFlagResult.stderr,
-    /--measurements[^\n]*retired[^\n]*0\.1\.0-alpha\.5/i,
+  assert.ok(
+    showsEntry(this.retiredFlagResult.stderr, "retired-flag", { flag: "--measurements", retiredIn: "0.1.0-alpha.5" }),
     `expected stderr to name --measurements as retired in 0.1.0-alpha.5; got:\n${this.retiredFlagResult.stderr}`,
   );
 });
@@ -191,8 +198,7 @@ Then("the refusal names what replaced it", function (this: SpecControllerWorld) 
 });
 
 Then("the refusal advises no pin toward a version that still accepts the flag", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(this.retiredFlagResult.stderr, /bump the pin/i);
-  assert.doesNotMatch(this.retiredFlagResult.stderr, /accepts --measurements/);
+  assert.equal(firstShown(this.retiredFlagResult.stderr, ["pin-drifted"]), undefined, this.retiredFlagResult.stderr);
 });
 
 function withoutFlag(args: readonly string[], flag: string): string[] {
@@ -241,16 +247,10 @@ Then("balance refuses the run as a usage fault, with nothing reconciled", functi
 Then(/^the refusal names (.+) as a flag missing its value$/, function (this: SpecControllerWorld, option: string) {
   const flag = optionFlag(option);
   const { stderr } = this.balanceResult;
-  assert.ok(
-    stderr.split("\n").some((line) => line.includes(flag) && /value/i.test(line)),
-    `expected a line of stderr naming ${flag} as missing its value; got:\n${stderr}`,
-  );
+  assert.ok(showsEntry(stderr, "missing-value", { flag }), `expected the missing-value refusal of ${flag}; got:\n${stderr}`);
   assert.doesNotMatch(stderr, /\btrue\b/, `stderr names the word a missing value used to become:\n${stderr}`);
-  assert.doesNotMatch(
-    stderr,
-    /does not exist|could not be read|unknown command|bump the pin/i,
-    `stderr names a fault other than the missing value:\n${stderr}`,
-  );
+  assert.doesNotMatch(stderr, /does not exist|could not be read/i, `stderr names a fault other than the missing value:\n${stderr}`);
+  assert.equal(firstShown(stderr, ["unknown-command", "pin-drifted"]), undefined, `stderr names a fault other than the missing value:\n${stderr}`);
 });
 
 Given("a target that reconciles out-of-balance, and an empty run store", function (this: SpecControllerWorld) {
@@ -316,10 +316,10 @@ When("a stored run is asked for with {}", function (this: SpecControllerWorld, r
 Then("the refusal names the flag as given before the command, never as an unknown command", function (this: SpecControllerWorld) {
   const { stderr } = this.balanceResult;
   assert.ok(
-    stderr.split("\n").some((line) => line.includes(this.flagOutOfPlace) && /before the command/i.test(line)),
-    `expected a line of stderr naming ${this.flagOutOfPlace} as given before the command; got:\n${stderr}`,
+    showsEntry(stderr, "flag-before-command", { flag: this.flagOutOfPlace }),
+    `expected the flag-before-command refusal of ${this.flagOutOfPlace}; got:\n${stderr}`,
   );
-  assert.doesNotMatch(stderr, /unknown command/i, `stderr calls the flag a command:\n${stderr}`);
+  assert.equal(firstShown(stderr, ["unknown-command"]), undefined, `stderr calls the flag a command:\n${stderr}`);
 });
 
 When("balance is asked to run with the store modifier given after the command", function (this: SpecControllerWorld) {
@@ -330,13 +330,13 @@ When("balance is asked to run with the store modifier given after the command", 
 Then("the refusal names the store modifier as one that goes before the command", function (this: SpecControllerWorld) {
   const { stderr } = this.balanceResult;
   assert.ok(
-    stderr.split("\n").some((line) => line.includes("--store") && /before the command/i.test(line)),
-    `expected a line of stderr naming --store as going before the command; got:\n${stderr}`,
+    showsEntry(stderr, "misplaced-modifier", { modifier: "--store" }),
+    `expected the misplaced-modifier refusal of --store; got:\n${stderr}`,
   );
 });
 
 Then("the refusal advises no pin", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(this.balanceResult.stderr, /\bpin\b/i, `stderr advises a pin:\n${this.balanceResult.stderr}`);
+  assert.equal(firstShown(this.balanceResult.stderr, PIN), undefined, `stderr advises a pin:\n${this.balanceResult.stderr}`);
 });
 
 const NOT_A_FLAG: Record<string, (store: string, target: string[]) => { argv: string[]; token: string }> = {
@@ -369,10 +369,10 @@ When("balance is asked to run with an argument that is no flag, {}", function (t
 Then("the refusal names that argument as one balance does not take", function (this: SpecControllerWorld) {
   const { stderr } = this.balanceResult;
   assert.ok(
-    stderr.split("\n").some((line) => line.includes(this.argumentNamed) && /not a flag/i.test(line)),
-    `expected a line of stderr naming ${this.argumentNamed} as not a flag; got:\n${stderr}`,
+    showsEntry(stderr, "not-a-flag", { token: this.argumentNamed }),
+    `expected the not-a-flag refusal of ${this.argumentNamed}; got:\n${stderr}`,
   );
-  assert.doesNotMatch(stderr, /\bpin\b|unknown/i, `stderr names another fault:\n${stderr}`);
+  assert.equal(firstShown(stderr, PIN_OR_UNKNOWN), undefined, `stderr names another fault:\n${stderr}`);
 });
 
 Then("the run store holds no record of a run", function (this: SpecControllerWorld) {
@@ -409,8 +409,8 @@ Then(
     const flag = optionFlag(option);
     const { stderr } = this.balanceResult;
     assert.ok(
-      stderr.split("\n").some((line) => line.includes(flag) && line.includes(value) && /takes no value/i.test(line)),
-      `expected a line of stderr naming ${flag} as taking no value and ${value} as given it; got:\n${stderr}`,
+      showsEntry(stderr, "takes-no-value", { flag, value }),
+      `expected the takes-no-value refusal of ${flag} given ${value}; got:\n${stderr}`,
     );
   },
 );
@@ -468,10 +468,7 @@ When(/^a run is asked for with (.+?) given twice, (.+)$/, function (this: SpecCo
 Then(/^the refusal names (.+) as given more than once$/, function (this: SpecControllerWorld, option: string) {
   const flag = optionFlag(option);
   const { stderr } = this.balanceResult;
-  assert.ok(
-    stderr.split("\n").some((line) => line.includes(flag) && /more than once/i.test(line)),
-    `expected a line of stderr naming ${flag} as given more than once; got:\n${stderr}`,
-  );
+  assert.ok(showsEntry(stderr, "given-twice", { flag }), `expected the given-twice refusal of ${flag}; got:\n${stderr}`);
 });
 
 const EQUALS_FORM: Record<string, (store: string, target: string[], written: string) => string[]> = {
@@ -526,14 +523,14 @@ Then(/^the refusal names (.+? joined by an equals sign) as a form that is not re
   const { stderr } = this.balanceResult;
   const given = withStoreRoot(this, written);
   assert.ok(
-    stderr.split("\n").some((line) => line.includes(given) && /not read/i.test(line)),
-    `expected a line of stderr naming ${given} as a form that is not read; got:\n${stderr}`,
+    showsEntry(stderr, "equals-form", { token: given, spelling: withStoreRoot(this, spelling) }),
+    `expected the equals-form refusal of ${given}, spelt '${spelling}'; got:\n${stderr}`,
   );
-  assert.ok(stderr.includes(`'${withStoreRoot(this, spelling)}'`), `expected the spelling '${spelling}' in stderr; got:\n${stderr}`);
 });
 
 Then("the refusal advises no pin, and calls the flag neither unknown nor out of place", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(this.balanceResult.stderr, /\bpin\b|unknown|before the command/i, `stderr gives other advice:\n${this.balanceResult.stderr}`);
+  const { stderr } = this.balanceResult;
+  assert.equal(firstShown(stderr, [...PIN_OR_UNKNOWN, ...BEFORE_THE_COMMAND]), undefined, `stderr gives other advice:\n${stderr}`);
 });
 
 const COMMAND_AS_VALUE: Record<string, (store: string, target: string[]) => string[]> = {
@@ -558,10 +555,10 @@ Then(/^the refusal names (.+) as having taken the command as its value$/, functi
   const modifier = optionFlag(intent);
   const { stderr } = this.balanceResult;
   assert.ok(
-    stderr.split("\n").some((line) => line.includes(modifier) && line.includes("balance") && /as its value/i.test(line)),
-    `expected a line of stderr naming ${modifier} as having taken balance as its value; got:\n${stderr}`,
+    showsEntry(stderr, "modifier-took-command", { modifier, command: "balance" }),
+    `expected the modifier-took-command refusal of ${modifier} and balance; got:\n${stderr}`,
   );
-  assert.doesNotMatch(stderr, /before the command/i, `stderr blames another token:\n${stderr}`);
+  assert.equal(firstShown(stderr, BEFORE_THE_COMMAND), undefined, `stderr blames another token:\n${stderr}`);
 });
 
 const MODIFIERS_WITH_NO_COMMAND: Record<string, (store: string) => string[]> = {
@@ -581,11 +578,12 @@ When(/^the host is asked for nothing but (.+?), (.+)$/, function (this: SpecCont
 
 Then("the refusal names every modifier given, and says no command followed them", function (this: SpecControllerWorld) {
   const { stderr } = this.balanceResult;
+  const named = shownEntry(stderr, "no-command-after-modifiers")?.["modifiers"] ?? "";
   assert.ok(
-    stderr.split("\n").some((line) => this.modifiersGiven.every((m) => line.includes(m)) && /no command/i.test(line)),
-    `expected a line of stderr naming ${this.modifiersGiven.join(" and ")} and saying no command followed; got:\n${stderr}`,
+    named !== "" && this.modifiersGiven.every((m) => named.includes(m)),
+    `expected the no-command-after-modifiers refusal of ${this.modifiersGiven.join(" and ")}; got:\n${stderr}`,
   );
-  assert.doesNotMatch(stderr, /unknown command|before the command|as its value|needs a value/i, `stderr names another fault:\n${stderr}`);
+  assert.equal(firstShown(stderr, OTHER_HOST_FAULTS), undefined, `stderr names another fault:\n${stderr}`);
 });
 
 const HELP_REQUESTS: Record<string, (store: string) => string[]> = {
@@ -693,14 +691,11 @@ When("a run is named with the run-name modifier and given no store modifier, {}"
 Then("the refusal names the run-name modifier as naming a run that is not kept", function (this: SpecControllerWorld) {
   const { stderr } = this.balanceResult;
   assert.ok(
-    stderr.split("\n").some((line) => line.includes("--run-id") && /no run is kept|keeps no run|not stored/i.test(line)),
-    `expected a line of stderr naming --run-id and saying no run is kept; got:\n${stderr}`,
+    showsEntry(stderr, "run-id-without-store") || (shownEntry(stderr, "re-render-not-stored")?.["modifiers"] ?? "").includes("--run-id"),
+    `expected the run-id-without-store refusal, or a re-render-not-stored refusal naming --run-id; got:\n${stderr}`,
   );
-  assert.doesNotMatch(
-    stderr,
-    /unknown command|before the command|as its value|needs a value|no command followed|does not exist/i,
-    `stderr names another fault:\n${stderr}`,
-  );
+  assert.equal(firstShown(stderr, [...OTHER_HOST_FAULTS, "no-command-after-modifiers"]), undefined, `stderr names another fault:\n${stderr}`);
+  assert.doesNotMatch(stderr, /does not exist/i, `stderr names another fault:\n${stderr}`);
   assert.doesNotMatch(stderr, /^\s+at /m, `stderr carries a stack trace:\n${stderr}`);
 });
 
@@ -742,8 +737,8 @@ When("the author asks for the next code giving {}", function (this: SpecControll
 Then("it is refused as a usage error, never as an unknown part, and no code is given", function (this: SpecControllerWorld) {
   assert.equal(this.answer.status, 2, `expected the usage status, got ${this.answer.status}\n${this.answer.stderr}`);
   assert.equal(this.answer.stdout, "");
-  assert.match(this.answer.stderr, /^spec-controller allocate: usage error — /m);
-  assert.doesNotMatch(this.answer.stderr, /unknown part/);
+  assert.ok(firstShown(this.answer.stderr, ["coded-usage-error", "usage-error"]) !== undefined, this.answer.stderr);
+  assert.equal(firstShown(this.answer.stderr, ["unknown-part-refused"]), undefined, this.answer.stderr);
 });
 
 const HELP_REQUEST: Record<string, readonly string[]> = {

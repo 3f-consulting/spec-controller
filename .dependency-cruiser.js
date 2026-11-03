@@ -70,6 +70,23 @@ export default {
     },
 
     {
+      name: "crash-guards-load-core",
+      severity: "error",
+      comment:
+        "the crash guards load nothing from the engine or its message formatter, so they are in place before either is evaluated and a module that cannot load still ends the run on the guards' code",
+      from: { path: "^packages/spec-controller/src/crashGuards\\.ts$" },
+      to: {
+        reachable: true,
+        path: [
+          "^packages/core/",
+          "^node_modules/@3f-consulting/spec-controller-core/",
+          "^@3f-consulting/spec-controller-core(/|$)",
+          "(^|/)intl-messageformat(/|$)",
+        ],
+      },
+    },
+
+    {
       name: "core-imports-io",
       severity: "error",
       comment: "a core module imports no node builtin but path — the engine stays testable with data alone",

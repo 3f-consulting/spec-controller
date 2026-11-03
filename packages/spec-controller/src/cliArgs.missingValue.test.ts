@@ -1,8 +1,10 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { balanceCommand, cliRegistry, type FlagSpec } from "./cliRegistry.js";
 import { checkMissingValues } from "./cliArgs.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 import { runBalanceCaptured } from "./runBalance.test-utils.js";
+import { printedRefusal, shownText } from "./shownText.test-utils.js";
 
 const balanceFlags: readonly FlagSpec[] = balanceCommand.flags;
 
@@ -19,8 +21,8 @@ const MISSING: [string, (flag: string) => string[]][] = [
 ];
 
 const refusalFor = (given: string, flag: FlagSpec): string =>
-  `${APP_MESSAGES[AppMessage.MissingValue](given, "spec-controller balance", flag.arg ?? "")}\n` +
-  APP_MESSAGES[AppMessage.SeeFlagsAndValues]("spec-controller balance");
+  `${message(AppError.MissingValue, { flag: given, scope: "spec-controller balance", arg: flag.arg ?? "" })}\n` +
+  message(AppMessage.SeeFlagsAndValues, { scope: "spec-controller balance" });
 
 describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, naming the missing value", () => {
 
@@ -29,7 +31,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     for (const given of [flag.name, ...(flag.aliases ?? [])]) {
       for (const [shape, argvOf] of MISSING) {
         it(`refuses ${given} ${shape}, naming it, its value and balance's scope, and never the word "true"`, () => {
-          const refusal = checkMissingValues(argvOf(given), cliRegistry, "balance");
+          const refusal = shownText(checkMissingValues(argvOf(given), cliRegistry, "balance"));
           expect(refusal).toBe(refusalFor(given, flag));
           expect(refusal).not.toMatch(/\btrue\b/);
         });
@@ -37,7 +39,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     }
 
     it(`accepts ${flag.name} given a value`, () => {
-      expect(checkMissingValues([flag.name, "some-value"], cliRegistry, "balance")).toBeNull();
+      expect(shownText(checkMissingValues([flag.name, "some-value"], cliRegistry, "balance"))).toBeNull();
     });
   }
 
@@ -52,7 +54,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(refusalFor("--vitest", vitest as FlagSpec) + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.MissingValue, refusalFor("--vitest", vitest as FlagSpec), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
@@ -67,7 +69,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(refusalFor("--pytest", pytest as FlagSpec) + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.MissingValue, refusalFor("--pytest", pytest as FlagSpec), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
@@ -82,7 +84,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(refusalFor("--jest", jest as FlagSpec) + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.MissingValue, refusalFor("--jest", jest as FlagSpec), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
@@ -97,7 +99,7 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(refusalFor("--junit", junit as FlagSpec) + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.MissingValue, refusalFor("--junit", junit as FlagSpec), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
@@ -112,13 +114,13 @@ describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, 
     ]);
 
     expect(exitCode).toBe(2);
-    expect(stderr).toBe(refusalFor("--rspec", rspec as FlagSpec) + "\n");
+    expect(stderr).toBe(printedRefusal(AppError.MissingValue, refusalFor("--rspec", rspec as FlagSpec), "balance") + "\n");
     expect(stdout).toBe("");
   });
 
   it("refuses no value flag for a command the registry does not know", () => {
     for (const flag of valueFlags) {
-      expect(checkMissingValues([flag.name], cliRegistry, "blance")).toBeNull();
+      expect(shownText(checkMissingValues([flag.name], cliRegistry, "blance"))).toBeNull();
     }
   });
 });

@@ -7,7 +7,8 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
-import { APP_MESSAGES, AppMessage } from "../../messages.js";
+import { APP_MESSAGES, AppError, AppMessage } from "../../messages.js";
+import { refusal, type ShownError } from "../../refusal.js";
 import { reportedExitCodeOf } from "../exitStatus.js";
 
 export interface OutputPayloads {
@@ -31,8 +32,8 @@ export function writeOutputs(
   earlierStoredRunDirOf: (path: string) => string | undefined,
 ): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  const refusal = vetDestinations(plan.outputs, stdoutFile, inputs) ?? earlierStoredRunRefusal(plan.outputs, earlierStoredRunDirOf);
-  if (refusal !== undefined) refuse(refusal);
+  const refused = vetDestinations(plan.outputs, stdoutFile, inputs) ?? earlierStoredRunRefusal(plan.outputs, earlierStoredRunDirOf);
+  if (refused !== undefined) refuse(refused);
   for (const { output, text } of emissions) emit(output, text);
 }
 
@@ -40,7 +41,7 @@ function vetDestinations(
   outputs: readonly PlannedOutput[],
   stdoutFile: () => FileIdentity | undefined,
   inputs: readonly IdentifiedInput[],
-): string | undefined {
+): ShownError | undefined {
   const created: string[] = [];
   try {
     const identified: IdentifiedOutput[] = [];
@@ -58,11 +59,11 @@ function vetDestinations(
 function earlierStoredRunRefusal(
   outputs: readonly PlannedOutput[],
   earlierStoredRunDirOf: (path: string) => string | undefined,
-): string | undefined {
+): ShownError | undefined {
   for (const { dest } of outputs) {
     if (dest.kind === "stdout") continue;
     const runDir = earlierStoredRunDirOf(dest.path);
-    if (runDir !== undefined) return APP_MESSAGES[AppMessage.OutputOverwritesStoredRun](dest.path, runDir);
+    if (runDir !== undefined) return refusal(AppError.OutputOverwritesStoredRun, { path: dest.path, runDir });
   }
   return undefined;
 }

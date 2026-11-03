@@ -40,8 +40,8 @@ export {
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
 export type { RunVerdict } from "./domain/runVerdict.js";
 
-export { nextScnCode } from "./domain/scnAllocation.js";
-export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart } from "./domain/scnAllocation.js";
+export { nextScnCode, unknownPartCarried } from "./domain/scnAllocation.js";
+export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart, UnknownPartCarried } from "./domain/scnAllocation.js";
 
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
@@ -83,3 +83,6 @@ export type { RunContext, RunInput, RunInputName, RunInputs, ProvenanceObject } 
 
 export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";
+
+export { messagesFrom } from "./render/message.js";
+export type { Message, MessageValues } from "./render/message.js";

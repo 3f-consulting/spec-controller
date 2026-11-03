@@ -859,6 +859,41 @@ When several codes apply, this ladder decides: nothing to reconcile (`5`), then 
 
 An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
+### Error codes
+
+**A refusal of a flag, a command or an argument carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below refuses the command as given, a usage error, and the run exits `2`.
+
+| Code | Meaning |
+|---|---|
+| `unknown-flag` | the command does not take the flag given |
+| `retired-flag` | the flag given is retired: an earlier version took it, and this one does not |
+| `unknown-command` | the tool has no command of the name given |
+| `missing-value` | a flag that takes a value was given none |
+| `given-twice` | a flag that is read once was given more than once |
+| `equals-form` | a flag and its value were joined by `=`; give them as two arguments |
+| `takes-no-value` | a flag that takes no value was given one |
+| `extra-argument` | an argument is more than the command takes |
+| `not-a-flag` | an argument is neither a flag nor the value of the flag before it |
+| `misplaced-modifier` | a host modifier, such as `--store`, was given after the command; it goes before it |
+| `flag-before-command` | a command's own flag was given before the command; it goes after it |
+| `no-command-after-modifiers` | host modifiers were given with no command after them |
+| `modifier-took-command` | a host modifier took a command's name as its value, and left no command to run |
+| `modifiers-not-taken` | a command that keeps no run, such as `allocate`, was given a host modifier |
+| `re-render-not-stored` | a re-render was given a host modifier; a re-render keeps no run |
+| `run-id-without-store` | `--run-id` was given without `--store`, so no run is kept under it |
+| `legacy-json-removed` | `--json <path>` was given; it is removed, and `--format json:<path>` writes the JSON report |
+| `re-render-reads-only` | a re-render was given a flag it would ignore; it reads only `--strict` and `--exit-zero` |
+| `unknown-format` | `--format` was given a format the tool does not write |
+| `more-than-one-to-stdout` | more than one output routes to stdout; at most one may |
+| `outputs-share-file` | two outputs name the same file |
+| `output-overwrites-input` | an output names a file the run reads |
+| `output-overwrites-stored-run` | an output names a file of an earlier stored run |
+| `format-names-stored-run-manifest` | an output names the stored run's own `run.yaml` |
+| `stored-run-reads-its-manifest` | a file the stored run reads is its own `run.yaml` |
+| `unknown-part-refused` | `allocate` was given a feature part no feature file's header carries |
+| `no-feature-part-given` | `allocate` was given no feature part |
+| `not-a-feature-part` | `allocate` was given a feature part not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
+
 ---
 
 ## Command reference — `balance`

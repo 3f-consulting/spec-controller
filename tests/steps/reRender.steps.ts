@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { shownEntry, showsEntry } from "./support/catalogue.js";
 import { exitOn, RUN_OUTCOME } from "./support/runExit.js";
 import { RUN_ID, specController, USAGE } from "./support/specControllerRun.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -180,7 +181,10 @@ When(
 
 Then(/^the refusal names the (.+ option)$/, function (this: SpecControllerWorld, option: string) {
   const flag = optionFlag(option);
-  assert.ok(this.reRendered.stderr.includes(flag), `expected stderr to name ${flag}; got:\n${this.reRendered.stderr}`);
+  assert.ok(
+    showsEntry(this.reRendered.stderr, "re-render-reads-only", { ignored: flag }),
+    `expected stderr to name ${flag} as what a re-render does not read; got:\n${this.reRendered.stderr}`,
+  );
 });
 
 Then("nothing is re-rendered", function (this: SpecControllerWorld) {
@@ -212,7 +216,8 @@ When(/^the operator asks for it to be re-rendered under a run store (.+)$/, func
 
 Then("the re-render is refused as a usage error, naming the store as what it cannot take", function (this: SpecControllerWorld) {
   assert.equal(this.run.status, USAGE, `expected the usage code; got ${this.run.status}\n${this.run.stderr}`);
-  assert.match(this.run.stderr, /--store\b/, `the refusal does not name --store:\n${this.run.stderr}`);
+  const given = shownEntry(this.run.stderr, "re-render-not-stored")?.["modifiers"] ?? "";
+  assert.match(given, /--store\b/, `the refusal does not name --store as what a re-render cannot take:\n${this.run.stderr}`);
 });
 
 Then("the refusal names no flag the operator did not give", function (this: SpecControllerWorld) {

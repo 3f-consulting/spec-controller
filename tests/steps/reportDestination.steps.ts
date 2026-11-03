@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { chmodSync, closeSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entryText, shownEntry, showsEntry } from "./support/catalogue.js";
 import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
@@ -82,15 +83,9 @@ Then("the run is rejected", function (this: SpecControllerWorld) {
 
 Then("the rejection hints to give one of the outputs a path of its own", function (this: SpecControllerWorld) {
   const stderr = this.balanceResult.stderr ?? "";
-  assert.match(
-    stderr,
-    /stdout/i,
-    `expected stderr to explain the stdout collision; got:\n${stderr}`
-  );
-  assert.match(
-    stderr,
-    /:<path>/,
-    `expected stderr to hint at giving one output a :<path>; got:\n${stderr}`
+  assert.ok(
+    showsEntry(stderr, "more-than-one-to-stdout"),
+    `expected stderr to explain the stdout collision and hint at giving one output a :<path>; got:\n${stderr}`
   );
 });
 
@@ -127,9 +122,8 @@ Then("the run is rejected and does not create that destination", function (this:
 
 Then("the rejection hints to use the format option to write the json report to a file", function (this: SpecControllerWorld) {
   const stderr = this.balanceResult.stderr ?? "";
-  assert.match(
-    stderr,
-    /--format json:<path>/,
+  assert.ok(
+    showsEntry(stderr, "legacy-json-removed"),
     `expected stderr to hint at using --format json:<path>; got:\n${stderr}`
   );
 });
@@ -162,13 +156,14 @@ Then("the run is rejected for the unknown format", function (this: SpecControlle
 
 Then("the rejection lists the supported formats md and json", function (this: SpecControllerWorld) {
   const stderr = this.balanceResult.stderr ?? "";
+  const supported = shownEntry(stderr, "unknown-format", { formats: "xml" })?.["supported"] ?? "";
   assert.match(
-    stderr,
+    supported,
     /\bmd\b/,
     `expected stderr to list md as a supported format; got:\n${stderr}`
   );
   assert.match(
-    stderr,
+    supported,
     /\bjson\b/,
     `expected stderr to list json as a supported format; got:\n${stderr}`
   );
@@ -190,19 +185,19 @@ const INPUT: Readonly<Record<string, InputRow>> = {
   "the record of the CI steps": { file: "ci-steps.json", pointedAt: POINTED, subject: "the --ci-steps record" },
   "the manifest it was pointed at": { file: "package.json", pointedAt: POINTED, subject: "the --package-json manifest" },
   "the manifest it reads by default": { file: "package.json", pointedAt: { ...POINTED, manifest: undefined }, subject: "the package.json read by default" },
-  "a feature file of the corpus it was pointed at": { file: "features/target.feature", pointedAt: POINTED, subject: "a feature file of the --features corpus" },
+  "a feature file of the corpus it was pointed at": { file: "features/target.feature", pointedAt: POINTED, subject: entryText("flagged-corpus-feature-file") },
   "a feature file of the corpus it reads by default": {
     file: "features/target.feature",
     pointedAt: { ...POINTED, features: undefined },
-    subject: "a feature file of the corpus read by default",
+    subject: entryText("default-corpus-feature-file"),
   },
-  "the workflow file it was pointed at": { file: "ci.yml", pointedAt: POINTED, subject: "the --ci workflow" },
-  "a .yml workflow of the folder it was pointed at": { file: "cidir/ci.yml", pointedAt: { ...POINTED, workflows: "cidir" }, subject: "a workflow of the --ci folder" },
-  "a .yaml workflow of the folder it was pointed at": { file: "cidir/other.yaml", pointedAt: { ...POINTED, workflows: "cidir" }, subject: "a workflow of the --ci folder" },
+  "the workflow file it was pointed at": { file: "ci.yml", pointedAt: POINTED, subject: entryText("flagged-ci-workflow") },
+  "a .yml workflow of the folder it was pointed at": { file: "cidir/ci.yml", pointedAt: { ...POINTED, workflows: "cidir" }, subject: entryText("flagged-ci-folder-workflow") },
+  "a .yaml workflow of the folder it was pointed at": { file: "cidir/other.yaml", pointedAt: { ...POINTED, workflows: "cidir" }, subject: entryText("flagged-ci-folder-workflow") },
   "a workflow of the folder it reads by default": {
     file: ".github/workflows/ci.yml",
     pointedAt: { ...POINTED, workflows: undefined },
-    subject: "a CI workflow read by default",
+    subject: entryText("default-ci-workflow"),
   },
   "the unit test report, named through a symbolic link": {
     file: "vitest.json",
@@ -213,7 +208,7 @@ const INPUT: Readonly<Record<string, InputRow>> = {
   "a feature file of the corpus, named through a linked folder": {
     file: "features/target.feature",
     pointedAt: { ...POINTED, features: "features-link" },
-    subject: "a feature file of the --features corpus",
+    subject: entryText("flagged-corpus-feature-file"),
     arrange: (target) => symlinkSync(join(target, "features"), join(target, "features-link")),
   },
 };
@@ -304,7 +299,7 @@ When(
     const flag = FORMAT_FLAG[format]!;
     const second = flag === "json" ? "md:second.md" : "json:second.json";
     const spec = this.throughStdout ? flag : `${flag}:${this.aimedAt}`;
-    this.namedOutput = this.throughStdout ? `${flag} on standard output` : spec;
+    this.namedOutput = this.throughStdout ? entryText("format-on-standard-output", { fmt: flag }) : spec;
     const store = runs === "runs" ? [] : ["--store", join(this.destinationTargetDir, "store"), "--run-id", "r1"];
     const args = [...store, "balance", ...pointedArgs(this.inputRow.pointedAt), "--format", spec, "--format", second];
     this.destinationInputsBefore = entriesUnder(this.destinationTargetDir);
@@ -323,8 +318,10 @@ When(
 
 Then("the run is refused as a usage error, not a verdict, naming the report and the input it would overwrite", function (this: SpecControllerWorld) {
   assert.equal(this.run.status, USAGE, `expected the usage code; got ${this.run.status}\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(this.namedOutput), `the refusal does not name ${this.namedOutput}:\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(this.inputRow.subject), `the refusal does not name ${this.inputRow.subject}:\n${this.run.stderr}`);
+  assert.ok(
+    showsEntry(this.run.stderr, "output-overwrites-input", { output: this.namedOutput, subject: this.inputRow.subject }),
+    `the refusal does not name ${this.namedOutput} as overwriting ${this.inputRow.subject}:\n${this.run.stderr}`,
+  );
 });
 
 Then("the refusal is a single line with no stack trace", function (this: SpecControllerWorld) {
@@ -475,7 +472,7 @@ When(
     const firstFlag = FORMAT_FLAG[first]!;
     const firstSpec = this.throughStdout ? firstFlag : `${firstFlag}:${this.firstPath}`;
     const secondSpec = `${FORMAT_FLAG[second]}:${this.secondPath}`;
-    this.namedOutputs = [this.throughStdout ? `${firstFlag} on standard output` : firstSpec, secondSpec];
+    this.namedOutputs = [this.throughStdout ? entryText("format-on-standard-output", { fmt: firstFlag }) : firstSpec, secondSpec];
     const args = ["balance", ...TARGET_ARGS, ...[firstSpec, secondSpec, `json:${this.thirdPath}`].flatMap((spec) => ["--format", spec])];
     this.run = this.throughStdout ? specControllerInto(this.sharedFile, args) : specController(args);
   },
@@ -493,9 +490,11 @@ function specControllerInto(file: string, args: readonly string[]): CommandRun {
 }
 
 Then("the refusal names both outputs that share the file", function (this: SpecControllerWorld) {
-  for (const output of this.namedOutputs) {
-    assert.ok(this.run.stderr.includes(output), `the refusal does not name ${output}:\n${this.run.stderr}`);
-  }
+  const [first, second] = this.namedOutputs;
+  assert.ok(
+    showsEntry(this.run.stderr, "outputs-share-file", { first: first ?? "", second: second ?? "" }),
+    `the refusal does not name ${this.namedOutputs.join(" and ")}:\n${this.run.stderr}`,
+  );
 });
 
 Then("every destination is left exactly as it was", function (this: SpecControllerWorld) {
@@ -536,7 +535,7 @@ When(new RegExp(`^the operator asks for the markdown report at ${STDOUT_DESTINAT
 });
 
 Then("the refusal says more than one output goes to the same place", function (this: SpecControllerWorld) {
-  assert.ok(this.run.stderr.includes("More than one output routes to stdout"), `the refusal does not say so:\n${this.run.stderr}`);
+  assert.ok(showsEntry(this.run.stderr, "more-than-one-to-stdout"), `the refusal does not say so:\n${this.run.stderr}`);
 });
 
 Then("nothing reaches the default report destination", function (this: SpecControllerWorld) {

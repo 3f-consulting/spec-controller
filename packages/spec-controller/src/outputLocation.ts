@@ -2,6 +2,8 @@ import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, rea
 import { dirname, resolve, sep } from "node:path";
 
 import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "./exitCode.js";
+import { errorText, standardError } from "./standardError.js";
+import type { ShownError } from "./refusal.js";
 
 class UsageRefusal extends Error {
   override readonly name = "UsageRefusal";
@@ -21,9 +23,12 @@ export function writeOrRefuse(subject: string, path: string, write: () => void):
   }
 }
 
-export function refuse(message: string): never {
-  process.stderr.write(message + "\n");
-  throw new UsageRefusal(message);
+// Only balance refuses through here; allocate and the host print their own refusals.
+const REFUSING_COMMAND = "balance";
+
+export function refuse(error: ShownError): never {
+  standardError(process.stderr, REFUSING_COMMAND).error(error);
+  throw new UsageRefusal(errorText(error, REFUSING_COMMAND));
 }
 
 export function settlingRefusal<T>(run: () => T, refused: T): T {

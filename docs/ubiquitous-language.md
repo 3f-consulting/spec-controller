@@ -121,6 +121,7 @@ There is one form per runner, and nothing else. The `scenario`'s tag line (`@SCN
 | verdict ladder | The order that decides the run verdict: nothing to reconcile (`5`), unsound (`4`), scenario code errors (`1`), out of balance (`1`), then pending under `--strict` (`3`). An unexpected error before any verdict (`6`) is not on the ladder. A run that reaches its verdict keeps it. |
 | nothing to reconcile | The ledger carries no Claim Reconciliation at all, so the run has no basis for a verdict (exit `5`). |
 | usage error | A malformed invocation, refused before anything runs (exit `2`). |
+| error code | The stable code an error shows its reader in square brackets, such as `[unknown-flag]`, so the error can be quoted and looked up in the user guide whatever its words. Nothing that is not an error carries one. |
 | retired flag | A flag refused as retired. The refusal names what replaced it. |
 | target | The repository being reconciled. `--target` names it in the report's provenance. |
 | provenance | The report's header recording what was reconciled (the target, its source SHA, the tool SHA and the input paths), so a reconciliation is reproducible and attributable. |

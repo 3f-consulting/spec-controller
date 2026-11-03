@@ -1,13 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { cliRegistry, type CliRegistry, type PositionalSpec } from "../cliRegistry.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 import { readRequest } from "./request.js";
+import { errorText } from "../standardError.js";
 import { withAllocatePositional } from "./registry.test-utils.js";
 
 function usageErrorOf(argv: readonly string[], registry: CliRegistry = cliRegistry): string {
   const read = readRequest(argv, registry, "0.0.0-test");
   if (!("usageError" in read)) throw new Error(`read as a request for ${read.part}`);
-  return read.usageError;
+  return errorText(read.usageError, "allocate");
 }
 
 describe("[SCN-ALC-012] a request not in the scenario-code form is refused as a usage error, never as an unknown part", () => {
@@ -20,7 +22,7 @@ describe("[SCN-ALC-012] a request not in the scenario-code form is refused as a 
     ["a flag the command does not take", ["ONE", "--bogus"], /--bogus/],
   ])("refuses %s as a usage error", (_name, argv, why) => {
     const error = usageErrorOf(argv);
-    expect(error).toMatch(/^spec-controller allocate: usage error — /);
+    expect(error).toMatch(/^spec-controller allocate: usage error \[[a-z-]+\] — /);
     expect(error).toMatch(why);
     expect(error).not.toMatch(/unknown part/);
   });
@@ -29,8 +31,8 @@ describe("[SCN-ALC-012] a request not in the scenario-code form is refused as a 
 
   function extraArgument(token: string, takes: string): string {
     return (
-      `spec-controller allocate: usage error — ${APP_MESSAGES[AppMessage.ExtraArgument](token, ALLOCATE_SCOPE, takes)}\n` +
-      APP_MESSAGES[AppMessage.SeeArguments](ALLOCATE_SCOPE)
+      `spec-controller allocate: usage error [extra-argument] — ${message(AppError.ExtraArgument, { token, scope: ALLOCATE_SCOPE, takes })}\n` +
+      message(AppMessage.SeeArguments, { scope: ALLOCATE_SCOPE })
     );
   }
 

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { readFeatureSources } from "../ingest/ingestScenarios.js";
 import { inputsReadBy, NODE_INPUT_READER, type InputReader } from "./inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { printedRefusal } from "../shownText.test-utils.js";
 
 function workflowFilesAt(path: string): string[] {
   return path.endsWith(".yml") ? [path] : [`${path}/ci.yml`, `${path}/nightly.yaml`];
@@ -26,24 +28,24 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
       { subject: "the --cucumber report", path: "c.json" },
       { subject: "the --package-json manifest", path: "p.json" },
       { subject: "the --ci-steps record", path: "s.json" },
-      { subject: APP_MESSAGES[AppMessage.FlaggedCorpusFeatureFile](), path: "f/a.feature" },
-      { subject: APP_MESSAGES[AppMessage.FlaggedCiWorkflow](), path: "w.yml" },
+      { subject: message(AppMessage.FlaggedCorpusFeatureFile), path: "f/a.feature" },
+      { subject: message(AppMessage.FlaggedCiWorkflow), path: "w.yml" },
     ]);
   });
 
   it("names the inputs read by default, when the run was not pointed elsewhere", () => {
     expect(inputsReadBy({}, reader)).toEqual([
       { subject: "the package.json read by default", path: "package.json" },
-      { subject: APP_MESSAGES[AppMessage.DefaultCorpusFeatureFile](), path: "features/a.feature" },
-      { subject: APP_MESSAGES[AppMessage.DefaultCiWorkflow](), path: ".github/workflows/ci.yml" },
-      { subject: APP_MESSAGES[AppMessage.DefaultCiWorkflow](), path: ".github/workflows/nightly.yaml" },
+      { subject: message(AppMessage.DefaultCorpusFeatureFile), path: "features/a.feature" },
+      { subject: message(AppMessage.DefaultCiWorkflow), path: ".github/workflows/ci.yml" },
+      { subject: message(AppMessage.DefaultCiWorkflow), path: ".github/workflows/nightly.yaml" },
     ]);
   });
 
   it("names every workflow of a folder the run was pointed at", () => {
     expect(inputsReadBy({ ci: "workflows" }, reader).filter((i) => i.subject.includes("workflow"))).toEqual([
-      { subject: APP_MESSAGES[AppMessage.FlaggedCiFolderWorkflow](), path: "workflows/ci.yml" },
-      { subject: APP_MESSAGES[AppMessage.FlaggedCiFolderWorkflow](), path: "workflows/nightly.yaml" },
+      { subject: message(AppMessage.FlaggedCiFolderWorkflow), path: "workflows/ci.yml" },
+      { subject: message(AppMessage.FlaggedCiFolderWorkflow), path: "workflows/nightly.yaml" },
     ]);
   });
 });
@@ -77,7 +79,12 @@ describe("[SCN-FMT-013] balance refuses a --format naming one of the feature fil
 
     expect(captured(["--features", features, "--ci", ci, "--format", `md:${output}`])).toEqual({
       stdout: "",
-      stderr: APP_MESSAGES[AppMessage.OutputOverwritesInput](`md:${output}`, APP_MESSAGES[AppMessage.FlaggedCorpusFeatureFile](), output) + "\n",
+      stderr:
+        printedRefusal(
+          AppError.OutputOverwritesInput,
+          message(AppError.OutputOverwritesInput, { output: `md:${output}`, subject: message(AppMessage.FlaggedCorpusFeatureFile), path: output }),
+          "balance",
+        ) + "\n",
       exitCode: 2,
     });
     expect(contentsOf(features)).toEqual(before);

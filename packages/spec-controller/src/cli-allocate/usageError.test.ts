@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
+import { errorCodesShown, printedRefusal } from "../shownText.test-utils.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -11,44 +13,59 @@ afterEach(() => {
 
 const ALLOCATE = "spec-controller allocate";
 
-const usageError = (why: string): string => APP_MESSAGES[AppMessage.UsageError]("allocate", why);
-
-type Malformed = readonly [request: string, argv: string[], why: (version: string) => string];
+type Malformed = readonly [request: string, argv: string[], code: AppError, why: (version: string) => string];
 
 const MALFORMED_REQUEST: readonly Malformed[] = [
-  ["no part", [], () => APP_MESSAGES[AppMessage.NoFeaturePartGiven]()],
-  ["the part fit, in lower case", ["fit"], () => APP_MESSAGES[AppMessage.NotAFeaturePart]("fit")],
-  ["the part F, one character long", ["F"], () => APP_MESSAGES[AppMessage.NotAFeaturePart]("F")],
-  ["the part TOOLONG, seven characters long", ["TOOLONG"], () => APP_MESSAGES[AppMessage.NotAFeaturePart]("TOOLONG")],
+  ["no part", [], AppError.NoFeaturePartGiven, () => message(AppError.NoFeaturePartGiven)],
+  ["the part fit, in lower case", ["fit"], AppError.NotAFeaturePart, () => message(AppError.NotAFeaturePart, { part: "fit" })],
+  ["the part F, one character long", ["F"], AppError.NotAFeaturePart, () => message(AppError.NotAFeaturePart, { part: "F" })],
+  ["the part TOOLONG, seven characters long", ["TOOLONG"], AppError.NotAFeaturePart, () => message(AppError.NotAFeaturePart, { part: "TOOLONG" })],
   [
     "two parts, ONE and TWO",
     ["ONE", "TWO"],
+    AppError.ExtraArgument,
     () =>
-      `${APP_MESSAGES[AppMessage.ExtraArgument]("TWO", ALLOCATE, "<FFF>")}\n` + APP_MESSAGES[AppMessage.SeeArguments](ALLOCATE),
+      `${message(AppError.ExtraArgument, { token: "TWO", scope: ALLOCATE, takes: "<FFF>" })}\n` + message(AppMessage.SeeArguments, { scope: ALLOCATE }),
   ],
   [
     "the part ONE and a flag it does not take",
     ["ONE", "--bogus"],
+    AppError.UnknownFlag,
     (version) =>
-      `${APP_MESSAGES[AppMessage.UnknownFlag]("--bogus", ALLOCATE, version, "allocate")}\n` +
-      `${APP_MESSAGES[AppMessage.PinDrifted]("allocate", "--bogus")}\n` +
-      APP_MESSAGES[AppMessage.OtherwiseSeeFlags](ALLOCATE),
+      `${message(AppError.UnknownFlag, { flag: "--bogus", scope: ALLOCATE, toolVersion: version, command: "allocate" })}\n` +
+      `${message(AppMessage.PinDrifted, { command: "allocate", flag: "--bogus" })}\n` +
+      message(AppMessage.OtherwiseSeeFlags, { scope: ALLOCATE }),
   ],
   [
     "the part ONE and a host modifier given after the command",
     ["ONE", "--store", "runs"],
-    () => `${APP_MESSAGES[AppMessage.MisplacedModifier]("--store", "allocate")}\n` + APP_MESSAGES[AppMessage.SeeModifiers](),
+    AppError.MisplacedModifier,
+    () => `${message(AppError.MisplacedModifier, { modifier: "--store", command: "allocate" })}\n` + message(AppMessage.SeeModifiers),
   ],
 ];
 
 describe("[SCN-ALC-012] A request not in the scenario-code form is refused as a usage error, never as an unknown part", () => {
-  it.each(MALFORMED_REQUEST)("refuses %s at the usage status, giving no code", (_request, argv, why) => {
+  it.each(MALFORMED_REQUEST)("refuses %s at the usage status, giving no code", (_request, argv, code, why) => {
     const answered = allocateIn(repositoryHeadedOneCarrying003("allocate-usage-error-"), argv);
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    expect(answered.stderr.startsWith(usageError(""))).toBe(true);
+    expect(answered.stderr.startsWith(printedRefusal(code, "", "allocate"))).toBe(true);
     expect(answered.stderr).not.toMatch(/unknown part/);
-    expect(answered.stderr).toBe(`${usageError(why(resolveToolIdentity().toolVersion))}\n`);
+    expect(answered.stderr).toBe(`${printedRefusal(code, why(resolveToolIdentity().toolVersion), "allocate")}\n`);
+  });
+});
+
+describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a request for a scenario code not in its form", () => {
+  it.each([
+    ["the part fit, in lower case", "fit"],
+    ["the part F, one character long", "F"],
+    ["the part TOOLONG, seven characters long", "TOOLONG"],
+  ])("refuses %s with [not-a-feature-part] once, after allocate's usage-error prefix", (_request, part) => {
+    const answered = allocateIn(repositoryHeadedOneCarrying003("allocate-coded-usage-error-"), [part]);
+
+    expect(answered.exitCode).toBe(2);
+    expect(errorCodesShown(answered.stderr)).toEqual({ opening: ["not-a-feature-part"], after: [] });
+    expect(answered.stderr).toBe(`spec-controller allocate: usage error [not-a-feature-part] — ${message(AppError.NotAFeaturePart, { part })}\n`);
   });
 });

@@ -7,7 +7,8 @@ import {
   positionalArguments,
 } from "../cliArgs.js";
 import type { CliRegistry } from "../cliRegistry.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError } from "../messages.js";
+import { refusal, type Refusal } from "../refusal.js";
 
 export interface AllocateRequest {
   readonly part: string;
@@ -18,13 +19,13 @@ export function readRequest(
   argv: readonly string[],
   registry: CliRegistry,
   toolVersion: string,
-): AllocateRequest | { readonly usageError: string } {
+): AllocateRequest | { readonly usageError: Refusal } {
   const why = argvRefusal(argv, registry, toolVersion) ?? partRefusal(positionalArguments(argv, registry, "allocate")[0]);
-  if (why !== null) return { usageError: APP_MESSAGES[AppMessage.UsageError]("allocate", why) };
+  if (why !== null) return { usageError: why };
   return { part: positionalArguments(argv, registry, "allocate")[0] ?? "", isNew: argv.includes("--new") };
 }
 
-function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): string | null {
+function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): Refusal | null {
   const args = parseArgs(argv);
   return (
     checkMisplacedHostModifiers(args, registry, "allocate") ??
@@ -33,8 +34,8 @@ function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion
   );
 }
 
-function partRefusal(part: string | undefined): string | null {
-  if (part === undefined) return APP_MESSAGES[AppMessage.NoFeaturePartGiven]();
+function partRefusal(part: string | undefined): Refusal | null {
+  if (part === undefined) return refusal(AppError.NoFeaturePartGiven, {});
   if (isFeaturePart(part)) return null;
-  return APP_MESSAGES[AppMessage.NotAFeaturePart](part);
+  return refusal(AppError.NotAFeaturePart, { part });
 }

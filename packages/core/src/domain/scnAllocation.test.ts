@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nextScnCode, type Allocation, type AllocationRequest, type ScnOccurrence } from "./scnAllocation.js";
+import { nextScnCode, unknownPartCarried, type Allocation, type AllocationRequest, type ScnOccurrence } from "./scnAllocation.js";
 
 function next(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
   const answer = nextScnCode(request, occurrences);
@@ -91,6 +91,13 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
 
   it("refuses a part no header carries, naming the header codes in order", () => {
     expect(nextScnCode({ part: "ZZZ", headerCodes }, [])).toEqual({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] });
+  });
+
+  it.each([
+    { headerCodes: [], carried: { kind: "none" } },
+    { headerCodes: ["ONE", "TWO"], carried: { kind: "some", headerCodes: ["ONE", "TWO"] } },
+  ])("says whether any part is carried, from $headerCodes", ({ headerCodes, carried }) => {
+    expect(unknownPartCarried({ kind: "unknown-part", part: "ZZZ", headerCodes })).toEqual(carried);
   });
 });
 

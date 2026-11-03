@@ -11,6 +11,12 @@ import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js"
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
+import { standardError, type StandardError } from "../standardError.js";
+import type { ShownError } from "../refusal.js";
+
+function shown(): StandardError {
+  return standardError(process.stderr, "allocate");
+}
 
 export function runAllocate(argv: string[]): void {
   if (asksForHelp(argv)) {
@@ -37,8 +43,8 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   }
 }
 
-function refuseUsage(line: string): void {
-  process.stderr.write(line + "\n");
+function refuseUsage(error: ShownError): void {
+  shown().error(error);
   endRunOn(USAGE_REFUSAL);
 }
 
@@ -52,13 +58,13 @@ function answerRequest({ part, isNew }: AllocateRequest): void {
     return;
   }
   writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
-  process.stderr.write(highestSeenLine(answer) + "\n");
+  shown().note(highestSeenLine(answer));
   writeLineIfAny(alreadyHeadedNote(answer));
   process.stdout.write(answer.code + "\n");
 }
 
 function writeLineIfAny(line: string | null): void {
-  if (line !== null) process.stderr.write(line + "\n");
+  if (line !== null) shown().note(line);
 }
 
 function occurrencesFrom(cwd: string, part: string, top: string | null): ScnOccurrence[] {

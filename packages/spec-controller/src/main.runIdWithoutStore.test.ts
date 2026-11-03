@@ -5,10 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runBalance } from "./cli-balance/cli.js";
 import { modifiersNotTakenRefusal, parseHostInvocation } from "./host.js";
 import { main } from "./main.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
+import { errorText } from "./standardError.js";
+import type { ShownError } from "./refusal.js";
 
 interface Answered extends Written {
   expectedStderr: string | undefined;
@@ -42,9 +45,11 @@ recordWhatTheProgramWrites();
 
 type Refusal = (argv: string[]) => string | undefined;
 
-const refusedAsUnstored: Refusal = (argv) => unstoredRunIdRefusal(parseHostInvocation(argv));
-const refusedAsReRender: Refusal = (argv) => storedReRenderRefusal(parseHostInvocation(argv));
-const refusedAsModifiersNotTaken: Refusal = (argv) => modifiersNotTakenRefusal(parseHostInvocation(argv));
+const printedAt = (shown: ShownError | undefined): string | undefined => (shown === undefined ? undefined : errorText(shown));
+
+const refusedAsUnstored: Refusal = (argv) => printedAt(unstoredRunIdRefusal(parseHostInvocation(argv)));
+const refusedAsReRender: Refusal = (argv) => printedAt(storedReRenderRefusal(parseHostInvocation(argv)));
+const refusedAsModifiersNotTaken: Refusal = (argv) => printedAt(modifiersNotTakenRefusal(parseHostInvocation(argv)));
 
 function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal: Refusal): Answered {
   const cwd = temporaryDirectory("main-run-id-without-store-");
@@ -61,8 +66,8 @@ function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal:
 
 const balance = (): string[] => ["balance", ...target];
 
-const KEEP_UNDER_NAME = (): string => APP_MESSAGES[AppMessage.KeepRunUnderName]("balance");
-const RE_RENDER_WITHOUT_IT = (): string => APP_MESSAGES[AppMessage.ReRenderWithoutIt]();
+const KEEP_UNDER_NAME = (): string => message(AppMessage.KeepRunUnderName, { command: "balance" });
+const RE_RENDER_WITHOUT_IT = (): string => message(AppMessage.ReRenderWithoutIt);
 
 const liveBalance = (): string[] => ["--run-id", "r1", ...balance()];
 const liveBalanceReportOnly = (): string[] => ["--run-id", "r1", ...balance(), "--exit-zero"];

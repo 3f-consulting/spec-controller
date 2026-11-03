@@ -9,41 +9,9 @@ export enum AppMessage {
   WorkingDirectory,
   CouldNotBeRead,
   CouldNotBeReadAt,
-  UsageError,
   GitExited,
   FeatureCorpusDirectoryMissing,
   StoredRunDirectoryNotCreated,
-  FormatNamesStoredRunManifest,
-  StoredRunReadsItsManifest,
-  SeeCommandsAndModifiers,
-  SeeModifiers,
-  SeeFlags,
-  SeeFlagsAndValues,
-  SeeArguments,
-  NoCommandAfterModifiers,
-  ModifierTookCommand,
-  GiveModifierItsOwnValue,
-  FlagBeforeCommand,
-  UnknownCommand,
-  ModifiersNotTaken,
-  RunWithoutModifiers,
-  MissingValue,
-  GivenTwice,
-  EqualsForm,
-  TakesNoValue,
-  ExtraArgument,
-  NotAFlag,
-  MisplacedModifier,
-  UnknownFlag,
-  PinDrifted,
-  OtherwiseSeeFlags,
-  RetiredFlag,
-  DoNotPinRetired,
-  ReRenderNotStored,
-  ReRenderWithoutIt,
-  ReRenderWithoutThem,
-  RunIdWithoutStore,
-  KeepRunUnderName,
   HelpTitle,
   HelpUsage,
   HelpCommands,
@@ -80,7 +48,6 @@ export enum AppMessage {
   AllocateSummary,
   FeaturePartArgument,
   NewFlag,
-  LegacyJsonRemoved,
   InputPathMissing,
   FlaggedFile,
   FlaggedReport,
@@ -109,12 +76,6 @@ export enum AppMessage {
   NotRenderableAsSaved,
   CorpusFileUnparseable,
   WorkflowNotYaml,
-  ReRenderReadsOnly,
-  UnknownFormat,
-  MoreThanOneToStdout,
-  OutputsShareFile,
-  OutputOverwritesInput,
-  OutputOverwritesStoredRun,
   ReportNotWritten,
   HistoryBoundary,
   ShallowHistoryUnread,
@@ -124,61 +85,78 @@ export enum AppMessage {
   HighestSeenNone,
   HighestSeenInTree,
   HighestSeenInCommit,
-  UnknownPartRefused,
-  NoPartsCarried,
   PartAlreadyHeaded,
-  NoFeaturePartGiven,
-  NotAFeaturePart,
-  DefaultCorpusFeatureFile,
-  FlaggedCorpusFeatureFile,
-  DefaultCiWorkflow,
-  FlaggedCiWorkflow,
-  FlaggedCiFolderWorkflow,
-  FormatOnStandardOutput,
   ShapeKindList,
   ShapeKindObject,
   ShapeKindOfType,
   ShapeTopLevel,
   ShapeWrongKind,
   ShapeFieldMissing,
-  HostUsageError,
   HelpUsageLine,
   UnexpectedError,
   UnexpectedErrorAfterVerdict,
+  UsageError = "usage-error",
+  SeeCommandsAndModifiers = "see-commands-and-modifiers",
+  SeeModifiers = "see-modifiers",
+  SeeFlags = "see-flags",
+  SeeFlagsAndValues = "see-flags-and-values",
+  SeeArguments = "see-arguments",
+  GiveModifierItsOwnValue = "give-modifier-its-own-value",
+  RunWithoutModifiers = "run-without-modifiers",
+  PinDrifted = "pin-drifted",
+  OtherwiseSeeFlags = "otherwise-see-flags",
+  DoNotPinRetired = "do-not-pin-retired",
+  ReRenderWithoutIt = "re-render-without-it",
+  ReRenderWithoutThem = "re-render-without-them",
+  KeepRunUnderName = "keep-run-under-name",
+  NoPartsCarried = "no-parts-carried",
+  DefaultCorpusFeatureFile = "default-corpus-feature-file",
+  FlaggedCorpusFeatureFile = "flagged-corpus-feature-file",
+  DefaultCiWorkflow = "default-ci-workflow",
+  FlaggedCiWorkflow = "flagged-ci-workflow",
+  FlaggedCiFolderWorkflow = "flagged-ci-folder-workflow",
+  FormatOnStandardOutput = "format-on-standard-output",
+  CodedUsageError = "coded-usage-error",
+  CodedHostUsageError = "coded-host-usage-error",
+}
+
+// Each error a reader can be shown, by its code: a handle's value is the code it prints.
+export enum AppError {
+  UnknownFlag = "unknown-flag",
+  RetiredFlag = "retired-flag",
+  UnknownCommand = "unknown-command",
+  MissingValue = "missing-value",
+  GivenTwice = "given-twice",
+  EqualsForm = "equals-form",
+  TakesNoValue = "takes-no-value",
+  ExtraArgument = "extra-argument",
+  NotAFlag = "not-a-flag",
+  MisplacedModifier = "misplaced-modifier",
+  FlagBeforeCommand = "flag-before-command",
+  NoCommandAfterModifiers = "no-command-after-modifiers",
+  ModifierTookCommand = "modifier-took-command",
+  ModifiersNotTaken = "modifiers-not-taken",
+  ReRenderNotStored = "re-render-not-stored",
+  RunIdWithoutStore = "run-id-without-store",
+  LegacyJsonRemoved = "legacy-json-removed",
+  ReRenderReadsOnly = "re-render-reads-only",
+  UnknownFormat = "unknown-format",
+  MoreThanOneToStdout = "more-than-one-to-stdout",
+  OutputsShareFile = "outputs-share-file",
+  OutputOverwritesInput = "output-overwrites-input",
+  OutputOverwritesStoredRun = "output-overwrites-stored-run",
+  FormatNamesStoredRunManifest = "format-names-stored-run-manifest",
+  StoredRunReadsItsManifest = "stored-run-reads-its-manifest",
+  UnknownPartRefused = "unknown-part-refused",
+  NoFeaturePartGiven = "no-feature-part-given",
+  NotAFeaturePart = "not-a-feature-part",
 }
 
 interface AppMessageParams {
   [AppMessage.CouldNotBeRead]: [subject: string, reason: string];
   [AppMessage.CouldNotBeReadAt]: [subject: string, path: string, reason: string];
-  [AppMessage.UsageError]: [command: string, message: string];
   [AppMessage.GitExited]: [args: readonly string[], status: number | null, said: string];
   [AppMessage.FeatureCorpusDirectoryMissing]: [directory: string];
-  [AppMessage.FormatNamesStoredRunManifest]: [formatPath: string, manifestPath: string, runDir: string];
-  [AppMessage.StoredRunReadsItsManifest]: [manifestPath: string, inputPath: string, inputSubject: string];
-  [AppMessage.SeeFlags]: [scope: string];
-  [AppMessage.SeeFlagsAndValues]: [scope: string];
-  [AppMessage.SeeArguments]: [scope: string];
-  [AppMessage.NoCommandAfterModifiers]: [modifiers: string];
-  [AppMessage.ModifierTookCommand]: [modifier: string, command: string];
-  [AppMessage.GiveModifierItsOwnValue]: [modifier: string, arg: string, command: string];
-  [AppMessage.FlagBeforeCommand]: [flag: string, modifiers: string];
-  [AppMessage.UnknownCommand]: [command: string];
-  [AppMessage.ModifiersNotTaken]: [command: string, modifiers: string];
-  [AppMessage.RunWithoutModifiers]: [command: string];
-  [AppMessage.MissingValue]: [flag: string, scope: string, arg: string];
-  [AppMessage.GivenTwice]: [flag: string, scope: string];
-  [AppMessage.EqualsForm]: [token: string, scope: string, spelling: string];
-  [AppMessage.TakesNoValue]: [flag: string, scope: string, value: string];
-  [AppMessage.ExtraArgument]: [token: string, scope: string, takes: string];
-  [AppMessage.NotAFlag]: [token: string, scope: string];
-  [AppMessage.MisplacedModifier]: [modifier: string, command: string];
-  [AppMessage.UnknownFlag]: [flag: string, scope: string, toolVersion: string, command: string];
-  [AppMessage.PinDrifted]: [command: string, flag: string];
-  [AppMessage.OtherwiseSeeFlags]: [scope: string];
-  [AppMessage.RetiredFlag]: [flag: string, scope: string, retiredIn: string, toolVersion: string];
-  [AppMessage.ReRenderNotStored]: [modifiers: string];
-  [AppMessage.RunIdWithoutStore]: [runId: string];
-  [AppMessage.KeepRunUnderName]: [command: string];
   [AppMessage.BuiltInDeferralTags]: [tags: string];
   [AppMessage.InputPathMissing]: [flag: string, path: string];
   [AppMessage.FlaggedFile]: [flag: string];
@@ -197,12 +175,6 @@ interface AppMessageParams {
   [AppMessage.NotRenderableAsSaved]: [subject: string, path: string, reason: string];
   [AppMessage.CorpusFileUnparseable]: [corpus: string, file: string, message: string];
   [AppMessage.WorkflowNotYaml]: [workflows: string, file: string, message: string];
-  [AppMessage.ReRenderReadsOnly]: [ignored: string];
-  [AppMessage.UnknownFormat]: [formats: string, supported: string];
-  [AppMessage.MoreThanOneToStdout]: [formats: string];
-  [AppMessage.OutputsShareFile]: [first: string, second: string];
-  [AppMessage.OutputOverwritesInput]: [output: string, subject: string, path: string];
-  [AppMessage.OutputOverwritesStoredRun]: [path: string, runDir: string];
   [AppMessage.ReportNotWritten]: [format: string];
   [AppMessage.HistoryBoundary]: [unread: string, risk: string];
   [AppMessage.ShallowHistoryUnread]: [before: string];
@@ -210,23 +182,68 @@ interface AppMessageParams {
   [AppMessage.RiskAboveCode]: [code: string];
   [AppMessage.HighestSeenInTree]: [code: string, path: string, line: number];
   [AppMessage.HighestSeenInCommit]: [code: string, path: string, line: number, commit: string];
-  [AppMessage.UnknownPartRefused]: [part: string, parts: string];
   [AppMessage.PartAlreadyHeaded]: [part: string];
-  [AppMessage.NotAFeaturePart]: [part: string];
-  [AppMessage.FormatOnStandardOutput]: [fmt: string];
   [AppMessage.ShapeKindOfType]: [type: string];
   [AppMessage.ShapeWrongKind]: [where: string, found: string, expected: string];
   [AppMessage.ShapeFieldMissing]: [path: string];
-  [AppMessage.HostUsageError]: [message: string];
   [AppMessage.HelpUsageLine]: [modifierUsage: string];
   [AppMessage.UnexpectedError]: [name: string, firstLine: string];
   [AppMessage.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
 }
 
-export type PlainAppMessage = Exclude<AppMessage, keyof AppMessageParams>;
+// A handle whose value is a string is worded by the data file; the others, by the table below.
+export type WordedAppMessage = Extract<AppMessage, string>;
+
+type TabledAppMessage = Extract<AppMessage, number>;
+
+export interface AppMessageValues {
+  [AppMessage.UsageError]: { command: string; message: string };
+  [AppMessage.SeeFlags]: { scope: string };
+  [AppMessage.SeeFlagsAndValues]: { scope: string };
+  [AppMessage.SeeArguments]: { scope: string };
+  [AppMessage.GiveModifierItsOwnValue]: { modifier: string; arg: string; command: string };
+  [AppMessage.RunWithoutModifiers]: { command: string };
+  [AppMessage.PinDrifted]: { command: string; flag: string };
+  [AppMessage.OtherwiseSeeFlags]: { scope: string };
+  [AppMessage.KeepRunUnderName]: { command: string };
+  [AppMessage.FormatOnStandardOutput]: { fmt: string };
+  [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };
+  [AppMessage.CodedHostUsageError]: { code: AppError; message: string };
+}
+
+export interface AppErrorValues {
+  [AppError.UnknownFlag]: { flag: string; scope: string; toolVersion: string; command: string };
+  [AppError.RetiredFlag]: { flag: string; scope: string; retiredIn: string; toolVersion: string };
+  [AppError.UnknownCommand]: { command: string };
+  [AppError.MissingValue]: { flag: string; scope: string; arg: string };
+  [AppError.GivenTwice]: { flag: string; scope: string };
+  [AppError.EqualsForm]: { token: string; scope: string; spelling: string };
+  [AppError.TakesNoValue]: { flag: string; scope: string; value: string };
+  [AppError.ExtraArgument]: { token: string; scope: string; takes: string };
+  [AppError.NotAFlag]: { token: string; scope: string };
+  [AppError.MisplacedModifier]: { modifier: string; command: string };
+  [AppError.FlagBeforeCommand]: { flag: string; modifiers: string };
+  [AppError.NoCommandAfterModifiers]: { modifiers: string };
+  [AppError.ModifierTookCommand]: { modifier: string; command: string };
+  [AppError.ModifiersNotTaken]: { command: string; modifiers: string };
+  [AppError.ReRenderNotStored]: { modifiers: string };
+  [AppError.RunIdWithoutStore]: { runId: string };
+  [AppError.ReRenderReadsOnly]: { ignored: string };
+  [AppError.UnknownFormat]: { formats: string; supported: string };
+  [AppError.MoreThanOneToStdout]: { formats: string };
+  [AppError.OutputsShareFile]: { first: string; second: string };
+  [AppError.OutputOverwritesInput]: { output: string; subject: string; path: string };
+  [AppError.OutputOverwritesStoredRun]: { path: string; runDir: string };
+  [AppError.FormatNamesStoredRunManifest]: { formatPath: string; manifestPath: string; runDir: string };
+  [AppError.StoredRunReadsItsManifest]: { manifestPath: string; inputPath: string; inputSubject: string };
+  [AppError.UnknownPartRefused]: { part: string; parts: string };
+  [AppError.NotAFeaturePart]: { part: string };
+}
+
+export type PlainAppMessage = Exclude<TabledAppMessage, keyof AppMessageParams>;
 
 export type AppMessages = {
-  readonly [C in AppMessage]: (...params: C extends keyof AppMessageParams ? AppMessageParams[C] : []) => string;
+  readonly [C in TabledAppMessage]: (...params: C extends keyof AppMessageParams ? AppMessageParams[C] : []) => string;
 };
 
 export const APP_MESSAGES: AppMessages = {
@@ -240,75 +257,9 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.WorkingDirectory]: () => "the working directory",
   [AppMessage.CouldNotBeRead]: (subject, reason) => `${subject} could not be read (${reason})`,
   [AppMessage.CouldNotBeReadAt]: (subject, path, reason) => `${subject} could not be read: ${path} (${reason})`,
-  [AppMessage.UsageError]: (command, message) => `spec-controller ${command}: usage error — ${message}`,
   [AppMessage.GitExited]: (args, status, said) => `git ${args[0]} exited ${status}: ${said}`,
   [AppMessage.FeatureCorpusDirectoryMissing]: (directory) => `The feature corpus directory does not exist: ${directory}`,
   [AppMessage.StoredRunDirectoryNotCreated]: () => "The stored run's directory could not be created",
-  [AppMessage.FormatNamesStoredRunManifest]: (formatPath, manifestPath, runDir) =>
-    `A --format output names ${formatPath}, which is this stored run's own ${manifestPath}. ` +
-    `Give the report a path outside ${runDir}.`,
-  [AppMessage.StoredRunReadsItsManifest]: (manifestPath, inputPath, inputSubject) =>
-    `A file this stored run reads is its own ${manifestPath}: ${inputPath} is ${inputSubject}. ` +
-    `Give the store a root outside the files the run reads.`,
-  [AppMessage.SeeCommandsAndModifiers]: () =>
-    "Run 'spec-controller --help' to see the commands and host modifiers this version accepts.",
-  [AppMessage.SeeModifiers]: () => "Run 'spec-controller --help' to see the host modifiers this version accepts.",
-  [AppMessage.SeeFlags]: (scope) => `Run '${scope} --help' to see the flags this version accepts.`,
-  [AppMessage.SeeFlagsAndValues]: (scope) =>
-    `Run '${scope} --help' to see the flags this version accepts and the values they take.`,
-  [AppMessage.SeeArguments]: (scope) => `Run '${scope} --help' to see what this version accepts.`,
-  [AppMessage.NoCommandAfterModifiers]: (modifiers) =>
-    `No command followed the host modifiers given (${modifiers}), so nothing ran: ` +
-    `a host modifier needs a command after it, or --help.`,
-  [AppMessage.ModifierTookCommand]: (modifier, command) =>
-    `The ${modifier} host modifier took '${command}', a command, as its value, and left no command to run.`,
-  [AppMessage.GiveModifierItsOwnValue]: (modifier, arg, command) =>
-    `Give ${modifier} its own value, as in 'spec-controller ${modifier} ${arg} ${command} …'.`,
-  [AppMessage.FlagBeforeCommand]: (flag, modifiers) =>
-    `The ${flag} flag was given before the command. Before the command, spec-controller takes ` +
-    `only its host modifiers (${modifiers}); a command's own flags go after it, as in ` +
-    `'spec-controller <command> ${flag}'.`,
-  [AppMessage.UnknownCommand]: (command) => `unknown command "${command}".`,
-  [AppMessage.ModifiersNotTaken]: (command, modifiers) =>
-    `'${command}' takes no host modifier, and was given ${modifiers}: it answers a query and keeps no run.`,
-  [AppMessage.RunWithoutModifiers]: (command) => `Run 'spec-controller ${command} …' without them.`,
-  [AppMessage.MissingValue]: (flag, scope, arg) =>
-    `The ${flag} flag of '${scope}' needs a value — ${flag} ${arg} — and was given none.`,
-  [AppMessage.GivenTwice]: (flag, scope) =>
-    `The ${flag} flag of '${scope}' was given more than once, and is read once: give it once.`,
-  [AppMessage.EqualsForm]: (token, scope, spelling) =>
-    `The ${token} form is not read by '${scope}': a flag and its value are two arguments, as in '${spelling}'.`,
-  [AppMessage.TakesNoValue]: (flag, scope, value) =>
-    `The ${flag} flag of '${scope}' takes no value, and was given one: '${value}'.`,
-  [AppMessage.ExtraArgument]: (token, scope, takes) =>
-    `The argument '${token}' is more than '${scope}' takes: it takes ${takes} once, and its flags.`,
-  [AppMessage.NotAFlag]: (token, scope) =>
-    `The argument '${token}' is not a flag, nor the value of the flag before it: ` +
-    `'${scope}' takes only flags and their values.`,
-  [AppMessage.MisplacedModifier]: (modifier, command) =>
-    `The ${modifier} flag is a host modifier: it goes before the command, as in ` +
-    `'spec-controller ${modifier} <value> ${command} …', never after it.`,
-  [AppMessage.UnknownFlag]: (flag, scope, toolVersion, command) =>
-    `Unknown flag ${flag} for '${scope}' — this is spec-controller ` +
-    `${toolVersion}, and that flag is not in its ${command} scope.`,
-  [AppMessage.PinDrifted]: (command, flag) =>
-    `If this version is pinned, the pin and the tree it is reading have drifted apart: ` +
-    `bump the pin to a version whose '${command}' accepts ${flag}.`,
-  [AppMessage.OtherwiseSeeFlags]: (scope) => `Otherwise run '${scope} --help' to see the flags this version accepts.`,
-  [AppMessage.RetiredFlag]: (flag, scope, retiredIn, toolVersion) =>
-    `Retired flag ${flag} for '${scope}' — retired in spec-controller ` +
-    `${retiredIn}, and no later version accepts it (this is spec-controller ${toolVersion}).`,
-  [AppMessage.DoNotPinRetired]: () =>
-    "Do not pin an earlier version to get it back: that restores the route it was retired with.",
-  [AppMessage.ReRenderNotStored]: (modifiers) =>
-    `'balance --render-from-json' re-renders a saved report to stdout and keeps no run, ` +
-    `and was given ${modifiers}: a re-render is not stored.`,
-  [AppMessage.ReRenderWithoutIt]: () => "Run 'spec-controller balance --render-from-json <path>' without it.",
-  [AppMessage.ReRenderWithoutThem]: () => "Run 'spec-controller balance --render-from-json <path>' without them.",
-  [AppMessage.RunIdWithoutStore]: (runId) =>
-    `--run-id names a stored run, and was given '${runId}' with no --store, so no run is kept under it.`,
-  [AppMessage.KeepRunUnderName]: (command) =>
-    `To keep the run under that name, give --store <root> as well; otherwise run '${command}' without --run-id.`,
   [AppMessage.HelpTitle]: () => "spec-controller — reconcile scenarios against observed evidence",
   [AppMessage.HelpUsage]: () => "Usage:",
   [AppMessage.HelpCommands]: () => "Commands:",
@@ -379,10 +330,6 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.NewFlag]: () =>
     "Start a part no feature file's header carries yet: its first code, " +
     "or one past any number the repository already carries for it.",
-  [AppMessage.LegacyJsonRemoved]: () =>
-    "The --json <path> flag has been removed. " +
-    "Use --format json:<path> to write the JSON report to a file " +
-    "(e.g. --format json:spec-reconciliation.json).",
   [AppMessage.InputPathMissing]: (flag, path) => `The ${flag} path does not exist: ${path}`,
   [AppMessage.FlaggedFile]: (flag) => `The ${flag} file`,
   [AppMessage.FlaggedReport]: (flag) => `The ${flag} report`,
@@ -417,24 +364,6 @@ export const APP_MESSAGES: AppMessages = {
     `${corpus} contains a feature file that could not be parsed: ${file}\n${message}`,
   [AppMessage.WorkflowNotYaml]: (workflows, file, message) =>
     `${workflows} contain a workflow that is not valid YAML: ${file}\n${message}`,
-  [AppMessage.ReRenderReadsOnly]: (ignored) =>
-    `--render-from-json re-renders a saved report and reads only --strict and --exit-zero beside it; ` +
-    `${ignored} would be ignored. Remove it, or run balance without --render-from-json.`,
-  [AppMessage.UnknownFormat]: (formats, supported) =>
-    `Unknown --format ${formats}. Supported formats are ${supported} ` +
-    `(e.g. --format md, --format json:report.json).`,
-  [AppMessage.MoreThanOneToStdout]: (formats) =>
-    `More than one output routes to stdout (${formats}); at most one may. ` +
-    `Give one of them a :<path> to write it to a file instead ` +
-    `(e.g. --format json:report.json).`,
-  [AppMessage.OutputsShareFile]: (first, second) =>
-    `Two outputs name the same file: ${first} and ${second}. Give each output a file of its own.`,
-  [AppMessage.OutputOverwritesInput]: (output, subject, path) =>
-    `An output would overwrite a file this run reads: ${output} is ${subject}, ${path}. ` +
-    `Give the report a file of its own.`,
-  [AppMessage.OutputOverwritesStoredRun]: (path, runDir) =>
-    `A --format output names ${path}, a file of the earlier stored run in ${runDir}. ` +
-    `Give the report a path outside that run's directory.`,
   [AppMessage.ReportNotWritten]: (format) => `The ${format} report could not be written`,
   [AppMessage.HistoryBoundary]: (unread, risk) => `history: ${unread}; ${risk} may have been used before`,
   [AppMessage.ShallowHistoryUnread]: (before) => `shallow clone — history before ${before} unread`,
@@ -444,27 +373,13 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.HighestSeenNone]: () => "highest seen: none",
   [AppMessage.HighestSeenInTree]: (code, path, line) => `highest seen: ${code}, ${path}:${line}`,
   [AppMessage.HighestSeenInCommit]: (code, path, line, commit) => `highest seen: ${code}, ${path}:${line} in ${commit}`,
-  [AppMessage.UnknownPartRefused]: (part, parts) =>
-    `spec-controller allocate: unknown part — no feature file's header carries ${part}.\n` +
-    `The parts this corpus's feature files carry: ${parts}.`,
-  [AppMessage.NoPartsCarried]: () => "none",
   [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
-  [AppMessage.NoFeaturePartGiven]: () =>
-    "no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code.",
-  [AppMessage.NotAFeaturePart]: (part) => `'${part}' is not a feature part: two to five characters, each A-Z or 0-9.`,
-  [AppMessage.DefaultCorpusFeatureFile]: () => "a feature file of the corpus read by default",
-  [AppMessage.FlaggedCorpusFeatureFile]: () => "a feature file of the --features corpus",
-  [AppMessage.DefaultCiWorkflow]: () => "a CI workflow read by default",
-  [AppMessage.FlaggedCiWorkflow]: () => "the --ci workflow",
-  [AppMessage.FlaggedCiFolderWorkflow]: () => "a workflow of the --ci folder",
-  [AppMessage.FormatOnStandardOutput]: (fmt) => `${fmt} on standard output`,
   [AppMessage.ShapeKindList]: () => "a list",
   [AppMessage.ShapeKindObject]: () => "an object",
   [AppMessage.ShapeKindOfType]: (type) => `a ${type}`,
   [AppMessage.ShapeTopLevel]: () => "the top level",
   [AppMessage.ShapeWrongKind]: (where, found, expected) => `${where} is ${found}, not ${expected}`,
   [AppMessage.ShapeFieldMissing]: (path) => `${path} is missing`,
-  [AppMessage.HostUsageError]: (message) => `spec-controller: usage error — ${message}`,
   [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
   [AppMessage.UnexpectedError]: (name, firstLine) => `spec-controller stopped on an unexpected error, and gives no verdict: ${name}: ${firstLine}`,
   [AppMessage.UnexpectedErrorAfterVerdict]: (name, firstLine) => `spec-controller hit an unexpected error after its verdict: ${name}: ${firstLine}`,

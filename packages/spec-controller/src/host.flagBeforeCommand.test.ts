@@ -1,13 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { cliRegistry } from "./cliRegistry.js";
 import { parseHostInvocation } from "./host.js";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppError, AppMessage } from "./messages.js";
+import { message } from "./appText.js";
+import { withShownRefusal } from "./shownText.test-utils.js";
 
 const HOST_MODIFIERS = "--store, --run-id";
 
 const flagBeforeCommand = (flag: string): string =>
-  `${APP_MESSAGES[AppMessage.FlagBeforeCommand](flag, HOST_MODIFIERS)}\n` +
-  APP_MESSAGES[AppMessage.SeeCommandsAndModifiers]();
+  `${message(AppError.FlagBeforeCommand, { flag, modifiers: HOST_MODIFIERS })}\n` +
+  message(AppMessage.SeeCommandsAndModifiers);
 
 const EXAMPLES: [string, { flag: string; argv: string[] }][] = [
   ["the report-only option, before balance", { flag: "--exit-zero", argv: ["--exit-zero", "balance"] }],
@@ -20,7 +22,7 @@ describe("[SCN-CLI-060] a flag given before the command is refused as a flag out
 
   for (const [row, { flag, argv }] of EXAMPLES) {
     it(`refuses ${row} as a flag before the command, listing the host's modifiers, and takes no command arguments`, () => {
-      expect(parseHostInvocation(argv)).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
+      expect(withShownRefusal(parseHostInvocation(argv))).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
     });
   }
 
@@ -31,7 +33,7 @@ describe("[SCN-CLI-060] a flag given before the command is refused as a flag out
   }
 
   it("refuses it after a modifier too, before any store is taken", () => {
-    const inv = parseHostInvocation(["--store", "/s", "--exit-zero", "balance"]);
+    const inv = withShownRefusal(parseHostInvocation(["--store", "/s", "--exit-zero", "balance"]));
     expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand("--exit-zero") });
   });
 });

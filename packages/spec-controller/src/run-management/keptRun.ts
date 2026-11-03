@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parse, stringify } from "yaml";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { refusal } from "../refusal.js";
 import { firstSharingFile, inputAt, refuse, writeOrRefuse, type ReadInput } from "../outputLocation.js";
 
 const RECONCILIATION_DOCUMENT = "spec-reconciliation.md";
@@ -149,11 +150,11 @@ export function executeKeptRun(
   const manifestPath = join(plan.runDir, RUN_MANIFEST);
   const sharesManifest = firstSharingFile(manifestPath, spec.formatPaths ?? []);
   if (sharesManifest !== undefined) {
-    refuse(APP_MESSAGES[AppMessage.FormatNamesStoredRunManifest](sharesManifest, manifestPath, plan.runDir));
+    refuse(refusal(AppError.FormatNamesStoredRunManifest, { formatPath: sharesManifest, manifestPath, runDir: plan.runDir }));
   }
   const readManifest = inputAt(manifestPath, spec.inputs ?? []);
   if (readManifest !== undefined) {
-    refuse(APP_MESSAGES[AppMessage.StoredRunReadsItsManifest](manifestPath, readManifest.path, readManifest.subject));
+    refuse(refusal(AppError.StoredRunReadsItsManifest, { manifestPath, inputPath: readManifest.path, inputSubject: readManifest.subject }));
   }
   if (!route([`md:${plan.documentPath}`, `json:${plan.reconciliationJsonPath}`], plan.runDir)) return undefined;
   const manifest = planRunManifest({ runId: spec.runId, target: spec.target, ...meta });

@@ -1,7 +1,7 @@
 export const USAGE_EXIT_CODE = 2;
 
 // A process outcome, not a verdict: the ledger was never finished, so no verdict code may stand for it.
-const UNEXPECTED_ERROR_EXIT_CODE = 6;
+export const UNEXPECTED_ERROR_EXIT_CODE = 6;
 
 export type RunEnding =
   | { readonly kind: "verdict"; readonly code: number }

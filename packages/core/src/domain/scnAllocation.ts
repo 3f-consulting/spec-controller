@@ -19,6 +19,10 @@ export interface UnknownPart {
   readonly headerCodes: readonly string[];
 }
 
+export type UnknownPartCarried =
+  | { readonly kind: "none" }
+  | { readonly kind: "some"; readonly headerCodes: readonly [string, ...(readonly string[])] };
+
 export interface Allocation {
   readonly kind: "allocated";
   readonly code: string;
@@ -59,4 +63,9 @@ export function nextScnCode(request: AllocationRequest, occurrences: readonly Sc
   const next = (highest === null ? 0 : numberOf(highest.code)) + 1;
   const code = `SCN-${request.part}-${String(next).padStart(NUMBER_WIDTH, "0")}`;
   return headed && request.isNew === true ? { kind: "allocated", code, highest, alreadyHeaded: true } : { kind: "allocated", code, highest };
+}
+
+export function unknownPartCarried(unknown: UnknownPart): UnknownPartCarried {
+  const [first, ...rest] = unknown.headerCodes;
+  return first === undefined ? { kind: "none" } : { kind: "some", headerCodes: [first, ...rest] };
 }
