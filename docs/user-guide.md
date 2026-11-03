@@ -1,6 +1,6 @@
 # spec-controller — how to use
 
-This guide is for anyone who runs `spec-controller balance` against a project: a developer wiring it into CI, a tech lead adopting the reconciliation discipline, or an auditor checking whether a codebase's scenarios are backed by evidence. The tool behaves the same whoever runs it.
+This guide is for anyone who runs `spec-controller balance` against a project, such as a developer wiring it into CI, a tech lead adopting the reconciliation discipline, or an auditor checking whether a codebase's scenarios are backed by evidence. The tool behaves the same whoever runs it.
 
 `balance` reconciles two sides, like a ledger:
 
@@ -11,7 +11,7 @@ This guide is for anyone who runs `spec-controller balance` against a project: a
 
 `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
-You do not need feature files to start. A project with none, or with feature files not tagged to spec-controller's model, is a `new-client`, and `balance` still reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds. They are not the first step.
+You do not need feature files to start. A project with none, or with feature files not tagged to spec-controller's model, is a `new-client`, and `balance` still reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds, and they are not the first step.
 
 **Contents**
 
@@ -73,7 +73,7 @@ npx spec-controller balance --features ./features …
 
 ## Every report, and the whole command
 
-[The quickstart](./quickstart.md) takes a first run from nothing to CI, on Vitest. This section holds what it leaves out: the command that writes each runner's report, and the command that reads them all. Run it from the repository being reconciled, with the published CLI.
+[The quickstart](./quickstart.md) takes a first run from nothing to CI, using Vitest. This section adds what it leaves out: the command that writes each runner's report, and the command that reads them all. Run these from the repository being reconciled, using the published CLI.
 
 ```
 cd ~/code/your-project
@@ -103,13 +103,16 @@ npx spec-controller --store "$STORE" balance \
 
 - **Leave out any input you don't have.**
 - **`STORE` is optional.** It sits outside the repository on purpose. A kept run lists a codebase's gaps, so it belongs in a store you chose, not under version control beside the code it describes. See [Storing a run](#storing-a-run----store----run-id).
-- **`--target` names the project in the report.** Without it the report reads `unknown-target`. When the project is a git checkout with an `origin` remote, the report adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`. The origin is named without any user, password, token, query or fragment its remote carries. Only a URL, a transport to a URL, an scp remote or a local path is named. A remote whose user part can only be guessed at names no origin, nor does any other form. A local path, and a `file:` URL holding no user, are named as given.
+- **`--target` names the project in the report.** Without it the report reads `unknown-target`. When the project is a git checkout with an `origin` remote, the report adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`.
+  - The origin is named without any user, password, token, query or fragment its remote carries.
+  - Only a URL, a transport to a URL, an scp remote or a local path is named. Any other form names no origin, and neither does a remote whose user part can only be guessed at.
+  - A local path, and a `file:` URL holding no user, are named as given.
 
 For the smallest form of the command and every flag, see [Command reference](#command-reference--balance).
 
 ### Expect your first run to fail — use `--exit-zero`
 
-Your first run against an unannotated pipeline goes red, and the ledger is right: the corpus raises nothing yet. [A first run, report only](./quickstart.md#a-first-run-report-only) says why, and how `--exit-zero` lets you watch before you gate.
+Your first run against an unannotated pipeline fails, and the ledger is right, because the corpus raises nothing yet. [A first run, report only](./quickstart.md#a-first-run-report-only) says why, and how `--exit-zero` lets you watch before you gate.
 
 ### Write your first `notChecks`
 
@@ -134,9 +137,9 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tag naming a kind of quality check says which kind of run answers the obligation; whether that run really is end-to-end is the test's job.
+A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
 
-A whole feature file is its header code on the line above `Feature:`, then its Rules and scenarios, each scenario carrying its own code:
+A feature file has a header code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own code:
 
 ```gherkin
 @<FFF>
@@ -180,7 +183,7 @@ A CI step citation:
 
 ### Only these four forms are read
 
-Nothing else names a scenario:
+The table above holds the only four forms that name a scenario: a bracketed code in a test's title or name, or in an enclosing title where the table allows it, a `scn` property on a pytest test, a Cucumber scenario's own `@SCN` tag, and a CI step's `id:`. These name nothing:
 
 - `SCN-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>` in a test title without the square brackets;
 - a code in a comment, including a `// @SCN-…` line in a step-definition file;
@@ -190,7 +193,7 @@ A test that names nothing still runs and is still reported. It lands on the **un
 
 ### Citing a scenario from pytest
 
-A pytest test's name is a Python function name, and cannot hold `[SCN-…]`. A pytest test cites its scenario with a marker instead, and a hook you add once copies the marker into the report. Pass the report with `--pytest`:
+A pytest test's name is a Python function name, which cannot hold `[SCN-…]`. So a pytest test cites its scenario with a marker, and a hook you add once copies the marker into the report. Pass the report with `--pytest`:
 
 ```sh
 pytest --junitxml=reports/pytest.xml
@@ -472,7 +475,11 @@ end
 }
 ```
 
-**Put the code on the example, not on its group.** `balance` reads the code in the example's own description first. Only when that carries none does it read a code in an enclosing `describe` or `context` description, and then every group's code counts: if one group cites a scenario and a group nested inside it cites a second, an example in the inner group credits neither. One code on each example is the form that cannot go wrong. `balance` reads RSpec's JSON report rather than JUnit XML because `rspec_junit_formatter` joins an example's description to its groups' descriptions, so a code on an example cannot be told from a code on its group. Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming your runners](#naming-your-runners--runners)).
+**Put the code on the example, not on its group.** `balance` reads the code in the example's own description first. Only when that carries none does it read a code in an enclosing `describe` or `context` description, and then every group's code counts: if one group cites a scenario and a group nested inside it cites a second, an example in the inner group credits neither. One code on each example is the form that cannot go wrong.
+
+`balance` reads RSpec's JSON report rather than JUnit XML because `rspec_junit_formatter` joins an example's description to its groups' descriptions, so a code on an example cannot be told from a code on its group.
+
+Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming your runners](#naming-your-runners--runners)).
 
 **A pending example proves nothing until it passes.** RSpec runs a `pending` example and expects it to fail. If it fails, RSpec reports it pending and `balance` reads no evidence, as it does for `skip` and `xit`. If it passes, RSpec reports it failed, and the scenario it cites reads failing until the `pending` is removed.
 
@@ -495,7 +502,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 
 ### Turn a fitness function into an evidence obligation
 
-**There are two artefacts and no third**, and neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step to write.
+You write two artefacts and no third, and neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step to write.
 
 **1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its axis, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
 
@@ -513,8 +520,6 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
         run: eslint
 ```
 
-That is all.
-
 - **One `@fitness` scenario is one check.** Its `@SCN` identifies the check and its title describes it. Nothing else says what the check is about.
 - **Nothing names a bar.** The bar is in the tool's own configuration or its step's `env:`, such as a suite's `timeout`, and the step fails below it. A check run on a schedule, such as a mutation sweep with Stryker's own `thresholds.break`, holds its bar in its own run and has no step here (see [Wiring into CI](#wiring-into-ci)).
 - **The check's evidence observation is its step's `outcome`.** Whatever the tool measures, its exit code on its own CI step is the verdict.
@@ -525,7 +530,7 @@ That is all.
 - A step stating an `@SCN` that no scenario carries posts to a **phantom claim**'s row.
 - A step stating no `@SCN` posts to the **unnamed claim**.
 
-**`specController.fitnessChecks` is not read.** A tree carrying the key has it treated like any other key this tool does not read: it is named under `### Configuration not read`, in the same words as a misspelling. You author only the two artefacts above.
+**`specController.fitnessChecks` is not read.** Like any other key this tool does not read, it is named under `### Configuration not read`, in the same words as a misspelling.
 
 **One `toJSON(steps)` dump step per job** lets the reconciler read what each step did, and `--ci-steps` points `balance` at it. That is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
@@ -568,8 +573,19 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. The report tells it apart from an omitted key, which it reads as *you have not told us*.
 - **A key outside the four** is reported as unrecognised, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step becomes a candidate. That is the zero-annotation report.
-- **A runner is recognised only as the command a step runs.** That is the first word of each command in an `&&`, `||` or `;` list (or its opening words, for a runner named in several words, below), after any `NAME=value` settings, or the word one of these launchers hands on to: `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m`, `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. This holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep. A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
-- **A step invokes a `package.json` script where a command runs it in a form its package manager documents.** A command runs at the head of each command in an `&&`, `||`, `;` or `|` list or after a background `&`, after a shell word (`!`, `(`, `{`, `if`, `then`, `elif`, `else`, `while`, `until`, `do`), and after a command that runs the command after it, past that command's options and `NAME=value` settings: the launchers above, `env`, `nice`, `nohup`, `time`, `command`, `exec`, `xargs`, `stdbuf`, `sudo`, `yarn exec`, `yarn dlx`, `cross-env`, `dotenv`, `xvfb-run`, `nyc`, `c8` and `flock`. So `env CI=1 pnpm test`, `sudo -u ci npm test`, `pnpm start & pnpm test` and `( cd pkg && pnpm test )` each run `test`. The forms are `npm run <script>` or its aliases `run-script`, `rum` and `urn`, and npm's test shortcut `npm test`, `npm t` or `npm tst`; `pnpm <script>`, `pnpm run <script>` and pnpm's `t` or `tst`, after any of the selections `--filter <selector>`, `-F <selector>`, `-r` and `--recursive`; and `yarn <script>`, `yarn run <script>`, either after `yarn workspace <name>`, and `yarn workspaces foreach <options> run <script>`. After `yarn workspaces foreach <options> exec`, the command after `exec` runs, never a script by that command's name. Only the target's own `package.json` is read, so a selection is followed into its script of that name. A script named anywhere else, as in `echo pnpm check`, is not run. A runner is still recognised only through the launchers, as above.
+- **A runner is recognised only as the command a step runs.** That is the first word of each command in an `&&`, `||` or `;` list, or its opening words for a runner named in several words (see below). `NAME=value` settings before it are passed over.
+  - The word may also be the one a launcher hands on to. The launchers are `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m` and `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`.
+  - This holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep.
+  - A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
+- **A step invokes a `package.json` script where a command runs it in a form its package manager documents.**
+  - A command runs in any of these positions: at the head of each command in an `&&`, `||`, `;` or `|` list, or after a background `&`; after a shell word (`!`, `(`, `{`, `if`, `then`, `elif`, `else`, `while`, `until`, `do`); and after a command that runs the command after it, past that command's options and `NAME=value` settings.
+  - The commands that run the command after them are the launchers above, `env`, `nice`, `nohup`, `time`, `command`, `exec`, `xargs`, `stdbuf`, `sudo`, `yarn exec`, `yarn dlx`, `cross-env`, `dotenv`, `xvfb-run`, `nyc`, `c8` and `flock`. So `env CI=1 pnpm test`, `sudo -u ci npm test`, `pnpm start & pnpm test` and `( cd pkg && pnpm test )` each run `test`.
+  - The npm forms are `npm run <script>` or its aliases `run-script`, `rum` and `urn`, and npm's test shortcut `npm test`, `npm t` or `npm tst`.
+  - The pnpm forms are `pnpm <script>`, `pnpm run <script>` and pnpm's `t` or `tst`, after any of the selections `--filter <selector>`, `-F <selector>`, `-r` and `--recursive`.
+  - The yarn forms are `yarn <script>` and `yarn run <script>`, either of them optionally after `yarn workspace <name>`, and `yarn workspaces foreach <options> run <script>`. After `yarn workspaces foreach <options> exec`, the command after `exec` runs, never a script by that command's name.
+  - Only the target's own `package.json` is read, so a selection is followed into its script of that name.
+  - A script named anywhere else, as in `echo pnpm check`, is not run.
+  - A runner is still recognised only through the launchers, as above.
 - **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
 - **Jest, RSpec, Go and Python work the same way:**
   - `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
@@ -706,7 +722,7 @@ Each check step carries its `@SCN` as its `id:`, and the job ends with one dump 
 - **Put `if: always()` on every check step, not just the dump.** Without it, the first red aborts the job and every later check is skipped. The ledger then reports one `failing` and N `broken`: a worse account from a correct mechanism.
 - **The dump must be `toJSON(steps)`.** It is the only place a step's `id` and its `outcome` travel together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not.
 - **Pass the dump through an environment variable,** never write `${{ toJSON(steps) }}` into the command itself. A step's output can hold a quote, and the shell would then run what follows it.
-- **A check that runs on a schedule stays on its own schedule, and no push step records it.** A check too slow for every push, such as a mutation sweep, runs on its own schedule, with its bar in its own run: a scope's nightly job concludes `failure` below the bar. No push step reads that verdict, so it has no row in a push's ledger. Its red needs a stop of its own where work starts, not in CI: no new work starts while the newest full sweep is red, lapsed or measured nothing, other than the fix, which merges on its own CI. Without that stop, a red sweep blocks nothing.
+- **A check that runs on a schedule stays on its own schedule, and no push step records it.** A check too slow for every push, such as a mutation sweep, holds its bar in its own run: a scope's nightly job concludes `failure` below the bar. No push step reads that verdict, so it has no row in a push's ledger. Its red needs a stop of its own where work starts, not in CI: no new work starts while the newest full sweep is red, lapsed or measured nothing, other than the fix, which merges on its own CI. Without that stop, a red sweep blocks nothing.
 
 ### Reconcile once, over the reports and the record
 
@@ -761,9 +777,9 @@ The output is the **Evidence Reconciliation**, the whole reconciliation, in two 
 - **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into **Quality Check Reconciliations**, one per kind of quality check, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `scenario-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger.
 
-The JSON's structure is stated by a JSON Schema the package ships, as `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). It names every key the JSON may carry and refuses any other. So validate a report you are handed against the schema of the version that wrote it, which the report's provenance names, and read a change to the JSON's structure as a change to the schema.
-
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
+
+The JSON's structure is stated by a JSON Schema the package ships, as `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). It names every key the JSON may carry and refuses any other. So validate a report you are handed against the schema of the version that wrote it, which the report's provenance names, and read a change to the JSON's structure as a change to the schema.
 
 ### How a run works
 
@@ -791,6 +807,14 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 
 The outcome to watch for is the **watermelon**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A watermelon is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
+### What counts as an `@SCN` code
+
+An `@SCN` code has the form `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+
+So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no `@SCN` code, and reconciles as `no-scn-code`.
+
+The tool judges scenario code errors only over the corpus that `--features` names.
+
 ### Duplicate `@SCN` codes
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
@@ -803,7 +827,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. It lists the errors it found under `### Scenario code errors` (`errors.scenarioCodes` in the JSON) only when the corpus holds one, in `## Errors in the inputs` right after the run provenance. A run whose corpus holds none states that its scenario codes are clean in one line, just after its run verdict. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errors.scenarioCodes` in the JSON), in `## Errors in the inputs` right after the run provenance. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
@@ -818,14 +842,6 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 - When the codes are clean, no section prints. The run verdict under `## Summary views` is followed by one line saying so, with how many feature files the run judged, coded or not, and how many feature codes they carry, each counted on its own.
 - Over a corpus with no feature file, no section prints either. The line after the run verdict says that no feature file was judged, and states nothing clean.
 - The section always says that a duplicated `@SCN` is reported on its account's rows, never in this section.
-
-### What counts as an `@SCN` code
-
-An `@SCN` code has the form `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
-
-So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no `@SCN` code, and reconciles as `no-scn-code`.
-
-The tool judges scenario code errors only over the corpus that `--features` names.
 
 ### Exit codes
 
@@ -1008,13 +1024,13 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **A `@unit` scenario reads `missing` while its test passes.** Check the square brackets around the code in the test title first. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's `@SCN` as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors. Finding them is the point.
+**A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's `@SCN` as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
 
-**My first run reds with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
+**My first run fails with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
 
 1. Read the report's **Step accounting** section. It names each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
-3. To keep the report while you work it down without redding the build, add `--exit-zero`. Delete it when you are ready to gate.
+3. To keep the report while you work it down without failing the build, add `--exit-zero`. Delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 

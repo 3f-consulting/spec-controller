@@ -230,7 +230,7 @@ At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs
 
 ## Starting from an existing codebase
 
-`balance` keeps a reconciled codebase reconciled, but it does not get one there. That work is yours: name each behaviour as a scenario, and put its code on the tests that prove it. Until then, use the inventory and `--exit-zero` described in *Try it*, above.
+`balance` keeps a reconciled codebase reconciled, but it does not get one there. That work is yours: name each behaviour as a scenario, and put its code on the tests that prove it. Before that, use the inventory and `--exit-zero` described in *Try it*, above.
 
 ## Built with Claude Code, and how it's kept honest
 
