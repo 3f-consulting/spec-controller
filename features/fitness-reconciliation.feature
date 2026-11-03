@@ -1,17 +1,18 @@
 @LNT
 Feature: Reconcile every fitness function as a @fitness scenario citing its own @SCN
 
-  A scenario tagged @fitness raises one Evidence Obligation for a whole-system property, and the
-  CI step whose id: is that scenario's code answers it with one Evidence Observation.
+  A scenario tagged @fitness raises one Evidence Obligation for a whole-system property. The CI
+  step whose id: is that scenario's code answers it with one Evidence Observation.
 
-  A @fitness scenario has a title and tags and no steps, and nothing runs it. Its obligation is
-  satisfied only by a run: step in the CI config over the real tree. A check that is not wired
-  into CI leaves its obligation missing, and one whose CI step or job sets `continue-on-error`
-  reconciles as watermelon, unless the run reads the CI run's step record, where the step's own
-  outcome answers the obligation. No other key or tag names a check: a
-  specController.checkRegistry key settles nothing and is reported under "Configuration not
-  read" like any key the block does not read, and a tag carrying a bare check word raises no
-  obligation.
+  A @fitness scenario has a title and tags and no steps, and nothing runs it. Only a run: step
+  in the CI config over the real tree satisfies its obligation. A check not wired into CI
+  leaves its obligation missing. One whose CI step or job sets `continue-on-error` reconciles
+  as watermelon, unless the run reads the CI run's step record, where the step's own outcome
+  answers the obligation.
+
+  No other key or tag names a check. A specController.checkRegistry key settles nothing and is
+  reported under "Configuration not read", like any key the block does not read. A tag carrying
+  a bare check word raises no obligation.
 
   Rule: a `@lint=<check>` tag raises no Evidence Obligation — the retired form is inert
 
@@ -23,8 +24,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a fitness function's run posts ONE Evidence Observation, citing its scenario's @SCN
 
-    A fitness run posts to the row of the scenario code it cites, as any other Evidence Observation
-    does. One run is one Evidence Observation and cites one scenario.
+    A fitness run posts to the row of the scenario code it cites, as any other Evidence
+    Observation does. One run is one Evidence Observation and cites one scenario.
 
     @unit @SCN-LNT-004
     Scenario: a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently
@@ -34,8 +35,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a fitness Evidence Observation matching no Evidence Obligation lands on the unnamed claim or a phantom claim
 
-    An Evidence Observation citing nothing lands on the unnamed claim. One citing a code no scenario
-    carries creates a phantom claim's row for that code and posts there.
+    An Evidence Observation citing nothing lands on the unnamed claim. One citing a code no
+    scenario carries creates a phantom claim's row for that code and posts there.
 
     @unit @SCN-LNT-009
     Scenario: a fitness Evidence Observation citing an @SCN no scenario carries posts to a phantom claim's row, named by the @SCN its step stated
@@ -74,8 +75,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no scenario
 
     With no @fitness scenarios and no annotated steps, the report lists every check the pipeline
-    runs, each on the unnamed claim. Steps the target lists as not checks, such as checkout, toolchain
-    setup, install and build, are reported as excluded. Only that list excludes a step.
+    runs, each on the unnamed claim. Steps the target lists as not checks, such as checkout,
+    toolchain setup, install and build, are reported as excluded. Only that list excludes a step.
 
     @unit @SCN-LNT-029
     Scenario: a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report
@@ -85,8 +86,8 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a running check's citation is the @SCN its own CI step states, and nothing resolves it
 
-    The citation is the code in the step's id:, never the script's name, and it is not checked
-    against any list. A step whose id: is not a scenario code, or that has no id:, cites nothing.
+    The citation is the code in the step's id:, never the script's name, and no list checks it.
+    A step whose id: is not a scenario code, or that has no id:, cites nothing.
 
     @unit @SCN-LNT-031
     Scenario: a check step's id: is the citation it supplies, so an annotated pipeline is not read as unannotated
@@ -107,9 +108,9 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   Rule: a check step's outcome in the CI run's record is the fitness Evidence Observation
 
     The workflow file says a check is wired and which row it cites. The run's record says what
-    the step did on this run, and that outcome is the row's Evidence Observation. The record is the
-    dump of the run's steps that the consumer's pipeline writes; it carries each step's own result
-    and the code its id: states.
+    the step did on this run, and that outcome is the row's Evidence Observation. The record is
+    the dump of the run's steps that the consumer's pipeline writes. It carries each step's own
+    result and the code its id: states.
 
     @unit @SCN-LNT-021
     Scenario: a check step the run's record says succeeded answers the obligation of the scenario whose @SCN it carries
@@ -125,9 +126,9 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
   Rule: a fitness obligation answered by several evidence observations reads one Reconciliation line per observation
 
-    Each evidence observation is read on its own and is its own Reconciliation line, in evidence order,
-    whatever order the observations arrive in. No line names another observation, and the ledger balances
-    only when every line is satisfied.
+    Each evidence observation is read alone and is its own Reconciliation line, in evidence
+    order, whatever order the observations arrive in. No line names another observation. The
+    ledger balances only when every line is satisfied.
 
     @unit @SCN-LNT-036
     Scenario: a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance
