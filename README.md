@@ -2,9 +2,13 @@
 
 **Reassurance that your software keeps doing what you said it does.**
 
-`balance` fails your build when your scenarios and your tests stop agreeing. You name each behaviour as a scenario in a `.feature` file. You tag the scenario with the evidence it needs, such as `@unit` or `@e2e`, and with a scenario code of the form `@SCN-<FFF>-<NNN>`. Each test cites, by that code, the scenario it proves. On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. When scenarios and evidence disagree, the build goes red.
+`balance` fails your build when your scenarios and your tests stop agreeing.
 
-**What you need first:** your behaviours written as Gherkin scenarios with `@SCN` codes, and tests that cite them. For CI checks, you also need GitHub Actions (see *Who it fits*, below). `balance` keeps a codebase reconciled. It does not name your behaviours for you.
+You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a scenario code of the form `@SCN-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
+
+On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. Any disagreement turns the build red.
+
+**What you need first:** your behaviours written as Gherkin scenarios with `@SCN` codes, and tests that cite them. For CI checks, you also need GitHub Actions (see *Who it fits*, below). `balance` keeps a codebase reconciled, but it does not name your behaviours for you.
 
 ## A small example
 
@@ -48,9 +52,9 @@ Delete the test, and the run is out of balance and exits `1`:
 
 ## What double entry buys: a change becomes deliberate
 
-Every behaviour is recorded twice: once as a scenario, and once as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
+Every behaviour is recorded twice, as a scenario and as the test that proves it, and the two records must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-Each kind of disagreement has its own outcome, and every outcome except `satisfied` turns the build red:
+Each kind of disagreement has its own outcome. Every outcome except `satisfied` turns the build red:
 
 | You change | The report shows |
 |---|---|
@@ -58,7 +62,7 @@ Each kind of disagreement has its own outcome, and every outcome except `satisfi
 | Skip a test | `missing`: a skipped test proves nothing |
 | Break the behaviour a test checks | `failing` |
 | Re-point a test at another scenario | `missing` on the original |
-| Drop the scenario code from a test's title | the test still runs, but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
+| Drop the scenario code from a test's title | the test still runs but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
@@ -68,15 +72,15 @@ Each kind of disagreement has its own outcome, and every outcome except `satisfi
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
 | Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
 
-To remove a behaviour cleanly, you change both places: the scenario and its evidence. That change shows in the diff, and review judges it.
+To remove a behaviour cleanly, you change both the scenario and its evidence. That change shows in the diff, where review judges it.
 
 This matters most when an agent writes the code. An agent asked to make failing tests pass can delete them. Here, that gives a red build, not a quiet green.
 
 **The limits:**
 
 - **Deliberate is not right.** A change made in both places balances. Review decides whether it should have been made.
-- **A change inside one check is one entry, and `balance` does not see it.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row checks that the step ran and what it reported, read from your CI run's own record. So a red that `continue-on-error` swallowed still turns its row red. But the row does not read what the tool examined.
-- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` cannot see it. A check for unused step definitions catches this; this repository runs one.
+- **A change inside one check is one entry, and `balance` does not see it.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row reads from your CI run's own record whether the step ran and what it reported, so a red that `continue-on-error` swallowed still turns its row red. It does not read what the tool examined.
+- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile.
 - **Whether a test is a good test is assumed.** A balanced row means the evidence exists and holds. It does not mean the test checks what its title says.
 
@@ -96,11 +100,11 @@ Each link between them needs something to hold it:
 | spec ↔ checks | **Nothing but care.** The spec says one thing, the checks prove another, and nothing notices when they drift |
 | spec ↔ application | only through the other two |
 
-`balance` makes the checks ↔ application link hold for every kind of quality check, not only unit tests. It never reads your spec: whether the checks say what the spec says is a judgement, not a reconciliation.
+`balance` makes the checks ↔ application link hold for every kind of quality check, not only unit tests. It never reads your spec, because whether the checks say what the spec says is a judgement, not a reconciliation.
 
 ## Reading the full report
 
-Here is part of what it prints for a larger set of scenarios, the run verdict and the Claim Reconciliations section:
+Here is part of the report for a larger set of scenarios: the run verdict and the Claim Reconciliations section.
 
 <div class="sample-report">
 
@@ -150,13 +154,15 @@ Read it as a ledger. Each scenario is an account: its tags are what it is owed, 
 - one test cites a scenario that doesn't exist;
 - one test cites nothing.
 
-One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two end-to-end runs at once. The row says that every proof it was promised, at both layers, arrived and passed. No single test runner can see that. The two `F/1` rows are CI checks: a complexity limit that holds, and a lint step that failed. A check is reconciled the same way as a test: its scenario is owed one, and the step's result is the evidence.
+The `U/3` `E/2` row balances on three unit tests and two end-to-end runs together. It says that every proof it was promised, at both layers, arrived and passed. No single test runner can see that.
 
-The report keeps its exact terms, and they read plainly once named:
+The two `F/1` rows are CI checks: a complexity limit that holds, and a lint step that failed. A check is reconciled the same way as a test: its scenario is owed one, and the step's result is the evidence.
 
-- A *Claim Reconciliation* is one row of the ledger, one per claim. It sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). A claim is usually a scenario.
-- A test that names a scenario which does not exist makes a *phantom claim*. The cause is usually a typo, or a scenario since deleted.
-- A test that names no scenario at all, or a code several scenarios share, lands on the *unnamed claim*.
+The report uses these exact terms:
+
+- A *Claim Reconciliation* is one row of the ledger, one per claim. A claim is usually a scenario. The row sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*).
+- A *phantom claim* comes from a test that names a scenario which does not exist. The cause is usually a typo, or a scenario since deleted.
+- The *unnamed claim* takes any test that names no scenario at all, or a code several scenarios share.
 - A *watermelon* is a check that passes, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run.
 
 [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md) has the rest.
@@ -216,7 +222,7 @@ Pass whichever reports you have. The *What you need* section of [`docs/user-guid
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`. You get the same report, but an out-of-balance verdict exits `0`. Remove the flag when you are ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
-**Before you name anything, it lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI does not already show. It is a starting inventory; the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
+**Before you name anything, it lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from nothing to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) is the full reference: every flag, every runner, and the CI wiring in detail.
 
@@ -224,13 +230,13 @@ At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs
 
 ## Starting from an existing codebase
 
-`balance` keeps a reconciled codebase reconciled. It does not get one there. That work is yours: name each behaviour as a scenario, and put its code on the tests that prove it. Before that, `balance` lists what ran (*Try it*, above), and `--exit-zero` lets you watch before you gate.
+`balance` keeps a reconciled codebase reconciled, but it does not get one there. That work is yours: name each behaviour as a scenario, and put its code on the tests that prove it. Until then, use the inventory and `--exit-zero` described in *Try it*, above.
 
 ## Built with Claude Code, and how it's kept honest
 
 This repository was built with Claude Code, by an author who does not write TypeScript. The commit history is the agent's working log. Each commit title follows the issue-key convention, `[KEY-123] summary`, where the ID refers to a private tracker.
 
-The repository holds itself to the same discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
+The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
 - mutation testing at 95% per scope;
 - cognitive complexity, function length and CRAP;
 - duplication and unused code;

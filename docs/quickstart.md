@@ -4,9 +4,9 @@ This guide takes you from nothing to a first `spec-controller balance` run on yo
 
 ## What spec-controller does
 
-You write each behaviour of your software as a scenario in a Gherkin `.feature` file. Its tags say what proof it needs, such as `@unit` or `@e2e`. These needs are its **evidence obligations**: the proofs a scenario asks for.
+You write each behaviour of your software as a scenario in a Gherkin `.feature` file. Its tags say what proof it needs, such as `@unit` or `@e2e`. These needs are its **evidence obligations**.
 
-Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**: one reported result, which is `broken` if it never ran to a result.
+Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**, which is `broken` if it never ran to a result.
 
 `balance` matches each observation to the obligation it answers, scenario by scenario, like a ledger. When the two sides disagree, the build goes red. `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
@@ -56,9 +56,9 @@ npx spec-controller balance \
   --exit-zero
 ```
 
-- **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have: with no `features/` folder yet, leave out `--features`, because a folder that does not exist is refused.
+- **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have. With no `features/` folder yet, leave out `--features`, because a folder that does not exist is refused.
 - **`--target` names the project in the report.** Without it the report reads `unknown-target`.
-- **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red. Every candidate step cites nothing, so every observation posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
+- **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red, because every candidate step cites nothing. Every observation then posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
 For every other runner's report command, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
@@ -111,9 +111,11 @@ describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a de
 });
 ```
 
-For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing. The test still runs, but it lands on the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.** Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own `@SCN` tag, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
+For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing: the test still runs, but it lands on the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
-Other runners cite a scenario in their own way: see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
+Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own `@SCN` tag, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
+
+For how each other runner cites a scenario, see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
 
 ## Turn one CI check into a fitness function
 
@@ -135,7 +137,9 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
         run: eslint
 ```
 
-The step's outcome is the evidence: its exit code on its own CI step is the verdict. That outcome reaches `balance` only through the CI run's step record, passed with `--ci-steps`. Only a CI run writes that record, so a local run has none. If no step carries the scenario's code, the scenario reads `missing`. A step citing a code no scenario carries posts to a **phantom claim**'s row: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
+The step's outcome is the evidence: its exit code on its own CI step is the verdict. That outcome reaches `balance` only through the CI run's step record, passed with `--ci-steps`. Only a CI run writes that record, so a local run has none.
+
+If no step carries the scenario's code, the scenario reads `missing`. A step citing a code no scenario carries posts to a **phantom claim**'s row: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
 
 ## Wire the run into CI
 
@@ -162,9 +166,9 @@ The step's outcome is the evidence: its exit code on its own CI step is the verd
   run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump must be `toJSON(steps)`. It is the only place that carries a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows it.
+The dump must be `toJSON(steps)`, the only place that carries a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows it.
 
-Then a single Reconcile step reads the reports and the record. It is the same as the first run, plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
+A single Reconcile step then reads the reports and the record. It is the first run plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
 
 ```yaml
 - name: Reconcile
@@ -184,7 +188,7 @@ Then a single Reconcile step reads the reports and the record. It is the same as
 
 Add `--cucumber reports/cucumber.json` if you have a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
 
-Keep the reports as build artefacts, but do not commit them. A report lists your codebase's gaps, so keep it out of version control. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
+Keep the reports as build artefacts, but do not commit them: a report lists your codebase's gaps. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 
 ## Read the report
 
