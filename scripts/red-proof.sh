@@ -14,19 +14,23 @@ valid_layer() {
 # A test reported a result when it passed or failed. One that was skipped, or never collected, did not, so a run in which none did is not a red, whatever its exit.
 # A report that cannot be read is a run that ended before writing one.
 judge() {
-  local layer=$1 report=$2 reported failed red
+  local layer=$1 report=$2 reported failed red passed
   if [ "$layer" = unit ]; then
     reported=$(jq '[.testResults[].assertionResults[] | select(.status == "passed" or .status == "failed")] | length' "$report" 2> /dev/null) || reported=0
     failed=$(jq '[.testResults[].assertionResults[] | select(.status == "failed")] | length' "$report" 2> /dev/null) || failed=0
     red=$(jq '.success | not' "$report" 2> /dev/null) || red=true
+    passed='.testResults[].assertionResults[] | select(.status == "passed") | .fullName'
   else
     reported=$(jq '[.[].elements[] | select(any(.steps[] | select(.hidden != true); .result.status == "passed" or .result.status == "failed"))] | length' "$report" 2> /dev/null) || reported=0
     failed=$(jq '[.[].elements[] | select(any(.steps[]; .result.status != "passed"))] | length' "$report" 2> /dev/null) || failed=0
     if [ "$failed" -gt 0 ]; then red=true; else red=false; fi
+    passed='.[].elements[] | select(all(.steps[]; .result.status == "passed") and any(.steps[] | select(.hidden != true); .result.status == "passed")) | .name'
   fi
   [ "$reported" -gt 0 ] || { echo "not a red: no selected test reported a result" >&2; return 4; }
   if [ "$red" = true ]; then
     echo "red: $failed of $reported selected failed"
+    # Each test the red commit adds or changes should be among the failures, so a selected test that passed is one to explain.
+    jq -r "$passed | \"passed: \" + ." "$report" 2> /dev/null || true
     return 1
   fi
   echo "green: $reported selected passed"
