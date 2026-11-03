@@ -13,6 +13,21 @@ This guide is for anyone who runs `spec-controller balance` against a project: a
 
 You do not need feature files to start. A project with none, or with feature files not tagged to spec-controller's model, is a `new-client`, and `balance` still reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds. They are not the first step.
 
+**Contents**
+
+- [What you need](#what-you-need)
+- [Install](#install)
+- [Every report, and the whole command](#every-report-and-the-whole-command)
+- [How your evidence finds its scenario](#how-your-evidence-finds-its-scenario)
+- [Fitness functions](#fitness-functions)
+- [Configuration — the `specController` block](#configuration--the-speccontroller-block)
+- [Wiring into CI](#wiring-into-ci)
+- [Reading the report](#reading-the-report)
+- [Command reference — `balance`](#command-reference--balance)
+- [Allocating the next scenario code — `spec-controller allocate`](#allocating-the-next-scenario-code--spec-controller-allocate)
+- [Troubleshooting](#troubleshooting)
+- [What spec-controller assumes, and what it does not do](#what-spec-controller-assumes-and-what-it-does-not-do)
+
 ---
 
 ## What you need
@@ -25,7 +40,7 @@ node --version   # must be v22.x or higher
 
 If your project uses pnpm: Node 25 and later do not bundle corepack, so install pnpm yourself (`npm install -g pnpm`).
 
-**Your evidence, as reports.** Generate whichever of these apply to your project before you run `balance`. The commands that write them are step 1 of the [quick start](#quick-start-run-it-on-your-project).
+**Your evidence, as reports.** Generate whichever of these apply to your project before you run `balance`. The commands that write them are step 1 of [Every report, and the whole command](#every-report-and-the-whole-command).
 
 | Input | What it is | Flag |
 |---|---|---|
@@ -56,9 +71,9 @@ npx spec-controller balance --features ./features …
 
 ---
 
-## Quick start: run it on your project
+## Every report, and the whole command
 
-Run it from the repository being reconciled, with the published CLI.
+[The quickstart](./quickstart.md) takes a first run from nothing to CI, on Vitest. This section holds what it leaves out: the command that writes each runner's report, and the command that reads them all. Run it from the repository being reconciled, with the published CLI.
 
 ```
 cd ~/code/your-project
@@ -94,9 +109,7 @@ For the smallest form of the command and every flag, see [Command reference](#co
 
 ### Expect your first run to fail — use `--exit-zero`
 
-Your first run against an unannotated pipeline goes red. Every candidate step cites nothing, so every evidence observation posts to the **unnamed claim** and `balance` exits `1`. The ledger is right: the corpus raises nothing yet.
-
-To adopt the tool by observing rather than by breaking the build, add `--exit-zero`. You get the same report, and the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
+Your first run against an unannotated pipeline goes red, and the ledger is right: the corpus raises nothing yet. [A first run, report only](./quickstart.md#a-first-run-report-only) says why, and how `--exit-zero` lets you watch before you gate.
 
 ### Write your first `notChecks`
 
@@ -770,7 +783,7 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 | `missing` | Evidence Observation is missing | |
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
 | `watermelon` | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run | see below |
-| `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [the quick start](#when-a-row-reads-no-evidence-obligation) |
+| `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [When a row reads `no-evidence-obligation`](#when-a-row-reads-no-evidence-obligation) |
 | `duplicate-scn-code` | Evidence Obligation's @SCN code is carried by another Scenario | see below |
 | `no-scn-code` | Evidence Obligation has no @SCN code for an Evidence Observation to link to | |
 

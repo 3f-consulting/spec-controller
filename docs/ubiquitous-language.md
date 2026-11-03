@@ -1,12 +1,12 @@
 # spec-controller's ubiquitous language
 
-The words spec-controller's code, scenarios, report and help use, and what each means. A review checks spec-controller against this file. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from the methodology**, which are named here and used as the methodology spec-controller implements defines them.
+The words spec-controller's code, scenarios, report and help use, and what each means. It has two parts: the **domain terms** that are spec-controller's own, defined here, and the terms **borrowed from 3F Consulting's delivery methodology**, which is not published, so they are named here and described where [`user-guide.md`](./user-guide.md) uses them.
 
 Each definition below restates what spec-controller already says in [`user-guide.md`](./user-guide.md), its feature files or its report; the evidence model's definitions also state the reconciliation model those follow. If the two ever disagree, the behaviour wins and this file is corrected.
 
 **One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. A machine key is language you read as much as prose is; it gets no private dialect. **One term, three forms — the form follows the surface, the word never changes, and a term from this file is `backticked` wherever it appears.** Prose spells it out (`static check`, `phantom claim`); a handle hyphenates it (`static-check`, `phantom-claim`, `quality-check-kind`, `both-missing`); a code identifier camel-cases it (`staticCheck`). A handle is not a licence to abbreviate: `check` is not a short `static-check`, it is a different word.
 
-An evidence-model term's **Double-check** entry names the words seen standing in for it. A review or a vocabulary sweep checks each use of those words by its sense: renamed to the term where it means the term, kept where it means something else. It is never a gate and never closed; a newly found synonym is added to it.
+An evidence-model term's **Double-check** entry names the words seen standing in for it. Such a word means the term only where its sense is the term's.
 
 ## Domain terms
 
@@ -83,7 +83,7 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | `Verdict` | The **two-valued** roll-up of a `Claim Reconciliation`: *balanced* (every `Reconciliation line` of every `Quality Check Reconciliation` on the row *satisfied*) or *out-of-balance* (any `reconciling item`) — never a third value. A `phantom claim`'s or the `unnamed claim`'s reconciliation is always out-of-balance; a `scenario` with neither `evidence obligation` nor `evidence observation` is out-of-balance via `both-missing` (one whose tests run untagged is out-of-balance via `no-evidence-obligation`), never a separate "empty" `verdict`. A **`Pending Item`** never affects the `verdict` — it is not a `reconciling item`. | Balanced / out of balance — an account whose two sides agree / don't | |
 | `Reconciling item` | A `Reconciliation line` whose `outcome` is an exception — in three shapes: a debit-side exception (missing / failing / `watermelon` / no-scn-code), a credit-side exception (cites-unknown-scenario / cites-no-scenario / no-evidence-obligation / broken), or **neither** — a real `scenario` with no `evidence obligation` and no `evidence observation` (both-missing). | Reconciling item — a line explaining a difference between two records | |
 | `Pending Item` | A **one-sided** `Quality Check Reconciliation` raised by a `<quality-check-kind>pending` tag — deliberately deferred, so it raises **no `Evidence Obligation`**, so nothing reconciles. *Not* a `Reconciling Item` (not an error): it never flips the `verdict` and never fails the run — a disclosed IOU, surfaced so it can't sit owed forever. Because there is no `Evidence Obligation`, an `Evidence Observation` citing that `scenario` at a pending `kind of quality check` is `no-evidence-obligation` — exactly as when no `Evidence Obligation` was raised at all. | Memorandum entry / note — an item disclosed but not posted to an account | warnings (credit-side) |
-| `Watermelon` | A passing `evidence observation` from a check that could not fail its job — its step or its job carries `continue-on-error`; the *`watermelon`* `outcome`. Green on the outside, and nothing behind it holds the build. It is read from the workflow file when no step record is supplied; with one, the step's own `outcome` answers the row, so a swallowed red reads *failing*. Neither route reads what the check examined, so a check over zero files that exits 0 is *satisfied*, not a watermelon. | | fabricated; green-but-fake |
+| `Watermelon` | A passing `evidence observation` whose check's CI step or job sets `continue-on-error`, so its red might not fail the CI run; the *`watermelon`* `outcome`. Green on the outside, and nothing behind it need hold the build. It is read from the workflow file when no step record is supplied; with one, the step's own `outcome` answers the row, so a swallowed red reads *failing*. Neither route reads what the check examined, so a check over zero files that exits 0 is *satisfied*, not a watermelon. | | fabricated; green-but-fake |
 
 #### The whole run
 
@@ -118,8 +118,8 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | provenance | The report's header recording what was reconciled (the target, its source SHA, the tool SHA and the input paths), so a reconciliation is reproducible and attributable. |
 | source SHA | The target's commit, by default its resolved `HEAD`. |
 | tool SHA | The tool's own identity, taken from its install, never from the target. |
-| run integrity | The report section that surfaces broken evidence as a harness failure and stamps the run unsound. |
-| proof never ran | A behaviour whose proof was never exercised in the run. |
+| run integrity | The report section, `## Run integrity: unsound`, printed only when evidence is broken. It stamps the run unsound, lists each proof that never ran with what broke, and says to fix what stopped each one from running and regenerate the report. |
+| proof never ran | An `evidence observation` that never ran to a result, so the behaviour it proves was never exercised: a `broken` one. |
 | Evidence observations | The report's count of evidence observations over every `kind of quality check`, fitness included, and its balancing identity: every evidence observation lands on a scenario, a phantom claim or the unnamed claim, and the three counts sum to the total. |
 
 ### Fitness functions in CI
@@ -154,8 +154,8 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 |---|---|
 | `specController` block | The block in a target's `package.json` holding `runners`, `notChecks` and `deferralTags`. |
 | `runners` | The declared behavioural runners, keyed by the four `layers` and nothing else. A value is a runner's name, or `null` to say the layer has none. |
-| `notChecks` | The target's list of steps that are neither runners nor checks, each written `<workflow file>:<job id>:<step name>` and matched exactly. Such a step is reported as excluded. |
-| configuration not read | A `specController` entry the run could not use: one of the wrong kind, read as absent, or a key the block does not read. Each is named on the report, and neither refuses the run. |
+| `notChecks` | The target's list of steps that are neither runners nor checks, each written `<workflow file>:<job id>:<step name>` and matched exactly. Such a step is reported as excluded, unless it is a reconciler step. An entry that matches no step of a workflow the run read, or does not name a step in that form, excludes nothing and is named under configuration not read. An entry naming a workflow the run did not read excludes nothing and is listed in step accounting as not applied. |
+| configuration not read | A `specController` entry the run could not use: one of the wrong kind, read as absent; a key the block does not read; a `runners` key that is not a layer; or a `notChecks` entry that matches no step or names none. Each is named on the report, and none refuses the run. |
 | deferral tag | A tag that defers every evidence obligation on its scenario to a Pending Item. The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`, and `deferralTags` extends it. |
 | `@<quality-check-kind>pending` | A tag deferring only the evidence obligation of that one `kind of quality check` on its scenario. |
 
@@ -181,26 +181,13 @@ One form per runner, and nothing else. The `scenario`'s tag line (`@SCN-<FFF>-<N
 | corpus census | The count of the corpus's scenarios, read from the Ledger summary. |
 | Summary views | The report's `## Summary views` section: the tallies by subject. It holds *Run verdict*, *Evidence reconciliation*, *Evidence observations*, *Step accounting* and *Out-of-balance by feature*. |
 | Out-of-balance by feature | The Summary views subsection that groups out-of-balance Claim Reconciliations by feature, opening with an *N of M* total line. |
-| harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. A broken one is reported as a harness failure, and the run is stamped Unsound. |
+| harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. The report does not use the word: it names what stopped each proof from running, and stamps the run Unsound. |
 | term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |
 | pair | The scenario code and `kind of quality check` at which an Evidence Obligation, and the Evidence Observations answering it, are booked. A term names a pair, and a credit at a named pair reconciles as a matched obligation. |
 
-## Descriptions for marketing use
+## Borrowed from 3F Consulting's delivery methodology
 
-The terms above are exact, and the code, the report and the help use them as they stand. Where a term's meaning is opaque to someone meeting the tool for the first time, it has a description below for writing *about* spec-controller: the README's prose, a talk, an article. Each stays as close to the definition as it can while a newcomer can read it. None is used in an error message, the report or the help, which keep the terms.
-
-| Term | Description for marketing use |
-|---|---|
-| `Evidence Obligation` | A proof a scenario asks for: its tags say which kinds of test or check must show that it holds. |
-| `Evidence Observation` | A proof that actually ran: one test's result, or one CI check's result, naming the scenario it proves. |
-| `Claim Reconciliation` | One line per claim, setting the proofs it asked for against the proofs that ran. |
-| `Phantom claim` | Where a test lands when it names a scenario that does not exist, usually a typo or a scenario since deleted. |
-| `Unnamed claim` | The holding pile for test and check results that name no scenario at all. |
-| `Watermelon` | A check that passes but could not have failed the build: green on the outside, nothing inside holding it. |
-
-## Borrowed from the methodology
-
-Named here, and used as the methodology defines them; [`user-guide.md`](./user-guide.md) describes each as spec-controller reads it.
+Named here. The methodology is not published: [`user-guide.md`](./user-guide.md) describes each term it uses as spec-controller reads it, and `ci-run-time` is described under `Dynamic Check`, above.
 
 - **Kinds of quality check**:
   - the kinds of quality check `@unit`, `@integration`, `@e2e`, `@performance` and `@fitness`, the first four the layers;

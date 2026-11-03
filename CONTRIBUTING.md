@@ -26,6 +26,10 @@ Before a change that touches only [`docs/`](docs/), [`README.md`](README.md), [`
 
 How a release goes out is [`docs/releasing.md`](docs/releasing.md).
 
+## Keep to the vocabulary
+
+A review checks spec-controller against [`docs/ubiquitous-language.md`](docs/ubiquitous-language.md). A review or a vocabulary sweep checks each use of the words in a term's **Double-check** entry by its sense: renamed to the term where it means the term, kept where it means something else. The entry is never a gate and never closed; a newly found synonym is added to it.
+
 ## Report a problem
 
 Open an issue at https://github.com/3f-consulting/spec-controller/issues. Say what you ran, what you expected and what happened. If `balance` produced a report, attach it.

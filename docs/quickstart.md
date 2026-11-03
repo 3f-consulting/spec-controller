@@ -6,7 +6,7 @@ This guide takes you from nothing to a first `spec-controller balance` run on yo
 
 You write each behaviour of your software as a scenario in a Gherkin `.feature` file. Its tags say what proof it needs, such as `@unit` or `@e2e`. These needs are its **evidence obligations**: the proofs a scenario asks for.
 
-Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**: a proof that actually ran.
+Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**: one reported result, which is `broken` if it never ran to a result.
 
 `balance` matches each observation to the obligation it answers, scenario by scenario, like a ledger. When the two sides disagree, the build goes red. `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
@@ -60,7 +60,7 @@ npx spec-controller balance \
 - **`--target` names the project in the report.** Without it the report reads `unknown-target`.
 - **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red. Every candidate step cites nothing, so every observation posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
-For every other runner's report command, see [Quick start: run it on your project](./user-guide.md#quick-start-run-it-on-your-project) and [Expect your first run to fail — use `--exit-zero`](./user-guide.md#expect-your-first-run-to-fail--use---exit-zero).
+For every other runner's report command, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
 **Before you name anything, it lists what ran.** It reports every test and CI step, grouped by file, with what passed and what failed. That is a starting inventory. The value begins when you name the behaviours.
 
@@ -193,14 +193,14 @@ Keep the reports as build artefacts, but do not commit them. A report lists your
 The [README's sample report](../README.md) shows every kind of row in one small example. Read it as a ledger:
 
 - **The run verdict** says whether the whole run balanced, and gives its exit code.
-- **A Claim Reconciliation** is one row per claim. A claim is usually a scenario. The row sets the proofs the claim asks for against the proofs that ran.
+- **A Claim Reconciliation** is one row per claim. A claim is usually a scenario. The row sets the evidence the claim asks for against the results reported for it.
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
 - **The verdict** is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
 - **A phantom claim's row** holds evidence that cites a code no scenario carries, usually a typo or the code of a deleted scenario. Each unknown code gets one such row, named by that code, like the sample's row whose item cites an unknown Scenario.
 - **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.
 
-Watch for a **watermelon**: a check that is green but could not have failed its job, because `continue-on-error` would have swallowed its red. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
+Watch for a **watermelon**: a check that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
 If your first run shows a wall of uncited checks, read the report's **Step accounting** section. It names each workflow and job, how many steps were read and what became of every one.
 

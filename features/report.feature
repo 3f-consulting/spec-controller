@@ -562,7 +562,7 @@ Feature: The report renders the ledger as sectioned facts
     in. The CI steps form one group of their own, listed after the files.
 
     Each group counts what ran, passed and failed. It names each failed test, by its test title
-    or Cucumber scenario name, and each CI step, which holds no result. Broken items are listed
+    or Cucumber scenario name, and each CI step by its workflow, job and step, which holds no result. Broken items are listed
     individually.
 
     Evidence citing an @SCN code that more than one scenario carries is grouped apart from
@@ -650,9 +650,9 @@ Feature: The report renders the ledger as sectioned facts
 
     After the section's tally lines and before its table, a key reads each evidence cell as
     obligation/observations: what the letter, the number, a `-`, a blank cell and `—` mean. It
-    also reads the Reconciling items and CI steps cells. Where a row carries a watermelon item,
-    the key says what the item's parentheses name, and what the reader removes or sets to false
-    so the check's red fails the CI run. Each line of the key holds for every kind of row the
+    also reads the Reconciling items and CI steps cells. Where a row's item says its CI step or
+    its job sets `continue-on-error`, the key says the name in parentheses after it is its fitness
+    function, and what the reader removes or sets to false so the check's red fails the CI run. Each line of the key holds for every kind of row the
     table can show.
 
     A table with no evidence column carries no key.

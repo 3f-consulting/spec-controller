@@ -29,17 +29,17 @@ it("[SCN-CHK-001] refuses an empty basket", () => { /* … */ });
 `balance` reconciles them, and the row balances:
 
 ```markdown
-| Claim | Unit | Verdict | Reconciling items |
-| --- | --- | --- | --- |
-| SCN-CHK-001 | U/1 | balanced | — |
+| Claim | Unit | Verdict | Reconciling items | CI steps |
+| --- | --- | --- | --- | --- |
+| SCN-CHK-001 | U/1 | balanced | — |  |
 ```
 
 Delete the test, and the run is out of balance and exits `1`:
 
 ```markdown
-| Claim | Unit | Verdict | Reconciling items |
-| --- | --- | --- | --- |
-| SCN-CHK-001 | U/- | out-of-balance | unit: Evidence Observation is missing |
+| Claim | Unit | Verdict | Reconciling items | CI steps |
+| --- | --- | --- | --- | --- |
+| SCN-CHK-001 | U/- | out-of-balance | unit: Evidence Observation is missing |  |
 ```
 
 </div>
@@ -62,7 +62,7 @@ Each kind of disagreement has its own outcome, and every outcome except `satisfi
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step run under `continue-on-error` | without the run's step record: `watermelon`, green but unable to fail the build. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
+| Let a CI check step or its job run under `continue-on-error` | without the run's step record: `watermelon`, passing, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
 | Copy a scenario and keep its `@SCN` code | both copies share one row, and every Quality Check Reconciliation on it reads `duplicate-scn-code`: no evidence can be credited to either |
 | Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
@@ -100,7 +100,7 @@ Each link between them needs something to hold it:
 
 ## Reading the full report
 
-Here is a sample of what it prints for a larger set of scenarios:
+Here is part of what it prints for a larger set of scenarios, the run verdict and the Claim Reconciliations section:
 
 <div class="sample-report">
 
@@ -114,25 +114,29 @@ Here is a sample of what it prints for a larger set of scenarios:
 - 8 Claim Reconciliation(s): 3 balanced, 5 out-of-balance.
 - 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.
 - 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".
-- 0 @SCN ids seen in non-tag context, excluded
+- 0 @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
 
 Key: each evidence cell reads *obligation*/*observations*.
-- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means none is raised, or the obligation is pending.
-- The number counts the Evidence Observations posted to the scenario for that kind. `-` means none.
-- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that asks for no unit evidence, or whose unit evidence is pending.
-- A blank cell means neither; `—` marks a row that is not a scenario of the corpus: a cited code no feature declares, or evidence that cites no scenario.
-- In Reconciling items, `—` means the row has no reconciling item.
+- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means they raise none of that kind, as a pending tag raises none.
+- The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.
+- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that raises no unit obligation, which puts the row out of balance even where its unit evidence is pending.
+- A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.
+- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.
+- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries an @SCN code and no tag that raises an Evidence Obligation.
+- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone, outside those counts.
+- CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.
+- Where a row's item says its CI step or its job sets `continue-on-error`, the name in parentheses after it is its fitness function. Remove `continue-on-error` from its CI step and from its job, or set it to false, and the check's red fails the CI run.
 
-| Claim | Fitness | Unit | E2e | Verdict | Reconciling items |
-| --- | --- | --- | --- | --- | --- |
-| SCN-CHK-001 |  | U/1 |  | balanced | — |
-| SCN-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing |
-| SCN-CHK-003 |  | U/- |  | out-of-balance | unit: Evidence Observation is missing |
-| SCN-CHK-005 |  | U/3 | E/2 | balanced | — |
-| SCN-CHK-006 | F/1 |  |  | balanced | — |
-| SCN-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing |
-| SCN-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts) — passed |
-| (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed |
+| Claim | Fitness | Unit | E2e | Verdict | Reconciling items | CI steps |
+| --- | --- | --- | --- | --- | --- | --- |
+| SCN-CHK-001 |  | U/1 |  | balanced | — | ci.yml:build:Unit tests |
+| SCN-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing (src/checkout.test.ts: [SCN-CHK-002] charges the card) | ci.yml:build:Unit tests |
+| SCN-CHK-003 |  | U/- |  | out-of-balance | unit: Evidence Observation is missing | ci.yml:build:Unit tests |
+| SCN-CHK-005 |  | U/3 | E/2 | balanced | — | ci.yml:build:Unit tests, ci.yml:build:End-to-end tests |
+| SCN-CHK-006 | F/1 |  |  | balanced | — | ci.yml:build:Complexity |
+| SCN-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing (SCN-CHK-007) | ci.yml:build:Lint |
+| SCN-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts: [SCN-CHK-004] applies the discount) — passed | ci.yml:build:Unit tests |
+| (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed | ci.yml:build:Unit tests |
 ```
 
 </div>
@@ -150,10 +154,10 @@ One balanced account, the `U/3` `E/2` row, is proved by three unit tests and two
 
 The report keeps its exact terms, and they read plainly once named:
 
-- A *Claim Reconciliation* is one line per claim. It sets the proofs the claim asked for (its *Evidence Obligations*) against the proofs that ran (its *Evidence Observations*). A claim is usually a scenario.
+- A *Claim Reconciliation* is one row of the ledger, one per claim. It sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). A claim is usually a scenario.
 - A test that names a scenario which does not exist makes a *phantom claim*. The cause is usually a typo, or a scenario since deleted.
-- A test that names no scenario at all lands on the *unnamed claim*.
-- A *watermelon* is a check that passes but could not have failed the build.
+- A test that names no scenario at all, or a code several scenarios share, lands on the *unnamed claim*.
+- A *watermelon* is a check that passes, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run.
 
 [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md) has the rest.
 
