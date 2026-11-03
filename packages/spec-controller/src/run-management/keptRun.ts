@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parse, stringify } from "yaml";
-import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { AppError } from "../messages.js";
 import { refusal } from "../refusal.js";
 import { firstSharingFile, inputAt, refuse, writeOrRefuse, type ReadInput } from "../outputLocation.js";
 
@@ -144,7 +144,7 @@ export function executeKeptRun(
   route: RouteOutputs
 ): KeptRunPlan | undefined {
   const plan = planKeptRun(spec);
-  writeOrRefuse(APP_MESSAGES[AppMessage.StoredRunDirectoryNotCreated](), plan.runDir, () =>
+  writeOrRefuse({ kind: "stored-run-directory" }, plan.runDir, () =>
     mkdirSync(plan.runDir, { recursive: true }),
   );
   const manifestPath = join(plan.runDir, RUN_MANIFEST);

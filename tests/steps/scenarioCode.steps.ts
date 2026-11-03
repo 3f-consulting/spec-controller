@@ -4,7 +4,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { shownEntry, showsEntry } from "./support/catalogue.js";
+import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalogue.js";
 import { allocate, git } from "./support/codeAllocation.js";
 import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -259,13 +259,11 @@ Given("in that repository {word} is {}", function (this: SpecControllerWorld, pa
   make(join(this.repository, path));
 });
 
-function allocateUsageError(result: SpawnSyncReturns<string>): string {
-  return shownEntry(result.stderr, "usage-error", { command: "allocate" })?.["message"] ?? "";
-}
+const UNREADABLE = ["could-not-be-read", "working-directory-unreadable"] as const;
 
-function refusalOf(result: SpawnSyncReturns<string>): string {
-  const refusal = allocateUsageError(result);
-  assert.match(refusal, /.+ could not be read/, `expected a refusal naming what could not be read; got:\n${result.stderr}`);
+function refusalOf(result: SpawnSyncReturns<string>, subject?: string): Readonly<Record<string, string>> {
+  const refusal = shownAmong(result.stderr, UNREADABLE, subject === undefined ? {} : { subject });
+  assert.ok(refusal !== undefined, `expected an unreadable-input refusal; got:\n${result.stderr}`);
   return refusal;
 }
 
@@ -276,18 +274,18 @@ Then("it is refused as a path allocate cannot read, and no code is given", funct
   refusalOf(this.answer);
 });
 
-function namesPath(refusal: string, path: string): boolean {
-  return refusal.includes(`/${path} (`);
+function namesPath(refusal: Readonly<Record<string, string>>, path: string): boolean {
+  return refusal["path"]?.endsWith(`/${path}`) === true;
 }
 
 Then("allocate's refusal names {word}", function (this: SpecControllerWorld, path: string) {
   const refusal = refusalOf(this.answer);
-  assert.ok(namesPath(refusal, path), `expected the refusal to name ${path}; got:\n${refusal}`);
+  assert.ok(namesPath(refusal, path), `expected the refusal to name ${path}; got:\n${this.answer.stderr}`);
 });
 
 Then("allocate's refusal names {word} and the parser's own words", function (this: SpecControllerWorld, path: string) {
-  const named = new RegExp(`.+ could not be parsed: .*/${path}$`);
-  assert.match(allocateUsageError(this.answer), named, `expected the refusal to name ${path}; got:\n${this.answer.stderr}`);
+  const file = shownEntry(this.answer.stderr, "corpus-file-unparseable")?.["file"] ?? "";
+  assert.ok(file.endsWith(`/${path}`), `expected the refusal to name ${path}; got:\n${this.answer.stderr}`);
   assert.match(this.answer.stderr, /^\(1:1\): expected: .*got 'not gherkin at all \{\{\{'$/m, `expected the parser's own words; got:\n${this.answer.stderr}`);
 });
 
@@ -333,8 +331,8 @@ Given(
 Then("allocate's refusal names {} and says allocate was not permitted to read it", function (this: SpecControllerWorld, path: string) {
   const refusal = refusalOf(this.answer);
   const named = path === "working directory" || path === "the repository's top" ? basename(this.repository) : path;
-  assert.ok(namesPath(refusal, named), `expected the refusal to name ${named}; got:\n${refusal}`);
-  assert.match(refusal, /EACCES|EPERM/, `expected the operating system's reason; got:\n${refusal}`);
+  assert.ok(namesPath(refusal, named), `expected the refusal to name ${named}; got:\n${this.answer.stderr}`);
+  assert.match(refusal["reason"] ?? "", /EACCES|EPERM/, `expected the operating system's reason; got:\n${this.answer.stderr}`);
 });
 
 When(
@@ -353,7 +351,7 @@ When(
 );
 
 Then("allocate's refusal says the working directory could not be read", function (this: SpecControllerWorld) {
-  assert.match(refusalOf(this.answer), /the working directory could not be read/);
+  refusalOf(this.answer, entryText("working-directory"));
 });
 
 const CARRIER: Record<string, { path: string; write: (world: SpecControllerWorld, code: string) => void }> = {
@@ -427,7 +425,7 @@ Given("it is cloned one commit deep, and the clone's shallow record is not permi
 });
 
 Then("allocate's refusal says the repository's history could not be read", function (this: SpecControllerWorld) {
-  assert.match(refusalOf(this.answer), /the repository's history could not be read/);
+  refusalOf(this.answer, entryText("history"));
 });
 
 Given("its .git directory is not permitted to be read", function (this: SpecControllerWorld) {
@@ -448,9 +446,9 @@ Given("its .git is a file pointing to a directory that is not there", function (
 });
 
 Then("allocate's refusal names the repository's .git and says git could not open it", function (this: SpecControllerWorld) {
-  const refusal = refusalOf(this.answer);
-  assert.ok(namesPath(refusal, `${basename(this.repository)}/.git`), `expected the refusal to name the repository's .git; got:\n${refusal}`);
-  assert.match(refusal, /the repository could not be read: .* \(git rev-parse exited \d+: /, `expected git's reason; got:\n${refusal}`);
+  const refusal = refusalOf(this.answer, entryText("repository"));
+  assert.ok(namesPath(refusal, `${basename(this.repository)}/.git`), `expected the refusal to name the repository's .git; got:\n${this.answer.stderr}`);
+  assert.ok(showsEntry(refusal["reason"] ?? "", "git-exited", { command: "rev-parse" }), `expected git's reason; got:\n${this.answer.stderr}`);
 });
 
 const OUTSIDE = ["SCN-A-001", "SCN-SIXCHR-001"] as const;

@@ -30,6 +30,11 @@ export function refusal<C extends RefusalError>(code: C, values: ValuesOf<C>, po
   return Object.assign(Object.create(PRINTED_REFUSAL) as RefusalLines, { code, values, pointers }) as Refusal;
 }
 
+// Several refusals print one after another, each opening with its own prefix and code.
+export function refusals(each: readonly Refusal[]): RefusalLines {
+  return { lines: (command) => each.map((one) => one.lines(command)).join("\n") };
+}
+
 const words = message as (code: RefusalError, values: object) => string;
 
 function openingLine(code: RefusalError, text: string, command: string | undefined): string {

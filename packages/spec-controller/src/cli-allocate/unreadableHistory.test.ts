@@ -3,9 +3,10 @@ import { readdirSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
 import { git, writeInto, commitAll, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
-import { allocateFrom, refusalReason } from "./answered.test-utils.js";
+import { allocateFrom, gitExited, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 function scenarioBlock(code: string): string {
   return `  @${code} @unit\n  Scenario: scenario ${code}\n    Given a step\n`;
@@ -36,11 +37,10 @@ afterEach(() => {
 });
 
 function historyRefusalReason(answered: Answered, path: string): string {
-  return refusalReason(answered, APP_MESSAGES[AppMessage.History](), path);
+  return refusalReason(answered, message(AppMessage.History), path);
 }
 
 const NOT_PERMITTED = /^(EACCES|EPERM): /;
-const GIT_LOG_FAILED = /^git log exited 128: \S/;
 
 describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
   it("refuses ONE when its loose objects are not permitted to be read, in git's own words", ({ skip }) => {
@@ -48,7 +48,7 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     const repo = repositoryWithADeletedCode();
     for (const dir of looseObjectDirectories(repo)) withhold(dir, 0o000);
 
-    expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(GIT_LOG_FAILED);
+    expect(historyRefusalReason(allocateFrom(repo), repo)).toMatch(gitExited("log", 128));
   });
 
   it("refuses ONE when its branch refs are not permitted to be read, naming them", ({ skip }) => {
@@ -93,6 +93,6 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
       process.env.PATH = path;
     }
 
-    expect(thrown).toMatchObject({ name: "UnreadableInput", subject: APP_MESSAGES[AppMessage.History](), path: "git" });
+    expect(thrown).toMatchObject({ name: "UnreadableInput", subject: message(AppMessage.History), path: "git" });
   });
 });

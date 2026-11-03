@@ -6,9 +6,9 @@ import { inputOverwriteRefusal, sharedFileRefusal, type FileIdentity, type Ident
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { probeDestination, refuse, unwritableRefusal, writeOrRefuse } from "../../outputLocation.js";
-import { APP_MESSAGES, AppError, AppMessage } from "../../messages.js";
-import { refusal, type ShownError } from "../../refusal.js";
+import { probeDestination, refuse, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
+import { AppError } from "../../messages.js";
+import { refusal, type Refusal } from "../../refusal.js";
 import { reportedExitCodeOf } from "../exitStatus.js";
 
 export interface OutputPayloads {
@@ -41,14 +41,14 @@ function vetDestinations(
   outputs: readonly PlannedOutput[],
   stdoutFile: () => FileIdentity | undefined,
   inputs: readonly IdentifiedInput[],
-): ShownError | undefined {
+): Refusal | undefined {
   const created: string[] = [];
   try {
     const identified: IdentifiedOutput[] = [];
     for (const output of outputs) {
       const probe = identify(output, stdoutFile, created);
-      if (typeof probe === "string") return probe;
-      identified.push({ output, identity: probe });
+      if (probe.kind === "refused") return probe.refusal;
+      identified.push({ output, identity: probe.identity });
     }
     return sharedFileRefusal(identified) ?? inputOverwriteRefusal(identified, inputs);
   } finally {
@@ -59,7 +59,7 @@ function vetDestinations(
 function earlierStoredRunRefusal(
   outputs: readonly PlannedOutput[],
   earlierStoredRunDirOf: (path: string) => string | undefined,
-): ShownError | undefined {
+): Refusal | undefined {
   for (const { dest } of outputs) {
     if (dest.kind === "stdout") continue;
     const runDir = earlierStoredRunDirOf(dest.path);
@@ -68,20 +68,22 @@ function earlierStoredRunRefusal(
   return undefined;
 }
 
-function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefined, created: string[]): FileIdentity | undefined | string {
+type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | undefined } | { readonly kind: "refused"; readonly refusal: Refusal };
+
+function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefined, created: string[]): Probe {
   const dest = output.dest;
-  if (dest.kind === "stdout") return stdoutFile();
+  if (dest.kind === "stdout") return { kind: "identified", identity: stdoutFile() };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);
-    return probed.identity;
+    return { kind: "identified", identity: probed.identity };
   } catch (err) {
-    return unwritableRefusal(refusalSubject(output), dest.path, err);
+    return { kind: "refused", refusal: unwritableRefusal(reportOf(output), dest.path, err) };
   }
 }
 
-function refusalSubject(output: PlannedOutput): string {
-  return APP_MESSAGES[AppMessage.ReportNotWritten](output.fmt);
+function reportOf(output: PlannedOutput): Unwritable {
+  return { kind: "report", format: output.fmt };
 }
 
 function emit(output: PlannedOutput, text: string): void {
@@ -90,5 +92,5 @@ function emit(output: PlannedOutput, text: string): void {
     process.stdout.write(text);
     return;
   }
-  writeOrRefuse(refusalSubject(output), dest.path, () => writeFileSync(dest.path, text));
+  writeOrRefuse(reportOf(output), dest.path, () => writeFileSync(dest.path, text));
 }

@@ -93,11 +93,15 @@ export interface FitnessTarget {
   packageJson: string;
 }
 
+// The data file's entry a refusal is expected to show, by its code, with the values the step knows.
+export type ExpectedEntry = readonly [code: string, values: Readonly<Record<string, string>>];
+
 export interface ArrangedTarget {
   readonly dir: string;
   readonly args: readonly string[];
   readonly named: string;
   readonly where: string;
+  readonly refusal?: ExpectedEntry;
 }
 
 export interface ExitZeroPair {

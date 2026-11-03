@@ -861,7 +861,7 @@ An error after the run reaches its verdict does not change the exit code. One li
 
 ### Error codes
 
-**A refusal of a flag, a command or an argument carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`.
+**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`.
 
 | Code | Meaning |
 |---|---|
@@ -893,6 +893,19 @@ An error after the run reaches its verdict does not change the exit code. One li
 | `unknown-part-refused` | `allocate` was given a feature part no feature file's header carries |
 | `no-feature-part-given` | `allocate` was given no feature part |
 | `not-a-feature-part` | `allocate` was given a feature part not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
+| `could-not-be-read` | an input could not be read: a file, a directory or a report the run reads, or the repository `allocate` reads |
+| `working-directory-unreadable` | `allocate` could not read the working directory it was run in |
+| `input-path-missing` | the path given to an input flag does not exist |
+| `not-valid-json` | a report read as JSON is not valid JSON |
+| `not-valid-json-in-shape` | a report read as JSON is not valid JSON, so not in the shape its tool writes |
+| `not-valid-xml` | a report read as JUnit XML is not valid XML |
+| `not-in-shape` | a report parses, but is not in the shape its tool writes |
+| `not-a-saved-reconciliation` | the `--render-from-json` file is not a saved reconciliation |
+| `not-renderable-as-saved` | the `--render-from-json` file could not be rendered as a saved reconciliation |
+| `corpus-file-unparseable` | a feature file in the corpus could not be parsed as Gherkin; each such file has its own coded line, with the parser's words beneath it |
+| `workflow-not-yaml` | a CI workflow is not valid YAML |
+| `report-not-written` | a report could not be written to the path its `--format` names |
+| `stored-run-directory-not-created` | the stored run's directory could not be created under the `--store` root |
 | `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `6`, or keeps `2` if it was already refused as a usage error |
 | `unexpected-error-after-verdict` | an unexpected error came after the run's verdict; the run exits with the verdict's code |
 

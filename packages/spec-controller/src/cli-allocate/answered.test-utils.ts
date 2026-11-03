@@ -1,5 +1,7 @@
 import { expect, vi } from "vitest";
 import { runAllocate } from "./cli.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 export interface Answered {
   stdout: string;
@@ -57,14 +59,24 @@ export function expectAnsweredWith(answered: Answered, code: string): void {
   expect(answered.stdout).toBe(`${code}\n`);
 }
 
+const REASON = "\u0000";
+
+// The refusal's one line holds the entry's words for the subject and path, around the reason it returns.
 export function refusalReason(answered: Answered, subject: string, path: string): string {
   expect(answered.stdout).toBe("");
   expect(answered.exitCode).toBe(2);
-  const opening = `spec-controller allocate: usage error — ${subject} could not be read: ${path} (`;
-  expect(answered.stderr.startsWith(opening)).toBe(true);
-  expect(answered.stderr.endsWith(")\n")).toBe(true);
   expect(answered.stderr.split("\n")).toHaveLength(2);
-  return answered.stderr.slice(opening.length, -2);
+  const [before = "", after = ""] = message(AppError.CouldNotBeRead, { subject, path, reason: REASON }).split(REASON);
+  const from = answered.stderr.indexOf(before);
+  expect(from).toBeGreaterThanOrEqual(0);
+  expect(answered.stderr.endsWith(`${after}\n`)).toBe(true);
+  return answered.stderr.slice(from + before.length, -after.length - 1);
+}
+
+// A git reader's reason opens with git's exit status, and goes on in git's own words.
+export function gitExited(command: string, status: number): RegExp {
+  const opening = message(AppMessage.GitExited, { command, status: String(status), said: "" });
+  return new RegExp(`^${opening.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\S`);
 }
 
 export function thrownBy(read: () => unknown): unknown {

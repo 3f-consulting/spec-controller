@@ -3,8 +3,8 @@ import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ScnOccurrence } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { firstLine, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { AppMessage } from "../messages.js";
+import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
 export type HistoryBoundary = { kind: "complete" } | { kind: "not-a-repository" } | { kind: "shallow"; before: string };
 
@@ -18,7 +18,7 @@ export function readHistory(cwd: string, part: string): ScnOccurrence[] {
   const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
   if (result.error !== undefined) refuse(AppMessage.History, cwd, result.error);
   if (result.status !== 0) {
-    throw new UnreadableInput(AppMessage.History, cwd, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
+    throw new UnreadableInput(AppMessage.History, cwd, gitExited(args, result.status, result.stderr));
   }
   return diffLineOccurrences(result.stdout);
 }
@@ -34,7 +34,7 @@ export function repositoryTop(cwd: string): string | null {
   if (result.status === 0) return result.stdout.trim();
   const gitEntry = result.error === undefined ? gitEntryAtOrAbove(cwd) : null;
   if (gitEntry === null) return null;
-  throw new UnreadableInput(AppMessage.Repository, gitEntry, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
+  throw new UnreadableInput(AppMessage.Repository, gitEntry, gitExited(args, result.status, result.stderr));
 }
 
 function gitEntryAtOrAbove(dir: string): string | null {

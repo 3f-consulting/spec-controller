@@ -179,12 +179,18 @@ const REPORTS = ["--vitest", "vitest.json", "--cucumber", "cucumber.json", "--ci
 
 const POINTED: PointedAt = { features: "features", manifest: "package.json", workflows: "ci.yml" };
 
+// An input is named mid-sentence, so its entry's opening capital is lowered.
+function inputNamed(code: string, flag?: string): string {
+  const text = entryText(code, flag === undefined ? {} : { flag });
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
 const INPUT: Readonly<Record<string, InputRow>> = {
-  "the unit test report": { file: "vitest.json", pointedAt: POINTED, subject: "the --vitest report" },
-  "the cucumber report": { file: "cucumber.json", pointedAt: POINTED, subject: "the --cucumber report" },
-  "the record of the CI steps": { file: "ci-steps.json", pointedAt: POINTED, subject: "the --ci-steps record" },
-  "the manifest it was pointed at": { file: "package.json", pointedAt: POINTED, subject: "the --package-json manifest" },
-  "the manifest it reads by default": { file: "package.json", pointedAt: { ...POINTED, manifest: undefined }, subject: "the package.json read by default" },
+  "the unit test report": { file: "vitest.json", pointedAt: POINTED, subject: inputNamed("flagged-report", "--vitest") },
+  "the cucumber report": { file: "cucumber.json", pointedAt: POINTED, subject: inputNamed("flagged-report", "--cucumber") },
+  "the record of the CI steps": { file: "ci-steps.json", pointedAt: POINTED, subject: inputNamed("flagged-record", "--ci-steps") },
+  "the manifest it was pointed at": { file: "package.json", pointedAt: POINTED, subject: inputNamed("flagged-manifest", "--package-json") },
+  "the manifest it reads by default": { file: "package.json", pointedAt: { ...POINTED, manifest: undefined }, subject: inputNamed("default-package-json") },
   "a feature file of the corpus it was pointed at": { file: "features/target.feature", pointedAt: POINTED, subject: entryText("flagged-corpus-feature-file") },
   "a feature file of the corpus it reads by default": {
     file: "features/target.feature",
@@ -202,7 +208,7 @@ const INPUT: Readonly<Record<string, InputRow>> = {
   "the unit test report, named through a symbolic link": {
     file: "vitest.json",
     pointedAt: { ...POINTED, vitest: "vitest-link.json" },
-    subject: "the --vitest report",
+    subject: inputNamed("flagged-report", "--vitest"),
     arrange: (target) => symlinkSync(join(target, "vitest.json"), join(target, "vitest-link.json")),
   },
   "a feature file of the corpus, named through a linked folder": {

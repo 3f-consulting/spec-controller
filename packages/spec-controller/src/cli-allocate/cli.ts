@@ -11,8 +11,7 @@ import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js"
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
-import { standardError, type StandardError } from "../standardError.js";
-import type { ShownError } from "../refusal.js";
+import { standardError, type RefusalLines, type StandardError } from "../standardError.js";
 
 function shown(): StandardError {
   return standardError(process.stderr, "allocate");
@@ -43,7 +42,7 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   }
 }
 
-function refuseUsage(error: ShownError): void {
+function refuseUsage(error: RefusalLines | string): void {
   shown().error(error);
   endRunOn(USAGE_REFUSAL);
 }

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { allocateFrom } from "./answered.test-utils.js";
 import { commitAll, freshDirectory, git, writeInto } from "./repository.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 
 const NOT_GHERKIN = "not gherkin at all {{{\n";
@@ -27,14 +27,14 @@ describe("[SCN-ALC-024] a feature file the Gherkin parser rejects is refused, na
 
     const answered = allocateFrom(repo);
 
-    expect(answered).toEqual({
-      stdout: "",
-      stderr: `${message(AppMessage.UsageError, { command: "allocate", message: APP_MESSAGES[AppMessage.CorpusFileUnparseable](
-          APP_MESSAGES[AppMessage.FeatureCorpus](),
-          join(repo, "features", "two.feature"),
-          parserWordsFor(NOT_GHERKIN),
-        ) })}\n`,
-      exitCode: 2,
-    });
+    expect(answered.stdout).toBe("");
+    expect(answered.exitCode).toBe(2);
+    expect(answered.stderr).toContain(
+      message(AppError.CorpusFileUnparseable, {
+        corpus: message(AppMessage.FeatureCorpus),
+        file: join(repo, "features", "two.feature"),
+        message: parserWordsFor(NOT_GHERKIN),
+      }),
+    );
   });
 });

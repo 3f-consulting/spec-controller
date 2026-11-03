@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { removedWorkingDirectory } from "../vanishedWorkingDirectory.test-utils.js";
 import { allocateWhere } from "./answered.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 
 afterEach(() => {
@@ -20,8 +20,6 @@ describe("[SCN-ALC-019] asked from a working directory that no longer exists, al
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    expect(answered.stderr).toBe(
-      `${message(AppMessage.UsageError, { command: "allocate", message: APP_MESSAGES[AppMessage.CouldNotBeRead](APP_MESSAGES[AppMessage.WorkingDirectory](), thrown.message) })}\n`,
-    );
+    expect(answered.stderr).toContain(message(AppError.WorkingDirectoryUnreadable, { subject: message(AppMessage.WorkingDirectory), reason: thrown.message }));
   });
 });

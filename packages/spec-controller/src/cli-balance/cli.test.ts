@@ -6,11 +6,11 @@ import { checkInputsExist, checkInputsParse } from "./cli.js";
 import { jsonInputsOf, readReports } from "./unreadableInputs.js";
 import { cliRegistry } from "../cliRegistry.js";
 import { checkUnknownFlags, parseArgs } from "../cliArgs.js";
-import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
-import { captured } from "./balanceRun.test-utils.js";
+import { captured, expectRefused } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { errorCodesShown, printedRefusal, shownText } from "../shownText.test-utils.js";
 
@@ -21,7 +21,7 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
     "returns a typed error naming --%s and the missing path when that flag's path is absent",
     (flag) => {
       const missing = `does/not/exist/${flag}.missing`;
-      const error = checkInputsExist({ [flag]: missing }, () => false);
+      const error = shownText(checkInputsExist({ [flag]: missing }, () => false));
       expect(error).not.toBeNull();
       expect(error).toContain(`--${flag}`);
       expect(error).toContain(missing);
@@ -59,20 +59,19 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
     }
     expect(reason).not.toBe("");
 
-    expect(captured(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[AppMessage.FlaggedReport]("--vitest"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(
+      captured(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path]),
+      message(AppError.NotValidJson, { subject: message(AppMessage.FlaggedReport, { flag: "--vitest" }), path, reason }),
+    );
   });
 
   it.each(jsonInputs)(
     "names --%s as its declaration names it, with the path and the parser's reason, when it is not valid JSON",
     (flag, subject) => {
       const path = `reports/${flag}.json`;
-      const error = checkInputsParse(readReports(jsonInputsOf({ [flag]: path }, () => false), () => "not valid json at all {{{"));
+      const error = shownText(checkInputsParse(readReports(jsonInputsOf({ [flag]: path }, () => false), () => "not valid json at all {{{")));
 
-      expect(error).toBe(APP_MESSAGES[AppMessage.NotValidJson](APP_MESSAGES[subject](`--${flag}`), path, reasonOf("not valid json at all {{{")));
+      expect(error).toBe(message(AppError.NotValidJson, { subject: message(subject, { flag: `--${flag}` }), path, reason: reasonOf("not valid json at all {{{") }));
     },
   );
 });
@@ -87,26 +86,16 @@ describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", ()
     throw new Error("expected the act to fail");
   }
 
-  function refusalFor(path: string, reason: string): string {
-    return (
-      APP_MESSAGES[AppMessage.CouldNotBeReadAt](
-        APP_MESSAGES[AppMessage.FlaggedSavedReport]("--render-from-json"),
-        path,
-        reason,
-      ) + "\n"
-    );
-  }
 
   it("runBalance refuses a MISSING saved report at exit 2, naming it and the file system's reason, rendering nothing", () => {
     const dir = temporaryDirectory("render-missing-");
     const missing = join(dir, "does-not-exist.json");
     const reason = failureOf(() => readFileSync(missing, "utf8"));
 
-    expect(captured(["--render-from-json", missing])).toEqual({
-      report: "",
-      stderr: refusalFor(missing, reason),
-      exitCode: 2,
-    });
+    expectRefused(
+      captured(["--render-from-json", missing]),
+      message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedSavedReport, { flag: "--render-from-json" }), path: missing, reason }),
+    );
   });
 });
 
@@ -259,7 +248,7 @@ describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as noth
     const args = { vitest: "reports/vitest.json", features: "features" };
     const exists = (path: string) =>
       path === "reports/vitest.json" || path === "features";
-    expect(checkInputsExist(args, exists)).toBeNull();
+    expect(shownText(checkInputsExist(args, exists))).toBeNull();
   });
 });
 

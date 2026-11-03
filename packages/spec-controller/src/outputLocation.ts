@@ -2,31 +2,36 @@ import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, rea
 import { dirname, resolve, sep } from "node:path";
 
 import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "./exitCode.js";
-import { errorText, standardError } from "./standardError.js";
-import type { ShownError } from "./refusal.js";
+import { errorText, standardError, type RefusalLines } from "./standardError.js";
+import { refusal, type Refusal } from "./refusal.js";
+import { AppError } from "./messages.js";
 
 class UsageRefusal extends Error {
   override readonly name = "UsageRefusal";
   readonly exitCode = USAGE_EXIT_CODE;
 }
 
-export function unwritableRefusal(subject: string, path: string, err: unknown): string {
+export type Unwritable = { readonly kind: "report"; readonly format: string } | { readonly kind: "stored-run-directory" };
+
+export function unwritableRefusal(what: Unwritable, path: string, err: unknown): Refusal {
   const reason = err instanceof Error ? err.message : String(err);
-  return `${subject}: ${path} (${reason})`;
+  return what.kind === "report"
+    ? refusal(AppError.ReportNotWritten, { format: what.format, path, reason })
+    : refusal(AppError.StoredRunDirectoryNotCreated, { path, reason });
 }
 
-export function writeOrRefuse(subject: string, path: string, write: () => void): void {
+export function writeOrRefuse(what: Unwritable, path: string, write: () => void): void {
   try {
     write();
   } catch (err) {
-    refuse(unwritableRefusal(subject, path, err));
+    refuse(unwritableRefusal(what, path, err));
   }
 }
 
 // Only balance refuses through here; allocate and the host print their own refusals.
 const REFUSING_COMMAND = "balance";
 
-export function refuse(error: ShownError): never {
+export function refuse(error: RefusalLines | string): never {
   standardError(process.stderr, REFUSING_COMMAND).error(error);
   throw new UsageRefusal(errorText(error, REFUSING_COMMAND));
 }

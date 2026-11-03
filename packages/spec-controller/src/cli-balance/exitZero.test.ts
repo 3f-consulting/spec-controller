@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { expectRefused } from "./balanceRun.test-utils.js";
+import { AppError } from "../messages.js";
+import { message } from "../appText.js";
 import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
 
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
@@ -82,11 +84,7 @@ describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict
       "--features", "tests/fixtures/evidence-observation/features",
       "--vitest", missing,
     ]);
-    expect(run).toEqual({
-      exitCode: 2,
-      stdout: "",
-      stderr: APP_MESSAGES[AppMessage.InputPathMissing]("--vitest", missing) + "\n",
-    });
+    expectRefused({ ...run, report: run.stdout }, message(AppError.InputPathMissing, { flag: "--vitest", path: missing }));
     expect(run.stderr).toContain("--vitest");
     expect(run.stderr).toContain(missing);
   });

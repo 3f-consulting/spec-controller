@@ -2,8 +2,8 @@ import { spawnSync } from "node:child_process";
 import { accessSync, constants, lstatSync, readdirSync, readFileSync, type Dirent } from "node:fs";
 import { join, relative, sep } from "node:path";
 import type { ScnOccurrence } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
-import { firstLine, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { AppMessage } from "../messages.js";
+import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
@@ -20,7 +20,7 @@ function gitListing(top: string, args: readonly string[]): string[] {
   const result = spawnSync("git", args, { cwd: top, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
   if (result.error !== undefined) refuse(AppMessage.Tree, top, result.error);
   if (result.status !== 0) {
-    throw new UnreadableInput(AppMessage.Tree, top, APP_MESSAGES[AppMessage.GitExited](args, result.status, firstLine(result.stderr)));
+    throw new UnreadableInput(AppMessage.Tree, top, gitExited(args, result.status, result.stderr));
   }
   return result.stdout.split("\0");
 }

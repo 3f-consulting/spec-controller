@@ -68,6 +68,10 @@ export function showsEntry(text: string, code: string, known: Values = {}): bool
   return shownEntry(text, code, known) !== undefined;
 }
 
+export function shownAmong(text: string, codes: readonly string[], known: Values = {}): Values | undefined {
+  return codes.map((code) => shownEntry(text, code, known)).find((values) => values !== undefined);
+}
+
 export function firstShown(text: string, codes: readonly string[]): string | undefined {
   return codes.find((code) => showsEntry(text, code));
 }

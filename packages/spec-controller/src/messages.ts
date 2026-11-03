@@ -1,17 +1,4 @@
 export enum AppMessage {
-  History,
-  Repository,
-  Tree,
-  TreeDirectory,
-  TreeFile,
-  FeatureFile,
-  FeatureCorpus,
-  WorkingDirectory,
-  CouldNotBeRead,
-  CouldNotBeReadAt,
-  GitExited,
-  FeatureCorpusDirectoryMissing,
-  StoredRunDirectoryNotCreated,
   HelpTitle,
   HelpUsage,
   HelpCommands,
@@ -48,35 +35,6 @@ export enum AppMessage {
   AllocateSummary,
   FeaturePartArgument,
   NewFlag,
-  InputPathMissing,
-  FlaggedFile,
-  FlaggedReport,
-  FlaggedRecord,
-  FlaggedManifest,
-  FlaggedSavedReport,
-  FlaggedCorpus,
-  FlaggedWorkflows,
-  DefaultPackageJson,
-  DefaultFeatureCorpus,
-  DefaultCiWorkflows,
-  VitestReportShape,
-  JunitReportShape,
-  JestReportShape,
-  JunitXmlReportShape,
-  RspecReportShape,
-  CucumberReportShape,
-  CiStepRecordShape,
-  PackageManifestShape,
-  NotValidJson,
-  NotValidJsonInShape,
-  NotValidXml,
-  XmlFaultAtLine,
-  NotInShape,
-  NotASavedReconciliation,
-  NotRenderableAsSaved,
-  CorpusFileUnparseable,
-  WorkflowNotYaml,
-  ReportNotWritten,
   HistoryBoundary,
   ShallowHistoryUnread,
   NoRepositoryHistoryRead,
@@ -86,14 +44,7 @@ export enum AppMessage {
   HighestSeenInTree,
   HighestSeenInCommit,
   PartAlreadyHeaded,
-  ShapeKindList,
-  ShapeKindObject,
-  ShapeKindOfType,
-  ShapeTopLevel,
-  ShapeWrongKind,
-  ShapeFieldMissing,
   HelpUsageLine,
-  UsageError = "usage-error",
   SeeCommandsAndModifiers = "see-commands-and-modifiers",
   SeeModifiers = "see-modifiers",
   SeeFlags = "see-flags",
@@ -116,6 +67,41 @@ export enum AppMessage {
   FormatOnStandardOutput = "format-on-standard-output",
   CodedUsageError = "coded-usage-error",
   CodedHostUsageError = "coded-host-usage-error",
+  History = "history",
+  Repository = "repository",
+  Tree = "tree",
+  TreeDirectory = "tree-directory",
+  TreeFile = "tree-file",
+  FeatureFile = "feature-file",
+  FeatureCorpus = "feature-corpus",
+  WorkingDirectory = "working-directory",
+  GitExited = "git-exited",
+  FeatureCorpusDirectoryMissing = "feature-corpus-directory-missing",
+  FlaggedFile = "flagged-file",
+  FlaggedReport = "flagged-report",
+  FlaggedRecord = "flagged-record",
+  FlaggedManifest = "flagged-manifest",
+  FlaggedSavedReport = "flagged-saved-report",
+  FlaggedCorpus = "flagged-corpus",
+  FlaggedWorkflows = "flagged-workflows",
+  DefaultPackageJson = "default-package-json",
+  DefaultFeatureCorpus = "default-feature-corpus",
+  DefaultCiWorkflows = "default-ci-workflows",
+  VitestReportShape = "vitest-report-shape",
+  JunitReportShape = "junit-report-shape",
+  JestReportShape = "jest-report-shape",
+  JunitXmlReportShape = "junit-xml-report-shape",
+  RspecReportShape = "rspec-report-shape",
+  CucumberReportShape = "cucumber-report-shape",
+  CiStepRecordShape = "ci-step-record-shape",
+  PackageManifestShape = "package-manifest-shape",
+  XmlFaultAtLine = "xml-fault-at-line",
+  ShapeKindList = "shape-kind-list",
+  ShapeKindObject = "shape-kind-object",
+  ShapeKindOfType = "shape-kind-of-type",
+  ShapeTopLevel = "shape-top-level",
+  ShapeWrongKind = "shape-wrong-kind",
+  ShapeFieldMissing = "shape-field-missing",
 }
 
 // Each error a reader can be shown, by its code: a handle's value is the code it prints.
@@ -148,6 +134,19 @@ export enum AppError {
   UnknownPartRefused = "unknown-part-refused",
   NoFeaturePartGiven = "no-feature-part-given",
   NotAFeaturePart = "not-a-feature-part",
+  WorkingDirectoryUnreadable = "working-directory-unreadable",
+  CouldNotBeRead = "could-not-be-read",
+  StoredRunDirectoryNotCreated = "stored-run-directory-not-created",
+  InputPathMissing = "input-path-missing",
+  NotValidJson = "not-valid-json",
+  NotValidJsonInShape = "not-valid-json-in-shape",
+  NotValidXml = "not-valid-xml",
+  NotInShape = "not-in-shape",
+  NotASavedReconciliation = "not-a-saved-reconciliation",
+  NotRenderableAsSaved = "not-renderable-as-saved",
+  CorpusFileUnparseable = "corpus-file-unparseable",
+  WorkflowNotYaml = "workflow-not-yaml",
+  ReportNotWritten = "report-not-written",
   UnexpectedError = "unexpected-error",
   UnexpectedErrorAfterVerdict = "unexpected-error-after-verdict",
 }
@@ -158,29 +157,7 @@ type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdic
 export type RefusalError = Exclude<AppError, CrashError>;
 
 interface AppMessageParams {
-  [AppMessage.CouldNotBeRead]: [subject: string, reason: string];
-  [AppMessage.CouldNotBeReadAt]: [subject: string, path: string, reason: string];
-  [AppMessage.GitExited]: [args: readonly string[], status: number | null, said: string];
-  [AppMessage.FeatureCorpusDirectoryMissing]: [directory: string];
   [AppMessage.BuiltInDeferralTags]: [tags: string];
-  [AppMessage.InputPathMissing]: [flag: string, path: string];
-  [AppMessage.FlaggedFile]: [flag: string];
-  [AppMessage.FlaggedReport]: [flag: string];
-  [AppMessage.FlaggedRecord]: [flag: string];
-  [AppMessage.FlaggedManifest]: [flag: string];
-  [AppMessage.FlaggedSavedReport]: [flag: string];
-  [AppMessage.FlaggedCorpus]: [flag: string];
-  [AppMessage.FlaggedWorkflows]: [flag: string];
-  [AppMessage.NotValidJson]: [subject: string, path: string, reason: string];
-  [AppMessage.NotValidJsonInShape]: [subject: string, shape: string, path: string, reason: string];
-  [AppMessage.NotValidXml]: [subject: string, shape: string, path: string, reason: string];
-  [AppMessage.XmlFaultAtLine]: [fault: string, line: number];
-  [AppMessage.NotInShape]: [subject: string, shape: string, path: string, fault: string];
-  [AppMessage.NotASavedReconciliation]: [subject: string, path: string, fault: string];
-  [AppMessage.NotRenderableAsSaved]: [subject: string, path: string, reason: string];
-  [AppMessage.CorpusFileUnparseable]: [corpus: string, file: string, message: string];
-  [AppMessage.WorkflowNotYaml]: [workflows: string, file: string, message: string];
-  [AppMessage.ReportNotWritten]: [format: string];
   [AppMessage.HistoryBoundary]: [unread: string, risk: string];
   [AppMessage.ShallowHistoryUnread]: [before: string];
   [AppMessage.RiskOfPartCode]: [part: string];
@@ -188,9 +165,6 @@ interface AppMessageParams {
   [AppMessage.HighestSeenInTree]: [code: string, path: string, line: number];
   [AppMessage.HighestSeenInCommit]: [code: string, path: string, line: number, commit: string];
   [AppMessage.PartAlreadyHeaded]: [part: string];
-  [AppMessage.ShapeKindOfType]: [type: string];
-  [AppMessage.ShapeWrongKind]: [where: string, found: string, expected: string];
-  [AppMessage.ShapeFieldMissing]: [path: string];
   [AppMessage.HelpUsageLine]: [modifierUsage: string];
   [AppError.UnexpectedError]: [name: string, firstLine: string];
   [AppError.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
@@ -201,8 +175,9 @@ export type WordedAppMessage = Extract<AppMessage, string>;
 
 type TabledAppMessage = Extract<AppMessage, number> | CrashError;
 
+export type PlainWordedAppMessage = Exclude<WordedAppMessage, keyof AppMessageValues>;
+
 export interface AppMessageValues {
-  [AppMessage.UsageError]: { command: string; message: string };
   [AppMessage.SeeFlags]: { scope: string };
   [AppMessage.SeeFlagsAndValues]: { scope: string };
   [AppMessage.SeeArguments]: { scope: string };
@@ -214,6 +189,19 @@ export interface AppMessageValues {
   [AppMessage.FormatOnStandardOutput]: { fmt: string };
   [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };
   [AppMessage.CodedHostUsageError]: { code: AppError; message: string };
+  [AppMessage.GitExited]: { command: string; status: string; said: string };
+  [AppMessage.FeatureCorpusDirectoryMissing]: { directory: string };
+  [AppMessage.FlaggedFile]: { flag: string };
+  [AppMessage.FlaggedReport]: { flag: string };
+  [AppMessage.FlaggedRecord]: { flag: string };
+  [AppMessage.FlaggedManifest]: { flag: string };
+  [AppMessage.FlaggedSavedReport]: { flag: string };
+  [AppMessage.FlaggedCorpus]: { flag: string };
+  [AppMessage.FlaggedWorkflows]: { flag: string };
+  [AppMessage.XmlFaultAtLine]: { fault: string; line: number };
+  [AppMessage.ShapeKindOfType]: { type: string };
+  [AppMessage.ShapeWrongKind]: { where: string; found: string; expected: string };
+  [AppMessage.ShapeFieldMissing]: { path: string };
 }
 
 export interface AppErrorValues {
@@ -243,6 +231,19 @@ export interface AppErrorValues {
   [AppError.StoredRunReadsItsManifest]: { manifestPath: string; inputPath: string; inputSubject: string };
   [AppError.UnknownPartRefused]: { part: string; parts: string };
   [AppError.NotAFeaturePart]: { part: string };
+  [AppError.WorkingDirectoryUnreadable]: { subject: string; reason: string };
+  [AppError.CouldNotBeRead]: { subject: string; path: string; reason: string };
+  [AppError.StoredRunDirectoryNotCreated]: { path: string; reason: string };
+  [AppError.InputPathMissing]: { flag: string; path: string };
+  [AppError.NotValidJson]: { subject: string; path: string; reason: string };
+  [AppError.NotValidJsonInShape]: { subject: string; shape: string; path: string; reason: string };
+  [AppError.NotValidXml]: { subject: string; shape: string; path: string; reason: string };
+  [AppError.NotInShape]: { subject: string; shape: string; path: string; fault: string };
+  [AppError.NotASavedReconciliation]: { subject: string; path: string; fault: string };
+  [AppError.NotRenderableAsSaved]: { subject: string; path: string; reason: string };
+  [AppError.CorpusFileUnparseable]: { corpus: string; file: string; message: string };
+  [AppError.WorkflowNotYaml]: { workflows: string; file: string; message: string };
+  [AppError.ReportNotWritten]: { format: string; path: string; reason: string };
 }
 
 export type PlainAppMessage = Exclude<TabledAppMessage, keyof AppMessageParams>;
@@ -252,19 +253,6 @@ export type AppMessages = {
 };
 
 export const APP_MESSAGES: AppMessages = {
-  [AppMessage.History]: () => "the repository's history",
-  [AppMessage.Repository]: () => "the repository",
-  [AppMessage.Tree]: () => "the tree",
-  [AppMessage.TreeDirectory]: () => "a directory in the tree",
-  [AppMessage.TreeFile]: () => "a file in the tree",
-  [AppMessage.FeatureFile]: () => "a feature file",
-  [AppMessage.FeatureCorpus]: () => "the feature corpus",
-  [AppMessage.WorkingDirectory]: () => "the working directory",
-  [AppMessage.CouldNotBeRead]: (subject, reason) => `${subject} could not be read (${reason})`,
-  [AppMessage.CouldNotBeReadAt]: (subject, path, reason) => `${subject} could not be read: ${path} (${reason})`,
-  [AppMessage.GitExited]: (args, status, said) => `git ${args[0]} exited ${status}: ${said}`,
-  [AppMessage.FeatureCorpusDirectoryMissing]: (directory) => `The feature corpus directory does not exist: ${directory}`,
-  [AppMessage.StoredRunDirectoryNotCreated]: () => "The stored run's directory could not be created",
   [AppMessage.HelpTitle]: () => "spec-controller — reconcile scenarios against observed evidence",
   [AppMessage.HelpUsage]: () => "Usage:",
   [AppMessage.HelpCommands]: () => "Commands:",
@@ -335,41 +323,6 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.NewFlag]: () =>
     "Start a part no feature file's header carries yet: its first code, " +
     "or one past any number the repository already carries for it.",
-  [AppMessage.InputPathMissing]: (flag, path) => `The ${flag} path does not exist: ${path}`,
-  [AppMessage.FlaggedFile]: (flag) => `The ${flag} file`,
-  [AppMessage.FlaggedReport]: (flag) => `The ${flag} report`,
-  [AppMessage.FlaggedRecord]: (flag) => `The ${flag} record`,
-  [AppMessage.FlaggedManifest]: (flag) => `The ${flag} manifest`,
-  [AppMessage.FlaggedSavedReport]: (flag) => `The ${flag} saved report`,
-  [AppMessage.FlaggedCorpus]: (flag) => `The ${flag} corpus`,
-  [AppMessage.FlaggedWorkflows]: (flag) => `The ${flag} workflows`,
-  [AppMessage.DefaultPackageJson]: () => "The package.json read by default",
-  [AppMessage.DefaultFeatureCorpus]: () => "The feature corpus read by default",
-  [AppMessage.DefaultCiWorkflows]: () => "The CI workflows read by default",
-  [AppMessage.VitestReportShape]: () => "the Vitest JSON reporter writes",
-  [AppMessage.JunitReportShape]: () => "of the JUnit XML report pytest --junitxml writes",
-  [AppMessage.JestReportShape]: () => "of the JSON report jest --json writes",
-  [AppMessage.JunitXmlReportShape]: () => "of a JUnit XML report",
-  [AppMessage.RspecReportShape]: () => "of the JSON report rspec --format json writes",
-  [AppMessage.CucumberReportShape]: () => "the Cucumber JSON formatter writes",
-  [AppMessage.CiStepRecordShape]: () => "of a CI run's record of its steps",
-  [AppMessage.PackageManifestShape]: () => "of a package.json manifest",
-  [AppMessage.NotValidJson]: (subject, path, reason) => `${subject} is not valid JSON: ${path} (${reason})`,
-  [AppMessage.NotValidJsonInShape]: (subject, shape, path, reason) =>
-    `${subject} is not valid JSON, so not in the shape ${shape}: ${path} (${reason})`,
-  [AppMessage.NotValidXml]: (subject, shape, path, reason) =>
-    `${subject} is not valid XML, so not in the shape ${shape}: ${path} (${reason})`,
-  [AppMessage.XmlFaultAtLine]: (fault, line) => `${fault} at line ${line}`,
-  [AppMessage.NotInShape]: (subject, shape, path, fault) => `${subject} is not in the shape ${shape}: ${path} (${fault})`,
-  [AppMessage.NotASavedReconciliation]: (subject, path, fault) =>
-    `${subject} is not a saved reconciliation: ${path} (${fault}). Run balance again to save one.`,
-  [AppMessage.NotRenderableAsSaved]: (subject, path, reason) =>
-    `${subject} could not be rendered as a saved reconciliation: ${path} (${reason})`,
-  [AppMessage.CorpusFileUnparseable]: (corpus, file, message) =>
-    `${corpus} contains a feature file that could not be parsed: ${file}\n${message}`,
-  [AppMessage.WorkflowNotYaml]: (workflows, file, message) =>
-    `${workflows} contain a workflow that is not valid YAML: ${file}\n${message}`,
-  [AppMessage.ReportNotWritten]: (format) => `The ${format} report could not be written`,
   [AppMessage.HistoryBoundary]: (unread, risk) => `history: ${unread}; ${risk} may have been used before`,
   [AppMessage.ShallowHistoryUnread]: (before) => `shallow clone — history before ${before} unread`,
   [AppMessage.NoRepositoryHistoryRead]: () => "not a git repository — none read",
@@ -379,12 +332,6 @@ export const APP_MESSAGES: AppMessages = {
   [AppMessage.HighestSeenInTree]: (code, path, line) => `highest seen: ${code}, ${path}:${line}`,
   [AppMessage.HighestSeenInCommit]: (code, path, line, commit) => `highest seen: ${code}, ${path}:${line} in ${commit}`,
   [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
-  [AppMessage.ShapeKindList]: () => "a list",
-  [AppMessage.ShapeKindObject]: () => "an object",
-  [AppMessage.ShapeKindOfType]: (type) => `a ${type}`,
-  [AppMessage.ShapeTopLevel]: () => "the top level",
-  [AppMessage.ShapeWrongKind]: (where, found, expected) => `${where} is ${found}, not ${expected}`,
-  [AppMessage.ShapeFieldMissing]: (path) => `${path} is missing`,
   [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
   [AppError.UnexpectedError]: (name, firstLine) =>
     `spec-controller stopped on an unexpected error [${AppError.UnexpectedError}], and gives no verdict: ${name}: ${firstLine}`,
@@ -404,7 +351,3 @@ export const Unreadable = {
 } as const;
 
 export type Unreadable = (typeof Unreadable)[keyof typeof Unreadable];
-
-export const UNREADABLE_SUBJECTS: Readonly<Record<Unreadable, string>> = Object.fromEntries(
-  Object.values(Unreadable).map((code) => [code, APP_MESSAGES[code]()]),
-) as Record<Unreadable, string>;

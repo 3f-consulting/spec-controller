@@ -5,8 +5,9 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, wr
 import { join } from "node:path";
 import { BALANCED_INPUTS } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalogue.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
-import type { ArrangedTarget, ReportedRun, SpecControllerWorld } from "./support/world.js";
+import type { ArrangedTarget, ExpectedEntry, ReportedRun, SpecControllerWorld } from "./support/world.js";
 
 Given(
   "a target, and the Vitest report option pointing at a report that exists but is not valid JSON",
@@ -26,14 +27,10 @@ Given(
 );
 
 Then("the refusal names the unparseable report and the parse failure", function (this: SpecControllerWorld) {
+  const subject = entryText("flagged-report", { flag: "--vitest" });
   assert.ok(
-    this.balanceResult.stderr.includes(this.unparseableReport),
-    `expected stderr to NAME the unparseable report ${this.unparseableReport}; got:\n${this.balanceResult.stderr}`,
-  );
-  assert.match(
-    this.balanceResult.stderr,
-    /not valid JSON|JSON/i,
-    `expected stderr to name the PARSE failure, not merely the file; got:\n${this.balanceResult.stderr}`,
+    shownAmong(this.balanceResult.stderr, ["not-valid-json", "not-valid-json-in-shape"], { subject, path: this.unparseableReport }) !== undefined,
+    `expected stderr to name the unparseable report ${this.unparseableReport} and the PARSE failure; got:\n${this.balanceResult.stderr}`,
   );
   assert.doesNotMatch(
     this.balanceResult.stderr,
@@ -252,7 +249,7 @@ Then("the refusal names that report file and the shape a JUnit XML report takes"
   assert.ok(this.balanceResult.stderr.includes(this.notAReport), `expected stderr to name ${this.notAReport}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes("--junit"), `expected stderr to name --junit; got:\n${this.balanceResult.stderr}`);
   assert.ok(
-    this.balanceResult.stderr.includes("in the shape of a JUnit XML report"),
+    this.balanceResult.stderr.includes(entryText("junit-xml-report-shape")),
     `expected stderr to name the shape a JUnit XML report takes; got:\n${this.balanceResult.stderr}`,
   );
 });
@@ -393,11 +390,25 @@ function targetDir(world: SpecControllerWorld): string {
   return dir;
 }
 
-function reportTarget(world: SpecControllerWorld, flag: string, file: string, document: unknown, where: string): ArrangedTarget {
+function reportTarget(world: SpecControllerWorld, flag: string, file: string, document: unknown, refusal: ExpectedEntry): ArrangedTarget {
   const dir = targetDir(world);
   writeFileSync(join(dir, file), JSON.stringify(document));
-  return { dir, args: ["--features", "features", `--${flag}`, file], named: file, where };
+  return { dir, args: ["--features", "features", `--${flag}`, file], named: file, where: `--${flag}`, refusal };
 }
+
+const LIST = entryText("shape-kind-list");
+
+const OBJECT = entryText("shape-kind-object");
+
+const kindOf = (type: string): string => entryText("shape-kind-of-type", { type });
+
+const wrongKind = (where: string, found: string, expected: string): string => entryText("shape-wrong-kind", { where, found, expected });
+
+const atTop = (found: string, expected: string): string => wrongKind(entryText("shape-top-level"), found, expected);
+
+const missing = (path: string): string => entryText("shape-field-missing", { path });
+
+const inShape = (fault: string): ExpectedEntry => ["not-in-shape", { fault }];
 
 function rowOf<T>(rows: Record<string, T>, name: string): T {
   const row = rows[name];
@@ -405,53 +416,53 @@ function rowOf<T>(rows: Record<string, T>, name: string): T {
   return row;
 }
 
-const VITEST: Record<string, readonly [unknown, string]> = {
-  "no list of test results": [{ numTotalTests: 0 }, "testResults is missing"],
-  "a list where the report belongs": [[], "the top level is a list, not an object"],
-  "test results that are not a list": [{ testResults: "x" }, "testResults is a string, not a list"],
-  "a test file that is not an object": [{ testResults: [1] }, "testResults[0] is a number, not an object"],
+const VITEST: Record<string, readonly [unknown, ExpectedEntry]> = {
+  "no list of test results": [{ numTotalTests: 0 }, inShape(missing("testResults"))],
+  "a list where the report belongs": [[], inShape(atTop(LIST, OBJECT))],
+  "test results that are not a list": [{ testResults: "x" }, inShape(wrongKind("testResults", kindOf("string"), LIST))],
+  "a test file that is not an object": [{ testResults: [1] }, inShape(wrongKind("testResults[0]", kindOf("number"), OBJECT))],
   "a test file whose assertions are not a list": [
     { testResults: [{ assertionResults: {} }] },
-    "testResults[0].assertionResults is an object, not a list",
+    inShape(wrongKind("testResults[0].assertionResults", OBJECT, LIST)),
   ],
   "a test file whose name is not a string": [
     { testResults: [{ name: 1, assertionResults: [] }] },
-    "testResults[0].name is a number, not a string",
+    inShape(wrongKind("testResults[0].name", kindOf("number"), kindOf("string"))),
   ],
 };
 
 Given("a target whose Vitest report parses but holds {}", function (this: SpecControllerWorld, defect: string) {
-  const [document, where] = rowOf(VITEST, defect);
-  this.target = reportTarget(this, "vitest", "vitest.json", document, where);
+  const [document, refusal] = rowOf(VITEST, defect);
+  this.target = reportTarget(this, "vitest", "vitest.json", document, refusal);
 });
 
-const CUCUMBER: Record<string, readonly [unknown, string]> = {
-  "an object where the list of features belongs": [{}, "the top level is an object, not a list"],
-  "a string where the list of features belongs": ["x", "the top level is a string, not a list"],
-  "a feature whose scenarios are not a list": [[{ elements: "x" }], "[0].elements is a string, not a list"],
-  "a scenario whose tags are not a list": [[{ elements: [{ tags: {} }] }], "[0].elements[0].tags is an object, not a list"],
-  "a scenario whose steps are not a list": [[{ elements: [{ steps: "x" }] }], "[0].elements[0].steps is a string, not a list"],
-  "a feature whose location is not a string": [[{ uri: 1, elements: [] }], "[0].uri is a number, not a string"],
+const CUCUMBER: Record<string, readonly [unknown, ExpectedEntry]> = {
+  "an object where the list of features belongs": [{}, inShape(atTop(OBJECT, LIST))],
+  "a string where the list of features belongs": ["x", inShape(atTop(kindOf("string"), LIST))],
+  "a feature whose scenarios are not a list": [[{ elements: "x" }], inShape(wrongKind("[0].elements", kindOf("string"), LIST))],
+  "a scenario whose tags are not a list": [[{ elements: [{ tags: {} }] }], inShape(wrongKind("[0].elements[0].tags", OBJECT, LIST))],
+  "a scenario whose steps are not a list": [[{ elements: [{ steps: "x" }] }], inShape(wrongKind("[0].elements[0].steps", kindOf("string"), LIST))],
+  "a feature whose location is not a string": [[{ uri: 1, elements: [] }], inShape(wrongKind("[0].uri", kindOf("number"), kindOf("string")))],
 };
 
 Given("a target whose Cucumber report parses but holds {}", function (this: SpecControllerWorld, defect: string) {
-  const [document, where] = rowOf(CUCUMBER, defect);
-  this.target = reportTarget(this, "cucumber", "cucumber.json", document, where);
+  const [document, refusal] = rowOf(CUCUMBER, defect);
+  this.target = reportTarget(this, "cucumber", "cucumber.json", document, refusal);
 });
 
-const CI_STEPS: Record<string, readonly [unknown, string]> = {
-  "a list where the record belongs": [[], "the top level is a list, not an object"],
-  "nothing where the record belongs": [null, "the top level is null, not an object"],
-  "a scenario-coded step that is not an object": [{ "SCN-UIN-001": "success" }, "SCN-UIN-001 is a string, not an object"],
+const CI_STEPS: Record<string, readonly [unknown, ExpectedEntry]> = {
+  "a list where the record belongs": [[], inShape(atTop(LIST, OBJECT))],
+  "nothing where the record belongs": [null, inShape(atTop("null", OBJECT))],
+  "a scenario-coded step that is not an object": [{ "SCN-UIN-001": "success" }, inShape(wrongKind("SCN-UIN-001", kindOf("string"), OBJECT))],
   "a scenario-coded step whose outcome is not a string": [
     { "SCN-UIN-001": { outcome: 1 } },
-    "SCN-UIN-001.outcome is a number, not a string",
+    inShape(wrongKind("SCN-UIN-001.outcome", kindOf("number"), kindOf("string"))),
   ],
 };
 
 Given("a target whose CI step record parses but holds {}", function (this: SpecControllerWorld, defect: string) {
-  const [document, where] = rowOf(CI_STEPS, defect);
-  this.target = reportTarget(this, "ci-steps", "ci-steps.json", document, where);
+  const [document, refusal] = rowOf(CI_STEPS, defect);
+  this.target = reportTarget(this, "ci-steps", "ci-steps.json", document, refusal);
 });
 
 const NOT_JUNIT_XML: Record<string, string> = {
@@ -496,19 +507,19 @@ Given(/^a target whose RSpec report is (?!well formed and holds nothing$)(.+)$/,
   this.target = { dir, args: ["--features", "features", "--rspec", "rspec.json"], named: "rspec.json", where: "--rspec" };
 });
 
-const MANIFEST: Record<string, readonly [string, string]> = {
-  "a list where the manifest belongs": ["[]", "the top level is a list, not an object"],
-  "scripts that are not a map": ['{"scripts":"x"}', "scripts is a string, not an object"],
-  "a script that is not a string": ['{"scripts":{"lint":5}}', "scripts.lint is a number, not a string"],
-  "text that does not parse": ["{not json", "is not valid JSON"],
+const MANIFEST: Record<string, readonly [string, ExpectedEntry]> = {
+  "a list where the manifest belongs": ["[]", inShape(atTop(LIST, OBJECT))],
+  "scripts that are not a map": ['{"scripts":"x"}', inShape(wrongKind("scripts", kindOf("string"), OBJECT))],
+  "a script that is not a string": ['{"scripts":{"lint":5}}', inShape(wrongKind("scripts.lint", kindOf("number"), kindOf("string")))],
+  "text that does not parse": ["{not json", ["not-valid-json", {}]],
 };
 
 Given("a target whose manifest, {}, holds {}", function (this: SpecControllerWorld, how: string, defect: string) {
-  const [text, where] = rowOf(MANIFEST, defect);
+  const [text, refusal] = rowOf(MANIFEST, defect);
   const dir = targetDir(this);
   writeFileSync(join(dir, "package.json"), text);
   const named = how === "given by name" ? ["--package-json", "package.json"] : [];
-  this.target = { dir, args: ["--features", "features", ...named], named: "package.json", where };
+  this.target = { dir, args: ["--features", "features", ...named], named: "package.json", where: "", refusal };
 });
 
 const EMPTY_PYTEST_REPORT =
@@ -606,7 +617,7 @@ const NOT_PERMITTED: Record<string, (dir: string) => readonly [readonly string[]
   "the manifest read by default": (dir) => {
     writeFileSync(join(dir, "package.json"), "{}");
     chmodSync(join(dir, "package.json"), 0o000);
-    return [["--features", "features"], "package.json", "package.json read by default"];
+    return [["--features", "features"], "package.json", entryText("default-package-json")];
   },
   "the Vitest report": (dir) => {
     writeFileSync(join(dir, "vitest.json"), '{"testResults":[]}');
@@ -647,24 +658,26 @@ Given("a target in which {} is not permitted to be read", function (this: SpecCo
   this.target = { dir, args, named, where };
 });
 
-const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string, unknown>) => unknown, string]> = {
-  "a list, not a reconciliation": [() => [], "the top level is a list, not an object"],
-  "a reconciliation with no ledger": [(saved) => ({ ...saved, ledger: undefined }), "ledger is missing"],
+const notSaved = (fault: string): ExpectedEntry => ["not-a-saved-reconciliation", { fault }];
+
+const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string, unknown>) => unknown, ExpectedEntry]> = {
+  "a list, not a reconciliation": [() => [], notSaved(atTop(LIST, OBJECT))],
+  "a reconciliation with no ledger": [(saved) => ({ ...saved, ledger: undefined }), notSaved(missing("ledger"))],
   "holding a section of the wrong kind": [
     (saved) => ({ ...saved, errors: { scenarioCodes: "x" } }),
-    "errors.scenarioCodes is a string, not a list",
+    notSaved(wrongKind("errors.scenarioCodes", kindOf("string"), LIST)),
   ],
-  "unreadable below its top": [(saved) => ({ ...saved, ledger: { claimReconciliations: [null] } }), "could not be rendered"],
+  "unreadable below its top": [(saved) => ({ ...saved, ledger: { claimReconciliations: [null] } }), ["not-renderable-as-saved", {}]],
   "a reconciliation that does not name its corpus": [
     (saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }),
-    "runProvenance.corpus is missing",
+    notSaved(missing("runProvenance.corpus")),
   ],
   "in an earlier summary shape": [
     (saved) => ({
       ...saved,
       summary: { ...(saved["summary"] as object), evidenceReconciliation: undefined, evidenceObservations: undefined },
     }),
-    "summary.evidenceReconciliation is missing",
+    notSaved(missing("summary.evidenceReconciliation")),
   ],
 };
 
@@ -678,10 +691,10 @@ function savedReconciliation(dir: string): Record<string, unknown> {
 }
 
 Given("a saved report that parses but is {}", function (this: SpecControllerWorld, defect: string) {
-  const [broken, where] = rowOf(NOT_A_SAVED_RECONCILIATION, defect);
+  const [broken, refusal] = rowOf(NOT_A_SAVED_RECONCILIATION, defect);
   const dir = targetDir(this);
   writeFileSync(join(dir, "saved.json"), JSON.stringify(broken(savedReconciliation(dir))));
-  this.target = { dir, args: ["--render-from-json", "saved.json"], named: "saved.json", where };
+  this.target = { dir, args: ["--render-from-json", "saved.json"], named: "saved.json", where: "", refusal };
 });
 
 const STORED: Record<string, (dir: string) => readonly [readonly string[], string]> = {
@@ -726,13 +739,13 @@ const YAML_PARSE_ERROR = "Flow sequence in block collection must be sufficiently
 const UNPARSEABLE_WORKFLOW: Record<string, (dir: string) => ArrangedTarget> = {
   "--ci workflow file": (dir) => {
     writeFileSync(join(dir, "ci.yml"), NOT_YAML);
-    return { dir, args: ["--features", "features", "--ci", "ci.yml"], named: "ci.yml", where: "The --ci workflows" };
+    return { dir, args: ["--features", "features", "--ci", "ci.yml"], named: "ci.yml", where: entryText("flagged-workflows", { flag: "--ci" }) };
   },
   "workflow in the --ci folder": (dir) => {
     mkdirSync(join(dir, "workflows"));
     writeFileSync(join(dir, "workflows", "a-lint.yml"), "jobs:\n  lint:\n    steps:\n      - run: pnpm lint\n");
     writeFileSync(join(dir, "workflows", "build.yml"), NOT_YAML);
-    return { dir, args: ["--features", "features", "--ci", "workflows"], named: join("workflows", "build.yml"), where: "The --ci workflows" };
+    return { dir, args: ["--features", "features", "--ci", "workflows"], named: join("workflows", "build.yml"), where: entryText("flagged-workflows", { flag: "--ci" }) };
   },
   "workflow read by default": (dir) => {
     mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
@@ -741,7 +754,7 @@ const UNPARSEABLE_WORKFLOW: Record<string, (dir: string) => ArrangedTarget> = {
       dir,
       args: ["--features", "features"],
       named: join(".github", "workflows", "ci.yml"),
-      where: "The CI workflows read by default",
+      where: entryText("default-ci-workflows"),
     };
   },
 };
@@ -751,8 +764,8 @@ Given("a target whose {} does not parse as YAML", function (this: SpecController
 });
 
 Then("the refusal names the workflow and the parse error", function (this: SpecControllerWorld) {
-  assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to name ${this.target.where}; got:\n${this.balanceResult.stderr}`);
-  assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
+  const file = shownEntry(this.balanceResult.stderr, "workflow-not-yaml", { workflows: this.target.where })?.["file"] ?? "";
+  assert.ok(file.endsWith(this.target.named), `expected stderr to name ${this.target.where} and ${this.target.named}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes(YAML_PARSE_ERROR), `expected stderr to carry the YAML parser's error; got:\n${this.balanceResult.stderr}`);
 });
 
@@ -765,7 +778,7 @@ Given("a target whose working directory has since been removed", function (this:
   const parent = temporaryDirectory(this, "unreadable-input-");
   const removed = join(parent, "removed");
   mkdirSync(removed);
-  this.target = { dir: removed, args: [], named: "features", where: "The feature corpus read by default" };
+  this.target = { dir: removed, args: [], named: "features", where: entryText("default-feature-corpus") };
 });
 
 When("balance is asked to reconcile it with no feature corpus given", function (this: SpecControllerWorld) {
@@ -784,15 +797,16 @@ Then("the input is refused as one the tool cannot read, never read as a verdict"
 });
 
 Then("the refusal names the input and where its shape is wrong", function (this: SpecControllerWorld) {
-  assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
-  assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to say "${this.target.where}"; got:\n${this.balanceResult.stderr}`);
+  const [code, values] = this.target.refusal ?? ["", {}];
+  const path = shownEntry(this.balanceResult.stderr, code, values)?.["path"] ?? "";
+  assert.ok(path.endsWith(this.target.named), `expected the refusal ${code} naming ${this.target.named} with ${JSON.stringify(values)}; got:\n${this.balanceResult.stderr}`);
 });
 
 Then("the refusal names the pytest report and the shape pytest writes", function (this: SpecControllerWorld) {
   assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to name ${this.target.where}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
   assert.ok(
-    this.balanceResult.stderr.includes("the JUnit XML report pytest --junitxml writes"),
+    this.balanceResult.stderr.includes(entryText("junit-report-shape")),
     `expected stderr to name the shape pytest writes; got:\n${this.balanceResult.stderr}`,
   );
 });
@@ -801,7 +815,7 @@ Then("the refusal names the Jest report and the shape Jest writes", function (th
   assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to name ${this.target.where}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
   assert.ok(
-    this.balanceResult.stderr.includes("the JSON report jest --json writes"),
+    this.balanceResult.stderr.includes(entryText("jest-report-shape")),
     `expected stderr to name the shape Jest writes; got:\n${this.balanceResult.stderr}`,
   );
 });
@@ -810,7 +824,7 @@ Then("the refusal names the RSpec report and the shape RSpec writes", function (
   assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to name ${this.target.where}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
   assert.ok(
-    this.balanceResult.stderr.includes("the JSON report rspec --format json writes"),
+    this.balanceResult.stderr.includes(entryText("rspec-report-shape")),
     `expected stderr to name the shape RSpec writes; got:\n${this.balanceResult.stderr}`,
   );
 });
@@ -819,7 +833,7 @@ Then("the refusal names the JUnit report and the shape a JUnit XML report takes"
   assert.ok(this.balanceResult.stderr.includes(this.target.where), `expected stderr to name ${this.target.where}; got:\n${this.balanceResult.stderr}`);
   assert.ok(this.balanceResult.stderr.includes(this.target.named), `expected stderr to name ${this.target.named}; got:\n${this.balanceResult.stderr}`);
   assert.ok(
-    this.balanceResult.stderr.includes("in the shape of a JUnit XML report"),
+    this.balanceResult.stderr.includes(entryText("junit-xml-report-shape")),
     `expected stderr to name the shape a JUnit XML report takes; got:\n${this.balanceResult.stderr}`,
   );
   assert.doesNotMatch(this.balanceResult.stderr, /pytest/, `a --junit refusal names no single runner; got:\n${this.balanceResult.stderr}`);
@@ -840,13 +854,13 @@ Then("the refusal names the input it could not read and the path", function (thi
 
 Then("the refusal names the feature corpus read by default and the working directory's read failure", function (this: SpecControllerWorld) {
   assert.ok(
-    this.balanceResult.stderr.startsWith(`${this.target.where} could not be read: ${this.target.named} (`),
-    `expected stderr to name the feature corpus read by default; got:\n${this.balanceResult.stderr}`,
+    showsEntry(this.balanceResult.stderr, "could-not-be-read", { subject: this.target.where, path: this.target.named }),
+    `expected the could-not-be-read refusal of ${this.target.where}; got:\n${this.balanceResult.stderr}`,
   );
   assert.match(this.balanceResult.stderr, /uv_cwd/, `expected the working directory's read failure; got:\n${this.balanceResult.stderr}`);
 });
 
 Then("the refusal says the tool was not permitted to read it", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stderr, /could not be read/, `expected the refusal to say the input could not be read; got:\n${this.balanceResult.stderr}`);
-  assert.match(this.balanceResult.stderr, /EACCES|EPERM/, `expected the operating system's reason; got:\n${this.balanceResult.stderr}`);
+  const reason = shownAmong(this.balanceResult.stderr, ["could-not-be-read", "working-directory-unreadable"])?.["reason"] ?? "";
+  assert.match(reason, /EACCES|EPERM/, `expected an unreadable-input refusal for the operating system's reason; got:\n${this.balanceResult.stderr}`);
 });

@@ -27,10 +27,9 @@ Given("a target, and the {} pointing at a path that does not exist", function (t
 
 Then("the run is rejected for the missing path", function (this: SpecControllerWorld) {
   assert.notEqual(this.balanceResult.status, 0, `expected a non-zero exit; got ${this.balanceResult.status}\n${this.balanceResult.stdout}`);
-  assert.match(
-    this.balanceResult.stderr,
-    /path does not exist/,
-    `expected the refusal to say the path does not exist, not that the input could not be read; got:\n${this.balanceResult.stderr}`,
+  assert.ok(
+    showsEntry(this.balanceResult.stderr, "input-path-missing", { path: this.missingPath }),
+    `expected the input-path-missing refusal of ${this.missingPath}; got:\n${this.balanceResult.stderr}`,
   );
 });
 
@@ -45,6 +44,10 @@ Then("the rejection names the {} and the missing path", function (this: SpecCont
     `expected stderr to name the missing path ${this.missingPath}; got:\n${this.balanceResult.stderr}`,
   );
 });
+
+const MISSING = ["input-path-missing", "feature-corpus-directory-missing"] as const;
+
+const MISSING_OR_UNREADABLE = [...MISSING, "could-not-be-read", "working-directory-unreadable"] as const;
 
 Then("nothing is reconciled", function (this: SpecControllerWorld) {
   assert.doesNotMatch(this.balanceResult.stdout, /Evidence Reconciliation/);
@@ -249,7 +252,7 @@ Then(/^the refusal names (.+) as a flag missing its value$/, function (this: Spe
   const { stderr } = this.balanceResult;
   assert.ok(showsEntry(stderr, "missing-value", { flag }), `expected the missing-value refusal of ${flag}; got:\n${stderr}`);
   assert.doesNotMatch(stderr, /\btrue\b/, `stderr names the word a missing value used to become:\n${stderr}`);
-  assert.doesNotMatch(stderr, /does not exist|could not be read/i, `stderr names a fault other than the missing value:\n${stderr}`);
+  assert.equal(firstShown(stderr, MISSING_OR_UNREADABLE), undefined, `stderr names a fault other than the missing value:\n${stderr}`);
   assert.equal(firstShown(stderr, ["unknown-command", "pin-drifted"]), undefined, `stderr names a fault other than the missing value:\n${stderr}`);
 });
 
@@ -695,7 +698,7 @@ Then("the refusal names the run-name modifier as naming a run that is not kept",
     `expected the run-id-without-store refusal, or a re-render-not-stored refusal naming --run-id; got:\n${stderr}`,
   );
   assert.equal(firstShown(stderr, [...OTHER_HOST_FAULTS, "no-command-after-modifiers"]), undefined, `stderr names another fault:\n${stderr}`);
-  assert.doesNotMatch(stderr, /does not exist/i, `stderr names another fault:\n${stderr}`);
+  assert.equal(firstShown(stderr, MISSING), undefined, `stderr names another fault:\n${stderr}`);
   assert.doesNotMatch(stderr, /^\s+at /m, `stderr carries a stack trace:\n${stderr}`);
 });
 

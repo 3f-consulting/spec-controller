@@ -1,4 +1,4 @@
-import { AppMessage, type PlainAppMessage } from "../messages.js";
+import { AppMessage, type PlainAppMessage, type PlainWordedAppMessage } from "../messages.js";
 import {
   CI_STEP_RECORD,
   CUCUMBER_REPORT,
@@ -17,7 +17,7 @@ export interface ReportInput {
   readonly format: ReportFormat;
   readonly shape: Shape;
   readonly subject: AppMessage.FlaggedReport | AppMessage.FlaggedRecord | AppMessage.FlaggedManifest;
-  readonly writer: PlainAppMessage;
+  readonly writer: PlainWordedAppMessage;
   readonly takesADirectory?: true;
 }
 

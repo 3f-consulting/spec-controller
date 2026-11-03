@@ -1,13 +1,14 @@
 import { readFileSync, readdirSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 export class MissingFeatureCorpusError extends Error {
   readonly directory: string;
 
   constructor(directory: string) {
-    super(APP_MESSAGES[AppMessage.FeatureCorpusDirectoryMissing](directory));
+    super(message(AppMessage.FeatureCorpusDirectoryMissing, { directory }));
     this.name = "MissingFeatureCorpusError";
     this.directory = directory;
   }

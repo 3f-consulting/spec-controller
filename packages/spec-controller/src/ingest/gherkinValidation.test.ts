@@ -2,8 +2,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
-import { runBalanceCaptured } from "../runBalance.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { captured, expectRefused } from "../cli-balance/balanceRun.test-utils.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 import { parseFeatureCorpus } from "@3f-consulting/spec-controller-core";
 import { readCorpus } from "./ingestQualityChecks.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
@@ -63,19 +64,11 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
     mkdirSync(ci);
     writeFileSync(join(ci, "ci.yml"), "jobs: {}\n");
     const refusalFor = (file: string, source: string): string =>
-      APP_MESSAGES[AppMessage.CorpusFileUnparseable](
-        APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"),
-        file,
-        parserMessageOf(source),
-      );
-    const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci]);
-
-    expect({ report: stdout, stderr, exitCode }).toEqual({
-      report: "",
-      stderr:
-        [refusalFor(paths["a.feature"]!, corruptTag), refusalFor(paths["c.feature"]!, corruptKeyword)].join("\n") +
-        "\n",
-      exitCode: 2,
-    });
+      message(AppError.CorpusFileUnparseable, { corpus: message(AppMessage.FlaggedCorpus, { flag: "--features" }), file, message: parserMessageOf(source) });
+    expectRefused(
+      captured(["--features", features, "--ci", ci]),
+      refusalFor(paths["a.feature"]!, corruptTag),
+      refusalFor(paths["c.feature"]!, corruptKeyword),
+    );
   });
 });

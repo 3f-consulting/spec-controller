@@ -102,6 +102,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
         | an unexpected error before its verdict        | the unexpected error                 |
         | an unexpected error that cannot be formatted  | the unexpected error                 |
         | an unexpected error after its verdict         | the unexpected error after a verdict |
+        | an input it cannot read                       | the input that could not be read     |
 
     @unit @SCN-MSG-011
     Scenario: a balanced run shows no error code

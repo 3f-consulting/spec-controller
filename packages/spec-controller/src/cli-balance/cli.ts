@@ -21,6 +21,7 @@ import {
   checkInputShapes,
   corpusDirRefusal,
   checkSavedReconciliation,
+  corpusUnparseableRefusal,
   jsonInputsOf,
   readReports,
   reportRefusal,
@@ -49,7 +50,7 @@ import {
   checkMisplacedHostModifiers,
 } from "../cliArgs.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { AppError } from "../messages.js";
 import { refusal, type Refusal } from "../refusal.js";
 
 function collectFormatSpecs(argv: string[]): string[] {
@@ -71,17 +72,17 @@ export function sourceTarget(args: Record<string, string>): string {
 export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
-): string | null {
+): Refusal | null {
   for (const { flag } of EVIDENCE_INPUTS) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
-      return APP_MESSAGES[AppMessage.InputPathMissing](`--${flag}`, path);
+      return refusal(AppError.InputPathMissing, { flag: `--${flag}`, path });
     }
   }
   return null;
 }
 
-export function checkInputsParse(reports: ReportsReading): string | null {
+export function checkInputsParse(reports: ReportsReading): Refusal | null {
   for (const file of reports.files) {
     const { reading } = file;
     if (!file.flagged || file.report.format !== "json") continue;
@@ -157,7 +158,7 @@ function renderSavedReport(args: Record<string, string>): boolean {
   const notSavedError = checkSavedReconciliation(rehydratePath, savedReading.document);
   if (notSavedError) refuse(notSavedError);
   const saved = reRenderOrRefusal(rehydratePath, savedReading.document, args["strict"] !== undefined);
-  if (typeof saved === "string") refuse(saved);
+  if ("code" in saved) refuse(saved);
   process.stdout.write(saved.markdown + "\n");
   endRunOn({ kind: "verdict", code: exitCodeOf(saved.verdict, args["exit-zero"] !== undefined) });
   return true;
@@ -188,15 +189,7 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
   if (reportsReading.kind === "faulty") refuse(checkInputShapes(reportsReading));
 
-  if (corpusReading.kind === "unparseable") {
-    refuse(
-      corpusReading.faults
-        .map(({ file, message }) =>
-          APP_MESSAGES[AppMessage.CorpusFileUnparseable](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), file, message),
-        )
-        .join("\n"),
-    );
-  }
+  if (corpusReading.kind === "unparseable") refuse(corpusUnparseableRefusal(corpusReading.faults));
   return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
 }
 

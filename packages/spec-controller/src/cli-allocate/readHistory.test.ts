@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { diffLineOccurrences, readHistory, repositoryTop } from "./readHistory.js";
 import { runGit as git, freshUnresolvedDirectory as freshDirectory, taken, withhold } from "./repository.test-utils.js";
 import { thrownBy } from "./answered.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 describe("[SCN-ALC-015] a code that appears only in a commit message is not retired", () => {
   let logWithMessage: string;
@@ -55,7 +56,7 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     const repo = repositoryWithHistory();
     const objects = join(repo, ".git", "objects");
     for (const name of readdirSync(objects).filter((entry) => /^[0-9a-f]{2}$/.test(entry))) withhold(join(objects, name), 0o000);
-    expect(thrownBy(() => readHistory(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", subject: APP_MESSAGES[AppMessage.History]() });
+    expect(thrownBy(() => readHistory(repo, "ONE"))).toMatchObject({ name: "UnreadableInput", subject: message(AppMessage.History) });
   });
 
   it("refuses history whose branch refs it may not read, though git itself says nothing", () => {
@@ -63,7 +64,7 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     withhold(join(repo, ".git", "refs", "heads"), 0o000);
     expect(thrownBy(() => readHistory(repo, "ONE"))).toMatchObject({
       name: "UnreadableInput",
-      subject: APP_MESSAGES[AppMessage.History](),
+      subject: message(AppMessage.History),
       path: join(realpathSync(repo), ".git", "refs", "heads"),
     });
   });
@@ -73,7 +74,7 @@ describe("[SCN-ALC-022] a repository git cannot open is refused, never read as n
   it("refuses a repository whose .git it may not read, naming the .git", () => {
     const repo = repositoryWithHistory();
     withhold(join(repo, ".git"), 0o000);
-    expect(thrownBy(() => repositoryTop(repo))).toMatchObject({ name: "UnreadableInput", subject: APP_MESSAGES[AppMessage.Repository](), path: join(repo, ".git") });
+    expect(thrownBy(() => repositoryTop(repo))).toMatchObject({ name: "UnreadableInput", subject: message(AppMessage.Repository), path: join(repo, ".git") });
   });
 
   it("finds the .git git would have found from a subdirectory", () => {

@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { taken, withhold, runsAsRoot, repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
 import { allocateFrom } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
+import { AppError, AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 function repositoryCarryingOneCode(): string {
   return repositoryHeadedOneCarrying003("allocate-unopenable-repository-", { "docs/readme.md": "a directory below the top\n" });
@@ -25,9 +27,8 @@ function expectRefusedNaming(answered: Answered, gitEntry: string, git: { status
   expect(answered.stdout).toBe("");
   expect(answered.exitCode).toBe(2);
   expect(git.said).toMatch(/\S/);
-  expect(answered.stderr).toBe(
-    `spec-controller allocate: usage error — the repository could not be read: ${gitEntry} (git rev-parse exited ${git.status}: ${git.said})\n`,
-  );
+  const reason = message(AppMessage.GitExited, { command: "rev-parse", status: String(git.status), said: git.said });
+  expect(answered.stderr).toContain(message(AppError.CouldNotBeRead, { subject: message(AppMessage.Repository), path: gitEntry, reason }));
 }
 
 describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {

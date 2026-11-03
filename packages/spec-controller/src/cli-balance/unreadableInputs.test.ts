@@ -7,15 +7,25 @@ import {
   checkInputShapes,
   checkSavedReconciliation,
   checkWorkflowsParse,
+  corpusDirRefusal,
   jsonInputsOf,
   readReports,
+  reRenderOrRefusal,
 } from "./unreadableInputs.js";
+import { checkInputsExist } from "./cli.js";
+import { refusalLine, UnparseableFeatureFiles, UnreadableInput } from "../cli-allocate/unreadable.js";
+import { executeKeptRun } from "../run-management/keptRun.js";
+import { errorText, type RefusalLines } from "../standardError.js";
+import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
 import { reRender } from "./reRender.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppError, AppMessage, Unreadable } from "../messages.js";
+import { message } from "../appText.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
+import { captured, expectRefused } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { shownText } from "../shownText.test-utils.js";
 
 const nothingByDefault = (): boolean => false;
 const reading = (content: string) => (): string => content;
@@ -23,7 +33,7 @@ const reading = (content: string) => (): string => content;
 describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the reporter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
     const inputs = jsonInputsOf({ vitest: "reports/vitest.json" }, nothingByDefault);
-    const error = checkInputShapes(readReports(inputs, reading('{"testResults":"x"}')));
+    const error = shownText(checkInputShapes(readReports(inputs, reading('{"testResults":"x"}'))));
 
     expect(error).toContain("--vitest");
     expect(error).toContain("reports/vitest.json");
@@ -32,7 +42,7 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
 
   it("passes a report in the reporter's shape, so the run goes on to reconcile", () => {
     const report = JSON.stringify({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [] }] });
-    expect(checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading(report)))).toBeNull();
+    expect(shownText(checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading(report))))).toBeNull();
   });
 
   function reportsOnDisk(files: Record<string, string>): string {
@@ -42,23 +52,19 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
   }
 
   const misshapenAt = (path: string): string =>
-    APP_MESSAGES[AppMessage.NotInShape](
-      APP_MESSAGES[AppMessage.FlaggedReport]("--vitest"),
-      APP_MESSAGES[AppMessage.VitestReportShape](),
+    message(AppError.NotInShape, {
+      subject: message(AppMessage.FlaggedReport, { flag: "--vitest" }),
+      shape: message(AppMessage.VitestReportShape),
       path,
-      "testResults is a string, not a list",
-    );
+      fault: "testResults is a string, not a list",
+    });
 
   it("runBalance refuses a misshapen --vitest report at exit 2, naming the file and where its shape is wrong, reconciling nothing", () => {
     const { features, ci } = targetOnDisk();
     const vitest = join(reportsOnDisk({ "vitest.json": '{"testResults":"x"}' }), "vitest.json");
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features, "--ci", ci, "--vitest", vitest]);
 
-    expect({ report: stdout, stderr, exitCode }).toEqual({
-      report: "",
-      stderr: misshapenAt(vitest) + "\n",
-      exitCode: 2,
-    });
+    expectRefused({ report: stdout, stderr, exitCode }, misshapenAt(vitest));
   });
 
   it("refuses a misshapen Vitest report checked after a well-formed --package-json, not only the first input it checks", () => {
@@ -72,13 +78,13 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
     ];
 
     expect(manifestFirst.map((input) => input.path)).toEqual([join(dir, "package.json"), join(dir, "vitest.json")]);
-    expect(checkInputShapes(readReports(manifestFirst, (path) => readFileSync(path, "utf8")))).toBe(misshapenAt(join(dir, "vitest.json")));
+    expect(shownText(checkInputShapes(readReports(manifestFirst, (path) => readFileSync(path, "utf8"))))).toBe(misshapenAt(join(dir, "vitest.json")));
   });
 });
 
 describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the formatter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
-    const error = checkInputShapes(readReports(jsonInputsOf({ cucumber: "reports/cucumber.json" }, nothingByDefault), reading("{}")));
+    const error = shownText(checkInputShapes(readReports(jsonInputsOf({ cucumber: "reports/cucumber.json" }, nothingByDefault), reading("{}"))));
 
     expect(error).toContain("--cucumber");
     expect(error).toContain("reports/cucumber.json");
@@ -88,7 +94,7 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
 
 describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(readReports(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content)));
+    shownText(checkInputShapes(readReports(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content))));
 
   it.each([
     ["text that is not XML", "collected 3 items\n3 passed\n", "is not valid XML"],
@@ -100,7 +106,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect(error).toContain("--pytest");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
+    expect(error).toContain(message(AppMessage.JunitReportShape));
     expect(error).toContain(fault);
   });
 
@@ -109,7 +115,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect(error).toContain("--pytest");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
+    expect(error).toContain(message(AppMessage.JunitReportShape));
     expect(error).toContain("testsuites is missing");
   });
 
@@ -121,13 +127,13 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(APP_MESSAGES[AppMessage.JunitReportShape]());
+    expect(stderr).toContain(message(AppMessage.JunitReportShape));
   });
 });
 
 describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(readReports(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content)));
+    shownText(checkInputShapes(readReports(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content))));
 
   it.each([
     ["text that is not JSON", "PASS src/a.test.ts\nTests: 3 passed, 3 total\n", "is not valid JSON"],
@@ -138,7 +144,7 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 
     expect(error).toContain("--jest");
     expect(error).toContain("reports/jest.json");
-    expect(error).toContain(APP_MESSAGES[AppMessage.JestReportShape]());
+    expect(error).toContain(message(AppMessage.JestReportShape));
     expect(error).toContain(fault);
   });
 
@@ -150,13 +156,13 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(APP_MESSAGES[AppMessage.JestReportShape]());
+    expect(stderr).toContain(message(AppMessage.JestReportShape));
   });
 });
 
 describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(readReports(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content)));
+    shownText(checkInputShapes(readReports(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content))));
 
   it.each([
     ["text that is not JSON", "Finished in 0.01 seconds\n3 examples, 0 failures\n", "is not valid JSON"],
@@ -183,7 +189,7 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 
     expect(error).toContain("--rspec");
     expect(error).toContain("reports/rspec.json");
-    expect(error).toContain(APP_MESSAGES[AppMessage.RspecReportShape]());
+    expect(error).toContain(message(AppMessage.RspecReportShape));
     expect(error).toContain(fault);
   });
 
@@ -195,13 +201,13 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(APP_MESSAGES[AppMessage.RspecReportShape]());
+    expect(stderr).toContain(message(AppMessage.RspecReportShape));
   });
 });
 
 describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
   const refusalOf = (content: string): string | null =>
-    checkInputShapes(readReports(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content)));
+    shownText(checkInputShapes(readReports(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content))));
 
   it.each([
     ["text that is not XML", "=== RUN   TestCited\n--- PASS: TestCited (0.00s)\nok\n", "is not valid XML"],
@@ -212,7 +218,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
     expect(error).toContain("--junit");
     expect(error).toContain("reports/report.xml");
-    expect(error).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
+    expect(error).toContain(`in the shape ${message(AppMessage.JunitXmlReportShape)}`);
     expect(error).toContain(fault);
     expect(error).not.toContain("pytest");
   });
@@ -225,7 +231,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(report);
-    expect(stderr).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
+    expect(stderr).toContain(`in the shape ${message(AppMessage.JunitXmlReportShape)}`);
   });
 });
 
@@ -241,11 +247,11 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 
   it("refuses a report file holding XML that holds no test suites, naming the flag, that file, the shape of a JUnit XML report and what is wrong", () => {
     const { reports, notAReport } = surefireReportsBeside("<html><body/></html>");
-    const error = checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8"))) ?? "";
+    const error = shownText(checkInputShapes(readReports(jsonInputsOf({ junit: reports }, existsSync), (path) => readFileSync(path, "utf8")))) ?? "";
 
     expect(error).toContain("--junit");
     expect(error).toContain(notAReport);
-    expect(error).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
+    expect(error).toContain(`in the shape ${message(AppMessage.JunitXmlReportShape)}`);
     expect(error).toContain("testsuites is missing");
   });
 
@@ -256,14 +262,14 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
 
     expect({ report: stdout, exitCode }).toEqual({ report: "", exitCode: 2 });
     expect(stderr).toContain(notAReport);
-    expect(stderr).toContain(`in the shape ${APP_MESSAGES[AppMessage.JunitXmlReportShape]()}`);
+    expect(stderr).toContain(`in the shape ${message(AppMessage.JunitXmlReportShape)}`);
   });
 });
 
 describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
-    const error = checkInputShapes(readReports(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json")));
+    const error = shownText(checkInputShapes(readReports(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json"))));
     expect(error).toContain("package.json read by default is not valid JSON");
   });
 });
@@ -287,7 +293,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
     ["cucumber", "[]"],
     ["ci-steps", "{}"],
   ])("passes an empty --%s", (flag, content) => {
-    expect(checkInputShapes(readReports(jsonInputsOf({ [flag]: "empty.json" }, nothingByDefault), reading(content)))).toBeNull();
+    expect(shownText(checkInputShapes(readReports(jsonInputsOf({ [flag]: "empty.json" }, nothingByDefault), reading(content))))).toBeNull();
   });
 
   function directoryHoldingNoReport(): string {
@@ -300,7 +306,7 @@ describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () =
     const inputs = jsonInputsOf({ junit: reports }, nothingByDefault);
 
     expect(inputs).toEqual([]);
-    expect(checkInputShapes(readReports(inputs, (path) => readFileSync(path, "utf8")))).toBeNull();
+    expect(shownText(checkInputShapes(readReports(inputs, (path) => readFileSync(path, "utf8"))))).toBeNull();
   });
 
   it("runBalance reads a --junit directory holding no report as an empty report, reaching the verdict of the same run given no report", () => {
@@ -334,8 +340,8 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
     const { features } = targetOnDisk();
     const file = join(features, name);
     writeFileSync(file, content);
-    const error = checkInputPaths({ features: file }, readCorpus(file), readWorkflows(undefined));
-    const refusal = APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), file, "ENOTDIR");
+    const error = shownText(checkInputPaths({ features: file }, readCorpus(file), readWorkflows(undefined)));
+    const refusal = message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedCorpus, { flag: "--features" }), path: file, reason: "ENOTDIR" });
 
     expect(error).toContain(refusal.slice(0, -")".length));
   });
@@ -343,7 +349,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("names the entry when the corpus holds a directory named as a feature file", () => {
     const { features } = targetOnDisk();
     mkdirSync(join(features, "z.feature"));
-    const error = checkInputPaths({ features }, readCorpus(features), readWorkflows(undefined));
+    const error = shownText(checkInputPaths({ features }, readCorpus(features), readWorkflows(undefined)));
 
     expect(error).toContain("--features");
     expect(error).toContain(join(features, "z.feature"));
@@ -353,7 +359,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("names the entry when the CI workflows hold a directory named as a workflow file", () => {
     const { features, ci } = targetOnDisk();
     mkdirSync(join(ci, "x.yml"));
-    const error = checkInputPaths({ features, ci }, readCorpus(features), readWorkflows(ci));
+    const error = shownText(checkInputPaths({ features, ci }, readCorpus(features), readWorkflows(ci)));
 
     expect(error).toContain("--ci");
     expect(error).toContain(join(ci, "x.yml"));
@@ -363,7 +369,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   it("names the entry when the directory given to --junit holds a directory named as a JUnit report, never passing it as holding no report", () => {
     const dir = temporaryDirectory("junit-directory-named-as-report-");
     mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
-    const error = checkInputShapes(readReports(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8")));
+    const error = shownText(checkInputShapes(readReports(jsonInputsOf({ junit: dir }, nothingByDefault), (path) => readFileSync(path, "utf8"))));
 
     expect(error).toContain("--junit");
     expect(error).toContain(join(dir, "TEST-example.NestedTest.xml"));
@@ -395,21 +401,12 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     throw new Error("the locked input was read");
   }
 
-  function balancing(argv: string[]): { report: string; stderr: string; exitCode: unknown } {
-    const { stdout, stderr, exitCode } = runBalanceCaptured(argv);
-    return { report: stdout, stderr, exitCode };
-  }
-
   it("runBalance refuses a given --features corpus it may not read at exit 2, naming the flag, the path and the refusal to read it, reconciling nothing", ({ skip }) => {
     skip(runsAsRoot());
     const features = lock(targetOnDisk().features);
     const reason = osReasonFor(() => readdirSync(features));
 
-    expect(balancing(["--features", features])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), features, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", features]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedCorpus, { flag: "--features" }), path: features, reason }));
   });
 
   it("runBalance refuses a given --vitest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
@@ -420,11 +417,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(path);
     const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--vitest"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--vitest", path]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--vitest" }), path, reason }));
   });
 
   it.each([
@@ -441,11 +434,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
       lock(path);
       const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-      expect(balancing(["--features", "tests/fixtures/evidence-observation/features", `--${flag}`, path])).toEqual({
-        report: "",
-        stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[subject](`--${flag}`), path, reason) + "\n",
-        exitCode: 2,
-      });
+      expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", `--${flag}`, path]), message(AppError.CouldNotBeRead, { subject: message(subject, { flag: `--${flag}` }), path, reason }));
     },
   );
 
@@ -457,11 +446,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(path);
     const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--pytest", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--pytest"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--pytest", path]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--pytest" }), path, reason }));
   });
 
   it("runBalance refuses a given --jest report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
@@ -472,11 +457,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(path);
     const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--jest", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--jest"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--jest", path]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--jest" }), path, reason }));
   });
 
   it("runBalance refuses a given --rspec report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
@@ -487,11 +468,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(path);
     const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--rspec", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--rspec"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--rspec", path]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--rspec" }), path, reason }));
   });
 
   it("runBalance refuses a given --junit report it may not read at exit 2, calling the report unreadable rather than misshapen, reconciling nothing", ({ skip }) => {
@@ -502,11 +479,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(path);
     const reason = osReasonFor(() => readFileSync(path, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--junit", path])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), path, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--junit", path]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--junit" }), path, reason }));
   });
 
   it("runBalance refuses a given --junit directory it may not list at exit 2, naming the flag, the directory and the refusal to read it, reconciling nothing", ({ skip }) => {
@@ -518,11 +491,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     lock(reports);
     const reason = osReasonFor(() => readFileSync(reports, "utf8"));
 
-    expect(balancing(["--features", "tests/fixtures/evidence-observation/features", "--junit", reports])).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedReport]("--junit"), reports, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused(captured(["--features", "tests/fixtures/evidence-observation/features", "--junit", reports]), message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedReport, { flag: "--junit" }), path: reports, reason }));
   });
 
   it("names the feature corpus read by default, and its path, when no --features is given and the working directory's corpus may not be read", ({ skip }) => {
@@ -532,8 +501,8 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     vi.spyOn(process, "cwd").mockReturnValue(join(features, ".."));
     const reason = osReasonFor(() => readdirSync(features));
 
-    expect(checkInputPaths({ ci: target.ci }, readCorpus(features), readWorkflows(target.ci))).toBe(
-      APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.DefaultFeatureCorpus](), features, reason),
+    expect(shownText(checkInputPaths({ ci: target.ci }, readCorpus(features), readWorkflows(target.ci)))).toBe(
+      message(AppError.CouldNotBeRead, { subject: message(AppMessage.DefaultFeatureCorpus), path: features, reason }),
     );
   });
 
@@ -541,7 +510,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
     const read = (): string => {
       throw Object.assign(new Error("EACCES: permission denied, open 'package.json'"), { code: "EACCES" });
     };
-    expect(checkInputShapes(readReports(jsonInputsOf({}, () => true), read))).toContain("package.json read by default could not be read");
+    expect(shownText(checkInputShapes(readReports(jsonInputsOf({}, () => true), read)))).toContain("package.json read by default could not be read");
   });
 });
 
@@ -575,11 +544,7 @@ describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is re
     const { features, subdirectory, reason } = corpusWithLockedSubdirectory();
     const { stdout, stderr, exitCode } = runBalanceCaptured(["--features", features]);
 
-    expect({ report: stdout, stderr, exitCode }).toEqual({
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.CouldNotBeReadAt](APP_MESSAGES[AppMessage.FlaggedCorpus]("--features"), subdirectory, reason) + "\n",
-      exitCode: 2,
-    });
+    expectRefused({ report: stdout, stderr, exitCode }, message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedCorpus, { flag: "--features" }), path: subdirectory, reason }));
   });
 });
 
@@ -597,14 +562,14 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
   }
 
   const refusal = (workflows: string, file: string): string =>
-    APP_MESSAGES[AppMessage.WorkflowNotYaml](workflows, file, parseErrorOf(NOT_YAML));
+    message(AppError.WorkflowNotYaml, { workflows, file, message: parseErrorOf(NOT_YAML) });
 
   it("refuses a --ci workflow file that does not parse, naming --ci, the file and the parser's error", () => {
     const { ci } = targetOnDisk();
     const file = join(ci, "ci.yml");
     writeFileSync(file, NOT_YAML);
 
-    expect(checkWorkflowsParse({ ci: file }, readWorkflows(file, readText))).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+    expect(shownText(checkWorkflowsParse({ ci: file }, readWorkflows(file, readText)))).toBe(refusal(message(AppMessage.FlaggedWorkflows, { flag: "--ci" }), file));
   });
 
   it("refuses a workflow in the --ci folder that does not parse, naming that workflow", () => {
@@ -612,23 +577,23 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
     const file = join(ci, "build.yml");
     writeFileSync(file, NOT_YAML);
 
-    expect(checkWorkflowsParse({ ci }, readWorkflows(ci, readText))).toBe(refusal(APP_MESSAGES[AppMessage.FlaggedWorkflows]("--ci"), file));
+    expect(shownText(checkWorkflowsParse({ ci }, readWorkflows(ci, readText)))).toBe(refusal(message(AppMessage.FlaggedWorkflows, { flag: "--ci" }), file));
   });
 
   it("refuses a workflow read by default that does not parse, naming the CI workflows read by default", () => {
     const [file] = ciSourcePathsOf(DEFAULT_CI_PATH);
     expect(file, "the repository's own workflows are read by default").toBeDefined();
 
-    const error = checkWorkflowsParse({}, readWorkflows(undefined, (path) => (path === file ? NOT_YAML : readText(path))));
+    const error = shownText(checkWorkflowsParse({}, readWorkflows(undefined, (path) => (path === file ? NOT_YAML : readText(path)))));
 
-    expect(error).toBe(refusal(APP_MESSAGES[AppMessage.DefaultCiWorkflows](), file!));
+    expect(error).toBe(refusal(message(AppMessage.DefaultCiWorkflows), file!));
   });
 
   it("refuses nothing for a workflow that parses but declares no jobs", () => {
     const { ci } = targetOnDisk();
     writeFileSync(join(ci, "ci.yml"), "name: no jobs\n");
 
-    expect(checkWorkflowsParse({ ci }, readWorkflows(ci, readText))).toBeNull();
+    expect(shownText(checkWorkflowsParse({ ci }, readWorkflows(ci, readText)))).toBeNull();
   });
 });
 
@@ -674,7 +639,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [{ ...SAVED, scenarioCodes: "x" }, "scenarioCodes is a string, not an object"],
     [{ ...SAVED, runProvenance: { ...SAVED.runProvenance, corpus: undefined } }, "runProvenance.corpus is missing"],
   ])("names where %j departs from a saved reconciliation", (document, fault) => {
-    const error = checkSavedReconciliation("saved.json", document);
+    const error = shownText(checkSavedReconciliation("saved.json", document));
 
     expect(error).toContain("--render-from-json");
     expect(error).toContain("saved.json");
@@ -683,7 +648,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   });
 
   it("passes a reconciliation saved with its input faults and its corpus's facts", () => {
-    expect(checkSavedReconciliation("saved.json", SAVED_WITH_SECTIONS)).toBeNull();
+    expect(shownText(checkSavedReconciliation("saved.json", SAVED_WITH_SECTIONS))).toBeNull();
   });
 
   function reRendering(document: unknown): { path: string; report: string; stderr: string; exitCode: unknown } {
@@ -697,18 +662,13 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   let theFile: string;
 
   beforeEach(() => {
-    theFile = APP_MESSAGES[AppMessage.FlaggedFile]("--render-from-json");
+    theFile = message(AppMessage.FlaggedFile, { flag: "--render-from-json" });
   });
 
   it("runBalance refuses a saved file with NO LEDGER at exit 2, naming the file and the missing part, rendering nothing", () => {
     const run = reRendering({ ...SAVED, ledger: undefined });
 
-    expect(run).toEqual({
-      path: run.path,
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.NotASavedReconciliation](theFile, run.path, "ledger is missing") + "\n",
-      exitCode: 2,
-    });
+    expectRefused(run, message(AppError.NotASavedReconciliation, { subject: theFile, path: run.path, fault: "ledger is missing" }));
   });
 
   it("runBalance refuses a saved file the renderer cannot read BELOW ITS TOP at exit 2, naming the file and the renderer's reason, rendering nothing", () => {
@@ -722,11 +682,81 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     expect(reason).not.toBe("");
     const run = reRendering(broken);
 
-    expect(run).toEqual({
-      path: run.path,
-      report: "",
-      stderr: APP_MESSAGES[AppMessage.NotRenderableAsSaved](theFile, run.path, reason) + "\n",
-      exitCode: 2,
+    expectRefused(run, message(AppError.NotRenderableAsSaved, { subject: theFile, path: run.path, reason }));
+  });
+});
+
+describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — an input it cannot read", () => {
+  const BALANCE_INPUTS = ["--features", "tests/fixtures/evidence-observation/features", "--vitest", "tests/fixtures/evidence-observation/vitest.json"];
+  const NOT_GHERKIN = "not gherkin at all {{{\n";
+
+  function regularFile(): string {
+    const file = join(temporaryDirectory("coded-input-refusal-"), "a-file");
+    writeFileSync(file, "a regular file\n");
+    return file;
+  }
+
+  function stderrOfRefused(run: () => unknown): string {
+    const written: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
+      written.push(String(chunk));
+      return true;
     });
+    try {
+      expect(usageStatusOf(run)).toBe(2);
+    } finally {
+      spy.mockRestore();
+    }
+    return written.join("");
+  }
+
+  function workflowsNotYaml(): ReturnType<typeof readWorkflows> {
+    const { ci } = targetOnDisk();
+    writeFileSync(join(ci, "ci.yml"), "jobs:\n  ci: [\n");
+    return readWorkflows(ci);
+  }
+
+  function corpusOfTwoNotGherkin(): { features: string; ci: string } {
+    const target = targetOnDisk();
+    writeFileSync(join(target.features, "a.feature"), NOT_GHERKIN);
+    writeFileSync(join(target.features, "b.feature"), NOT_GHERKIN);
+    return target;
+  }
+
+  const printed = (command: string, shown: unknown): string => errorText(shown as RefusalLines | string, command).trimEnd();
+
+  const ROWS: readonly (readonly [string, string, string, () => unknown])[] = [
+    ["balance's unreadable corpus", "could-not-be-read", "balance", () => corpusDirRefusal({ path: "features", reason: "EACCES: permission denied, scandir 'features'" })],
+    ["allocate's unreadable repository", "could-not-be-read", "allocate", () => refusalLine(new UnreadableInput(Unreadable.Repository, "/repo/.git", "EACCES: permission denied"))],
+    ["allocate's vanished working directory", "working-directory-unreadable", "allocate", () => refusalLine(new UnreadableInput(Unreadable.WorkingDirectory, "", "ENOENT: no such file or directory, uv_cwd"))],
+    ["a --vitest path that does not exist", "input-path-missing", "balance", () => checkInputsExist({ vitest: "reports/vitest.json" }, () => false)],
+    ["a --vitest report that is not JSON", "not-valid-json", "balance", () => checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading("{{{")))],
+    ["a --jest report that is not JSON", "not-valid-json-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ jest: "j.json" }, nothingByDefault), reading("{{{")))],
+    ["a --pytest report that is not XML", "not-valid-xml", "balance", () => checkInputShapes(readReports(jsonInputsOf({ pytest: "p.xml" }, nothingByDefault), reading("not xml")))],
+    ["a --vitest report not in the reporter's shape", "not-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading('{"testResults":"x"}')))],
+    ["a saved file with no ledger", "not-a-saved-reconciliation", "balance", () => checkSavedReconciliation("saved.json", { ...SAVED, ledger: undefined })],
+    ["a saved file the renderer cannot read", "not-renderable-as-saved", "balance", () => reRenderOrRefusal("saved.json", { ...SAVED, ledger: { claimReconciliations: [null] } }, false)],
+    ["allocate's feature file the parser rejects", "corpus-file-unparseable", "allocate", () => refusalLine(new UnparseableFeatureFiles([{ file: "features/a.feature", message: "(1:1): expected: #Feature" }]))],
+    ["a --ci workflow that is not YAML", "workflow-not-yaml", "balance", () => checkWorkflowsParse({ ci: "ci" }, workflowsNotYaml())],
+    ["a --format file that cannot be written", "report-not-written", "balance", () => runBalanceCaptured([...BALANCE_INPUTS, "--format", `json:${join(regularFile(), "report.json")}`]).stderr],
+    ["a stored run's directory that cannot be created", "stored-run-directory-not-created", "balance", () => stderrOfRefused(() => executeKeptRun({ storeRoot: join(regularFile(), "store"), target: "t", runId: "r1" }, { sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.0.0", mode: "balance", date: "2026-11-03T00:00:00.000Z" }, () => true))],
+  ];
+
+  it.each(ROWS)("refuses %s with [%s] once, after %s's usage-error prefix", (_input, code, command, shown) => {
+    const text = printed(command, shown());
+
+    expect(text.split("\n")[0]?.slice(0, `spec-controller ${command}: usage error [${code}] — `.length)).toBe(`spec-controller ${command}: usage error [${code}] — `);
+    expect(text.split(`[${code}]`)).toHaveLength(2);
+  });
+
+  it.each([
+    ["balance", () => runBalanceCaptured(["--features", corpusOfTwoNotGherkin().features, "--ci", targetOnDisk().ci]).stderr],
+    ["allocate", () => refusalLine(new UnparseableFeatureFiles([{ file: "features/a.feature", message: "(1:1): expected: #Feature" }, { file: "features/b.feature", message: "(1:1): expected: #Feature" }]))],
+  ] as const)("refuses %s's two feature files the parser rejects with one coded line each, and no code on the parser's words beneath", (command, shown) => {
+    const lines = printed(command, shown()).split("\n");
+    const opening = `spec-controller ${command}: usage error [corpus-file-unparseable] — `;
+
+    expect(lines.filter((line) => line.startsWith(opening)).map((line) => /[ab]\.feature$/.exec(line)?.[0])).toEqual(["a.feature", "b.feature"]);
+    expect(lines.filter((line) => line.includes("[corpus-file-unparseable]"))).toHaveLength(2);
   });
 });

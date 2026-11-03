@@ -1,6 +1,7 @@
 import { featureCodeOf } from "@3f-consulting/spec-controller-core";
 
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 export type Shape =
   | "string"
@@ -103,59 +104,87 @@ export const SAVED_RECONCILIATION: Shape = {
   required: ["runProvenance", "summary", "ledger"],
 };
 
+// Kinds are compared unworded, so a well-shaped report formats no message.
 function kindOf(value: unknown): string {
   if (value === null) return "null";
-  if (Array.isArray(value)) return APP_MESSAGES[AppMessage.ShapeKindList]();
-  if (typeof value === "object") return APP_MESSAGES[AppMessage.ShapeKindObject]();
-  return APP_MESSAGES[AppMessage.ShapeKindOfType](typeof value);
+  if (Array.isArray(value)) return "list";
+  return typeof value;
 }
 
-function expectedKindOf(shape: Shape): string {
-  if (typeof shape === "string") return APP_MESSAGES[AppMessage.ShapeKindOfType](shape);
-  return "list" in shape ? APP_MESSAGES[AppMessage.ShapeKindList]() : APP_MESSAGES[AppMessage.ShapeKindObject]();
+function expectedKindOf(shape: Exclude<Shape, "anything">): string {
+  if (typeof shape === "string") return shape;
+  return "list" in shape ? "list" : "object";
 }
 
-function pathOf(where: string, key: string): string {
-  return where === "" ? key : `${where}.${key}`;
+function wordedKind(kind: string): string {
+  if (kind === "null") return kind;
+  if (kind === "list") return message(AppMessage.ShapeKindList);
+  if (kind === "object") return message(AppMessage.ShapeKindObject);
+  return message(AppMessage.ShapeKindOfType, { type: kind });
 }
 
-export function shapeFaultIn(value: unknown, shape: Shape, where = ""): string | null {
+type At = { readonly kind: "at"; readonly path: string };
+type Position = { readonly kind: "top" } | At;
+
+const TOP: Position = { kind: "top" };
+
+function at(path: string): At {
+  return { kind: "at", path };
+}
+
+function nameOf(position: Position): string {
+  return position.kind === "top" ? message(AppMessage.ShapeTopLevel) : position.path;
+}
+
+function fieldOf(position: Position, key: string): At {
+  return at(position.kind === "top" ? key : `${position.path}.${key}`);
+}
+
+function itemOf(position: Position, index: number): At {
+  return at(`${position.kind === "top" ? "" : position.path}[${index}]`);
+}
+
+export function shapeFaultIn(value: unknown, shape: Shape): string | null {
+  return faultAt(value, shape, TOP);
+}
+
+function faultAt(value: unknown, shape: Shape, where: Position): string | null {
   if (shape === "anything") return null;
   const found = kindOf(value);
   const expected = expectedKindOf(shape);
   if (found !== expected)
-    return APP_MESSAGES[AppMessage.ShapeWrongKind](where === "" ? APP_MESSAGES[AppMessage.ShapeTopLevel]() : where, found, expected);
+    return message(AppMessage.ShapeWrongKind, { where: nameOf(where), found: wordedKind(found), expected: wordedKind(expected) });
   if (typeof shape === "string") return null;
   if ("list" in shape) return listFault(value as readonly unknown[], shape.list, where);
   if ("entries" in shape) return entriesFault(value as Record<string, unknown>, shape, where);
   return fieldsFault(value as Record<string, unknown>, shape, where);
 }
 
-function listFault(items: readonly unknown[], item: Shape, where: string): string | null {
+function listFault(items: readonly unknown[], item: Shape, where: Position): string | null {
   for (const [index, value] of items.entries()) {
-    const fault = shapeFaultIn(value, item, `${where}[${index}]`);
+    const fault = faultAt(value, item, itemOf(where, index));
     if (fault !== null) return fault;
   }
   return null;
 }
 
-function fieldsFault(record: Record<string, unknown>, shape: Fields, where: string): string | null {
+function fieldsFault(record: Record<string, unknown>, shape: Fields, where: Position): string | null {
   for (const [key, field] of Object.entries(shape.fields)) {
-    const path = pathOf(where, key);
+    const position = fieldOf(where, key);
     if (record[key] === undefined) {
-      if (shape.required?.includes(key) === true) return APP_MESSAGES[AppMessage.ShapeFieldMissing](path);
+      if (shape.required?.includes(key) === true) return message(AppMessage.ShapeFieldMissing, { path: position.path });
       continue;
     }
-    const fault = shapeFaultIn(record[key], field, path);
+    const fault = faultAt(record[key], field, position);
     if (fault !== null) return fault;
   }
   return null;
 }
 
-function entriesFault(record: Record<string, unknown>, shape: Entries, where: string): string | null {
+function entriesFault(record: Record<string, unknown>, shape: Entries, where: Position): string | null {
   for (const [key, value] of Object.entries(record)) {
     if (shape.keys !== undefined && !shape.keys(key)) continue;
-    const fault = shapeFaultIn(value, shape.entries, pathOf(where, key));
+    const fault = faultAt(value, shape.entries, fieldOf(where, key));
     if (fault !== null) return fault;
   }
   return null;

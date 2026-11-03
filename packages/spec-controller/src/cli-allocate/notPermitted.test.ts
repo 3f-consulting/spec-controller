@@ -13,7 +13,8 @@ import {
 } from "./repository.test-utils.js";
 import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
-import { APP_MESSAGES, Unreadable } from "../messages.js";
+import { Unreadable } from "../messages.js";
+import { message } from "../appText.js";
 
 function repository(): string {
   return repositoryHeadedOneCarrying003("allocate-not-permitted-", {
@@ -36,7 +37,7 @@ afterEach(() => {
 });
 
 function expectRefusedNaming(answered: Answered, subject: Unreadable, path: string): void {
-  expect(refusalReason(answered, APP_MESSAGES[subject](), path)).toMatch(/^(EACCES|EPERM): /);
+  expect(refusalReason(answered, message(subject), path)).toMatch(/^(EACCES|EPERM): /);
 }
 
 interface Withheld {
