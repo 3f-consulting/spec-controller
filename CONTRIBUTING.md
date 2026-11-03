@@ -24,7 +24,7 @@ Put a helper that more than one unit test file uses in a `*.test-utils.ts` file 
 
 Before a change that touches only [`docs/`](docs/), [`README.md`](README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) or [`LICENSE`](LICENSE), run `pnpm docs:check`. It runs every documentation check and exits non-zero if any fails. It needs [Vale](https://vale.sh) on your `PATH`, at the version [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installs.
 
-How a release goes out is [`docs/releasing.md`](docs/releasing.md). What each check in CI holds, and what it has caught, is [`docs/fitness-functions.md`](docs/fitness-functions.md).
+How a release goes out is [`docs/releasing.md`](docs/releasing.md).
 
 ## Report a problem
 
