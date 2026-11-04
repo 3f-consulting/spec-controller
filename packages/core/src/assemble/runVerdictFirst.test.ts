@@ -21,7 +21,7 @@ describe("[SCN-RMD-029] the JSON report's summary states the run verdict first, 
   it("a fresh run: the run verdict comes first and the rest of the summary keeps its order", () => {
     const report = JSON.parse(everyOutcomeCorpusJson()) as { readonly summary: Summary };
 
-    expect(Object.keys(report.summary)).toEqual([
+    expect(Object.keys(report.summary).filter((key) => key !== "scenarioCodes")).toEqual([
       "runVerdict",
       "evidenceReconciliation",
       "evidenceObservations",

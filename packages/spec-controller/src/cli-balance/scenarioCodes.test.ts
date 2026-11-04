@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { claimReconciliationsOf } from "../../../../tests/steps/support/reportClaimReconciliations.js";
+import { scenarioCodesOnReport } from "../../../../tests/steps/support/reportScenarioCodes.js";
 
 // A whole balance run takes longer than Vitest's default limit.
 const wholeRun = { timeout: 30_000 };
@@ -74,7 +75,7 @@ describe("[SCN-CLI-094] a prose mention of a feature part outside two to five ch
     );
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
-    expect(report.scenarioCodes.excludedOccurrences).toBe(2);
+    expect(scenarioCodesOnReport(report).excludedOccurrences).toBe(2);
     expect(report.errors).toBeUndefined();
   });
 });
@@ -125,7 +126,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["SCN-TWO-001"]);
     expect(rows.find((r) => r.claim === "SCN-TWO-002")?.kind).toBe("phantom-claim");
     expect(rows.find((r) => r.claim === "SCN-TWO-003")).toBeUndefined();
-    expect(report.scenarioCodes.untaggedScenarios).toEqual([]);
+    expect(scenarioCodesOnReport(report).untaggedScenarios).toEqual([]);
   });
 
   it("lists several-scn-codes in the JSON and under Scenario code errors, naming the file, the scenario and both codes, and exits 1", wholeRun, () => {

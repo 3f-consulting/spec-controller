@@ -14,6 +14,7 @@ import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { scenarioCodesOnReport, withScenarioCodesOnReport } from "../assemble/scenarioCodesOnReport.test-utils.js";
 
 interface CorpusFile {
   readonly slug: string;
@@ -253,13 +254,13 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
       expect(statement).toContain(over("\0", "\0").split("\0").at(-1));
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
-      expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
+      expect(scenarioCodesOnReport(report)).toEqual({ featureFiles: files, featureCodes: codes.length });
       statedAloneAfterRunVerdict(report, statement);
     });
   }
 
   it("says nothing when the corpus's facts carry no count of feature files", () => {
-    const report = { ...newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), scenarioCodes: { excludedOccurrences: 0, untaggedScenarios: [] } };
+    const report = withScenarioCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
     expect(report.errors?.scenarioCodes).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING);
@@ -284,7 +285,7 @@ describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus wa
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
     const report = newShapeReport(unjudged);
     expect(report.errors?.scenarioCodes).toBeUndefined();
-    expect(report.scenarioCodes).toBeUndefined();
+    expect(scenarioCodesOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING);
     expect(afterRunVerdictOf(md)).toEqual([""]);
@@ -297,7 +298,7 @@ describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run v
   it("says no feature file was judged after the run verdict, prints no scenario code errors section, and states nothing clean", () => {
     const report = newShapeReport(judgedCorpus([], 0));
     expect(report.errors?.scenarioCodes).toBeUndefined();
-    expect(report.scenarioCodes).toMatchObject({ featureFiles: 0, featureCodes: 0 });
+    expect(scenarioCodesOnReport(report)).toMatchObject({ featureFiles: 0, featureCodes: 0 });
     const md = statedAloneAfterRunVerdict(report, statement);
     printsNoScenarioCodeErrorsSection(md);
     const cleanOpening = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver]("", "").split(" over ")[0]!;

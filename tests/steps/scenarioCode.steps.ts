@@ -10,6 +10,7 @@ import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { GrammarRow, GrammarRun, InheritedCodeRun, SpecControllerWorld } from "./support/world.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
+import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 
 function newRepository(world: SpecControllerWorld): string {
   const repo = temporaryDirectory(world, "allocate-");
@@ -642,7 +643,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
 
 Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
-  assert.deepEqual(report.scenarioCodes.untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
+  assert.deepEqual(scenarioCodesOnReport(report).untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
   const named = claimReconciliationsOf(report).filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));
   assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
 });

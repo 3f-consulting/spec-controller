@@ -98,8 +98,14 @@ export const SAVED_RECONCILIATION: Shape = {
           },
         },
         evidenceObservations: { fields: {} },
+        scenarioCodes: {
+          fields: {
+            untaggedScenarios: { list: SCENARIO_NAME },
+            sharedScnCodes: { list: { fields: { scenarios: { list: SCENARIO_NAME } } } },
+          },
+        },
       },
-      required: ["evidenceReconciliation", "evidenceObservations"],
+      required: ["evidenceReconciliation", "evidenceObservations", "scenarioCodes"],
     },
     claimReconciliations: {
       list: {
@@ -124,12 +130,6 @@ export const SAVED_RECONCILIATION: Shape = {
         },
       },
       retired: { configuration: "configurationNotRead" },
-    },
-    scenarioCodes: {
-      fields: {
-        untaggedScenarios: { list: SCENARIO_NAME },
-        sharedScnCodes: { list: { fields: { scenarios: { list: SCENARIO_NAME } } } },
-      },
     },
   },
   required: ["runProvenance", "summary", "claimReconciliations"],

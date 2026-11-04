@@ -2,7 +2,6 @@ import { setWorldConstructor, World } from "@cucumber/cucumber";
 import type { IWorldOptions } from "@cucumber/cucumber";
 import type { SpawnSyncReturns } from "node:child_process";
 import type { ClaimReconciliationsSection } from "./reportClaimReconciliations.js";
-import type { ScenarioName } from "./scenarioName.js";
 
 export interface ClaimReconciliation {
   claim: string;
@@ -12,9 +11,7 @@ export interface ClaimReconciliation {
 
 export interface InheritedCodeRun {
   status: number | null;
-  report: ClaimReconciliationsSection<ClaimReconciliation> & {
-    scenarioCodes: { untaggedScenarios: ScenarioName[] };
-  };
+  report: ClaimReconciliationsSection<ClaimReconciliation>;
 }
 
 export interface PointedAt {

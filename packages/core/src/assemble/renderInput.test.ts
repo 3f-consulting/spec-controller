@@ -17,6 +17,7 @@ import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 import { configurationFaultsKey, configurationFaultsOf } from "./reportErrors.test-utils.js";
 import type { ErrorsSection } from "../domain/renderInput.js";
+import { scenarioCodesOnReport } from "./scenarioCodesOnReport.test-utils.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
 function reportLedger(): Ledger {
@@ -52,14 +53,13 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       string,
       unknown
     >;
-    expect(Object.keys(report)).toEqual([
+    expect(Object.keys(report).filter((key) => key !== "scenarioCodes")).toEqual([
       "runProvenance",
-      "scenarioCodes",
       "summary",
       "claimReconciliations",
     ]);
     expect(report).not.toHaveProperty("metadata");
-    expect(report.scenarioCodes).toEqual({
+    expect(scenarioCodesOnReport(report)).toEqual({
       featureFiles: 2,
       featureCodes: 1,
       excludedOccurrences: 3,
@@ -102,7 +102,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "runnerKeysNotALayer",
       "nonChecksMatchingNoStep",
     ]);
-    expect(report.scenarioCodes).toHaveProperty("sharedScnCodes");
+    expect(scenarioCodesOnReport(report)).toHaveProperty("sharedScnCodes");
     for (const oldPlace of ["scenarioCodeErrors", "scenarioCodePopulation", "evidenceObligations"]) {
       expect(report).not.toHaveProperty(oldPlace);
     }

@@ -48,7 +48,13 @@ const sharedCodeCorpusFacts = {
   ],
 };
 
-describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under scenarioCodes", () => {
+describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under summary.scenarioCodes, straight after the run verdict", () => {
+  it("states them in the summary after the run verdict, and not at the report's top level", () => {
+    const report = reportOver(sharedCodeCorpus, ["one.feature"]);
+    expect(report).not.toHaveProperty("scenarioCodes");
+    expect(Object.keys(report.summary).slice(0, 2)).toEqual(["runVerdict", "scenarioCodes"]);
+  });
+
   it("states the feature files and codes, the excluded occurrences, the untagged scenarios and the shared codes in one object", () => {
     const report = reportOver(
       [
@@ -75,7 +81,7 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sce
       ],
       ["one.feature", "plain.feature"]
     );
-    expect(report.scenarioCodes).toEqual({
+    expect(report.summary.scenarioCodes).toEqual({
       featureFiles: 2,
       featureCodes: 1,
       excludedOccurrences: 1,
@@ -91,23 +97,23 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sce
       ],
       ["one.feature", "two.feature"]
     );
-    expect(report.scenarioCodes).toEqual({
+    expect(report.summary.scenarioCodes).toEqual({
       featureFiles: 2,
       featureCodes: 2,
       excludedOccurrences: 0,
       untaggedScenarios: [],
     });
-    expect(report.scenarioCodes).not.toHaveProperty("sharedScnCodes");
+    expect(report.summary.scenarioCodes).not.toHaveProperty("sharedScnCodes");
   });
 
   it("carries the feature files and codes alone when the report is given only the population", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: true, census: false });
-    expect(report.scenarioCodes).toStrictEqual({ featureFiles: 1, featureCodes: 1 });
+    expect(report.summary.scenarioCodes).toStrictEqual({ featureFiles: 1, featureCodes: 1 });
   });
 
   it("carries the excluded occurrences, the untagged scenarios and the shared codes alone when the report is given only the census", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: false, census: true });
-    expect(report.scenarioCodes).toStrictEqual({
+    expect(report.summary.scenarioCodes).toStrictEqual({
       excludedOccurrences: 0,
       ...sharedCodeCorpusFacts,
     });
@@ -116,5 +122,6 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sce
   it("carries no scenarioCodes when the report is given neither", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: false, census: false });
     expect(report).not.toHaveProperty("scenarioCodes");
+    expect(report.summary).not.toHaveProperty("scenarioCodes");
   });
 });

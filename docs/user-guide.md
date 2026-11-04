@@ -827,7 +827,7 @@ The tool judges scenario code errors only over the corpus that `--features` name
 - Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
-- The report names each shared code with the file and the name of every scenario carrying it (`scenarioCodes.sharedScnCodes` in the JSON).
+- The report names each shared code with the file and the name of every scenario carrying it (`summary.scenarioCodes.sharedScnCodes` in the JSON).
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 ### Scenario code errors

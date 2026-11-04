@@ -266,7 +266,7 @@ const ledgerSection: SectionEmitter = (report) => {
     CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.evidenceReconciliation.claimReconciliations),
-    ...censusLines(report.scenarioCodes, scenarioRows.length),
+    ...censusLines(report.summary.scenarioCodes, scenarioRows.length),
     "",
     ...evidenceKeyLines(columns),
     ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheckKind ?? []),
@@ -292,7 +292,7 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
   return lines;
 }
 
-function censusLines(codes: RenderInput["scenarioCodes"], scenarios: number): string[] {
+function censusLines(codes: RenderInput["summary"]["scenarioCodes"], scenarios: number): string[] {
   if (codes?.excludedOccurrences === undefined) return [];
   const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](codes.excludedOccurrences)}`];
   const untagged = (codes.untaggedScenarios ?? []).length;

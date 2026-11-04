@@ -38,8 +38,8 @@ export function assembleRenderInput(
   return {
     runProvenance: provenanceObject(ctx),
     ...(errors ? { errors } : {}),
-    ...(scenarioCodes ? { scenarioCodes } : {}),
     summary: concludedSummary({
+      ...(scenarioCodes ? { scenarioCodes } : {}),
       ...summaryStatingNoFault(evidenceReconciliation.summary),
       ...(byFeature.length > 0 ? { outOfBalanceByFeature: byFeature } : {}),
     }, {

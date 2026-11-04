@@ -98,9 +98,9 @@ function nonEmpty<K extends string, T>(key: K, entries: readonly T[] | undefined
 export interface RenderInput {
   readonly runProvenance: ProvenanceObject;
   readonly errors?: ErrorsSection;
-  readonly scenarioCodes?: ScenarioCodesSection;
   readonly summary: SummaryStatingNoFault & {
     readonly runVerdict: RunVerdict;
+    readonly scenarioCodes?: ScenarioCodesSection;
     readonly outOfBalanceByFeature?: readonly FeatureOutOfBalance[];
   };
   readonly claimReconciliations: readonly ClaimReconciliation[];

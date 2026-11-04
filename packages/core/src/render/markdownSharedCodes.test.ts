@@ -13,6 +13,7 @@ import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { scenarioCodesOnReport } from "../assemble/scenarioCodesOnReport.test-utils.js";
 import {
   RECONCILING_ITEMS_COLUMN,
   VERDICT_COLUMN,
@@ -114,9 +115,9 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {
     const shared = JSON.parse(renderJson(er(ledger), ctx, census));
-    expect(shared.scenarioCodes.sharedScnCodes).toEqual(census.sharedScnCodes);
+    expect(scenarioCodesOnReport(shared)?.sharedScnCodes).toEqual(census.sharedScnCodes);
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
-    expect(clean.scenarioCodes).not.toHaveProperty("sharedScnCodes");
+    expect(scenarioCodesOnReport(clean)).not.toHaveProperty("sharedScnCodes");
     expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 

@@ -6,8 +6,9 @@ import { basename, join } from "node:path";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
+import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
-import { scenarioName, type ScenarioName } from "./support/scenarioName.js";
+import { scenarioName } from "./support/scenarioName.js";
 import type { CorpusRun, SpecControllerWorld } from "./support/world.js";
 
 Given(
@@ -378,9 +379,8 @@ When("balance is asked to reconcile that corpus", function (this: SpecController
 
 Then("the reconciliation names each of those scenarios by its feature file's path under the corpus", function (this: SpecControllerWorld) {
   assert.ok(this.sameNameJson, "the corpus was not reconciled");
-  const scenarioCodes = this.sameNameJson["scenarioCodes"] as { untaggedScenarios: ScenarioName[] };
   assert.deepEqual(
-    scenarioCodes.untaggedScenarios,
+    scenarioCodesOnReport(this.sameNameJson).untaggedScenarios,
     SAME_NAME_FILES.map((feature) => scenarioName(feature, UNTAGGED_TITLE)),
     "an untagged scenario's feature file was not named by its path under the corpus",
   );

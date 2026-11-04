@@ -5,7 +5,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
   Its top-level keys, in document order, are runProvenance, then errors when the inputs hold a
-  fault, then scenarioCodes, summary and claimReconciliations. There is no
+  fault, then summary and claimReconciliations. The scenario codes sit in the summary, straight
+  after its run verdict. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
   beside spec-reconciliation.md, and the markdown renderer reads the same assembled model, so

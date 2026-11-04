@@ -95,7 +95,7 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
 
 export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
   if (report.errors?.scenarioCodes !== undefined) return [];
-  const { featureFiles, featureCodes } = report.scenarioCodes ?? {};
+  const { featureFiles, featureCodes } = report.summary.scenarioCodes ?? {};
   if (featureFiles === undefined || featureCodes === undefined) return [];
   if (featureFiles === 0) return [CORE_MESSAGES[CoreMessage.NoFeatureFileJudged], ""];
   return [cleanStatement(featureFiles, featureCodes), ""];
