@@ -9,7 +9,11 @@ export type Shape =
   | "boolean"
   | "anything"
   | { readonly list: Shape }
-  | { readonly fields: Readonly<Record<string, Shape>>; readonly required?: readonly string[] }
+  | {
+      readonly fields: Readonly<Record<string, Shape>>;
+      readonly required?: readonly string[];
+      readonly retired?: Readonly<Record<string, string>>;
+    }
   | { readonly entries: Shape; readonly keys?: (key: string) => boolean };
 
 type Fields = Extract<Shape, { fields: unknown }>;
@@ -109,7 +113,7 @@ export const SAVED_RECONCILIATION: Shape = {
     errors: {
       fields: {
         scenarioCodes: { list: "anything" },
-        configuration: {
+        configurationNotRead: {
           fields: {
             keysNotRead: { list: "anything" },
             ofWrongKind: { list: "anything" },
@@ -119,6 +123,7 @@ export const SAVED_RECONCILIATION: Shape = {
           },
         },
       },
+      retired: { configuration: "configurationNotRead" },
     },
     scenarioCodes: {
       fields: {
@@ -195,6 +200,9 @@ function listFault(items: readonly unknown[], item: Shape, where: Position): str
 }
 
 function fieldsFault(record: Record<string, unknown>, shape: Fields, where: Position): string | null {
+  for (const [old, replacement] of Object.entries(shape.retired ?? {}))
+    if (record[old] !== undefined && record[replacement] === undefined)
+      return message(AppMessage.ShapeFieldMissing, { path: fieldOf(where, replacement).path });
   for (const [key, field] of Object.entries(shape.fields)) {
     const position = fieldOf(where, key);
     if (record[key] === undefined) {

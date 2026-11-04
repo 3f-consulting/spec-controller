@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromSources.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 import { errorsOf } from "../domain/renderInput.js";
+import { configurationFaultsOf } from "./reportErrors.test-utils.js";
 import { unitTestsAndTypesCi as ci, feature } from "../evidenceReconciliation.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
@@ -35,7 +36,7 @@ describe("[SCN-RMD-013] the step accounting names the steps the target calls non
   it("reports an entry that names no step as a configuration error, and never names it among the non-checks", () => {
     const { summary } = reconcile(["ci.yml:quality:Types", "ci.yml:quality:Deploy"]);
     expect(summary.stepAccounting?.steps.nonChecks).toStrictEqual(["ci.yml:quality:Types"]);
-    expect(errorsOf(undefined, summary)?.configuration?.nonChecksMatchingNoStep).toStrictEqual([
+    expect(configurationFaultsOf(errorsOf(undefined, summary))?.nonChecksMatchingNoStep).toStrictEqual([
       "ci.yml:quality:Deploy",
     ]);
   });

@@ -691,6 +691,7 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
       (saved) => ({ ...withoutClaimReconciliations(saved), ledger: claimReconciliationsSection(claimReconciliationsOf(saved)) }),
       notSaved(missing(CLAIM_RECONCILIATIONS_SECTION)),
     ],
+    [(saved) => ({ ...saved, errors: { configuration: { keysNotRead: ["x"] } } }), notSaved(missing("errors.configurationNotRead"))],
   ],
 };
 

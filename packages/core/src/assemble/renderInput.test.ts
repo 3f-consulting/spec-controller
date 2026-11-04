@@ -15,6 +15,8 @@ import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconci
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
+import { configurationFaultsKey, configurationFaultsOf } from "./reportErrors.test-utils.js";
+import type { ErrorsSection } from "../domain/renderInput.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
 function reportLedger(): Ledger {
@@ -92,9 +94,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       string,
       unknown
     >;
-    const errors = report.errors as { scenarioCodes: unknown; configuration: Record<string, unknown> };
-    expect(Object.keys(errors)).toEqual(["scenarioCodes", "configuration"]);
-    expect(Object.keys(errors.configuration)).toEqual([
+    const errors = report.errors as ErrorsSection;
+    expect(Object.keys(errors)).toEqual(["scenarioCodes", configurationFaultsKey]);
+    expect(Object.keys({ ...configurationFaultsOf(errors) })).toEqual([
       "keysNotRead",
       "ofWrongKind",
       "runnerKeysNotALayer",

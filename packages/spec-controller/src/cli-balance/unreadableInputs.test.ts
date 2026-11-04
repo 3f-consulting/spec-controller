@@ -614,7 +614,7 @@ const savedWithSections = () => ({
   ...saved(),
   errors: {
     scenarioCodes: [{ kind: "several-scn-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
-    configuration: {
+    configurationNotRead: {
       keysNotRead: ["runner"],
       ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
       runnerKeysNotALayer: ["smoke"],
@@ -640,11 +640,12 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
       (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-scn-code", evidenceObligation: {} }] }]),
     ],
     ["errors.scenarioCodes is a string, not a list", (s: Saved) => ({ ...s, errors: { scenarioCodes: "x" } })],
-    ["errors.configuration.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: "x" } } })],
-    ["errors.configuration.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errors: { configuration: { ofWrongKind: "x" } } })],
-    ["errors.configuration.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errors: { configuration: { runnerKeysNotALayer: "x" } } })],
-    ["errors.configuration.nonChecksMatchingNoStep is a string, not a list", (s: Saved) => ({ ...s, errors: { configuration: { nonChecksMatchingNoStep: "x" } } })],
-    ["errors.configuration.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errors: { configuration: { nonChecksNotAStepName: "x" } } })],
+    ["errors.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { keysNotRead: "x" } } })],
+    ["errors.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { ofWrongKind: "x" } } })],
+    ["errors.configurationNotRead.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { runnerKeysNotALayer: "x" } } })],
+    ["errors.configurationNotRead.nonChecksMatchingNoStep is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { nonChecksMatchingNoStep: "x" } } })],
+    ["errors.configurationNotRead.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { nonChecksNotAStepName: "x" } } })],
+    ["errors.configurationNotRead is missing", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: ["runner"] } } })],
     ["scenarioCodes is a string, not an object", (s: Saved) => ({ ...s, scenarioCodes: "x" })],
     ["runProvenance.corpus is missing", (s: Saved) => ({ ...s, runProvenance: { ...s.runProvenance, corpus: undefined } })],
     [

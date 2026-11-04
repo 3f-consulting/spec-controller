@@ -50,14 +50,14 @@ interface ConfigurationFaults {
 
 export interface ErrorsSection {
   readonly scenarioCodes?: readonly ScenarioCodeError[];
-  readonly configuration?: ConfigurationFaults;
+  readonly configurationNotRead?: ConfigurationFaults;
 }
 
 export function errorsOf(
   scenarioCodeErrors: readonly ScenarioCodeError[] | undefined,
   summary: Summary
 ): ErrorsSection | undefined {
-  const configuration: ConfigurationFaults = {
+  const configurationNotRead: ConfigurationFaults = {
     ...nonEmpty("keysNotRead", summary.configurationKeysNotRead),
     ...nonEmpty("ofWrongKind", summary.configurationOfWrongKind),
     ...nonEmpty("runnerKeysNotALayer", summary.runnerKeysNotALayer),
@@ -66,7 +66,7 @@ export function errorsOf(
   };
   const errors: ErrorsSection = {
     ...nonEmpty("scenarioCodes", scenarioCodeErrors),
-    ...(Object.keys(configuration).length > 0 ? { configuration } : {}),
+    ...(Object.keys(configurationNotRead).length > 0 ? { configurationNotRead } : {}),
   };
   return Object.keys(errors).length > 0 ? errors : undefined;
 }
