@@ -117,7 +117,7 @@ Here is part of the report for a larger set of scenarios: the run verdict and th
 
 - 8 Claim Reconciliation(s): 3 balanced, 5 out-of-balance.
 - 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.
-- 1 Claim Reconciliation(s) for evidence observations citing no scenario, aggregated into "(unnamed claim)".
+- 1 Claim Reconciliation(s) for evidence observations no one scenario can take, aggregated into "(unnamed claim)".
 - 0 @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
 
 Key: each evidence cell reads *obligation*/*observations*.

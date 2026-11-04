@@ -92,8 +92,8 @@ Then(
       `a scenario cites lint:foo; the unnamed claim's row must not name it at all; got:\n${unnamedClaimRow}`
     );
     assert.ok(
-      this.markdown.includes("| fitness | 2 |") && this.markdown.includes(" + 1 citing no scenario."),
-      `expected lint:foo folded into the running volume (fitness 2, 1 citing no scenario); got:\n${this.markdown}`
+      this.markdown.includes("| fitness | 2 |") && /^\d+ [^=\n]+ = \d+ [^+\n]+ \+ \d+ [^+\n]+ \+ 1 [^+\n]+\.$/m.test(this.markdown),
+      `expected lint:foo folded into the running volume (fitness 2, 1 on the unnamed claim); got:\n${this.markdown}`
     );
   }
 );

@@ -168,11 +168,11 @@ Feature: The report renders the ledger as sectioned facts
 
     Under "## Summary views", the "### Evidence observations" cut counts the evidence
     observations of every kind of quality check, fitness included. It opens with the identity
-    "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c citing no scenario",
+    "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c that no one scenario can take",
     which always balances.
 
-    A phantom claim is an @SCN code no scenario carries. The unnamed claim holds observations
-    with no @SCN code.
+    A phantom claim is an @SCN code no scenario carries. The unnamed claim holds the observations
+    no one scenario can take: those citing no @SCN code, several codes, or a code several scenarios share.
 
     A table by kind of quality check follows, always listing all five: fitness last at the count
     of fitness functions that ran, and a kind with no evidence observation at zero.
@@ -611,7 +611,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
 
     The Markdown names a phantom claim's row as a cited scenario id with no real scenario, and the
-    unnamed claim's row as evidence observations citing no scenario.
+    unnamed claim's row as evidence observations no one scenario can take.
 
     A balanced run's gloss quotes the satisfied outcome's sentence. Wherever the Markdown's prose
     refers to an outcome, it quotes the outcome's sentence, never its handle.

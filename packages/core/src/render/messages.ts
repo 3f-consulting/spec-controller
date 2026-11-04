@@ -279,7 +279,7 @@ const SATISFIED = "Evidence Observation satisfies its Evidence Obligation";
 const MISSING = "Evidence Observation is missing";
 const DUPLICATE_SCN_CODE = "Evidence Obligation's @SCN code is carried by another Scenario";
 const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
-const CITING_NO_SCENARIO = "evidence observations citing no scenario";
+const NO_ONE_SCENARIO_CAN_TAKE = "evidence observations no one scenario can take";
 
 const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
@@ -406,7 +406,7 @@ export const CORE_MESSAGES: CoreMessages = {
     `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
   [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
   [CoreMessage.EvidenceObservationsSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
-    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} citing no scenario.`,
+    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} that no one scenario can take.`,
   [CoreMessage.EvidenceObservationsTableHeader]: "| Kind of quality check | Evidence observations | Runner | CI step |",
   [CoreMessage.FitnessRunner]: "each fitness function's check step",
   [CoreMessage.FitnessCiStep]: (steps) =>
@@ -451,7 +451,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
     `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,
   [CoreMessage.PhantomClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
-  [CoreMessage.UnnamedClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}`,
+  [CoreMessage.UnnamedClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${NO_ONE_SCENARIO_CAN_TAKE}`,
   [CoreMessage.AndJoiner]: " and ",
   [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
   [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
@@ -461,7 +461,7 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PhantomClaimTally]: (count) =>
     `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
   [CoreMessage.UnnamedClaimTally]: (count) =>
-    `${count} Claim Reconciliation(s) for ${CITING_NO_SCENARIO}, aggregated into "${UNNAMED_CLAIM_ID}".`,
+    `${count} Claim Reconciliation(s) for ${NO_ONE_SCENARIO_CAN_TAKE}, aggregated into "${UNNAMED_CLAIM_ID}".`,
   [CoreMessage.ExcludedScnOccurrences]: (count) =>
     `${count} @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, ` +
     "a comment or step text rather than as a tag, so it marks no scenario and raises no claim",
