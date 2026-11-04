@@ -99,9 +99,28 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
   return `${group.qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
 }
 
+interface UnnamedClaimCiStepsView {
+  readonly count: number;
+  readonly named: { readonly kind: "none" } | { readonly kind: "some"; readonly list: string };
+}
+
+function unnamedClaimCiStepsViewOf(names: readonly string[]): UnnamedClaimCiStepsView {
+  const named = names.filter((name) => name !== "");
+  return { count: names.length, named: named.length === 0 ? { kind: "none" } : { kind: "some", list: named.join(", ") } };
+}
+
+function unnamedClaimCiSteps({ count, named }: UnnamedClaimCiStepsView): string {
+  switch (named.kind) {
+    case "none":
+      return coreMessage(CoreMessage.UnnamedClaimCiSteps, { count });
+    case "some":
+      return coreMessage(CoreMessage.UnnamedClaimCiStepsNamed, { count, list: named.list });
+  }
+}
+
 function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
-  const steps = CORE_MESSAGES[CoreMessage.UnnamedClaimCiSteps](group.names.map(reportedName));
+  const steps = unnamedClaimCiSteps(unnamedClaimCiStepsViewOf(group.names.map(reportedName)));
   const remark =
     group.sharedScnCode === undefined ? "" : ` (${CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)})`;
   return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${remark} — ${steps}`;
@@ -137,11 +156,7 @@ function brokenEvidenceNameWords(name: BrokenEvidenceName): string {
 const runIntegritySection: SectionEmitter = (report) => {
   if (!hasBrokenEvidence(report)) return [];
   const brokenObservations = brokenItemsOf(report).flatMap((line) => line.evidenceObservation ?? []);
-  const count = brokenObservations.length;
-  const proofs =
-    count === 1
-      ? CORE_MESSAGES[CoreMessage.OneProofNeverRan]
-      : CORE_MESSAGES[CoreMessage.ProofsNeverRan](count);
+  const proofs = coreMessage(CoreMessage.ProofsNeverRan, { count: brokenObservations.length });
   const lines = [
     markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
     "",

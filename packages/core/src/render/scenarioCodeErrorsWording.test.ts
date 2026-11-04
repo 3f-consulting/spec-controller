@@ -110,7 +110,7 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
 
     it("frames and glosses exactly as before", () => {
       expect(framingOf(md)).toBe(
-        coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count: coreMessage(CoreMessage.OneScenarioCodeError) })
+        coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count: coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 1 }) })
       );
       expect(verdictOf(md)).toContain(`— ${coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading], alsoOutOfBalance: "" })} (`);
     });

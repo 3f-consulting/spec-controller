@@ -55,8 +55,8 @@ function refusalNaming(modifiers: string, closing: string): string {
   return `${message(AppMessage.CodedHostUsageError, { code: AppError.ReRenderNotStored, message: message(AppError.ReRenderNotStored, { modifiers }) })}\n${closing}\n`;
 }
 
-const NAMING_THE_STORE = (): string => refusalNaming("--store", message(AppMessage.ReRenderWithoutIt));
-const NAMING_BOTH = (): string => refusalNaming("--store, --run-id", message(AppMessage.ReRenderWithoutThem));
+const NAMING_THE_STORE = (): string => refusalNaming("--store", message(AppMessage.ReRenderWithout, { count: 1 }));
+const NAMING_BOTH = (): string => refusalNaming("--store, --run-id", message(AppMessage.ReRenderWithout, { count: 2 }));
 
 const missingFromSavedDir = (): string[] => ["--render-from-json", join(savedDir, "missing.json")];
 
@@ -125,5 +125,12 @@ describe("[SCN-RMG-007] main refuses a stored --render-from-json re-render namin
       expect(answered.stderr).toBe(`${errorText(answerUnknownCommand("blance", renderTopLevelHelp(cliRegistry)).refusal)}\n`);
       expect(answered.exitCode).toBe(2);
     });
+  });
+});
+
+describe("[SCN-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
+  it("2 flags", () => {
+    const answered = underAStoreNotYetMade((store) => ["--store", store, "--run-id", "r1", "balance", "--render-from-json", savedReport]);
+    expect(answered.stderr.trimEnd().split("\n").at(-1)).toBe("Run 'spec-controller balance --render-from-json <path>' without them.");
   });
 });

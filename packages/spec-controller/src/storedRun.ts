@@ -17,7 +17,7 @@ export function storedReRenderRefusal(inv: HostInvocation): Refusal | undefined 
   return refusal(
     AppError.ReRenderNotStored,
     { modifiers: given.join(", ") },
-    [message(given.length === 1 ? AppMessage.ReRenderWithoutIt : AppMessage.ReRenderWithoutThem)],
+    [message(AppMessage.ReRenderWithout, { count: given.length })],
   );
 }
 

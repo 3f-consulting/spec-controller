@@ -85,6 +85,21 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
     @unit @SCN-MSG-009
     Scenario: no message chooses between words other than by a count's plural forms
 
+  Rule: a counted noun reads in the number its count calls for
+
+    @unit @SCN-MSG-015
+    Scenario Outline: a counted noun agrees with its count — <message>
+
+      Examples:
+        | message                                         | counts                      |
+        | the run-integrity stamp's proofs that never ran | 1 proof                     |
+        | the run-integrity stamp's proofs that never ran | 1000 proofs                 |
+        | the clean statement's feature files and codes   | 1 feature file and 1 code   |
+        | the clean statement's feature files and codes   | 3 feature files and 1 code  |
+        | the clean statement's feature files and codes   | 2 feature files and 0 codes |
+        | a re-render's flags it does not read            | 1 flag                      |
+        | a re-render's flags it does not read            | 2 flags                     |
+
   Rule: every error a reader is shown carries one error code, and nothing else the tool prints carries one
 
     An error is what refuses a run, stops it on an unexpected error, or is named under the report's

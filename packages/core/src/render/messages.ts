@@ -15,20 +15,7 @@ export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
 export enum CoreMessage {
   ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
-  OneProofNeverRan,
-  ProofsNeverRan,
   ScenarioCodeErrorsHeading,
-  FeatureFileNoun,
-  FeatureCodeNoun,
-  NoFeatureFileJudged,
-  ScenarioCodesCleanOver,
-  CleanNoCodedScenario,
-  CleanEachFileOwnCode,
-  CleanOthersNoFeatureCode,
-  ItPronoun,
-  ThemPronoun,
-  HoldsVerb,
-  HoldVerb,
   ReconciliationTotalsHeading,
   ReconciliationTotalsClaimReconciliationTerm,
   ReconciliationTotalsReconciliationLineTerm,
@@ -112,15 +99,20 @@ export enum CoreMessage {
   ObservationPassed,
   ObservationFailed,
   UnnamedClaimGroupCounts,
-  UnnamedClaimCiSteps,
   UnnamedClaimFailedNames,
   SeveralScnCodes,
   SharedScnCode,
   ConfigurationNotReadIntro = "configuration-not-read-intro",
   ConfigurationWrongKind = "configuration-wrong-kind",
   ConfigurationUnknownKey = "configuration-unknown-key",
-  OneScenarioCodeError = "one-scenario-code-error",
+  ProofsNeverRan = "proofs-never-ran",
   ScenarioCodeErrorCount = "scenario-code-error-count",
+  NoFeatureFileJudged = "no-feature-file-judged",
+  CleanNoCodedScenario = "clean-no-coded-scenario",
+  CleanEachFileOwnCode = "clean-each-file-own-code",
+  CleanOthersNoFeatureCode = "clean-others-no-feature-code",
+  UnnamedClaimCiSteps = "unnamed-claim-ci-steps",
+  UnnamedClaimCiStepsNamed = "unnamed-claim-ci-steps-named",
   ScenarioCodeErrorsFraming = "scenario-code-errors-framing",
   SeveralScnCodesFraming = "several-scn-codes-framing",
   MisfiledAndSeveralScnCodesFraming = "misfiled-and-several-scn-codes-framing",
@@ -191,11 +183,6 @@ export enum CoreError {
 }
 
 interface CoreMessageParams {
-  readonly [CoreMessage.ProofsNeverRan]: [count: number];
-  readonly [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
-  readonly [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
-  readonly [CoreMessage.CleanEachFileOwnCode]: [over: string];
-  readonly [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessCiStep]: [steps: number];
@@ -220,7 +207,6 @@ interface CoreMessageParams {
   readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
   readonly [CoreMessage.UnnamedClaimGroupCounts]: [ran: number, passed: number, failed: number];
-  readonly [CoreMessage.UnnamedClaimCiSteps]: [names: readonly string[]];
   readonly [CoreMessage.UnnamedClaimFailedNames]: [names: readonly string[]];
   readonly [CoreMessage.SeveralScnCodes]: [codes: readonly string[]];
   readonly [CoreMessage.SharedScnCode]: [code: string];
@@ -238,7 +224,13 @@ export interface CoreMessageValues {
   readonly [CoreMessage.NotChecksEntryMatchesNoStep]: { readonly key: string; readonly entry: string };
   readonly [CoreMessage.NotChecksEntryNotAStepName]: { readonly key: string; readonly entry: string };
   readonly [CoreMessage.ManifestKindOfType]: { readonly type: string };
+  readonly [CoreMessage.ProofsNeverRan]: { readonly count: number };
   readonly [CoreMessage.ScenarioCodeErrorCount]: { readonly count: number };
+  readonly [CoreMessage.CleanNoCodedScenario]: { readonly featureFiles: number };
+  readonly [CoreMessage.CleanEachFileOwnCode]: { readonly featureFiles: number; readonly featureCodes: number };
+  readonly [CoreMessage.CleanOthersNoFeatureCode]: { readonly featureFiles: number; readonly featureCodes: number; readonly noFeatureCode: number };
+  readonly [CoreMessage.UnnamedClaimCiSteps]: { readonly count: number };
+  readonly [CoreMessage.UnnamedClaimCiStepsNamed]: { readonly count: number; readonly list: string };
   readonly [CoreMessage.ScenarioCodeErrorsFraming]: { readonly count: string };
   readonly [CoreMessage.SeveralScnCodesFraming]: { readonly count: string };
   readonly [CoreMessage.MisfiledAndSeveralScnCodesFraming]: { readonly count: string };
@@ -282,30 +274,11 @@ const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
 const NO_ONE_SCENARIO_CAN_TAKE = "evidence observations no one scenario can take";
 
 const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
-const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
 export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
-  [CoreMessage.OneProofNeverRan]: "1 Evidence Observation never ran to a result, so the behaviour it proves was never exercised.",
-  [CoreMessage.ProofsNeverRan]: (count) =>
-    `${count} Evidence Observations never ran to a result, so the behaviours they prove were never exercised.`,
   [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
-  [CoreMessage.FeatureFileNoun]: "feature file",
-  [CoreMessage.FeatureCodeNoun]: "feature code",
-  [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so no scenario code is vouched for.",
-  [CoreMessage.ScenarioCodesCleanOver]: (featureFiles, featureCodes) =>
-    `Scenario codes are clean over ${featureFiles} carrying ${featureCodes} ` +
-    "(a feature code is the tag heading a feature file, the `<FFF>` that each `@SCN-<FFF>-<NNN>` code in that file repeats)",
-  [CoreMessage.CleanNoCodedScenario]: (over, them) => `${over}: no scenario in ${them} carries an @SCN code to misfile.`,
-  [CoreMessage.CleanEachFileOwnCode]: (over) => `${over}: each file carries a code of its own, and ${IN_ITS_FILE}.`,
-  [CoreMessage.CleanOthersNoFeatureCode]: (over, noFeatureCode, hold) =>
-    `${over}: each code is carried by exactly one file, ${IN_ITS_FILE}, and the other ${noFeatureCode} ` +
-    `${hold} no coded scenario.`,
-  [CoreMessage.ItPronoun]: "it",
-  [CoreMessage.ThemPronoun]: "them",
-  [CoreMessage.HoldsVerb]: "holds",
-  [CoreMessage.HoldVerb]: "hold",
   [CoreMessage.ReconciliationTotalsHeading]: "### Reconciliation totals",
   [CoreMessage.ReconciliationTotalsClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: one claim, reconciled in its Quality Check Reconciliations. " +
@@ -450,11 +423,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ObservationPassed]: "passed",
   [CoreMessage.ObservationFailed]: "failed",
   [CoreMessage.UnnamedClaimGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
-  [CoreMessage.UnnamedClaimCiSteps]: (names) => {
-    const named = names.map((name) => name.trim()).filter((name) => name !== "");
-    const listed = named.length === 0 ? "" : `: ${named.join(", ")}`;
-    return `${names.length} CI step${names.length === 1 ? "" : "s"}${listed}`;
-  },
   [CoreMessage.UnnamedClaimFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
   [CoreMessage.SeveralScnCodes]: (codes) =>
     `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,

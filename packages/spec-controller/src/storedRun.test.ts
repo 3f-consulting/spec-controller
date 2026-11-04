@@ -28,3 +28,10 @@ describe("[SCN-RMG-007] the host refuses a stored re-render, naming the store an
     expect(shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", ...SAVED, "--help"])))).toBeUndefined();
   });
 });
+
+describe("[SCN-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
+  it("1 flag", () => {
+    const refusal = shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", "balance", "--render-from-json", "saved.json"])));
+    expect(refusal?.trimEnd().split("\n").at(-1)).toBe("Run 'spec-controller balance --render-from-json <path>' without it.");
+  });
+});

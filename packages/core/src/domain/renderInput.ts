@@ -15,14 +15,6 @@ export interface ScenarioCodesSection {
   readonly sharedScnCodes?: readonly SharedScnCode[];
 }
 
-/** Exact only while no feature code is shared: `featureCodes` counts distinct codes, so a code two files share counts once. */
-export function featureFilesWithNoFeatureCodeOf({
-  featureFiles,
-  featureCodes,
-}: Required<Pick<ScenarioCodesSection, "featureFiles" | "featureCodes">>): number {
-  return featureFiles - featureCodes;
-}
-
 export function scenarioCodesOf(
   population: ScenarioCodePopulation | undefined,
   obligations: EvidenceObligations | undefined

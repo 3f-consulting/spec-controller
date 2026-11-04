@@ -50,3 +50,14 @@ describe("[SCN-MSG-002] core's formatter prints a catalogue entry's words, with 
     expect(message("counted", { count: 1000 })).toBe("1,000 steps ran; 1000 in all.");
   });
 });
+
+describe("[SCN-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
+  const PROOFS = { proofs: "{count, plural, one {{count} proof never ran} other {{count} proofs never ran}}." };
+
+  it("1000 proofs", () => {
+    const proofs = messagesFrom<"proofs", { proofs: { count: number } }>(PROOFS);
+    expect(new Intl.NumberFormat("en").format(1000)).toBe("1,000");
+    expect(proofs("proofs", { count: 1000 })).toBe("1000 proofs never ran.");
+    expect(proofs("proofs", { count: 1 })).toBe("1 proof never ran.");
+  });
+});

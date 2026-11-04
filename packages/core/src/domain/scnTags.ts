@@ -58,6 +58,20 @@ export function scenarioCodeErrorsAre(errors: readonly ScenarioCodeError[]): Sce
   return several === errors.length ? "several-codes" : "both";
 }
 
+export type ScenarioCodeCleanliness =
+  | { readonly kind: "no-feature-file" }
+  | { readonly kind: "no-coded-scenario"; readonly featureFiles: number }
+  | { readonly kind: "each-file-own-code"; readonly featureFiles: number; readonly featureCodes: number }
+  | { readonly kind: "others-no-feature-code"; readonly featureFiles: number; readonly featureCodes: number; readonly noFeatureCode: number };
+
+// Read only of a population with no scenario code error, where no feature code is shared, so each code is one file's.
+export function scenarioCodeCleanlinessOf({ featureFiles, featureCodes }: ScenarioCodePopulation): ScenarioCodeCleanliness {
+  if (featureFiles === 0) return { kind: "no-feature-file" };
+  if (featureCodes === 0) return { kind: "no-coded-scenario", featureFiles };
+  if (featureCodes === featureFiles) return { kind: "each-file-own-code", featureFiles, featureCodes };
+  return { kind: "others-no-feature-code", featureFiles, featureCodes, noFeatureCode: featureFiles - featureCodes };
+}
+
 export function scenarioCodesOf(tags: readonly string[]): Attribution {
   return attributionOf(tags.filter((tag) => SCN_CODE.test(tag)));
 }

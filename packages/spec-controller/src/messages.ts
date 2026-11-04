@@ -55,8 +55,7 @@ export enum AppMessage {
   PinDrifted = "pin-drifted",
   OtherwiseSeeFlags = "otherwise-see-flags",
   DoNotPinRetired = "do-not-pin-retired",
-  ReRenderWithoutIt = "re-render-without-it",
-  ReRenderWithoutThem = "re-render-without-them",
+  ReRenderWithout = "re-render-without",
   KeepRunUnderName = "keep-run-under-name",
   NoPartsCarried = "no-parts-carried",
   DefaultCorpusFeatureFile = "default-corpus-feature-file",
@@ -185,6 +184,7 @@ export interface AppMessageValues {
   [AppMessage.RunWithoutModifiers]: { command: string };
   [AppMessage.PinDrifted]: { command: string; flag: string };
   [AppMessage.OtherwiseSeeFlags]: { scope: string };
+  [AppMessage.ReRenderWithout]: { count: number };
   [AppMessage.KeepRunUnderName]: { command: string };
   [AppMessage.FormatOnStandardOutput]: { fmt: string };
   [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };

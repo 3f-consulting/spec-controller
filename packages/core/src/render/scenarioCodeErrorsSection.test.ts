@@ -217,6 +217,14 @@ function printsNoScenarioCodeErrorsSection(md: string): void {
   expect(md).not.toContain(duplicateLine());
 }
 
+function cleanOver(): string {
+  return coreMessage(CoreMessage.CleanEachFileOwnCode, { featureFiles: 1, featureCodes: 1 }).split(": ")[0]!;
+}
+
+const cleanOpening = (): string => cleanOver().split(" over ")[0]!;
+
+const cleanGloss = (): string => cleanOver().slice(cleanOver().indexOf(" ("));
+
 const CLEAN_CORPORA = [
   { codes: ["ONE"], plain: 0 },
   { codes: ["ONE", "TWO"], plain: 0 },
@@ -228,22 +236,21 @@ const CLEAN_CORPORA = [
 ];
 
 describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes", () => {
-  const F = CORE_MESSAGES[CoreMessage.FeatureFileNoun];
-  const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
-  const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver];
-  const ownCode = CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode];
-  const othersNoFeatureCode = CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode];
-  const noCoded = CORE_MESSAGES[CoreMessage.CleanNoCodedScenario];
+  const ownCode = (featureFiles: number, featureCodes: number): string =>
+    coreMessage(CoreMessage.CleanEachFileOwnCode, { featureFiles, featureCodes });
+  const othersNoFeatureCode = (featureFiles: number, featureCodes: number, noFeatureCode: number): string =>
+    coreMessage(CoreMessage.CleanOthersNoFeatureCode, { featureFiles, featureCodes, noFeatureCode });
+  const noCoded = (featureFiles: number): string => coreMessage(CoreMessage.CleanNoCodedScenario, { featureFiles });
 
   function statements(): string[] {
     return [
-      ownCode(over(`1 ${F}`, `1 ${C}`)),
-      ownCode(over(`2 ${F}s`, `2 ${C}s`)),
-      othersNoFeatureCode(over(`3 ${F}s`, `2 ${C}s`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
-      othersNoFeatureCode(over(`4 ${F}s`, `2 ${C}s`), 2, CORE_MESSAGES[CoreMessage.HoldVerb]),
-      othersNoFeatureCode(over(`2 ${F}s`, `1 ${C}`), 1, CORE_MESSAGES[CoreMessage.HoldsVerb]),
-      noCoded(over(`1 ${F}`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ItPronoun]),
-      noCoded(over(`2 ${F}s`, `0 ${C}s`), CORE_MESSAGES[CoreMessage.ThemPronoun]),
+      ownCode(1, 1),
+      ownCode(2, 2),
+      othersNoFeatureCode(3, 2, 1),
+      othersNoFeatureCode(4, 2, 2),
+      othersNoFeatureCode(2, 1, 1),
+      noCoded(1),
+      noCoded(2),
     ];
   }
 
@@ -252,7 +259,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     const files = codes.length + plain;
     it(`states the codes clean over ${files} files carrying ${codes.length} codes after the run verdict`, () => {
       const statement = statements()[row]!;
-      expect(statement).toContain(over("\0", "\0").split("\0").at(-1));
+      expect(statement).toContain(cleanGloss());
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
       expect(scenarioCodesOnReport(report)).toEqual({ featureFiles: files, featureCodes: codes.length });
@@ -264,11 +271,11 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     const report = withScenarioCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
     expect(report.errors?.scenarioCodes).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-    const cleanHead = over("\0", "\0").split("\0")[0]!;
+    const cleanHead = `${cleanOpening()} over `;
     expect(cleanHead).not.toBe("");
     expect(md).not.toContain(HEADING);
     expect(md).not.toContain(cleanHead);
-    expect(md).not.toContain(CORE_MESSAGES[CoreMessage.NoFeatureFileJudged]);
+    expect(md).not.toContain(coreMessage(CoreMessage.NoFeatureFileJudged));
   });
 });
 
@@ -297,16 +304,14 @@ describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus wa
 });
 
 describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean", () => {
-  const statement = CORE_MESSAGES[CoreMessage.NoFeatureFileJudged];
-
   it("says no feature file was judged after the run verdict, prints no scenario code errors section, and states nothing clean", () => {
+    const statement = coreMessage(CoreMessage.NoFeatureFileJudged);
     const report = newShapeReport(judgedCorpus([], 0));
     expect(report.errors?.scenarioCodes).toBeUndefined();
     expect(scenarioCodesOnReport(report)).toMatchObject({ featureFiles: 0, featureCodes: 0 });
     const md = statedAloneAfterRunVerdict(report, statement);
     printsNoScenarioCodeErrorsSection(md);
-    const cleanOpening = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver]("", "").split(" over ")[0]!;
-    expect(md.split("\n").filter((line) => line.startsWith(cleanOpening))).toEqual([]);
+    expect(md.split("\n").filter((line) => line.startsWith(cleanOpening()))).toEqual([]);
   });
 });
 
@@ -346,7 +351,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
       expect(errorsSectionOf(md)).toEqual([
         HEADING,
         "",
-        framing(coreMessage(CoreMessage.OneScenarioCodeError)),
+        framing(coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 1 })),
         "",
         errorLine("foreign-scn-code", foreignOneCarrier()),
         "",
@@ -449,9 +454,8 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
 
   function codesStatement(codes: keyof typeof CODES): string[] {
     if (codes === "holding an error") return [];
-    if (codes === "from no feature file") return [CORE_MESSAGES[CoreMessage.NoFeatureFileJudged], ""];
-    const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver](`2 ${CORE_MESSAGES[CoreMessage.FeatureFileNoun]}s`, `2 ${CORE_MESSAGES[CoreMessage.FeatureCodeNoun]}s`);
-    return [CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode](over), ""];
+    if (codes === "from no feature file") return [coreMessage(CoreMessage.NoFeatureFileJudged), ""];
+    return [coreMessage(CoreMessage.CleanEachFileOwnCode, { featureFiles: 2, featureCodes: 2 }), ""];
   }
 
   it.each([
@@ -492,5 +496,35 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
     expect(claimReconciliations.length).toBeGreaterThan(1);
     expect(claimReconciliations.filter((line) => facts.includes(line))).toEqual([]);
     expect(lines.filter((line) => facts.includes(line))).toEqual(facts);
+  });
+});
+
+describe("[SCN-MSG-015] a counted noun agrees with its count — the clean statement's feature files and codes", () => {
+  const DEFINED =
+    "(a feature code is the tag heading a feature file, the `<FFF>` that each `@SCN-<FFF>-<NNN>` code in that file repeats)";
+  const rows: [string, readonly string[], number, string][] = [
+    [
+      "1 feature file and 1 code",
+      ["ONE"],
+      0,
+      `Scenario codes are clean over 1 feature file carrying 1 feature code ${DEFINED}: each file carries a code of its own, and every coded scenario sits in the file its code names.`,
+    ],
+    [
+      "3 feature files and 1 code",
+      ["ONE"],
+      2,
+      `Scenario codes are clean over 3 feature files carrying 1 feature code ${DEFINED}: each code is carried by exactly one file, every coded scenario sits in the file its code names, and the other 2 hold no coded scenario.`,
+    ],
+    [
+      "2 feature files and 0 codes",
+      [],
+      2,
+      `Scenario codes are clean over 2 feature files carrying 0 feature codes ${DEFINED}: no scenario in them carries an @SCN code to misfile.`,
+    ],
+  ];
+
+  it.each(rows)("%s", (_, codes, plain, line) => {
+    const md = renderReportFromJson(JSON.stringify(newShapeReport(judgedCorpus(codes, plain))), ctx.inputs, publishedExitCodeOf);
+    expect(afterRunVerdictOf(md)).toEqual(["", line, ""]);
   });
 });

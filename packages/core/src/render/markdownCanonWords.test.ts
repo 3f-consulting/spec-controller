@@ -66,7 +66,7 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
-    const stamp = coreMessage(CoreMessage.RunUnsound, { proofs: CORE_MESSAGES[CoreMessage.OneProofNeverRan] });
+    const stamp = coreMessage(CoreMessage.RunUnsound, { proofs: coreMessage(CoreMessage.ProofsNeverRan, { count: 1 }) });
     expect(md.split("\n")).toContain(stamp);
     expect(stamp).toContain(`"${CORE_MESSAGES[CoreMessage.OutcomeMissing]}"`);
     expect(md).not.toContain("`missing`");

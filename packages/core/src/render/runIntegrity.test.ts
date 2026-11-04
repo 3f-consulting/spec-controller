@@ -99,7 +99,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
-      unsoundStamp(CORE_MESSAGES[CoreMessage.OneProofNeverRan]),
+      unsoundStamp(coreMessage(CoreMessage.ProofsNeverRan, { count: 1 })),
       "",
       whatBroke(COLLECTION_FAILED_LOCATOR),
       "",
@@ -115,7 +115,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
-      unsoundStamp(CORE_MESSAGES[CoreMessage.OneProofNeverRan]),
+      unsoundStamp(coreMessage(CoreMessage.ProofsNeverRan, { count: 1 })),
       "",
       whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
       "",
@@ -131,7 +131,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
-      unsoundStamp(CORE_MESSAGES[CoreMessage.ProofsNeverRan](2)),
+      unsoundStamp(coreMessage(CoreMessage.ProofsNeverRan, { count: 2 })),
       "",
       whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
       "",
@@ -198,5 +198,20 @@ describe("[SCN-RPT-085] an item quoting what an evidence observation said states
     const item = reconcilingItemsCell(render(failing("t1", "expected\t1  to be 2"), failing("t2", "expected 1 to be 2")), UNNAMED_CLAIM_ID);
     expect(item).toContain("(x.test.ts: expected 1 to be 2)");
     expect(item.split("expected 1 to be 2")).toHaveLength(2);
+  });
+});
+
+describe("[SCN-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
+  const stampOf = (md: string): string => runIntegrityLines(md)[2]!;
+
+  it("1 proof", () => {
+    const stamp = stampOf(render(collectionFailed(COLLECTION_FAILED_LOCATOR)));
+    expect(stamp).toContain("1 Evidence Observation never ran to a result, so the behaviour it proves was never exercised.");
+  });
+
+  it("1000 proofs", () => {
+    const broken = Array.from({ length: 1000 }, (_, i) => collectionFailed(`src/collect${i}.test.ts`));
+    const stamp = stampOf(render(...broken));
+    expect(stamp).toContain("1000 Evidence Observations never ran to a result, so the behaviours they prove were never exercised.");
   });
 });

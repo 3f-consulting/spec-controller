@@ -67,7 +67,7 @@ function inTemporaryWorkingDirectory(argvAt: (cwd: string) => string[], refusal:
 const balance = (): string[] => ["balance", ...target];
 
 const KEEP_UNDER_NAME = (): string => message(AppMessage.KeepRunUnderName, { command: "balance" });
-const RE_RENDER_WITHOUT_IT = (): string => message(AppMessage.ReRenderWithoutIt);
+const RE_RENDER_WITHOUT_IT = (): string => message(AppMessage.ReRenderWithout, { count: 1 });
 
 const liveBalance = (): string[] => ["--run-id", "r1", ...balance()];
 const liveBalanceReportOnly = (): string[] => ["--run-id", "r1", ...balance(), "--exit-zero"];

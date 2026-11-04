@@ -1,5 +1,12 @@
-import { featureFilesWithNoFeatureCodeOf, type RenderInput } from "../domain/renderInput.js";
-import { foreignCodeCarriersOf, scenarioCodeErrorsAre, type ForeignScnCodeError, type ScenarioCodeError } from "../domain/scnTags.js";
+import type { RenderInput } from "../domain/renderInput.js";
+import {
+  foreignCodeCarriersOf,
+  scenarioCodeCleanlinessOf,
+  scenarioCodeErrorsAre,
+  type ForeignScnCodeError,
+  type ScenarioCodeCleanliness,
+  type ScenarioCodeError,
+} from "../domain/scnTags.js";
 import { CORE_MESSAGES, CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { errorEntry } from "./errorEntry.js";
@@ -22,23 +29,24 @@ function scenarioCodeErrorsFraming(errors: readonly ScenarioCodeError[], count: 
   }
 }
 
-function counted(n: number, noun: string): string {
-  return `${n} ${noun}${n === 1 ? "" : "s"}`;
-}
-
-function cleanStatement(featureFiles: number, featureCodes: number): string {
-  const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver](
-    counted(featureFiles, CORE_MESSAGES[CoreMessage.FeatureFileNoun]),
-    counted(featureCodes, CORE_MESSAGES[CoreMessage.FeatureCodeNoun])
-  );
-  if (featureCodes === 0) {
-    const them = featureFiles === 1 ? CORE_MESSAGES[CoreMessage.ItPronoun] : CORE_MESSAGES[CoreMessage.ThemPronoun];
-    return CORE_MESSAGES[CoreMessage.CleanNoCodedScenario](over, them);
+function cleanStatement(cleanliness: ScenarioCodeCleanliness): string {
+  switch (cleanliness.kind) {
+    case "no-feature-file":
+      return coreMessage(CoreMessage.NoFeatureFileJudged);
+    case "no-coded-scenario":
+      return coreMessage(CoreMessage.CleanNoCodedScenario, { featureFiles: cleanliness.featureFiles });
+    case "each-file-own-code":
+      return coreMessage(CoreMessage.CleanEachFileOwnCode, {
+        featureFiles: cleanliness.featureFiles,
+        featureCodes: cleanliness.featureCodes,
+      });
+    case "others-no-feature-code":
+      return coreMessage(CoreMessage.CleanOthersNoFeatureCode, {
+        featureFiles: cleanliness.featureFiles,
+        featureCodes: cleanliness.featureCodes,
+        noFeatureCode: cleanliness.noFeatureCode,
+      });
   }
-  if (featureCodes === featureFiles) return CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode](over);
-  const noFeatureCode = featureFilesWithNoFeatureCodeOf({ featureFiles, featureCodes });
-  const hold = noFeatureCode === 1 ? CORE_MESSAGES[CoreMessage.HoldsVerb] : CORE_MESSAGES[CoreMessage.HoldVerb];
-  return CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode](over, noFeatureCode, hold);
 }
 
 function worded(error: ScenarioCodeError): string {
@@ -77,10 +85,7 @@ function foreignWorded(error: ForeignScnCodeError): string {
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
   const errors = report.errors?.scenarioCodes;
   if (errors === undefined) return [];
-  const count =
-    errors.length === 1
-      ? coreMessage(CoreMessage.OneScenarioCodeError)
-      : coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: errors.length });
+  const count = coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: errors.length });
   return [
     CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading],
     "",
@@ -96,7 +101,6 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
 export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
   if (report.errors?.scenarioCodes !== undefined) return [];
   const { featureFiles, featureCodes } = report.summary.scenarioCodes ?? {};
-  if (featureFiles === undefined || featureCodes === undefined) return [];
-  if (featureFiles === 0) return [CORE_MESSAGES[CoreMessage.NoFeatureFileJudged], ""];
-  return [cleanStatement(featureFiles, featureCodes), ""];
+  if (typeof featureFiles !== "number" || typeof featureCodes !== "number") return [];
+  return [cleanStatement(scenarioCodeCleanlinessOf({ featureFiles, featureCodes })), ""];
 };
