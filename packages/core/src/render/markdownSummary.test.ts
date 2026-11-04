@@ -235,7 +235,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   });
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
-  it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
+  it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
     expect(md).toContain(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(md.split("\n")).toContain(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](3)}`);

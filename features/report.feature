@@ -132,8 +132,6 @@ Feature: The report renders the ledger as sectioned facts
     Every scenario is a ledger row, and a scenario with no obligation is a both-missing row, so
     the ledger's scenario count ("- N Claim Reconciliation(s): …") is the corpus census.
 
-    The excluded-occurrence bullet sits in the ledger summary.
-
     @unit @SCN-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
 
@@ -142,8 +140,7 @@ Feature: The report renders the ledger as sectioned facts
     The report states "N @SCN ids seen in non-tag context, excluded": the raw @SCN code
     occurrences in the feature source (in prose, comments and step text) minus the codes written
     as tags. A code written as a tag counts once, on whatever it tags, however many scenarios
-    inherit it, so the figure is never negative. It appears as a bullet in the markdown ledger
-    summary and in the JSON evidence-obligations object.
+    inherit it, so the figure is never negative. The JSON report carries it with the scenario codes.
 
     @unit @SCN-RPT-008
     Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
@@ -151,11 +148,9 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report renders summary-first, ledger-last
 
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance" comes
-    first. "## Summary" holds the derived cuts: Run verdict first, followed by one line
-    stating its codes are clean on a run whose judged corpus holds no scenario code error, then
-    Evidence reconciliation and Evidence observations, and Out-of-balance by feature last.
-    "## Claim Reconciliations" comes last, with its summary lines on top: the verdict tally and
-    the excluded-occurrence bullet.
+    first. "## Summary" holds the derived cuts: Run verdict first, followed by the scenario codes,
+    then Evidence reconciliation and Evidence observations, and Out-of-balance by feature last.
+    "## Claim Reconciliations" comes last, with its tally lines on top.
 
     Every reconciling item is labelled by its tag: the bare tag word for a layer (unit,
     integration, …) and "fitness" for fitness, never an internal kind.
@@ -277,18 +272,20 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-069
     Scenario: the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column
 
-  Rule: the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row
+  Rule: the report counts the scenarios with no @SCN code and lists each on its own ledger row
 
-    The ledger summary states how many scenarios carry no @SCN code. Each is named once, by its
-    `feature-file : scenario` locator, on its own ledger row.
+    Each is named by its `feature-file : scenario` locator.
 
     Every scenario header counts, including outlines, templates and examples. An Examples data
     table does not.
 
-    The JSON evidence-obligations object carries these scenarios beside the excluded occurrences.
+    The JSON report carries these scenarios with the scenario codes.
 
     @unit @SCN-RPT-014
-    Scenario: the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row
+    Scenario: the report counts the scenarios with no @SCN code
+
+    @unit @SCN-RPT-095
+    Scenario: each scenario with no @SCN code is listed once, on its own ledger row
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
@@ -773,6 +770,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-064
     Scenario: the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code
+
+    @unit @SCN-RPT-096
+    Scenario: the excluded @SCN occurrences, the scenarios with no @SCN code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file
 
   Rule: a shared code's Claim Reconciliations each name their scenario
 

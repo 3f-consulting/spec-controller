@@ -266,7 +266,6 @@ const ledgerSection: SectionEmitter = (report) => {
     CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
     ...ledgerTallyLines(report.summary.evidenceReconciliation.claimReconciliations),
-    ...censusLines(report.summary.scenarioCodes, scenarioRows.length),
     "",
     ...evidenceKeyLines(columns),
     ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheckKind ?? []),
@@ -292,14 +291,15 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
   return lines;
 }
 
-function censusLines(codes: RenderInput["summary"]["scenarioCodes"], scenarios: number): string[] {
+const scenarioCodeFactsSection: SectionEmitter = (report) => {
+  const codes = report.summary.scenarioCodes;
   if (codes?.excludedOccurrences === undefined) return [];
   const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](codes.excludedOccurrences)}`];
   const untagged = (codes.untaggedScenarios ?? []).length;
   if (untagged > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged)}`);
-  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], scenarios));
-  return lines;
-}
+  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], report.claimReconciliations.filter(isScenario).length));
+  return [...lines, ""];
+};
 
 function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number): string[] {
   if (shared.length === 0) return [];
@@ -344,6 +344,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   summarySection,
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   scenarioCodesCleanStatement,
+  scenarioCodeFactsSection,
   evidenceReconciliationSection,
   evidenceObservationsSection,
   stepAccountingSection,

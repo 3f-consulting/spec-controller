@@ -63,14 +63,16 @@ const untaggedLocators = [
   "zeta.feature : untagged scenario b",
 ];
 
-describe("[SCN-RPT-014] the ledger summary counts the scenarios with no @SCN code, and each is listed once, on its own ledger row", () => {
-  it("states the count of scenarios with no @SCN code in the ledger summary, naming none of them there", () => {
+describe("[SCN-RPT-014] the report counts the scenarios with no @SCN code", () => {
+  it("states the count of scenarios with no @SCN code, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
       `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](3)}`,
     ]);
   });
+});
 
+describe("[SCN-RPT-095] each scenario with no @SCN code is listed once, on its own ledger row", () => {
   it.each(untaggedLocators)("names %s exactly once, on its own ledger row", (locator) => {
     const lines = renderCorpus(corpus).split("\n");
     const naming = lines.filter((line) => line.includes(locator));

@@ -259,12 +259,15 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     });
   }
 
-  it("says nothing when the corpus's facts carry no count of feature files", () => {
+  it("states no clean line when the corpus's facts carry no count of feature files", () => {
     const report = withScenarioCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
     expect(report.errors?.scenarioCodes).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+    const cleanHead = over("\0", "\0").split("\0")[0]!;
+    expect(cleanHead).not.toBe("");
     expect(md).not.toContain(HEADING);
-    expect(afterRunVerdictOf(md)).toEqual([""]);
+    expect(md).not.toContain(cleanHead);
+    expect(md).not.toContain(CORE_MESSAGES[CoreMessage.NoFeatureFileJudged]);
   });
 });
 
@@ -433,5 +436,60 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
     const shown = linesCarryingACode(renderReportFromJson(saved, ctx.inputs, publishedExitCodeOf));
     expect(shown.map(codesOn)).toEqual([["foreign-scn-code"]]);
     expect(shown[0]!.startsWith("- `foreign-scn-code` — ")).toBe(true);
+  });
+});
+
+describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SCN code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file", () => {
+  const CODES = {
+    clean: { judged: () => newShapeReport(judgedCorpus(["ONE", "TWO"], 0)), scenarios: 2 },
+    "holding an error": { judged: () => newShapeReport(balancedWith([FOREIGN])), scenarios: 2 },
+    "from no feature file": { judged: () => newShapeReport(judgedCorpus([], 0)), scenarios: 0 },
+  } as const;
+
+  function codesStatement(codes: keyof typeof CODES): string[] {
+    if (codes === "holding an error") return [];
+    if (codes === "from no feature file") return [CORE_MESSAGES[CoreMessage.NoFeatureFileJudged], ""];
+    const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver](`2 ${CORE_MESSAGES[CoreMessage.FeatureFileNoun]}s`, `2 ${CORE_MESSAGES[CoreMessage.FeatureCodeNoun]}s`);
+    return [CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode](over), ""];
+  }
+
+  it.each([
+    { codes: "clean", excluded: 0, others: false, lines: "the excluded line alone, at zero" },
+    { codes: "clean", excluded: 3, others: true, lines: "the excluded, untagged and shared-code lines, in that order" },
+    { codes: "holding an error", excluded: 0, others: false, lines: "the excluded line alone, at zero" },
+    { codes: "holding an error", excluded: 3, others: true, lines: "the excluded, untagged and shared-code lines, in that order" },
+    { codes: "from no feature file", excluded: 0, others: false, lines: "the excluded line alone, at zero" },
+  ] as const)("states $lines after the run verdict when the codes are $codes", ({ codes, excluded, others }) => {
+    const judged = CODES[codes].judged();
+    expect(judged.errors?.scenarioCodes === undefined).toBe(codes !== "holding an error");
+    const report = withScenarioCodesOnReport(judged, {
+      ...scenarioCodesOnReport(judged),
+      excludedOccurrences: excluded,
+      untaggedScenarios: others ? [{ feature: "three.feature", title: "the scenario with no code" }] : [],
+      ...(others
+        ? { sharedScnCodes: [{ scnId: "SCN-ONE-001", scenarios: [{ feature: "one.feature", title: "the first" }, { feature: "two.feature", title: "the second" }] }] }
+        : {}),
+    });
+    const facts = [
+      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](excluded)}`,
+      ...(others
+        ? [
+            `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](1)}`,
+            `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](CODES[codes].scenarios, 1)}`,
+            "  - SCN-ONE-001: one.feature : the first; two.feature : the second",
+          ]
+        : []),
+    ];
+    const lines = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf).split("\n");
+    const verdict = lines.indexOf(RUN_VERDICT_HEADING);
+    const next = lines.indexOf(EVIDENCE_RECONCILIATION_HEADING);
+    expect(verdict).toBeGreaterThan(lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
+    expect(lines.slice(verdict, verdict + 2)).toEqual([RUN_VERDICT_HEADING, ""]);
+    expect(lines[verdict + 2]).not.toBe("");
+    expect(lines.slice(verdict + 3, next)).toEqual(["", ...codesStatement(codes), ...facts, ""]);
+    const claimReconciliations = lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]));
+    expect(claimReconciliations.length).toBeGreaterThan(1);
+    expect(claimReconciliations.filter((line) => facts.includes(line))).toEqual([]);
+    expect(lines.filter((line) => facts.includes(line))).toEqual(facts);
   });
 });
