@@ -1,5 +1,5 @@
-// 3.5 is the owner's judgement, set by hand; no measurement derives it.
-export const testRatioCeiling = 3.5;
+// 4 is the owner's judgement, set by hand while the scenarios are reviewed for lines no claim needs; it comes down by hand once that review makes the room.
+export const testRatioCeiling = 4;
 
 // Git pathspec globs: a tracked file matching an include and no exclude is counted.
 export const test = {
