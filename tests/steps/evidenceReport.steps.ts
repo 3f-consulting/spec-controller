@@ -1,11 +1,18 @@
 import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { BALANCED_INPUTS } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalogue.js";
+import {
+  CLAIM_RECONCILIATIONS_SECTION,
+  claimReconciliationsOf,
+  claimReconciliationsSection,
+  withClaimReconciliations,
+  withoutClaimReconciliations,
+} from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { ArrangedTarget, ExpectedEntry, ReportedRun, SpecControllerWorld } from "./support/world.js";
 
@@ -69,7 +76,7 @@ function reconcileWithTheReports(this: SpecControllerWorld): void {
 function satisfiedUnitReconciliationOf(world: SpecControllerWorld, claim: string): ScenarioRow["qualityCheckReconciliations"][number] | undefined {
   let rows: ScenarioRow[];
   try {
-    rows = (JSON.parse(world.balanceResult.stdout) as { ledger: { claimReconciliations: ScenarioRow[] } }).ledger.claimReconciliations;
+    rows = claimReconciliationsOf<ScenarioRow>(JSON.parse(world.balanceResult.stdout));
   } catch {
     assert.fail(`expected the reconciliation as JSON; got exit ${world.balanceResult.status}\nstdout:\n${world.balanceResult.stdout}\nstderr:\n${world.balanceResult.stderr}`);
   }
@@ -660,24 +667,30 @@ Given("a target in which {} is not permitted to be read", function (this: SpecCo
 
 const notSaved = (fault: string): ExpectedEntry => ["not-a-saved-reconciliation", { fault }];
 
-const NOT_A_SAVED_RECONCILIATION: Record<string, readonly [(saved: Record<string, unknown>) => unknown, ExpectedEntry]> = {
-  "a list, not a reconciliation": [() => [], notSaved(atTop(LIST, OBJECT))],
-  "a reconciliation with no ledger": [(saved) => ({ ...saved, ledger: undefined }), notSaved(missing("ledger"))],
+type SavedShape = readonly [(saved: Record<string, unknown>) => unknown, ExpectedEntry];
+
+const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
+  "a list, not a reconciliation": [[() => [], notSaved(atTop(LIST, OBJECT))]],
+  "a reconciliation with no ledger": [[withoutClaimReconciliations, notSaved(missing(CLAIM_RECONCILIATIONS_SECTION))]],
   "holding a section of the wrong kind": [
-    (saved) => ({ ...saved, errors: { scenarioCodes: "x" } }),
-    notSaved(wrongKind("errors.scenarioCodes", kindOf("string"), LIST)),
+    [(saved) => ({ ...saved, errors: { scenarioCodes: "x" } }), notSaved(wrongKind("errors.scenarioCodes", kindOf("string"), LIST))],
   ],
-  "unreadable below its top": [(saved) => ({ ...saved, ledger: { claimReconciliations: [null] } }), ["not-renderable-as-saved", {}]],
+  "unreadable below its top": [[(saved) => withClaimReconciliations(saved, [null]), ["not-renderable-as-saved", {}]]],
   "a reconciliation that does not name its corpus": [
-    (saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }),
-    notSaved(missing("runProvenance.corpus")),
+    [(saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }), notSaved(missing("runProvenance.corpus"))],
   ],
-  "in an earlier summary shape": [
-    (saved) => ({
-      ...saved,
-      summary: { ...(saved["summary"] as object), evidenceReconciliation: undefined, evidenceObservations: undefined },
-    }),
-    notSaved(missing("summary.evidenceReconciliation")),
+  "in an earlier report shape": [
+    [
+      (saved) => ({
+        ...saved,
+        summary: { ...(saved["summary"] as object), evidenceReconciliation: undefined, evidenceObservations: undefined },
+      }),
+      notSaved(missing("summary.evidenceReconciliation")),
+    ],
+    [
+      (saved) => ({ ...withoutClaimReconciliations(saved), ledger: claimReconciliationsSection(claimReconciliationsOf(saved)) }),
+      notSaved(missing(CLAIM_RECONCILIATIONS_SECTION)),
+    ],
   ],
 };
 
@@ -691,10 +704,14 @@ function savedReconciliation(dir: string): Record<string, unknown> {
 }
 
 Given("a saved report that parses but is {}", function (this: SpecControllerWorld, defect: string) {
-  const [broken, refusal] = rowOf(NOT_A_SAVED_RECONCILIATION, defect);
   const dir = targetDir(this);
-  writeFileSync(join(dir, "saved.json"), JSON.stringify(broken(savedReconciliation(dir))));
-  this.target = { dir, args: ["--render-from-json", "saved.json"], named: "saved.json", where: "", refusal };
+  const good = savedReconciliation(dir);
+  const [first, ...more] = rowOf(NOT_A_SAVED_RECONCILIATION, defect).map(([broken, refusal], i): ArrangedTarget => {
+    const file = i === 0 ? "saved.json" : `saved-${i + 1}.json`;
+    writeFileSync(join(dir, file), JSON.stringify(broken(good)));
+    return { dir, args: ["--render-from-json", file], named: file, where: "", refusal };
+  });
+  this.target = { ...first!, more };
 });
 
 const STORED: Record<string, (dir: string) => readonly [readonly string[], string]> = {
@@ -769,10 +786,21 @@ Then("the refusal names the workflow and the parse error", function (this: SpecC
   assert.ok(this.balanceResult.stderr.includes(YAML_PARSE_ERROR), `expected stderr to carry the YAML parser's error; got:\n${this.balanceResult.stderr}`);
 });
 
+function balanceReading(target: ArrangedTarget): SpawnSyncReturns<string> {
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...target.args], { cwd: target.dir, encoding: "utf8" });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return result;
+}
+
 When("the balance run reads that input", function (this: SpecControllerWorld) {
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...this.target.args], { cwd: this.target.dir, encoding: "utf8" });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
+  this.balanceResult = balanceReading(this.target);
+  this.moreBalanceResults = (this.target.more ?? []).map((target) => [target, balanceReading(target)] as const);
 });
+
+// A row may hold several inputs; each is read on its own.
+function eachReading(world: SpecControllerWorld): readonly (readonly [ArrangedTarget, SpawnSyncReturns<string>])[] {
+  return [[world.target, world.balanceResult], ...world.moreBalanceResults];
+}
 
 Given("a target whose working directory has since been removed", function (this: SpecControllerWorld) {
   const parent = temporaryDirectory(this, "unreadable-input-");
@@ -791,15 +819,19 @@ When("balance is asked to reconcile it with no feature corpus given", function (
 });
 
 Then("the input is refused as one the tool cannot read, never read as a verdict", function (this: SpecControllerWorld) {
-  assert.equal(this.balanceResult.status, 2, `expected the usage exit; got ${this.balanceResult.status}\n${this.balanceResult.stderr}${this.balanceResult.stdout}`);
-  assert.doesNotMatch(this.balanceResult.stdout, /Evidence Reconciliation/, "a refused input must not reach a report");
-  assert.doesNotMatch(this.balanceResult.stderr, /^\s+at .*:\d+:\d+\)?$/m, `a refusal is typed, never a stack trace:\n${this.balanceResult.stderr}`);
+  for (const [, result] of eachReading(this)) {
+    assert.equal(result.status, 2, `expected the usage exit; got ${result.status}\n${result.stderr}${result.stdout}`);
+    assert.doesNotMatch(result.stdout, /Evidence Reconciliation/, "a refused input must not reach a report");
+    assert.doesNotMatch(result.stderr, /^\s+at .*:\d+:\d+\)?$/m, `a refusal is typed, never a stack trace:\n${result.stderr}`);
+  }
 });
 
 Then("the refusal names the input and where its shape is wrong", function (this: SpecControllerWorld) {
-  const [code, values] = this.target.refusal ?? ["", {}];
-  const path = shownEntry(this.balanceResult.stderr, code, values)?.["path"] ?? "";
-  assert.ok(path.endsWith(this.target.named), `expected the refusal ${code} naming ${this.target.named} with ${JSON.stringify(values)}; got:\n${this.balanceResult.stderr}`);
+  for (const [target, result] of eachReading(this)) {
+    const [code, values] = target.refusal ?? ["", {}];
+    const path = shownEntry(result.stderr, code, values)?.["path"] ?? "";
+    assert.ok(path.endsWith(target.named), `expected the refusal ${code} naming ${target.named} with ${JSON.stringify(values)}; got:\n${result.stderr}`);
+  }
 });
 
 Then("the refusal names the pytest report and the shape pytest writes", function (this: SpecControllerWorld) {

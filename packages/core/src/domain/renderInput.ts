@@ -1,5 +1,5 @@
 import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
-import type { Ledger } from "./ledger.js";
+import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
 import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./corpusCounts.js";
@@ -102,7 +102,7 @@ export interface RenderInput {
     readonly runVerdict: RunVerdict;
     readonly outOfBalanceByFeature?: readonly FeatureOutOfBalance[];
   };
-  readonly ledger: Ledger;
+  readonly claimReconciliations: readonly ClaimReconciliation[];
 }
 
 export type FeatureNames = ReadonlyMap<string, string>;

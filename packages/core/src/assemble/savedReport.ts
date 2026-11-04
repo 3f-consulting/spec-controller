@@ -10,7 +10,7 @@ export function assembleSavedReport(saved: SavedReport, strictGiven: boolean): R
     ...saved,
     runProvenance: { ...saved.runProvenance, strict },
     summary: concludedSummary(saved.summary, {
-      ledger: saved.ledger,
+      ledger: { claimReconciliations: saved.claimReconciliations },
       scenarioCodeErrors: saved.errors?.scenarioCodes,
       strict,
     }),

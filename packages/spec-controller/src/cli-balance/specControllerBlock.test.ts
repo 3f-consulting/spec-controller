@@ -104,7 +104,7 @@ describe("[SCN-CFG-007] a saved run re-rendered names the same specController en
 });
 
 describe("[SCN-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
-  const accounts = (report: string): string => report.slice(report.indexOf("## Summary views"));
+  const accounts = (report: string): string => report.slice(report.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
 
   it.each(["notCheck", "fitnessChecks", "zzz"])("reconciles a target also holding %s as the target without it, naming the key in the one sentence every unread key gets", (key) => {
     const dir = targetOf(block);
@@ -116,7 +116,7 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
     expect(entries.every(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: `\`specController.${key}\`` })))).toBe(true);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(without.exitCode);
-    expect(accounts(run.report)).toMatch(/^## Summary views\n/);
+    expect(accounts(run.report)).toMatch(new RegExp(`^${CORE_MESSAGES[CoreMessage.SummaryHeading]}\n`));
     expect(accounts(run.report)).toBe(accounts(without.report));
   });
 });

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { everyOutcomeCorpusJson } from "../assemble/everyOutcomeCorpus.test-utils.js";
+import { claimReconciliationsOf } from "../assemble/reportClaimReconciliations.test-utils.js";
 import {
   reconcileEvidenceObligation,
   makeQualityCheckReconciliation,
@@ -145,10 +146,8 @@ function sidesOf(line: ReconciliationLine): [Outcome, SidePresence, SidePresence
 
 /** Every Reconciliation line of the JSON report the every-outcome corpus emits, read back through the domain's own reader. */
 function corpusReportLines(): ReconciliationLine[] {
-  const report = JSON.parse(everyOutcomeCorpusJson()) as {
-    readonly ledger: { readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[] }[] };
-  };
-  return report.ledger.claimReconciliations.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf));
+  const rows = claimReconciliationsOf<{ readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[] }>(JSON.parse(everyOutcomeCorpusJson()));
+  return rows.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf));
 }
 
 describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's definition, a divergent pair is unconstructible, and the emitted report agrees", () => {

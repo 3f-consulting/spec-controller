@@ -385,7 +385,7 @@ Feature: spec-controller balance runs standalone
         | workflow read by default    |
 
     @unit @e2e @SCN-CLI-074
-    Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, naming a section of the wrong kind by its place in the report, and one in an earlier summary shape by its missing section
+    Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section
       Given a saved report that parses but is <defect>
       When the balance run reads that input
       Then the input is refused as one the tool cannot read, never read as a verdict
@@ -398,7 +398,7 @@ Feature: spec-controller balance runs standalone
         | holding a section of the wrong kind            |
         | unreadable below its top                       |
         | a reconciliation that does not name its corpus |
-        | in an earlier summary shape                    |
+        | in an earlier report shape                     |
 
     @e2e @SCN-CLI-081
     Scenario Outline: a stored run given an input it cannot read in shape is refused and stores nothing

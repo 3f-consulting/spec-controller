@@ -374,7 +374,7 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
     reason: "char '{' is not expected at line 1",
   },
   [AppError.NotInShape]: { subject: "The --vitest report", shape: "the Vitest JSON reporter writes", path: "vitest.json", fault: "testResults is missing" },
-  [AppError.NotASavedReconciliation]: { subject: "The --render-from-json file", path: "saved.json", fault: "ledger is missing" },
+  [AppError.NotASavedReconciliation]: { subject: "The --render-from-json file", path: "saved.json", fault: "claimReconciliations is missing" },
   [AppError.NotRenderableAsSaved]: { subject: "The --render-from-json file", path: "saved.json", reason: "cannot read properties of undefined" },
   [AppError.CorpusFileUnparseable]: { corpus: "The --features corpus", file: "features/a.feature", message: "(3:1): expected: #Feature" },
   [AppError.WorkflowNotYaml]: { workflows: "The --ci workflows", file: "ci.yml", message: "Flow sequence in block collection must end with a ]" },
@@ -382,7 +382,7 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
   [AppError.StoredRunDirectoryNotCreated]: { path: "store/t/r1", reason: "ENOTDIR: not a directory" },
   [AppMessage.ShapeKindOfType]: { type: "number" },
   [AppMessage.ShapeWrongKind]: { where: "testResults", found: "an object", expected: "a list" },
-  [AppMessage.ShapeFieldMissing]: { path: "ledger.claimReconciliations" },
+  [AppMessage.ShapeFieldMissing]: { path: "summary.evidenceReconciliation" },
 };
 
 function renderedApp(code: AppMessage | AppError): string {

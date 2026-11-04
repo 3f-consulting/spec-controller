@@ -47,6 +47,6 @@ export function assembleRenderInput(
       scenarioCodeErrors: evidenceReconciliation.scenarioCodeErrors,
       strict: ctx.strict === true,
     }),
-    ledger: evidenceReconciliation.ledger,
+    claimReconciliations: evidenceReconciliation.ledger.claimReconciliations,
   };
 }

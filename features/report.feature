@@ -2,7 +2,7 @@
 Feature: The report renders the ledger as sectioned facts
 
   The report renders the reconciled ledger as facts, in sections: the run provenance first,
-  then the summary views, opening with the run verdict, and the Claim Reconciliations last.
+  then the Summary, opening with the run verdict, and the Claim Reconciliations last.
 
   It states facts only: no interpretation, editorial or cross-run comparison.
 
@@ -27,8 +27,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the JSON report carries a provenance object
 
-    A top-level run provenance object sits beside the reconciliation body, its summary and
-    ledger. It holds the same run facts as the markdown header: the target, the source SHA, the
+    A top-level run provenance object holds the same run facts as the markdown header: the target, the source SHA, the
     tool's own SHA and version, the UTC run timestamp, and the input paths and flags used.
 
     @unit @SCN-RPT-002
@@ -46,7 +45,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
-    Under "## Summary views", the "### Evidence reconciliation" section renders one table. Its
+    Under "## Summary", the "### Evidence reconciliation" section renders one table. Its
     rows are the subjects, Claim Reconciliation and Reconciliation line, each with its own
     Total. Its columns are balanced and out-of-balance. Nothing in it is bold.
 
@@ -89,7 +88,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
-    Under "## Summary views", the "### Out-of-balance by feature" section shows which features
+    Under "## Summary", the "### Out-of-balance by feature" section shows which features
     hold the out-of-balance scenarios. It opens with a total line that starts
     "N of M Claim Reconciliation(s) of scenarios out of balance", says which are grouped by
     feature, and names any that are not, "(no feature file names them)". A table headed
@@ -152,7 +151,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report renders summary-first, ledger-last
 
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance" comes
-    first. "## Summary views" holds the derived cuts: Run verdict first, followed by one line
+    first. "## Summary" holds the derived cuts: Run verdict first, followed by one line
     stating its codes are clean on a run whose judged corpus holds no scenario code error, then
     Evidence reconciliation and Evidence observations, and Out-of-balance by feature last.
     "## Claim Reconciliations" comes last, with its summary lines on top: the verdict tally and
@@ -166,7 +165,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report reconciles the evidence observations — raw = attributed + phantom claim + unnamed claim
 
-    Under "## Summary views", the "### Evidence observations" cut counts the evidence
+    Under "## Summary", the "### Evidence observations" cut counts the evidence
     observations of every kind of quality check, fitness included. It opens with the identity
     "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c that no one scenario can take",
     which always balances.
@@ -688,7 +687,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind its Runners, Reconciler, Excluded and GitHub plumbing counts listed beneath
 
-    Under "## Summary views", the "### Step accounting" section is the report's one section about
+    Under "## Summary", the "### Step accounting" section is the report's one section about
     the CI steps the run read. Its table has a row per workflow and job read, in the step
     accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners, Reconciler,
     Excluded, GitHub plumbing and Accounted for. When more than one job was read, a Total row
@@ -738,7 +737,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report lists each scenario code error under Scenario code errors, only when the corpus holds one, worded from the error's own values
 
     @unit @SCN-RPT-055
-    Scenario: a foreign-scn-code is listed by its handle under Scenario code errors, worded from its values with the one file or the several files carrying the named code, before the summary views
+    Scenario: a foreign-scn-code is listed by its handle under Scenario code errors, worded from its values with the one file or the several files carrying the named code, before the Summary
 
     @unit @SCN-RPT-056
     Scenario: a duplicate-feature-code is listed by its handle, worded from the shared code and the files that carry it
@@ -761,7 +760,13 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report states a corpus's scenario codes clean only over the files it judged, with the counts the run recorded
 
     @unit @SCN-RPT-062
-    Scenario: clean scenario codes are stated after the run verdict under the summary views, with the run's count of feature files and of feature codes, no scenario code errors section prints, and nothing is stated when no corpus was judged
+    Scenario: clean scenario codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes
+
+    @unit @SCN-RPT-093
+    Scenario: no scenario code errors section prints when the scenario codes are clean
+
+    @unit @SCN-RPT-094
+    Scenario: nothing is stated about scenario codes when no corpus was judged
 
     @unit @SCN-RPT-063
     Scenario: a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean

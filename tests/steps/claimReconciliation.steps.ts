@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
+import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { SpecControllerWorld } from "./support/world.js";
 
@@ -298,7 +299,7 @@ Then("the scenario's row shows the test that passed as passed", function (this: 
 });
 
 function savedObservationAt(world: SpecControllerWorld, locator: string, status: string): Record<string, unknown> {
-  const observations = world.savedJson.ledger.claimReconciliations.flatMap((row) =>
+  const observations = claimReconciliationsOf(world.savedJson).flatMap((row) =>
     row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? [])
   );
   const found = observations.find((o) => o["locator"] === locator && o["status"] === status);

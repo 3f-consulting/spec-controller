@@ -5,6 +5,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { basename, join } from "node:path";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { CorpusRun, SpecControllerWorld } from "./support/world.js";
 
@@ -293,8 +294,7 @@ function judgement({ report }: CorpusRun): Record<string, unknown> {
 }
 
 function scenarioCodesOf({ report }: CorpusRun): string[] {
-  const ledger = report["ledger"] as { claimReconciliations: { claim: string; kind: string }[] };
-  return ledger.claimReconciliations
+  return claimReconciliationsOf<{ claim: string; kind: string }>(report)
     .filter(({ kind }) => kind === "scenario")
     .map(({ claim }) => claim)
     .sort();
@@ -383,8 +383,7 @@ Then("the reconciliation names each of those scenarios by its feature file's pat
     SAME_NAME_FILES.map((feature) => ({ feature, scenario: UNTAGGED_TITLE })),
     "an untagged scenario's feature file was not named by its path under the corpus",
   );
-  const ledger = this.sameNameJson["ledger"] as { claimReconciliations: { claim: string }[] };
-  const rows = ledger.claimReconciliations.map(({ claim }) => claim);
+  const rows = claimReconciliationsOf<{ claim: string }>(this.sameNameJson).map(({ claim }) => claim);
   for (const feature of SAME_NAME_FILES) {
     assert.ok(rows.includes(`${feature} : ${UNTAGGED_TITLE}`), `no reconciliation row names ${feature}:\n${rows.join("\n")}`);
     assert.ok(this.sameNameMarkdown.includes(`${feature} : ${UNTAGGED_TITLE}`), `the Markdown report does not name ${feature}`);

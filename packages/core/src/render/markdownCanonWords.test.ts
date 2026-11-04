@@ -6,6 +6,7 @@ import { coreMessage } from "./coreText.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { claimReconciliationsOf } from "../assemble/reportClaimReconciliations.test-utils.js";
 
 describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
   const proven = { scnId: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
@@ -43,10 +44,8 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
   });
 
   it("keeps the terms phantom-claim and unnamed-claim as the JSON's row kinds", () => {
-    const json = JSON.parse(renderJson(__er(unbalanced()), ctx)) as {
-      ledger: { claimReconciliations: { kind: string }[] };
-    };
-    expect(json.ledger.claimReconciliations.map((row) => row.kind)).toEqual([
+    const rows = claimReconciliationsOf<{ kind: string }>(JSON.parse(renderJson(__er(unbalanced()), ctx)));
+    expect(rows.map((row) => row.kind)).toEqual([
       "scenario",
       "phantom-claim",
       "unnamed-claim",

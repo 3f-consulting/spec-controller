@@ -66,7 +66,7 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       "",
     ]);
     expect(md.indexOf(CORE_MESSAGES[CoreMessage.RunProvenanceHeading])).toBeLessThan(md.indexOf(heading));
-    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]));
+    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
   });
 });
 

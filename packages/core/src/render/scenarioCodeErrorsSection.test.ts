@@ -87,11 +87,11 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
     ]);
   });
 
-  it("sits before the summary views, as a caveat on every cut beneath it", () => {
+  it("sits before the Summary, as a caveat on every cut beneath it", () => {
     const lines = md.split("\n");
-    const summaryViews = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]);
+    const summary = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
     expect(lines.indexOf(HEADING)).toBeGreaterThanOrEqual(0);
-    expect(lines.indexOf(HEADING)).toBeLessThan(summaryViews);
+    expect(lines.indexOf(HEADING)).toBeLessThan(summary);
   });
 });
 
@@ -192,7 +192,7 @@ const EVIDENCE_RECONCILIATION_HEADING = CORE_MESSAGES[CoreMessage.EvidenceReconc
 
 function afterRunVerdictOf(md: string): string[] {
   const lines = md.split("\n");
-  const summary = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]);
+  const summary = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
   const start = lines.indexOf(RUN_VERDICT_HEADING);
   expect(summary).toBeGreaterThanOrEqual(0);
   expect(start).toBeGreaterThan(summary);
@@ -207,28 +207,31 @@ function statedAloneAfterRunVerdict(report: RenderInput, statement: string): str
   const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
   expect(afterRunVerdictOf(md)).toEqual(["", statement, ""]);
   expect(md.split("\n").filter((line) => line === statement)).toHaveLength(1);
-  expect(md).not.toContain(HEADING);
-  expect(md).not.toContain(duplicateLine());
   return md;
 }
 
-describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict under the summary views, with the run's count of feature files and of feature codes, no scenario code errors section prints, and nothing is stated when no corpus was judged", () => {
+function printsNoScenarioCodeErrorsSection(md: string): void {
+  expect(md).not.toContain(HEADING);
+  expect(md).not.toContain(duplicateLine());
+}
+
+const CLEAN_CORPORA = [
+  { codes: ["ONE"], plain: 0 },
+  { codes: ["ONE", "TWO"], plain: 0 },
+  { codes: ["ONE", "TWO"], plain: 1 },
+  { codes: ["ONE", "TWO"], plain: 2 },
+  { codes: ["ONE"], plain: 1 },
+  { codes: [], plain: 1 },
+  { codes: [], plain: 2 },
+];
+
+describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes", () => {
   const F = CORE_MESSAGES[CoreMessage.FeatureFileNoun];
   const C = CORE_MESSAGES[CoreMessage.FeatureCodeNoun];
   const over = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver];
   const ownCode = CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode];
   const othersNoFeatureCode = CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode];
   const noCoded = CORE_MESSAGES[CoreMessage.CleanNoCodedScenario];
-
-  const cases = [
-    { codes: ["ONE"], plain: 0 },
-    { codes: ["ONE", "TWO"], plain: 0 },
-    { codes: ["ONE", "TWO"], plain: 1 },
-    { codes: ["ONE", "TWO"], plain: 2 },
-    { codes: ["ONE"], plain: 1 },
-    { codes: [], plain: 1 },
-    { codes: [], plain: 2 },
-  ];
 
   function statements(): string[] {
     return [
@@ -242,33 +245,46 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     ];
   }
 
-  for (let row = 0; row < cases.length; row++) {
-    const { codes, plain } = cases[row]!;
+  for (let row = 0; row < CLEAN_CORPORA.length; row++) {
+    const { codes, plain } = CLEAN_CORPORA[row]!;
     const files = codes.length + plain;
-    it(`states the codes clean over ${files} files carrying ${codes.length} codes after the run verdict, and prints no scenario code errors section`, () => {
+    it(`states the codes clean over ${files} files carrying ${codes.length} codes after the run verdict`, () => {
       const statement = statements()[row]!;
       expect(statement).toContain(over("\0", "\0").split("\0").at(-1));
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(report.errors?.scenarioCodes).toBeUndefined();
       expect(report.scenarioCodes).toEqual({ featureFiles: files, featureCodes: codes.length });
-      const md = statedAloneAfterRunVerdict(report, statement);
-      expect(md).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline]);
+      statedAloneAfterRunVerdict(report, statement);
     });
   }
 
+  it("says nothing when the corpus's facts carry no count of feature files", () => {
+    const report = { ...newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), scenarioCodes: { excludedOccurrences: 0, untaggedScenarios: [] } };
+    expect(report.errors?.scenarioCodes).toBeUndefined();
+    const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+    expect(md).not.toContain(HEADING);
+    expect(afterRunVerdictOf(md)).toEqual([""]);
+  });
+});
+
+describe("[SCN-RPT-093] no scenario code errors section prints when the scenario codes are clean", () => {
+  for (const { codes, plain } of CLEAN_CORPORA) {
+    it(`prints no scenario code errors section over ${codes.length + plain} files carrying ${codes.length} codes`, () => {
+      const report = newShapeReport(judgedCorpus(codes, plain));
+      expect(report.errors?.scenarioCodes).toBeUndefined();
+      const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+      printsNoScenarioCodeErrorsSection(md);
+      expect(md).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline]);
+    });
+  }
+});
+
+describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus was judged", () => {
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
     const report = newShapeReport(unjudged);
     expect(report.errors?.scenarioCodes).toBeUndefined();
     expect(report.scenarioCodes).toBeUndefined();
-    const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-    expect(md).not.toContain(HEADING);
-    expect(afterRunVerdictOf(md)).toEqual([""]);
-  });
-
-  it("says nothing when the corpus's facts carry no count of feature files", () => {
-    const report = { ...newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), scenarioCodes: { excludedOccurrences: 0, untaggedScenarios: [] } };
-    expect(report.errors?.scenarioCodes).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING);
     expect(afterRunVerdictOf(md)).toEqual([""]);
@@ -283,6 +299,7 @@ describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run v
     expect(report.errors?.scenarioCodes).toBeUndefined();
     expect(report.scenarioCodes).toMatchObject({ featureFiles: 0, featureCodes: 0 });
     const md = statedAloneAfterRunVerdict(report, statement);
+    printsNoScenarioCodeErrorsSection(md);
     const cleanOpening = CORE_MESSAGES[CoreMessage.ScenarioCodesCleanOver]("", "").split(" over ")[0]!;
     expect(md.split("\n").filter((line) => line.startsWith(cleanOpening))).toEqual([]);
   });

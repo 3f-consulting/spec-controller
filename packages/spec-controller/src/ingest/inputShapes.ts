@@ -95,7 +95,7 @@ export const SAVED_RECONCILIATION: Shape = {
       },
       required: ["evidenceReconciliation", "evidenceObservations"],
     },
-    ledger: { fields: { claimReconciliations: { list: "anything" } }, required: ["claimReconciliations"] },
+    claimReconciliations: { list: "anything" },
     errors: {
       fields: {
         scenarioCodes: { list: "anything" },
@@ -112,7 +112,7 @@ export const SAVED_RECONCILIATION: Shape = {
     },
     scenarioCodes: { fields: {} },
   },
-  required: ["runProvenance", "summary", "ledger"],
+  required: ["runProvenance", "summary", "claimReconciliations"],
 };
 
 // Kinds are compared unworded, so a well-shaped report formats no message.

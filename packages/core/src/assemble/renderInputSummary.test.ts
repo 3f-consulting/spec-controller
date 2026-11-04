@@ -7,6 +7,7 @@ import type { Ledger } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
+import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 
 describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted", () => {
@@ -169,17 +170,12 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind 
     JSON.parse(
       JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [brokenFitness])), ctx))
     ) as {
-      ledger: {
-        claimReconciliations: Array<{
-          qualityCheckReconciliations: Array<Record<string, unknown>>;
-        }>;
-      };
       summary: { evidenceReconciliation: { reconciliationLines: Record<string, unknown> } };
     };
 
   it("carries a fitness reconciliation keyed by qualityCheckKind 'fitness' alone, its fitness function named only on its observation", () => {
-    const fitness = report()
-      .ledger.claimReconciliations.flatMap((s) => s.qualityCheckReconciliations)
+    const fitness = claimReconciliationsOf<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>(report())
+      .flatMap((s) => s.qualityCheckReconciliations)
       .filter((o) => o.qualityCheckKind === "fitness");
     expect(fitness).toEqual([
       {

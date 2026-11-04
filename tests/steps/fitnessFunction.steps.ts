@@ -5,19 +5,18 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
+import { claimReconciliationsOf, type ClaimReconciliationsSection } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { FitnessTarget, SpecControllerWorld } from "./support/world.js";
 
 type OutcomeCarrier = { readonly outcome?: string };
-type JsonReport = {
+type JsonRow = {
+  readonly claim: string;
+  readonly kind: string;
+  readonly qualityCheckReconciliations: readonly (OutcomeCarrier & { readonly evidenceObservations?: readonly OutcomeCarrier[] })[];
+};
+type JsonReport = ClaimReconciliationsSection<JsonRow> & {
   readonly summary: { readonly evidenceReconciliation: { readonly reconciliationLines: { readonly byOutcome: Readonly<Record<string, number>> } } };
-  readonly ledger: {
-    readonly claimReconciliations: readonly {
-      readonly claim: string;
-      readonly kind: string;
-      readonly qualityCheckReconciliations: readonly (OutcomeCarrier & { readonly evidenceObservations?: readonly OutcomeCarrier[] })[];
-    }[];
-  };
 };
 
 const LINT_CHECKS_TARGET: FitnessTarget = {
@@ -212,7 +211,7 @@ Then(
       `expected NO watermelon in the summary, whose count of watermelon lines is present even at zero: a ` +
         `watermelon says a cited check is passing but fabricated, and this one genuinely runs. Report:\n${this.jsonText}`,
     );
-    const onScenarios = report.ledger.claimReconciliations
+    const onScenarios = claimReconciliationsOf(report)
       .filter((row) => row.kind === "scenario")
       .flatMap((row) => row.qualityCheckReconciliations.flatMap((line) => [line, ...(line.evidenceObservations ?? [])]))
       .filter((carrier) => carrier.outcome === "watermelon");

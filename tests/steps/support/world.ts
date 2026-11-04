@@ -1,6 +1,7 @@
 import { setWorldConstructor, World } from "@cucumber/cucumber";
 import type { IWorldOptions } from "@cucumber/cucumber";
 import type { SpawnSyncReturns } from "node:child_process";
+import type { ClaimReconciliationsSection } from "./reportClaimReconciliations.js";
 
 export interface ClaimReconciliation {
   claim: string;
@@ -10,8 +11,7 @@ export interface ClaimReconciliation {
 
 export interface InheritedCodeRun {
   status: number | null;
-  report: {
-    ledger: { claimReconciliations: ClaimReconciliation[] };
+  report: ClaimReconciliationsSection<ClaimReconciliation> & {
     scenarioCodes: { untaggedScenarios: { feature: string; scenario: string }[] };
   };
 }
@@ -59,7 +59,7 @@ export interface GrammarRow {
 
 export interface GrammarRun {
   status: number;
-  report: { ledger: { claimReconciliations: GrammarRow[] }; errors?: { scenarioCodes?: unknown[] } };
+  report: ClaimReconciliationsSection<GrammarRow> & { errors?: { scenarioCodes?: unknown[] } };
 }
 
 export interface RoomCommand {
@@ -102,6 +102,7 @@ export interface ArrangedTarget {
   readonly named: string;
   readonly where: string;
   readonly refusal?: ExpectedEntry;
+  readonly more?: readonly ArrangedTarget[];
 }
 
 export interface ExitZeroPair {
@@ -109,9 +110,7 @@ export interface ExitZeroPair {
   readonly with: SpawnSyncReturns<string>;
 }
 
-export interface SavedLedger {
-  ledger: { claimReconciliations: { qualityCheckReconciliations: { evidenceObservations?: Record<string, unknown>[] }[] }[] };
-}
+export type SavedLedger = ClaimReconciliationsSection<{ qualityCheckReconciliations: { evidenceObservations?: Record<string, unknown>[] }[] }>;
 
 export interface ToolProvenance {
   insideARepository: Provenance;
@@ -131,6 +130,7 @@ export class SpecControllerWorld extends World {
   targetArgs!: string[];
   reportArgs!: string[];
   balanceResult!: SpawnSyncReturns<string>;
+  moreBalanceResults: readonly (readonly [ArrangedTarget, SpawnSyncReturns<string>])[] = [];
   hostResult!: SpawnSyncReturns<string>;
   retiredFlagResult!: SpawnSyncReturns<string>;
   balanceHelpAlone!: SpawnSyncReturns<string>;

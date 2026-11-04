@@ -14,6 +14,7 @@ import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconciliation.test-utils.js";
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
+import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 
 function reportLedger(): Ledger {
   return reconcile(
@@ -52,7 +53,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "runProvenance",
       "scenarioCodes",
       "summary",
-      "ledger",
+      "claimReconciliations",
     ]);
     expect(report).not.toHaveProperty("metadata");
     expect(report.scenarioCodes).toEqual({
@@ -176,16 +177,25 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 });
 
-describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary, each Claim Reconciliation carrying its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else", () => {
-  it("writes every row of the every-outcome corpus's ledger with exactly its claim, kind, verdict, Quality Check Reconciliations and pending items", () => {
-    const parsed = JSON.parse(everyOutcomeCorpusJson()) as {
-      readonly summary: unknown;
-      readonly ledger: { readonly claimReconciliations: readonly Record<string, unknown>[] };
-    };
-    const rows = parsed.ledger.claimReconciliations;
+describe("[SCN-RMD-002] the Claim Reconciliations sit at the report's top level beside the Summary", () => {
+  it("writes the every-outcome corpus's Claim Reconciliations as a top-level list straight after the summary, under no ledger wrapper", () => {
+    const parsed = JSON.parse(everyOutcomeCorpusJson()) as Record<string, unknown>;
+    const keys = Object.keys(parsed);
 
-    expect(parsed).toHaveProperty("summary");
-    expect(rows.length).toBeGreaterThan(0);
+    expect(keys.slice(-2)).toEqual(["summary", "claimReconciliations"]);
+    expect(Array.isArray(parsed.claimReconciliations)).toBe(true);
+    expect(keys).not.toContain("ledger");
+  });
+});
+
+describe("[SCN-RMD-030] each Claim Reconciliation carries its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else", () => {
+  it("writes every row of the every-outcome corpus's Claim Reconciliations with exactly its claim, kind, verdict, Quality Check Reconciliations and pending items", () => {
+    const parsed = JSON.parse(everyOutcomeCorpusJson()) as {
+      readonly claimReconciliations: readonly Record<string, unknown>[];
+    };
+    const rows = parsed.claimReconciliations;
+
+    expect(rows).not.toHaveLength(0);
     for (const row of rows) {
       expect(Object.keys(row)).toEqual(["claim", "kind", "verdict", "qualityCheckReconciliations", "pendingItems"]);
     }
@@ -211,7 +221,7 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
       ],
       [untaggedScenarioId({ feature: "alpha.feature", scenario: "an untagged scenario" })]
     );
-    const rows: Record<string, unknown>[] = JSON.parse(renderJson(__er(ledger), ctx)).ledger.claimReconciliations;
+    const rows = claimReconciliationsOf<Record<string, unknown>>(JSON.parse(renderJson(__er(ledger), ctx)));
     expect(rows.map((row) => [row.kind, row.claim])).toEqual([
       ["scenario", "SCN-AAA-001"],
       ["phantom-claim", "SCN-PHM-999"],
@@ -283,10 +293,11 @@ describe("[SCN-RMD-003] the summary counts the evidence observations of each of 
 
   it("counts the phantom claim's and the unnamed claim's evidence observations where their ledger rows hold them", () => {
     const parsed = JSON.parse(renderJson(__er(rmd003Balance, true), ctx));
-    const phantomClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "phantom-claim");
-    const unnamedClaimRow = parsed.ledger.claimReconciliations.find((s: { kind: string }) => s.kind === "unnamed-claim");
-    expect(phantomClaimRow.claim).toBe("SCN-PHX-999");
-    expect(heldObservationsOf(unnamedClaimRow)).toHaveLength(2);
+    const rows = claimReconciliationsOf<{ kind: string; claim: string; qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }>(parsed);
+    const phantomClaimRow = rows.find((s) => s.kind === "phantom-claim");
+    const unnamedClaimRow = rows.find((s) => s.kind === "unnamed-claim");
+    expect(phantomClaimRow?.claim).toBe("SCN-PHX-999");
+    expect(heldObservationsOf(unnamedClaimRow!)).toHaveLength(2);
     expect(parsed.summary.evidenceObservations.onPhantomClaim).toBe(1);
     expect(parsed.summary.evidenceObservations.onUnnamedClaim).toBe(2);
   });

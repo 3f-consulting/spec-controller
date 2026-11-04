@@ -57,7 +57,7 @@ function render(...broken: readonly EvidenceObservation[]): string {
 function runIntegrityLines(md: string): string[] {
   const lines = md.split("\n");
   const start = lines.indexOf(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
-  const end = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]);
+  const end = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
   return lines.slice(start, end);

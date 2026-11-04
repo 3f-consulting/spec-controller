@@ -212,7 +212,7 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections).toEqual([
       CORE_MESSAGES[CoreMessage.RunProvenanceHeading],
-      CORE_MESSAGES[CoreMessage.SummaryViewsHeading],
+      CORE_MESSAGES[CoreMessage.SummaryHeading],
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     ]);
   });
@@ -273,6 +273,15 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
         { qualityCheckKind: "fitness", fitnessFunction: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
       ]
     );
+  });
+
+  it("opens on the run provenance, then the Summary under the heading ## Summary, with the Claim Reconciliations last", () => {
+    const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
+    expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual([
+      CORE_MESSAGES[CoreMessage.RunProvenanceHeading],
+      "## Summary",
+      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
+    ]);
   });
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {

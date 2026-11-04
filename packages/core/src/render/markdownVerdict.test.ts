@@ -43,13 +43,13 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     cucumberBroken = balanceWithBroken(brokenObservation("integration", CUCUMBER_LOCATOR, cucumberMessage()));
   });
 
-  it("stamps each run unsound, above the summary views", () => {
+  it("stamps each run unsound, above the Summary", () => {
     for (const balance of [vitestBroken, cucumberBroken]) {
       const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
       expect(md).toContain(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
       const iProvenance = md.indexOf("## Run provenance");
       const iStamp = md.indexOf(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
-      const iSummary = md.indexOf("## Summary views");
+      const iSummary = md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
       expect(iProvenance).toBeLessThan(iStamp);
       expect(iStamp).toBeLessThan(iSummary);
       expect(md).toMatch(/unsound[\s\S]{0,400}missing/i);
@@ -76,7 +76,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   const summaryOpening = (md: string): string =>
-    md.slice(md.indexOf("## Summary views"), md.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]));
+    md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]), md.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]));
 
   const balancedScenario: Scenario = {
     scnId: "SCN-VRD-001",

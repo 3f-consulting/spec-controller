@@ -844,7 +844,7 @@ The tool judges scenario code errors only over the corpus that `--features` name
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
 - What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any scenario code error fails the run at exit `1`**.
 - A run carrying both a scenario code error and an out-of-balance account exits `1`, and its verdict names both.
-- When the codes are clean, no section prints. The run verdict under `## Summary views` is followed by one line saying so, with how many feature files the run judged, coded or not, and how many feature codes they carry, each counted on its own.
+- When the codes are clean, no section prints. The run verdict under `## Summary` is followed by one line saying so, with how many feature files the run judged, coded or not, and how many feature codes they carry, each counted on its own.
 - Over a corpus with no feature file, no section prints either. The line after the run verdict says that no feature file was judged, and states nothing clean.
 - The section always says that a duplicated `@SCN` is reported on its account's rows, never in this section.
 

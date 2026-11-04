@@ -14,7 +14,7 @@ const SECTION = CORE_MESSAGES[CoreMessage.ErrorsInTheInputsHeading];
 const SCENARIO_CODE_ERRORS = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
 const CONFIGURATION_NOT_READ = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const RUN_PROVENANCE = CORE_MESSAGES[CoreMessage.RunProvenanceHeading];
-const SUMMARY_VIEWS = CORE_MESSAGES[CoreMessage.SummaryViewsHeading];
+const SUMMARY = CORE_MESSAGES[CoreMessage.SummaryHeading];
 
 const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
@@ -74,18 +74,18 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
 };
 
 describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
-  it("states scenario code errors alone under Scenario code errors, right after the run provenance and before the summary views", () => {
+  it("states scenario code errors alone under Scenario code errors, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
     expect(before).toBe(RUN_PROVENANCE);
-    expect(after).toBe(SUMMARY_VIEWS);
+    expect(after).toBe(SUMMARY);
     expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS]);
     expect(body.filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
-  it("states configuration faults alone under Configuration not read, right after the run provenance and before the summary views", () => {
+  it("states configuration faults alone under Configuration not read, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ configuration: KEY_NOT_READ }));
     expect(before).toBe(RUN_PROVENANCE);
-    expect(after).toBe(SUMMARY_VIEWS);
+    expect(after).toBe(SUMMARY);
     expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ]);
     expect(body.filter(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: "`specController.zzz`" })))).toHaveLength(1);
   });

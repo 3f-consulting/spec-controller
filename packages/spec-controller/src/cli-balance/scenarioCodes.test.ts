@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { claimReconciliationsOf } from "../../../../tests/steps/support/reportClaimReconciliations.js";
 
 // A whole balance run takes longer than Vitest's default limit.
 const wholeRun = { timeout: 30_000 };
@@ -38,7 +39,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
 
   function ownRowOf(dir: string): unknown {
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
-    const rows = JSON.parse(stdout).ledger.claimReconciliations as { claim: string }[];
+    const rows = claimReconciliationsOf<{ claim: string }>(JSON.parse(stdout));
     return rows.find((r) => r.claim === "SCN-DUP-002");
   }
 
@@ -52,7 +53,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
       "--format", "json",
     ]);
     const report = JSON.parse(stdout);
-    const rows = report.ledger.claimReconciliations as { claim: string; verdict: string }[];
+    const rows = claimReconciliationsOf<{ claim: string; verdict: string }>(report);
     expect(rows.filter((r) => r.claim === "SCN-DUP-001")).toHaveLength(2);
     expect(rows.find((r) => r.claim === "SCN-DUP-002")?.verdict).toBe("balanced");
     expect(exitCode).toBe(1);
@@ -120,7 +121,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
 
   it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", wholeRun, () => {
     const report = JSON.parse(balance(target("@SCN-TWO-002 @SCN-TWO-003"), "json").stdout);
-    const rows = report.ledger.claimReconciliations as Row[];
+    const rows = claimReconciliationsOf<Row>(report);
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["SCN-TWO-001"]);
     expect(rows.find((r) => r.claim === "SCN-TWO-002")?.kind).toBe("phantom-claim");
     expect(rows.find((r) => r.claim === "SCN-TWO-003")).toBeUndefined();
@@ -153,7 +154,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
   it("reconciles a scenario with one code as today, listing no scenario code error", wholeRun, () => {
     const json = balance(target("@SCN-TWO-002"), "json");
     const report = JSON.parse(json.stdout);
-    const row = (report.ledger.claimReconciliations as Row[]).find((r) => r.claim === "SCN-TWO-002");
+    const row = claimReconciliationsOf<Row>(report).find((r) => r.claim === "SCN-TWO-002");
     expect(row).toMatchObject({ kind: "scenario", verdict: "balanced" });
     expect(report.errors).toBeUndefined();
     expect(json.exitCode).toBe(0);

@@ -5,7 +5,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
   Its top-level keys, in document order, are runProvenance, then errors when the inputs hold a
-  fault, then scenarioCodes, summary and ledger. There is no
+  fault, then scenarioCodes, summary and claimReconciliations. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
   beside spec-reconciliation.md, and the markdown renderer reads the same assembled model, so
@@ -14,10 +14,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Rule: the reconciliation publishes as one glue-free whole-document report model
 
     The foundation. One report model, assembled from the reconciliation and the facts of the
-    run, is serialised glue-free as spec-reconciliation.json. The report opens with
-    runProvenance (the run facts), then the faults in its inputs and the corpus's own facts,
-    then the materialised summary (the totals the markdown's trial-balance table shows), then
-    the ledger. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
+    run, is serialised glue-free as spec-reconciliation.json. Its summary is materialised: the
+    totals the markdown's trial-balance table shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
     the ledger. Each fact is stated once: a fault in the inputs only under errors, a fact of the
     corpus only under scenarioCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
@@ -41,20 +39,15 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the ledger is the detail beside the summary's totals
 
-    The document IS the Evidence Reconciliation, so a root
-    key named for the Evidence Reconciliation would be the layer naming itself inside itself — and the grid
-    it names is the LEDGER. Root then reads as chain step 6 literally: "The summary
-    has the totals and the ledger the detail."
-
-    The key is not `scenarios` — a phantom claim or the unnamed claim is not a scenario — and it is `ledger`.
-
-    Code identifiers and JSON keys are ONE vocabulary, so the model's
-    `interface Ledger { claimReconciliations }` and the JSON `"ledger": { "claimReconciliations":
-    [...] }` agree as objects — a Ledger that holds entries cannot serialise as a bare array
-    of rows.
+    The document is the Evidence Reconciliation, and its detail is the Ledger, the Claim
+    Reconciliations: the summary has the totals and the Claim Reconciliations the detail. They
+    are not called scenarios, because a phantom claim or the unnamed claim is not a scenario.
 
     @unit @SCN-RMD-002
-    Scenario: the ledger serialises under the top-level key ledger, beside summary, each Claim Reconciliation carrying its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else
+    Scenario: the Claim Reconciliations sit at the report's top level beside the Summary
+
+    @unit @SCN-RMD-030
+    Scenario: each Claim Reconciliation carries its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else
 
   Rule: a Claim Reconciliation carries each of its entries once, inside its Quality Check Reconciliations, named by the claim it reconciles
 
@@ -135,7 +128,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The evidence coordinate is ONE flat kind of quality check ∈ {fitness, unit, integration, e2e,
     performance}: fitness is one kind of quality check, not a second axis. So each sub-row of
-    ledger.claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheckKind alone,
+    claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheckKind alone,
     and the summary's missing split, missingByQualityCheckKind under the reconciliationLines
     of the summary's evidence reconciliation, counts the missing Reconciliation lines by the same flat
     kind of quality check: an obligation answered only by a broken observation is one missing line

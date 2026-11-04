@@ -6,6 +6,7 @@ import { constants } from "node:os";
 import path, { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { Provenance, Room, RoomCommand, SpecControllerWorld } from "./support/world.js";
 
@@ -401,7 +402,6 @@ Then(
     );
     const parsed = JSON.parse(this.jsonText) as {
       runProvenance?: { inputs?: Record<string, string> };
-      ledger?: { claimReconciliations: Array<{ claim: string; kind?: string; qualityCheckReconciliations: Array<{ outcome?: string; evidenceObservations?: Array<{ outcome: string; locator?: string }> }> }> };
     };
     assert.equal(
       parsed.runProvenance?.inputs?.features,
@@ -413,7 +413,7 @@ Then(
       "vitest.json",
       `expected runProvenance.inputs.vitest "vitest.json" (relative to the target root); got ${JSON.stringify(parsed.runProvenance?.inputs)}`
     );
-    const unnamedClaimRow = (parsed.ledger?.claimReconciliations ?? []).find((s) => s.kind === "unnamed-claim");
+    const unnamedClaimRow = claimReconciliationsOf<{ claim: string; kind?: string; qualityCheckReconciliations: Array<{ outcome?: string; evidenceObservations?: Array<{ outcome: string; locator?: string }> }> }>(parsed).find((s) => s.kind === "unnamed-claim");
     assert.ok(unnamedClaimRow, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${this.jsonText}`);
     const locators = unnamedClaimRow!.qualityCheckReconciliations
       .flatMap((o) => o.evidenceObservations ?? [])

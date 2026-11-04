@@ -123,10 +123,8 @@ type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[],
 const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
 
 const runIntegritySection: SectionEmitter = (report) => {
-  if (!hasBrokenEvidence({ claimReconciliations: report.ledger.claimReconciliations })) return [];
-  const brokenObservations = brokenItemsOf({
-    claimReconciliations: report.ledger.claimReconciliations,
-  }).flatMap((line) => line.evidenceObservation ?? []);
+  if (!hasBrokenEvidence(report)) return [];
+  const brokenObservations = brokenItemsOf(report).flatMap((line) => line.evidenceObservation ?? []);
   const count = brokenObservations.length;
   const proofs =
     count === 1
@@ -148,7 +146,7 @@ const runIntegritySection: SectionEmitter = (report) => {
   return lines;
 };
 
-const summaryViewsSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.SummaryViewsHeading], ""];
+const summarySection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.SummaryHeading], ""];
 
 const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
   CORE_MESSAGES[CoreMessage.SubjectColumn],
@@ -209,7 +207,7 @@ function pendingTally(pending: number): string[] {
 }
 
 const byFeatureSection: SectionEmitter = (report) => {
-  const rows = report.ledger.claimReconciliations;
+  const rows = report.claimReconciliations;
   const scenarios = rows.filter(isScenario);
   const groups = report.summary.outOfBalanceByFeature ?? [];
   const ungrouped = ungroupedOutOfBalance(report.summary.evidenceReconciliation.claimReconciliations);
@@ -259,11 +257,9 @@ function ungroupedTail(ungrouped: readonly string[]): string {
 }
 
 const ledgerSection: SectionEmitter = (report) => {
-  const scenarioRows = report.ledger.claimReconciliations.filter(
-    isScenario
-  );
-  const phantomClaimRows = report.ledger.claimReconciliations.filter(isPhantomClaim);
-  const unnamedClaimRows = report.ledger.claimReconciliations.filter(isUnnamedClaim);
+  const scenarioRows = report.claimReconciliations.filter(isScenario);
+  const phantomClaimRows = report.claimReconciliations.filter(isPhantomClaim);
+  const unnamedClaimRows = report.claimReconciliations.filter(isUnnamedClaim);
   const claims = [...scenarioRows, ...phantomClaimRows, ...unnamedClaimRows];
   const columns = report.summary.evidenceObservations !== undefined ? evidenceColumns(claims) : [];
   return [
@@ -345,7 +341,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   provenanceSection,
   errorsInTheInputsSection,
   runIntegritySection,
-  summaryViewsSection,
+  summarySection,
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   scenarioCodesCleanStatement,
   evidenceReconciliationSection,
