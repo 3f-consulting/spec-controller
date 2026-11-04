@@ -172,7 +172,7 @@ export function behaviouralObservationTally(ledger: Ledger): BehaviouralObservat
     }
   }
 
-  const total = LAYERS.reduce((n, qc) => n + rawByLayer[qc], 0);
+  const total = LAYERS.reduce((n, layer) => n + rawByLayer[layer], 0);
 
   return { rawByLayer, total, onScenario, onPhantomClaim, onUnnamedClaim };
 }

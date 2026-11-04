@@ -13,9 +13,9 @@ Feature: The fitness functions this repository carries, one scenario per check
   it ran and what each one did. Each scenario raises its fitness evidence obligation from its
   `@fitness` tag, and that record answers it.
 
-  The tag names the axis and the title names the check. A scenario here carries no other tag about
-  its subject: its title says what the check asserts, its `@SCN` is its identity, and its CI step
-  runs the command that settles it. A fitness function is known by its tag, never its shape. The
+  The tag names the scenario's kind of quality check and the title names the check. A scenario
+  here carries no other tag about its subject: its title says what the check asserts, its `@SCN`
+  is its identity, and its CI step runs the command that settles it. A fitness function is known by its tag, never its shape. The
   Cucumber profile selects `@integration or @e2e`, so it selects none of these scenarios. Any
   scenario that profile does not select, a `@unit`-only one included, carries no Given, When or
   Then and no step definition. The title is the specification. The evidence is the check's own

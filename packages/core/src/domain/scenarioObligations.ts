@@ -19,10 +19,10 @@ const TAG_TO_LAYER: Record<string, Layer> = {
   performance: "performance",
 };
 
-export const FITNESS_AXIS_TAG = "fitness";
+const FITNESS_TAG = "fitness";
 
 function convertedFitnessObligationsOf(tags: readonly string[]): EvidenceObligation[] {
-  if (!tags.includes(FITNESS_AXIS_TAG)) return [];
+  if (!tags.includes(FITNESS_TAG)) return [];
   return [{ qualityCheckKind: "fitness" }];
 }
 
@@ -34,10 +34,10 @@ export function obligationsRaisedBy(
   const seenLayers = new Set<Layer>();
   const seenPending = new Set<QualityCheckKind>();
   for (const t of tags) {
-    const pendingCheck = pendingQualityCheckKind(t);
-    if (pendingCheck && !seenPending.has(pendingCheck)) {
-      seenPending.add(pendingCheck);
-      evidenceObligations.push({ qualityCheckKind: pendingCheck, pending: true });
+    const pendingKind = pendingQualityCheckKind(t);
+    if (pendingKind && !seenPending.has(pendingKind)) {
+      seenPending.add(pendingKind);
+      evidenceObligations.push({ qualityCheckKind: pendingKind, pending: true });
       continue;
     }
     const layer = TAG_TO_LAYER[t];

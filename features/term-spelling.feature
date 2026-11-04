@@ -18,7 +18,7 @@ Feature: Term spelling — a term names the same pair however its author spelled
   laxest form by every copy. NOTHING MECHANICAL
   HOLDS THE COUNT AT ONE, AND IT IS SAID HERE RATHER THAN LEFT TO BE FOUND. No scan over this
   repository's own source is part of this Rule's evidence: its subject would be our tree rather
-  than the product, so a target adopting this axis would inherit no such scan. A second
+  than the product, so a target adopting this Rule would inherit no such scan. A second
   hand-copy is one paste away and review is the whole of what
   catches it: an accepted residual, not an oversight.
 

@@ -89,7 +89,7 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
 const SEVERED_SCRIPT = "lint:severed-check";
 
 describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
-  it("answers each obligation from an evidence observation of its own axis — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the watermelon — and never one from the other", () => {
+  it("answers each obligation from an evidence observation of its own kind of quality check — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the watermelon — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);
 

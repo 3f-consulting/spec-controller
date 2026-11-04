@@ -504,7 +504,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 
 You write two artefacts and no third, and neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step to write.
 
-**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its axis, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
+**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its kind of quality check, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
 
 ```gherkin
   @fitness @SCN-<FFF>-<NNN>
