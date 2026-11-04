@@ -675,7 +675,7 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
   "holding a section of the wrong kind": [
     [(saved) => ({ ...saved, errors: { scenarioCodes: "x" } }), notSaved(wrongKind("errors.scenarioCodes", kindOf("string"), LIST))],
   ],
-  "unreadable below its top": [[(saved) => withClaimReconciliations(saved, [null]), ["not-renderable-as-saved", {}]]],
+  "unreadable below its top": [[(saved) => withClaimReconciliations(saved, [{}]), ["not-renderable-as-saved", {}]]],
   "a reconciliation that does not name its corpus": [
     [(saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }), notSaved(missing("runProvenance.corpus"))],
   ],

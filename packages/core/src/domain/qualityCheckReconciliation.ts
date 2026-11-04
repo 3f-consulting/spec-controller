@@ -18,10 +18,16 @@ declare const qualityCheckReconciliationBrand: unique symbol;
 
 export type ReconciledEvidenceObservation = EvidenceObservation & { readonly outcome: Outcome };
 
+/** The evidence obligation a Quality Check Reconciliation holds: an obligation that states no kind of quality check holds null. */
+export interface ReconciledEvidenceObligation {
+  readonly qualityCheckKind: QualityCheckKind | null;
+  readonly pending?: boolean;
+}
+
 interface QualityCheckReconciliationFields {
   readonly qualityCheckKind?: QualityCheckKind;
   readonly outcome?: Outcome;
-  readonly evidenceObligation?: EvidenceObligation;
+  readonly evidenceObligation?: ReconciledEvidenceObligation;
   readonly evidenceObservations?: readonly ReconciledEvidenceObservation[];
   readonly scenario?: ScenarioName;
 }
@@ -172,7 +178,7 @@ export function reconcileEvidenceObligation(
   return makeQualityCheckReconciliation({
     qualityCheckKind: obligation.qualityCheckKind,
     ...(answered ? {} : { outcome: "missing" as const }),
-    evidenceObligation: obligation,
+    evidenceObligation: { ...obligation, qualityCheckKind: obligation.qualityCheckKind ?? null },
     ...observationsField(linesFor(citing, "evidence-obligation")),
   });
 }
@@ -222,7 +228,7 @@ export function unnamedClaimReconciliationsOf(
 }
 
 export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
-  return [makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: {} })];
+  return [makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: { qualityCheckKind: null } })];
 }
 
 export function duplicateScnCodeReconciliationsOf(
@@ -237,10 +243,15 @@ export function duplicateScnCodeReconciliationsOf(
     }
   }
   if (firstNaming.size === 0) {
-    return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: {}, ...naming })];
+    return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: null }, ...naming })];
   }
   return [...firstNaming].map(([qualityCheckKind, evidenceObligation]) =>
-    makeQualityCheckReconciliation({ qualityCheckKind, outcome: "duplicate-scn-code", evidenceObligation, ...naming })
+    makeQualityCheckReconciliation({
+      qualityCheckKind,
+      outcome: "duplicate-scn-code",
+      evidenceObligation: { ...evidenceObligation, qualityCheckKind },
+      ...naming,
+    })
   );
 }
 

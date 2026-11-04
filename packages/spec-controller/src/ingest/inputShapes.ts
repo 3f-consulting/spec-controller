@@ -95,7 +95,15 @@ export const SAVED_RECONCILIATION: Shape = {
       },
       required: ["evidenceReconciliation", "evidenceObservations"],
     },
-    claimReconciliations: { list: "anything" },
+    claimReconciliations: {
+      list: {
+        fields: {
+          qualityCheckReconciliations: {
+            list: { fields: { evidenceObligation: { fields: { qualityCheckKind: "anything" }, required: ["qualityCheckKind"] } } },
+          },
+        },
+      },
+    },
     errors: {
       fields: {
         scenarioCodes: { list: "anything" },

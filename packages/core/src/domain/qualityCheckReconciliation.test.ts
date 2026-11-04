@@ -6,7 +6,7 @@ import {
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
 } from "./qualityCheckReconciliation.js";
-import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, SidePresence } from "./qualityCheckReconciliation.js";
+import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObligation, ReconciledEvidenceObservation, SidePresence } from "./qualityCheckReconciliation.js";
 import { linesOf, type ReconciliationLine } from "./claimReconciliation.js";
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
 import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
@@ -75,7 +75,7 @@ function flipped(presence: SidePresence): SidePresence {
 
 type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 
-const sampleObligation: EvidenceObligation = { qualityCheckKind: "unit" };
+const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
 
 function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
   return { qualityCheckKind: "unit", scnId: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };

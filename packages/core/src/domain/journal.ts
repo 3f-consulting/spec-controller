@@ -62,9 +62,9 @@ export function evidenceObligationPairKey(
   return `${scnId} ${qualityCheckKind}`;
 }
 
-export function evidenceObligationsOf(
-  evidenceObligations: readonly EvidenceObligation[]
-): EvidenceObligation[] {
+export function evidenceObligationsOf<T extends { readonly pending?: boolean }>(
+  evidenceObligations: readonly T[]
+): T[] {
   return evidenceObligations.filter((obligation) => !obligation.pending);
 }
 

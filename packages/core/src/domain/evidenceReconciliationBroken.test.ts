@@ -8,7 +8,7 @@ import type {
 
 describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope obligation and no observation", () => {
 
-  it("the untagged scenario's one reconciliation is the no-scn-code outcome and its scenario-scope obligation {}, with no observation list, and the row's obligation census stays empty", () => {
+  it("the untagged scenario's one reconciliation is the no-scn-code outcome and its scenario-scope obligation, whose kind of quality check is null, with no observation list, and the row's obligation census stays empty", () => {
     const namedScenarios: Scenario[] = [
       { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
@@ -21,7 +21,7 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
       (r) => r.claim === "beta must never lose the money",
     );
     expect(row?.qualityCheckReconciliations).toStrictEqual([
-      { outcome: "no-scn-code", evidenceObligation: {} },
+      { outcome: "no-scn-code", evidenceObligation: { qualityCheckKind: null } },
     ]);
     expect(obligationsOf(row!)).toEqual([]);
   });

@@ -64,6 +64,10 @@ describe("[SCN-STG-013] two scenarios in one file sharing an @SCN are two claims
       ["duplicate-scn-code"],
       ["duplicate-scn-code"],
     ]);
+    expect(accounts.map((account) => account.qualityCheckReconciliations.map((q) => q.evidenceObligation))).toEqual([
+      [{ qualityCheckKind: null }],
+      [{ qualityCheckKind: null }],
+    ]);
     expect(accounts.map((account) => account.verdict)).toEqual(["out-of-balance", "out-of-balance"]);
   });
 });

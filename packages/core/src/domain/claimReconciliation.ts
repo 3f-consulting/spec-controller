@@ -1,11 +1,16 @@
 import type {
-  EvidenceObligation,
   PendingItem,
   QualityCheckKind,
 } from "./journal.js";
 import { QUALITY_CHECK_KINDS, evidenceObligationsOf, isFitnessObservation } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
-import type { Outcome, QualityCheckReconciliation, ReconciledEvidenceObservation, ScenarioName } from "./qualityCheckReconciliation.js";
+import type {
+  Outcome,
+  QualityCheckReconciliation,
+  ReconciledEvidenceObligation,
+  ReconciledEvidenceObservation,
+  ScenarioName,
+} from "./qualityCheckReconciliation.js";
 import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
 
 export type Verdict = "balanced" | "out-of-balance";
@@ -26,7 +31,7 @@ export interface ClaimReconciliation {
 export interface ReconciliationLine {
   readonly qualityCheckKind?: QualityCheckKind;
   readonly outcome: Outcome;
-  readonly evidenceObligation?: EvidenceObligation;
+  readonly evidenceObligation?: ReconciledEvidenceObligation;
   readonly evidenceObservation?: ReconciledEvidenceObservation;
   readonly scenario?: ScenarioName;
 }
@@ -81,9 +86,9 @@ export function observationsOf(row: ClaimReconciliation): readonly ReconciledEvi
 }
 
 /** A row's evidence obligations at a quality check, read from its Quality Check Reconciliations: a scenario-scope obligation names none. */
-export function obligationsOf(row: ClaimReconciliation): readonly EvidenceObligation[] {
+export function obligationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObligation[] {
   return row.qualityCheckReconciliations.flatMap(({ evidenceObligation }) =>
-    evidenceObligation?.qualityCheckKind === undefined ? [] : [evidenceObligation]
+    evidenceObligation?.qualityCheckKind == null ? [] : [evidenceObligation]
   );
 }
 
