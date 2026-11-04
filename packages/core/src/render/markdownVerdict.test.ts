@@ -76,7 +76,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   const summaryOpening = (md: string): string =>
-    md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]), md.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]));
+    md.slice(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]), md.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]));
 
   const balancedScenario: Scenario = {
     scnId: "SCN-VRD-001",

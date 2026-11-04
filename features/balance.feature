@@ -112,7 +112,7 @@ Feature: spec-controller balance runs standalone
     Scenario: the tally, the verdict headline and the process exit code name the same outcome
       Given a target whose only out-of-balance row is the unnamed claim's reconciliation
       When balance is asked to reconcile that target
-      Then the trial-balance table counts 1 out-of-balance Claim Reconciliation
+      Then the Reconciliation totals table counts 1 out-of-balance Claim Reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with
       And the run ends on the out-of-balance verdict
       And the tally, the verdict headline and the run's exit agree

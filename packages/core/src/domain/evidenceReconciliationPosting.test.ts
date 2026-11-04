@@ -6,6 +6,7 @@ import { brokenReconciliationsOf } from "./qualityCheckReconciliation.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced, brokenItemsOf } from "./ledger.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
+import { reconciliationTotalsOf } from "../assemble/reportReconciliationTotals.test-utils.js";
 import type { RunContext } from "./runProvenance.js";
 import type {
   Scenario,
@@ -240,7 +241,7 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
     expect(accountFor(ledger, "(unnamed claim)")).toBeUndefined();
     expect(isBalanced(ledger)).toBe(true);
-    expect(assembleRenderInput(__er(ledger), ctx).summary.evidenceReconciliation.claimReconciliations.outOfBalance).toBe(0);
+    expect(reconciliationTotalsOf(assembleRenderInput(__er(ledger), ctx)).claimReconciliations.outOfBalance).toBe(0);
   });
 });
 

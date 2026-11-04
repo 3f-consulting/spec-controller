@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { assembleSavedReport, type SavedReport } from "./savedReport.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
+import { RECONCILIATION_TOTALS_KEY } from "./reportReconciliationTotals.test-utils.js";
 
 type Summary = Record<string, unknown>;
 
@@ -23,7 +24,7 @@ describe("[SCN-RMD-029] the JSON report's summary states the run verdict first, 
 
     expect(Object.keys(report.summary).filter((key) => key !== "scenarioCodes")).toEqual([
       "runVerdict",
-      "evidenceReconciliation",
+      RECONCILIATION_TOTALS_KEY,
       "evidenceObservations",
       "stepAccounting",
       "outOfBalanceByFeature",

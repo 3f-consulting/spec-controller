@@ -13,6 +13,7 @@ import {
   withClaimReconciliations,
   withoutClaimReconciliations,
 } from "./support/reportClaimReconciliations.js";
+import { RECONCILIATION_TOTALS_PATH, reconciliationTotalsSection, withReconciliationTotalsUnderEarlierKey } from "./support/reportReconciliationTotals.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { ArrangedTarget, ExpectedEntry, ReportedRun, SpecControllerWorld } from "./support/world.js";
 
@@ -683,10 +684,11 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
     [
       (saved) => ({
         ...saved,
-        summary: { ...(saved["summary"] as object), evidenceReconciliation: undefined, evidenceObservations: undefined },
+        summary: { ...(saved["summary"] as object), ...reconciliationTotalsSection(undefined), evidenceObservations: undefined },
       }),
-      notSaved(missing("summary.evidenceReconciliation")),
+      notSaved(missing(RECONCILIATION_TOTALS_PATH)),
     ],
+    [(saved) => withReconciliationTotalsUnderEarlierKey(saved as { summary: object }), notSaved(missing(RECONCILIATION_TOTALS_PATH))],
     [
       (saved) => ({ ...withoutClaimReconciliations(saved), ledger: claimReconciliationsSection(claimReconciliationsOf(saved)) }),
       notSaved(missing(CLAIM_RECONCILIATIONS_SECTION)),

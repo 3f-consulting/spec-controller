@@ -7,9 +7,9 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 
-describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
-  const evidenceReconciliationSection = (md: string): string => {
-    const heading = CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading];
+describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
+  const reconciliationTotalsSection = (md: string): string => {
+    const heading = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
     const i = md.indexOf(heading);
     expect(i, `expected the section ${heading}`).toBeGreaterThanOrEqual(0);
     const rest = md.slice(i + 1);
@@ -34,9 +34,9 @@ describe("[SCN-RPT-042] the markdown Summary tallies Pending Items separately fr
     );
   });
 
-  it("renders the Pending Items tally (3) in the Evidence reconciliation view, on a line that opens with its count", () => {
+  it("renders the Pending Items tally (3) in the Reconciliation totals section, on a line that opens with its count", () => {
     const md = renderMarkdown(__er(pendingBalance), ctx, publishedExitCodeOf);
-    const section = evidenceReconciliationSection(md);
+    const section = reconciliationTotalsSection(md);
     expect(section).toMatch(/^3 Pending Item\(s\) — deferred, tallied apart from balanced and out-of-balance\.$/m);
   });
 });

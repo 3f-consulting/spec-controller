@@ -146,7 +146,7 @@ function verdictHeadline(stdout: string): { word: string; exit: number } {
   return { word: String(headline[1]), exit: Number(headline[2]) };
 }
 
-Then("the trial-balance table counts {int} out-of-balance Claim Reconciliation", function (this: SpecControllerWorld, count: number) {
+Then("the Reconciliation totals table counts {int} out-of-balance Claim Reconciliation", function (this: SpecControllerWorld, count: number) {
   assert.equal(
     tallyOutOfBalance(this.balanceResult.stdout),
     count,

@@ -16,7 +16,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The foundation. One report model, assembled from the reconciliation and the facts of the
     run, is serialised glue-free as spec-reconciliation.json. Its summary is materialised: the
-    totals the markdown's trial-balance table shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
+    totals the markdown's Summary shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
     the ledger. Each fact is stated once: a fault in the inputs only under errors, a fact of the
     corpus only under scenarioCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
@@ -60,10 +60,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @SCN-RMD-020
     Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's @SCN, a phantom claim's cited code, the unnamed claim, and a scenario with no @SCN by its feature and title
 
-  Rule: the summary states its evidence reconciliation, and its evidence observations over every kind of quality check
+  Rule: the summary states its reconciliation totals, and its evidence observations over every kind of quality check
 
     The numbers the markdown prints are model data, not renderer arithmetic. The summary states
-    the evidence reconciliation as one section: the Claim Reconciliations counted by verdict and
+    its reconciliation totals as one section: the Claim Reconciliations counted by verdict and
     by kind of claim, the Quality Check Reconciliations counted by outcome with the missing ones
     by kind of quality check, and the pending items counted. No fitness-only tally stands beside it: the
     fitness Quality Check Reconciliations are counted there with the rest. The summary states
@@ -82,7 +82,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     file in isolation.
 
     @unit @SCN-RMD-005
-    Scenario: the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted
+    Scenario: the summary states its reconciliation totals: its Claim Reconciliations, Reconciliation lines and pending items counted
 
     @unit @SCN-RMD-003
     Scenario: the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum
@@ -131,7 +131,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     performance}: fitness is one kind of quality check, not a second axis. So each sub-row of
     claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheckKind alone,
     and the summary's missing split, missingByQualityCheckKind under the reconciliationLines
-    of the summary's evidence reconciliation, counts the missing Reconciliation lines by the same flat
+    of the summary's reconciliation totals, counts the missing Reconciliation lines by the same flat
     kind of quality check: an obligation answered only by a broken observation is one missing line
     beside the broken one, so it counts once. One reconcile function
     serves every kind of quality check, and the fitness value is what tells a watermelon apart. The

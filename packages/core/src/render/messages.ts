@@ -66,11 +66,11 @@ export enum CoreMessage {
   NothingToReconcileHeadline,
   NothingToReconcileGloss,
   PendingItemsOutstanding,
-  EvidenceReconciliationHeading,
-  EvidenceReconciliationClaimReconciliationTerm,
-  EvidenceReconciliationReconciliationLineTerm,
-  EvidenceReconciliationEvidenceObligationTerm,
-  EvidenceReconciliationEvidenceObservationTerm,
+  ReconciliationTotalsHeading,
+  ReconciliationTotalsClaimReconciliationTerm,
+  ReconciliationTotalsReconciliationLineTerm,
+  ReconciliationTotalsEvidenceObligationTerm,
+  ReconciliationTotalsEvidenceObservationTerm,
   SubjectColumn,
   TotalColumn,
   BalancedColumn,
@@ -369,28 +369,28 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.PendingItemsOutstanding]:
     "Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
     "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
-  [CoreMessage.EvidenceReconciliationHeading]: "### Evidence reconciliation",
-  [CoreMessage.EvidenceReconciliationClaimReconciliationTerm]:
+  [CoreMessage.ReconciliationTotalsHeading]: "### Reconciliation totals",
+  [CoreMessage.ReconciliationTotalsClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: one claim, reconciled in its Quality Check Reconciliations. " +
     "A Quality Check Reconciliation reconciles the evidence of one kind of quality check within the claim: " +
     "the claim's Evidence Obligation of that kind, when it has one, against its Evidence Observations of that kind. " +
     "A claim is a scenario, a phantom claim (a code that evidence cites and no scenario carries, which the table below calls an unknown Scenario) " +
     "or the unnamed claim (the one row for the evidence that no scenario or phantom claim takes).",
-  [CoreMessage.EvidenceReconciliationReconciliationLineTerm]:
+  [CoreMessage.ReconciliationTotalsReconciliationLineTerm]:
     "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome: each Evidence Observation it holds is one line, " +
     "and its Evidence Obligation is one more when no Evidence Observation that ran answers it. " +
     "A scenario with no Evidence Obligation, no Pending Item and no Evidence Observation still has one Quality Check Reconciliation, " +
     "holding neither, and it is a single line. " +
     "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
     "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
-  [CoreMessage.EvidenceReconciliationEvidenceObligationTerm]:
+  [CoreMessage.ReconciliationTotalsEvidenceObligationTerm]:
     "An Evidence Obligation is the evidence a scenario asks for, by the tags it carries, to be met by Evidence Observations. " +
     "A pending tag such as `@unitpending` defers the evidence of its kind of quality check, and a deferral tag such as `@wip` " +
     "defers all of the scenario's: what a tag defers raises no Evidence Obligation and is a Pending Item instead, " +
     "tallied after the table, apart from balanced and out-of-balance, when there is one. " +
     "On a scenario that shares its `@SCN` code with another, no tag defers anything: " +
     `it reads "${DUPLICATE_SCN_CODE}" at each kind of quality check it raises, or once when it raises none.`,
-  [CoreMessage.EvidenceReconciliationEvidenceObservationTerm]:
+  [CoreMessage.ReconciliationTotalsEvidenceObservationTerm]:
     "An Evidence Observation is one reported result of a test or a fitness function, attributed by the codes it cites: " +
     "to the one scenario that carries its one code, to a phantom claim when no scenario carries its one code, " +
     "and otherwise to the unnamed claim, because no one scenario can take it. " +

@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { claimReconciliationsOf, type ClaimReconciliationsSection } from "./support/reportClaimReconciliations.js";
+import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { FitnessTarget, SpecControllerWorld } from "./support/world.js";
 
@@ -15,9 +16,7 @@ type JsonRow = {
   readonly kind: string;
   readonly qualityCheckReconciliations: readonly (OutcomeCarrier & { readonly evidenceObservations?: readonly OutcomeCarrier[] })[];
 };
-type JsonReport = ClaimReconciliationsSection<JsonRow> & {
-  readonly summary: { readonly evidenceReconciliation: { readonly reconciliationLines: { readonly byOutcome: Readonly<Record<string, number>> } } };
-};
+type JsonReport = ClaimReconciliationsSection<JsonRow>;
 
 const LINT_CHECKS_TARGET: FitnessTarget = {
   features: "tests/fixtures/two-lint-checks-one-cited/features",
@@ -204,7 +203,7 @@ Then(
       `expected SCN-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
     );
     const report = JSON.parse(this.jsonText) as JsonReport;
-    const watermelons = report.summary.evidenceReconciliation.reconciliationLines.byOutcome.watermelon;
+    const watermelons = reconciliationTotalsOf(report).reconciliationLines.byOutcome["watermelon"];
     assert.equal(
       watermelons,
       0,

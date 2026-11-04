@@ -72,9 +72,9 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     );
   });
 
-  it("renders a '### Evidence reconciliation' table with subjects as rows and balanced / out-of-balance as columns", () => {
+  it("renders a '### Reconciliation totals' table with subjects as rows and balanced / out-of-balance as columns", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]);
+    expect(md.split("\n")).toContain("### Reconciliation totals");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
     expect(md).toContain(`| ${SUBJECT} | 3 | 0 | 3 |`);
@@ -125,7 +125,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     );
   });
 
-  it("counts the unnamed claim's reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
+  it("counts the unnamed claim's reconciliation in the Reconciliation totals' out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx, publishedExitCodeOf);
     expect(md).toContain(`| ${SUBJECT} | 4 | 3 | 1 |`);
     expect(md).not.toContain(`| ${SUBJECT} | 3 | 3 | 0 |`);

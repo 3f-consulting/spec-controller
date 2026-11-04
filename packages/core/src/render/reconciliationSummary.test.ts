@@ -20,7 +20,7 @@ const ctx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-const SETTLED = `Feature: the evidence reconciliation summary
+const SETTLED = `Feature: the reconciliation totals
 
   @unit @SCN-ERS-001
   Scenario: proved
@@ -58,7 +58,7 @@ function render(feature: string, observations: EvidenceObservation[] = OBSERVATI
 
 function sectionLines(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]);
+  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
   expect(start).toBeGreaterThanOrEqual(0);
   const end = lines.findIndex((line, i) => i > start && line.startsWith("#"));
   expect(end).toBeGreaterThan(start);
@@ -89,12 +89,12 @@ function expectedTable(
 ): string[] {
   const outOfBalance = Object.values(leafCounts).reduce((a, b) => a + b, 0);
   return [
-    CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
+    CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading],
     "",
-    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationClaimReconciliationTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationReconciliationLineTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObligationTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObservationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsClaimReconciliationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsReconciliationLineTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObligationTerm]}`,
+    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObservationTerm]}`,
     "",
     row([
       CORE_MESSAGES[CoreMessage.SubjectColumn],
@@ -130,21 +130,7 @@ function expectedTable(
   ];
 }
 
-describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance", () => {
-  let settledTable: string[];
-  beforeEach(() => {
-    settledTable = expectedTable(
-      { total: 4, balanced: 1, outOfBalance: 3 },
-      { total: 5, satisfied: 2 },
-      { missing: 2, failing: 1 },
-      "1 unit + 1 integration"
-    );
-  });
-
-  it("with no Pending Item: the table, then one blank line, and no tally line", () => {
-    expect(sectionLines(render(SETTLED))).toEqual([...settledTable, ""]);
-  });
-
+describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
   it("with one Pending Item: a blank line, the tally carrying 1 on its own line, then a blank line; the counts are those of the settled layers", () => {
     expect(sectionLines(render(SETTLED + ONE_DEFERRED, [...OBSERVATIONS, ...DEFERRED_OBSERVATIONS]))).toEqual([
       ...expectedTable(
@@ -157,5 +143,21 @@ describe("[SCN-RPT-042] the Evidence Reconciliation Summary tallies Pending Item
       CORE_MESSAGES[CoreMessage.PendingTally](1),
       "",
     ]);
+  });
+});
+
+describe("[SCN-RPT-097] the Reconciliation totals section shows no Pending Items tally line when there are none", () => {
+  let settledTable: string[];
+  beforeEach(() => {
+    settledTable = expectedTable(
+      { total: 4, balanced: 1, outOfBalance: 3 },
+      { total: 5, satisfied: 2 },
+      { missing: 2, failing: 1 },
+      "1 unit + 1 integration"
+    );
+  });
+
+  it("with no Pending Item: the table, then one blank line, and no tally line", () => {
+    expect(sectionLines(render(SETTLED))).toEqual([...settledTable, ""]);
   });
 });

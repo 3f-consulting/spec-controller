@@ -7,15 +7,15 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
 const TERMS = [
-  `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationClaimReconciliationTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationReconciliationLineTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObligationTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.EvidenceReconciliationEvidenceObservationTerm]}`,
+  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsClaimReconciliationTerm]}`,
+  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsReconciliationLineTerm]}`,
+  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObligationTerm]}`,
+  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObservationTerm]}`,
 ];
 
 function linesBeforeTable(md: string): string[] {
   const lines = md.split("\n");
-  const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading]);
+  const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
   const header = lines.findIndex((line, i) => i > heading && line.startsWith("| Subject |"));
   return lines.slice(heading + 1, header);
 }
@@ -25,7 +25,7 @@ function totalOf(md: string, subject: string): number {
   return Number(row?.split("|")[2]?.trim());
 }
 
-describe("[SCN-RPT-071] the evidence reconciliation section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table", () => {
+describe("[SCN-RPT-071] the Reconciliation totals section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table", () => {
   it("prints the four definitions as a list between the heading and the table, the same on a one-scenario ledger and on one holding a phantom claim and the unnamed claim, with no count and nothing bold", () => {
     const small = reconcile(
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],

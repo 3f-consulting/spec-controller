@@ -6,6 +6,7 @@ import { basename, join } from "node:path";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
+import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
 import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import { scenarioName } from "./support/scenarioName.js";
@@ -144,8 +145,8 @@ Given("a target with no Gherkin corpus whose unit evidence cites no scenario", f
 });
 
 Then("the uncited evidence observations are posted to the unnamed claim's reconciliation", function (this: SpecControllerWorld) {
-  const { summary } = JSON.parse(readFileSync(this.uncitedJsonPath, "utf8"));
-  const { evidenceObservations } = summary;
+  const report = JSON.parse(readFileSync(this.uncitedJsonPath, "utf8"));
+  const { evidenceObservations } = report.summary;
   assert.deepEqual(
     [
       evidenceObservations.total,
@@ -156,7 +157,7 @@ Then("the uncited evidence observations are posted to the unnamed claim's reconc
     [2, 0, 0, 2],
     `expected both uncited evidence observations on the unnamed claim and none anywhere else; got: ${JSON.stringify(evidenceObservations)}`,
   );
-  const { reconciliationLines } = summary.evidenceReconciliation;
+  const { reconciliationLines } = reconciliationTotalsOf(report);
   assert.equal(
     reconciliationLines.byOutcome["cites-no-scenario"],
     2,

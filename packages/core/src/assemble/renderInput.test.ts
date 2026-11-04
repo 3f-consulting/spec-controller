@@ -15,6 +15,7 @@ import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconci
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
+import { RECONCILIATION_TOTALS_KEY, reconciliationTotalsOf } from "./reportReconciliationTotals.test-utils.js";
 import { configurationFaultsKey, configurationFaultsOf } from "./reportErrors.test-utils.js";
 import type { ErrorsSection } from "../domain/renderInput.js";
 import { scenarioCodesOnReport } from "./scenarioCodesOnReport.test-utils.js";
@@ -125,7 +126,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
 
   it("materialises the summary totals from the balance", () => {
     const report = assembleRenderInput(__er(reportLedger()), ctx);
-    const { claimReconciliations, reconciliationLines } = report.summary.evidenceReconciliation;
+    const { claimReconciliations, reconciliationLines } = reconciliationTotalsOf(report);
     expect(claimReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantomClaim: 0, unnamedClaim: 0 });
     expect(reconciliationLines.total).toBe(3);
     expect(reconciliationLines.outOfBalance).toBe(2);
@@ -150,7 +151,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(ledgerWithPhantomClaimRow), ctx);
-    const t = report.summary.evidenceReconciliation.claimReconciliations;
+    const t = reconciliationTotalsOf(report).claimReconciliations;
     expect(t).toEqual({
       total: 4,
       balanced: 2,
@@ -162,9 +163,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(isBalanced(ledgerWithPhantomClaimRow)).toBe(false);
   });
 
-  it("states each summary total once: under evidenceReconciliation and evidenceObservations, and at none of their old places", () => {
+  it("states each summary total once: under reconciliationTotals and evidenceObservations, and at none of their old places", () => {
     const summary = (JSON.parse(everyOutcomeCorpusJson()) as { readonly summary: Record<string, unknown> }).summary;
-    expect(summary).toHaveProperty("evidenceReconciliation");
+    expect(summary).toHaveProperty(RECONCILIATION_TOTALS_KEY);
     expect(summary).toHaveProperty("evidenceObservations");
     for (const oldPlace of [
       "claimReconciliations",

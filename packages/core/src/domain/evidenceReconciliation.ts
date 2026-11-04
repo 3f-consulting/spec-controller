@@ -318,14 +318,14 @@ export interface StepAccounting {
   readonly workflowsRead?: readonly string[];
 }
 
-interface EvidenceReconciliationTotals {
+interface ReconciliationTotals {
   readonly claimReconciliations: ClaimReconciliationTotals;
   readonly reconciliationLines: ReconciliationLineTotals;
   readonly pending: number;
 }
 
 export interface Summary {
-  readonly evidenceReconciliation: EvidenceReconciliationTotals;
+  readonly reconciliationTotals: ReconciliationTotals;
   readonly evidenceObservations?: EvidenceObservationTally;
   readonly runnerKeysNotALayer?: readonly string[];
   readonly configurationOfWrongKind?: readonly WrongKindEntry[];
@@ -345,7 +345,7 @@ export interface EvidenceReconciliation {
 export function summaryOf(ledger: Ledger, withEvidenceObservations: boolean): Summary {
   const tally = ledgerTally(ledger);
   return {
-    evidenceReconciliation: {
+    reconciliationTotals: {
       claimReconciliations: tally.claimReconciliations,
       reconciliationLines: tally.reconciliationLines,
       pending: tally.pending,

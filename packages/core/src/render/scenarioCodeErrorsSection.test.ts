@@ -189,7 +189,7 @@ function errorsSectionOf(md: string): string[] {
 }
 
 const RUN_VERDICT_HEADING = CORE_MESSAGES[CoreMessage.RunVerdictHeading];
-const EVIDENCE_RECONCILIATION_HEADING = CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading];
+const RECONCILIATION_TOTALS_HEADING = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
 
 function afterRunVerdictOf(md: string): string[] {
   const lines = md.split("\n");
@@ -198,7 +198,7 @@ function afterRunVerdictOf(md: string): string[] {
   expect(summary).toBeGreaterThanOrEqual(0);
   expect(start).toBeGreaterThan(summary);
   const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
-  expect(lines[next]).toBe(EVIDENCE_RECONCILIATION_HEADING);
+  expect(lines[next]).toBe(RECONCILIATION_TOTALS_HEADING);
   expect(lines[start + 1]).toBe("");
   expect(lines[start + 2]).not.toBe("");
   return lines.slice(start + 3, next);
@@ -482,7 +482,7 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
     ];
     const lines = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf).split("\n");
     const verdict = lines.indexOf(RUN_VERDICT_HEADING);
-    const next = lines.indexOf(EVIDENCE_RECONCILIATION_HEADING);
+    const next = lines.indexOf(RECONCILIATION_TOTALS_HEADING);
     expect(verdict).toBeGreaterThan(lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
     expect(lines.slice(verdict, verdict + 2)).toEqual([RUN_VERDICT_HEADING, ""]);
     expect(lines[verdict + 2]).not.toBe("");

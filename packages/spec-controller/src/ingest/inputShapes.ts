@@ -88,7 +88,7 @@ export const SAVED_RECONCILIATION: Shape = {
     runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
     summary: {
       fields: {
-        evidenceReconciliation: {
+        reconciliationTotals: {
           fields: {
             reconciliationLines: {
               fields: {
@@ -105,7 +105,7 @@ export const SAVED_RECONCILIATION: Shape = {
           },
         },
       },
-      required: ["evidenceReconciliation", "evidenceObservations", "scenarioCodes"],
+      required: ["reconciliationTotals", "evidenceObservations", "scenarioCodes"],
     },
     claimReconciliations: {
       list: {

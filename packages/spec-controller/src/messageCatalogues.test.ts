@@ -41,6 +41,7 @@ import {
 } from "./messages.js";
 import { message } from "./appText.js";
 import { UNREADABLE_SUBJECTS } from "./cli-allocate/unreadable.js";
+import { RECONCILIATION_TOTALS_PATH } from "../../../tests/steps/support/reportReconciliationTotals.js";
 
 type Code = number | string;
 
@@ -382,7 +383,7 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
   [AppError.StoredRunDirectoryNotCreated]: { path: "store/t/r1", reason: "ENOTDIR: not a directory" },
   [AppMessage.ShapeKindOfType]: { type: "number" },
   [AppMessage.ShapeWrongKind]: { where: "testResults", found: "an object", expected: "a list" },
-  [AppMessage.ShapeFieldMissing]: { path: "summary.evidenceReconciliation" },
+  [AppMessage.ShapeFieldMissing]: { path: RECONCILIATION_TOTALS_PATH },
 };
 
 function renderedApp(code: AppMessage | AppError): string {

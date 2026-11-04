@@ -242,16 +242,19 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
   });
 });
 
-describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten leaf outcomes summing to the out-of-balance total, with no group rows", () => {
+const spanningLedger = (): Ledger =>
+  reconcile(
+    [
+      { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { scnId: "SCN-C", evidenceObligations: [] },
+    ],
+    [{ qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
+  );
+
+describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf outcomes summing to the Reconciliation line out-of-balance total", () => {
   let spanning: Ledger;
   beforeEach(() => {
-    spanning = reconcile(
-      [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-C", evidenceObligations: [] },
-      ],
-      [{ qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
-    );
+    spanning = spanningLedger();
   });
 
   const LEAVES = [
@@ -295,7 +298,7 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
       .filter((cell) => sentences.has(cell));
   };
 
-  it("decomposes the Quality Check Reconciliation out-of-balance into exactly the ten leaf outcome rows, each opening with its outcome's sentence alone", () => {
+  it("decomposes the Reconciliation line out-of-balance into exactly the ten leaf outcome rows, each opening with its outcome's sentence alone", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     for (const leaf of LEAVES) {
       expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION[leaf]} |`);
@@ -313,7 +316,7 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
     expect(rendered).not.toContain(OUTCOME_DESCRIPTION.satisfied);
   });
 
-  it("sums the leaf counts to the Quality Check Reconciliation out-of-balance total", () => {
+  it("sums the leaf counts to the Reconciliation line out-of-balance total", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     const subject = CORE_MESSAGES[CoreMessage.ReconciliationLineSubject].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const qcrOutOfBalance = Number(
@@ -328,6 +331,30 @@ describe("[SCN-RPT-019] the Quality Check Reconciliation summary lists the ten l
       leafSum += n;
     }
     expect(leafSum).toBe(qcrOutOfBalance);
+  });
+});
+
+describe("[SCN-RPT-099] the Reconciliation totals section lists no group rows among the leaf outcomes", () => {
+  let spanning: Ledger;
+  beforeEach(() => {
+    spanning = spanningLedger();
+  });
+
+  it("lists only the ten cause rows after the Reconciliation line row, with no debit-side, credit-side or neither-side subtotal row", () => {
+    const lines = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf).split("\n");
+    const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
+    const subjectRow = `| ${CORE_MESSAGES[CoreMessage.ReconciliationLineSubject]} |`;
+    const start = lines.findIndex((line, i) => i > heading && line.startsWith(subjectRow));
+    const end = lines.findIndex((line, i) => i > start && !line.startsWith("|"));
+    expect(heading).toBeGreaterThan(-1);
+    expect(start).toBeGreaterThan(heading);
+    expect(end).toBeGreaterThan(start);
+    const firstCells = lines.slice(start + 1, end).map((line) => line.split(" | ")[0]?.replace(/^\| /, ""));
+    const causes = (Object.keys(OUTCOME_DESCRIPTION) as Outcome[])
+      .filter((outcome) => outcome !== "satisfied")
+      .map((outcome) => OUTCOME_DESCRIPTION[outcome]);
+    expect(causes.length).toBe(10);
+    expect([...firstCells].sort()).toEqual([...causes].sort());
   });
 });
 

@@ -39,7 +39,7 @@ function item(outcome: Outcome, subject?: string, suffix?: string, result?: stri
   return `${head}${OUTCOME_DESCRIPTION[outcome]}${tail}${ran}`;
 }
 
-describe("[SCN-RPT-004] the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns", () => {
+describe("[SCN-RPT-004] the markdown report renders the reconciliation totals as subjects-rows with balanced and out-of-balance columns", () => {
   describe("an obligation side with nothing to show for it", () => {
     it("a scenario with no obligation and no observation renders the both-missing sentence alone", () => {
       const md = render([{ scnId: "SCN-RCI-002", evidenceObligations: [] }], []);

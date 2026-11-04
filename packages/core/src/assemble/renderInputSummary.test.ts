@@ -8,10 +8,11 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
+import { reconciliationTotalsOf } from "./reportReconciliationTotals.test-utils.js";
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
-describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted", () => {
+describe("[SCN-RMD-005] the summary states its reconciliation totals: its Claim Reconciliations, Reconciliation lines and pending items counted", () => {
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
@@ -23,7 +24,7 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
     { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheckKind: "integration", scnId: null, status: "passed" },
   ];
-  const evidenceReconciliation = {
+  const reconciliationTotals = {
     claimReconciliations: { total: 5, balanced: 2, outOfBalance: 3, phantomClaim: 1, unnamedClaim: 1 },
     reconciliationLines: {
       total: 5,
@@ -44,9 +45,9 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
     },
     pending: 1,
   };
-  const evidenceReconciliationWithAnyMissingSplit = () => ({
-    ...evidenceReconciliation,
-    reconciliationLines: { ...evidenceReconciliation.reconciliationLines, missingByQualityCheckKind: expect.anything() },
+  const reconciliationTotalsWithAnyMissingSplit = () => ({
+    ...reconciliationTotals,
+    reconciliationLines: { ...reconciliationTotals.reconciliationLines, missingByQualityCheckKind: expect.anything() },
   });
   let rmd005Balance: Ledger;
   let lintBalance: Ledger;
@@ -64,20 +65,20 @@ describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Clai
     );
   });
 
-  it("states the Claim Reconciliations, the Quality Check Reconciliations and the pending items counted under evidenceReconciliation", () => {
+  it("states the Claim Reconciliations, the Reconciliation lines and the pending items counted under reconciliationTotals", () => {
     const report = assembleRenderInput(__er(rmd005Balance), ctx);
-    expect(report.summary.evidenceReconciliation).toEqual(evidenceReconciliationWithAnyMissingSplit());
+    expect(report.summary.reconciliationTotals).toEqual(reconciliationTotalsWithAnyMissingSplit());
   });
 
-  it("states no fitness-only tally beside the evidence reconciliation, in the assembled summary or its JSON serialisation", () => {
+  it("states no fitness-only tally beside the reconciliation totals, in the assembled summary or its JSON serialisation", () => {
     const summary = assembleRenderInput(__er(lintBalance), ctx).summary;
     expect(summary).not.toHaveProperty("fitness");
     expect(summary).not.toHaveProperty("lint");
     expect(JSON.parse(renderJson(__er(lintBalance), ctx)).summary).not.toHaveProperty("fitness");
   });
 
-  it("carries the evidence reconciliation through the glue-free JSON serialisation", () => {
-    expect(JSON.parse(renderJson(__er(rmd005Balance), ctx)).summary.evidenceReconciliation).toEqual(evidenceReconciliationWithAnyMissingSplit());
+  it("carries the reconciliation totals through the glue-free JSON serialisation", () => {
+    expect(JSON.parse(renderJson(__er(rmd005Balance), ctx)).summary.reconciliationTotals).toEqual(reconciliationTotalsWithAnyMissingSplit());
   });
 });
 
@@ -136,7 +137,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
   it("states no view when no scenario is out of balance, a phantom and an unnamed claim out of balance included", () => {
     const balanced = reconcile(scenarios.slice(0, 1), [observations[0]!, observations[3]!, observations[4]!]);
     const report = assembleRenderInput(__er(balanced), ctx, evidenceObligations, featureNames);
-    expect(report.summary.evidenceReconciliation.claimReconciliations).toMatchObject({ outOfBalance: 2 });
+    expect(reconciliationTotalsOf(report).claimReconciliations).toMatchObject({ outOfBalance: 2 });
     expect(report.summary).not.toHaveProperty("outOfBalanceByFeature");
   });
 
@@ -166,9 +167,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind 
   const report = () =>
     JSON.parse(
       JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [brokenFitness])), ctx))
-    ) as {
-      summary: { evidenceReconciliation: { reconciliationLines: Record<string, unknown> } };
-    };
+    ) as unknown;
 
   it("carries a fitness reconciliation keyed by qualityCheckKind 'fitness' alone, its fitness function named only on its observation", () => {
     const fitness = claimReconciliationsOf<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>(report())
@@ -196,7 +195,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind 
   });
 
   it("counts the missing Reconciliation lines by kind of quality check, an obligation answered only by a broken observation once", () => {
-    const totals = report().summary.evidenceReconciliation.reconciliationLines;
+    const totals = reconciliationTotalsOf(report()).reconciliationLines;
     expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
     expect(totals.missingByQualityCheckKind).toEqual([
       { qualityCheckKind: "fitness", count: 1 },

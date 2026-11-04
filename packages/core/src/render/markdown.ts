@@ -148,7 +148,7 @@ const runIntegritySection: SectionEmitter = (report) => {
 
 const summarySection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.SummaryHeading], ""];
 
-const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
+const RECONCILIATION_TOTALS_COLUMNS: readonly string[] = [
   CORE_MESSAGES[CoreMessage.SubjectColumn],
   CORE_MESSAGES[CoreMessage.TotalColumn],
   CORE_MESSAGES[CoreMessage.BalancedColumn],
@@ -156,25 +156,25 @@ const EVIDENCE_RECONCILIATION_COLUMNS: readonly string[] = [
   CORE_MESSAGES[CoreMessage.DetailColumn],
 ];
 
-const EVIDENCE_RECONCILIATION_TERMS = [
-  CoreMessage.EvidenceReconciliationClaimReconciliationTerm,
-  CoreMessage.EvidenceReconciliationReconciliationLineTerm,
-  CoreMessage.EvidenceReconciliationEvidenceObligationTerm,
-  CoreMessage.EvidenceReconciliationEvidenceObservationTerm,
+const RECONCILIATION_TOTALS_TERMS = [
+  CoreMessage.ReconciliationTotalsClaimReconciliationTerm,
+  CoreMessage.ReconciliationTotalsReconciliationLineTerm,
+  CoreMessage.ReconciliationTotalsEvidenceObligationTerm,
+  CoreMessage.ReconciliationTotalsEvidenceObservationTerm,
 ] as const;
 
-const evidenceReconciliationSection: SectionEmitter = (report) => {
-  const { claimReconciliations, reconciliationLines, pending } = report.summary.evidenceReconciliation;
+const reconciliationTotalsSection: SectionEmitter = (report) => {
+  const { claimReconciliations, reconciliationLines, pending } = report.summary.reconciliationTotals;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
   const missingSplit = reconciliationLines.missingByQualityCheckKind
     .map(({ qualityCheckKind, count }) => `${count} ${qualityCheckKind}`)
     .join(" + ");
   const lines = [
-    CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],
+    CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading],
     "",
-    ...EVIDENCE_RECONCILIATION_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
+    ...RECONCILIATION_TOTALS_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
     "",
-    row(EVIDENCE_RECONCILIATION_COLUMNS),
+    row(RECONCILIATION_TOTALS_COLUMNS),
     row(["---", "---", "---", "---", "---"]),
     row([
       CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject],
@@ -210,7 +210,7 @@ const byFeatureSection: SectionEmitter = (report) => {
   const rows = report.claimReconciliations;
   const scenarios = rows.filter(isScenario);
   const groups = report.summary.outOfBalanceByFeature ?? [];
-  const ungrouped = ungroupedOutOfBalance(report.summary.evidenceReconciliation.claimReconciliations);
+  const ungrouped = ungroupedOutOfBalance(report.summary.reconciliationTotals.claimReconciliations);
   if (groups.length === 0 && ungrouped.length === 0) return [];
   const head = CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
   return [
@@ -241,7 +241,7 @@ function idsCell(group: FeatureOutOfBalance): string {
   return ids === "" ? noScnCode : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${noScnCode}`;
 }
 
-type ClaimReconciliationTotals = RenderInput["summary"]["evidenceReconciliation"]["claimReconciliations"];
+type ClaimReconciliationTotals = RenderInput["summary"]["reconciliationTotals"]["claimReconciliations"];
 
 function ungroupedOutOfBalance(totals: ClaimReconciliationTotals): string[] {
   return [
@@ -265,7 +265,7 @@ const ledgerSection: SectionEmitter = (report) => {
   return [
     CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     "",
-    ...ledgerTallyLines(report.summary.evidenceReconciliation.claimReconciliations),
+    ...ledgerTallyLines(report.summary.reconciliationTotals.claimReconciliations),
     "",
     ...evidenceKeyLines(columns),
     ...ledgerTableLines(claims, columns, report.summary.evidenceObservations?.byQualityCheckKind ?? []),
@@ -345,7 +345,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
   scenarioCodesCleanStatement,
   scenarioCodeFactsSection,
-  evidenceReconciliationSection,
+  reconciliationTotalsSection,
   evidenceObservationsSection,
   stepAccountingSection,
   byFeatureSection,

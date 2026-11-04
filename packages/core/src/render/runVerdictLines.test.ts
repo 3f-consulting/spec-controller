@@ -24,7 +24,7 @@ const ctx: RunContext = {
 const strictCtx: RunContext = { ...ctx, strict: true };
 
 const HEADING = CORE_MESSAGES[CoreMessage.RunVerdictHeading];
-const NEXT_HEADING = CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading];
+const NEXT_HEADING = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
 
 function verdictSectionOf(md: string): string[] {
   const lines = md.split("\n");
