@@ -76,7 +76,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
     With no @fitness scenarios and no annotated steps, the report lists every check the pipeline
     runs, each on the unnamed claim. Steps the target lists as not checks, such as checkout,
-    toolchain setup, install and build, are reported as excluded. Only that list excludes a step.
+    toolchain setup, install and build, are reported as non-checks. Only that list makes a step a non-check.
 
     @unit @SCN-LNT-029
     Scenario: a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report

@@ -156,7 +156,7 @@ function withARecordedRunnerStep(): EvidenceReconciliation {
   });
 }
 
-const excludedTwinCi = `name: fixture CI
+const nonCheckTwinCi = `name: fixture CI
 jobs:
   quality:
     steps:
@@ -166,11 +166,11 @@ jobs:
         run: pnpm lint
 `;
 
-function withAnExcludedTwin(): EvidenceReconciliation {
+function withANonCheckTwin(): EvidenceReconciliation {
   return evidenceReconciliationFromSources({
     features: parsedFeatures([feature]),
     packageJson: { scripts, specController: { notChecks: ["workflow-0.yml:quality:Early lint"] } },
-    ciWorkflows: parsedWorkflows([excludedTwinCi]),
+    ciWorkflows: parsedWorkflows([nonCheckTwinCi]),
     behaviouralObservations: [],
     deferralTags: [],
   });
@@ -417,8 +417,8 @@ describe("[SCN-RMD-015] each kind of quality check in the summary's evidence obs
     });
   });
 
-  it("names on fitness the candidate step behind its fitness function, never an excluded step running the same script before it", () => {
-    expect(entryFor(withAnExcludedTwin(), "fitness")).toStrictEqual({
+  it("names on fitness the candidate step behind its fitness function, never a non-check running the same script before it", () => {
+    expect(entryFor(withANonCheckTwin(), "fitness")).toStrictEqual({
       qualityCheckKind: "fitness",
       count: 1,
       ciSteps: ["workflow-0.yml:quality:Lint"],

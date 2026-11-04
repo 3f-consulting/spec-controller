@@ -66,10 +66,10 @@ describe("[SCN-RPT-050] the step-accounting section lists each reconciler step b
     expect(section.slice(start)).toContain(reconcilerItem(item, reconciles));
   });
 
-  it("lists neither reconciler step as excluded", () => {
+  it("lists neither reconciler step as a non-check", () => {
     const lines = reportLines(ci);
     for (const step of [dump, balance]) {
-      expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.StepExcluded](codeSpan(step))}`);
+      expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.StepNonCheck](codeSpan(step))}`);
     }
   });
 

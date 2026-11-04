@@ -54,7 +54,7 @@ jobs:
     ]);
   });
 
-  it("counts a step the target calls a non-check as excluded, not as a candidate, in its row", () => {
+  it("counts a step the target calls a non-check under nonChecks, not as a candidate, in its row", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"], {
       ...packageJson,
       specController: { runners: { unit: "vitest" }, notChecks: ["ci.yml:quality:Install"] },

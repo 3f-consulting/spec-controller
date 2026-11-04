@@ -173,12 +173,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
 
-  Rule: the summary's step accounting holds a row per workflow and job read, with the steps behind its runners, reconciler, excluded and plumbing counts
+  Rule: the summary's step accounting holds a row per workflow and job read, with the steps behind its runners, reconciler, non-check and plumbing counts
 
     The summary's step accounting states every CI step the run read, and what it counted each
     step as. It holds one row per workflow and job, ordered by workflow and then by job, each
     compared character by character. Each row carries the steps read, and how many of them are
-    candidates, runners, reconciler steps, excluded steps and plumbing. Its total sums each of
+    candidates, runners, reconciler steps, non-checks and plumbing. Its total sums each of
     those counts over the rows.
     It names each reconciler step with its role, each step the target calls a non-check, and
     the steps behind its runners and plumbing counts, each list holding exactly the steps its
@@ -206,7 +206,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts
 
     @unit @SCN-RMD-025
-    Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or excluded steps beside it
+    Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or non-check steps beside it
 
     @unit @SCN-RMD-026
     Scenario: every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists

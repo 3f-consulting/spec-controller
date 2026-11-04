@@ -12,16 +12,10 @@ const STEPS = [TYPES, TESTS];
 const EXCLUDED_STEP = "ci.yml:quality:Types";
 const STRAY_ENTRY = "ci.yml:quality:Lint";
 
-describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped", () => {
-  it("excludes the step an entry names, and reports it as excluded", () => {
-    const { excluded, isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
-    expect(excluded).toStrictEqual([EXCLUDED_STEP]);
+describe("[SCN-USG-015] a step named in `notChecks` is not a candidate", () => {
+  it("excludes the step an entry names", () => {
+    const { isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(isExcluded(TYPES)).toBe(true);
-  });
-
-  it("reports an entry that names no step as matching no step", () => {
-    const { unmatchedEntries } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
-    expect(unmatchedEntries).toStrictEqual([STRAY_ENTRY]);
   });
 
   it("does not exclude a step that no entry names", () => {
@@ -29,10 +23,26 @@ describe("[SCN-USG-015] a step named in `notChecks` is not a candidate, and is r
     expect(isExcluded(TESTS)).toBe(false);
   });
 
+  it("excludes no step when the manifest names no step a non-check", () => {
+    const { isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, []);
+    expect(isExcluded(TYPES)).toBe(false);
+  });
+});
+
+describe("[SCN-USG-038] a step named in `notChecks` is reported as a non-check rather than dropped", () => {
+  it("reports the step an entry names as a non-check", () => {
+    const { excluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
+    expect(excluded).toStrictEqual([EXCLUDED_STEP]);
+  });
+
+  it("reports an entry that names no step as matching no step", () => {
+    const { unmatchedEntries } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
+    expect(unmatchedEntries).toStrictEqual([STRAY_ENTRY]);
+  });
+
   it("carries nothing in either account when the manifest names no step a non-check", () => {
-    const { excluded, unmatchedEntries, isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, []);
+    const { excluded, unmatchedEntries } = nonChecksApplied(STEPS, namedInItsWorkflow, []);
     expect(excluded).toStrictEqual([]);
     expect(unmatchedEntries).toStrictEqual([]);
-    expect(isExcluded(TYPES)).toBe(false);
   });
 });

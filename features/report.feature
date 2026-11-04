@@ -682,20 +682,20 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-088
     Scenario: each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string
 
-  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind its Runners, Reconciler, Excluded and GitHub plumbing counts listed beneath
+  Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind its Runners, Reconciler, Non-checks and GitHub plumbing counts listed beneath
 
     Under "## Summary", the "### Step accounting" section is the report's one section about
     the CI steps the run read. Its table has a row per workflow and job read, in the step
     accounting's order, with the columns Workflow, Job, Steps read, Candidates, Runners, Reconciler,
-    Excluded, GitHub plumbing and Accounted for. When more than one job was read, a Total row
+    Non-checks, GitHub plumbing and Accounted for. When more than one job was read, a Total row
     follows. Each Workflow and Job cell holds its name whole, a pipe or a backslash escaped and a
     run of whitespace read as one space.
 
     Beneath the table, each column other than Candidates that counts a step lists the steps behind
-    it, under the column's name: Runners, Reconciler, Excluded and GitHub plumbing, in that order. A
+    it, under the column's name: Runners, Reconciler, Non-checks and GitHub plumbing, in that order. A
     list follows the table's rows, and each job's steps in the order they were read. A reconciler
-    step says what it does. An excluded step says the target names it a non-check, one line for each
-    step an entry matches. A column that counts no step lists nothing. After the excluded steps,
+    step says what it does. Each non-check's line says the target names it a non-check, one line for each
+    step an entry matches. A column that counts no step lists nothing. After the non-checks,
     each notChecks entry naming a workflow the run did not read is listed as not applied, under a
     label naming the workflows the run read. Each step a list names is shown whole in its code span:
     as written, or as its quoted string where a code span cannot hold it as written.
@@ -714,10 +714,13 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation
 
     @unit @SCN-RPT-048
-    Scenario: the step-accounting section lists each excluded step beneath its table with its reason, and lists none when the target names no non-check
+    Scenario: the step-accounting section lists each non-check beneath its table with its reason
+
+    @unit @SCN-RPT-098
+    Scenario: the step-accounting section lists no non-check when the target names none
 
     @unit @SCN-RPT-090
-    Scenario: a notChecks entry naming a workflow whose name holds a colon excludes that workflow's step
+    Scenario: a notChecks entry naming a workflow whose name holds a colon makes that workflow's step a non-check
 
     @unit @SCN-RPT-089
     Scenario: a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read
@@ -729,7 +732,10 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing
 
     @unit @SCN-RPT-092
-    Scenario: the step-accounting section defines its Candidates, Reconciler, Excluded, GitHub plumbing and Accounted for columns before its table, and prints no definition when it prints no table
+    Scenario: the step-accounting section defines its Candidates, Reconciler, Non-checks, GitHub plumbing and Accounted for columns before its table
+
+    @unit @SCN-RPT-100
+    Scenario: the step-accounting section prints no column definition when it prints no table
 
   Rule: the report lists each scenario code error under Scenario code errors, only when the corpus holds one, worded from the error's own values
 

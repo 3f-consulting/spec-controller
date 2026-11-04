@@ -86,7 +86,7 @@ Every CI step is listed as a check, except a declared runner and GitHub's own ch
 - **`runners`** declares the command each layer of tests runs, so that step is read as your test suite and not as a check. `null` means *we have no runner for this layer*.
 - **`notChecks`** lists steps that do work but check nothing, such as publishing. Each entry is `<workflow file>:<job id>:<step name>`, matched exactly.
 
-See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--runners) and [Excluding steps that are not checks — `notChecks`](./user-guide.md#excluding-steps-that-are-not-checks--notchecks).
+See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--runners) and [Naming your non-checks — `notChecks`](./user-guide.md#naming-your-non-checks--notchecks).
 
 ## Cite one scenario from one test
 

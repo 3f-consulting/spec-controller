@@ -84,17 +84,20 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     @unit @SCN-USG-005
     Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited fitness function
 
-  Rule: a step the manifest names a non-check is excluded, and the report says so
+  Rule: a step the manifest names a non-check is not a candidate, and the report says so
 
     Each non-check entry names a workflow file, a job and a step name as GitHub shows it in the run
     log, and matches that step exactly. There is no wildcard form.
 
-    The report names every excluded step. It names as stale every entry that matches no step of
+    The report names every non-check. It names as stale every entry that matches no step of
     the workflows the run read. In a run that read any CI step, an entry naming a workflow the run
     did not read is listed as not applied, beside the workflows the run read.
 
     @unit @SCN-USG-015
-    Scenario: a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped
+    Scenario: a step named in `notChecks` is not a candidate
+
+    @unit @SCN-USG-038
+    Scenario: a step named in `notChecks` is reported as a non-check rather than dropped
 
   Rule: the reconciler is not one of the reconciled rows
 
@@ -102,7 +105,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     the reconciler. The step that dumps GitHub's step record is its input. Both are excluded without
     any configuration. The report lists both under Reconciler, beneath the step accounting's
     table, saying which runs the reconciliation and which writes the step record it reads, and
-    lists neither as excluded. The same tool run for another purpose stays a candidate, and
+    lists neither as a non-check. The same tool run for another purpose stays a candidate, and
     neither step is recognised by its title.
 
     @unit @SCN-USG-014
@@ -133,11 +136,14 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     @unit @SCN-USG-031
     Scenario: an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action
 
-    A plumbing step the manifest names a non-check is excluded and named as the manifest says, and
+    A plumbing step the manifest names a non-check is a non-check, named as the manifest says, and
     its entry is not stale.
 
     @unit @SCN-USG-032
-    Scenario: a plumbing step the manifest names a non-check is excluded as the manifest says, and its entry is not stale
+    Scenario: a plumbing step the manifest names a non-check is a non-check, as the manifest says
+
+    @unit @SCN-USG-037
+    Scenario: a notChecks entry naming a plumbing step is not stale
 
   Rule: a manifest naming no runners makes every step a candidate
 
@@ -160,7 +166,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Rule: every step the reader saw is accounted for
 
-    Every step read leaves as a candidate, a runner, the reconciler, an excluded step or one of
+    Every step read leaves as a candidate, a runner, the reconciler, a non-check or one of
     GitHub's plumbing actions. The report states how many steps it read and how many it accounted
     for, and the two are equal. The JSON report and the Markdown report both name the steps behind
     each count other than the candidates, plumbing steps included.

@@ -200,7 +200,7 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.EvidenceObservationsSum]: [3, 1, 1, 1],
   [CoreMessage.FitnessCiStep]: [2],
   [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
-  [CoreMessage.StepExcluded]: ["ci.yml / build / lint"],
+  [CoreMessage.StepNonCheck]: ["ci.yml / build / lint"],
   [CoreMessage.StepAccountingNotAppliedLabel]: ["`specController.notChecks`", "`ci.yml`"],
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
   [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],

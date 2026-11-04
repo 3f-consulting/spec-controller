@@ -90,19 +90,19 @@ export enum CoreMessage {
   ReconcilerStep,
   ReconcilerReconciles,
   ReconcilerRecords,
-  StepExcluded,
+  StepNonCheck,
   StepAccountingHeading,
   StepAccountingTableHeader,
   StepAccountingTotal,
   StepAccountingRunnersLabel,
   StepAccountingReconcilerLabel,
-  StepAccountingExcludedLabel,
+  StepAccountingNonChecksLabel,
   StepAccountingNotAppliedLabel,
   StepAccountingNoWorkflowRead,
   StepAccountingPlumbingLabel,
   StepAccountingCandidatesTerm,
   StepAccountingReconcilerTerm,
-  StepAccountingExcludedTerm,
+  StepAccountingNonChecksTerm,
   StepAccountingPlumbingTerm,
   StepAccountingAccountedForTerm,
   OutOfBalanceByFeatureHeading,
@@ -214,7 +214,7 @@ interface CoreMessageParams {
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessCiStep]: [steps: number];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
-  readonly [CoreMessage.StepExcluded]: [entry: string];
+  readonly [CoreMessage.StepNonCheck]: [entry: string];
   readonly [CoreMessage.StepAccountingNotAppliedLabel]: [key: string, workflowsRead: string];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
@@ -419,28 +419,28 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
   [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",
-  [CoreMessage.StepExcluded]: (entry) => `${entry} — excluded: the target names this step a non-check.`,
+  [CoreMessage.StepNonCheck]: (entry) => `${entry} — a non-check: the target names it under \`specController.notChecks\`.`,
   [CoreMessage.StepAccountingHeading]: "### Step accounting",
   [CoreMessage.StepAccountingTableHeader]:
-    "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
+    "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Non-checks | GitHub plumbing | Accounted for |",
   [CoreMessage.StepAccountingTotal]: "Total",
   [CoreMessage.StepAccountingRunnersLabel]: "Runners:",
   [CoreMessage.StepAccountingReconcilerLabel]: "Reconciler:",
-  [CoreMessage.StepAccountingExcludedLabel]: "Excluded:",
+  [CoreMessage.StepAccountingNonChecksLabel]: "Non-checks:",
   [CoreMessage.StepAccountingNotAppliedLabel]: (key, workflowsRead) =>
     `Not applied, because each ${key} entry below names a workflow this run did not read (this run read ${workflowsRead}):`,
   [CoreMessage.StepAccountingNoWorkflowRead]: "no workflow",
   [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
   [CoreMessage.StepAccountingCandidatesTerm]:
-    "A Candidate is a step read that is not a Runner, Reconciler, Excluded or GitHub plumbing step. " +
+    "A Candidate is a step read that is not a Runner, Reconciler, Non-check or GitHub plumbing step. " +
     "It is read as a fitness function, and no list below names it.",
   [CoreMessage.StepAccountingReconcilerTerm]:
     "A Reconciler step runs this reconciliation or writes the step record it reads.",
-  [CoreMessage.StepAccountingExcludedTerm]:
-    "An Excluded step is one the target names a non-check under `specController.notChecks`, unless it is a Reconciler step. " +
-    "A GitHub plumbing step named there is Excluded too.",
+  [CoreMessage.StepAccountingNonChecksTerm]:
+    "A Non-check is a step the target names under `specController.notChecks`, unless it is a Reconciler step. " +
+    "A GitHub plumbing step named there is a Non-check too.",
   [CoreMessage.StepAccountingPlumbingTerm]:
-    "A GitHub plumbing step is one that is neither a Reconciler nor an Excluded step and uses one of GitHub's own actions " +
+    "A GitHub plumbing step is one that is neither a Reconciler nor a Non-check step and uses one of GitHub's own actions " +
     "`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `actions/download-artifact` or `actions/setup-*`. " +
     "A step that runs a command, an install included, is never plumbing.",
   [CoreMessage.StepAccountingAccountedForTerm]:

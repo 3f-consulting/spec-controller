@@ -102,15 +102,14 @@ const UNNAMED_CHECKOUT: PipelineStep = {
 };
 const NAMED_A_NON_CHECK = "ci.yml:quality:Set up Node";
 
-describe("[SCN-USG-032] a plumbing step the manifest names a non-check is excluded as the manifest says, and its entry is not stale", () => {
-  it("names the plumbing step excluded, and reports no entry matching no step", () => {
-    const { excluded, unmatchedEntries } = nonChecksApplied(
+describe("[SCN-USG-032] a plumbing step the manifest names a non-check is a non-check, as the manifest says", () => {
+  it("names the plumbing step excluded", () => {
+    const { excluded } = nonChecksApplied(
       [SET_UP_NODE, UNNAMED_CHECKOUT],
       namedInItsWorkflow,
       [NAMED_A_NON_CHECK]
     );
     expect(excluded).toStrictEqual([NAMED_A_NON_CHECK]);
-    expect(unmatchedEntries).toStrictEqual([]);
   });
 
   it("leaves the named plumbing step no candidate", () => {
@@ -122,5 +121,16 @@ describe("[SCN-USG-032] a plumbing step the manifest names a non-check is exclud
     const { isExcluded } = nonChecksApplied([SET_UP_NODE, UNNAMED_CHECKOUT], namedInItsWorkflow, [NAMED_A_NON_CHECK]);
     expect(stepDispositions({ ...NO_RECONCILER, isNamedANonCheck: isExcluded, runsARunner: RUNS_NO_RUNNER })(UNNAMED_CHECKOUT)).toBe("plumbing");
     expect(isExcluded(UNNAMED_CHECKOUT)).toBe(false);
+  });
+});
+
+describe("[SCN-USG-037] a notChecks entry naming a plumbing step is not stale", () => {
+  it("reports no entry matching no step", () => {
+    const { unmatchedEntries } = nonChecksApplied(
+      [SET_UP_NODE, UNNAMED_CHECKOUT],
+      namedInItsWorkflow,
+      [NAMED_A_NON_CHECK]
+    );
+    expect(unmatchedEntries).toStrictEqual([]);
   });
 });

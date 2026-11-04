@@ -71,68 +71,70 @@ jobs:
         run: pnpm typecheck
 `;
 
-const label = CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel];
+const label = CORE_MESSAGES[CoreMessage.StepAccountingNonChecksLabel];
 
-const excluded = (span: string): string => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](span)}`;
+const nonCheck = (span: string): string => `- ${CORE_MESSAGES[CoreMessage.StepNonCheck](span)}`;
 
-const excludedMark = (): string => `${CORE_MESSAGES[CoreMessage.StepExcluded]("").split(":")[0]!.trim()}:`;
+const nonCheckMark = (): string => `${CORE_MESSAGES[CoreMessage.StepNonCheck]("").split(":")[0]!.trim()}:`;
 
-const excludedList = (lines: readonly string[], length: number): string[] => {
+const nonChecksList = (lines: readonly string[], length: number): string[] => {
   const start = lines.indexOf(label);
   expect(start).toBeGreaterThanOrEqual(0);
   return lines.slice(start, start + length);
 };
 
-describe("[SCN-RPT-048] the step-accounting section lists each excluded step beneath its table with its reason, and lists none when the target names no non-check", () => {
-  it("lists each excluded step with its reason under an Excluded label beneath the table, then a blank line, and no entry that matches no step", () => {
+describe("[SCN-RPT-048] the step-accounting section lists each non-check beneath its table with its reason", () => {
+  it("lists each non-check with its reason under a Non-checks label beneath the table, then a blank line, and no entry that matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types", "ci.yml:quality:Lint"]));
     const tableEnd = endOfTable(section);
 
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
-    expect(excludedList(section, 3)).toStrictEqual([label, excluded(codeSpan("ci.yml:quality:Types")), ""]);
+    expect(nonChecksList(section, 3)).toStrictEqual([label, nonCheck(codeSpan("ci.yml:quality:Types")), ""]);
     expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it.each([
     { entry: "ci.yml:quality:Run `pnpm lint`", item: "`` ci.yml:quality:Run `pnpm lint` ``" },
     { entry: "ci.yml:quality:Two\nlines", item: '`"ci.yml:quality:Two\\nlines"`' },
-  ])("lists the excluded step $entry whole in its code span, as $item", ({ entry, item }) => {
+  ])("lists the non-check $entry whole in its code span, as $item", ({ entry, item }) => {
     const section = stepAccounting(reportLines([entry], { "ci.yml": spanStepsCi }));
-    expect(excludedList(section, 3)).toStrictEqual([label, excluded(item), ""]);
-  });
-
-  it("prints no Excluded label when the target's only entry matches no step", () => {
-    const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
-    expect(section.length).toBeGreaterThan(0);
-    expect(section).not.toContain(label);
-    expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(nonChecksList(section, 3)).toStrictEqual([label, nonCheck(item), ""]);
   });
 
   it("lists one line for each step an entry matches", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types"], { "ci.yml": twoTypesStepsCi }));
-    const types = excluded(codeSpan("ci.yml:quality:Types"));
-    expect(excludedList(section, 4)).toStrictEqual([label, types, types, ""]);
+    const types = nonCheck(codeSpan("ci.yml:quality:Types"));
+    expect(nonChecksList(section, 4)).toStrictEqual([label, types, types, ""]);
   });
 
-  it("lists the excluded steps after the reconciler steps, in the order the steps were read", () => {
+  it("lists the non-checks after the reconciler steps, in the order the steps were read", () => {
     const section = stepAccounting(linesOf(reconcileStepAccounting([stepAccountingCi])));
     const reconcilerLabel = CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel];
     expect(section.indexOf(reconcilerLabel)).toBeGreaterThanOrEqual(0);
     expect(section.indexOf(label)).toBeGreaterThan(section.indexOf(reconcilerLabel));
-    expect(excludedList(section, 5)).toStrictEqual([
+    expect(nonChecksList(section, 5)).toStrictEqual([
       label,
-      excluded(codeSpan("ci.yml:ci:Checkout")),
-      excluded(codeSpan("ci.yml:ci:Install")),
-      excluded(codeSpan("ci.yml:ci:Build")),
+      nonCheck(codeSpan("ci.yml:ci:Checkout")),
+      nonCheck(codeSpan("ci.yml:ci:Install")),
+      nonCheck(codeSpan("ci.yml:ci:Build")),
       "",
     ]);
   });
+});
 
-  it("lists no excluded step, and prints no Excluded label, for a target that names no step a non-check", () => {
+describe("[SCN-RPT-098] the step-accounting section lists no non-check when the target names none", () => {
+  it("lists no non-check, and prints no Non-checks label, for a target that names no step a non-check", () => {
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
     expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes(excludedMark()) || line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(lines.some((line) => line.includes(nonCheckMark()) || line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
+  });
+
+  it("prints no Non-checks label when the target's only entry matches no step", () => {
+    const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
+    expect(section.length).toBeGreaterThan(0);
+    expect(section).not.toContain(label);
+    expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 });
 
@@ -245,21 +247,21 @@ jobs:
         run: ./deploy.sh
 `;
 
-describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a colon excludes that workflow's step", () => {
+describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a colon makes that workflow's step a non-check", () => {
   it.each<{ workflows: Readonly<Record<string, string>>; entry: string }>([
     { workflows: { "a:b.yml": deployCi }, entry: "a:b.yml:quality:Deploy" },
     { workflows: { "a.yml": deployCi, "a.yml:b.yml": deployCi }, entry: "a.yml:b.yml:quality:Deploy" },
-  ])("excludes $entry's step, reading $workflows, and lists it neither as unread nor as not applied", ({ workflows, entry }) => {
+  ])("takes $entry's step as a non-check, reading $workflows, and lists it neither as unread nor as not applied", ({ workflows, entry }) => {
     const reconciliation = reconciliationOf([entry], workflows);
     const { nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting: accounting } = reconciliation.summary;
     const lines = renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
-    const [, excludedItem, afterItem] = excludedList(stepAccounting(lines), 3);
+    const [, nonCheckItem, afterItem] = nonChecksList(stepAccounting(lines), 3);
 
     expect(accounting?.steps.nonChecks).toStrictEqual([entry]);
     expect([nonChecksNotAStepName, nonChecksMatchingNoStep, accounting?.nonChecksNamingAWorkflowNotRead]).toStrictEqual([undefined, undefined, undefined]);
-    expect(excludedItem).toContain(entry);
+    expect(nonCheckItem).toContain(entry);
     expect(afterItem).toBe("");
-    expect(lines.filter((line) => line.includes(entry) || line.includes(excludedMark()))).toStrictEqual([excludedItem]);
+    expect(lines.filter((line) => line.includes(entry) || line.includes(nonCheckMark()))).toStrictEqual([nonCheckItem]);
     expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
   });
 });

@@ -127,7 +127,7 @@ Every CI step is listed as a check, except a declared runner (see [Naming your r
 }
 ```
 
-The full rules are in [Excluding steps that are not checks](#excluding-steps-that-are-not-checks--notchecks).
+The full rules are in [Naming your non-checks](#naming-your-non-checks--notchecks).
 
 ### When a row reads `no-evidence-obligation`
 
@@ -596,17 +596,17 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **Java:** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, and a step that runs the tests through a later phase, such as `mvn verify` or `mvn install`, is declared with those words. Otherwise the step is reported as a check.
 - **Kotlin:** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check. Declare the words your test step opens with: a step running `./gradlew clean test`, `./gradlew build`, `./gradlew check` or `./gradlew :app:test` is declared with those words, or it is reported as a check.
 
-### Excluding steps that are not checks — `notChecks`
+### Naming your non-checks — `notChecks`
 
-`notChecks` lists the steps that are neither runners nor checks.
+`notChecks` lists the steps that are neither runners nor checks: the non-checks.
 
 - **Each entry is `<workflow file>:<job id>:<step name>`**, matched **exactly**: no prefix form, no glob, no bare name.
 - **To take a whole workflow out, narrow `--ci`** rather than listing its steps.
-- **An excluded step is named on the report**, not dropped.
+- **A non-check is named on the report**, not dropped. **Step accounting** counts it under *Non-checks* and lists it under `Non-checks:`, each line reading "— a non-check: the target names it under `specController.notChecks`."
 - **An entry that matches no step of a workflow the run read is reported as stale**, under `### Configuration not read`. An entry naming a workflow the run did not read is not judged.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
-**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref or sub-path follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *GitHub plumbing* in **Step accounting** and names it in that section's *GitHub plumbing* list, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is excluded as you named it.
+**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref or sub-path follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *GitHub plumbing* in **Step accounting** and names it in that section's *GitHub plumbing* list, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
 
 ### Deferring a scenario — `deferralTags`
 
@@ -643,8 +643,8 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 | `configuration-wrong-kind` | an entry of a kind its reader does not take (a `notChecks` written as one string, a runner written as a number) is read as absent |
 | `configuration-unknown-key` | a key the block does not read at all (a misspelling, or a key an older version read) is passed over |
 | `runner-key-not-a-layer` | a `runners` key that is not one of the four layers excludes nothing |
-| `not-checks-entry-matches-no-step` | a `notChecks` entry that matches no step of a workflow the run read excludes nothing |
-| `not-checks-entry-not-a-step-name` | a `notChecks` entry that does not name a step as `<workflow file>:<job id>:<step name>` excludes nothing |
+| `not-checks-entry-matches-no-step` | a `notChecks` entry that matches no step of a workflow the run read makes no step a non-check |
+| `not-checks-entry-not-a-step-name` | a `notChecks` entry that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
 None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it. Its entry opens with its code, as in `` - `configuration-wrong-kind` — … ``.
 

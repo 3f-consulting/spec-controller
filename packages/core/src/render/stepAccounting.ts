@@ -34,7 +34,7 @@ const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
 const STEP_ACCOUNTING_TERMS = [
   CoreMessage.StepAccountingCandidatesTerm,
   CoreMessage.StepAccountingReconcilerTerm,
-  CoreMessage.StepAccountingExcludedTerm,
+  CoreMessage.StepAccountingNonChecksTerm,
   CoreMessage.StepAccountingPlumbingTerm,
   CoreMessage.StepAccountingAccountedForTerm,
 ] as const;
@@ -77,8 +77,8 @@ const nonChecksListOf = ({ steps }: StepAccounting): string[] => {
   const nonChecks = steps.nonChecks ?? [];
   if (nonChecks.length === 0) return [];
   return [
-    CORE_MESSAGES[CoreMessage.StepAccountingExcludedLabel],
-    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepExcluded](codeSpan(step))}`),
+    CORE_MESSAGES[CoreMessage.StepAccountingNonChecksLabel],
+    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepNonCheck](codeSpan(step))}`),
     "",
   ];
 };

@@ -33,13 +33,13 @@ const stepAccounting = (workflow: string): string[] =>
   );
 
 describe("[SCN-RPT-073] the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing", () => {
-  it("lists each GitHub plumbing step by its name under a GitHub plumbing label after the Excluded list, in the order the steps were read", () => {
+  it("lists each GitHub plumbing step by its name under a GitHub plumbing label after the Non-checks list, in the order the steps were read", () => {
     const section = stepAccounting(stepAccountingCi);
-    const excluded = section.indexOf("Excluded:");
+    const nonChecks = section.indexOf("Non-checks:");
     const start = section.indexOf(label);
 
-    expect(excluded).toBeGreaterThanOrEqual(0);
-    expect(start).toBeGreaterThan(excluded);
+    expect(nonChecks).toBeGreaterThanOrEqual(0);
+    expect(start).toBeGreaterThan(nonChecks);
     expect(section.slice(start)).toStrictEqual([
       "GitHub plumbing:",
       "- `ci.yml:ci:Checkout tools`",
