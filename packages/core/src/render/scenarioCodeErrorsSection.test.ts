@@ -16,6 +16,7 @@ import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { scenarioCodesOnReport, withScenarioCodesOnReport } from "../assemble/scenarioCodesOnReport.test-utils.js";
+import { scenarioCodeErrorsOnReport } from "../assemble/reportErrors.test-utils.js";
 
 interface CorpusFile {
   readonly slug: string;
@@ -261,7 +262,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
       const statement = statements()[row]!;
       expect(statement).toContain(cleanGloss());
       const report = newShapeReport(judgedCorpus(codes, plain));
-      expect(report.errors?.scenarioCodes).toBeUndefined();
+      expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
       expect(scenarioCodesOnReport(report)).toEqual({ featureFiles: files, featureCodes: codes.length });
       statedAloneAfterRunVerdict(report, statement);
     });
@@ -269,7 +270,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
 
   it("states no clean line when the corpus's facts carry no count of feature files", () => {
     const report = withScenarioCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
-    expect(report.errors?.scenarioCodes).toBeUndefined();
+    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     const cleanHead = `${cleanOpening()} over `;
     expect(cleanHead).not.toBe("");
@@ -283,7 +284,7 @@ describe("[SCN-RPT-093] no scenario code errors section prints when the scenario
   for (const { codes, plain } of CLEAN_CORPORA) {
     it(`prints no scenario code errors section over ${codes.length + plain} files carrying ${codes.length} codes`, () => {
       const report = newShapeReport(judgedCorpus(codes, plain));
-      expect(report.errors?.scenarioCodes).toBeUndefined();
+      expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
       const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
       printsNoScenarioCodeErrorsSection(md);
       expect(md).not.toContain(coreMessage(CoreMessage.ScenarioCodeErrorsHeadline));
@@ -295,7 +296,7 @@ describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus wa
   it("says nothing when no corpus was judged", () => {
     const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
     const report = newShapeReport(unjudged);
-    expect(report.errors?.scenarioCodes).toBeUndefined();
+    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
     expect(scenarioCodesOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING);
@@ -307,7 +308,7 @@ describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run v
   it("says no feature file was judged after the run verdict, prints no scenario code errors section, and states nothing clean", () => {
     const statement = coreMessage(CoreMessage.NoFeatureFileJudged);
     const report = newShapeReport(judgedCorpus([], 0));
-    expect(report.errors?.scenarioCodes).toBeUndefined();
+    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
     expect(scenarioCodesOnReport(report)).toMatchObject({ featureFiles: 0, featureCodes: 0 });
     const md = statedAloneAfterRunVerdict(report, statement);
     printsNoScenarioCodeErrorsSection(md);
@@ -466,7 +467,7 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
     { codes: "from no feature file", excluded: 0, others: false, lines: "the excluded line alone, at zero" },
   ] as const)("states $lines after the run verdict when the codes are $codes", ({ codes, excluded, others }) => {
     const judged = CODES[codes].judged();
-    expect(judged.errors?.scenarioCodes === undefined).toBe(codes !== "holding an error");
+    expect(scenarioCodeErrorsOnReport(judged) === undefined).toBe(codes !== "holding an error");
     const report = withScenarioCodesOnReport(judged, {
       ...scenarioCodesOnReport(judged),
       excludedOccurrences: excluded,

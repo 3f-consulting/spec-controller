@@ -42,24 +42,24 @@ function reportOver(feature: string, specController: Record<string, unknown>): R
 
 describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when its inputs hold a fault", () => {
   it("carries no errors key when the inputs hold no fault", () => {
-    expect(reportOver(coded, sound)).not.toHaveProperty("errors");
+    expect(reportOver(coded, sound)).not.toHaveProperty("errorsInTheInputs");
   });
 
   it("carries only the scenario code errors when the inputs hold no configuration fault", () => {
-    expect(reportOver(uncoded, sound).errors).toEqual({
-      scenarioCodes: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
+    expect(reportOver(uncoded, sound).errorsInTheInputs).toEqual({
+      scenarioCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
     });
   });
 
   it("carries only the configuration fault when the inputs hold no scenario code error", () => {
-    expect(reportOver(coded, { ...sound, zzz: true }).errors).toEqual({
+    expect(reportOver(coded, { ...sound, zzz: true }).errorsInTheInputs).toEqual({
       configurationNotRead: { keysNotRead: ["zzz"] },
     });
   });
 
   it("carries the scenario code errors and each kind of configuration fault together", () => {
-    expect(reportOver(uncoded, everyConfigurationFault).errors).toEqual({
-      scenarioCodes: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
+    expect(reportOver(uncoded, everyConfigurationFault).errorsInTheInputs).toEqual({
+      scenarioCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
       configurationNotRead: {
         keysNotRead: ["zzz"],
         ofWrongKind: [{ entry: "specController.deferralTags", is: "object", reads: "list" }],

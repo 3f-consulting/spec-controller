@@ -16,8 +16,7 @@ import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 import { RECONCILIATION_TOTALS_KEY, reconciliationTotalsOf } from "./reportReconciliationTotals.test-utils.js";
-import { configurationFaultsKey, configurationFaultsOf } from "./reportErrors.test-utils.js";
-import type { ErrorsSection } from "../domain/renderInput.js";
+import { configurationFaultsKey, configurationFaultsOf, errorsInTheInputsOf, scenarioCodeErrorsKey } from "./reportErrors.test-utils.js";
 import { scenarioCodesOnReport } from "./scenarioCodesOnReport.test-utils.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
@@ -95,8 +94,8 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       string,
       unknown
     >;
-    const errors = report.errors as ErrorsSection;
-    expect(Object.keys(errors)).toEqual(["scenarioCodes", configurationFaultsKey]);
+    const errors = errorsInTheInputsOf(report);
+    expect(Object.keys({ ...errors })).toEqual([scenarioCodeErrorsKey, configurationFaultsKey]);
     expect(Object.keys({ ...configurationFaultsOf(errors) })).toEqual([
       "keysNotRead",
       "ofWrongKind",

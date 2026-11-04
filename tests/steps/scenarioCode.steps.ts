@@ -11,6 +11,7 @@ import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { GrammarRow, GrammarRun, InheritedCodeRun, SpecControllerWorld } from "./support/world.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
+import { publishedSchemaNamesScenarioCodeErrors, scenarioCodeErrorsOnReport } from "./support/reportErrorsInTheInputs.js";
 
 function newRepository(world: SpecControllerWorld): string {
   const repo = temporaryDirectory(world, "allocate-");
@@ -503,7 +504,9 @@ When("balance reconciles that grammar target", function (this: SpecControllerWor
 });
 
 Then("the grammar target lists no scenario code error", function (this: SpecControllerWorld) {
-  assert.deepEqual(this.grammarRun.report.errors?.scenarioCodes ?? [], [], `expected no scenario code error; got ${JSON.stringify(this.grammarRun.report.errors?.scenarioCodes)}`);
+  assert.ok(publishedSchemaNamesScenarioCodeErrors(), "expected the published schema to name the place scenario code errors are read from; it does not");
+  const errors = scenarioCodeErrorsOnReport(this.grammarRun.report);
+  assert.deepEqual(errors ?? [], [], `expected no scenario code error; got ${JSON.stringify(errors)}`);
 });
 
 const OWN = "SCN-OWN-001";

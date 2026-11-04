@@ -41,7 +41,7 @@ interface ConfigurationFaults {
 }
 
 export interface ErrorsSection {
-  readonly scenarioCodes?: readonly ScenarioCodeError[];
+  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
   readonly configurationNotRead?: ConfigurationFaults;
 }
 
@@ -57,7 +57,7 @@ export function errorsOf(
     ...nonEmpty("nonChecksNotAStepName", summary.nonChecksNotAStepName),
   };
   const errors: ErrorsSection = {
-    ...nonEmpty("scenarioCodes", scenarioCodeErrors),
+    ...nonEmpty("scenarioCodeErrors", scenarioCodeErrors),
     ...(Object.keys(configurationNotRead).length > 0 ? { configurationNotRead } : {}),
   };
   return Object.keys(errors).length > 0 ? errors : undefined;
@@ -89,7 +89,7 @@ function nonEmpty<K extends string, T>(key: K, entries: readonly T[] | undefined
 
 export interface RenderInput {
   readonly runProvenance: ProvenanceObject;
-  readonly errors?: ErrorsSection;
+  readonly errorsInTheInputs?: ErrorsSection;
   readonly summary: SummaryStatingNoFault & {
     readonly runVerdict: RunVerdict;
     readonly scenarioCodes?: ScenarioCodesSection;

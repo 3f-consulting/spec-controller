@@ -83,7 +83,7 @@ function foreignWorded(error: ForeignScnCodeError): string {
 }
 
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
-  const errors = report.errors?.scenarioCodes;
+  const errors = report.errorsInTheInputs?.scenarioCodeErrors;
   if (errors === undefined) return [];
   const count = coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: errors.length });
   return [
@@ -99,7 +99,7 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
 };
 
 export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
-  if (report.errors?.scenarioCodes !== undefined) return [];
+  if (report.errorsInTheInputs?.scenarioCodeErrors !== undefined) return [];
   const { featureFiles, featureCodes } = report.summary.scenarioCodes ?? {};
   if (typeof featureFiles !== "number" || typeof featureCodes !== "number") return [];
   return [cleanStatement(scenarioCodeCleanlinessOf({ featureFiles, featureCodes })), ""];

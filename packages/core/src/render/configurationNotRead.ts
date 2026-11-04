@@ -23,11 +23,11 @@ function kindWords(kind: ConfigurationKind): string {
 }
 
 export const configurationNotReadSection = (report: RenderInput): string[] => {
-  const wrongKinds = report.errors?.configurationNotRead?.ofWrongKind ?? [];
-  const unknownKeys = report.errors?.configurationNotRead?.keysNotRead ?? [];
-  const runnerKeysNotALayer = report.errors?.configurationNotRead?.runnerKeysNotALayer ?? [];
-  const nonChecksMatchingNoStep = report.errors?.configurationNotRead?.nonChecksMatchingNoStep ?? [];
-  const nonChecksNotAStepName = report.errors?.configurationNotRead?.nonChecksNotAStepName ?? [];
+  const wrongKinds = report.errorsInTheInputs?.configurationNotRead?.ofWrongKind ?? [];
+  const unknownKeys = report.errorsInTheInputs?.configurationNotRead?.keysNotRead ?? [];
+  const runnerKeysNotALayer = report.errorsInTheInputs?.configurationNotRead?.runnerKeysNotALayer ?? [];
+  const nonChecksMatchingNoStep = report.errorsInTheInputs?.configurationNotRead?.nonChecksMatchingNoStep ?? [];
+  const nonChecksNotAStepName = report.errorsInTheInputs?.configurationNotRead?.nonChecksNotAStepName ?? [];
   if (
     wrongKinds.length === 0 &&
     unknownKeys.length === 0 &&

@@ -621,8 +621,8 @@ const SAVED_BEFORE_CLAIM_KEYS = {"runProvenance":{"target":"unknown-target","sou
 
 const savedWithSections = () => withScenarioCodesOnReport({
   ...saved(),
-  errors: {
-    scenarioCodes: [{ kind: "several-scn-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
+  errorsInTheInputs: {
+    scenarioCodeErrors: [{ kind: "several-scn-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
     configurationNotRead: {
       keysNotRead: ["runner"],
       ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
@@ -655,13 +655,16 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
       `${CLAIM_RECONCILIATIONS_PATH}[0].qualityCheckReconciliations[0].evidenceObligation.qualityCheckKind is missing`,
       (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-scn-code", evidenceObligation: {} }] }]),
     ],
-    ["errors.scenarioCodes is a string, not a list", (s: Saved) => ({ ...s, errors: { scenarioCodes: "x" } })],
-    ["errors.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { keysNotRead: "x" } } })],
-    ["errors.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { ofWrongKind: "x" } } })],
-    ["errors.configurationNotRead.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { runnerKeysNotALayer: "x" } } })],
-    ["errors.configurationNotRead.nonChecksMatchingNoStep is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { nonChecksMatchingNoStep: "x" } } })],
-    ["errors.configurationNotRead.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errors: { configurationNotRead: { nonChecksNotAStepName: "x" } } })],
-    ["errors.configurationNotRead is missing", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: ["runner"] } } })],
+    ["errorsInTheInputs.scenarioCodeErrors is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodeErrors: "x" } })],
+    ["errorsInTheInputs.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { keysNotRead: "x" } } })],
+    ["errorsInTheInputs.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { ofWrongKind: "x" } } })],
+    ["errorsInTheInputs.configurationNotRead.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { runnerKeysNotALayer: "x" } } })],
+    ["errorsInTheInputs.configurationNotRead.nonChecksMatchingNoStep is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { nonChecksMatchingNoStep: "x" } } })],
+    ["errorsInTheInputs.configurationNotRead.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { nonChecksNotAStepName: "x" } } })],
+    ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: ["runner"] } } })],
+    ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { scenarioCodes: [], configurationNotRead: { keysNotRead: ["runner"] } } })],
+    ["errorsInTheInputs.scenarioCodeErrors is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodes: [] } })],
+    ["errorsInTheInputs.configurationNotRead is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { configuration: { keysNotRead: ["runner"] } } })],
     [`${SCENARIO_CODES_PATH} is a string, not an object`, (s: Saved) => withScenarioCodesOnReport(s, "x")],
     ["runProvenance.corpus is missing", (s: Saved) => ({ ...s, runProvenance: { ...s.runProvenance, corpus: undefined } })],
     [

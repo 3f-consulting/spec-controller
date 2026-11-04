@@ -832,7 +832,7 @@ The tool judges scenario code errors only over the corpus that `--features` name
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errors.scenarioCodes` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-scn-code` — … ``. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errorsInTheInputs.scenarioCodeErrors` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-scn-code` — … ``. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |

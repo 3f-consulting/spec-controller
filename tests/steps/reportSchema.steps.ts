@@ -2,12 +2,10 @@ import { Then } from "@cucumber/cucumber";
 import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { SPEC_CONTROLLER_BIN } from "./support/builtCli.js";
+import { PUBLISHED_SCHEMA } from "./support/builtCli.js";
 import { CLAIM_RECONCILIATIONS_SECTION } from "./support/reportClaimReconciliations.js";
 import type { SpecControllerWorld } from "./support/world.js";
 
-const PUBLISHED_SCHEMA = join(dirname(SPEC_CONTROLLER_BIN), "spec-reconciliation.schema.json");
 const REQUIRED_KEY = CLAIM_RECONCILIATIONS_SECTION;
 const UNNAMED_KEY = "surprise";
 

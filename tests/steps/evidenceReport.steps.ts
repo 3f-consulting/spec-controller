@@ -675,7 +675,7 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
   "a list, not a reconciliation": [[() => [], notSaved(atTop(LIST, OBJECT))]],
   "a reconciliation with no ledger": [[withoutClaimReconciliations, notSaved(missing(CLAIM_RECONCILIATIONS_SECTION))]],
   "holding a section of the wrong kind": [
-    [(saved) => ({ ...saved, errors: { scenarioCodes: "x" } }), notSaved(wrongKind("errors.scenarioCodes", kindOf("string"), LIST))],
+    [(saved) => ({ ...saved, errorsInTheInputs: { scenarioCodeErrors: "x" } }), notSaved(wrongKind("errorsInTheInputs.scenarioCodeErrors", kindOf("string"), LIST))],
   ],
   "unreadable below its top": [[(saved) => withClaimReconciliations(saved, [{}]), ["not-renderable-as-saved", {}]]],
   "a reconciliation that does not name its corpus": [
@@ -694,7 +694,7 @@ const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
       (saved) => ({ ...withoutClaimReconciliations(saved), ledger: claimReconciliationsSection(claimReconciliationsOf(saved)) }),
       notSaved(missing(CLAIM_RECONCILIATIONS_SECTION)),
     ],
-    [(saved) => ({ ...saved, errors: { configuration: { keysNotRead: ["x"] } } }), notSaved(missing("errors.configurationNotRead"))],
+    [(saved) => ({ ...saved, errors: { configuration: { keysNotRead: ["x"] } } }), notSaved(missing("errorsInTheInputs"))],
   ],
 };
 

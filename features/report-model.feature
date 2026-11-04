@@ -4,8 +4,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   The reconciliation is ONE whole-document report model — the ordered sections of the
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
-  Its top-level keys, in document order, are runProvenance, then errors when the inputs hold a
-  fault, then summary and claimReconciliations. The scenario codes sit in the summary, straight
+  Its top-level keys, in document order, are runProvenance, then errorsInTheInputs when the inputs
+  hold a fault, then summary and claimReconciliations. The scenario codes sit in the summary, straight
   after its run verdict. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
@@ -17,7 +17,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     The foundation. One report model, assembled from the reconciliation and the facts of the
     run, is serialised glue-free as spec-reconciliation.json. Its summary is materialised: the
     totals the markdown's Summary shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
-    the ledger. Each fact is stated once: a fault in the inputs only under errors, a fact of the
+    the ledger. Each fact is stated once: a fault in the inputs only under errorsInTheInputs, a fact of the
     corpus only under scenarioCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
 

@@ -116,9 +116,9 @@ export const SAVED_RECONCILIATION: Shape = {
         },
       },
     },
-    errors: {
+    errorsInTheInputs: {
       fields: {
-        scenarioCodes: { list: "anything" },
+        scenarioCodeErrors: { list: "anything" },
         configurationNotRead: {
           fields: {
             keysNotRead: { list: "anything" },
@@ -129,10 +129,11 @@ export const SAVED_RECONCILIATION: Shape = {
           },
         },
       },
-      retired: { configuration: "configurationNotRead" },
+      retired: { scenarioCodes: "scenarioCodeErrors", configuration: "configurationNotRead" },
     },
   },
   required: ["runProvenance", "summary", "claimReconciliations"],
+  retired: { errors: "errorsInTheInputs" },
 };
 
 // Kinds are compared unworded, so a well-shaped report formats no message.

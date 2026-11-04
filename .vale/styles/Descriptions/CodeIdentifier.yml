@@ -9,12 +9,14 @@ exceptions:
   # The keys of the published report, which a reader of spec-reconciliation.json reads.
   - byOutcome
   - claimReconciliations
+  - errorsInTheInputs
   - missingByQualityCheckKind
   - outOfBalance
   - qualityCheckKind
   - qualityCheckReconciliations
   - reconciliationLines
   - runProvenance
+  - scenarioCodeErrors
   - scenarioCodes
   # The keys an adopter writes in package.json; checkRegistry is a retired one the report names as not read.
   - specController

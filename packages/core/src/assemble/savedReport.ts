@@ -11,7 +11,7 @@ export function assembleSavedReport(saved: SavedReport, strictGiven: boolean): R
     runProvenance: { ...saved.runProvenance, strict },
     summary: concludedSummary(saved.summary, {
       ledger: { claimReconciliations: saved.claimReconciliations },
-      scenarioCodeErrors: saved.errors?.scenarioCodes,
+      scenarioCodeErrors: saved.errorsInTheInputs?.scenarioCodeErrors,
       strict,
     }),
   };

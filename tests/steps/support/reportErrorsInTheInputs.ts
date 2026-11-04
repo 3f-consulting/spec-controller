@@ -1,0 +1,35 @@
+import { readFileSync } from "node:fs";
+import { PUBLISHED_SCHEMA } from "./builtCli.js";
+
+const SECTION = "errorsInTheInputs";
+const SCENARIO_CODE_ERRORS = "scenarioCodeErrors";
+
+export interface ErrorsInTheInputsSection {
+  readonly [SCENARIO_CODE_ERRORS]?: unknown[];
+}
+
+export interface WithErrorsInTheInputs {
+  readonly [SECTION]?: ErrorsInTheInputsSection;
+}
+
+export function errorsInTheInputsOf(report: unknown): ErrorsInTheInputsSection | undefined {
+  return (report as WithErrorsInTheInputs)[SECTION];
+}
+
+export function scenarioCodeErrorsOnReport(report: unknown): unknown[] | undefined {
+  return errorsInTheInputsOf(report)?.[SCENARIO_CODE_ERRORS];
+}
+
+interface SchemaNode {
+  readonly $ref?: string;
+  readonly properties?: Readonly<Record<string, SchemaNode>>;
+}
+
+// An absent section reads the same under any key, so a reader that finds none
+// first shows the published schema names the place it looked.
+export function publishedSchemaNamesScenarioCodeErrors(): boolean {
+  const schema = JSON.parse(readFileSync(PUBLISHED_SCHEMA, "utf8")) as SchemaNode & { readonly definitions: Record<string, SchemaNode> };
+  const resolved = (node: SchemaNode | undefined): SchemaNode | undefined =>
+    node?.$ref === undefined ? node : schema.definitions[node.$ref.replace("#/definitions/", "")];
+  return resolved(resolved(resolved(schema)?.properties?.[SECTION])?.properties?.[SCENARIO_CODE_ERRORS]) !== undefined;
+}

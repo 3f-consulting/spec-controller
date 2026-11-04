@@ -2,6 +2,7 @@ import { setWorldConstructor, World } from "@cucumber/cucumber";
 import type { IWorldOptions } from "@cucumber/cucumber";
 import type { SpawnSyncReturns } from "node:child_process";
 import type { ClaimReconciliationsSection } from "./reportClaimReconciliations.js";
+import type { WithErrorsInTheInputs } from "./reportErrorsInTheInputs.js";
 
 export interface ClaimReconciliation {
   claim: string;
@@ -57,7 +58,7 @@ export interface GrammarRow {
 
 export interface GrammarRun {
   status: number;
-  report: ClaimReconciliationsSection<GrammarRow> & { errors?: { scenarioCodes?: unknown[] } };
+  report: ClaimReconciliationsSection<GrammarRow> & WithErrorsInTheInputs;
 }
 
 export interface RoomCommand {

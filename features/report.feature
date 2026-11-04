@@ -654,7 +654,7 @@ Feature: The report renders the ledger as sectioned facts
 
     Right after "## Run provenance", "## Errors in the inputs" holds the scenario code errors under
     "### Scenario code errors", then the configuration the run could not use under
-    "### Configuration not read", in the order the JSON's errors hold them. Each part keeps its own
+    "### Configuration not read", in the order the JSON's errorsInTheInputs holds them. Each part keeps its own
     introduction and prints only when it holds a fault, and the section prints only when one part
     does.
 

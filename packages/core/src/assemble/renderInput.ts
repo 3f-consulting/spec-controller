@@ -28,7 +28,7 @@ export function assembleRenderInput(
   evidenceObligations?: EvidenceObligations,
   featureNames?: ReadonlyMap<string, string>
 ): RenderInput {
-  const errors = errorsOf(evidenceReconciliation.scenarioCodeErrors, evidenceReconciliation.summary);
+  const errorsInTheInputs = errorsOf(evidenceReconciliation.scenarioCodeErrors, evidenceReconciliation.summary);
   const scenarioCodes = scenarioCodesOf(evidenceReconciliation.scenarioCodePopulation, evidenceObligations);
   const byFeature = outOfBalanceByFeature(
     evidenceReconciliation.ledger.claimReconciliations,
@@ -37,7 +37,7 @@ export function assembleRenderInput(
   );
   return {
     runProvenance: provenanceObject(ctx),
-    ...(errors ? { errors } : {}),
+    ...(errorsInTheInputs ? { errorsInTheInputs } : {}),
     summary: concludedSummary({
       ...(scenarioCodes ? { scenarioCodes } : {}),
       ...summaryStatingNoFault(evidenceReconciliation.summary),
