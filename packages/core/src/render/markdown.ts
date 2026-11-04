@@ -33,6 +33,8 @@ import { evidenceObservationsSection } from "./evidenceObservations.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { remarkHeadlineOf, remarkWordsOf } from "./remarkWords.js";
 import { fencedBlockLines } from "./codeSpan.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
@@ -120,7 +122,17 @@ function renderRowExceptions(s: ClaimReconciliation): string {
 
 type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[], exitCodeOf: ExitCodeOf) => readonly string[];
 
-const titleSection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.ReportTitle], ""];
+const titleSection: SectionEmitter = () => [markdownHeading(1, coreMessage(CoreMessage.ReportTitle)), ""];
+
+type BrokenEvidenceName = { readonly kind: "unnamed" } | { readonly kind: "named"; readonly locator: string };
+
+export function brokenEvidenceNameOf({ locator }: EvidenceObservation): BrokenEvidenceName {
+  return locator?.trim() ? { kind: "named", locator } : { kind: "unnamed" };
+}
+
+function brokenEvidenceNameWords(name: BrokenEvidenceName): string {
+  return name.kind === "named" ? name.locator : coreMessage(CoreMessage.BrokenEvidenceNotNamed);
+}
 
 const runIntegritySection: SectionEmitter = (report) => {
   if (!hasBrokenEvidence(report)) return [];
@@ -131,22 +143,22 @@ const runIntegritySection: SectionEmitter = (report) => {
       ? CORE_MESSAGES[CoreMessage.OneProofNeverRan]
       : CORE_MESSAGES[CoreMessage.ProofsNeverRan](count);
   const lines = [
-    CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
+    markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
     "",
-    CORE_MESSAGES[CoreMessage.RunUnsound](proofs),
+    coreMessage(CoreMessage.RunUnsound, { proofs }),
     "",
   ];
   for (const item of brokenObservations) {
-    const locator = item.locator?.trim() ? item.locator : CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed];
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`);
+    const locator = brokenEvidenceNameWords(brokenEvidenceNameOf(item));
+    lines.push(`- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`);
     lines.push("");
-    lines.push(...fencedBlockLines("text", remarkWordsOf(item) ?? CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage]));
+    lines.push(...fencedBlockLines("text", remarkWordsOf(item) ?? coreMessage(CoreMessage.BrokenEvidenceNoMessage)));
     lines.push("");
   }
   return lines;
 };
 
-const summarySection: SectionEmitter = () => [CORE_MESSAGES[CoreMessage.SummaryHeading], ""];
+const summarySection: SectionEmitter = () => [markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)), ""];
 
 const RECONCILIATION_TOTALS_COLUMNS: readonly string[] = [
   CORE_MESSAGES[CoreMessage.SubjectColumn],

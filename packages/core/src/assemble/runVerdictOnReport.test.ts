@@ -8,14 +8,16 @@ import type { RunContext } from "../domain/runProvenance.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
 import type { EvidenceObservation, Ledger } from "../model.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
-import { CORE_MESSAGES, CoreMessage, type CoreMessages } from "../render/messages.js";
+import { CoreMessage, type CoreMessageValues, type WordedCoreMessage } from "../render/messages.js";
+import { coreMessage } from "../render/coreText.js";
+import { markdownHeading } from "../render/heading.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 import { sectionCtx as ctx } from "../render/runContext.test-utils.js";
 import { passed, pendingScenario, scenario } from "../domain/runVerdict.test-utils.js";
 
 const strictCtx: RunContext = { ...ctx, strict: true };
 
-const HEADLINE: Readonly<Record<RunVerdict, keyof CoreMessages>> = {
+const HEADLINE: Readonly<Record<RunVerdict, Exclude<WordedCoreMessage, keyof CoreMessageValues>>> = {
   balanced: CoreMessage.BalancedHeadline,
   "out-of-balance": CoreMessage.OutOfBalanceHeadline,
   unsound: CoreMessage.UnsoundHeadline,
@@ -76,7 +78,7 @@ const ROWS: readonly Row[] = [
 
 const verdictHeadlineOf = (md: string): string => {
   const lines = md.split("\n");
-  const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.RunVerdictHeading]);
+  const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.RunVerdictHeading)));
   expect(heading).toBeGreaterThanOrEqual(0);
   return lines[heading + 2]!.split(" — ")[0]!;
 };
@@ -89,7 +91,7 @@ describe("[SCN-RMD-017] the JSON report's summary names the run verdict, the one
       const md = renderMarkdown(reconciliation, row.ctx, publishedExitCodeOf);
 
       expect(report.summary.runVerdict).toBe(row.verdict);
-      expect(verdictHeadlineOf(md)).toBe(CORE_MESSAGES[HEADLINE[report.summary.runVerdict]]);
+      expect(verdictHeadlineOf(md)).toBe(coreMessage(HEADLINE[report.summary.runVerdict]));
     });
   }
 });

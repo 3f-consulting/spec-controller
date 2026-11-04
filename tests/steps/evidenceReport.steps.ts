@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { BALANCED_INPUTS } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalogue.js";
+import { showsHeading } from "./support/reportLines.js";
 import {
   CLAIM_RECONCILIATIONS_SECTION,
   claimReconciliationsOf,
@@ -824,7 +825,7 @@ When("balance is asked to reconcile it with no feature corpus given", function (
 Then("the input is refused as one the tool cannot read, never read as a verdict", function (this: SpecControllerWorld) {
   for (const [, result] of eachReading(this)) {
     assert.equal(result.status, 2, `expected the usage exit; got ${result.status}\n${result.stderr}${result.stdout}`);
-    assert.doesNotMatch(result.stdout, /Evidence Reconciliation/, "a refused input must not reach a report");
+    assert.ok(!result.stdout.includes(entryText("report-title")), "a refused input must not reach a report");
     assert.doesNotMatch(result.stderr, /^\s+at .*:\d+:\d+\)?$/m, `a refusal is typed, never a stack trace:\n${result.stderr}`);
   }
 });
@@ -877,7 +878,7 @@ Then("the refusal names the JUnit report and the shape a JUnit XML report takes"
 Then("the run reads it and reaches its verdict", function (this: SpecControllerWorld) {
   assert.equal(this.balanceResult.status, 1, `expected the out-of-balance verdict of a target with no evidence; got ${this.balanceResult.status}\n${this.balanceResult.stderr}`);
   assert.equal(this.balanceResult.stderr, "", "a report that was read says nothing on stderr");
-  assert.match(this.balanceResult.stdout, /^# Evidence Reconciliation/m);
+  assert.ok(showsHeading(this.balanceResult.stdout, 1, "report-title"), `expected the report's title; got:\n${this.balanceResult.stdout}`);
   const supplied = `\`${this.target.args[2]} ${this.target.args[3]}\``;
   assert.ok(this.balanceResult.stdout.includes(supplied), `expected the report to list ${supplied} among its inputs`);
 });

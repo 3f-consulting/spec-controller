@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
+import { CORE_MESSAGES, CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkInputsExist, checkInputsParse } from "./cli.js";
@@ -108,7 +108,7 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
       "tests/fixtures/evidence-observation/vitest.json",
     ]);
 
-    expect(`\n${emitted}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
+    expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
     expect(emitted).toMatch(/out-of-balance/);
     expect(exitCode).toBe(1);
   });
@@ -125,7 +125,7 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
       "tests/fixtures/broken/package.json",
     ]);
 
-    expect(`\n${emitted}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
+    expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
     expect(emitted).toMatch(/out-of-balance/);
     expect(exitCode).toBe(4);
   });
@@ -142,7 +142,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
       "tests/fixtures/nothing-to-reconcile",
     ]);
 
-    expect(`\n${emitted}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
+    expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
     expect(`\n${emitted}`).toContain(`\n| ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} | 0 | 0 | 0 |`);
     expect(exitCode).toBe(5);
   });
@@ -159,7 +159,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
       "tests/fixtures/pending-only",
     ]);
 
-    expect(`\n${emitted}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
+    expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
     expect(emitted).toMatch(/Pending Item/);
     expect(exitCode).toBe(0);
   });

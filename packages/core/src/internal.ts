@@ -25,5 +25,6 @@ export {
   type WordedCoreMessage,
 } from "./render/messages.js";
 export { CORE_TEXTS, coreMessage } from "./render/coreText.js";
+export { markdownHeading } from "./render/heading.js";
 
 export { observationsOf, obligationsOf, reconcilingItemsOf } from "./domain/claimReconciliation.js";

@@ -5,6 +5,9 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import { UNNAMED_CLAIM_ID } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
+import { brokenEvidenceNameOf } from "./markdown.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
@@ -24,11 +27,11 @@ const ctx: RunContext = {
 const COLLECTION_FAILED_LOCATOR = "src/collect.test.ts";
 const COLLECTION_FAILED_MESSAGE = "  \n\t\nError:  Cannot   find | package\n    at packageResolve (node:internal)";
 
-const collectionFailed = (locator: string, message?: string): EvidenceObservation => ({
+const collectionFailed = (locator: string | undefined, message?: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
   scnId: null,
   status: "failed",
-  locator,
+  ...(locator !== undefined ? { locator } : {}),
   broken: true,
   ...(message !== undefined ? { message } : {}),
 });
@@ -56,8 +59,8 @@ function render(...broken: readonly EvidenceObservation[]): string {
 
 function runIntegrityLines(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
-  const end = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
+  const start = lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)));
+  const end = lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)));
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
   return lines.slice(start, end);
@@ -68,12 +71,12 @@ function reconcilingItemsCell(md: string, claim: string): string {
 }
 
 const whatBroke = (locator: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.BrokenEvidenceWhatBroke](`\`${locator}\``)}`;
+  `- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`;
 
 const brokenCell = (qualityCheckKind: string, where: string): string =>
   `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
 
-const unsoundStamp = (proofs: string): string => CORE_MESSAGES[CoreMessage.RunUnsound](proofs);
+const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnsound, { proofs });
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
@@ -81,7 +84,6 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     checkDidNotRun = CORE_MESSAGES[CoreMessage.CheckStepSkipped]("SCN-RIN-001");
   });
 
-  const noMessage = CORE_MESSAGES[CoreMessage.BrokenEvidenceNoMessage];
   it.each([
     ["its error verbatim", COLLECTION_FAILED_MESSAGE, "```", COLLECTION_FAILED_MESSAGE],
     [
@@ -90,19 +92,19 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
       "````",
       "Error: bad\n```\n# Heading after fence\nmore",
     ],
-    ["an empty error as no message", "", "```", noMessage],
-    ["an error of whitespace only as no message", "  \n\t", "```", noMessage],
+    ["an empty error as no message", "", "```", null],
+    ["an error of whitespace only as no message", "  \n\t", "```", null],
   ])("one broken evidence: the stamp counts one proof, then names its file and prints %s, each block followed by a blank line", (_, message, fence, shown) => {
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message));
     expect(runIntegrityLines(md)).toEqual([
-      CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
+      markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
       unsoundStamp(CORE_MESSAGES[CoreMessage.OneProofNeverRan]),
       "",
       whatBroke(COLLECTION_FAILED_LOCATOR),
       "",
       `${fence}text`,
-      ...shown.split("\n"),
+      ...(shown ?? coreMessage(CoreMessage.BrokenEvidenceNoMessage)).split("\n"),
       fence,
       "",
     ]);
@@ -111,11 +113,11 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   it("a broken item whose error is empty and which carries a note is printed with the note's words alone", () => {
     const md = render({ ...SKIPPED_CHECK, message: "" });
     expect(runIntegrityLines(md)).toEqual([
-      CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
+      markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
       unsoundStamp(CORE_MESSAGES[CoreMessage.OneProofNeverRan]),
       "",
-      whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]),
+      whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
       "",
       "```text",
       checkDidNotRun,
@@ -127,11 +129,11 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   it("two broken evidences: the stamp counts them in the plural, and the one the runner did not name is listed as unnamed", () => {
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
     expect(runIntegrityLines(md)).toEqual([
-      CORE_MESSAGES[CoreMessage.RunIntegrityHeading],
+      markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
       "",
       unsoundStamp(CORE_MESSAGES[CoreMessage.ProofsNeverRan](2)),
       "",
-      whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]),
+      whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
       "",
       "```text",
       checkDidNotRun,
@@ -164,7 +166,16 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
 
   it("a broken file whose locator is whitespace only is listed as unnamed, as one with no locator is", () => {
     const md = render(collectionFailed("  ", COLLECTION_FAILED_MESSAGE));
-    expect(runIntegrityLines(md)).toContain(whatBroke(CORE_MESSAGES[CoreMessage.BrokenEvidenceNotNamed]));
+    expect(runIntegrityLines(md)).toContain(whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)));
+  });
+
+  it.each([
+    { shape: "no locator", locator: undefined, name: { kind: "unnamed" } },
+    { shape: "an empty locator", locator: "", name: { kind: "unnamed" } },
+    { shape: "a locator of whitespace only", locator: " \t ", name: { kind: "unnamed" } },
+    { shape: "a locator", locator: " spaced/collect.test.ts", name: { kind: "named", locator: " spaced/collect.test.ts" } },
+  ])("a broken evidence observation with $shape is named by whether its locator names anything", ({ locator, name }) => {
+    expect(brokenEvidenceNameOf(collectionFailed(locator))).toEqual(name);
   });
 });
 

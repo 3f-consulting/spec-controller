@@ -7,14 +7,15 @@ import type { ScenarioCodeError } from "../domain/scnTags.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { isEntryOf } from "./inputErrorEntry.test-utils.js";
 
 const SECTION = CORE_MESSAGES[CoreMessage.ErrorsInTheInputsHeading];
 const SCENARIO_CODE_ERRORS = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
 const CONFIGURATION_NOT_READ = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
-const RUN_PROVENANCE = CORE_MESSAGES[CoreMessage.RunProvenanceHeading];
-const SUMMARY = CORE_MESSAGES[CoreMessage.SummaryHeading];
+const runProvenance = (): string => markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading));
+const summary = (): string => markdownHeading(2, coreMessage(CoreMessage.SummaryHeading));
 
 const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
@@ -76,16 +77,16 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
 describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
   it("states scenario code errors alone under Scenario code errors, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
-    expect(before).toBe(RUN_PROVENANCE);
-    expect(after).toBe(SUMMARY);
+    expect(before).toBe(runProvenance());
+    expect(after).toBe(summary());
     expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS]);
     expect(body.filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
   it("states configuration faults alone under Configuration not read, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ configuration: KEY_NOT_READ }));
-    expect(before).toBe(RUN_PROVENANCE);
-    expect(after).toBe(SUMMARY);
+    expect(before).toBe(runProvenance());
+    expect(after).toBe(summary());
     expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ]);
     expect(body.filter(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: "`specController.zzz`" })))).toHaveLength(1);
   });
@@ -93,8 +94,8 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
   it("states scenario code errors before configuration faults, in one section ahead of the run integrity stamp", () => {
     const lines = reportLines({ codeErrors: [FOREIGN], configuration: KEY_NOT_READ, unsound: true });
     const { before, body, after } = errorSectionOf(lines);
-    expect(before).toBe(RUN_PROVENANCE);
-    expect(after).toBe(CORE_MESSAGES[CoreMessage.RunIntegrityHeading]);
+    expect(before).toBe(runProvenance());
+    expect(after).toBe(markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)));
     expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS, CONFIGURATION_NOT_READ]);
     expect(lines.filter((line) => line === SECTION)).toHaveLength(1);
   });

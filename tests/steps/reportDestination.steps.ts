@@ -5,6 +5,7 @@ import { chmodSync, closeSync, copyFileSync, existsSync, linkSync, lstatSync, mk
 import { basename, dirname, join, relative } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { entryText, shownEntry, showsEntry } from "./support/catalogue.js";
+import { showsHeading } from "./support/reportLines.js";
 import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
@@ -50,7 +51,7 @@ Then("the markdown report is in that file, and nothing else is reported", functi
   );
   assert.ok(existsSync(this.markdownDestination), `expected the markdown report at ${this.markdownDestination}; it does not exist`);
   const report = readFileSync(this.markdownDestination, "utf8");
-  assert.match(report, /^## Run provenance$/m, `expected the markdown report in the file; got:\n${report}`);
+  assert.ok(showsHeading(report, 2, "run-provenance-heading"), `expected the markdown report in the file; got:\n${report}`);
   assert.match(report, /^\| Claim \|/m, `expected the claim table in the file; got:\n${report}`);
   assert.equal(this.balanceResult.stdout, "", `expected nothing on stdout; got:\n${this.balanceResult.stdout}`);
 });

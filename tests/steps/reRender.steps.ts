@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { shownEntry, showsEntry } from "./support/catalogue.js";
+import { entryText, shownEntry, showsEntry } from "./support/catalogue.js";
+import { headingLine, showsHeading, verdictLineOn } from "./support/reportLines.js";
 import { exitOn, RUN_OUTCOME } from "./support/runExit.js";
 import { RUN_ID, specController, USAGE } from "./support/specControllerRun.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -47,7 +48,7 @@ Then("the refusal names the unreadable saved report", function (this: SpecContro
 });
 
 Then("nothing is rendered", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(this.balanceResult.stdout, /Evidence Reconciliation/);
+  assert.ok(!this.balanceResult.stdout.includes(entryText("report-title")), `expected nothing rendered; got:\n${this.balanceResult.stdout}`);
 });
 
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
@@ -82,11 +83,11 @@ function saveLiveRun(world: SpecControllerWorld, fixture: string, flags: string[
 }
 
 function headlineExit(stdout: string): number {
-  const after = stdout.split("### Run verdict")[1] ?? "";
+  const after = stdout.split(headingLine(3, "run-verdict-heading"))[1] ?? "";
   const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
-  const match = /\(exit (\d)\)$/.exec(line);
-  assert.ok(match, `expected a verdict headline naming an exit; got:\n${line}`);
-  return Number(match[1]);
+  const verdict = verdictLineOn(line);
+  assert.ok(verdict, `expected a verdict headline naming an exit; got:\n${line}`);
+  return verdict.exit;
 }
 
 Given(/^a saved reconciliation of a target that reconciles (.+)$/, function (this: SpecControllerWorld, verdict: string) {
@@ -161,7 +162,7 @@ Then(new RegExp(`^under the report-only option the re-render ends on (${RUN_OUTC
 });
 
 Then("the two re-renders report the same, byte for byte", function (this: SpecControllerWorld) {
-  assert.ok(this.exitZeroPair && this.exitZeroPair.without.stdout.includes("### Run verdict"), "the re-render printed no report");
+  assert.ok(this.exitZeroPair && showsHeading(this.exitZeroPair.without.stdout, 3, "run-verdict-heading"), "the re-render printed no report");
   assert.equal(this.exitZeroPair.with.stdout, this.exitZeroPair.without.stdout);
 });
 

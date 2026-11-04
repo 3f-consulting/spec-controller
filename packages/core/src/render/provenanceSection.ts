@@ -1,26 +1,32 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
-import { projectProvenanceObject } from "./provenanceFacts.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { projectProvenanceObject, provenanceInputsView, type ProvenanceInputsView } from "./provenanceFacts.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
+
+function inputsLines(inputs: ProvenanceInputsView): string[] {
+  switch (inputs.kind) {
+    case "none":
+      return [`- ${coreMessage(CoreMessage.ProvenanceNoInputs)}`];
+    case "given":
+      return [`- ${coreMessage(CoreMessage.ProvenanceInputs)}`, ...inputs.inputs.map(({ flag, value }) => `  - \`${flag} ${value}\``)];
+  }
+}
 
 export const provenanceSection = (report: RenderInput, inputNames: readonly RunInputName[]): string[] => {
   const p = projectProvenanceObject(report.runProvenance, inputNames);
-  const lines = [CORE_MESSAGES[CoreMessage.RunProvenanceHeading], ""];
+  const lines = [markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)), ""];
   const targetRepo = p.targetOrigin === undefined
-    ? CORE_MESSAGES[CoreMessage.ProvenanceTargetRepo](p.target)
-    : CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted](p.target, p.targetOrigin);
+    ? coreMessage(CoreMessage.ProvenanceTargetRepo, { target: p.target })
+    : coreMessage(CoreMessage.ProvenanceTargetRepoUntargeted, { target: p.target, origin: p.targetOrigin });
   lines.push(`- ${targetRepo}`);
-  if (p.inputs.length === 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceNoInputs]}`);
-  } else {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceInputs]}`);
-    for (const { flag, value } of p.inputs) lines.push(`  - \`${flag} ${value}\``);
-  }
-  if (p.absentInputs.length > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceNotSupplied](p.absentInputs.map((flag) => `\`${flag}\``).join(", "))}`);
-  lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceRunTimestamp](p.runStartUtc)}`);
-  lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceSourceSha](p.sourceSha ?? CORE_MESSAGES[CoreMessage.ProvenanceSourceShaUnknown])}`);
-  lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceToolSha](p.toolSha ?? CORE_MESSAGES[CoreMessage.ProvenanceToolShaUnknown])}`);
-  lines.push(`- ${CORE_MESSAGES[CoreMessage.ProvenanceToolVersion](p.toolVersion)}`);
+  lines.push(...inputsLines(provenanceInputsView(p.inputs)));
+  if (p.absentInputs.length > 0) lines.push(`- ${coreMessage(CoreMessage.ProvenanceNotSupplied, { flags: p.absentInputs.map((flag) => `\`${flag}\``).join(", ") })}`);
+  lines.push(`- ${coreMessage(CoreMessage.ProvenanceRunTimestamp, { runStartUtc: p.runStartUtc })}`);
+  lines.push(`- ${coreMessage(CoreMessage.ProvenanceSourceSha, { sha: p.sourceSha ?? coreMessage(CoreMessage.ProvenanceSourceShaUnknown) })}`);
+  lines.push(`- ${coreMessage(CoreMessage.ProvenanceToolSha, { sha: p.toolSha ?? coreMessage(CoreMessage.ProvenanceToolShaUnknown) })}`);
+  lines.push(`- ${coreMessage(CoreMessage.ProvenanceToolVersion, { version: p.toolVersion })}`);
   lines.push("");
   return lines;
 };

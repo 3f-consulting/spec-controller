@@ -13,28 +13,10 @@ export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
 };
 
 export enum CoreMessage {
-  ReportTitle,
-  RunProvenanceHeading,
-  ProvenanceTargetRepo,
-  ProvenanceTargetRepoUntargeted,
-  ProvenanceNoInputs,
-  ProvenanceInputs,
-  ProvenanceNotSupplied,
-  ProvenanceRunTimestamp,
-  ProvenanceSourceSha,
-  ProvenanceSourceShaUnknown,
-  ProvenanceToolSha,
-  ProvenanceToolShaUnknown,
-  ProvenanceToolVersion,
   ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
-  RunIntegrityHeading,
   OneProofNeverRan,
   ProofsNeverRan,
-  RunUnsound,
-  BrokenEvidenceNotNamed,
-  BrokenEvidenceWhatBroke,
-  BrokenEvidenceNoMessage,
   ScenarioCodeErrorsHeading,
   FeatureFileNoun,
   FeatureCodeNoun,
@@ -47,25 +29,6 @@ export enum CoreMessage {
   ThemPronoun,
   HoldsVerb,
   HoldVerb,
-  SummaryHeading,
-  RunVerdictHeading,
-  VerdictExit,
-  ScenarioCodeErrorsHeadline,
-  ScenarioCodeErrorsGloss,
-  SeveralScnCodesGloss,
-  MisfiledAndSeveralScnCodesGloss,
-  AlsoOutOfBalance,
-  OutOfBalanceHeadline,
-  OutOfBalanceGloss,
-  UnsoundHeadline,
-  UnsoundGloss,
-  PendingHeadline,
-  PendingGloss,
-  BalancedHeadline,
-  BalancedGloss,
-  NothingToReconcileHeadline,
-  NothingToReconcileGloss,
-  PendingItemsOutstanding,
   ReconciliationTotalsHeading,
   ReconciliationTotalsClaimReconciliationTerm,
   ReconciliationTotalsReconciliationLineTerm,
@@ -175,6 +138,43 @@ export enum CoreMessage {
   ManifestKindString = "manifest-kind-string",
   ManifestKindStringOrNull = "manifest-kind-string-or-null",
   ManifestKindOfType = "manifest-kind-of-type",
+  ReportTitle = "report-title",
+  RunProvenanceHeading = "run-provenance-heading",
+  ProvenanceTargetRepo = "provenance-target-repo",
+  ProvenanceTargetRepoUntargeted = "provenance-target-repo-untargeted",
+  ProvenanceNoInputs = "provenance-no-inputs",
+  ProvenanceInputs = "provenance-inputs",
+  ProvenanceNotSupplied = "provenance-not-supplied",
+  ProvenanceRunTimestamp = "provenance-run-timestamp",
+  ProvenanceSourceSha = "provenance-source-sha",
+  ProvenanceSourceShaUnknown = "provenance-source-sha-unknown",
+  ProvenanceToolSha = "provenance-tool-sha",
+  ProvenanceToolShaUnknown = "provenance-tool-sha-unknown",
+  ProvenanceToolVersion = "provenance-tool-version",
+  RunIntegrityHeading = "run-integrity-heading",
+  RunUnsound = "run-unsound",
+  BrokenEvidenceNotNamed = "broken-evidence-not-named",
+  BrokenEvidenceWhatBroke = "broken-evidence-what-broke",
+  BrokenEvidenceNoMessage = "broken-evidence-no-message",
+  SummaryHeading = "summary-heading",
+  RunVerdictHeading = "run-verdict-heading",
+  VerdictExit = "verdict-exit",
+  ScenarioCodeErrorsHeadline = "scenario-code-errors-headline",
+  ScenarioCodeErrorsGloss = "scenario-code-errors-gloss",
+  SeveralScnCodesGloss = "several-scn-codes-gloss",
+  MisfiledAndSeveralScnCodesGloss = "misfiled-and-several-scn-codes-gloss",
+  AlsoOutOfBalance = "also-out-of-balance",
+  OutOfBalanceHeadline = "out-of-balance-headline",
+  OutOfBalanceGloss = "out-of-balance-gloss",
+  UnsoundHeadline = "unsound-headline",
+  UnsoundGloss = "unsound-gloss",
+  PendingHeadline = "pending-headline",
+  PendingGloss = "pending-gloss",
+  BalancedHeadline = "balanced-headline",
+  BalancedGloss = "balanced-gloss",
+  NothingToReconcileHeadline = "nothing-to-reconcile-headline",
+  NothingToReconcileGloss = "nothing-to-reconcile-gloss",
+  PendingItemsOutstanding = "pending-items-outstanding",
 }
 
 // Each error named under Errors in the inputs, by its code: a handle's value is the code its entry opens with.
@@ -191,25 +191,11 @@ export enum CoreError {
 }
 
 interface CoreMessageParams {
-  readonly [CoreMessage.ProvenanceTargetRepo]: [target: string];
-  readonly [CoreMessage.ProvenanceTargetRepoUntargeted]: [target: string, origin: string];
-  readonly [CoreMessage.ProvenanceNotSupplied]: [flags: string];
-  readonly [CoreMessage.ProvenanceRunTimestamp]: [runStartUtc: string];
-  readonly [CoreMessage.ProvenanceSourceSha]: [sha: string];
-  readonly [CoreMessage.ProvenanceToolSha]: [sha: string];
-  readonly [CoreMessage.ProvenanceToolVersion]: [version: string];
   readonly [CoreMessage.ProofsNeverRan]: [count: number];
-  readonly [CoreMessage.RunUnsound]: [proofs: string];
-  readonly [CoreMessage.BrokenEvidenceWhatBroke]: [locator: string];
   readonly [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
   readonly [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
   readonly [CoreMessage.CleanEachFileOwnCode]: [over: string];
   readonly [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
-  readonly [CoreMessage.VerdictExit]: [code: number];
-  readonly [CoreMessage.ScenarioCodeErrorsGloss]: [alsoOutOfBalance: string];
-  readonly [CoreMessage.SeveralScnCodesGloss]: [alsoOutOfBalance: string];
-  readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: [alsoOutOfBalance: string];
-  readonly [CoreMessage.NothingToReconcileGloss]: [corpusDir: string];
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessCiStep]: [steps: number];
@@ -269,6 +255,20 @@ export interface CoreMessageValues {
   readonly [CoreMessage.ForeignScnCodeNoCarrier]: { readonly file: string; readonly featureCode: string; readonly scnId: string; readonly named: string };
   readonly [CoreMessage.NoFeatureCode]: { readonly file: string };
   readonly [CoreMessage.ScenarioSeveralScnCodes]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
+  readonly [CoreMessage.ProvenanceTargetRepo]: { readonly target: string };
+  readonly [CoreMessage.ProvenanceTargetRepoUntargeted]: { readonly target: string; readonly origin: string };
+  readonly [CoreMessage.ProvenanceNotSupplied]: { readonly flags: string };
+  readonly [CoreMessage.ProvenanceRunTimestamp]: { readonly runStartUtc: string };
+  readonly [CoreMessage.ProvenanceSourceSha]: { readonly sha: string };
+  readonly [CoreMessage.ProvenanceToolSha]: { readonly sha: string };
+  readonly [CoreMessage.ProvenanceToolVersion]: { readonly version: string };
+  readonly [CoreMessage.RunUnsound]: { readonly proofs: string };
+  readonly [CoreMessage.BrokenEvidenceWhatBroke]: { readonly locator: string };
+  readonly [CoreMessage.VerdictExit]: { readonly code: number };
+  readonly [CoreMessage.ScenarioCodeErrorsGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.SeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.NothingToReconcileGloss]: { readonly corpusDir: string };
 }
 
 export type CoreMessages = {
@@ -285,36 +285,11 @@ const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
 
 export const CORE_MESSAGES: CoreMessages = {
-  [CoreMessage.ReportTitle]: "# Evidence Reconciliation",
-  [CoreMessage.RunProvenanceHeading]: "## Run provenance",
-  [CoreMessage.ProvenanceTargetRepo]: (target) => `Target repo: ${target}`,
-  [CoreMessage.ProvenanceTargetRepoUntargeted]: (target, origin) => `Target repo: ${target} (no --target given; origin is ${origin})`,
-  [CoreMessage.ProvenanceNoInputs]: "Inputs: none specified",
-  [CoreMessage.ProvenanceInputs]: "Inputs:",
-  [CoreMessage.ProvenanceNotSupplied]: (flags) => `Not supplied: ${flags}`,
-  [CoreMessage.ProvenanceRunTimestamp]: (runStartUtc) => `Run timestamp (UTC): ${runStartUtc}`,
-  [CoreMessage.ProvenanceSourceSha]: (sha) => `Source SHA: ${sha}`,
-  [CoreMessage.ProvenanceSourceShaUnknown]: "unknown (non-git target)",
-  [CoreMessage.ProvenanceToolSha]: (sha) => `Tool SHA: ${sha}`,
-  [CoreMessage.ProvenanceToolShaUnknown]: "unknown (not a git checkout)",
-  [CoreMessage.ProvenanceToolVersion]: (version) => `Tool version: ${version}`,
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
-  [CoreMessage.RunIntegrityHeading]: "## Run integrity: unsound",
   [CoreMessage.OneProofNeverRan]: "1 Evidence Observation never ran to a result, so the behaviour it proves was never exercised.",
   [CoreMessage.ProofsNeverRan]: (count) =>
     `${count} Evidence Observations never ran to a result, so the behaviours they prove were never exercised.`,
-  [CoreMessage.RunUnsound]: (proofs) =>
-    `**This run is unsound.** ${proofs} A broken proof sits on the row of the claim it names, as every ` +
-    "Evidence Observation does. On a scenario's row, an Evidence Obligation of its kind of quality check " +
-    `that no other proof answers reads "${MISSING}", though its test may already be written. A broken ` +
-    "proof on the row of a phantom claim or of the unnamed claim may be the proof behind any item of its " +
-    `kind of quality check that reads "${MISSING}", on any row. Fix what stopped each proof listed below ` +
-    "from running, such as its test, the code it loads, its step definitions, its runner or the CI job " +
-    "that runs it. Then run them again and regenerate this report.",
-  [CoreMessage.BrokenEvidenceNotNamed]: "(evidence not named by the runner)",
-  [CoreMessage.BrokenEvidenceWhatBroke]: (locator) => `${locator} — what broke:`,
-  [CoreMessage.BrokenEvidenceNoMessage]: "(no message reported by the runner)",
   [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
   [CoreMessage.FeatureFileNoun]: "feature file",
   [CoreMessage.FeatureCodeNoun]: "feature code",
@@ -331,44 +306,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ThemPronoun]: "them",
   [CoreMessage.HoldsVerb]: "holds",
   [CoreMessage.HoldVerb]: "hold",
-  [CoreMessage.SummaryHeading]: "## Summary",
-  [CoreMessage.RunVerdictHeading]: "### Run verdict",
-  [CoreMessage.VerdictExit]: (code) => `exit ${code}`,
-  [CoreMessage.ScenarioCodeErrorsHeadline]: "**SCENARIO CODE ERRORS**",
-  [CoreMessage.ScenarioCodeErrorsGloss]: (alsoOutOfBalance) =>
-    "the corpus files a scenario code under the wrong feature, so the by-feature grouping " +
-    `cannot be trusted. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
-  [CoreMessage.SeveralScnCodesGloss]: (alsoOutOfBalance) =>
-    "a scenario in the corpus carries more than one scenario code, so no account was raised for it " +
-    `under any of them. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
-  [CoreMessage.MisfiledAndSeveralScnCodesGloss]: (alsoOutOfBalance) =>
-    "the corpus files a scenario code under the wrong feature, so the by-feature grouping cannot be " +
-    "trusted, and a scenario in it carries more than one scenario code, so no account was raised for it " +
-    `under any of them. Read \`### Scenario code errors\` above.${alsoOutOfBalance} This run FAILED.`,
-  [CoreMessage.AlsoOutOfBalance]:
-    " The accounts do not agree either: at least one Claim Reconciliation carries a reconciling item.",
-  [CoreMessage.OutOfBalanceHeadline]: "**OUT-OF-BALANCE**",
-  [CoreMessage.OutOfBalanceGloss]:
-    "the accounts do not agree. At least one Claim Reconciliation carries a reconciling item. This run FAILED.",
-  [CoreMessage.UnsoundHeadline]: "**UNSOUND**",
-  [CoreMessage.UnsoundGloss]:
-    "the evidence could not be TRUSTED to reconcile. A proof never ran, so the behaviour " +
-    "it proves was never exercised. Read the run-integrity stamp above before any count " +
-    "below it.",
-  [CoreMessage.PendingHeadline]: "**PENDING**",
-  [CoreMessage.PendingGloss]:
-    "every Claim Reconciliation balances, but Pending Items are outstanding and this run " +
-    "treats a deferral as a failure (`--strict`). This run FAILED.",
-  [CoreMessage.BalancedHeadline]: "**BALANCED**",
-  [CoreMessage.BalancedGloss]: `every Claim Reconciliation balances: every ${SATISFIED}.`,
-  [CoreMessage.NothingToReconcileHeadline]: "**NOTHING TO RECONCILE**",
-  [CoreMessage.NothingToReconcileGloss]: (corpusDir) =>
-    "there were no accounts to agree. The ledger carries no Claim Reconciliation at " +
-    `all, so this run has NO BASIS FOR A VERDICT — the corpus \`${corpusDir}\` ` +
-    "carried no scenario and nothing was produced. Not balanced: a run that examined nothing must not certify.",
-  [CoreMessage.PendingItemsOutstanding]:
-    "Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
-    "A run that treats a deferral as a failure gives exit 3 under `--strict`.",
   [CoreMessage.ReconciliationTotalsHeading]: "### Reconciliation totals",
   [CoreMessage.ReconciliationTotalsClaimReconciliationTerm]:
     "A Claim Reconciliation is one row of the ledger: one claim, reconciled in its Quality Check Reconciliations. " +

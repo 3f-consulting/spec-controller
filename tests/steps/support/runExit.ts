@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { VerdictHeadlineEntry } from "./reportLines.js";
 
 const OUTCOME_EXIT: Readonly<Record<string, number>> = {
   "the balanced verdict": 0,
@@ -11,11 +12,16 @@ const OUTCOME_EXIT: Readonly<Record<string, number>> = {
   "the nothing-to-reconcile verdict": 5,
 };
 
-const HEADLINE_EXIT: Readonly<Record<string, number>> = {
-  BALANCED: 0,
-  "OUT-OF-BALANCE": 1,
-  PENDING: 3,
-  UNSOUND: 4,
+export interface NamedHeadline {
+  readonly headline: VerdictHeadlineEntry;
+  readonly exit: number;
+}
+
+const HEADLINE_NAMED: Readonly<Record<string, NamedHeadline>> = {
+  BALANCED: { headline: "balanced-headline", exit: 0 },
+  "OUT-OF-BALANCE": { headline: "out-of-balance-headline", exit: 1 },
+  PENDING: { headline: "pending-headline", exit: 3 },
+  UNSOUND: { headline: "unsound-headline", exit: 4 },
 };
 
 export const RUN_OUTCOME = Object.keys(OUTCOME_EXIT).join("|");
@@ -26,8 +32,8 @@ export function exitOn(outcome: string): number {
   return code;
 }
 
-export function exitNamedBy(headlineWord: string): number {
-  const code = HEADLINE_EXIT[headlineWord];
-  assert.ok(code !== undefined, `no exit is named for the headline word ${headlineWord}`);
-  return code;
+export function headlineNamedBy(headlineWord: string): NamedHeadline {
+  const named = HEADLINE_NAMED[headlineWord];
+  assert.ok(named !== undefined, `the word ${headlineWord} names no headline`);
+  return named;
 }

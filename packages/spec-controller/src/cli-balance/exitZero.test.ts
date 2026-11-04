@@ -3,7 +3,7 @@ import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { expectRefused } from "./balanceRun.test-utils.js";
 import { AppError } from "../messages.js";
 import { message } from "../appText.js";
-import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
+import { CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 
 describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
   const EXAMPLES = [
@@ -66,7 +66,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
 
       expect(without.exitCode).toBe(example.code);
       expect(withFlag.exitCode).toBe(0);
-      expect(`\n${without.stdout}`).toContain(`\n${CORE_MESSAGES[CoreMessage.ReportTitle]}`);
+      expect(`\n${without.stdout}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
       expect(withFlag.stdout).toBe(without.stdout);
     });
   }

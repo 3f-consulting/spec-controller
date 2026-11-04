@@ -5,6 +5,7 @@ import { assembleRenderInput } from "../assemble/renderInput.js";
 import type { RenderInput } from "../domain/renderInput.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -90,7 +91,7 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
 
   it("sits before the Summary, as a caveat on every cut beneath it", () => {
     const lines = md.split("\n");
-    const summary = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
+    const summary = lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)));
     expect(lines.indexOf(HEADING)).toBeGreaterThanOrEqual(0);
     expect(lines.indexOf(HEADING)).toBeLessThan(summary);
   });
@@ -188,13 +189,13 @@ function errorsSectionOf(md: string): string[] {
   return lines.slice(start, next === -1 ? lines.length : next);
 }
 
-const RUN_VERDICT_HEADING = CORE_MESSAGES[CoreMessage.RunVerdictHeading];
+const runVerdictHeading = (): string => markdownHeading(3, coreMessage(CoreMessage.RunVerdictHeading));
 const RECONCILIATION_TOTALS_HEADING = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
 
 function afterRunVerdictOf(md: string): string[] {
   const lines = md.split("\n");
-  const summary = lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]);
-  const start = lines.indexOf(RUN_VERDICT_HEADING);
+  const summary = lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)));
+  const start = lines.indexOf(runVerdictHeading());
   expect(summary).toBeGreaterThanOrEqual(0);
   expect(start).toBeGreaterThan(summary);
   const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
@@ -278,7 +279,7 @@ describe("[SCN-RPT-093] no scenario code errors section prints when the scenario
       expect(report.errors?.scenarioCodes).toBeUndefined();
       const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
       printsNoScenarioCodeErrorsSection(md);
-      expect(md).not.toContain(CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeadline]);
+      expect(md).not.toContain(coreMessage(CoreMessage.ScenarioCodeErrorsHeadline));
     });
   }
 });
@@ -481,10 +482,10 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
         : []),
     ];
     const lines = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf).split("\n");
-    const verdict = lines.indexOf(RUN_VERDICT_HEADING);
+    const verdict = lines.indexOf(runVerdictHeading());
     const next = lines.indexOf(RECONCILIATION_TOTALS_HEADING);
-    expect(verdict).toBeGreaterThan(lines.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
-    expect(lines.slice(verdict, verdict + 2)).toEqual([RUN_VERDICT_HEADING, ""]);
+    expect(verdict).toBeGreaterThan(lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
+    expect(lines.slice(verdict, verdict + 2)).toEqual([runVerdictHeading(), ""]);
     expect(lines[verdict + 2]).not.toBe("");
     expect(lines.slice(verdict + 3, next)).toEqual(["", ...codesStatement(codes), ...facts, ""]);
     const claimReconciliations = lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]));

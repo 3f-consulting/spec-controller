@@ -6,9 +6,11 @@ import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { provenanceInputsView } from "./provenanceFacts.js";
 
-const notSupplied = (flags: string): string => `- ${CORE_MESSAGES[CoreMessage.ProvenanceNotSupplied](flags)}`;
+const notSupplied = (flags: string): string => `- ${coreMessage(CoreMessage.ProvenanceNotSupplied, { flags })}`;
 
 let balance: Ledger;
 beforeEach(() => {
@@ -37,7 +39,7 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
     expect(notSuppliedLine(md)).toBe(notSupplied("`--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`"));
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeGreaterThan(-1);
     expect(md.indexOf("  - `--ci-steps ci-steps.json`")).toBeLessThan(md.indexOf(notSupplied("")));
-    expect(md.indexOf(notSupplied(""))).toBeLessThan(md.indexOf(`- ${CORE_MESSAGES[CoreMessage.ProvenanceRunTimestamp]("")}`));
+    expect(md.indexOf(notSupplied(""))).toBeLessThan(md.indexOf(`- ${coreMessage(CoreMessage.ProvenanceRunTimestamp, { runStartUtc: "" })}`));
   });
 
   it("says nothing about absence when the run was handed every canonical stream", () => {
@@ -62,9 +64,19 @@ describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run di
 
   it("keeps the none-specified Inputs branch reachable, and names every canonical flag beside it", () => {
     const md = renderMarkdown(er(balance), handed({}), publishedExitCodeOf);
-    expect(md.split("\n")).toContain(`- ${CORE_MESSAGES[CoreMessage.ProvenanceNoInputs]}`);
+    expect(md.split("\n")).toContain(`- ${coreMessage(CoreMessage.ProvenanceNoInputs)}`);
     expect(notSuppliedLine(md)).toBe(
       notSupplied("`--features`, `--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`")
     );
+  });
+
+  it.each([
+    { inputs: [], view: { kind: "none" } },
+    {
+      inputs: [{ flag: "--features", value: "features" }, { flag: "--ci", value: ".github/workflows" }],
+      view: { kind: "given", inputs: [{ flag: "--features", value: "features" }, { flag: "--ci", value: ".github/workflows" }] },
+    },
+  ])("says whether the run was given any input, from $inputs.length inputs", ({ inputs, view }) => {
+    expect(provenanceInputsView(inputs)).toEqual(view);
   });
 });

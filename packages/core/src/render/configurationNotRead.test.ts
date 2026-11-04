@@ -7,6 +7,7 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { entryOf } from "./inputErrorEntry.test-utils.js";
 
@@ -65,8 +66,8 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       entryOf(wrongKind("`specController.runners.unit`", coreMessage(CoreMessage.ManifestKindOfType, { type: "number" }), coreMessage(CoreMessage.ManifestKindStringOrNull))),
       "",
     ]);
-    expect(md.indexOf(CORE_MESSAGES[CoreMessage.RunProvenanceHeading])).toBeLessThan(md.indexOf(heading));
-    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
+    expect(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)))).toBeLessThan(md.indexOf(heading));
+    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
   });
 });
 

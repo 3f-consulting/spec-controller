@@ -4,8 +4,9 @@ import type { SpawnSyncReturns } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { BALANCED_INPUTS, NO_WORKFLOWS, OUT_OF_BALANCE_INPUTS, spawnBalance } from "./support/balanceTarget.js";
-import { showsEntry } from "./support/catalogue.js";
-import { exitNamedBy, exitOn, RUN_OUTCOME } from "./support/runExit.js";
+import { entryText, showsEntry, shownEntry } from "./support/catalogue.js";
+import { showsHeading, verdictLineOf, type VerdictLine } from "./support/reportLines.js";
+import { exitOn, headlineNamedBy, RUN_OUTCOME } from "./support/runExit.js";
 import type { SpecControllerWorld } from "./support/world.js";
 
 const PENDING_ONLY = {
@@ -40,7 +41,7 @@ When("balance is asked to reconcile that target", function (this: SpecController
 });
 
 Then("it reports the Evidence Reconciliation", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^# Evidence Reconciliation/m);
+  assert.ok(showsHeading(this.balanceResult.stdout, 1, "report-title"), `expected the report's title; got:\n${this.balanceResult.stdout}`);
 });
 
 Then("the reconciliation reports the target's scenarios", function (this: SpecControllerWorld) {
@@ -55,7 +56,7 @@ When("balance is asked to reconcile that target without the Cucumber report opti
 });
 
 Then("it reconciles the scenarios against the supplied evidence", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^# Evidence Reconciliation/m);
+  assert.ok(showsHeading(this.balanceResult.stdout, 1, "report-title"), `expected the report's title; got:\n${this.balanceResult.stdout}`);
   assert.match(this.balanceResult.stdout, /\| Claim Reconciliation \| 2 \|/);
 });
 
@@ -140,10 +141,10 @@ function tallyOutOfBalance(stdout: string): number {
   return Number(row[3]);
 }
 
-function verdictHeadline(stdout: string): { word: string; exit: number } {
-  const headline = stdout.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND|PENDING)\*\* — .*\(exit (\d+)\)$/m);
-  assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${stdout}`);
-  return { word: String(headline[1]), exit: Number(headline[2]) };
+function verdictHeadline(stdout: string): VerdictLine {
+  const verdict = verdictLineOf(stdout);
+  assert.ok(verdict, `expected a run-verdict headline in stdout; got:\n${stdout}`);
+  return verdict;
 }
 
 Then("the Reconciliation totals table counts {int} out-of-balance Claim Reconciliation", function (this: SpecControllerWorld, count: number) {
@@ -155,10 +156,10 @@ Then("the Reconciliation totals table counts {int} out-of-balance Claim Reconcil
 });
 
 Then("the verdict headline reads {word} and names the exit it ends with", function (this: SpecControllerWorld, word: string) {
-  const exit = exitNamedBy(word);
+  const named = headlineNamedBy(word);
   const headline = verdictHeadline(this.balanceResult.stdout);
-  assert.equal(headline.word, word, `expected the headline to read ${word}; got ${headline.word}`);
-  assert.equal(headline.exit, exit, `expected the headline to name exit ${exit}; got exit ${headline.exit}`);
+  assert.equal(headline.headline, named.headline, `expected the headline to read ${word}; got ${headline.line}`);
+  assert.equal(headline.exit, named.exit, `expected the headline to name exit ${named.exit}; got exit ${headline.exit}`);
 });
 
 Then("the tally, the verdict headline and the run's exit agree", function (this: SpecControllerWorld) {
@@ -177,9 +178,9 @@ Then("the tally, the verdict headline and the run's exit agree", function (this:
     `the tally counts ${tally} out-of-balance but the process exited ${exitCode} — the tally and the exit code disagree`,
   );
   assert.equal(
-    headline.word === "BALANCED",
+    headline.headline === "balanced-headline",
     tally === 0,
-    `the headline reads ${headline.word} but the tally counts ${tally} out-of-balance`,
+    `the headline reads ${headline.line} but the tally counts ${tally} out-of-balance`,
   );
 });
 
@@ -212,21 +213,19 @@ Given("a target that carried no scenario and produced no evidence", function (th
 });
 
 Then("the verdict headline says the run had nothing to reconcile, never that it balanced", function (this: SpecControllerWorld) {
-  const headline = this.balanceResult.stdout.match(/^\*\*(.+?)\*\* — .*\(exit (\d+)\)$/m);
-  assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${this.balanceResult.stdout}`);
+  const headline = verdictHeadline(this.balanceResult.stdout);
   assert.equal(
-    headline[1],
-    "NOTHING TO RECONCILE",
-    `expected the headline word to say the run had nothing to reconcile; got **${headline[1]}**`,
+    headline.headline,
+    "nothing-to-reconcile-headline",
+    `expected the headline word to say the run had nothing to reconcile; got ${headline.line}`,
   );
   assert.equal(
-    Number(headline[2]),
+    headline.exit,
     5,
-    `expected the headline to name exit 5; got exit ${headline[2]}`,
+    `expected the headline to name exit 5; got exit ${headline.exit}`,
   );
-  assert.doesNotMatch(
-    this.balanceResult.stdout,
-    /\*\*BALANCED\*\*/,
+  assert.ok(
+    !this.balanceResult.stdout.includes(entryText("balanced-headline")),
     `a run with no accounts must NEVER read as balanced; got:\n${this.balanceResult.stdout}`,
   );
 });
@@ -272,18 +271,20 @@ Then(new RegExp(`^under the report-only option the run ends on (${RUN_OUTCOME})$
   statusOf(exitZeroRuns(this).with, "the run with --exit-zero", exitOn(outcome));
 });
 
-const RUN_TIMESTAMP_LINE = /^- Run timestamp \(UTC\): .+$/m;
-
 function maskRunTimestamp(stdout: string, label: string): string {
-  assert.match(stdout, RUN_TIMESTAMP_LINE, `${label} printed no run-timestamp line to mask`);
-  return stdout.replace(RUN_TIMESTAMP_LINE, "- Run timestamp (UTC): <masked>");
+  const stamped = (line: string): boolean =>
+    line.startsWith("- ") && (shownEntry(line, "provenance-run-timestamp")?.["runStartUtc"] ?? "") !== "";
+  const lines = stdout.split("\n");
+  assert.ok(lines.some(stamped), `${label} printed no run-timestamp line to mask`);
+  const masked = `- ${entryText("provenance-run-timestamp", { runStartUtc: "<masked>" })}`;
+  return lines.map((line) => (stamped(line) ? masked : line)).join("\n");
 }
 
 Then(
   "the two runs report the same Evidence Reconciliation, byte for byte but for the run timestamp each stamps for itself",
   function (this: SpecControllerWorld) {
     const { without, with: withFlag } = exitZeroRuns(this);
-    assert.match(without.stdout, /^# Evidence Reconciliation/m);
+    assert.ok(showsHeading(without.stdout, 1, "report-title"), `expected the report's title; got:\n${without.stdout}`);
     assert.equal(
       maskRunTimestamp(withFlag.stdout, "the run with --exit-zero"),
       maskRunTimestamp(without.stdout, "the run without --exit-zero"),
@@ -327,10 +328,10 @@ Then("the report carries the out-of-balance account", function (this: SpecContro
 });
 
 Then("the verdict headline names both the scenario code error and the accounts out of balance", function (this: SpecControllerWorld) {
-  const headline = this.balanceResult.stdout.split("\n").find((line) => line.startsWith("**SCENARIO CODE ERRORS**"));
-  assert.ok(headline, `expected the SCENARIO CODE ERRORS headline; got:\n${this.balanceResult.stdout}`);
-  assert.match(headline, /accounts do not agree/);
-  assert.match(headline, /\(exit 1\)$/);
+  const headline = verdictHeadline(this.balanceResult.stdout);
+  assert.equal(headline.headline, "scenario-code-errors-headline", `expected the headline of a corpus that misfiles a code; got ${headline.line}`);
+  assert.ok(headline.line.includes(entryText("also-out-of-balance")), `expected the headline to carry the also-out-of-balance entry; got ${headline.line}`);
+  assert.equal(headline.exit, 1);
 });
 
 const SCENARIO_CODE_ERROR = "tests/fixtures/scenario-code-error";

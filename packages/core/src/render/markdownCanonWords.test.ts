@@ -37,7 +37,7 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 
   it("glosses a balanced run with the satisfied outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [provenObservation])), ctx, publishedExitCodeOf);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.BalancedGloss]);
+    expect(md).toContain(coreMessage(CoreMessage.BalancedGloss));
     expect(md).toContain(
       `every ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} balances: every ${CORE_MESSAGES[CoreMessage.OutcomeSatisfied]}.`
     );
@@ -66,7 +66,7 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
-    const stamp = CORE_MESSAGES[CoreMessage.RunUnsound](CORE_MESSAGES[CoreMessage.OneProofNeverRan]);
+    const stamp = coreMessage(CoreMessage.RunUnsound, { proofs: CORE_MESSAGES[CoreMessage.OneProofNeverRan] });
     expect(md.split("\n")).toContain(stamp);
     expect(stamp).toContain(`"${CORE_MESSAGES[CoreMessage.OutcomeMissing]}"`);
     expect(md).not.toContain("`missing`");

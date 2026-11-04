@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { optionFlag } from "./support/balanceOption.js";
 import { NO_WORKFLOWS, OUT_OF_BALANCE_INPUTS, spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { firstShown, shownEntry, showsEntry } from "./support/catalogue.js";
+import { entryText, firstShown, shownEntry, showsEntry } from "./support/catalogue.js";
 import { allocate, git } from "./support/codeAllocation.js";
 import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -50,7 +50,7 @@ const MISSING = ["input-path-missing", "feature-corpus-directory-missing"] as co
 const MISSING_OR_UNREADABLE = [...MISSING, "could-not-be-read", "working-directory-unreadable"] as const;
 
 Then("nothing is reconciled", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(this.balanceResult.stdout, /Evidence Reconciliation/);
+  assert.ok(!this.balanceResult.stdout.includes(entryText("report-title")), `expected no report; got:\n${this.balanceResult.stdout}`);
 });
 
 function spawnController(args: string[]): SpawnSyncReturns<string> {
@@ -183,7 +183,7 @@ Then("balance refuses the run as a usage fault and reconciles nothing", function
     2,
     `expected exit 2; got ${this.retiredFlagResult.status}\nstderr:\n${this.retiredFlagResult.stderr}`,
   );
-  assert.doesNotMatch(this.retiredFlagResult.stdout, /Evidence Reconciliation/);
+  assert.ok(!this.retiredFlagResult.stdout.includes(entryText("report-title")), `expected no report; got:\n${this.retiredFlagResult.stdout}`);
 });
 
 Then("the refusal names the flag as retired, with the version that retired it", function (this: SpecControllerWorld) {

@@ -5,7 +5,9 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { basename, join } from "node:path";
 import { spawnBalance } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entryText } from "./support/catalogue.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
+import { showsHeading, verdictLineOf as verdictShownIn } from "./support/reportLines.js";
 import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
 import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -120,12 +122,12 @@ Then("the run ends on the exit its verdict headline names, rather than on a stac
     ENUMERATED_STATUSES.includes(this.balanceResult.status ?? -1),
     `expected an enumerated status; got ${this.balanceResult.status}\nstderr:\n${this.balanceResult.stderr}`,
   );
-  const headline = this.balanceResult.stdout.match(/^\*\*(.+?)\*\* — .*\(exit (\d+)\)$/m);
+  const headline = verdictShownIn(this.balanceResult.stdout);
   assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${this.balanceResult.stdout}`);
   assert.equal(
     this.balanceResult.status,
-    Number(headline[2]),
-    `the report says exit ${headline[2]} (**${headline[1]}**) but the process exited ${this.balanceResult.status} — a status the REPORT did not choose is Node's, not the tool's`,
+    headline.exit,
+    `the report says exit ${headline.exit} (${headline.line}) but the process exited ${this.balanceResult.status} — a status the REPORT did not choose is Node's, not the tool's`,
   );
 });
 
@@ -166,9 +168,8 @@ Then("the uncited evidence observations are posted to the unnamed claim's reconc
 });
 
 Then("the run is never read as one with nothing to reconcile", function (this: SpecControllerWorld) {
-  assert.doesNotMatch(
-    this.balanceResult.stdout,
-    /NOTHING TO RECONCILE/,
+  assert.ok(
+    !this.balanceResult.stdout.includes(entryText("nothing-to-reconcile-headline").replaceAll("*", "")),
     `a corpus-less run WITH accounts has something to reconcile — the unnamed claim's row; got:\n${this.balanceResult.stdout}`,
   );
   assert.notEqual(
@@ -181,7 +182,7 @@ Then("the run is never read as one with nothing to reconcile", function (this: S
 const CORPUS_DIR = "features";
 
 function verdictLineOf(stdout: string, shape: string): string {
-  const line = stdout.match(/^\*\*.+\*\* — .*\(exit \d+\)$/m)?.[0];
+  const line = verdictShownIn(stdout)?.line;
   assert.ok(line, `expected a run-verdict headline for the target with ${shape}; got:\n${stdout}`);
   return line;
 }
@@ -375,7 +376,7 @@ When("balance is asked to reconcile that corpus", function (this: SpecController
     assert.fail(`expected a JSON reconciliation on stdout:\n${json}`);
   }
   this.sameNameMarkdown = balanceOverSameName("md");
-  assert.match(this.sameNameMarkdown, /^# Evidence Reconciliation/m, `expected a Markdown reconciliation on stdout:\n${this.sameNameMarkdown}`);
+  assert.ok(showsHeading(this.sameNameMarkdown, 1, "report-title"), `expected a Markdown reconciliation on stdout:\n${this.sameNameMarkdown}`);
 });
 
 Then("the reconciliation names each of those scenarios by its feature file's path under the corpus", function (this: SpecControllerWorld) {
@@ -383,7 +384,7 @@ Then("the reconciliation names each of those scenarios by its feature file's pat
   assert.deepEqual(
     scenarioCodesOnReport(this.sameNameJson).untaggedScenarios,
     SAME_NAME_FILES.map((feature) => scenarioName(feature, UNTAGGED_TITLE)),
-    "an untagged scenario's feature file was not named by its path under the corpus",
+    "an untagged scenario's name does not hold its feature file's path under the corpus",
   );
   const rows = claimReconciliationsOf<{ claim: string }>(this.sameNameJson).map(({ claim }) => claim);
   for (const feature of SAME_NAME_FILES) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage, coreMessage } from "@3f-consulting/spec-controller-core/internal";
+import { CORE_MESSAGES, CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
@@ -104,7 +104,7 @@ describe("[SCN-CFG-007] a saved run re-rendered names the same specController en
 });
 
 describe("[SCN-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
-  const accounts = (report: string): string => report.slice(report.indexOf(CORE_MESSAGES[CoreMessage.SummaryHeading]));
+  const accounts = (report: string): string => report.slice(report.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
 
   it.each(["notCheck", "fitnessChecks", "zzz"])("reconciles a target also holding %s as the target without it, naming the key in the one sentence every unread key gets", (key) => {
     const dir = targetOf(block);
@@ -116,7 +116,7 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
     expect(entries.every(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: `\`specController.${key}\`` })))).toBe(true);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(without.exitCode);
-    expect(accounts(run.report)).toMatch(new RegExp(`^${CORE_MESSAGES[CoreMessage.SummaryHeading]}\n`));
+    expect(accounts(run.report)).toMatch(new RegExp(`^${markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))}\n`));
     expect(accounts(run.report)).toBe(accounts(without.report));
   });
 });

@@ -6,7 +6,9 @@ import { constants } from "node:os";
 import path, { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entryText, shownEntry } from "./support/catalogue.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
+import { showsHeading } from "./support/reportLines.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { Provenance, Room, RoomCommand, SpecControllerWorld } from "./support/world.js";
 
@@ -28,12 +30,6 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const PACKAGE_DIRS = ["packages/core", "packages/spec-controller"] as const;
 
 const ASK = ["balance", "--features", "features"] as const;
-
-const TOOL_SHA_LINE = "- Tool SHA: ";
-
-const TOOL_VERSION_LINE = "- Tool version: ";
-
-const NO_CHECKOUT = "unknown (not a git checkout)";
 
 function scratch(world: SpecControllerWorld, purpose: string): string {
   return realpathSync(temporaryDirectory(world, `spec-controller-rpt029-${purpose}-`));
@@ -222,10 +218,13 @@ When("each one runs a reconcile and the provenance it renders is read", function
   const read = (room: Room): Provenance => {
     const ran = finish(room.start.command, room.start.args, room.start.cwd);
     assert.ok(
-      ran.stdout.includes("## Run provenance"),
+      showsHeading(ran.stdout, 2, "run-provenance-heading"),
       `the tool must render a report in ${room.where}. It said:\n${ran.stdout}\n${ran.stderr}`,
     );
-    return { toolSha: factOf(ran.stdout, TOOL_SHA_LINE, room), toolVersion: factOf(ran.stdout, TOOL_VERSION_LINE, room) };
+    return {
+      toolSha: factOf(ran.stdout, "provenance-tool-sha", "sha", room),
+      toolVersion: factOf(ran.stdout, "provenance-tool-version", "version", room),
+    };
   };
 
   this.reported = {
@@ -235,19 +234,20 @@ When("each one runs a reconcile and the provenance it renders is read", function
   };
 });
 
-function factOf(report: string, prefix: string, room: Room): string {
-  const line = report.split("\n").find((candidate) => candidate.startsWith(prefix));
-  assert.ok(
-    line !== undefined,
-    `the report from ${room.where} must carry a "${prefix.trim()}" line. It said:\n${report}`,
-  );
-  return line.slice(prefix.length).trim();
+function factOf(report: string, code: string, slot: string, room: Room): string {
+  const fact = report
+    .split("\n")
+    .filter((candidate) => candidate.startsWith("- "))
+    .map((candidate) => shownEntry(candidate.slice(2), code)?.[slot])
+    .find((value) => value !== undefined);
+  assert.ok(fact !== undefined, `the report from ${room.where} must carry a ${code} line. It said:\n${report}`);
+  return fact.trim();
 }
 
 Then("the one installed inside a git repository reports no tool SHA, and does not name that repository's commit", function (this: SpecControllerWorld) {
   assert.equal(
     this.reported.insideARepository.toolSha,
-    NO_CHECKOUT,
+    entryText("provenance-tool-sha-unknown"),
     "an installed tool has no checkout of its own, whatever repository it is sitting inside",
   );
   assert.notEqual(
@@ -260,7 +260,7 @@ Then("the one installed inside a git repository reports no tool SHA, and does no
 Then("the one installed outside any repository reports no tool SHA", function (this: SpecControllerWorld) {
   assert.equal(
     this.reported.outsideEveryRepository.toolSha,
-    NO_CHECKOUT,
+    entryText("provenance-tool-sha-unknown"),
     "the arm that was already right must stay right",
   );
 });

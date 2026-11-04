@@ -3,7 +3,9 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage, type CoreMessages } from "./messages.js";
+import { CORE_MESSAGES, CoreMessage, type CoreMessageValues, type WordedCoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import type { EvidenceObservation, Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
@@ -23,20 +25,20 @@ const ctx: RunContext = {
 
 const strictCtx: RunContext = { ...ctx, strict: true };
 
-const HEADING = CORE_MESSAGES[CoreMessage.RunVerdictHeading];
+const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.RunVerdictHeading));
 const NEXT_HEADING = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
 
 function verdictSectionOf(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(HEADING);
+  const start = lines.indexOf(heading());
   const end = lines.indexOf(NEXT_HEADING);
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
   return lines.slice(start, end);
 }
 
-function verdictLine(headline: keyof CoreMessages, gloss: string, exitCode: number): string {
-  return `${CORE_MESSAGES[headline] as string} — ${gloss} (${CORE_MESSAGES[CoreMessage.VerdictExit](exitCode)})`;
+function verdictLine(headline: Exclude<WordedCoreMessage, keyof CoreMessageValues>, gloss: string, exitCode: number): string {
+  return `${coreMessage(headline)} — ${gloss} (${coreMessage(CoreMessage.VerdictExit, { code: exitCode })})`;
 }
 
 const evidenceReconciliation = (ledger: Ledger): EvidenceReconciliation => ({
@@ -47,23 +49,23 @@ const evidenceReconciliation = (ledger: Ledger): EvidenceReconciliation => ({
 
 let BALANCED_LINE: string;
 beforeEach(() => {
-  BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, CORE_MESSAGES[CoreMessage.BalancedGloss], 0);
+  BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, coreMessage(CoreMessage.BalancedGloss), 0);
 });
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   it("a balanced ledger: the heading, a blank line, the verdict naming exit 0, and one blank line", () => {
     const md = renderMarkdown(evidenceReconciliation(reconcile([scenario], [passed])), ctx, publishedExitCodeOf);
-    expect(verdictSectionOf(md)).toEqual([HEADING, "", BALANCED_LINE, ""]);
+    expect(verdictSectionOf(md)).toEqual([heading(), "", BALANCED_LINE, ""]);
   });
 
   it("a balanced ledger with Pending Items: the verdict still names exit 0, then a blank line and the outstanding note, then one blank line", () => {
     const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
-      HEADING,
+      heading(),
       "",
       BALANCED_LINE,
       "",
-      CORE_MESSAGES[CoreMessage.PendingItemsOutstanding],
+      coreMessage(CoreMessage.PendingItemsOutstanding),
       "",
     ]);
   });
@@ -71,9 +73,9 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   it("the same Pending Items under --strict: the verdict names exit 3 and carries no outstanding note", () => {
     const md = renderMarkdown(evidenceReconciliation(reconcile([pendingScenario], [passed])), strictCtx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
-      HEADING,
+      heading(),
       "",
-      verdictLine(CoreMessage.PendingHeadline, CORE_MESSAGES[CoreMessage.PendingGloss], 3),
+      verdictLine(CoreMessage.PendingHeadline, coreMessage(CoreMessage.PendingGloss), 3),
       "",
     ]);
   });
@@ -81,11 +83,11 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   it("an empty corpus: the verdict names exit 5 and the corpus directory the run examined", () => {
     const md = renderMarkdown(evidenceReconciliation(reconcile([], [])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([
-      HEADING,
+      heading(),
       "",
       verdictLine(
         CoreMessage.NothingToReconcileHeadline,
-        CORE_MESSAGES[CoreMessage.NothingToReconcileGloss]("specs/features"),
+        coreMessage(CoreMessage.NothingToReconcileGloss, { corpusDir: "specs/features" }),
         5
       ),
       "",
@@ -113,9 +115,9 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     it("with every account balanced: the scenario-code-error verdict names exit 1 and adds nothing about the accounts", () => {
       const md = renderMarkdown(reconciled(bothPassed), ctx, publishedExitCodeOf);
       expect(verdictSectionOf(md)).toEqual([
-        HEADING,
+        heading(),
         "",
-        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss](""), 1),
+        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading], alsoOutOfBalance: "" }), 1),
         "",
       ]);
     });

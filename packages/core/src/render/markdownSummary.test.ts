@@ -5,6 +5,8 @@ import { type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -211,8 +213,8 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
     const sections = md.split("\n").filter((line) => line.startsWith("## "));
     expect(sections).toEqual([
-      CORE_MESSAGES[CoreMessage.RunProvenanceHeading],
-      CORE_MESSAGES[CoreMessage.SummaryHeading],
+      markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)),
+      markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)),
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     ]);
   });
@@ -278,7 +280,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   it("opens on the run provenance, then the Summary under the heading ## Summary, with the Claim Reconciliations last", () => {
     const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
     expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual([
-      CORE_MESSAGES[CoreMessage.RunProvenanceHeading],
+      markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)),
       "## Summary",
       CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
     ]);

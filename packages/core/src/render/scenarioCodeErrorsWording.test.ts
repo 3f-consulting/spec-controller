@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { codeErrorsCtx as ctx } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
@@ -42,7 +43,7 @@ function framingOf(md: string): string {
 
 function verdictOf(md: string): string {
   const lines = md.split("\n");
-  const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.RunVerdictHeading]);
+  const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.RunVerdictHeading)));
   expect(heading).toBeGreaterThanOrEqual(0);
   return lines[heading + 2]!;
 }
@@ -111,7 +112,7 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
       expect(framingOf(md)).toBe(
         coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count: coreMessage(CoreMessage.OneScenarioCodeError) })
       );
-      expect(verdictOf(md)).toContain(`— ${CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss]("")} (`);
+      expect(verdictOf(md)).toContain(`— ${coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading], alsoOutOfBalance: "" })} (`);
     });
   });
 });

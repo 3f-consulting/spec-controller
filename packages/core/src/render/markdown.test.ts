@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { type Ledger } from "../model.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -36,13 +38,13 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     const targetRepo = (md: string) => md.split("\n").find((line) => line.startsWith("- Target repo:"));
     const untargeted = { ...ctx, target: "unknown-target" };
     expect(targetRepo(renderMarkdown(__er(balance), { ...untargeted, targetOrigin: "ekino/veggies" }, publishedExitCodeOf)))
-      .toBe(`- ${CORE_MESSAGES[CoreMessage.ProvenanceTargetRepoUntargeted]("unknown-target", "ekino/veggies")}`);
+      .toBe(`- ${coreMessage(CoreMessage.ProvenanceTargetRepoUntargeted, { target: "unknown-target", origin: "ekino/veggies" })}`);
     expect(targetRepo(renderMarkdown(__er(balance), untargeted, publishedExitCodeOf))).toBe("- Target repo: unknown-target");
   });
 
   it("positions the provenance header above the claim table (sectioned-renderer order)", () => {
     const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
-    expect(md.indexOf(CORE_MESSAGES[CoreMessage.ReportTitle])).toBeLessThan(md.indexOf("## Run provenance"));
+    expect(md.indexOf(markdownHeading(1, coreMessage(CoreMessage.ReportTitle)))).toBeLessThan(md.indexOf("## Run provenance"));
     expect(md.indexOf("## Run provenance")).toBeLessThan(md.indexOf("| Claim | Verdict | Reconciling items |"));
   });
 

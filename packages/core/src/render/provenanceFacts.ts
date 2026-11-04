@@ -5,6 +5,10 @@ export interface ProvenanceInput {
   readonly value: string;
 }
 
+export type ProvenanceInputsView =
+  | { readonly kind: "none" }
+  | { readonly kind: "given"; readonly inputs: readonly [ProvenanceInput, ...(readonly ProvenanceInput[])] };
+
 export interface ProvenanceFacts {
   readonly target: string;
   readonly targetOrigin?: string;
@@ -37,4 +41,9 @@ export function projectProvenanceObject(obj: ProvenanceObject, inputNames: reado
     toolSha: obj.toolSha,
     toolVersion: obj.toolVersion,
   };
+}
+
+export function provenanceInputsView(inputs: readonly ProvenanceInput[]): ProvenanceInputsView {
+  const [first, ...rest] = inputs;
+  return first === undefined ? { kind: "none" } : { kind: "given", inputs: [first, ...rest] };
 }
