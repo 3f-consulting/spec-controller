@@ -115,7 +115,7 @@ function pipelineReadings(input: EvidenceReconciliationSources): PipelineReading
 
 function untaggedScenariosAmong(features: readonly ParsedFeatureFile[]): string[] {
   return features.flatMap((parsed) =>
-    untaggedScenariosOf(parsed).map((scenario) => untaggedScenarioId({ feature: parsed.file, scenario }))
+    untaggedScenariosOf(parsed).map((title) => untaggedScenarioId({ feature: parsed.file, title }))
   );
 }
 

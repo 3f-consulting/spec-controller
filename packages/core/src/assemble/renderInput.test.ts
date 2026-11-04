@@ -15,6 +15,7 @@ import { __er, heldObservationsOf, unitTestsAndLintCi } from "../evidenceReconci
 import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
+import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
 function reportLedger(): Ledger {
   return reconcile(
@@ -219,7 +220,7 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
         { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
         { qualityCheckKind: "unit", scnId: null, status: "passed" },
       ],
-      [untaggedScenarioId({ feature: "alpha.feature", scenario: "an untagged scenario" })]
+      [untaggedScenarioId(scenarioName("alpha.feature", "an untagged scenario"))]
     );
     const rows = claimReconciliationsOf<Record<string, unknown>>(JSON.parse(renderJson(__er(ledger), ctx)));
     expect(rows.map((row) => [row.kind, row.claim])).toEqual([

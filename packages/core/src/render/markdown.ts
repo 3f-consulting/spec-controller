@@ -306,7 +306,7 @@ function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number)
   return [
     `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenarios, shared.length)}`,
     ...shared.map(
-      (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.scenario}`).join("; ")}`
+      (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.title}`).join("; ")}`
     ),
   ];
 }

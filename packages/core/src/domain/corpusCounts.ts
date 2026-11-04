@@ -1,22 +1,19 @@
-export interface UntaggedScenario {
-  readonly feature: string;
-  readonly scenario: string;
-}
+import type { ScenarioName } from "./qualityCheckReconciliation.js";
 
-export function untaggedScenarioId({ feature, scenario }: UntaggedScenario): string {
-  return `${feature} : ${scenario}`;
+export function untaggedScenarioId({ feature, title }: ScenarioName): string {
+  return `${feature} : ${title}`;
 }
 
 export interface SharedScnCode {
   readonly scnId: string;
-  readonly scenarios: readonly UntaggedScenario[];
+  readonly scenarios: readonly ScenarioName[];
 }
 
 export interface EvidenceObligations {
   readonly rawScnOccurrences: number;
   readonly scenarioCount: number;
   readonly excludedOccurrences: number;
-  readonly untaggedScenarios: readonly UntaggedScenario[];
+  readonly untaggedScenarios: readonly ScenarioName[];
   readonly sharedScnCodes?: readonly SharedScnCode[];
 }
 
@@ -34,10 +31,10 @@ export interface ParsedFeature extends ParsedFeatureCounts {
 export function sharedScnCodesOf(
   files: readonly Pick<ParsedFeature, "feature" | "taggedScenarios">[]
 ): SharedScnCode[] {
-  const byCode = new Map<string, UntaggedScenario[]>();
+  const byCode = new Map<string, ScenarioName[]>();
   for (const { feature, taggedScenarios } of files) {
     for (const { scnId, name } of taggedScenarios) {
-      byCode.set(scnId, [...(byCode.get(scnId) ?? []), { feature, scenario: name }]);
+      byCode.set(scnId, [...(byCode.get(scnId) ?? []), { feature, title: name }]);
     }
   }
   return [...byCode]
@@ -51,15 +48,15 @@ export function corpusCountsOf(files: readonly ParsedFeature[]): EvidenceObligat
   const scenarioCount = files.reduce((n, f) => n + f.taggedScenarios.length, 0);
   const tagOccurrences = files.reduce((n, f) => n + f.tagScnOccurrences, 0);
   const untagged = files
-    .flatMap(({ feature, untaggedScenarios }) => untaggedScenarios.map((scenario) => ({ feature, scenario })))
-    .sort((a, b) => a.feature.localeCompare(b.feature) || a.scenario.localeCompare(b.scenario));
+    .flatMap(({ feature, untaggedScenarios }) => untaggedScenarios.map((title) => ({ feature, title })))
+    .sort((a, b) => a.feature.localeCompare(b.feature) || a.title.localeCompare(b.title));
   return evidenceObligations(raw, scenarioCount, untagged, sharedScnCodesOf(files), tagOccurrences);
 }
 
 export function evidenceObligations(
   raw: number,
   scenarioCount: number,
-  untaggedScenarios: UntaggedScenario[] = [],
+  untaggedScenarios: ScenarioName[] = [],
   sharedScnCodes: SharedScnCode[] = [],
   tagOccurrences: number = scenarioCount
 ): EvidenceObligations {

@@ -4,6 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { readCorpus } from "../parse/scenarioReaders.test-utils.js";
 import { censusBlock } from "./renderedSection.test-utils.js";
 import { evidenceObligations } from "../domain/corpusCounts.js";
+import { scenarioTitleOf } from "../domain/scenarioName.test-utils.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
@@ -41,7 +42,7 @@ function renderCorpus(corpus: readonly { feature: string; source: string }[]): s
   const ledger = reconcile(
     scenarios,
     [],
-    untagged.map(({ feature, scenario }) => `${feature} : ${scenario}`)
+    untagged.map((name) => `${name.feature} : ${scenarioTitleOf(name)}`)
   );
   return renderMarkdown(
     { summary: summaryOf(ledger, false), ledger },

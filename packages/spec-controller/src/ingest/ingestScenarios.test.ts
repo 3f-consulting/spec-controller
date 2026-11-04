@@ -8,6 +8,7 @@ import { readEvidenceObligations, readFeatureCorpus, runReconcile } from "./corp
 import { readFeatureSources, slugOf } from "./ingestScenarios.js";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 
 const WELL_FORMED = `@AAA
 Feature: alpha
@@ -148,8 +149,8 @@ describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path un
 
   it("names each untagged scenario's feature file by its path under the corpus", () => {
     expect(readEvidenceObligations(SAME_NAME_FEATURES).untaggedScenarios).toEqual([
-      { feature: "alpha/run.feature", scenario: "the run has no scenario code" },
-      { feature: "beta/run.feature", scenario: "the run has no scenario code" },
+      scenarioName("alpha/run.feature", "the run has no scenario code"),
+      scenarioName("beta/run.feature", "the run has no scenario code"),
     ]);
   });
 

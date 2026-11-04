@@ -77,6 +77,8 @@ export const CI_STEP_RECORD: Shape = {
 
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };
 
+const SCENARIO_NAME: Shape = { fields: { title: "string" }, required: ["title"] };
+
 export const SAVED_RECONCILIATION: Shape = {
   fields: {
     runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
@@ -118,7 +120,12 @@ export const SAVED_RECONCILIATION: Shape = {
         },
       },
     },
-    scenarioCodes: { fields: {} },
+    scenarioCodes: {
+      fields: {
+        untaggedScenarios: { list: SCENARIO_NAME },
+        sharedScnCodes: { list: { fields: { scenarios: { list: SCENARIO_NAME } } } },
+      },
+    },
   },
   required: ["runProvenance", "summary", "claimReconciliations"],
 };

@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf, type EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { evidenceObligations, type UntaggedScenario } from "../domain/corpusCounts.js";
+import { evidenceObligations } from "../domain/corpusCounts.js";
+import type { ScenarioName } from "../domain/qualityCheckReconciliation.js";
+import { scenarioName, scenarioTitleOf } from "../domain/scenarioName.test-utils.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
@@ -18,8 +20,8 @@ const ctx: RunContext = {
 
 const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false), ledger });
 
-function noScnCodeCorpus(untagged: UntaggedScenario[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
-  const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${u.scenario}`));
+function noScnCodeCorpus(untagged: ScenarioName[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
+  const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${scenarioTitleOf(u)}`));
   return { reconciliation: reconciliationOf(ledger), census: evidenceObligations(0, 0, untagged) };
 }
 
@@ -38,12 +40,9 @@ function byFeatureRowOf(rows: string[][], code: string): { row: string[][]; othe
 }
 
 describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
-  let checkout: UntaggedScenario[];
+  let checkout: ScenarioName[];
   beforeEach(() => {
-    checkout = ["pay by card", "pay by voucher", "pay on account"].map((scenario) => ({
-      feature: "checkout.feature",
-      scenario,
-    }));
+    checkout = ["pay by card", "pay by voucher", "pay on account"].map((title) => scenarioName("checkout.feature", title));
   });
 
   it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
@@ -56,8 +55,8 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
 describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row", () => {
   it("counts a headed file's no-scn-code scenarios on its feature's row when none carries the code", () => {
     const { reconciliation, census } = noScnCodeCorpus([
-      { feature: "one.feature", scenario: "a no-scn-code scenario" },
-      { feature: "one.feature", scenario: "an over-long code" },
+      scenarioName("one.feature", "a no-scn-code scenario"),
+      scenarioName("one.feature", "an over-long code"),
     ]);
     const md = renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census, new Map([["ONE", "one"]]));
     expect(byFeatureRowOf(byFeatureRows(md), "ONE")).toEqual({ row: [["2", "2 with no `@SCN` code"]], others: [] });
@@ -65,13 +64,13 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
 
   it("counts them on the same row as the scenarios carrying the file's code", () => {
     const untagged = [
-      { feature: "sample.feature", scenario: "an untagged scenario with no anchor" },
-      { feature: "sample.feature", scenario: "an untagged outline with no anchor" },
+      scenarioName("sample.feature", "an untagged scenario with no anchor"),
+      scenarioName("sample.feature", "an untagged outline with no anchor"),
     ];
     const ledger = reconcile(
       [{ scnId: "SCN-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [],
-      untagged.map((u) => `${u.feature} : ${u.scenario}`),
+      untagged.map((u) => `${u.feature} : ${scenarioTitleOf(u)}`),
     );
     const md = renderMarkdown(reconciliationOf(ledger), ctx, publishedExitCodeOf, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
     expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "SCN-UNT-001 and 2 with no `@SCN` code"]], others: [] });

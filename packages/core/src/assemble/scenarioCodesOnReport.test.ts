@@ -36,13 +36,13 @@ const sharedCodeCorpus = [
 ];
 
 const sharedCodeCorpusFacts = {
-  untaggedScenarios: [{ feature: "one.feature", scenario: "carries no code" }],
+  untaggedScenarios: [{ feature: "one.feature", title: "carries no code" }],
   sharedScnCodes: [
     {
       scnId: "SCN-ONE-001",
       scenarios: [
-        { feature: "one.feature", scenario: "first" },
-        { feature: "one.feature", scenario: "second" },
+        { feature: "one.feature", title: "first" },
+        { feature: "one.feature", title: "second" },
       ],
     },
   ],

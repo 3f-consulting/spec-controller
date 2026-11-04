@@ -1,7 +1,9 @@
-import type { ParsedFeatureCounts, UntaggedScenario } from "../domain/corpusCounts.js";
+import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
+import type { ScenarioName } from "../domain/qualityCheckReconciliation.js";
 import type { ScenarioTags } from "../domain/scnTags.js";
 import type { Scenario } from "../model.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
+import { scenarioName } from "../domain/scenarioName.test-utils.js";
 import { countScnOccurrences, featureCountsOf, scenariosOf, untaggedScenariosOf, type ParsedFeatureFile } from "./scenarios.js";
 
 function parsedFeature(source: string): ParsedFeatureFile {
@@ -25,12 +27,12 @@ export function parseScenarios(source: string, deferralTags: readonly string[] =
 }
 
 export function readCorpus(corpus: readonly { feature: string; source: string }[]): {
-  untagged: UntaggedScenario[];
+  untagged: ScenarioName[];
   raw: number;
   scenarios: Scenario[];
 } {
   const untagged = corpus.flatMap(({ feature, source }) =>
-    parseUntaggedScenarios(source).map((scenario) => ({ feature, scenario }))
+    parseUntaggedScenarios(source).map((title) => scenarioName(feature, title))
   );
   const raw = corpus.reduce((n, { source }) => n + countScnOccurrences(source), 0);
   const scenarios = corpus.flatMap(({ source }) => parseScenarios(source));

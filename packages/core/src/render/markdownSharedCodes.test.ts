@@ -4,6 +4,7 @@ import { renderJson } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { __er as er } from "../evidenceReconciliation.test-utils.js";
 import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
+import { scenarioName } from "../domain/scenarioName.test-utils.js";
 import { parseFeatureCounts, readCorpus } from "../parse/scenarioReaders.test-utils.js";
 import { censusBlock as censusBlockOf } from "./renderedSection.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
@@ -47,8 +48,8 @@ beforeEach(() => {
       {
         scnId: "SCN-ONE-001",
         scenarios: [
-          { feature: "one.feature", scenario: "the scenario in one" },
-          { feature: "two.feature", scenario: "the scenario in two" },
+          scenarioName("one.feature", "the scenario in one"),
+          scenarioName("two.feature", "the scenario in two"),
         ],
       },
     ],

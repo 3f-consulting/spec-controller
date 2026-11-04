@@ -32,7 +32,7 @@ interface QualityCheckReconciliationFields {
   readonly scenario?: ScenarioName;
 }
 
-/** The scenario a duplicate-scn-code reconciliation reconciles, by its feature file and title. */
+/** A scenario, named by its feature file and its title. */
 export interface ScenarioName {
   readonly feature: string;
   readonly title: string;

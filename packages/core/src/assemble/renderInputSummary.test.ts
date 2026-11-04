@@ -9,6 +9,7 @@ import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
+import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
 describe("[SCN-RMD-005] the summary states its evidence reconciliation: its Claim Reconciliations, Quality Check Reconciliations and pending items counted", () => {
   const rmd005Scenarios: Scenario[] = [
@@ -95,17 +96,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheckKind: "unit", scnId: null, status: "passed" },
   ];
-  const untaggedScenarios = [
-    { feature: "ledger.feature", scenario: "a ledger scenario with no code" },
-    { feature: "loose.feature", scenario: "a loose scenario" },
-    { feature: "loose.feature", scenario: "another loose scenario" },
-  ];
-  const evidenceObligations: EvidenceObligations = {
-    rawScnOccurrences: 5,
-    scenarioCount: 8,
-    excludedOccurrences: 0,
-    untaggedScenarios,
-  };
+  let evidenceObligations: EvidenceObligations;
   const featureNames = new Map([
     ["LDG", "ledger"],
     ["LNT", "fitness-evidence"],
@@ -118,6 +109,12 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
   ];
   let ledger: Ledger;
   beforeEach(() => {
+    const untaggedScenarios = [
+      scenarioName("ledger.feature", "a ledger scenario with no code"),
+      scenarioName("loose.feature", "a loose scenario"),
+      scenarioName("loose.feature", "another loose scenario"),
+    ];
+    evidenceObligations = { rawScnOccurrences: 5, scenarioCount: 8, excludedOccurrences: 0, untaggedScenarios };
     ledger = reconcile(scenarios, observations, untaggedScenarios.map(untaggedScenarioId));
   });
 

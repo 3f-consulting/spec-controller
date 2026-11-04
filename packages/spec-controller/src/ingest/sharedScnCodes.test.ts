@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readEvidenceObligations } from "./corpusReading.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 
 function corpus(files: Record<string, string>): string {
   const dir = join(temporaryDirectory("scn-stg-017-"), "features");
@@ -23,8 +24,8 @@ describe("[SCN-CLI-099] readEvidenceObligations names the scenarios sharing each
       {
         scnId: "SCN-ONE-001",
         scenarios: [
-          { feature: "one.feature", scenario: "the scenario in one" },
-          { feature: "two.feature", scenario: "the scenario in two" },
+          scenarioName("one.feature", "the scenario in one"),
+          scenarioName("two.feature", "the scenario in two"),
         ],
       },
     ]);

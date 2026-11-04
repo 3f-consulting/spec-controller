@@ -2,7 +2,8 @@ import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
-import type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./corpusCounts.js";
+import type { EvidenceObligations, SharedScnCode } from "./corpusCounts.js";
+import type { ScenarioName } from "./qualityCheckReconciliation.js";
 import type { RunVerdict } from "./runVerdict.js";
 import type { FeatureOutOfBalance } from "./outOfBalanceByFeature.js";
 
@@ -10,7 +11,7 @@ export interface ScenarioCodesSection {
   readonly featureFiles?: number;
   readonly featureCodes?: number;
   readonly excludedOccurrences?: number;
-  readonly untaggedScenarios?: readonly UntaggedScenario[];
+  readonly untaggedScenarios?: readonly ScenarioName[];
   readonly sharedScnCodes?: readonly SharedScnCode[];
 }
 

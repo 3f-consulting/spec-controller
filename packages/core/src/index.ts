@@ -26,7 +26,8 @@ export {
 export type { ParsedFeatureFile } from "./parse/scenarios.js";
 
 export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
-export type { EvidenceObligations, SharedScnCode, UntaggedScenario } from "./domain/corpusCounts.js";
+export type { EvidenceObligations, SharedScnCode } from "./domain/corpusCounts.js";
+export type { ScenarioName } from "./domain/qualityCheckReconciliation.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export { hasScenarioCodeErrors } from "./domain/scnTags.js";

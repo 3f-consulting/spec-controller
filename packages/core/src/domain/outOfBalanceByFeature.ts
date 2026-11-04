@@ -1,6 +1,7 @@
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import { carriesNoScnCode, isOutOfBalance, isScenario } from "./claimReconciliation.js";
-import { untaggedScenarioId, type UntaggedScenario } from "./corpusCounts.js";
+import { untaggedScenarioId } from "./corpusCounts.js";
+import type { ScenarioName } from "./qualityCheckReconciliation.js";
 import { featureCodeOf } from "./featureCode.js";
 
 export interface FeatureOutOfBalance {
@@ -13,7 +14,7 @@ export interface FeatureOutOfBalance {
 
 export function outOfBalanceByFeature(
   rows: readonly ClaimReconciliation[],
-  untagged: readonly UntaggedScenario[],
+  untagged: readonly ScenarioName[],
   featureNames: Readonly<Record<string, string>>,
 ): FeatureOutOfBalance[] {
   const fileOfCode = new Map(Object.entries(featureNames).map(([code, slug]) => [code, `${slug}.feature`]));
