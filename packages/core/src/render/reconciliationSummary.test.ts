@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage, type WordedCoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
@@ -69,18 +69,18 @@ function sectionLines(md: string): string[] {
 
 const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
 
-const CAUSE_ROW_SENTENCE: Record<Outcome, string> = {
-  satisfied: CORE_MESSAGES[CoreMessage.OutcomeSatisfied],
-  missing: CORE_MESSAGES[CoreMessage.OutcomeMissing],
-  failing: CORE_MESSAGES[CoreMessage.OutcomeFailing],
-  watermelon: CORE_MESSAGES[CoreMessage.OutcomeWatermelon],
-  "no-scn-code": CORE_MESSAGES[CoreMessage.OutcomeNoScnCode],
-  "duplicate-scn-code": CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode],
-  "cites-unknown-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesUnknownScenario],
-  "cites-no-scenario": CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario],
-  "no-evidence-obligation": CORE_MESSAGES[CoreMessage.OutcomeNoEvidenceObligation],
-  broken: CORE_MESSAGES[CoreMessage.OutcomeBroken],
-  "both-missing": CORE_MESSAGES[CoreMessage.OutcomeBothMissing],
+const CAUSE_ROW_SENTENCE: Record<Outcome, WordedCoreMessage> = {
+  satisfied: CoreMessage.OutcomeSatisfied,
+  missing: CoreMessage.OutcomeMissing,
+  failing: CoreMessage.OutcomeFailing,
+  watermelon: CoreMessage.OutcomeWatermelon,
+  "no-scn-code": CoreMessage.OutcomeNoScnCode,
+  "duplicate-scn-code": CoreMessage.OutcomeDuplicateScnCode,
+  "cites-unknown-scenario": CoreMessage.OutcomeCitesUnknownScenario,
+  "cites-no-scenario": CoreMessage.OutcomeCitesNoScenario,
+  "no-evidence-obligation": CoreMessage.OutcomeNoEvidenceObligation,
+  broken: CoreMessage.OutcomeBroken,
+  "both-missing": CoreMessage.OutcomeBothMissing,
 };
 
 function expectedTable(
@@ -122,7 +122,7 @@ function expectedTable(
     ]),
     ...OUT_OF_BALANCE_OUTCOMES.map((outcome) =>
       row([
-        CAUSE_ROW_SENTENCE[outcome],
+        coreMessage(CAUSE_ROW_SENTENCE[outcome]),
         "",
         "",
         String(leafCounts[outcome] ?? 0),

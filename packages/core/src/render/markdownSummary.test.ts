@@ -4,7 +4,7 @@ import { assembleRenderInput } from "../assemble/renderInput.js";
 import { type Ledger } from "../model.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
@@ -47,11 +47,11 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
   it("renders an '### Out-of-balance by feature' table grouping the out-of-balance scenarios under their feature code", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
 
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    expect(md).toContain(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
     expect(md).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 3, claimReconciliations: 5 })}${coreMessage(CoreMessage.GroupedByFeature)}.`
     );
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.ByFeatureTableHeader]);
+    expect(md).toContain(coreMessage(CoreMessage.ByFeatureTableHeader));
     expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
     expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
   });
@@ -62,8 +62,8 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
     const md = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf);
-    expect(md).not.toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
-    const wordsAfterTheCounts = CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](NaN, NaN).split("NaN").at(-1)?.trim();
+    expect(md).not.toContain(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
+    const wordsAfterTheCounts = coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: NaN, claimReconciliations: NaN }).split("NaN").at(-1)?.trim();
     expect(md).not.toContain(wordsAfterTheCounts);
   });
 
@@ -74,8 +74,8 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
     );
     const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
     const iObservations = md.indexOf(markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)));
-    const iByFeature = md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
-    const iLedger = md.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
+    const iByFeature = md.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
+    const iLedger = md.indexOf(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)));
     expect(iObservations).toBeGreaterThanOrEqual(0);
     expect(iByFeature).toBeGreaterThanOrEqual(0);
     expect(iLedger).toBeGreaterThanOrEqual(0);
@@ -95,7 +95,7 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
     expect(md).toContain(`| ${files.get("LNT")} (LNT) | 1 | SCN-LNT-002 |`);
   });
 
-  const ledgerHeading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
+  const ledgerHeading = (): string => markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
 
   function featureFilesOf(reconciliation: ReturnType<typeof __er>, featureNames: ReadonlyMap<string, string>): Map<string, string | undefined> {
     const byFeature = assembleRenderInput(reconciliation, ctx, undefined, featureNames).summary.outOfBalanceByFeature ?? [];
@@ -103,9 +103,9 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
   }
 
   function byFeatureLines(lines: string[]): string[] {
-    const start = lines.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    const start = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
     expect(start).toBeGreaterThanOrEqual(0);
-    const end = lines.indexOf(ledgerHeading);
+    const end = lines.indexOf(ledgerHeading());
     expect(end).toBeGreaterThan(start);
     return lines.slice(start, end);
   }
@@ -116,11 +116,11 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
     const files = featureFilesOf(__er(spanning), featureNames);
 
     expect(byFeatureLines(lines)).toEqual([
-      CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
+      markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)),
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](3, 5)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}.`,
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 3, claimReconciliations: 5 })}${coreMessage(CoreMessage.GroupedByFeature)}.`,
       "",
-      CORE_MESSAGES[CoreMessage.ByFeatureTableHeader],
+      coreMessage(CoreMessage.ByFeatureTableHeader),
       "| --- | --- | --- |",
       `| ${files.get("LDG")} (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |`,
       "| LNT | 1 | SCN-LNT-002 |",
@@ -134,9 +134,9 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf).split("\n");
-    const ledgerAt = lines.indexOf(ledgerHeading);
+    const ledgerAt = lines.indexOf(ledgerHeading());
 
-    expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    expect(lines).not.toContain(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
     expect(ledgerAt).toBeGreaterThan(1);
     expect(lines[ledgerAt - 1]).toBe("");
     expect(lines[ledgerAt - 2]).not.toBe("");
@@ -151,19 +151,19 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   const uncitedObservation = { qualityCheckKind: "unit" as const, scnId: null, status: "passed" as const };
   const byFeature = (ledger: Ledger): string => {
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
-    const at = md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
+    const at = md.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
     return at < 0 ? "" : md.slice(at, md.indexOf("\n## ", at));
   };
   const phantomClaimAndUnnamedClaimReconciliations = (): string =>
-    [CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](1), CORE_MESSAGES[CoreMessage.UnnamedClaimReconciliations](1)].join(
-      CORE_MESSAGES[CoreMessage.AndJoiner]
+    [coreMessage(CoreMessage.PhantomClaimReconciliations, { count: 1 }), coreMessage(CoreMessage.UnnamedClaimReconciliations, { count: 1 })].join(
+      coreMessage(CoreMessage.AndJoiner)
     );
 
   it("names the out-of-balance phantom claim's row beside the grouped scenario rows, and never groups it", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
-        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](1))}.`
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 1, claimReconciliations: 2 })}${coreMessage(CoreMessage.GroupedByFeature)}; ` +
+        `${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: coreMessage(CoreMessage.PhantomClaimReconciliations, { count: 1 }) })}.`
     );
     expect(section).toContain("| BFP | 1 | SCN-BFP-002 |");
     expect(section).not.toContain("SCN-GONE-001");
@@ -172,15 +172,15 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("names both ungrouped kinds when a phantom claim's row and the unnamed claim's row are out of balance", () => {
     const section = byFeature(reconcile([proven, unproven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](1, 2)}${CORE_MESSAGES[CoreMessage.GroupedByFeature]}; ` +
-        `${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 1, claimReconciliations: 2 })}${coreMessage(CoreMessage.GroupedByFeature)}; ` +
+        `${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: phantomClaimAndUnnamedClaimReconciliations() })}.`
     );
   });
 
   it("renders the section with no table when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section).toContain(
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 0, claimReconciliations: 1 })}; ${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: phantomClaimAndUnnamedClaimReconciliations() })}.`
     );
     expect(section).not.toContain("| Feature | Count |");
   });
@@ -188,9 +188,9 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   it("renders only the heading and the total line, with no table and no stray line, when the ungrouped rows are the only ones out of balance", () => {
     const section = byFeature(reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]));
     expect(section.split("\n")).toEqual([
-      CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
+      markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)),
       "",
-      `${CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](0, 1)}; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](phantomClaimAndUnnamedClaimReconciliations())}.`,
+      `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 0, claimReconciliations: 1 })}; ${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: phantomClaimAndUnnamedClaimReconciliations() })}.`,
       "",
     ]);
   });
@@ -215,15 +215,15 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
     expect(sections).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)),
       markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)),
-      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
+      markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)),
     ]);
   });
 
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
-    expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](3, 1, 2)}`);
+    expect(md).toContain(`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`);
     expect(md).toContain("SCN-C");
-    expect(md).toContain(`| out-of-balance | ${CORE_MESSAGES[CoreMessage.OutcomeBothMissing]} |`);
+    expect(md).toContain(`| out-of-balance | ${coreMessage(CoreMessage.OutcomeBothMissing)} |`);
   });
 });
 
@@ -239,18 +239,18 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
-    expect(md.split("\n")).toContain(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](3)}`);
+    expect(md).toContain(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)));
+    expect(md.split("\n")).toContain(`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 3 })}`);
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
     const lines = renderMarkdown(__er(simple), ctx, publishedExitCodeOf).split("\n");
-    const heading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
+    const heading = markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
     const section = lines.slice(lines.indexOf(heading));
     expect(section.slice(0, 4)).toEqual([
       heading,
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](1, 1, 0)}`,
+      `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 1, balanced: 1, outOfBalance: 0 })}`,
       "",
     ]);
     const table = claimReconciliationsTable(section);
@@ -282,17 +282,17 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)),
       "## Summary",
-      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
+      markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)),
     ]);
   });
 
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
     const table = claimReconciliationsTable(md);
-    expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN)).toBe(`unit: ${CORE_MESSAGES[CoreMessage.OutcomeMissing]}`);
-    expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN).startsWith(`fitness: ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]}`)).toBe(true);
+    expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN())).toBe("out-of-balance");
+    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN())).toBe(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
+    expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN())).toBe("out-of-balance");
+    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN()).startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`)).toBe(true);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });
@@ -306,7 +306,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(observed, true), ctx, publishedExitCodeOf).split("\n");
-    const heading = CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading];
+    const heading = markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
     const start = lines.indexOf(heading);
     expect(start).toBeGreaterThan(0);
     expect(lines.filter((line) => line.startsWith("## ")).at(-1)).toBe(heading);
@@ -315,7 +315,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(section.slice(0, 4)).toEqual([
       heading,
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
+      `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 2, balanced: 1, outOfBalance: 1 })}`,
       "",
     ]);
     const table = claimReconciliationsTable(section);

@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 import type { BehaviouralEvidenceObservation } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
+import { CoreMessage } from "../render/messages.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
+import { coreMessage } from "../render/coreText.js";
 
 describe("[SCN-CUC-002] a Cucumber scenario tagged @e2e, by its own tag or one it inherits, is posted at e2e, and one tagged only @unit, or with no layer tag, at integration", () => {
   const report: CucumberJsonReport = [
@@ -168,9 +169,9 @@ describe("[SCN-CUC-003] parseCucumberEvidenceObservations emits a broken observa
   });
 
   it.each<[string, { keyword?: string; name?: string }, object, () => string]>([
-    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, { kind: "ambiguous-step", step: "Given a step two definitions both match" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given a step two definitions both match")],
-    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, { kind: "ambiguous-step", step: "Given" }, () => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("Given")],
-    ["as a step, when it has neither keyword nor text", {}, { kind: "ambiguous-step" }, () => CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]],
+    ["by its keyword and text", { keyword: "Given ", name: "a step two definitions both match" }, { kind: "ambiguous-step", step: "Given a step two definitions both match" }, () => coreMessage(CoreMessage.AmbiguousNamedStep, { step: "Given a step two definitions both match" })],
+    ["by its keyword alone, trimmed, when its text is empty", { keyword: "Given ", name: "" }, { kind: "ambiguous-step", step: "Given" }, () => coreMessage(CoreMessage.AmbiguousNamedStep, { step: "Given" })],
+    ["as a step, when it has neither keyword nor text", {}, { kind: "ambiguous-step" }, () => coreMessage(CoreMessage.AmbiguousUnnamedStep)],
   ])("names the ambiguous step %s, and the report words the note", (_case, step, note, wordsOf) => {
     const report: CucumberJsonReport = [
       {

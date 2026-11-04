@@ -2,15 +2,17 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 
 const keyLines = (): string[] => [
-  ...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"),
-  CORE_MESSAGES[CoreMessage.WatermelonItemKey],
+  ...coreMessage(CoreMessage.EvidenceCellKey).split("\n"),
+  coreMessage(CoreMessage.WatermelonItemKey),
 ];
 
 describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell", () => {
@@ -26,15 +28,15 @@ describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Cl
   });
   const sectionOf = (md: string): string[] => {
     const lines = md.split("\n");
-    return lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]));
+    return lines.slice(lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading))));
   };
 
   it("renders the key after the tally lines and before a table that carries an evidence column", () => {
     const section = sectionOf(renderMarkdown(__er(ledger, true), ctx, publishedExitCodeOf));
     const expected = [
-      CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
+      markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)),
       "",
-      `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](2, 1, 1)}`,
+      `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 2, balanced: 1, outOfBalance: 1 })}`,
       "",
       ...keyLines(),
       "",

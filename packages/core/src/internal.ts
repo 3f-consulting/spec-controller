@@ -2,7 +2,7 @@ export { SCN_ID_SOURCE } from "./domain/featureCode.js";
 
 export { bareTerm } from "./lib/bareTerm.js";
 
-export { OUTCOME_DESCRIPTION } from "./render/outcomeDescription.js";
+export { OUTCOME_DESCRIPTION, outcomeDescription } from "./render/outcomeDescription.js";
 
 export type { ScriptCitation } from "./parse/fitnessCitations.js";
 

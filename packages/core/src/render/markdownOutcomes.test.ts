@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { OUT_OF_BALANCE_OUTCOMES, type Ledger, type Outcome } from "../model.js";
-import { CORE_MESSAGES, CoreMessage, type CoreMessages } from "./messages.js";
+import { CoreMessage, type WordedCoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
@@ -38,7 +38,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     ["no-evidence-obligation", CoreMessage.OutcomeNoEvidenceObligation],
     ["broken", CoreMessage.OutcomeBroken],
     ["both-missing", CoreMessage.OutcomeBothMissing],
-  ] as const satisfies readonly (readonly [Outcome, keyof CoreMessages])[];
+  ] as const satisfies readonly (readonly [Outcome, WordedCoreMessage])[];
   // A new out-of-balance outcome fails the typecheck here until its entry has a row.
   const everyCauseHasARow: [Exclude<Outcome, "satisfied" | (typeof CAUSE_ROW_ENTRIES)[number][0]>] extends [never]
     ? true
@@ -54,9 +54,9 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     expect(lineSubjectRow).toBeGreaterThanOrEqual(0);
     expect([...OUT_OF_BALANCE_OUTCOMES].sort()).toEqual(CAUSE_ROW_ENTRIES.map(([handle]) => handle).sort());
     const causeRows = lines.slice(lineSubjectRow + 1, lineSubjectRow + 1 + OUT_OF_BALANCE_OUTCOMES.length);
-    const entryOf = new Map<Outcome, keyof CoreMessages>(CAUSE_ROW_ENTRIES);
+    const entryOf = new Map<Outcome, WordedCoreMessage>(CAUSE_ROW_ENTRIES);
     expect(causeRows.map((line) => line.split(" | ")[0])).toEqual(
-      OUT_OF_BALANCE_OUTCOMES.map((outcome) => `| ${CORE_MESSAGES[entryOf.get(outcome)!]}`)
+      OUT_OF_BALANCE_OUTCOMES.map((outcome) => `| ${coreMessage(entryOf.get(outcome)!)}`)
     );
     for (const [handle] of CAUSE_ROW_ENTRIES) {
       expect(md).not.toContain(`\n| ${handle} |`);
@@ -65,7 +65,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
 
   it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
     const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
-    expect(items.some((item) => item.startsWith(`fitness: ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]}`))).toBe(true);
+    expect(items.some((item) => item.startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`))).toBe(true);
     expect(items.some((item) => item.startsWith("fitness: watermelon"))).toBe(false);
   });
 });

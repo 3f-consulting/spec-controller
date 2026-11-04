@@ -93,7 +93,7 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
     "",
     ...errors.map((error) => errorEntry(CODE_OF[error.kind], worded(error))),
     "",
-    coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode] }),
+    coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) }),
     "",
   ];
 };

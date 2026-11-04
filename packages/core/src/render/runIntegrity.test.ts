@@ -4,11 +4,11 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { UNNAMED_CLAIM_ID } from "../model.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { brokenEvidenceNameOf } from "./markdown.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { outcomeDescription } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -67,21 +67,21 @@ function runIntegrityLines(md: string): string[] {
 }
 
 function reconcilingItemsCell(md: string, claim: string): string {
-  return claimReconciliationsTable(md).rowOf(claim).cell(RECONCILING_ITEMS_COLUMN);
+  return claimReconciliationsTable(md).rowOf(claim).cell(RECONCILING_ITEMS_COLUMN());
 }
 
 const whatBroke = (locator: string): string =>
   `- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`;
 
 const brokenCell = (qualityCheckKind: string, where: string): string =>
-  `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.broken} (${where})`;
+  `${qualityCheckKind}: ${outcomeDescription("broken")} (${where})`;
 
 const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnsound, { proofs });
 
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
-    checkDidNotRun = CORE_MESSAGES[CoreMessage.CheckStepSkipped]("SCN-RIN-001");
+    checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { scnId: "SCN-RIN-001" });
   });
 
   it.each([
@@ -155,7 +155,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
       brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Cannot find \\| package`),
     );
     expect(reconcilingItemsCell(md, "SCN-RIN-001")).toBe(
-      [`fitness: ${OUTCOME_DESCRIPTION.missing}`, brokenCell("fitness", checkDidNotRun)].join("; "),
+      [`fitness: ${outcomeDescription("missing")}`, brokenCell("fitness", checkDidNotRun)].join("; "),
     );
   });
 
@@ -188,7 +188,7 @@ describe("[SCN-RPT-085] an item quoting what an evidence observation said states
   ];
   it.each(rows)("%s", (_, observation) => {
     const item = reconcilingItemsCell(render(observation), UNNAMED_CLAIM_ID);
-    expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](codes)})`);
+    expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${coreMessage(CoreMessage.SeveralScnCodesCited, { count: codes.length, codes: codes.join(", ") })})`);
     expect(item).not.toContain("at foo");
   });
 

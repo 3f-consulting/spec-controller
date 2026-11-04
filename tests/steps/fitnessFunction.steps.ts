@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { shownEntry } from "./support/catalogue.js";
+import { entryText, shownEntry } from "./support/catalogue.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { claimReconciliationsOf, type ClaimReconciliationsSection } from "./support/reportClaimReconciliations.js";
 import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
@@ -80,7 +80,7 @@ Then(
         `a reader posting the evidence observation to a scenario the corpus never wrote satisfies it too. ` +
         `Got:\n${this.markdown}`
     );
-    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGT-001", "Reconciling items");
+    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGT-001", entryText("reconciling-items-column"));
     assert.ok(
       !reconcilingItems.split("; ").some((item) => item.startsWith("fitness:")),
       `expected SCN-TGT-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`
@@ -198,7 +198,7 @@ Then(
         `nightly.yml, so the scenario citing it is telling the truth. Reading ci.yml alone is what makes ` +
         `the tool disagree. Report:\n${this.markdown}`,
     );
-    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGS-001", "Reconciling items");
+    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGS-001", entryText("reconciling-items-column"));
     assert.ok(
       !reconcilingItems.split("; ").some((item) => item.startsWith("fitness:")),
       `expected SCN-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,

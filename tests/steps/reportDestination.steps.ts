@@ -52,7 +52,7 @@ Then("the markdown report is in that file, and nothing else is reported", functi
   assert.ok(existsSync(this.markdownDestination), `expected the markdown report at ${this.markdownDestination}; it does not exist`);
   const report = readFileSync(this.markdownDestination, "utf8");
   assert.ok(showsHeading(report, 2, "run-provenance-heading"), `expected the markdown report in the file; got:\n${report}`);
-  assert.match(report, /^\| Claim \|/m, `expected the claim table in the file; got:\n${report}`);
+  assert.ok(report.split("\n").some((line) => line.startsWith(`| ${entryText("claim-column")} |`)), `expected the claim table in the file; got:\n${report}`);
   assert.equal(this.balanceResult.stdout, "", `expected nothing on stdout; got:\n${this.balanceResult.stdout}`);
 });
 

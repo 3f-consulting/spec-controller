@@ -1,5 +1,4 @@
 import { QualityCheckFaultCode, type QualityCheckFault } from "../domain/qualityCheckFault.js";
-import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
 export type QualityCheckFaultMessages = {
   readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { readonly code: C }>) => string;
@@ -16,53 +15,6 @@ export enum CoreMessage {
   ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
   ScenarioCodeErrorsHeading,
-  OutOfBalanceByFeatureHeading,
-  ScenarioClaimReconciliationsOutOfBalance,
-  GroupedByFeature,
-  NotGroupedByFeature,
-  PhantomClaimReconciliations,
-  UnnamedClaimReconciliations,
-  AndJoiner,
-  ByFeatureTableHeader,
-  NoScnCodeScenarios,
-  ClaimReconciliationsHeading,
-  ClaimReconciliationTally,
-  PhantomClaimTally,
-  UnnamedClaimTally,
-  ExcludedScnOccurrences,
-  UntaggedScenarios,
-  SharedScnCodes,
-  SharedScnCodeScenario,
-  ClaimColumn,
-  VerdictColumn,
-  ReconcilingItemsColumn,
-  CiStepsColumn,
-  EvidenceCellKey,
-  WatermelonItemKey,
-  PendingItem,
-  PendingItemFor,
-  CheckStepNoOutcome,
-  CheckStepSkipped,
-  CheckStepEnded,
-  AmbiguousNamedStep,
-  AmbiguousUnnamedStep,
-  OutcomeSatisfied,
-  OutcomeMissing,
-  OutcomeFailing,
-  OutcomeWatermelon,
-  OutcomeNoScnCode,
-  OutcomeDuplicateScnCode,
-  OutcomeCitesUnknownScenario,
-  OutcomeCitesNoScenario,
-  OutcomeNoEvidenceObligation,
-  OutcomeBroken,
-  OutcomeBothMissing,
-  ObservationPassed,
-  ObservationFailed,
-  UnnamedClaimGroupCounts,
-  UnnamedClaimFailedNames,
-  SeveralScnCodes,
-  SharedScnCode,
   ConfigurationNotReadIntro = "configuration-not-read-intro",
   ConfigurationWrongKind = "configuration-wrong-kind",
   ConfigurationUnknownKey = "configuration-unknown-key",
@@ -167,6 +119,54 @@ export enum CoreMessage {
   StepAccountingNonChecksTerm = "step-accounting-non-checks-term",
   StepAccountingPlumbingTerm = "step-accounting-plumbing-term",
   StepAccountingAccountedForTerm = "step-accounting-accounted-for-term",
+  OutOfBalanceByFeatureHeading = "out-of-balance-by-feature-heading",
+  ScenarioClaimReconciliationsOutOfBalance = "scenario-claim-reconciliations-out-of-balance",
+  GroupedByFeature = "grouped-by-feature",
+  NotGroupedByFeature = "not-grouped-by-feature",
+  PhantomClaimReconciliations = "phantom-claim-reconciliations",
+  UnnamedClaimReconciliations = "unnamed-claim-reconciliations",
+  AndJoiner = "and-joiner",
+  ByFeatureTableHeader = "by-feature-table-header",
+  NoScnCodeScenarios = "no-scn-code-scenarios",
+  CodesAndNoScnCodeScenarios = "codes-and-no-scn-code-scenarios",
+  ClaimReconciliationsHeading = "claim-reconciliations-heading",
+  ClaimReconciliationTally = "claim-reconciliation-tally",
+  PhantomClaimTally = "phantom-claim-tally",
+  UnnamedClaimTally = "unnamed-claim-tally",
+  ExcludedScnOccurrences = "excluded-scn-occurrences",
+  UntaggedScenarios = "untagged-scenarios",
+  SharedScnCodes = "shared-scn-codes",
+  SharedScnCodeScenario = "shared-scn-code-scenario",
+  ClaimColumn = "claim-column",
+  VerdictColumn = "verdict-column",
+  ReconcilingItemsColumn = "reconciling-items-column",
+  CiStepsColumn = "ci-steps-column",
+  EvidenceCellKey = "evidence-cell-key",
+  WatermelonItemKey = "watermelon-item-key",
+  PendingItem = "pending-item",
+  PendingItemFor = "pending-item-for",
+  CheckStepNoOutcome = "check-step-no-outcome",
+  CheckStepSkipped = "check-step-skipped",
+  CheckStepEnded = "check-step-ended",
+  AmbiguousNamedStep = "ambiguous-named-step",
+  AmbiguousUnnamedStep = "ambiguous-unnamed-step",
+  OutcomeSatisfied = "outcome-satisfied",
+  OutcomeMissing = "outcome-missing",
+  OutcomeFailing = "outcome-failing",
+  OutcomeWatermelon = "outcome-watermelon",
+  OutcomeNoScnCode = "outcome-no-scn-code",
+  OutcomeDuplicateScnCode = "outcome-duplicate-scn-code",
+  OutcomeCitesUnknownScenario = "outcome-cites-unknown-scenario",
+  OutcomeCitesNoScenario = "outcome-cites-no-scenario",
+  OutcomeNoEvidenceObligation = "outcome-no-evidence-obligation",
+  OutcomeBroken = "outcome-broken",
+  OutcomeBothMissing = "outcome-both-missing",
+  ObservationPassed = "observation-passed",
+  ObservationFailed = "observation-failed",
+  UnnamedClaimGroupCounts = "unnamed-claim-group-counts",
+  UnnamedClaimFailedNames = "unnamed-claim-failed-names",
+  SeveralScnCodesCited = "several-scn-codes-cited",
+  SharedScnCode = "shared-scn-code",
 }
 
 // Each error named under Errors in the inputs, by its code: a handle's value is the code its entry opens with.
@@ -182,29 +182,6 @@ export enum CoreError {
   SeveralScnCodes = "several-scn-codes",
 }
 
-interface CoreMessageParams {
-  readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
-  readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
-  readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
-  readonly [CoreMessage.UnnamedClaimReconciliations]: [count: number];
-  readonly [CoreMessage.NoScnCodeScenarios]: [count: number];
-  readonly [CoreMessage.ClaimReconciliationTally]: [total: number, balanced: number, outOfBalance: number];
-  readonly [CoreMessage.PhantomClaimTally]: [count: number];
-  readonly [CoreMessage.UnnamedClaimTally]: [count: number];
-  readonly [CoreMessage.ExcludedScnOccurrences]: [count: number];
-  readonly [CoreMessage.UntaggedScenarios]: [count: number];
-  readonly [CoreMessage.SharedScnCodes]: [scenarios: number, codes: number];
-  readonly [CoreMessage.SharedScnCodeScenario]: [feature: string, title: string];
-  readonly [CoreMessage.PendingItemFor]: [qualityCheckKind: string];
-  readonly [CoreMessage.CheckStepNoOutcome]: [scnId: string];
-  readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
-  readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
-  readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
-  readonly [CoreMessage.UnnamedClaimGroupCounts]: [ran: number, passed: number, failed: number];
-  readonly [CoreMessage.UnnamedClaimFailedNames]: [names: readonly string[]];
-  readonly [CoreMessage.SeveralScnCodes]: [codes: readonly string[]];
-  readonly [CoreMessage.SharedScnCode]: [code: string];
-}
 
 // A handle whose value is a string is worded by the data file; the others, by the table below.
 export type WordedCoreMessage = Extract<CoreMessage, string>;
@@ -262,93 +239,34 @@ export interface CoreMessageValues {
   readonly [CoreMessage.StepNonCheck]: { readonly entry: string };
   readonly [CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel]: { readonly key: string; readonly workflows: string };
   readonly [CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel]: { readonly key: string };
+  readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: { readonly outOfBalance: number; readonly claimReconciliations: number };
+  readonly [CoreMessage.NotGroupedByFeature]: { readonly ungrouped: string };
+  readonly [CoreMessage.PhantomClaimReconciliations]: { readonly count: number };
+  readonly [CoreMessage.UnnamedClaimReconciliations]: { readonly count: number };
+  readonly [CoreMessage.NoScnCodeScenarios]: { readonly count: number };
+  readonly [CoreMessage.CodesAndNoScnCodeScenarios]: { readonly codes: string; readonly count: number };
+  readonly [CoreMessage.ClaimReconciliationTally]: { readonly total: number; readonly balanced: number; readonly outOfBalance: number };
+  readonly [CoreMessage.PhantomClaimTally]: { readonly count: number };
+  readonly [CoreMessage.UnnamedClaimTally]: { readonly count: number; readonly unnamedClaimId: string };
+  readonly [CoreMessage.ExcludedScnOccurrences]: { readonly count: number };
+  readonly [CoreMessage.UntaggedScenarios]: { readonly count: number };
+  readonly [CoreMessage.SharedScnCodes]: { readonly scenarios: number; readonly codes: number };
+  readonly [CoreMessage.SharedScnCodeScenario]: { readonly feature: string; readonly title: string };
+  readonly [CoreMessage.PendingItemFor]: { readonly qualityCheckKind: string };
+  readonly [CoreMessage.CheckStepNoOutcome]: { readonly scnId: string };
+  readonly [CoreMessage.CheckStepSkipped]: { readonly scnId: string };
+  readonly [CoreMessage.CheckStepEnded]: { readonly scnId: string; readonly outcome: string };
+  readonly [CoreMessage.AmbiguousNamedStep]: { readonly step: string };
+  readonly [CoreMessage.UnnamedClaimGroupCounts]: { readonly ran: number; readonly passed: number; readonly failed: number };
+  readonly [CoreMessage.UnnamedClaimFailedNames]: { readonly names: string };
+  readonly [CoreMessage.SeveralScnCodesCited]: { readonly count: number; readonly codes: string };
+  readonly [CoreMessage.SharedScnCode]: { readonly code: string };
 }
 
-export type CoreMessages = {
-  readonly [C in TabledCoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
-};
-
-const SATISFIED = "Evidence Observation satisfies its Evidence Obligation";
-const MISSING = "Evidence Observation is missing";
-const DUPLICATE_SCN_CODE = "Evidence Obligation's @SCN code is carried by another Scenario";
-const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
-const NO_ONE_SCENARIO_CAN_TAKE = "evidence observations no one scenario can take";
+export type CoreMessages = { readonly [C in TabledCoreMessage]: string };
 
 export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
   [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
-  [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
-  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
-  [CoreMessage.GroupedByFeature]: ", grouped by feature",
-  [CoreMessage.NotGroupedByFeature]: (ungrouped) =>
-    `${ungrouped} out of balance, not grouped by feature (no feature file names them)`,
-  [CoreMessage.PhantomClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}`,
-  [CoreMessage.UnnamedClaimReconciliations]: (count) => `${count} Claim Reconciliation(s) for ${NO_ONE_SCENARIO_CAN_TAKE}`,
-  [CoreMessage.AndJoiner]: " and ",
-  [CoreMessage.ByFeatureTableHeader]: "| Feature | Count | Out-of-balance `@SCN` ids |",
-  [CoreMessage.NoScnCodeScenarios]: (count) => `${count} with no \`@SCN\` code`,
-  [CoreMessage.ClaimReconciliationsHeading]: "## Claim Reconciliations",
-  [CoreMessage.ClaimReconciliationTally]: (total, balanced, outOfBalance) =>
-    `${total} Claim Reconciliation(s): ${balanced} balanced, ${outOfBalance} out-of-balance.`,
-  [CoreMessage.PhantomClaimTally]: (count) =>
-    `${count} Claim Reconciliation(s) for ${CITED_WITH_NO_SCENARIO}.`,
-  [CoreMessage.UnnamedClaimTally]: (count) =>
-    `${count} Claim Reconciliation(s) for ${NO_ONE_SCENARIO_CAN_TAKE}, aggregated into "${UNNAMED_CLAIM_ID}".`,
-  [CoreMessage.ExcludedScnOccurrences]: (count) =>
-    `${count} @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, ` +
-    "a comment or step text rather than as a tag, so it marks no scenario and raises no claim",
-  [CoreMessage.UntaggedScenarios]: (count) => `${count} scenario(s) carry no @SCN code`,
-  [CoreMessage.SharedScnCodes]: (scenarios, codes) =>
-    `The corpus holds ${scenarios} scenarios — ${codes} @SCN code(s) carried by more than one scenario, each scenario named as \`feature file : scenario title\`:`,
-  [CoreMessage.SharedScnCodeScenario]: (feature, title) => `this one is ${feature} : ${title}`,
-  [CoreMessage.ClaimColumn]: "Claim",
-  [CoreMessage.VerdictColumn]: "Verdict",
-  [CoreMessage.ReconcilingItemsColumn]: "Reconciling items",
-  [CoreMessage.CiStepsColumn]: "CI steps",
-  [CoreMessage.EvidenceCellKey]: [
-    "Key: each evidence cell reads *obligation*/*observations*.",
-    "- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means they raise none of that kind, as a pending tag raises none.",
-    "- The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.",
-    "- For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that raises no unit obligation, which puts the row out of balance even where its unit evidence is pending.",
-    "- A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.",
-    "- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.",
-    "- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries an @SCN code and no tag that raises an Evidence Obligation.",
-    "- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone, outside those counts.",
-    "- CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.",
-  ].join("\n"),
-  [CoreMessage.WatermelonItemKey]:
-    "- Where a row's item says its CI step or its job sets `continue-on-error`, the name in parentheses after it is its fitness function. Remove `continue-on-error` from its CI step and from its job, or set it to false, and the check's red fails the CI run.",
-  [CoreMessage.PendingItem]: "pending",
-  [CoreMessage.PendingItemFor]: (qualityCheckKind) => `pending: ${qualityCheckKind}`,
-  [CoreMessage.CheckStepNoOutcome]: (scnId) =>
-    `${scnId}: the CI run's record carries no outcome for this check's step — so the check did not run.`,
-  [CoreMessage.CheckStepSkipped]: (scnId) =>
-    `${scnId}: the CI run's record says this check's step was skipped — so the check did not run.`,
-  [CoreMessage.CheckStepEnded]: (scnId, outcome) =>
-    `${scnId}: the CI run's record says this check's step ended \`${outcome}\` — so the check did not run.`,
-  [CoreMessage.AmbiguousNamedStep]: (step) =>
-    `The step "${step}" is ambiguous — two or more step definitions match it, so the step never ran.`,
-  [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
-  [CoreMessage.OutcomeSatisfied]: SATISFIED,
-  [CoreMessage.OutcomeMissing]: MISSING,
-  [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",
-  [CoreMessage.OutcomeWatermelon]:
-    "Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run",
-  [CoreMessage.OutcomeNoScnCode]: "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
-  [CoreMessage.OutcomeDuplicateScnCode]: DUPLICATE_SCN_CODE,
-  [CoreMessage.OutcomeCitesUnknownScenario]: "Evidence Observation cites an unknown Scenario",
-  [CoreMessage.OutcomeCitesNoScenario]: "Evidence Observation cites no Scenario",
-  [CoreMessage.OutcomeNoEvidenceObligation]: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
-  [CoreMessage.OutcomeBroken]: "Evidence Observation is broken because its proof never ran to a result",
-  [CoreMessage.OutcomeBothMissing]:
-    "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
-  [CoreMessage.ObservationPassed]: "passed",
-  [CoreMessage.ObservationFailed]: "failed",
-  [CoreMessage.UnnamedClaimGroupCounts]: (ran, passed, failed) => `${ran} ran, ${passed} passed, ${failed} failed`,
-  [CoreMessage.UnnamedClaimFailedNames]: (names) => `(failed: ${names.join(" / ")})`,
-  [CoreMessage.SeveralScnCodes]: (codes) =>
-    `${codes.length} scenario codes cite ${codes.join(", ")} — a test cites exactly one scenario, so this one credits none of them.`,
-  [CoreMessage.SharedScnCode]: (code) =>
-    `${code} is carried by more than one scenario, so evidence citing it credits none of them.`,
 };

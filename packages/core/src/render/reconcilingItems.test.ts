@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { outcomeDescription } from "./outcomeDescription.js";
 import { remarkWordsOf } from "./remarkWords.js";
 import type { EvidenceObservation, Outcome, Scenario } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -36,7 +36,7 @@ function item(outcome: Outcome, subject?: string, suffix?: string, result?: stri
   const head = subject === undefined ? "" : `${subject}: `;
   const tail = suffix === undefined ? "" : ` (${suffix})`;
   const ran = result === undefined ? "" : ` — ${result}`;
-  return `${head}${OUTCOME_DESCRIPTION[outcome]}${tail}${ran}`;
+  return `${head}${outcomeDescription(outcome)}${tail}${ran}`;
 }
 
 describe("[SCN-RPT-004] the markdown report renders the reconciliation totals as subjects-rows with balanced and out-of-balance columns", () => {
@@ -240,7 +240,7 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
   ])("a shared code's scenario title holding %s", (_title, title, quoted) => {
     const sharer = (title: string): Scenario => ({ scnId: "SCN-DEM-004", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "a.feature", title });
     const rows = claimReconciliationsTable(render([sharer(title), sharer("c")], [])).rowsOf("SCN-DEM-004");
-    expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN))).toContain(item("duplicate-scn-code", "unit") + ` — this one is a.feature : ${quoted}`);
+    expect(rows.map((row) => row.cell(RECONCILING_ITEMS_COLUMN()))).toContain(item("duplicate-scn-code", "unit") + ` — this one is a.feature : ${quoted}`);
   });
 
   it.each([

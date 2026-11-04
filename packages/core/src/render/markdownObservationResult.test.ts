@@ -5,10 +5,11 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 
-const CITES_UNKNOWN = CORE_MESSAGES[CoreMessage.OutcomeCitesUnknownScenario];
-const NO_OBLIGATION = CORE_MESSAGES[CoreMessage.OutcomeNoEvidenceObligation];
+const CITES_UNKNOWN = (): string => coreMessage(CoreMessage.OutcomeCitesUnknownScenario);
+const NO_OBLIGATION = (): string => coreMessage(CoreMessage.OutcomeNoEvidenceObligation);
 
 function rowOf(md: string, rowName: string): string {
   const row = md.split("\n").find((line) => line.startsWith(`| ${rowName} |`));
@@ -31,12 +32,12 @@ describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on
 
   it("shows the test that failed as failed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
-    expect(row).toContain(`unit: ${CITES_UNKNOWN} (src/broken-spawn.test.ts) — failed`);
+    expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/broken-spawn.test.ts) — failed`);
   });
 
   it("shows the test that passed as passed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
-    expect(row).toContain(`unit: ${CITES_UNKNOWN} (src/sound.test.ts) — passed`);
+    expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/sound.test.ts) — passed`);
   });
 });
 
@@ -54,12 +55,12 @@ describe("[SCN-RPT-035] a test observed at a check its scenario holds no obligat
 
   it("shows the test that failed as failed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
-    expect(row).toContain(`unit: ${NO_OBLIGATION} (src/broken-spawn.test.ts) — failed`);
+    expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/broken-spawn.test.ts) — failed`);
   });
 
   it("shows the test that passed as passed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
-    expect(row).toContain(`unit: ${NO_OBLIGATION} (src/sound.test.ts) — passed`);
+    expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/sound.test.ts) — passed`);
   });
 });
 
@@ -77,11 +78,11 @@ describe("[SCN-RPT-086] a test that answers no evidence obligation is named by i
 
   it("names the first test by its file and its test name", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
-    expect(row).toContain(`unit: ${CITES_UNKNOWN} (src/x.test.ts: first) — failed`);
+    expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/x.test.ts: first) — failed`);
   });
 
   it("names the second test by its file and its test name", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
-    expect(row).toContain(`unit: ${CITES_UNKNOWN} (src/x.test.ts: second) — failed`);
+    expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/x.test.ts: second) — failed`);
   });
 });

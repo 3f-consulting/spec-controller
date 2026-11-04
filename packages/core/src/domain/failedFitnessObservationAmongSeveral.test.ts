@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced } from "./ledger.js";
 import { renderMarkdown } from "../assemble/composers.js";
-import { OUTCOME_DESCRIPTION } from "../render/outcomeDescription.js";
+import { outcomeDescription } from "../render/outcomeDescription.js";
 import { sampleReportCtx as ctx } from "../render/runContext.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "../render/claimReconciliationsTable.test-utils.js";
@@ -118,7 +118,7 @@ describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelo
       false,
     ]);
     const lines = (failedFirst ? ["failing", "watermelon"] as const : ["watermelon", "failing"] as const)
-      .map((outcome) => `fitness: ${OUTCOME_DESCRIPTION[outcome]}`);
+      .map((outcome) => `fitness: ${outcomeDescription(outcome)}`);
     const markdown = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
     expect(reconcilingItemsOf(markdown, SCN).map((item, i) => item.startsWith(lines[i]!))).toEqual([true, true]);
   });

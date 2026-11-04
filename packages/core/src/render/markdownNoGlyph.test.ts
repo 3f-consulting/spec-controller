@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, Outcome } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { OUTCOME_DESCRIPTION, outcomeDescription } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -17,7 +17,7 @@ function ledgerRows(md: string): readonly ClaimRow[] {
 }
 
 function readsInWords(item: string): boolean {
-  const sentence = (text: string): boolean => Object.values(OUTCOME_DESCRIPTION).some((s) => text.startsWith(s));
+  const sentence = (text: string): boolean => (Object.keys(OUTCOME_DESCRIPTION) as Outcome[]).map(outcomeDescription).some((s) => text.startsWith(s));
   const colon = item.indexOf(": ");
   return sentence(item) || (colon > 0 && QUALITY_CHECK_KINDS.includes(item.slice(0, colon)) && sentence(item.slice(colon + 2)));
 }
@@ -50,34 +50,34 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   });
 
   it("holds every outcome but satisfied among its reconciling items, so every item shape prints", () => {
-    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.cell(RECONCILING_ITEMS_COLUMN).split("; "));
+    const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).flatMap((row) => row.cell(RECONCILING_ITEMS_COLUMN()).split("; "));
     const outcomes = Object.keys(OUTCOME_DESCRIPTION) as Outcome[];
     for (const outcome of outcomes.filter((o) => o !== "satisfied")) {
-      expect(items.some((item) => item.includes(OUTCOME_DESCRIPTION[outcome])), outcome).toBe(true);
+      expect(items.some((item) => item.includes(outcomeDescription(outcome))), outcome).toBe(true);
     }
   });
 
   it("shows each Verdict cell as balanced or out-of-balance, and nothing else", () => {
-    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).map((row) => row.cell(VERDICT_COLUMN));
+    const verdicts = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf)).map((row) => row.cell(VERDICT_COLUMN()));
     expect(new Set(verdicts)).toEqual(new Set(["balanced", "out-of-balance"]));
   });
 
   it("reads each reconciling item as its kind of quality check and its outcome's sentence, or the sentence alone", () => {
     const items = ledgerRows(renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf))
-      .map((row) => row.cell(RECONCILING_ITEMS_COLUMN))
+      .map((row) => row.cell(RECONCILING_ITEMS_COLUMN()))
       .filter((cell) => cell !== "—")
       .flatMap((cell) => cell.split("; "));
     expect(items.length).toBeGreaterThan(0);
     for (const item of items) expect(readsInWords(item), item).toBe(true);
-    expect(items).toContain(OUTCOME_DESCRIPTION["no-scn-code"]);
-    expect(items).toContain(OUTCOME_DESCRIPTION["both-missing"]);
-    expect(items.some((item) => item.startsWith(`unit: ${OUTCOME_DESCRIPTION.failing}`))).toBe(true);
+    expect(items).toContain(outcomeDescription("no-scn-code"));
+    expect(items).toContain(outcomeDescription("both-missing"));
+    expect(items.some((item) => item.startsWith(`unit: ${outcomeDescription("failing")}`))).toBe(true);
   });
 
   it("reads each fitness evidence obligation's reconciling item on its claim's row as its kind of quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
     const watermelon = reconcilingItemsOf(md, "SCN-NGL-003");
-    expect(watermelon.some((item) => item.startsWith(`fitness: ${OUTCOME_DESCRIPTION.watermelon}`))).toBe(true);
+    expect(watermelon.some((item) => item.startsWith(`fitness: ${outcomeDescription("watermelon")}`))).toBe(true);
     expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
     expect(reconcilingItemsOf(md, "SCN-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });

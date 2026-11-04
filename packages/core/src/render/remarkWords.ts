@@ -1,5 +1,6 @@
 import type { ObservationNote } from "../domain/journal.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 
 interface Remark {
   readonly message?: string;
@@ -9,22 +10,22 @@ interface Remark {
 function noteWords(note: ObservationNote): string {
   switch (note.kind) {
     case "several-scn-codes":
-      return CORE_MESSAGES[CoreMessage.SeveralScnCodes](note.codes);
+      return coreMessage(CoreMessage.SeveralScnCodesCited, { count: note.codes.length, codes: note.codes.join(", ") });
     case "shared-scn-code":
-      return CORE_MESSAGES[CoreMessage.SharedScnCode](note.code);
+      return coreMessage(CoreMessage.SharedScnCode, { code: note.code });
     case "ambiguous-step":
       return note.step === undefined
-        ? CORE_MESSAGES[CoreMessage.AmbiguousUnnamedStep]
-        : CORE_MESSAGES[CoreMessage.AmbiguousNamedStep](note.step);
+        ? coreMessage(CoreMessage.AmbiguousUnnamedStep)
+        : coreMessage(CoreMessage.AmbiguousNamedStep, { step: note.step });
     case "check-step-did-not-run":
       return checkStepWords(note.code, note.outcome);
   }
 }
 
 function checkStepWords(code: string, outcome: string | undefined): string {
-  if (outcome === undefined) return CORE_MESSAGES[CoreMessage.CheckStepNoOutcome](code);
-  if (outcome === "skipped") return CORE_MESSAGES[CoreMessage.CheckStepSkipped](code);
-  return CORE_MESSAGES[CoreMessage.CheckStepEnded](code, outcome);
+  if (outcome === undefined) return coreMessage(CoreMessage.CheckStepNoOutcome, { scnId: code });
+  if (outcome === "skipped") return coreMessage(CoreMessage.CheckStepSkipped, { scnId: code });
+  return coreMessage(CoreMessage.CheckStepEnded, { scnId: code, outcome });
 }
 
 export function remarkWordsOf({ message, notes = [] }: Remark): string | undefined {

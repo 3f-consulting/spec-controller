@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { entryText, shownEntry } from "./support/catalogue.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -67,8 +68,6 @@ const FEATURE_FILE_PASSED_SCENARIO = "an empty basket cannot be checked out";
 
 const PASSING_FILE = { locator: "tests/fixtures/unnamed-claim-status/sound.test.ts", ran: 1, passed: 1, failed: 0 };
 
-const UNCITED_OUTCOME_ROW = "Evidence Observation cites no Scenario";
-
 const UNCITED_STEPS = ["ci.yml:ci:pnpm lint:bar", "ci.yml:ci:pnpm lint:foo"];
 
 const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
@@ -94,12 +93,22 @@ function rowItemFor(world: SpecControllerWorld, rowName: string, locator: string
 }
 
 function unnamedClaimItems(world: SpecControllerWorld): string[] {
-  return claimReconciliationCell(world.report, "(unnamed claim)", "Reconciling items").split("; ");
+  return claimReconciliationCell(world.report, "(unnamed claim)", entryText("reconciling-items-column")).split("; ");
 }
 
 function unnamedClaimItemsFor(world: SpecControllerWorld, locator: string): string[] {
   return unnamedClaimItems(world).filter((item) => item.includes(`(${locator})`) || item.includes(`(${locator}: `));
 }
+
+function uncitedOutcomeCount(world: SpecControllerWorld): number {
+  const uncitedOutcomeRow = entryText("outcome-cites-no-scenario");
+  const outcomeRow = world.report.split("\n").find((line) => line.startsWith(`| ${uncitedOutcomeRow} |`));
+  assert.ok(outcomeRow, `expected a "${uncitedOutcomeRow}" row in the report; got:\n${world.report}`);
+  return Number(outcomeRow.split(" | ")[3]);
+}
+
+// An entry's counts of its own tests, read from the part after its last dash.
+const groupCounts = (item: string) => shownEntry(item.split(" — ").at(-1) ?? "", "unnamed-claim-group-counts");
 
 function argsFor(target: Record<"features" | "vitest" | "packageJson" | "ci", string>): string[] {
   const root = process.cwd();
@@ -197,7 +206,7 @@ Then("the unnamed claim's row lists each of the two files once", function (this:
 Then("each file's entry counts how many of its tests ran, how many passed and how many failed", function (this: SpecControllerWorld) {
   for (const { locator, ran, passed, failed } of [MIXED_FILE, PASSING_FILE]) {
     const [item] = unnamedClaimItemsFor(this, locator);
-    const counts = ` — ${ran} ran, ${passed} passed, ${failed} failed`;
+    const counts = ` — ${entryText("unnamed-claim-group-counts", { ran: String(ran), passed: String(passed), failed: String(failed) })}`;
     assert.ok(
       item?.endsWith(counts) || item?.includes(`${counts} `),
       `expected ${locator}'s entry to count "${counts.slice(3)}"; got:\n${item}`,
@@ -206,10 +215,8 @@ Then("each file's entry counts how many of its tests ran, how many passed and ho
 });
 
 Then("the counts of tests that ran add up to the count of evidence observations that cite no scenario", function (this: SpecControllerWorld) {
-  const outcomeRow = this.report.split("\n").find((line) => line.startsWith(`| ${UNCITED_OUTCOME_ROW} |`));
-  assert.ok(outcomeRow, `expected a "${UNCITED_OUTCOME_ROW}" row in the report; got:\n${this.report}`);
-  const uncited = Number(outcomeRow.split(" | ")[3]);
-  const ran = unnamedClaimItems(this).reduce((sum, item) => sum + Number(/ — (\d+) ran,/.exec(item)?.[1] ?? Number.NaN), 0);
+  const uncited = uncitedOutcomeCount(this);
+  const ran = unnamedClaimItems(this).reduce((sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? Number.NaN), 0);
   assert.equal(ran, uncited, `the unnamed claim's row's ran counts must add up to ${uncited}; got:\n${unnamedClaimItems(this).join("\n")}`);
   assert.equal(uncited, MIXED_FILE.ran + PASSING_FILE.ran);
 });
@@ -222,7 +229,7 @@ function mixedFileEntry(world: SpecControllerWorld): string {
 
 Then("the file's entry on the unnamed claim's row names the test that failed by its title", function (this: SpecControllerWorld) {
   const entry = mixedFileEntry(this);
-  assert.ok(entry.endsWith(`(failed: ${MIXED_FILE_FAILED_TEST})`), `expected the entry to name "${MIXED_FILE_FAILED_TEST}" as failed; got:\n${entry}`);
+  assert.ok(entry.endsWith(entryText("unnamed-claim-failed-names", { names: MIXED_FILE_FAILED_TEST })), `expected the entry to name "${MIXED_FILE_FAILED_TEST}" as failed; got:\n${entry}`);
 });
 
 Then("the file's entry does not name the test that passed", function (this: SpecControllerWorld) {
@@ -238,7 +245,7 @@ function featureFileEntry(world: SpecControllerWorld): string {
 
 Then("the feature file's entry on the unnamed claim's row names the Cucumber scenario that failed by its name", function (this: SpecControllerWorld) {
   const entry = featureFileEntry(this);
-  assert.ok(entry.endsWith(`(failed: ${FEATURE_FILE_FAILED_SCENARIO})`), `expected the entry to name "${FEATURE_FILE_FAILED_SCENARIO}" as failed; got:\n${entry}`);
+  assert.ok(entry.endsWith(entryText("unnamed-claim-failed-names", { names: FEATURE_FILE_FAILED_SCENARIO })), `expected the entry to name "${FEATURE_FILE_FAILED_SCENARIO}" as failed; got:\n${entry}`);
 });
 
 Then("the feature file's entry does not name the Cucumber scenario that passed", function (this: SpecControllerWorld) {
@@ -267,11 +274,9 @@ Then("the CI steps' entry names each of the two checks", function (this: SpecCon
 });
 
 Then("what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario", function (this: SpecControllerWorld) {
-  const outcomeRow = this.report.split("\n").find((line) => line.startsWith(`| ${UNCITED_OUTCOME_ROW} |`));
-  assert.ok(outcomeRow, `expected a "${UNCITED_OUTCOME_ROW}" row in the report; got:\n${this.report}`);
-  const uncited = Number(outcomeRow.split(" | ")[3]);
+  const uncited = uncitedOutcomeCount(this);
   const counted = unnamedClaimItems(this).reduce(
-    (sum, item) => sum + Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)?.[1] ?? Number.NaN),
+    (sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? / — (\d+) CI steps?:/.exec(item)?.[1] ?? Number.NaN),
     0,
   );
   assert.equal(counted, uncited, `the unnamed claim's row's counts must add up to ${uncited}; got:\n${unnamedClaimItems(this).join("\n")}`);
@@ -280,22 +285,22 @@ Then("what the unnamed claim's row counts adds up to the count of evidence obser
 
 Then("the phantom claim's row shows the test that failed as failed", function (this: SpecControllerWorld) {
   const item = rowItemFor(this, PHANTOM_CLAIM, PHANTOM_CLAIM_FAILED_TEST);
-  assert.match(item, endsWithResult(PHANTOM_CLAIM_FAILED_TEST, "failed"));
+  assert.match(item, endsWithResult(PHANTOM_CLAIM_FAILED_TEST, entryText("observation-failed")));
 });
 
 Then("the phantom claim's row shows the test that passed as passed", function (this: SpecControllerWorld) {
   const item = rowItemFor(this, PHANTOM_CLAIM, PHANTOM_CLAIM_PASSED_TEST);
-  assert.match(item, endsWithResult(PHANTOM_CLAIM_PASSED_TEST, "passed"));
+  assert.match(item, endsWithResult(PHANTOM_CLAIM_PASSED_TEST, entryText("observation-passed")));
 });
 
 Then("the scenario's row shows the test that failed as failed", function (this: SpecControllerWorld) {
   const item = rowItemFor(this, NO_OBLIGATION_SCENARIO, NO_OBLIGATION_FAILED_TEST);
-  assert.match(item, endsWithResult(NO_OBLIGATION_FAILED_TEST, "failed"));
+  assert.match(item, endsWithResult(NO_OBLIGATION_FAILED_TEST, entryText("observation-failed")));
 });
 
 Then("the scenario's row shows the test that passed as passed", function (this: SpecControllerWorld) {
   const item = rowItemFor(this, NO_OBLIGATION_SCENARIO, NO_OBLIGATION_PASSED_TEST);
-  assert.match(item, endsWithResult(NO_OBLIGATION_PASSED_TEST, "passed"));
+  assert.match(item, endsWithResult(NO_OBLIGATION_PASSED_TEST, entryText("observation-passed")));
 });
 
 function savedObservationAt(world: SpecControllerWorld, locator: string, status: string): Record<string, unknown> {

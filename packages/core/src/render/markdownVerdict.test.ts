@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -17,7 +17,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     `${VITEST_LOCATOR}\n    at packageResolve (node:internal/modules/esm/resolve:catch)\n    at moduleResolve (node:internal/modules/esm/resolve)`;
 
   const CUCUMBER_LOCATOR = "features/handover.feature";
-  const cucumberMessage = (): string => CORE_MESSAGES[CoreMessage.AmbiguousNamedStep]("When the handover is accepted");
+  const cucumberMessage = (): string => coreMessage(CoreMessage.AmbiguousNamedStep, { step: "When the handover is accepted" });
 
   const rowFor = (md: string, scnId: string): string => {
     const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
@@ -61,16 +61,16 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   it("carries the locator on the unnamed claim's broken item — a broken proof, not an absent one", () => {
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx, publishedExitCodeOf);
     const unnamedClaimRow = rowFor(vitestMd, "(unnamed claim)");
-    expect(unnamedClaimRow).toContain(`unit: ${CORE_MESSAGES[CoreMessage.OutcomeBroken]}`);
+    expect(unnamedClaimRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeBroken)}`);
     expect(unnamedClaimRow).toContain(VITEST_LOCATOR);
     expect(unnamedClaimRow).toContain("Cannot find package '@cucumber/tag-expressions'");
     expect(unnamedClaimRow).not.toContain("at packageResolve");
     const namedRow = rowFor(vitestMd, "SCN-HNS-002");
-    expect(namedRow).toContain(`unit: ${CORE_MESSAGES[CoreMessage.OutcomeMissing]}`);
-    expect(namedRow).not.toContain(CORE_MESSAGES[CoreMessage.OutcomeBroken]);
+    expect(namedRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
+    expect(namedRow).not.toContain(coreMessage(CoreMessage.OutcomeBroken));
 
     const cucumberUnnamedClaimRow = rowFor(renderMarkdown(__er(cucumberBroken), ctx, publishedExitCodeOf), "(unnamed claim)");
-    expect(cucumberUnnamedClaimRow).toContain(`integration: ${CORE_MESSAGES[CoreMessage.OutcomeBroken]}`);
+    expect(cucumberUnnamedClaimRow).toContain(`integration: ${coreMessage(CoreMessage.OutcomeBroken)}`);
     expect(cucumberUnnamedClaimRow).toContain(CUCUMBER_LOCATOR);
     expect(cucumberUnnamedClaimRow).toContain("is ambiguous");
   });
@@ -134,7 +134,7 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
 
   it('names no row "Scenario Reconciliation" anywhere in a report holding a scenario, a phantom claim and the unnamed claim', () => {
     const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx, publishedExitCodeOf);
-    expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](3, 1, 2)}`);
+    expect(md).toContain(`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`);
     expect(md.split(`${coreMessage(CoreMessage.ClaimReconciliationSubject)}(s) for `)).toHaveLength(5);
     expect(md).not.toMatch(/scenario reconciliation/i);
   });

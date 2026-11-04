@@ -3,9 +3,10 @@ import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import { CORE_MESSAGES, CoreMessage } from "../render/messages.js";
+import { CoreMessage } from "../render/messages.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
+import { coreMessage } from "../render/coreText.js";
 
 describe("[SCN-VIT-006] every observation read from a Vitest report is posted at unit, because a Vitest report is a report of test results and carries no layer tags", () => {
   const report: VitestJsonReport = {
@@ -253,7 +254,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
         .find((line) => line.startsWith("| (unnamed claim) | "));
 
       expect(unnamedClaimRow ?? "").toContain(
-        `(/r/several.test.ts: ${CORE_MESSAGES[CoreMessage.SeveralScnCodes](["SCN-AAA-001", "SCN-AAA-002"])})`
+        `(/r/several.test.ts: ${coreMessage(CoreMessage.SeveralScnCodesCited, { count: 2, codes: "SCN-AAA-001, SCN-AAA-002" })})`
       );
     });
   });

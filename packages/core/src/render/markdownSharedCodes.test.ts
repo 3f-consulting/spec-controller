@@ -7,7 +7,7 @@ import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 import { parseFeatureCounts, readCorpus } from "../parse/scenarioReaders.test-utils.js";
 import { censusBlock as censusBlockOf } from "./renderedSection.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -21,6 +21,7 @@ import {
   type ClaimReconciliationsTable,
   type ClaimRow,
 } from "./claimReconciliationsTable.test-utils.js";
+import { coreMessage } from "./coreText.js";
 
 const ctx: RunContext = {
   target: "stg-017",
@@ -102,7 +103,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
   it.each([
     [
       "states that the corpus holds three scenarios, one code carried by more than one of them",
-      () => `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](3, 1)}`,
+      () => `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: 3, codes: 1 })}`,
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
@@ -130,8 +131,8 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
       []
     );
     const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("SCN-ONE-001");
-    expect(row?.cell(VERDICT_COLUMN)).toBe("out-of-balance");
-    expect(row?.cell(RECONCILING_ITEMS_COLUMN).startsWith(CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode])).toBe(true);
+    expect(row?.cell(VERDICT_COLUMN())).toBe("out-of-balance");
+    expect(row?.cell(RECONCILING_ITEMS_COLUMN()).startsWith(coreMessage(CoreMessage.OutcomeDuplicateScnCode))).toBe(true);
     expect(row?.cells.join(" | ")).not.toContain("undefined");
   });
 
@@ -142,8 +143,8 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
         { feature: "beta.feature", source: beta },
       ])
     ).toEqual([
-      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](6, 2)}`,
+      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`,
+      `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: 6, codes: 2 })}`,
       "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
       "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
     ]);
@@ -173,18 +174,18 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
   ])("names %s in its sharer's reconciling items", (scenario) => {
     const rows = sharerRowsOf();
     expect(rows).toHaveLength(2);
-    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN) === `unit: ${CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode]} — this one is ${scenario}`)).toHaveLength(1);
+    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN()) === `unit: ${coreMessage(CoreMessage.OutcomeDuplicateScnCode)} — this one is ${scenario}`)).toHaveLength(1);
   });
 
   it("renders the two sharers' rows alike but for the scenario each names", () => {
     const table = sharerTable();
     const rows = table.rowsOf("SCN-ONE-001").map((row) =>
       table.header.map((column) =>
-        column === RECONCILING_ITEMS_COLUMN ? row.cell(column).replace(/ — this one is .+$/, " — this one is <scenario>") : row.cell(column)
+        column === RECONCILING_ITEMS_COLUMN() ? row.cell(column).replace(/ — this one is .+$/, " — this one is <scenario>") : row.cell(column)
       )
     );
     expect(rows).toHaveLength(2);
-    expect(rows[0]![table.header.indexOf(RECONCILING_ITEMS_COLUMN)]).toContain(" — this one is <scenario>");
+    expect(rows[0]![table.header.indexOf(RECONCILING_ITEMS_COLUMN())]).toContain(" — this one is <scenario>");
     expect(rows[1]).toEqual(rows[0]);
   });
 });

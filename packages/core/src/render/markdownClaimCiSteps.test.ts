@@ -158,7 +158,7 @@ const ciStepsOf = (claim: string): string => table().rowOf(claim).cell(CI_STEPS_
 describe("[SCN-RPT-080] each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included", () => {
   it("ends the table with the CI steps column, after Reconciling items", () => {
     const header = table().header;
-    expect(header.slice(-2)).toStrictEqual([RECONCILING_ITEMS_COLUMN, CI_STEPS_COLUMN]);
+    expect(header.slice(-2)).toStrictEqual([RECONCILING_ITEMS_COLUMN(), CI_STEPS_COLUMN]);
   });
 
   it("names a unit and e2e scenario's steps in column order", () => {

@@ -6,7 +6,7 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { outcomeDescription } from "./outcomeDescription.js";
 import { cellSafeKeepingCodeSpans } from "./cellSafe.js";
 import { reportedName } from "./reportedName.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
@@ -20,6 +20,7 @@ import {
   isUnnamedClaim,
   outOfBalanceCountOf,
   reconcilingItemsOf,
+  UNNAMED_CLAIM_ID,
 } from "../domain/claimReconciliation.js";
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
@@ -32,7 +33,7 @@ import { stepAccountingSection } from "./stepAccounting.js";
 import { evidenceObservationsSection } from "./evidenceObservations.js";
 import type { FeatureOutOfBalance } from "../domain/outOfBalanceByFeature.js";
 import { evidenceColumns, columnHeader, evidenceCell, type EvidenceColumn } from "./evidenceGrid.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { remarkHeadlineOf, remarkWordsOf } from "./remarkWords.js";
@@ -40,7 +41,7 @@ import { fencedBlockLines } from "./codeSpan.js";
 import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGroup } from "../domain/unnamedClaimGroups.js";
 
 function renderLine(line: ReconciliationLine): string {
-  const sentence = `${OUTCOME_DESCRIPTION[line.outcome]}${scenarioClauseOf(line)}`;
+  const sentence = `${outcomeDescription(line.outcome)}${scenarioClauseOf(line)}`;
   if (line.outcome === "both-missing" || line.outcome === "no-scn-code" || line.qualityCheckKind === undefined) {
     return sentence;
   }
@@ -63,7 +64,7 @@ function namedSuffix(o: EvidenceObservation): string {
 }
 
 function scenarioClauseOf({ scenario }: ReconciliationLine): string {
-  return scenario === undefined ? "" : ` — ${CORE_MESSAGES[CoreMessage.SharedScnCodeScenario](reportedName(scenario.feature), reportedName(scenario.title))}`;
+  return scenario === undefined ? "" : ` — ${coreMessage(CoreMessage.SharedScnCodeScenario, { feature: reportedName(scenario.feature), title: reportedName(scenario.title) })}`;
 }
 
 function brokenSuffix(o: EvidenceObservation): string {
@@ -80,23 +81,23 @@ const RESULT_MESSAGE = {
 } as const satisfies Record<EvidenceStatus, CoreMessage>;
 
 function resultOf(o: EvidenceObservation): string {
-  return o.status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[o.status]]}`;
+  return o.status === undefined ? "" : ` — ${coreMessage(RESULT_MESSAGE[o.status])}`;
 }
 
 function renderPendingItem(item: PendingItem): string {
   return item.qualityCheckKind === undefined
-    ? CORE_MESSAGES[CoreMessage.PendingItem]
-    : CORE_MESSAGES[CoreMessage.PendingItemFor](item.qualityCheckKind);
+    ? coreMessage(CoreMessage.PendingItem)
+    : coreMessage(CoreMessage.PendingItemFor, { qualityCheckKind: item.qualityCheckKind });
 }
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark, reportedName) ?? []);
-  const code = group.sharedScnCode === undefined ? [] : [CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)];
+  const code = group.sharedScnCode === undefined ? [] : [coreMessage(CoreMessage.SharedScnCode, { code: group.sharedScnCode })];
   const said = [...new Set([...code, ...remarks])].filter((part) => part !== "").join(" / ");
-  const counts = CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](group.ran, group.passed, group.failed);
+  const counts = coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: group.ran, passed: group.passed, failed: group.failed });
   const names = group.failedNames.map(reportedName).filter((name) => name !== "");
-  const failed = names.length === 0 ? "" : ` ${CORE_MESSAGES[CoreMessage.UnnamedClaimFailedNames](names)}`;
-  return `${group.qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
+  const failed = names.length === 0 ? "" : ` ${coreMessage(CoreMessage.UnnamedClaimFailedNames, { names: names.join(" / ") })}`;
+  return `${group.qualityCheckKind}: ${outcomeDescription("cites-no-scenario")}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
 }
 
 interface UnnamedClaimCiStepsView {
@@ -122,8 +123,8 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = unnamedClaimCiSteps(unnamedClaimCiStepsViewOf(group.names.map(reportedName)));
   const remark =
-    group.sharedScnCode === undefined ? "" : ` (${CORE_MESSAGES[CoreMessage.SharedScnCode](group.sharedScnCode)})`;
-  return `fitness: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}${remark} — ${steps}`;
+    group.sharedScnCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedScnCode, { code: group.sharedScnCode })})`;
+  return `fitness: ${outcomeDescription("cites-no-scenario")}${remark} — ${steps}`;
 }
 
 function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[] {
@@ -220,7 +221,7 @@ const reconciliationTotalsSection: SectionEmitter = (report) => {
   ];
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    lines.push(row([OUTCOME_DESCRIPTION[outcome], "", "", String(reconciliationLines.byOutcome[outcome]), detail]));
+    lines.push(row([outcomeDescription(outcome), "", "", String(reconciliationLines.byOutcome[outcome]), detail]));
   }
   lines.push(...pendingTally(pending));
   lines.push("");
@@ -239,11 +240,11 @@ const byFeatureSection: SectionEmitter = (report) => {
   const groups = report.summary.outOfBalanceByFeature ?? [];
   const ungrouped = ungroupedOutOfBalance(report.summary.reconciliationTotals.claimReconciliations);
   if (groups.length === 0 && ungrouped.length === 0) return [];
-  const head = CORE_MESSAGES[CoreMessage.ScenarioClaimReconciliationsOutOfBalance](outOfBalanceCountOf(scenarios), scenarios.length);
+  const head = coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: outOfBalanceCountOf(scenarios), claimReconciliations: scenarios.length });
   return [
-    CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading],
+    markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)),
     "",
-    `${head}${groups.length > 0 ? CORE_MESSAGES[CoreMessage.GroupedByFeature] : ""}${ungroupedTail(ungrouped)}.`,
+    `${head}${groups.length > 0 ? coreMessage(CoreMessage.GroupedByFeature) : ""}${ungroupedTail(ungrouped)}.`,
     "",
     ...byFeatureTableLines(groups),
   ];
@@ -251,7 +252,7 @@ const byFeatureSection: SectionEmitter = (report) => {
 
 function byFeatureTableLines(groups: readonly FeatureOutOfBalance[]): string[] {
   if (groups.length === 0) return [];
-  const lines = [CORE_MESSAGES[CoreMessage.ByFeatureTableHeader], "| --- | --- | --- |"];
+  const lines = [coreMessage(CoreMessage.ByFeatureTableHeader), "| --- | --- | --- |"];
   for (const group of groups) {
     const label = group.featureFile ? `${group.featureFile} (${group.feature})` : group.feature;
     lines.push(`| ${label} | ${group.count} | ${idsCell(group)} |`);
@@ -260,26 +261,40 @@ function byFeatureTableLines(groups: readonly FeatureOutOfBalance[]): string[] {
   return lines;
 }
 
+type OutOfBalanceCodesView = { readonly kind: "none" } | { readonly kind: "some"; readonly codes: readonly [string, ...(readonly string[])] };
+
+const outOfBalanceCodesOf = ({ claims }: FeatureOutOfBalance): OutOfBalanceCodesView => {
+  const [first, ...rest] = claims;
+  if (first === undefined) return { kind: "none" };
+  return { kind: "some", codes: [first, ...rest] };
+};
+
+const codeList = (codes: readonly string[]): string => codes.join(", ");
+
 function idsCell(group: FeatureOutOfBalance): string {
-  const ids = group.claims.join(", ");
   const noScnCodeCount = group.scenariosWithNoScnCode ?? 0;
-  if (noScnCodeCount === 0) return ids;
-  const noScnCode = CORE_MESSAGES[CoreMessage.NoScnCodeScenarios](noScnCodeCount);
-  return ids === "" ? noScnCode : `${ids}${CORE_MESSAGES[CoreMessage.AndJoiner]}${noScnCode}`;
+  if (noScnCodeCount === 0) return codeList(group.claims);
+  const view = outOfBalanceCodesOf(group);
+  switch (view.kind) {
+    case "none":
+      return coreMessage(CoreMessage.NoScnCodeScenarios, { count: noScnCodeCount });
+    case "some":
+      return coreMessage(CoreMessage.CodesAndNoScnCodeScenarios, { codes: codeList(view.codes), count: noScnCodeCount });
+  }
 }
 
 type ClaimReconciliationTotals = RenderInput["summary"]["reconciliationTotals"]["claimReconciliations"];
 
 function ungroupedOutOfBalance(totals: ClaimReconciliationTotals): string[] {
   return [
-    ...(totals.phantomClaim > 0 ? [CORE_MESSAGES[CoreMessage.PhantomClaimReconciliations](totals.phantomClaim)] : []),
-    ...(totals.unnamedClaim > 0 ? [CORE_MESSAGES[CoreMessage.UnnamedClaimReconciliations](totals.unnamedClaim)] : []),
+    ...(totals.phantomClaim > 0 ? [coreMessage(CoreMessage.PhantomClaimReconciliations, { count: totals.phantomClaim })] : []),
+    ...(totals.unnamedClaim > 0 ? [coreMessage(CoreMessage.UnnamedClaimReconciliations, { count: totals.unnamedClaim })] : []),
   ];
 }
 
 function ungroupedTail(ungrouped: readonly string[]): string {
   return ungrouped.length > 0
-    ? `; ${CORE_MESSAGES[CoreMessage.NotGroupedByFeature](ungrouped.join(CORE_MESSAGES[CoreMessage.AndJoiner]))}`
+    ? `; ${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: ungrouped.join(coreMessage(CoreMessage.AndJoiner)) })}`
     : "";
 }
 
@@ -290,7 +305,7 @@ const ledgerSection: SectionEmitter = (report) => {
   const claims = [...scenarioRows, ...phantomClaimRows, ...unnamedClaimRows];
   const columns = report.summary.evidenceObservations !== undefined ? evidenceColumns(claims) : [];
   return [
-    CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading],
+    markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)),
     "",
     ...ledgerTallyLines(report.summary.reconciliationTotals.claimReconciliations),
     "",
@@ -302,18 +317,18 @@ const ledgerSection: SectionEmitter = (report) => {
 
 function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
   if (columns.length === 0) return [];
-  return [...CORE_MESSAGES[CoreMessage.EvidenceCellKey].split("\n"), CORE_MESSAGES[CoreMessage.WatermelonItemKey], ""];
+  return [...coreMessage(CoreMessage.EvidenceCellKey).split("\n"), coreMessage(CoreMessage.WatermelonItemKey), ""];
 }
 
 function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
   const lines = [
-    `- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](totals.total, totals.balanced, totals.outOfBalance)}`,
+    `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: totals.total, balanced: totals.balanced, outOfBalance: totals.outOfBalance })}`,
   ];
   if (totals.phantomClaim > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.PhantomClaimTally](totals.phantomClaim)}`);
+    lines.push(`- ${coreMessage(CoreMessage.PhantomClaimTally, { count: totals.phantomClaim })}`);
   }
   if (totals.unnamedClaim > 0) {
-    lines.push(`- ${CORE_MESSAGES[CoreMessage.UnnamedClaimTally](totals.unnamedClaim)}`);
+    lines.push(`- ${coreMessage(CoreMessage.UnnamedClaimTally, { count: totals.unnamedClaim, unnamedClaimId: UNNAMED_CLAIM_ID })}`);
   }
   return lines;
 }
@@ -321,9 +336,9 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
 const scenarioCodeFactsSection: SectionEmitter = (report) => {
   const codes = report.summary.scenarioCodes;
   if (codes?.excludedOccurrences === undefined) return [];
-  const lines = [`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](codes.excludedOccurrences)}`];
+  const lines = [`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: codes.excludedOccurrences })}`];
   const untagged = (codes.untaggedScenarios ?? []).length;
-  if (untagged > 0) lines.push(`- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](untagged)}`);
+  if (untagged > 0) lines.push(`- ${coreMessage(CoreMessage.UntaggedScenarios, { count: untagged })}`);
   lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], report.claimReconciliations.filter(isScenario).length));
   return [...lines, ""];
 };
@@ -331,7 +346,7 @@ const scenarioCodeFactsSection: SectionEmitter = (report) => {
 function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number): string[] {
   if (shared.length === 0) return [];
   return [
-    `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](scenarios, shared.length)}`,
+    `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios, codes: shared.length })}`,
     ...shared.map(
       (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.title}`).join("; ")}`
     ),
@@ -345,11 +360,11 @@ function ledgerTableLines(
 ): string[] {
   const withSteps = columns.length > 0;
   const headers = [
-    CORE_MESSAGES[CoreMessage.ClaimColumn],
+    coreMessage(CoreMessage.ClaimColumn),
     ...columns.map(columnHeader),
-    CORE_MESSAGES[CoreMessage.VerdictColumn],
-    CORE_MESSAGES[CoreMessage.ReconcilingItemsColumn],
-    ...(withSteps ? [CORE_MESSAGES[CoreMessage.CiStepsColumn]] : []),
+    coreMessage(CoreMessage.VerdictColumn),
+    coreMessage(CoreMessage.ReconcilingItemsColumn),
+    ...(withSteps ? [coreMessage(CoreMessage.CiStepsColumn)] : []),
   ];
   const lines = [`| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`];
   for (const s of claims) {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parseJunitEvidenceObservations } from "@3f-consulting/spec-controller-core";
-import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
+import { CoreMessage, coreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { parseJunitXml } from "./junitXml.js";
 import {
   expectMissingWithNoObservation,
@@ -81,7 +81,7 @@ describe("[SCN-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
 
   it("posts the enclosing test's failure to the unnamed claim, under its own name", () => {
     expect(unnamedClaimRowOf(balance(), TARGET)).toContain(
-      `${CORE_MESSAGES[CoreMessage.OutcomeCitesNoScenario]} (example.com/gofixture/cited::TestEnclosingFailsFirst) — ${CORE_MESSAGES[CoreMessage.UnnamedClaimGroupCounts](1, 0, 1)}`,
+      `${coreMessage(CoreMessage.OutcomeCitesNoScenario)} (example.com/gofixture/cited::TestEnclosingFailsFirst) — ${coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: 1, passed: 0, failed: 1 })}`,
     );
   });
 });

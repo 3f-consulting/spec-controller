@@ -3,7 +3,7 @@ import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 
@@ -38,7 +38,7 @@ export const endOfStepAccountingTable = (section: readonly string[]): number => 
 
 export function censusBlock(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(`- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`);
+  const start = lines.indexOf(`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`);
   expect(start).toBeGreaterThan(0);
   const block = lines.slice(start);
   return block.slice(0, block.indexOf(""));

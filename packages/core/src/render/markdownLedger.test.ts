@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { Ledger, Outcome } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { OUTCOME_DESCRIPTION, outcomeDescription } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { linesOf } from "../domain/claimReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
@@ -92,7 +92,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     table.rows.map((row) => [row.claim, ...table.evidenceOf(row)]);
 
   const unnamedClaimItemsOf = (table: ClaimReconciliationsTable): string =>
-    table.rowOf("(unnamed claim)").cell(RECONCILING_ITEMS_COLUMN);
+    table.rowOf("(unnamed claim)").cell(RECONCILING_ITEMS_COLUMN());
 
   it("adds a column for a behavioural layer the corpus names but no run observed, lettered E for e2e and P for performance", () => {
     const named = reconcile(
@@ -113,7 +113,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   const citesNoScenario = (qualityCheckKind: string): string =>
-    `${qualityCheckKind}: ${OUTCOME_DESCRIPTION["cites-no-scenario"]}`;
+    `${qualityCheckKind}: ${outcomeDescription("cites-no-scenario")}`;
 
   it.each([
     [
@@ -233,14 +233,14 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
 
   it("shows the failure in Verdict and Reconciling items, as for the failed unit test", () => {
     const table = tableOf();
-    const fitnessVerdict = table.rowOf("SCN-FIT").cell(VERDICT_COLUMN);
-    const fitnessItems = table.rowOf("SCN-FIT").cell(RECONCILING_ITEMS_COLUMN);
-    const unitVerdict = table.rowOf("SCN-UNIT").cell(VERDICT_COLUMN);
-    const unitItems = table.rowOf("SCN-UNIT").cell(RECONCILING_ITEMS_COLUMN);
+    const fitnessVerdict = table.rowOf("SCN-FIT").cell(VERDICT_COLUMN());
+    const fitnessItems = table.rowOf("SCN-FIT").cell(RECONCILING_ITEMS_COLUMN());
+    const unitVerdict = table.rowOf("SCN-UNIT").cell(VERDICT_COLUMN());
+    const unitItems = table.rowOf("SCN-UNIT").cell(RECONCILING_ITEMS_COLUMN());
     expect(fitnessVerdict).toBe(unitVerdict);
     expect(fitnessVerdict).toBe("out-of-balance");
-    expect(unitItems.startsWith(`unit: ${OUTCOME_DESCRIPTION.failing}`)).toBe(true);
-    expect(fitnessItems.startsWith(`fitness: ${OUTCOME_DESCRIPTION.failing}`)).toBe(true);
+    expect(unitItems.startsWith(`unit: ${outcomeDescription("failing")}`)).toBe(true);
+    expect(fitnessItems.startsWith(`fitness: ${outcomeDescription("failing")}`)).toBe(true);
   });
 });
 
@@ -293,7 +293,7 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
   });
 
   const leafCellsOf = (md: string): string[] => {
-    const sentences = new Set<string>(Object.values(OUTCOME_DESCRIPTION));
+    const sentences = new Set<string>((Object.keys(OUTCOME_DESCRIPTION) as Outcome[]).map(outcomeDescription));
     return md
       .split("\n")
       .map((line) => line.split(" | ")[0]?.replace(/^\| /, "") ?? "")
@@ -303,7 +303,7 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
   it("decomposes the Reconciliation line out-of-balance into exactly the ten leaf outcome rows, each opening with its outcome's sentence alone", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     for (const leaf of LEAVES) {
-      expect(md).toContain(`\n| ${OUTCOME_DESCRIPTION[leaf]} |`);
+      expect(md).toContain(`\n| ${outcomeDescription(leaf)} |`);
     }
     expect(leafCellsOf(md).length).toBe(10);
   });
@@ -312,10 +312,10 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
     const rendered = new Set(leafCellsOf(md));
     for (const outcome of EXPECTED_LEAVES) {
-      expect(rendered).toContain(OUTCOME_DESCRIPTION[outcome]);
+      expect(rendered).toContain(outcomeDescription(outcome));
     }
     expect(rendered.size).toBe(EXPECTED_LEAVES.length);
-    expect(rendered).not.toContain(OUTCOME_DESCRIPTION.satisfied);
+    expect(rendered).not.toContain(outcomeDescription("satisfied"));
   });
 
   it("sums the leaf counts to the Reconciliation line out-of-balance total", () => {
@@ -327,7 +327,7 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
     expect(qcrOutOfBalance).toBe(3);
     let leafSum = 0;
     for (const leaf of LEAVES) {
-      const gloss = OUTCOME_DESCRIPTION[leaf].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const gloss = outcomeDescription(leaf).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const n = Number(new RegExp(`\\n\\| ${gloss} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]);
       expect(Number.isNaN(n)).toBe(false);
       leafSum += n;
@@ -354,7 +354,7 @@ describe("[SCN-RPT-099] the Reconciliation totals section lists no group rows am
     const firstCells = lines.slice(start + 1, end).map((line) => line.split(" | ")[0]?.replace(/^\| /, ""));
     const causes = (Object.keys(OUTCOME_DESCRIPTION) as Outcome[])
       .filter((outcome) => outcome !== "satisfied")
-      .map((outcome) => OUTCOME_DESCRIPTION[outcome]);
+      .map((outcome) => outcomeDescription(outcome));
     expect(causes.length).toBe(10);
     expect([...firstCells].sort()).toEqual([...causes].sort());
   });

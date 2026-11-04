@@ -173,34 +173,6 @@ function renderedByHandle<C>(handles: object, rendered: (code: C) => string): Re
   );
 }
 
-type CoreTemplate = {
-  [C in keyof CoreMessages]: CoreMessages[C] extends string ? never : C;
-}[keyof CoreMessages];
-
-const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessages[C]> } = {
-  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
-  [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],
-  [CoreMessage.PhantomClaimReconciliations]: [1],
-  [CoreMessage.UnnamedClaimReconciliations]: [1],
-  [CoreMessage.NoScnCodeScenarios]: [1],
-  [CoreMessage.ClaimReconciliationTally]: [3, 2, 1],
-  [CoreMessage.PhantomClaimTally]: [1],
-  [CoreMessage.UnnamedClaimTally]: [1],
-  [CoreMessage.ExcludedScnOccurrences]: [1],
-  [CoreMessage.UntaggedScenarios]: [1],
-  [CoreMessage.SharedScnCodes]: [4, 1],
-  [CoreMessage.SharedScnCodeScenario]: ["login.feature", "a user with the right password is let in"],
-  [CoreMessage.PendingItemFor]: ["unit"],
-  [CoreMessage.CheckStepNoOutcome]: ["SCN-ABC-001"],
-  [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
-  [CoreMessage.CheckStepEnded]: ["SCN-ABC-001", "cancelled"],
-  [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
-  [CoreMessage.UnnamedClaimGroupCounts]: [3, 2, 1],
-  [CoreMessage.UnnamedClaimFailedNames]: [["spawns yarn", "reads the lockfile"]],
-  [CoreMessage.SeveralScnCodes]: [["SCN-ABC-001", "SCN-ABC-002"]],
-  [CoreMessage.SharedScnCode]: ["SCN-ABC-001"],
-};
-
 const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessageValues[C] } = {
   [CoreMessage.ConfigurationWrongKind]: { entry: "specController.runners", is: "a string", reads: "an object" },
   [CoreMessage.ConfigurationUnknownKey]: { key: "specController.extra" },
@@ -245,17 +217,35 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.StepNonCheck]: { entry: "ci.yml / build / lint" },
   [CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel]: { key: "`specController.notChecks`", workflows: "`ci.yml`" },
   [CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel]: { key: "`specController.notChecks`" },
+  [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: { outOfBalance: 1, claimReconciliations: 3 },
+  [CoreMessage.NotGroupedByFeature]: { ungrouped: "1 Claim Reconciliation(s) for cited scenario ids with no real scenario" },
+  [CoreMessage.PhantomClaimReconciliations]: { count: 1 },
+  [CoreMessage.UnnamedClaimReconciliations]: { count: 1 },
+  [CoreMessage.NoScnCodeScenarios]: { count: 1 },
+  [CoreMessage.CodesAndNoScnCodeScenarios]: { codes: "SCN-ABC-001", count: 1 },
+  [CoreMessage.ClaimReconciliationTally]: { total: 3, balanced: 2, outOfBalance: 1 },
+  [CoreMessage.PhantomClaimTally]: { count: 1 },
+  [CoreMessage.UnnamedClaimTally]: { count: 1, unnamedClaimId: "(unnamed claim)" },
+  [CoreMessage.ExcludedScnOccurrences]: { count: 1 },
+  [CoreMessage.UntaggedScenarios]: { count: 1 },
+  [CoreMessage.SharedScnCodes]: { scenarios: 4, codes: 1 },
+  [CoreMessage.SharedScnCodeScenario]: { feature: "login.feature", title: "a user with the right password is let in" },
+  [CoreMessage.PendingItemFor]: { qualityCheckKind: "unit" },
+  [CoreMessage.CheckStepNoOutcome]: { scnId: "SCN-ABC-001" },
+  [CoreMessage.CheckStepSkipped]: { scnId: "SCN-ABC-001" },
+  [CoreMessage.CheckStepEnded]: { scnId: "SCN-ABC-001", outcome: "cancelled" },
+  [CoreMessage.AmbiguousNamedStep]: { step: "Given a thing" },
+  [CoreMessage.UnnamedClaimGroupCounts]: { ran: 3, passed: 2, failed: 1 },
+  [CoreMessage.UnnamedClaimFailedNames]: { names: "spawns yarn / reads the lockfile" },
+  [CoreMessage.SeveralScnCodesCited]: { count: 2, codes: "SCN-ABC-001, SCN-ABC-002" },
+  [CoreMessage.SharedScnCode]: { code: "SCN-ABC-001" },
 };
 
 function renderedCore(code: CoreMessage): string {
-  if (!(code in CORE_MESSAGES)) {
-    const worded = code as WordedCoreMessage;
-    const values = (SAMPLE_CORE_VALUES as Partial<Record<WordedCoreMessage, MessageValues>>)[worded];
-    return (coreMessage as (code: WordedCoreMessage, values?: MessageValues) => string)(worded, values);
-  }
-  const entry = CORE_MESSAGES[code as keyof CoreMessages];
-  if (typeof entry === "string") return entry;
-  return (entry as (...params: unknown[]) => string)(...SAMPLE_CORE_PARAMS[code as CoreTemplate]);
+  if (code in CORE_MESSAGES) return CORE_MESSAGES[code as keyof CoreMessages];
+  const worded = code as WordedCoreMessage;
+  const values = (SAMPLE_CORE_VALUES as Partial<Record<WordedCoreMessage, MessageValues>>)[worded];
+  return (coreMessage as (code: WordedCoreMessage, values?: MessageValues) => string)(worded, values);
 }
 
 const SAMPLE_APP_PARAMS: { readonly [C in keyof AppMessages]: Parameters<AppMessages[C]> } = {
@@ -417,9 +407,6 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
     expect(keysOf({ ...CORE_MESSAGES, ...CORE_TEXTS })).toEqual(codes);
-    const tabled = codes.filter((code): code is keyof CoreMessages => typeof code === "number");
-    const templates = tabled.filter((code) => typeof CORE_MESSAGES[code] !== "string");
-    expect((keysOf(SAMPLE_CORE_PARAMS) as (keyof CoreMessages)[]).map((code) => CoreMessage[code])).toEqual(templates.map((code) => CoreMessage[code]));
   });
 
   it("holds the app's catalogue to every app message code and nothing else", () => {

@@ -6,9 +6,10 @@ import { censusBlock } from "./renderedSection.test-utils.js";
 import { evidenceObligations } from "../domain/corpusCounts.js";
 import { scenarioTitleOf } from "../domain/scenarioName.test-utils.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
+import { coreMessage } from "./coreText.js";
 
 const ctx: RunContext = {
   target: "fixture",
@@ -66,8 +67,8 @@ const untaggedLocators = [
 describe("[SCN-RPT-014] the report counts the scenarios with no @SCN code", () => {
   it("states the count of scenarios with no @SCN code, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
-      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](0)}`,
-      `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](3)}`,
+      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`,
+      `- ${coreMessage(CoreMessage.UntaggedScenarios, { count: 3 })}`,
     ]);
   });
 });

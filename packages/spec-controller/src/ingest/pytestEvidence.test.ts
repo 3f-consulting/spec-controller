@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OUTCOME_DESCRIPTION, observationsOf } from "@3f-consulting/spec-controller-core/internal";
+import { observationsOf, outcomeDescription } from "@3f-consulting/spec-controller-core/internal";
 import {
   brokenItemsOf,
   expectMissingWithNoObservation,
@@ -112,7 +112,7 @@ describe("[SCN-PYT-008] runReconcile reads a test whose setup errored in a real 
   it("renders the broken item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {
     const brokenItemLine = reportLinesOf(balance(), TARGET).find((line) => line.startsWith("| ") && line.includes("test_cases::test_setup_error"));
 
-    expect(brokenItemLine ?? "").toContain(`${OUTCOME_DESCRIPTION.broken} (test_cases::test_setup_error`);
+    expect(brokenItemLine ?? "").toContain(`${outcomeDescription("broken")} (test_cases::test_setup_error`);
     expect(brokenItemLine ?? "").not.toContain("failed to collect");
   });
 });

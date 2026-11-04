@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
-import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
+import { outcomeDescription } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { specsFeaturesInputs } from "./runContext.test-utils.js";
@@ -51,7 +51,7 @@ function render(): string {
 }
 
 const pendingFor = (qualityCheckKind: string): string => `pending: ${qualityCheckKind}`;
-const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${OUTCOME_DESCRIPTION.missing}`;
+const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${outcomeDescription("missing")}`;
 
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no kind of quality check carries the bare pending label, and its row still balances", () => {

@@ -156,7 +156,7 @@ describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its s
 });
 
 const duplicateLine = (): string =>
-  coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode] });
+  coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) });
 
 const HEADING = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
 
@@ -477,11 +477,11 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
         : {}),
     });
     const facts = [
-      `- ${CORE_MESSAGES[CoreMessage.ExcludedScnOccurrences](excluded)}`,
+      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: excluded })}`,
       ...(others
         ? [
-            `- ${CORE_MESSAGES[CoreMessage.UntaggedScenarios](1)}`,
-            `- ${CORE_MESSAGES[CoreMessage.SharedScnCodes](CODES[codes].scenarios, 1)}`,
+            `- ${coreMessage(CoreMessage.UntaggedScenarios, { count: 1 })}`,
+            `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: CODES[codes].scenarios, codes: 1 })}`,
             "  - SCN-ONE-001: one.feature : the first; two.feature : the second",
           ]
         : []),
@@ -493,7 +493,7 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
     expect(lines.slice(verdict, verdict + 2)).toEqual([runVerdictHeading(), ""]);
     expect(lines[verdict + 2]).not.toBe("");
     expect(lines.slice(verdict + 3, next)).toEqual(["", ...codesStatement(codes), ...facts, ""]);
-    const claimReconciliations = lines.slice(lines.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]));
+    const claimReconciliations = lines.slice(lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading))));
     expect(claimReconciliations.length).toBeGreaterThan(1);
     expect(claimReconciliations.filter((line) => facts.includes(line))).toEqual([]);
     expect(lines.filter((line) => facts.includes(line))).toEqual(facts);

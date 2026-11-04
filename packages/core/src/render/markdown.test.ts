@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { type Ledger } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
@@ -85,10 +85,10 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
 
   it("decomposes the Reconciliation line out-of-balance into cause rows, each its outcome's sentence alone, with the level split as Detail", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
-    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeMissing]} |`);
+    expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeMissing)} |`);
     expect(md).toContain("1 unit + 1 integration");
-    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeFailing]} |`);
-    expect(md).toContain(`\n| ${CORE_MESSAGES[CoreMessage.OutcomeWatermelon]} |`);
+    expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeFailing)} |`);
+    expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeWatermelon)} |`);
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
@@ -103,7 +103,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     );
     const md = renderMarkdown(__er(lintAndBehavioural), ctx, publishedExitCodeOf);
     expect(md).toContain("1 fitness + 1 integration");
-    const missingCause = `\n| ${CORE_MESSAGES[CoreMessage.OutcomeMissing]} |`;
+    const missingCause = `\n| ${coreMessage(CoreMessage.OutcomeMissing)} |`;
     const afterMissingCause = md.slice(md.indexOf(missingCause) + missingCause.length);
     expect(md).toContain(missingCause);
     expect(afterMissingCause).toMatch(/^[^\d]*2 \|/);
