@@ -632,6 +632,8 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 **A deferral tag is scenario scope. `@<quality-check-kind>pending` is not.** `@integrationpending` defers only the integration obligation on its scenario, so a passing `@unit` beside it still reconciles satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending Item from each.
 
+**Neither defers anything on a scenario that shares its `@SCN` code with another.** It reads `duplicate-scn-code` at each kind of quality check it raises, deferred or not, or once when it raises none, and it has no Pending Item. Give it a code of its own before deferring it.
+
 `balance --help` prints the key and the built-in set.
 
 ### Configuration the run cannot use is named, never dropped
