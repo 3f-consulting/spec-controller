@@ -19,11 +19,11 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
     expect(totals).toMatchObject({ total: 5, byOutcome: { missing: 5 } });
 
     expect(totals.missingByQualityCheckKind).toEqual([
-      { subject: "fitness", count: 1 },
-      { subject: "unit", count: 1 },
-      { subject: "integration", count: 1 },
-      { subject: "e2e", count: 1 },
-      { subject: "performance", count: 1 },
+      { qualityCheckKind: "fitness", count: 1 },
+      { qualityCheckKind: "unit", count: 1 },
+      { qualityCheckKind: "integration", count: 1 },
+      { qualityCheckKind: "e2e", count: 1 },
+      { qualityCheckKind: "performance", count: 1 },
     ]);
   });
 
@@ -41,6 +41,6 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
     const totals = tally.reconciliationLines;
     expect(totals.total).toBe(3);
     expect(totals.byOutcome).toMatchObject({ missing: 1, broken: 1, satisfied: 1 });
-    expect(totals.missingByQualityCheckKind).toEqual([{ subject: "unit", count: 1 }]);
+    expect(totals.missingByQualityCheckKind).toEqual([{ qualityCheckKind: "unit", count: 1 }]);
   });
 });

@@ -127,10 +127,6 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(reconciliationLines.outOfBalance).toBe(2);
     expect(reconciliationLines.byOutcome["satisfied"]).toBe(1);
     expect(reconciliationLines.byOutcome["missing"]).toBe(2);
-    expect(reconciliationLines.missingByQualityCheckKind).toEqual([
-      { subject: "unit", count: 1 },
-      { subject: "integration", count: 1 },
-    ]);
     expect(report.summary).not.toHaveProperty("evidenceObligations");
   });
 

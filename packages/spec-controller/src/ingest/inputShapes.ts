@@ -81,7 +81,18 @@ export const SAVED_RECONCILIATION: Shape = {
   fields: {
     runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
     summary: {
-      fields: { evidenceReconciliation: { fields: {} }, evidenceObservations: { fields: {} } },
+      fields: {
+        evidenceReconciliation: {
+          fields: {
+            reconciliationLines: {
+              fields: {
+                missingByQualityCheckKind: { list: { fields: { qualityCheckKind: "string" }, required: ["qualityCheckKind"] } },
+              },
+            },
+          },
+        },
+        evidenceObservations: { fields: {} },
+      },
       required: ["evidenceReconciliation", "evidenceObservations"],
     },
     ledger: { fields: { claimReconciliations: { list: "anything" } }, required: ["claimReconciliations"] },

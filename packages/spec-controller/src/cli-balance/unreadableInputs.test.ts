@@ -638,6 +638,19 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     ],
     [{ ...SAVED, scenarioCodes: "x" }, "scenarioCodes is a string, not an object"],
     [{ ...SAVED, runProvenance: { ...SAVED.runProvenance, corpus: undefined } }, "runProvenance.corpus is missing"],
+    [
+      {
+        ...SAVED,
+        summary: {
+          ...SAVED.summary,
+          evidenceReconciliation: {
+            ...SAVED.summary.evidenceReconciliation,
+            reconciliationLines: { ...SAVED.summary.evidenceReconciliation.reconciliationLines, missingByQualityCheckKind: [{ subject: "unit", count: 1 }] },
+          },
+        },
+      },
+      "summary.evidenceReconciliation.reconciliationLines.missingByQualityCheckKind[0].qualityCheckKind is missing",
+    ],
   ])("names where %j departs from a saved reconciliation", (document, fault) => {
     const error = shownText(checkSavedReconciliation("saved.json", document));
 

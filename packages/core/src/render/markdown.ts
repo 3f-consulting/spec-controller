@@ -169,7 +169,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   const { claimReconciliations, reconciliationLines, pending } = report.summary.evidenceReconciliation;
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
   const missingSplit = reconciliationLines.missingByQualityCheckKind
-    .map(({ subject, count }) => `${count} ${subject}`)
+    .map(({ qualityCheckKind, count }) => `${count} ${qualityCheckKind}`)
     .join(" + ");
   const lines = [
     CORE_MESSAGES[CoreMessage.EvidenceReconciliationHeading],

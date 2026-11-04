@@ -50,7 +50,7 @@ export interface ClaimReconciliationTotals {
 }
 
 export interface MissingByQualityCheckKind {
-  readonly subject: string;
+  readonly qualityCheckKind: QualityCheckKind;
   readonly count: number;
 }
 
@@ -132,7 +132,7 @@ function reconciliationLineTotals(ledger: Ledger): ReconciliationLineTotals {
     byOutcome,
     outOfBalance: total - byOutcome.satisfied,
     missingByQualityCheckKind: QUALITY_CHECK_KINDS.filter((s) => (missing.get(s) ?? 0) > 0).map(
-      (subject) => ({ subject, count: missing.get(subject)! })
+      (qualityCheckKind) => ({ qualityCheckKind, count: missing.get(qualityCheckKind)! })
     ),
   };
 }
