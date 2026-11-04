@@ -16,45 +16,6 @@ export enum CoreMessage {
   ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
   ScenarioCodeErrorsHeading,
-  ReconciliationTotalsHeading,
-  ReconciliationTotalsClaimReconciliationTerm,
-  ReconciliationTotalsReconciliationLineTerm,
-  ReconciliationTotalsEvidenceObligationTerm,
-  ReconciliationTotalsEvidenceObservationTerm,
-  SubjectColumn,
-  TotalColumn,
-  BalancedColumn,
-  OutOfBalanceColumn,
-  DetailColumn,
-  ClaimReconciliationSubject,
-  ReconciliationLineSubject,
-  PendingTally,
-  EvidenceObservationsHeading,
-  EvidenceObservationsSum,
-  EvidenceObservationsTableHeader,
-  FitnessRunner,
-  FitnessCiStep,
-  RunnerLayerNamesNone,
-  RunnerLayerUnnamed,
-  NoStepCountedAsItsRunnerRunsIt,
-  ReconcilerStep,
-  ReconcilerReconciles,
-  ReconcilerRecords,
-  StepNonCheck,
-  StepAccountingHeading,
-  StepAccountingTableHeader,
-  StepAccountingTotal,
-  StepAccountingRunnersLabel,
-  StepAccountingReconcilerLabel,
-  StepAccountingNonChecksLabel,
-  StepAccountingNotAppliedLabel,
-  StepAccountingNoWorkflowRead,
-  StepAccountingPlumbingLabel,
-  StepAccountingCandidatesTerm,
-  StepAccountingReconcilerTerm,
-  StepAccountingNonChecksTerm,
-  StepAccountingPlumbingTerm,
-  StepAccountingAccountedForTerm,
   OutOfBalanceByFeatureHeading,
   ScenarioClaimReconciliationsOutOfBalance,
   GroupedByFeature,
@@ -167,6 +128,45 @@ export enum CoreMessage {
   NothingToReconcileHeadline = "nothing-to-reconcile-headline",
   NothingToReconcileGloss = "nothing-to-reconcile-gloss",
   PendingItemsOutstanding = "pending-items-outstanding",
+  ReconciliationTotalsHeading = "reconciliation-totals-heading",
+  ReconciliationTotalsClaimReconciliationTerm = "reconciliation-totals-claim-reconciliation-term",
+  ReconciliationTotalsReconciliationLineTerm = "reconciliation-totals-reconciliation-line-term",
+  ReconciliationTotalsEvidenceObligationTerm = "reconciliation-totals-evidence-obligation-term",
+  ReconciliationTotalsEvidenceObservationTerm = "reconciliation-totals-evidence-observation-term",
+  SubjectColumn = "subject-column",
+  TotalColumn = "total-column",
+  BalancedColumn = "balanced-column",
+  OutOfBalanceColumn = "out-of-balance-column",
+  DetailColumn = "detail-column",
+  ClaimReconciliationSubject = "claim-reconciliation-subject",
+  ReconciliationLineSubject = "reconciliation-line-subject",
+  PendingTally = "pending-tally",
+  EvidenceObservationsHeading = "evidence-observations-heading",
+  EvidenceObservationsSum = "evidence-observations-sum",
+  EvidenceObservationsTableHeader = "evidence-observations-table-header",
+  FitnessRunner = "fitness-runner",
+  FitnessCiStep = "fitness-ci-step",
+  RunnerLayerNamesNone = "runner-layer-names-none",
+  RunnerLayerUnnamed = "runner-layer-unnamed",
+  NoStepCountedAsItsRunnerRunsIt = "no-step-counted-as-its-runner-runs-it",
+  ReconcilerStep = "reconciler-step",
+  ReconcilerReconciles = "reconciler-reconciles",
+  ReconcilerRecords = "reconciler-records",
+  StepNonCheck = "step-non-check",
+  StepAccountingHeading = "step-accounting-heading",
+  StepAccountingTableHeader = "step-accounting-table-header",
+  StepAccountingTotal = "step-accounting-total",
+  StepAccountingRunnersLabel = "step-accounting-runners-label",
+  StepAccountingReconcilerLabel = "step-accounting-reconciler-label",
+  StepAccountingNonChecksLabel = "step-accounting-non-checks-label",
+  StepAccountingNotAppliedWorkflowsReadLabel = "step-accounting-not-applied-workflows-read-label",
+  StepAccountingNotAppliedNoWorkflowReadLabel = "step-accounting-not-applied-no-workflow-read-label",
+  StepAccountingPlumbingLabel = "step-accounting-plumbing-label",
+  StepAccountingCandidatesTerm = "step-accounting-candidates-term",
+  StepAccountingReconcilerTerm = "step-accounting-reconciler-term",
+  StepAccountingNonChecksTerm = "step-accounting-non-checks-term",
+  StepAccountingPlumbingTerm = "step-accounting-plumbing-term",
+  StepAccountingAccountedForTerm = "step-accounting-accounted-for-term",
 }
 
 // Each error named under Errors in the inputs, by its code: a handle's value is the code its entry opens with.
@@ -183,12 +183,6 @@ export enum CoreError {
 }
 
 interface CoreMessageParams {
-  readonly [CoreMessage.PendingTally]: [pending: number];
-  readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
-  readonly [CoreMessage.FitnessCiStep]: [steps: number];
-  readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
-  readonly [CoreMessage.StepNonCheck]: [entry: string];
-  readonly [CoreMessage.StepAccountingNotAppliedLabel]: [key: string, workflowsRead: string];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
   readonly [CoreMessage.PhantomClaimReconciliations]: [count: number];
@@ -261,6 +255,13 @@ export interface CoreMessageValues {
   readonly [CoreMessage.SeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
   readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
   readonly [CoreMessage.NothingToReconcileGloss]: { readonly corpusDir: string };
+  readonly [CoreMessage.PendingTally]: { readonly pending: number };
+  readonly [CoreMessage.EvidenceObservationsSum]: { readonly total: number; readonly onScenario: number; readonly onPhantomClaim: number; readonly onUnnamedClaim: number };
+  readonly [CoreMessage.FitnessCiStep]: { readonly steps: number };
+  readonly [CoreMessage.ReconcilerStep]: { readonly step: string; readonly whatItIs: string };
+  readonly [CoreMessage.StepNonCheck]: { readonly entry: string };
+  readonly [CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel]: { readonly key: string; readonly workflows: string };
+  readonly [CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel]: { readonly key: string };
 }
 
 export type CoreMessages = {
@@ -273,88 +274,10 @@ const DUPLICATE_SCN_CODE = "Evidence Obligation's @SCN code is carried by anothe
 const CITED_WITH_NO_SCENARIO = "cited scenario ids with no real scenario";
 const NO_ONE_SCENARIO_CAN_TAKE = "evidence observations no one scenario can take";
 
-const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
-
 export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
   [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
-  [CoreMessage.ReconciliationTotalsHeading]: "### Reconciliation totals",
-  [CoreMessage.ReconciliationTotalsClaimReconciliationTerm]:
-    "A Claim Reconciliation is one row of the ledger: one claim, reconciled in its Quality Check Reconciliations. " +
-    "A Quality Check Reconciliation reconciles the evidence of one kind of quality check within the claim: " +
-    "the claim's Evidence Obligation of that kind, when it has one, against its Evidence Observations of that kind. " +
-    "A claim is a scenario, a phantom claim (a code that evidence cites and no scenario carries, which the table below calls an unknown Scenario) " +
-    "or the unnamed claim (the one row for the evidence that no scenario or phantom claim takes).",
-  [CoreMessage.ReconciliationTotalsReconciliationLineTerm]:
-    "A Reconciliation line is one line of a Quality Check Reconciliation, with its own outcome: each Evidence Observation it holds is one line, " +
-    "and its Evidence Obligation is one more when no Evidence Observation that ran answers it. " +
-    "A scenario with no Evidence Obligation, no Pending Item and no Evidence Observation still has one Quality Check Reconciliation, " +
-    "holding neither, and it is a single line. " +
-    "No line stands in for another: a scenario whose one Evidence Obligation two passing tests answer " +
-    "adds one to the Claim Reconciliation total and two to the Reconciliation line total.",
-  [CoreMessage.ReconciliationTotalsEvidenceObligationTerm]:
-    "An Evidence Obligation is the evidence a scenario asks for, by the tags it carries, to be met by Evidence Observations. " +
-    "A pending tag such as `@unitpending` defers the evidence of its kind of quality check, and a deferral tag such as `@wip` " +
-    "defers all of the scenario's: what a tag defers raises no Evidence Obligation and is a Pending Item instead, " +
-    "tallied after the table, apart from balanced and out-of-balance, when there is one. " +
-    "On a scenario that shares its `@SCN` code with another, no tag defers anything: " +
-    `it reads "${DUPLICATE_SCN_CODE}" at each kind of quality check it raises, or once when it raises none.`,
-  [CoreMessage.ReconciliationTotalsEvidenceObservationTerm]:
-    "An Evidence Observation is one reported result of a test or a fitness function, attributed by the codes it cites: " +
-    "to the one scenario that carries its one code, to a phantom claim when no scenario carries its one code, " +
-    "and otherwise to the unnamed claim, because no one scenario can take it. " +
-    "One that never reached its assertions is broken: it was reported, but did not run to a result.",
-  [CoreMessage.SubjectColumn]: "Subject",
-  [CoreMessage.TotalColumn]: "Total",
-  [CoreMessage.BalancedColumn]: "Balanced",
-  [CoreMessage.OutOfBalanceColumn]: "Out-of-balance",
-  [CoreMessage.DetailColumn]: "Detail",
-  [CoreMessage.ClaimReconciliationSubject]: "Claim Reconciliation",
-  [CoreMessage.ReconciliationLineSubject]: "Reconciliation line",
-  [CoreMessage.PendingTally]: (pending) =>
-    `${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`,
-  [CoreMessage.EvidenceObservationsHeading]: "### Evidence observations",
-  [CoreMessage.EvidenceObservationsSum]: (total, onScenario, onPhantomClaim, onUnnamedClaim) =>
-    `${total} evidence observations = ${onScenario} on scenarios + ${onPhantomClaim} on ${CITED_WITH_NO_SCENARIO} + ${onUnnamedClaim} that no one scenario can take.`,
-  [CoreMessage.EvidenceObservationsTableHeader]: "| Kind of quality check | Evidence observations | Runner | CI step |",
-  [CoreMessage.FitnessRunner]: "each fitness function's check step",
-  [CoreMessage.FitnessCiStep]: (steps) =>
-    `${steps} step(s), each named on its fitness function's row of Claim Reconciliations.`,
-  [CoreMessage.RunnerLayerNamesNone]:
-    `no runner: the target declares this layer has none, by setting it to \`null\` under ${RUNNERS_PLACE}.`,
-  [CoreMessage.RunnerLayerUnnamed]:
-    `unnamed: the target leaves this layer's runner undeclared: ${RUNNERS_PLACE} is missing or not a block, leaves the layer out, or gives it a value that is neither a string nor \`null\`. A string there names the layer's runner.`,
-  [CoreMessage.NoStepCountedAsItsRunnerRunsIt]: "no step counted as its runner runs it.",
-  [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
-  [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
-  [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",
-  [CoreMessage.StepNonCheck]: (entry) => `${entry} — a non-check: the target names it under \`specController.notChecks\`.`,
-  [CoreMessage.StepAccountingHeading]: "### Step accounting",
-  [CoreMessage.StepAccountingTableHeader]:
-    "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Non-checks | GitHub plumbing | Accounted for |",
-  [CoreMessage.StepAccountingTotal]: "Total",
-  [CoreMessage.StepAccountingRunnersLabel]: "Runners:",
-  [CoreMessage.StepAccountingReconcilerLabel]: "Reconciler:",
-  [CoreMessage.StepAccountingNonChecksLabel]: "Non-checks:",
-  [CoreMessage.StepAccountingNotAppliedLabel]: (key, workflowsRead) =>
-    `Not applied, because each ${key} entry below names a workflow this run did not read (this run read ${workflowsRead}):`,
-  [CoreMessage.StepAccountingNoWorkflowRead]: "no workflow",
-  [CoreMessage.StepAccountingPlumbingLabel]: "GitHub plumbing:",
-  [CoreMessage.StepAccountingCandidatesTerm]:
-    "A Candidate is a step read that is not a Runner, Reconciler, Non-check or GitHub plumbing step. " +
-    "It is read as a fitness function, and no list below names it.",
-  [CoreMessage.StepAccountingReconcilerTerm]:
-    "A Reconciler step runs this reconciliation or writes the step record it reads.",
-  [CoreMessage.StepAccountingNonChecksTerm]:
-    "A Non-check is a step the target names under `specController.notChecks`, unless it is a Reconciler step. " +
-    "A GitHub plumbing step named there is a Non-check too.",
-  [CoreMessage.StepAccountingPlumbingTerm]:
-    "A GitHub plumbing step is one that is neither a Reconciler nor a Non-check step and uses one of GitHub's own actions " +
-    "`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `actions/download-artifact` or `actions/setup-*`. " +
-    "A step that runs a command, an install included, is never plumbing.",
-  [CoreMessage.StepAccountingAccountedForTerm]:
-    "Accounted for is the sum of the five columns from Candidates to GitHub plumbing, in which each step read is counted once.",
   [CoreMessage.OutOfBalanceByFeatureHeading]: "### Out-of-balance by feature",
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: (outOfBalance, claimReconciliations) => `${outOfBalance} of ${claimReconciliations} Claim Reconciliation(s) of scenarios out of balance`,
   [CoreMessage.GroupedByFeature]: ", grouped by feature",

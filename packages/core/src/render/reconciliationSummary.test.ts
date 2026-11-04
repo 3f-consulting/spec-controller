@@ -4,6 +4,8 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import type { EvidenceObservation, Outcome } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
@@ -58,7 +60,7 @@ function render(feature: string, observations: EvidenceObservation[] = OBSERVATI
 
 function sectionLines(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
+  const start = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading)));
   expect(start).toBeGreaterThanOrEqual(0);
   const end = lines.findIndex((line, i) => i > start && line.startsWith("#"));
   expect(end).toBeGreaterThan(start);
@@ -89,30 +91,30 @@ function expectedTable(
 ): string[] {
   const outOfBalance = Object.values(leafCounts).reduce((a, b) => a + b, 0);
   return [
-    CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading],
+    markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading)),
     "",
-    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsClaimReconciliationTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsReconciliationLineTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObligationTerm]}`,
-    `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObservationTerm]}`,
+    `- ${coreMessage(CoreMessage.ReconciliationTotalsClaimReconciliationTerm)}`,
+    `- ${coreMessage(CoreMessage.ReconciliationTotalsReconciliationLineTerm)}`,
+    `- ${coreMessage(CoreMessage.ReconciliationTotalsEvidenceObligationTerm)}`,
+    `- ${coreMessage(CoreMessage.ReconciliationTotalsEvidenceObservationTerm)}`,
     "",
     row([
-      CORE_MESSAGES[CoreMessage.SubjectColumn],
-      CORE_MESSAGES[CoreMessage.TotalColumn],
-      CORE_MESSAGES[CoreMessage.BalancedColumn],
-      CORE_MESSAGES[CoreMessage.OutOfBalanceColumn],
-      CORE_MESSAGES[CoreMessage.DetailColumn],
+      coreMessage(CoreMessage.SubjectColumn),
+      coreMessage(CoreMessage.TotalColumn),
+      coreMessage(CoreMessage.BalancedColumn),
+      coreMessage(CoreMessage.OutOfBalanceColumn),
+      coreMessage(CoreMessage.DetailColumn),
     ]),
     "| --- | --- | --- | --- | --- |",
     row([
-      CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject],
+      coreMessage(CoreMessage.ClaimReconciliationSubject),
       String(scenarios.total),
       String(scenarios.balanced),
       String(scenarios.outOfBalance),
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.ReconciliationLineSubject],
+      coreMessage(CoreMessage.ReconciliationLineSubject),
       String(reconciliationLines.total),
       String(reconciliationLines.satisfied),
       String(outOfBalance),
@@ -140,7 +142,7 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
         "1 unit + 1 integration"
       ),
       "",
-      CORE_MESSAGES[CoreMessage.PendingTally](1),
+      coreMessage(CoreMessage.PendingTally, { pending: 1 }),
       "",
     ]);
   });

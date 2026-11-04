@@ -73,7 +73,7 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       [{ qualityCheckKind: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
-    const iObservations = md.indexOf(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading]);
+    const iObservations = md.indexOf(markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)));
     const iByFeature = md.indexOf(CORE_MESSAGES[CoreMessage.OutOfBalanceByFeatureHeading]);
     const iLedger = md.indexOf(CORE_MESSAGES[CoreMessage.ClaimReconciliationsHeading]);
     expect(iObservations).toBeGreaterThanOrEqual(0);
@@ -347,7 +347,7 @@ describe("[SCN-RPT-010] the markdown report renders the Evidence observations re
 
   it("[SCN-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading]);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](8, 4, 1, 3));
+    expect(md).toContain(markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)));
+    expect(md).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 8, onScenario: 4, onPhantomClaim: 1, onUnnamedClaim: 3 }));
   });
 });

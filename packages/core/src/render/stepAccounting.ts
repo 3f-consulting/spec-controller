@@ -1,7 +1,9 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ReconcilerStep } from "../domain/evidenceReconciliation.js";
 import { accountedForOf } from "../domain/uncitedFitnessFunctions.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { cellSafe } from "./cellSafe.js";
 import { codeSpan } from "./codeSpan.js";
 
@@ -28,7 +30,7 @@ const totalRowOf = ({ byJob, total }: StepAccounting): string[] => {
   if (byJob.length < 2) return [];
   const { stepsRead, candidates, runners, reconciler, nonChecks, plumbing } = total;
   const counts = rowOf([stepsRead, candidates, runners, reconciler, nonChecks, plumbing, accountedForOf(total)]);
-  return [`| ${CORE_MESSAGES[CoreMessage.StepAccountingTotal]} | ${counts}`];
+  return [`| ${coreMessage(CoreMessage.StepAccountingTotal)} | ${counts}`];
 };
 
 const STEP_ACCOUNTING_TERMS = [
@@ -42,9 +44,9 @@ const STEP_ACCOUNTING_TERMS = [
 const tableOf = (accounting: StepAccounting): string[] => {
   if (accounting.byJob.length === 0) return [];
   return [
-    ...STEP_ACCOUNTING_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
+    ...STEP_ACCOUNTING_TERMS.map((term) => `- ${coreMessage(term)}`),
     "",
-    CORE_MESSAGES[CoreMessage.StepAccountingTableHeader],
+    coreMessage(CoreMessage.StepAccountingTableHeader),
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...jobRowsOf(accounting),
     ...totalRowOf(accounting),
@@ -52,23 +54,23 @@ const tableOf = (accounting: StepAccounting): string[] => {
   ];
 };
 
-const WHAT_IT_IS: Readonly<Record<ReconcilerStep["role"], string>> = {
-  reconciles: CORE_MESSAGES[CoreMessage.ReconcilerReconciles],
-  records: CORE_MESSAGES[CoreMessage.ReconcilerRecords],
-};
+const WHAT_IT_IS = {
+  reconciles: CoreMessage.ReconcilerReconciles,
+  records: CoreMessage.ReconcilerRecords,
+} as const satisfies Readonly<Record<ReconcilerStep["role"], CoreMessage>>;
 
 const runnersListOf = ({ steps }: StepAccounting): string[] => {
   const runners = steps.runners ?? [];
   if (runners.length === 0) return [];
-  return [CORE_MESSAGES[CoreMessage.StepAccountingRunnersLabel], ...runners.map((step) => `- ${codeSpan(step)}`), ""];
+  return [coreMessage(CoreMessage.StepAccountingRunnersLabel), ...runners.map((step) => `- ${codeSpan(step)}`), ""];
 };
 
 const reconcilerListOf = ({ steps }: StepAccounting): string[] => {
   const reconciler = steps.reconciler ?? [];
   if (reconciler.length === 0) return [];
   return [
-    CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel],
-    ...reconciler.map(({ step, role }) => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](codeSpan(step), WHAT_IT_IS[role])}`),
+    coreMessage(CoreMessage.StepAccountingReconcilerLabel),
+    ...reconciler.map(({ step, role }) => `- ${coreMessage(CoreMessage.ReconcilerStep, { step: codeSpan(step), whatItIs: coreMessage(WHAT_IT_IS[role]) })}`),
     "",
   ];
 };
@@ -77,39 +79,51 @@ const nonChecksListOf = ({ steps }: StepAccounting): string[] => {
   const nonChecks = steps.nonChecks ?? [];
   if (nonChecks.length === 0) return [];
   return [
-    CORE_MESSAGES[CoreMessage.StepAccountingNonChecksLabel],
-    ...nonChecks.map((step) => `- ${CORE_MESSAGES[CoreMessage.StepNonCheck](codeSpan(step))}`),
+    coreMessage(CoreMessage.StepAccountingNonChecksLabel),
+    ...nonChecks.map((step) => `- ${coreMessage(CoreMessage.StepNonCheck, { entry: codeSpan(step) })}`),
     "",
   ];
 };
 
-const workflowsReadOf = ({ workflowsRead, byJob }: StepAccounting): string => {
-  const workflows = [...new Set(workflowsRead ?? byJob.map(({ workflow }) => workflow))];
-  if (workflows.length === 0) return CORE_MESSAGES[CoreMessage.StepAccountingNoWorkflowRead];
-  return workflows.map((workflow) => codeSpan(workflow)).join(", ");
+type WorkflowsReadView = { readonly kind: "none" } | { readonly kind: "read"; readonly files: readonly [string, ...(readonly string[])] };
+
+const workflowsReadOf = ({ workflowsRead, byJob }: StepAccounting): WorkflowsReadView => {
+  const [first, ...rest] = new Set(workflowsRead ?? byJob.map(({ workflow }) => workflow));
+  if (first === undefined) return { kind: "none" };
+  return { kind: "read", files: [first, ...rest] };
+};
+
+const NOT_CHECKS_KEY = "`specController.notChecks`";
+
+const notAppliedLeadOf = (view: WorkflowsReadView): string => {
+  switch (view.kind) {
+    case "none":
+      return coreMessage(CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel, { key: NOT_CHECKS_KEY });
+    case "read":
+      return coreMessage(CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel, {
+        key: NOT_CHECKS_KEY,
+        workflows: view.files.map((workflow) => codeSpan(workflow)).join(", "),
+      });
+  }
 };
 
 const notAppliedListOf = (accounting: StepAccounting): string[] => {
   const notApplied = accounting.nonChecksNamingAWorkflowNotRead;
   if (notApplied === undefined) return [];
-  return [
-    CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", workflowsReadOf(accounting)),
-    ...notApplied.map((entry) => `- ${codeSpan(entry)}`),
-    "",
-  ];
+  return [notAppliedLeadOf(workflowsReadOf(accounting)), ...notApplied.map((entry) => `- ${codeSpan(entry)}`), ""];
 };
 
 const plumbingListOf = ({ steps }: StepAccounting): string[] => {
   const plumbing = steps.plumbing ?? [];
   if (plumbing.length === 0) return [];
-  return [CORE_MESSAGES[CoreMessage.StepAccountingPlumbingLabel], ...plumbing.map((step) => `- ${codeSpan(step)}`), ""];
+  return [coreMessage(CoreMessage.StepAccountingPlumbingLabel), ...plumbing.map((step) => `- ${codeSpan(step)}`), ""];
 };
 
 export const stepAccountingSection = (report: RenderInput): string[] => {
   const accounting = report.summary.stepAccounting;
   if (accounting === undefined) return [];
   return [
-    CORE_MESSAGES[CoreMessage.StepAccountingHeading],
+    markdownHeading(3, coreMessage(CoreMessage.StepAccountingHeading)),
     "",
     ...tableOf(accounting),
     ...runnersListOf(accounting),

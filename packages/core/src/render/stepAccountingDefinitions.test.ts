@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { renderJson, renderMarkdown, renderReportFromJson } from "../assemble/composers.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { stepAccountingSection } from "./renderedSection.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -11,12 +12,12 @@ import {
   reconcileStepAccounting as reconcile,
 } from "../evidenceReconciliation.test-utils.js";
 
-const DEFINITIONS = [
-  `- ${CORE_MESSAGES[CoreMessage.StepAccountingCandidatesTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.StepAccountingReconcilerTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.StepAccountingNonChecksTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.StepAccountingPlumbingTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.StepAccountingAccountedForTerm]}`,
+const DEFINITIONS = (): string[] => [
+  `- ${coreMessage(CoreMessage.StepAccountingCandidatesTerm)}`,
+  `- ${coreMessage(CoreMessage.StepAccountingReconcilerTerm)}`,
+  `- ${coreMessage(CoreMessage.StepAccountingNonChecksTerm)}`,
+  `- ${coreMessage(CoreMessage.StepAccountingPlumbingTerm)}`,
+  `- ${coreMessage(CoreMessage.StepAccountingAccountedForTerm)}`,
 ];
 
 const runnerAndTypesCi = `name: fixture CI
@@ -33,7 +34,7 @@ const sectionOf = (md: string): string[] => stepAccountingSection(md.split("\n")
 
 const linesBeforeTable = (md: string): string[] => {
   const section = sectionOf(md);
-  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+  const header = section.indexOf(coreMessage(CoreMessage.StepAccountingTableHeader));
   expect(header).toBeGreaterThan(0);
   return section.slice(1, header);
 };
@@ -53,7 +54,7 @@ describe("[SCN-RPT-092] the step-accounting section defines its Candidates, Reco
     }
 
     const oneJobLines = linesBeforeTable(markdownOf(oneJob));
-    expect(oneJobLines).toStrictEqual(["", ...DEFINITIONS, ""]);
+    expect(oneJobLines).toStrictEqual(["", ...DEFINITIONS(), ""]);
     expect(linesBeforeTable(markdownOf(severalJobs))).toStrictEqual(oneJobLines);
     for (const line of oneJobLines) expect(line).not.toMatch(/[0-9]/);
   });
@@ -63,20 +64,20 @@ describe("[SCN-RPT-092] the step-accounting section defines its Candidates, Reco
     const total = reconciliation.summary.stepAccounting?.total;
 
     expect([total?.reconciler, total?.plumbing]).toStrictEqual([0, 0]);
-    expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS, ""]);
+    expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS(), ""]);
   });
 
   it("prints the same five for a target with no specController block", () => {
     const reconciliation = reconcile([ci], ["ci.yml"], { scripts: { test: "vitest run" } });
 
-    expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS, ""]);
+    expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS(), ""]);
   });
 
   it("prints the same five when a saved report is re-rendered from its JSON", () => {
     const saved = renderJson(reconcile([ci]), ctx);
     const regenerated = renderReportFromJson(saved, ctx.inputs, publishedExitCodeOf);
 
-    expect(linesBeforeTable(regenerated)).toStrictEqual(["", ...DEFINITIONS, ""]);
+    expect(linesBeforeTable(regenerated)).toStrictEqual(["", ...DEFINITIONS(), ""]);
   });
 });
 
@@ -89,7 +90,7 @@ describe("[SCN-RPT-100] the step-accounting section prints no column definition 
     const section = sectionOf(markdownOf(reconciliation));
 
     expect(section).toContain("- `deploy.yml:release:Ship`");
-    expect(section).not.toContain(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
-    for (const definition of DEFINITIONS) expect(section).not.toContain(definition);
+    expect(section).not.toContain(coreMessage(CoreMessage.StepAccountingTableHeader));
+    for (const definition of DEFINITIONS()) expect(section).not.toContain(definition);
   });
 });

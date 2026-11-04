@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { linesOf, sectionUnder } from "./renderedSection.test-utils.js";
 import { reconcileStepAccounting, stepAccountingCi } from "../evidenceReconciliation.test-utils.js";
 
@@ -28,7 +30,7 @@ jobs:
 `;
 
 const stepAccounting = (workflow: string): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(
+  sectionUnder(markdownHeading(3, coreMessage(CoreMessage.StepAccountingHeading)))(
     linesOf(reconcileStepAccounting([workflow]))
   );
 

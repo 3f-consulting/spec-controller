@@ -9,7 +9,7 @@ import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
-const SUBJECT = CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject];
+const SUBJECT = (): string => coreMessage(CoreMessage.ClaimReconciliationSubject);
 
 let balance: Ledger;
 beforeEach(() => {
@@ -79,7 +79,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     expect(md.split("\n")).toContain("### Reconciliation totals");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
-    expect(md).toContain(`| ${SUBJECT} | 3 | 0 | 3 |`);
+    expect(md).toContain(`| ${SUBJECT()} | 3 | 0 | 3 |`);
     expect(md).toContain("| Reconciliation line | 6 | 2 | 4 |");
   });
 
@@ -129,7 +129,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
 
   it("counts the unnamed claim's reconciliation in the Reconciliation totals' out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(__er(threeScenarioRowsPlusUnnamedClaimRow), ctx, publishedExitCodeOf);
-    expect(md).toContain(`| ${SUBJECT} | 4 | 3 | 1 |`);
-    expect(md).not.toContain(`| ${SUBJECT} | 3 | 3 | 0 |`);
+    expect(md).toContain(`| ${SUBJECT()} | 4 | 3 | 1 |`);
+    expect(md).not.toContain(`| ${SUBJECT()} | 3 | 3 | 0 |`);
   });
 });

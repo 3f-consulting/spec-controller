@@ -26,12 +26,12 @@ const ctx: RunContext = {
 const strictCtx: RunContext = { ...ctx, strict: true };
 
 const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.RunVerdictHeading));
-const NEXT_HEADING = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
+const NEXT_HEADING = (): string => markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading));
 
 function verdictSectionOf(md: string): string[] {
   const lines = md.split("\n");
   const start = lines.indexOf(heading());
-  const end = lines.indexOf(NEXT_HEADING);
+  const end = lines.indexOf(NEXT_HEADING());
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
   return lines.slice(start, end);

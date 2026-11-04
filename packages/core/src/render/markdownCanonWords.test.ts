@@ -32,14 +32,14 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 
   it("sums the test volume over scenarios, cited scenario ids with no real scenario, and observations citing no scenario", () => {
     const md = renderMarkdown(__er(unbalanced(), true), ctx, publishedExitCodeOf);
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](3, 1, 1, 1));
+    expect(md).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 3, onScenario: 1, onPhantomClaim: 1, onUnnamedClaim: 1 }));
   });
 
   it("glosses a balanced run with the satisfied outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [provenObservation])), ctx, publishedExitCodeOf);
     expect(md).toContain(coreMessage(CoreMessage.BalancedGloss));
     expect(md).toContain(
-      `every ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} balances: every ${CORE_MESSAGES[CoreMessage.OutcomeSatisfied]}.`
+      `every ${coreMessage(CoreMessage.ClaimReconciliationSubject)} balances: every ${CORE_MESSAGES[CoreMessage.OutcomeSatisfied]}.`
     );
   });
 

@@ -5,11 +5,13 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 
 describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
   const reconciliationTotalsSection = (md: string): string => {
-    const heading = CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading];
+    const heading = markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading));
     const i = md.indexOf(heading);
     expect(i, `expected the section ${heading}`).toBeGreaterThanOrEqual(0);
     const rest = md.slice(i + 1);

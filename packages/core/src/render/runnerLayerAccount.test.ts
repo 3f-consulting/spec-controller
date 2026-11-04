@@ -4,7 +4,9 @@ import type { EvidenceObservation } from "../model.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 
 const feature = `Feature: fixture
 
@@ -34,8 +36,8 @@ const behaviouralObservations: EvidenceObservation[] = [
   { qualityCheckKind: "performance", scnId: "SCN-FIX-003", status: "passed" },
 ];
 
-const NO_RUNNER = CORE_MESSAGES[CoreMessage.RunnerLayerNamesNone];
-const UNNAMED = CORE_MESSAGES[CoreMessage.RunnerLayerUnnamed];
+const NO_RUNNER = (): string => coreMessage(CoreMessage.RunnerLayerNamesNone);
+const UNNAMED = (): string => coreMessage(CoreMessage.RunnerLayerUnnamed);
 
 function rowsOf(specController?: { runners?: unknown }): Map<string, string[]> {
   const reconciliation = evidenceReconciliationFromSources({
@@ -48,7 +50,7 @@ function rowsOf(specController?: { runners?: unknown }): Map<string, string[]> {
     behaviouralObservations,
     deferralTags: [],
   });
-  const lines = sectionUnder(CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading])(linesOf(reconciliation));
+  const lines = sectionUnder(markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)))(linesOf(reconciliation));
   const rows = lines
     .filter((line) => line.startsWith("|"))
     .map(cells)
@@ -63,14 +65,14 @@ function rowsByCheck(runners: unknown): Map<string, string[]> {
 describe("[SCN-RPT-051] a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count", () => {
   it("says in the runner cell of a layer the target sets to null that the target declares it has none, and where, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
-    expect(rows.get("performance")).toStrictEqual(["performance", "1", NO_RUNNER, ""]);
+    expect(rows.get("performance")).toStrictEqual(["performance", "1", NO_RUNNER(), ""]);
   });
 
   it("says at count 0 that the target declares a layer it sets to null has none", () => {
     expect(rowsByCheck({ unit: "vitest", integration: null }).get("integration")).toStrictEqual([
       "integration",
       "0",
-      NO_RUNNER,
+      NO_RUNNER(),
       "",
     ]);
   });
@@ -93,7 +95,7 @@ describe("[SCN-RPT-051] a layer the target gives no runner's name says in its ru
   ])(
     "says the layer's runner is undeclared, where a string names it, with a blank CI step cell, when the target %s",
     (_target, specController, layer, count) => {
-      expect(rowsOf(specController).get(layer)).toStrictEqual([layer, count, UNNAMED, ""]);
+      expect(rowsOf(specController).get(layer)).toStrictEqual([layer, count, UNNAMED(), ""]);
     }
   );
 });

@@ -5,7 +5,9 @@ import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { linesOf } from "../domain/claimReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -318,7 +320,7 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
 
   it("sums the leaf counts to the Reconciliation line out-of-balance total", () => {
     const md = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf);
-    const subject = CORE_MESSAGES[CoreMessage.ReconciliationLineSubject].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const subject = coreMessage(CoreMessage.ReconciliationLineSubject).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const qcrOutOfBalance = Number(
       new RegExp(`\\| ${subject} \\| \\d+ \\| \\d+ \\| (\\d+) \\|`).exec(md)?.[1]
     );
@@ -342,8 +344,8 @@ describe("[SCN-RPT-099] the Reconciliation totals section lists no group rows am
 
   it("lists only the ten cause rows after the Reconciliation line row, with no debit-side, credit-side or neither-side subtotal row", () => {
     const lines = renderMarkdown(__er(spanning), ctx, publishedExitCodeOf).split("\n");
-    const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
-    const subjectRow = `| ${CORE_MESSAGES[CoreMessage.ReconciliationLineSubject]} |`;
+    const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading)));
+    const subjectRow = `| ${coreMessage(CoreMessage.ReconciliationLineSubject)} |`;
     const start = lines.findIndex((line, i) => i > heading && line.startsWith(subjectRow));
     const end = lines.findIndex((line, i) => i > start && !line.startsWith("|"));
     expect(heading).toBeGreaterThan(-1);

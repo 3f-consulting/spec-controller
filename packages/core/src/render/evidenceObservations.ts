@@ -1,38 +1,54 @@
 import type { RenderInput } from "../domain/renderInput.js";
-import type { QualityCheckKindObservations } from "../domain/ledger.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { runnerSteps, type QualityCheckKindObservations, type RunnerSteps } from "../domain/ledger.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { cellSafe, cellSafeKeepingCodeSpans } from "./cellSafe.js";
 import { reportedName } from "./reportedName.js";
 
-const runnerCells = ({ qualityCheckKind, count, runner, ciSteps }: QualityCheckKindObservations): [string, string] => {
-  if (typeof runner === "string") {
-    return [
-      cellSafe(runner),
-      ciSteps ? cellSafeKeepingCodeSpans(ciSteps.map(reportedName).join(", ")) : CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt],
-    ];
+const namedRunnerStepsCell = (steps: RunnerSteps): string => {
+  switch (steps.kind) {
+    case "none":
+      return coreMessage(CoreMessage.NoStepCountedAsItsRunnerRunsIt);
+    case "some":
+      return cellSafeKeepingCodeSpans(steps.ciSteps.map(reportedName).join(", "));
   }
+};
+
+const fitnessStepsCell = (steps: RunnerSteps): string => {
+  switch (steps.kind) {
+    case "none":
+      return "";
+    case "some":
+      return coreMessage(CoreMessage.FitnessCiStep, { steps: steps.ciSteps.length });
+  }
+};
+
+const runnerCells = (entry: QualityCheckKindObservations): [string, string] => {
+  const { qualityCheckKind, count, runner } = entry;
+  if (typeof runner === "string") return [cellSafe(runner), namedRunnerStepsCell(runnerSteps(entry))];
   if (qualityCheckKind === "fitness") {
     if (count === 0) return ["", ""];
-    return [CORE_MESSAGES[CoreMessage.FitnessRunner], ciSteps ? CORE_MESSAGES[CoreMessage.FitnessCiStep](ciSteps.length) : ""];
+    return [coreMessage(CoreMessage.FitnessRunner), fitnessStepsCell(runnerSteps(entry))];
   }
-  if (runner === undefined) return [CORE_MESSAGES[CoreMessage.RunnerLayerUnnamed], ""];
-  return [CORE_MESSAGES[CoreMessage.RunnerLayerNamesNone], ""];
+  if (runner === undefined) return [coreMessage(CoreMessage.RunnerLayerUnnamed), ""];
+  return [coreMessage(CoreMessage.RunnerLayerNamesNone), ""];
 };
 
 export const evidenceObservationsSection = (report: RenderInput): string[] => {
   const observations = report.summary.evidenceObservations;
   if (!observations) return [];
   const lines = [
-    CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading],
+    markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)),
     "",
-    CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](
-      observations.total,
-      observations.onScenario,
-      observations.onPhantomClaim,
-      observations.onUnnamedClaim
-    ),
+    coreMessage(CoreMessage.EvidenceObservationsSum, {
+      total: observations.total,
+      onScenario: observations.onScenario,
+      onPhantomClaim: observations.onPhantomClaim,
+      onUnnamedClaim: observations.onUnnamedClaim,
+    }),
     "",
-    CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader],
+    coreMessage(CoreMessage.EvidenceObservationsTableHeader),
     "| --- | --- | --- | --- |",
   ];
   for (const entry of observations.byQualityCheckKind) {

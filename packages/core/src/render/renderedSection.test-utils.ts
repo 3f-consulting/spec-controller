@@ -4,6 +4,8 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtxNextDay as ctx } from "./runContext.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 
 export function sectionUnder(heading: string): (lines: readonly string[]) => string[] {
   return function section(lines: readonly string[]): string[] {
@@ -24,10 +26,10 @@ export const linesOf = (reconciliation: EvidenceReconciliation): string[] =>
   renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 
 export const stepAccountingSection = (lines: readonly string[]): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.StepAccountingHeading])(lines);
+  sectionUnder(markdownHeading(3, coreMessage(CoreMessage.StepAccountingHeading)))(lines);
 
 export const endOfStepAccountingTable = (section: readonly string[]): number => {
-  const header = section.indexOf(CORE_MESSAGES[CoreMessage.StepAccountingTableHeader]);
+  const header = section.indexOf(coreMessage(CoreMessage.StepAccountingTableHeader));
   expect(header).toBeGreaterThanOrEqual(0);
   const end = section.indexOf("", header);
   expect(end).toBeGreaterThan(header);

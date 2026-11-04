@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
+import { CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkInputsExist, checkInputsParse } from "./cli.js";
@@ -143,7 +143,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
     ]);
 
     expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
-    expect(`\n${emitted}`).toContain(`\n| ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} | 0 | 0 | 0 |`);
+    expect(`\n${emitted}`).toContain(`\n| ${coreMessage(CoreMessage.ClaimReconciliationSubject)} | 0 | 0 | 0 |`);
     expect(exitCode).toBe(5);
   });
 });
@@ -296,9 +296,9 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
     const { stdout: emitted, exitCode } = runBalanceCaptured(argv);
     const tally = emitted
       .split("\n")
-      .find((line) => line.startsWith(`| ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} | `))
+      .find((line) => line.startsWith(`| ${coreMessage(CoreMessage.ClaimReconciliationSubject)} | `))
       ?.match(/^\|[^|]+\| (\d+) \| (\d+) \| (\d+) \|/);
-    expect(tally, `expected a ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} tally row; got:\n${emitted}`).not.toBeNull();
+    expect(tally, `expected a ${coreMessage(CoreMessage.ClaimReconciliationSubject)} tally row; got:\n${emitted}`).not.toBeNull();
     const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
     expect(headline, `expected a run-verdict headline; got:\n${emitted}`).not.toBeNull();
     return {

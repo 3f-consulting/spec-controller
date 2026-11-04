@@ -8,6 +8,7 @@ import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { OUTCOME_DESCRIPTION } from "./outcomeDescription.js";
 import { HANDED_INPUT_NAMES, FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -77,7 +78,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     const savedJson = renderJson(__er(balance, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson, HANDED_INPUT_NAMES, publishedExitCodeOf);
     const citesNoScenario = OUTCOME_DESCRIPTION["cites-no-scenario"];
-    expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.EvidenceObservationsSum](5, 2, 1, 2));
+    expect(regenerated).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 5, onScenario: 2, onPhantomClaim: 1, onUnnamedClaim: 2 }));
     expect(regenerated).toContain("| fitness | 2 |");
     expect(regenerated).toContain(CORE_MESSAGES[CoreMessage.UnnamedClaimTally](1));
     const unnamedClaimRow = regenerated.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));

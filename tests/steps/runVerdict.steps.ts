@@ -44,8 +44,16 @@ Then("it reports the Evidence Reconciliation", function (this: SpecControllerWor
   assert.ok(showsHeading(this.balanceResult.stdout, 1, "report-title"), `expected the report's title; got:\n${this.balanceResult.stdout}`);
 });
 
+// The Reconciliation totals' Claim Reconciliation row, as its Total, Balanced and Out-of-balance cells.
+function claimReconciliationTally(stdout: string): readonly number[] | undefined {
+  const opening = `| ${entryText("claim-reconciliation-subject")} | `;
+  const row = stdout.split("\n").find((line) => line.startsWith(opening));
+  const cells = row?.slice(opening.length).split(" | ").slice(0, 3);
+  return cells?.length === 3 && cells.every((cell) => /^\d+$/.test(cell)) ? cells.map(Number) : undefined;
+}
+
 Then("the reconciliation reports the target's scenarios", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /\| Claim Reconciliation \| 2 \|/);
+  assert.equal(claimReconciliationTally(this.balanceResult.stdout)?.[0], 2, `expected 2 Claim Reconciliations; got:\n${this.balanceResult.stdout}`);
 });
 
 Given("a target with scenarios and a Vitest report", aBalancedTargetWithAVitestReport);
@@ -57,7 +65,7 @@ When("balance is asked to reconcile that target without the Cucumber report opti
 
 Then("it reconciles the scenarios against the supplied evidence", function (this: SpecControllerWorld) {
   assert.ok(showsHeading(this.balanceResult.stdout, 1, "report-title"), `expected the report's title; got:\n${this.balanceResult.stdout}`);
-  assert.match(this.balanceResult.stdout, /\| Claim Reconciliation \| 2 \|/);
+  assert.equal(claimReconciliationTally(this.balanceResult.stdout)?.[0], 2, `expected 2 Claim Reconciliations; got:\n${this.balanceResult.stdout}`);
 });
 
 Given("a target that reconciles out-of-balance", function (this: SpecControllerWorld) {
@@ -111,7 +119,7 @@ function pendingOnlyArgs(): string[] {
 }
 
 Then("the reconciliation reports a Pending Item", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /Pending Item/);
+  assert.ok(showsEntry(this.balanceResult.stdout, "pending-tally"), `expected the Pending Items tally; got:\n${this.balanceResult.stdout}`);
 });
 
 When("balance is asked to reconcile that target under the strict option", function (this: SpecControllerWorld) {
@@ -136,9 +144,9 @@ Given("a target whose only out-of-balance row is the unnamed claim's reconciliat
 });
 
 function tallyOutOfBalance(stdout: string): number {
-  const row = stdout.match(/^\| Claim Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
-  assert.ok(row, `expected a Claim Reconciliation tally row in stdout; got:\n${stdout}`);
-  return Number(row[3]);
+  const tally = claimReconciliationTally(stdout);
+  assert.ok(tally, `expected a Claim Reconciliation tally row in stdout; got:\n${stdout}`);
+  return tally[2] as number;
 }
 
 function verdictHeadline(stdout: string): VerdictLine {

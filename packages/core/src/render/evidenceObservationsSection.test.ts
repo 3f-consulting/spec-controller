@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { evidenceReconciliationOf, reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 
@@ -21,11 +23,10 @@ const observations: EvidenceObservation[] = [
   { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
-const heading = CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading];
-const sum = CORE_MESSAGES[CoreMessage.EvidenceObservationsSum];
-const tableHeader = CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader];
+const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading));
+const tableHeader = (): string => coreMessage(CoreMessage.EvidenceObservationsTableHeader);
 
-const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
+const section = (lines: readonly string[]): string[] => sectionUnder(heading())(lines);
 
 // The runner and CI step cells are asserted by the scenarios that own them.
 function qualityCheckKindAndCount(row: string): string[] {
@@ -34,8 +35,8 @@ function qualityCheckKindAndCount(row: string): string[] {
 
 function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliation): void {
   const lines = linesOf(reconciliation);
-  expect(lines).not.toContain(heading);
-  expect(lines).not.toContain(tableHeader);
+  expect(lines).not.toContain(heading());
+  expect(lines).not.toContain(tableHeader());
   const headings = lines.flatMap((line, i) => (i > 0 && line.startsWith("#") ? [i] : []));
   expect(headings.length).toBeGreaterThan(0);
   for (const i of headings) expect(lines[i - 1]).toBe("");
@@ -51,7 +52,7 @@ describe("[SCN-RPT-010] the report renders the Evidence observations cut over ev
       onUnnamedClaim: 2,
     });
     const lines = section(linesOf(reconciliation));
-    expect(lines.slice(0, 6)).toStrictEqual([heading, "", sum(8, 5, 1, 2), "", tableHeader, "| --- | --- | --- | --- |"]);
+    expect(lines.slice(0, 6)).toStrictEqual([heading(), "", coreMessage(CoreMessage.EvidenceObservationsSum, { total: 8, onScenario: 5, onPhantomClaim: 1, onUnnamedClaim: 2 }), "", tableHeader(), "| --- | --- | --- | --- |"]);
     expect(lines.slice(6, -1).map(qualityCheckKindAndCount)).toStrictEqual([
       ["unit", "3"],
       ["integration", "1"],

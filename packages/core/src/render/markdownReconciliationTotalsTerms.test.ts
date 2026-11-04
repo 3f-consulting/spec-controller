@@ -1,21 +1,23 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
-const TERMS = [
-  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsClaimReconciliationTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsReconciliationLineTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObligationTerm]}`,
-  `- ${CORE_MESSAGES[CoreMessage.ReconciliationTotalsEvidenceObservationTerm]}`,
+const TERMS = (): string[] => [
+  `- ${coreMessage(CoreMessage.ReconciliationTotalsClaimReconciliationTerm)}`,
+  `- ${coreMessage(CoreMessage.ReconciliationTotalsReconciliationLineTerm)}`,
+  `- ${coreMessage(CoreMessage.ReconciliationTotalsEvidenceObligationTerm)}`,
+  `- ${coreMessage(CoreMessage.ReconciliationTotalsEvidenceObservationTerm)}`,
 ];
 
 function linesBeforeTable(md: string): string[] {
   const lines = md.split("\n");
-  const heading = lines.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]);
+  const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading)));
   const header = lines.findIndex((line, i) => i > heading && line.startsWith("| Subject |"));
   return lines.slice(heading + 1, header);
 }
@@ -46,7 +48,7 @@ describe("[SCN-RPT-071] the Reconciliation totals section says what a Claim Reco
     expect(new Set(large.claimReconciliations.map((r) => r.kind))).toEqual(
       new Set(["scenario", "phantom-claim", "unnamed-claim"]),
     );
-    expect(smallLines).toEqual(["", ...TERMS, ""]);
+    expect(smallLines).toEqual(["", ...TERMS(), ""]);
     expect(largeLines).toEqual(smallLines);
     for (const line of largeLines) {
       expect(line).not.toMatch(/[0-9]/);
@@ -64,7 +66,7 @@ describe("[SCN-RPT-071] the Reconciliation totals section says what a Claim Reco
     );
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 
-    expect(totalOf(md, CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject])).toBe(1);
-    expect(totalOf(md, CORE_MESSAGES[CoreMessage.ReconciliationLineSubject])).toBe(2);
+    expect(totalOf(md, coreMessage(CoreMessage.ClaimReconciliationSubject))).toBe(1);
+    expect(totalOf(md, coreMessage(CoreMessage.ReconciliationLineSubject))).toBe(2);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
@@ -22,13 +23,13 @@ function reportLines(ciSource: string): string[] {
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
-const label = CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel];
+const label = (): string => coreMessage(CoreMessage.StepAccountingReconcilerLabel);
 const dump = "ci.yml:ci:Dump this run's step record";
 const balance = "ci.yml:ci:Reconciliation";
-const reconciles = CORE_MESSAGES[CoreMessage.ReconcilerReconciles];
-const records = CORE_MESSAGES[CoreMessage.ReconcilerRecords];
+const reconciles = (): string => coreMessage(CoreMessage.ReconcilerReconciles);
+const records = (): string => coreMessage(CoreMessage.ReconcilerRecords);
 
-const reconcilerItem = (span: string, whatItIs: string): string => `- ${CORE_MESSAGES[CoreMessage.ReconcilerStep](span, whatItIs)}`;
+const reconcilerItem = (span: string, whatItIs: string): string => `- ${coreMessage(CoreMessage.ReconcilerStep, { step: span, whatItIs })}`;
 
 const spanStepsCi = `name: fixture CI
 jobs:
@@ -41,7 +42,7 @@ jobs:
 `;
 
 const reconcilerList = (lines: readonly string[]): string[] => {
-  const start = lines.indexOf(label);
+  const start = lines.indexOf(label());
   expect(start).toBeGreaterThanOrEqual(0);
   return lines.slice(start, start + 4);
 };
@@ -51,9 +52,9 @@ describe("[SCN-RPT-050] the step-accounting section lists each reconciler step b
     const section = stepAccounting(reportLines(ci));
     const tableEnd = endOfTable(section);
 
-    expect(reconciles).not.toBe(records);
-    expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
-    expect(reconcilerList(section)).toStrictEqual([label, reconcilerItem(codeSpan(dump), records), reconcilerItem(codeSpan(balance), reconciles), ""]);
+    expect(reconciles()).not.toBe(records());
+    expect(section.indexOf(label())).toBeGreaterThan(tableEnd);
+    expect(reconcilerList(section)).toStrictEqual([label(), reconcilerItem(codeSpan(dump), records()), reconcilerItem(codeSpan(balance), reconciles()), ""]);
   });
 
   it.each([
@@ -61,22 +62,22 @@ describe("[SCN-RPT-050] the step-accounting section lists each reconciler step b
     { step: "ci.yml:ci:Two\nlines", item: '`"ci.yml:ci:Two\\nlines"`' },
   ])("lists the reconciler step $step whole in its code span, as $item", ({ item }) => {
     const section = stepAccounting(reportLines(spanStepsCi));
-    const start = section.indexOf(label);
+    const start = section.indexOf(label());
     expect(start).toBeGreaterThanOrEqual(0);
-    expect(section.slice(start)).toContain(reconcilerItem(item, reconciles));
+    expect(section.slice(start)).toContain(reconcilerItem(item, reconciles()));
   });
 
   it("lists neither reconciler step as a non-check", () => {
     const lines = reportLines(ci);
     for (const step of [dump, balance]) {
-      expect(lines).not.toContain(`- ${CORE_MESSAGES[CoreMessage.StepNonCheck](codeSpan(step))}`);
+      expect(lines).not.toContain(`- ${coreMessage(CoreMessage.StepNonCheck, { entry: codeSpan(step) })}`);
     }
   });
 
   it("lists no reconciler step, and prints no Reconciler label, for a pipeline that runs no reconciliation", () => {
     const lines = reportLines(ciWithoutReconciler);
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
-    expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes(reconciles) || line.includes(records))).toBe(false);
+    expect(lines).not.toContain(label());
+    expect(lines.some((line) => line.includes(reconciles()) || line.includes(records()))).toBe(false);
   });
 });

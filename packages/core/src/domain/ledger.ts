@@ -209,6 +209,14 @@ export interface QualityCheckKindObservations {
   readonly ciSteps?: readonly string[];
 }
 
+export type RunnerSteps = { readonly kind: "none" } | { readonly kind: "some"; readonly ciSteps: readonly [string, ...(readonly string[])] };
+
+export function runnerSteps({ ciSteps }: QualityCheckKindObservations): RunnerSteps {
+  const [first, ...rest] = ciSteps ?? [];
+  if (first === undefined) return { kind: "none" };
+  return { kind: "some", ciSteps: [first, ...rest] };
+}
+
 export interface EvidenceObservationTally {
   readonly total: number;
   readonly onScenario: number;

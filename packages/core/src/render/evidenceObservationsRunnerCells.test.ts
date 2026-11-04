@@ -6,11 +6,13 @@ import type { QualityCheckKindObservations } from "../domain/ledger.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { parsedWorkflows } from "../parse/parsedWorkflows.test-utils.js";
 import { cells, linesOf, sectionUnder } from "./renderedSection.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 
-const HEADING = CORE_MESSAGES[CoreMessage.EvidenceObservationsHeading];
-const FITNESS_RUNNER = CORE_MESSAGES[CoreMessage.FitnessRunner];
-const NO_STEP_RUNS_IT = CORE_MESSAGES[CoreMessage.NoStepCountedAsItsRunnerRunsIt];
+const HEADING = (): string => markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading));
+const FITNESS_RUNNER = (): string => coreMessage(CoreMessage.FitnessRunner);
+const NO_STEP_RUNS_IT = (): string => coreMessage(CoreMessage.NoStepCountedAsItsRunnerRunsIt);
 
 const feature = `Feature: fixture
 
@@ -81,7 +83,7 @@ function assembled(workflow: string = ci, observations: EvidenceObservation[] = 
 }
 
 function rowsOf(reconciliation: EvidenceReconciliation): string[][] {
-  const lines = sectionUnder(HEADING)(linesOf(reconciliation));
+  const lines = sectionUnder(HEADING())(linesOf(reconciliation));
   return lines.filter((line) => line.startsWith("|")).map(cells);
 }
 
@@ -116,7 +118,7 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
       },
     },
   };
-  const lines = sectionUnder(HEADING)(linesOf(withFitness));
+  const lines = sectionUnder(HEADING())(linesOf(withFitness));
   return lines
     .filter((line) => line.startsWith("|"))
     .map(cells)
@@ -126,7 +128,7 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
 describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
   it("heads the table with the kind of quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
-    expect(header).toStrictEqual(cells(CORE_MESSAGES[CoreMessage.EvidenceObservationsTableHeader]));
+    expect(header).toStrictEqual(cells(coreMessage(CoreMessage.EvidenceObservationsTableHeader)));
     expect(separator).toStrictEqual(["---", "---", "---", "---"]);
   });
 
@@ -151,14 +153,14 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
     expect(fitness).toStrictEqual([
       "fitness",
       "3",
-      FITNESS_RUNNER,
-      CORE_MESSAGES[CoreMessage.FitnessCiStep](2),
+      FITNESS_RUNNER(),
+      coreMessage(CoreMessage.FitnessCiStep, { steps: 2 }),
     ]);
   });
 
   it("leaves the CI step cell blank on a fitness row with evidence observations and no steps", () => {
     const fitness = fitnessRowWith({ qualityCheckKind: "fitness", count: 2 });
-    expect(fitness).toStrictEqual(["fitness", "2", FITNESS_RUNNER, ""]);
+    expect(fitness).toStrictEqual(["fitness", "2", FITNESS_RUNNER(), ""]);
   });
 
   it("names the declared runner and the step that runs it on a kind of quality check with no evidence observations", () => {
@@ -175,7 +177,7 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
       "performance",
       "0",
       "k6",
-      NO_STEP_RUNS_IT,
+      NO_STEP_RUNS_IT(),
     ]);
   });
 
@@ -189,7 +191,7 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
       "performance",
       "1",
       "k6",
-      NO_STEP_RUNS_IT,
+      NO_STEP_RUNS_IT(),
     ]);
   });
 
@@ -205,7 +207,7 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
       "unit",
       "2",
       "vitest",
-      NO_STEP_RUNS_IT,
+      NO_STEP_RUNS_IT(),
     ]);
   });
 
@@ -241,7 +243,7 @@ function assembledWith(workflow: string, runners: Record<string, string>): Evide
 }
 
 const rawRowsOf = (reconciliation: EvidenceReconciliation): string[] =>
-  sectionUnder(HEADING)(linesOf(reconciliation)).filter((line) => line.startsWith("|"));
+  sectionUnder(HEADING())(linesOf(reconciliation)).filter((line) => line.startsWith("|"));
 
 const pipeStepCi = `name: fixture CI
 jobs:
@@ -297,7 +299,7 @@ describe("[SCN-RPT-079] every cell of the evidence observations table holds its 
       "performance",
       "0",
       "k6 | cloud",
-      NO_STEP_RUNS_IT,
+      NO_STEP_RUNS_IT(),
     ]);
   });
 });

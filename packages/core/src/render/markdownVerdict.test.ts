@@ -78,7 +78,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
 describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   const summaryOpening = (md: string): string =>
-    md.slice(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))), md.indexOf(CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading]));
+    md.slice(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))), md.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading))));
 
   const balancedScenario: Scenario = {
     scnId: "SCN-VRD-001",
@@ -129,13 +129,13 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
 
   it('names the collection "Claim Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
     const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx, publishedExitCodeOf);
-    expect(md).toContain(`| ${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]} |`);
+    expect(md).toContain(`| ${coreMessage(CoreMessage.ClaimReconciliationSubject)} |`);
   });
 
   it('names no row "Scenario Reconciliation" anywhere in a report holding a scenario, a phantom claim and the unnamed claim', () => {
     const md = renderMarkdown(__er(scenarioPhantomClaimAndUnnamedClaimRows), ctx, publishedExitCodeOf);
     expect(md).toContain(`- ${CORE_MESSAGES[CoreMessage.ClaimReconciliationTally](3, 1, 2)}`);
-    expect(md.split(`${CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject]}(s) for `)).toHaveLength(5);
+    expect(md.split(`${coreMessage(CoreMessage.ClaimReconciliationSubject)}(s) for `)).toHaveLength(5);
     expect(md).not.toMatch(/scenario reconciliation/i);
   });
 });

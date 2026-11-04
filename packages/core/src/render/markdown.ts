@@ -175,13 +175,13 @@ const runIntegritySection: SectionEmitter = (report) => {
 
 const summarySection: SectionEmitter = () => [markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)), ""];
 
-const RECONCILIATION_TOTALS_COLUMNS: readonly string[] = [
-  CORE_MESSAGES[CoreMessage.SubjectColumn],
-  CORE_MESSAGES[CoreMessage.TotalColumn],
-  CORE_MESSAGES[CoreMessage.BalancedColumn],
-  CORE_MESSAGES[CoreMessage.OutOfBalanceColumn],
-  CORE_MESSAGES[CoreMessage.DetailColumn],
-];
+const RECONCILIATION_TOTALS_COLUMNS = [
+  CoreMessage.SubjectColumn,
+  CoreMessage.TotalColumn,
+  CoreMessage.BalancedColumn,
+  CoreMessage.OutOfBalanceColumn,
+  CoreMessage.DetailColumn,
+] as const;
 
 const RECONCILIATION_TOTALS_TERMS = [
   CoreMessage.ReconciliationTotalsClaimReconciliationTerm,
@@ -197,21 +197,21 @@ const reconciliationTotalsSection: SectionEmitter = (report) => {
     .map(({ qualityCheckKind, count }) => `${count} ${qualityCheckKind}`)
     .join(" + ");
   const lines = [
-    CORE_MESSAGES[CoreMessage.ReconciliationTotalsHeading],
+    markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading)),
     "",
-    ...RECONCILIATION_TOTALS_TERMS.map((term) => `- ${CORE_MESSAGES[term]}`),
+    ...RECONCILIATION_TOTALS_TERMS.map((term) => `- ${coreMessage(term)}`),
     "",
-    row(RECONCILIATION_TOTALS_COLUMNS),
+    row(RECONCILIATION_TOTALS_COLUMNS.map((column) => coreMessage(column))),
     row(["---", "---", "---", "---", "---"]),
     row([
-      CORE_MESSAGES[CoreMessage.ClaimReconciliationSubject],
+      coreMessage(CoreMessage.ClaimReconciliationSubject),
       String(claimReconciliations.total),
       String(claimReconciliations.balanced),
       String(claimReconciliations.outOfBalance),
       "",
     ]),
     row([
-      CORE_MESSAGES[CoreMessage.ReconciliationLineSubject],
+      coreMessage(CoreMessage.ReconciliationLineSubject),
       String(reconciliationLines.total),
       String(reconciliationLines.byOutcome.satisfied),
       String(reconciliationLines.outOfBalance),
@@ -229,7 +229,7 @@ const reconciliationTotalsSection: SectionEmitter = (report) => {
 
 function pendingTally(pending: number): string[] {
   return pending > 0
-    ? ["", CORE_MESSAGES[CoreMessage.PendingTally](pending)]
+    ? ["", coreMessage(CoreMessage.PendingTally, { pending })]
     : [];
 }
 

@@ -178,12 +178,6 @@ type CoreTemplate = {
 }[keyof CoreMessages];
 
 const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessages[C]> } = {
-  [CoreMessage.PendingTally]: [1],
-  [CoreMessage.EvidenceObservationsSum]: [3, 1, 1, 1],
-  [CoreMessage.FitnessCiStep]: [2],
-  [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
-  [CoreMessage.StepNonCheck]: ["ci.yml / build / lint"],
-  [CoreMessage.StepAccountingNotAppliedLabel]: ["`specController.notChecks`", "`ci.yml`"],
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
   [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],
   [CoreMessage.PhantomClaimReconciliations]: [1],
@@ -244,6 +238,13 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.SeveralScnCodesGloss]: { heading: "### Scenario code errors", alsoOutOfBalance: "" },
   [CoreMessage.MisfiledAndSeveralScnCodesGloss]: { heading: "### Scenario code errors", alsoOutOfBalance: "" },
   [CoreMessage.NothingToReconcileGloss]: { corpusDir: "features" },
+  [CoreMessage.PendingTally]: { pending: 1 },
+  [CoreMessage.EvidenceObservationsSum]: { total: 3, onScenario: 1, onPhantomClaim: 1, onUnnamedClaim: 1 },
+  [CoreMessage.FitnessCiStep]: { steps: 2 },
+  [CoreMessage.ReconcilerStep]: { step: "ci.yml / build / balance", whatItIs: "this step runs the reconciliation this report is" },
+  [CoreMessage.StepNonCheck]: { entry: "ci.yml / build / lint" },
+  [CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel]: { key: "`specController.notChecks`", workflows: "`ci.yml`" },
+  [CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel]: { key: "`specController.notChecks`" },
 };
 
 function renderedCore(code: CoreMessage): string {

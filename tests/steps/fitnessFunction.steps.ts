@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { shownEntry } from "./support/catalogue.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { claimReconciliationsOf, type ClaimReconciliationsSection } from "./support/reportClaimReconciliations.js";
 import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
@@ -90,7 +91,7 @@ Then(
       `a scenario cites lint:foo; the unnamed claim's row must not name it at all; got:\n${unnamedClaimRow}`
     );
     assert.ok(
-      this.markdown.includes("| fitness | 2 |") && /^\d+ [^=\n]+ = \d+ [^+\n]+ \+ \d+ [^+\n]+ \+ 1 [^+\n]+\.$/m.test(this.markdown),
+      this.markdown.includes("| fitness | 2 |") && shownEntry(this.markdown, "evidence-observations-sum")?.["onUnnamedClaim"] === "1",
       `expected lint:foo folded into the running volume (fitness 2, 1 on the unnamed claim); got:\n${this.markdown}`
     );
   }

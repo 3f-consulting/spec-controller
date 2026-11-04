@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
@@ -71,14 +72,14 @@ jobs:
         run: pnpm typecheck
 `;
 
-const label = CORE_MESSAGES[CoreMessage.StepAccountingNonChecksLabel];
+const label = (): string => coreMessage(CoreMessage.StepAccountingNonChecksLabel);
 
-const nonCheck = (span: string): string => `- ${CORE_MESSAGES[CoreMessage.StepNonCheck](span)}`;
+const nonCheck = (span: string): string => `- ${coreMessage(CoreMessage.StepNonCheck, { entry: span })}`;
 
-const nonCheckMark = (): string => `${CORE_MESSAGES[CoreMessage.StepNonCheck]("").split(":")[0]!.trim()}:`;
+const nonCheckMark = (): string => `${coreMessage(CoreMessage.StepNonCheck, { entry: "" }).split(":")[0]!.trim()}:`;
 
 const nonChecksList = (lines: readonly string[], length: number): string[] => {
-  const start = lines.indexOf(label);
+  const start = lines.indexOf(label());
   expect(start).toBeGreaterThanOrEqual(0);
   return lines.slice(start, start + length);
 };
@@ -88,8 +89,8 @@ describe("[SCN-RPT-048] the step-accounting section lists each non-check beneath
     const section = stepAccounting(reportLines(["ci.yml:quality:Types", "ci.yml:quality:Lint"]));
     const tableEnd = endOfTable(section);
 
-    expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
-    expect(nonChecksList(section, 3)).toStrictEqual([label, nonCheck(codeSpan("ci.yml:quality:Types")), ""]);
+    expect(section.indexOf(label())).toBeGreaterThan(tableEnd);
+    expect(nonChecksList(section, 3)).toStrictEqual([label(), nonCheck(codeSpan("ci.yml:quality:Types")), ""]);
     expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
@@ -98,22 +99,22 @@ describe("[SCN-RPT-048] the step-accounting section lists each non-check beneath
     { entry: "ci.yml:quality:Two\nlines", item: '`"ci.yml:quality:Two\\nlines"`' },
   ])("lists the non-check $entry whole in its code span, as $item", ({ entry, item }) => {
     const section = stepAccounting(reportLines([entry], { "ci.yml": spanStepsCi }));
-    expect(nonChecksList(section, 3)).toStrictEqual([label, nonCheck(item), ""]);
+    expect(nonChecksList(section, 3)).toStrictEqual([label(), nonCheck(item), ""]);
   });
 
   it("lists one line for each step an entry matches", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types"], { "ci.yml": twoTypesStepsCi }));
     const types = nonCheck(codeSpan("ci.yml:quality:Types"));
-    expect(nonChecksList(section, 4)).toStrictEqual([label, types, types, ""]);
+    expect(nonChecksList(section, 4)).toStrictEqual([label(), types, types, ""]);
   });
 
   it("lists the non-checks after the reconciler steps, in the order the steps were read", () => {
     const section = stepAccounting(linesOf(reconcileStepAccounting([stepAccountingCi])));
-    const reconcilerLabel = CORE_MESSAGES[CoreMessage.StepAccountingReconcilerLabel];
+    const reconcilerLabel = coreMessage(CoreMessage.StepAccountingReconcilerLabel);
     expect(section.indexOf(reconcilerLabel)).toBeGreaterThanOrEqual(0);
-    expect(section.indexOf(label)).toBeGreaterThan(section.indexOf(reconcilerLabel));
+    expect(section.indexOf(label())).toBeGreaterThan(section.indexOf(reconcilerLabel));
     expect(nonChecksList(section, 5)).toStrictEqual([
-      label,
+      label(),
       nonCheck(codeSpan("ci.yml:ci:Checkout")),
       nonCheck(codeSpan("ci.yml:ci:Install")),
       nonCheck(codeSpan("ci.yml:ci:Build")),
@@ -126,14 +127,14 @@ describe("[SCN-RPT-098] the step-accounting section lists no non-check when the 
   it("lists no non-check, and prints no Non-checks label, for a target that names no step a non-check", () => {
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
-    expect(lines).not.toContain(label);
+    expect(lines).not.toContain(label());
     expect(lines.some((line) => line.includes(nonCheckMark()) || line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it("prints no Non-checks label when the target's only entry matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
     expect(section.length).toBeGreaterThan(0);
-    expect(section).not.toContain(label);
+    expect(section).not.toContain(label());
     expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 });
@@ -145,10 +146,10 @@ jobs:
 `;
 
 const notAppliedLabelOf = (workflowsRead: readonly string[]): string =>
-  CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel](
-    "`specController.notChecks`",
-    workflowsRead.map((workflow) => `\`${workflow}\``).join(", ")
-  );
+  coreMessage(CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel, {
+    key: "`specController.notChecks`",
+    workflows: workflowsRead.map((workflow) => `\`${workflow}\``).join(", "),
+  });
 
 describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read", () => {
   it.each<{ workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; notApplied: readonly string[] }>([
@@ -173,7 +174,7 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
     const notAppliedLabel = notAppliedLabelOf(Object.keys(workflows));
     const start = section.indexOf(notAppliedLabel);
 
-    expect(start).toBeGreaterThan(Math.max(endOfTable(section), section.indexOf(label)));
+    expect(start).toBeGreaterThan(Math.max(endOfTable(section), section.indexOf(label())));
     expect(section.slice(start, start + notApplied.length + 2)).toStrictEqual([
       notAppliedLabel,
       ...notApplied.map((entry) => `- \`${entry}\``),
@@ -216,15 +217,19 @@ const configurationNotRead = (lines: readonly string[]): string[] =>
   sectionUnder(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading])(lines);
 
 describe("[SCN-RPT-091] a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none", () => {
-  it.each<{ case: string; workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; workflowsRead: string; malformed: readonly string[] }>([
-    { case: "reads no workflow", workflows: {}, notChecks: ["deploy.yml:release:Ship", "ci.yml:build"], workflowsRead: "no workflow", malformed: ["ci.yml:build"] },
-    { case: "reads one workflow whose only job calls another", workflows: { "release.yml": callsAnotherWorkflowCi }, notChecks: ["deploy.yml:release:Ship"], workflowsRead: "`release.yml`", malformed: [] },
-  ])("holds only the not-applied list for a run that $case", ({ workflows, notChecks, workflowsRead, malformed }) => {
+  it.each<{ case: string; workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; malformed: readonly string[] }>([
+    { case: "reads no workflow", workflows: {}, notChecks: ["deploy.yml:release:Ship", "ci.yml:build"], malformed: ["ci.yml:build"] },
+    { case: "reads one workflow whose only job calls another", workflows: { "release.yml": callsAnotherWorkflowCi }, notChecks: ["deploy.yml:release:Ship"], malformed: [] },
+  ])("holds only the not-applied list for a run that $case", ({ workflows, notChecks, malformed }) => {
     const lines = reportLines(notChecks, workflows);
-    const notAppliedLabel = CORE_MESSAGES[CoreMessage.StepAccountingNotAppliedLabel]("`specController.notChecks`", workflowsRead);
+    const workflowsRead = Object.keys(workflows);
+    const notAppliedLabel =
+      workflowsRead.length === 0
+        ? coreMessage(CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel, { key: "`specController.notChecks`" })
+        : notAppliedLabelOf(workflowsRead);
 
     expect(stepAccounting(lines)).toStrictEqual([
-      CORE_MESSAGES[CoreMessage.StepAccountingHeading],
+      markdownHeading(3, coreMessage(CoreMessage.StepAccountingHeading)),
       "",
       notAppliedLabel,
       "- `deploy.yml:release:Ship`",

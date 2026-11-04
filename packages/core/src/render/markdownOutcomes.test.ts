@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { OUT_OF_BALANCE_OUTCOMES, type Ledger, type Outcome } from "../model.js";
 import { CORE_MESSAGES, CoreMessage, type CoreMessages } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
@@ -48,7 +49,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     const md = renderMarkdown(__er(rich), ctx, publishedExitCodeOf);
     const lines = md.split("\n");
     const lineSubjectRow = lines.findIndex((line) =>
-      line.startsWith(`| ${CORE_MESSAGES[CoreMessage.ReconciliationLineSubject]} |`)
+      line.startsWith(`| ${coreMessage(CoreMessage.ReconciliationLineSubject)} |`)
     );
     expect(lineSubjectRow).toBeGreaterThanOrEqual(0);
     expect([...OUT_OF_BALANCE_OUTCOMES].sort()).toEqual(CAUSE_ROW_ENTRIES.map(([handle]) => handle).sort());
