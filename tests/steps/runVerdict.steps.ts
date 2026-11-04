@@ -4,6 +4,7 @@ import type { SpawnSyncReturns } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { BALANCED_INPUTS, NO_WORKFLOWS, OUT_OF_BALANCE_INPUTS, spawnBalance } from "./support/balanceTarget.js";
+import { showsEntry } from "./support/catalogue.js";
 import { exitNamedBy, exitOn, RUN_OUTCOME } from "./support/runExit.js";
 import type { SpecControllerWorld } from "./support/world.js";
 
@@ -309,9 +310,16 @@ Given(
   },
 );
 
+function assertListsMisfiled(report: string, scnId: string): void {
+  assert.ok(
+    showsEntry(report, "foreign-scn-code-carried", { file: "two.feature", scnId, carrierCount: "1" }),
+    `expected ${scnId} in two.feature listed as misfiled; got:\n${report}`,
+  );
+}
+
 Then("the report lists the scenario code error", function (this: SpecControllerWorld) {
   assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
-  assert.match(this.balanceResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-CEA-002/m);
+  assertListsMisfiled(this.balanceResult.stdout, "SCN-CEA-002");
 });
 
 Then("the report carries the out-of-balance account", function (this: SpecControllerWorld) {
@@ -349,5 +357,5 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
 
 Then("the report still lists the scenario code error", function (this: SpecControllerWorld) {
   assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
-  assert.match(this.balanceResult.stdout, /^- `foreign-scn-code` — two\.feature .*@SCN-UCA-002/m);
+  assertListsMisfiled(this.balanceResult.stdout, "SCN-UCA-002");
 });

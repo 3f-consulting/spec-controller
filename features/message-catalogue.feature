@@ -94,15 +94,18 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
     Scenario Outline: an error shows its reader the error code of what went wrong — <error>
 
       Examples:
-        | error                                         | what went wrong                      |
-        | a flag the command does not take              | the flag unknown to the command      |
-        | a flag the command has retired                | the retired flag                     |
-        | a command the tool does not have              | the unknown command                  |
-        | a request for a scenario code not in its form | the request not in the code's form   |
-        | an unexpected error before its verdict        | the unexpected error                 |
-        | an unexpected error that cannot be formatted  | the unexpected error                 |
-        | an unexpected error after its verdict         | the unexpected error after a verdict |
-        | an input it cannot read                       | the input that could not be read     |
+        | error                                                      | what went wrong                      |
+        | a flag the command does not take                           | the flag unknown to the command      |
+        | a flag the command has retired                             | the retired flag                     |
+        | a command the tool does not have                           | the unknown command                  |
+        | a request for a scenario code not in its form              | the request not in the code's form   |
+        | an unexpected error before its verdict                     | the unexpected error                 |
+        | an unexpected error that cannot be formatted               | the unexpected error                 |
+        | an unexpected error after its verdict                      | the unexpected error after a verdict |
+        | an input it cannot read                                    | the input that could not be read     |
+        | a configuration entry of a kind it does not read           | the entry of the wrong kind          |
+        | a scenario carrying a code of another feature              | the misfiled code                    |
+        | a saved report holding an error in its inputs, re-rendered | the error the saved report holds     |
 
     @unit @SCN-MSG-011
     Scenario: a balanced run shows no error code
@@ -114,3 +117,6 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
 
     @unit @SCN-MSG-013
     Scenario: every documented code is one the tool can give
+
+    @unit @SCN-MSG-014
+    Scenario: no error code stands for two errors

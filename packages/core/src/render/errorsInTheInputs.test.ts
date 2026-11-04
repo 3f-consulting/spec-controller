@@ -7,6 +7,8 @@ import type { ScenarioCodeError } from "../domain/scnTags.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { isEntryOf } from "./inputErrorEntry.test-utils.js";
 
 const SECTION = CORE_MESSAGES[CoreMessage.ErrorsInTheInputsHeading];
 const SCENARIO_CODE_ERRORS = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
@@ -85,7 +87,7 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     expect(before).toBe(RUN_PROVENANCE);
     expect(after).toBe(SUMMARY_VIEWS);
     expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ]);
-    expect(body.filter((line) => line.startsWith("- `specController.zzz` "))).toHaveLength(1);
+    expect(body.filter(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: "`specController.zzz`" })))).toHaveLength(1);
   });
 
   it("states scenario code errors before configuration faults, in one section ahead of the run integrity stamp", () => {

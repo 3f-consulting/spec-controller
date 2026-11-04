@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { CoreError } from "@3f-consulting/spec-controller-core";
 import { AppError } from "./messages.js";
 import { UNEXPECTED_ERROR_EXIT_CODE, USAGE_EXIT_CODE } from "./exitCode.js";
 import { EXIT_CODE } from "./cli-balance/exitStatus.js";
@@ -7,8 +8,16 @@ import { EXIT_CODE } from "./cli-balance/exitStatus.js";
 interface Finding {
   readonly section: string;
   readonly code: string;
-  readonly fault: "not listed" | "listed twice" | "listed with no meaning" | "not one the tool can give";
+  readonly fault: "not listed" | "listed twice" | "listed with no meaning" | "not one the tool can give" | "stands for two errors";
 }
+
+// The two catalogues of errors a reader can be shown: the app's refusals and the report's errors in the inputs.
+interface ErrorCatalogues {
+  readonly app: Readonly<Record<string, string>>;
+  readonly core: Readonly<Record<string, string>>;
+}
+
+const ERROR_CATALOGUES: ErrorCatalogues = { app: AppError, core: CoreError };
 
 // Each row of a section's table, as its code and its meaning, up to the next heading or rule.
 function rows(guide: string, section: string): { code: string; meaning: string }[] {
@@ -19,8 +28,8 @@ function rows(guide: string, section: string): { code: string; meaning: string }
   }));
 }
 
-function check(guide: string, section: string, codes: readonly string[]): Finding[] {
-  const listed = rows(guide, section);
+function check(guide: string, section: string, codes: readonly string[], headings: readonly string[] = [section]): Finding[] {
+  const listed = headings.flatMap((heading) => rows(guide, heading));
   const timesListed = (code: string): number => listed.filter((row) => row.code === code).length;
   return [
     ...codes.flatMap((code): Finding[] => [
@@ -32,9 +41,16 @@ function check(guide: string, section: string, codes: readonly string[]): Findin
   ];
 }
 
-function documentationFindings(guide: string): Finding[] {
+function documentationFindings(guide: string, catalogues: ErrorCatalogues = ERROR_CATALOGUES): Finding[] {
   const exitCodes = [...new Set([...Object.values(EXIT_CODE), USAGE_EXIT_CODE, UNEXPECTED_ERROR_EXIT_CODE])].map(String);
-  return [...check(guide, "Exit codes", exitCodes), ...check(guide, "Error codes", Object.values(AppError))];
+  return [
+    ...check(guide, "Exit codes", exitCodes),
+    ...check(guide, "Error codes", Object.values(catalogues.app)),
+    ...check(guide, "Errors in the inputs", Object.values(catalogues.core), ["Configuration the run cannot use is named, never dropped", "Scenario code errors"]),
+    ...Object.values(catalogues.app)
+      .filter((code) => Object.values(catalogues.core).includes(code))
+      .map((code) => ({ section: "Error codes, Errors in the inputs", code, fault: "stands for two errors" as const })),
+  ];
 }
 
 function userGuide(): string {
@@ -69,6 +85,19 @@ describe("[SCN-MSG-013] every documented code is one the tool can give", () => {
     expect(documentationFindings(planted)).toEqual([
       { section: "Exit codes", code: "7", fault: "not one the tool can give" },
       { section: "Error codes", code: "no-such-error", fault: "not one the tool can give" },
+    ]);
+  });
+});
+
+describe("[SCN-MSG-014] no error code stands for two errors", () => {
+  it("[SCN-MSG-014] a code the app's errors and the errors in the inputs both hold is named, though the guide lists it under each", () => {
+    const planted = userGuide().replace(
+      /^(\| `configuration-wrong-kind` \|.*\n)/m,
+      "$1| `unknown-flag` | an entry the run cannot use, under a code a refusal already gives |\n",
+    );
+    const catalogues = { app: AppError, core: { ...CoreError, Planted: AppError.UnknownFlag } };
+    expect(documentationFindings(planted, catalogues)).toEqual([
+      { section: "Error codes, Errors in the inputs", code: "unknown-flag", fault: "stands for two errors" },
     ]);
   });
 });

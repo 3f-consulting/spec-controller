@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { codeErrorsCtx as ctx } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -108,7 +109,7 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
 
     it("frames and glosses exactly as before", () => {
       expect(framingOf(md)).toBe(
-        CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsFraming](CORE_MESSAGES[CoreMessage.OneScenarioCodeError])
+        coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count: coreMessage(CoreMessage.OneScenarioCodeError) })
       );
       expect(verdictOf(md)).toContain(`— ${CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsGloss]("")} (`);
     });

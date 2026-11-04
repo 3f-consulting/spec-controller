@@ -7,13 +7,19 @@ export interface RefusalLines {
   lines(command?: string): string;
 }
 
-// An error given as its words is printed as it is.
-export function errorText(error: RefusalLines | string, command?: string): string {
+declare const coded: unique symbol;
+
+// A line that already carries its error code. Only the crash guards build one, from an error's handle, so a bare string
+// is not an error the printer takes.
+export type CodedLine = string & { readonly [coded]: true };
+
+// A coded line is printed as it is.
+export function errorText(error: RefusalLines | CodedLine, command?: string): string {
   return typeof error === "string" ? error : error.lines(command);
 }
 
 export interface StandardError {
-  error(error: RefusalLines | string): void;
+  error(error: RefusalLines | CodedLine): void;
   note(line: string): void;
 }
 

@@ -1,22 +1,24 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ConfigurationKind } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CORE_MESSAGES, CoreError, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { codeSpan } from "./codeSpan.js";
+import { errorEntry } from "./errorEntry.js";
 
 function kindWords(kind: ConfigurationKind): string {
   switch (kind) {
     case "list":
-      return CORE_MESSAGES[CoreMessage.ManifestKindList];
+      return coreMessage(CoreMessage.ManifestKindList);
     case "object":
-      return CORE_MESSAGES[CoreMessage.ManifestKindObject];
+      return coreMessage(CoreMessage.ManifestKindObject);
     case "string":
-      return CORE_MESSAGES[CoreMessage.ManifestKindString];
+      return coreMessage(CoreMessage.ManifestKindString);
     case "string-or-null":
-      return CORE_MESSAGES[CoreMessage.ManifestKindStringOrNull];
+      return coreMessage(CoreMessage.ManifestKindStringOrNull);
     case "null":
       return kind;
     default:
-      return CORE_MESSAGES[CoreMessage.ManifestKindOfType](kind);
+      return coreMessage(CoreMessage.ManifestKindOfType, { type: kind });
   }
 }
 
@@ -37,22 +39,22 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
   return [
     CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],
     "",
-    CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
+    coreMessage(CoreMessage.ConfigurationNotReadIntro),
     "",
     ...wrongKinds.map(
-      ({ entry, is, reads }) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationWrongKind](codeSpan(entry), kindWords(is), kindWords(reads))}`
+      ({ entry, is, reads }) => errorEntry(CoreError.ConfigurationWrongKind, coreMessage(CoreMessage.ConfigurationWrongKind, { entry: codeSpan(entry), is: kindWords(is), reads: kindWords(reads) }))
     ),
     ...unknownKeys.map(
-      (key) => `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](codeSpan(`specController.${key}`))}`
+      (key) => errorEntry(CoreError.ConfigurationUnknownKey, coreMessage(CoreMessage.ConfigurationUnknownKey, { key: codeSpan(`specController.${key}`) }))
     ),
     ...runnerKeysNotALayer.map(
-      (key) => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer](codeSpan(`specController.runners.${key}`))}`
+      (key) => errorEntry(CoreError.RunnerKeyNotALayer, coreMessage(CoreMessage.RunnerKeyNotALayer, { key: codeSpan(`specController.runners.${key}`) }))
     ),
     ...nonChecksMatchingNoStep.map(
-      (entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", codeSpan(entry))}`
+      (entry) => errorEntry(CoreError.NotChecksEntryMatchesNoStep, coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "`specController.notChecks`", entry: codeSpan(entry) }))
     ),
     ...nonChecksNotAStepName.map(
-      (entry) => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", codeSpan(entry))}`
+      (entry) => errorEntry(CoreError.NotChecksEntryNotAStepName, coreMessage(CoreMessage.NotChecksEntryNotAStepName, { key: "`specController.notChecks`", entry: codeSpan(entry) }))
     ),
     "",
   ];

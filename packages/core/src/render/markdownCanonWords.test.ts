@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { renderJson, renderMarkdown } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
@@ -82,7 +83,7 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
       ctx,
       publishedExitCodeOf
     );
-    expect(md).toContain(CORE_MESSAGES[CoreMessage.DuplicateScnCodeNotListed]);
+    expect(md).toContain(coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode] }));
     expect(md).toContain(`as "${CORE_MESSAGES[CoreMessage.OutcomeDuplicateScnCode]}".`);
     expect(md).not.toContain("`duplicate-scn-code`");
   });

@@ -16,6 +16,13 @@ export interface ForeignScnCodeError {
   readonly namedFeatureFiles: readonly string[];
 }
 
+export type ForeignCodeCarriers = { readonly kind: "none" } | { readonly kind: "carried"; readonly files: readonly [string, ...(readonly string[])] };
+
+export function foreignCodeCarriersOf(error: ForeignScnCodeError): ForeignCodeCarriers {
+  const [first, ...rest] = error.namedFeatureFiles;
+  return first === undefined ? { kind: "none" } : { kind: "carried", files: [first, ...rest] };
+}
+
 interface NoFeatureCodeError {
   readonly kind: "no-feature-code";
   readonly files: readonly string[];

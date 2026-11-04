@@ -142,3 +142,10 @@ Feature: The fitness functions this repository carries, one scenario per check
 
     @fitness @SCN-FIT-059
     Scenario: the build reds when a current-state document cites a file, heading or path that does not exist
+
+  Rule: the tool shows an error only from its catalogues' errors, and only with its error code
+
+    Every error the tool shows is worded in a catalogue, under its error code, and reaches the reader with that code. Nothing the tool writes to standard error goes around the one printer that shows it so.
+
+    @fitness @SCN-FIT-076
+    Scenario: every refusal, crash line and error in the inputs the tool shows is a catalogue error, shown with its error code

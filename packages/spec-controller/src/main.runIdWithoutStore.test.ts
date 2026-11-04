@@ -11,7 +11,7 @@ import { storedReRenderRefusal, unstoredRunIdRefusal } from "./storedRun.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "./programOutput.test-utils.js";
 import { errorText } from "./standardError.js";
-import type { ShownError } from "./refusal.js";
+import type { Refusal as ShownRefusal } from "./refusal.js";
 
 interface Answered extends Written {
   expectedStderr: string | undefined;
@@ -45,7 +45,7 @@ recordWhatTheProgramWrites();
 
 type Refusal = (argv: string[]) => string | undefined;
 
-const printedAt = (shown: ShownError | undefined): string | undefined => (shown === undefined ? undefined : errorText(shown));
+const printedAt = (shown: ShownRefusal | undefined): string | undefined => (shown === undefined ? undefined : errorText(shown));
 
 const refusedAsUnstored: Refusal = (argv) => printedAt(unstoredRunIdRefusal(parseHostInvocation(argv)));
 const refusedAsReRender: Refusal = (argv) => printedAt(storedReRenderRefusal(parseHostInvocation(argv)));

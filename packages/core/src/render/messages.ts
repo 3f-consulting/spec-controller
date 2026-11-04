@@ -28,9 +28,6 @@ export enum CoreMessage {
   ProvenanceToolVersion,
   ErrorsInTheInputsHeading,
   ConfigurationNotReadHeading,
-  ConfigurationNotReadIntro,
-  ConfigurationWrongKind,
-  ConfigurationUnknownKey,
   RunIntegrityHeading,
   OneProofNeverRan,
   ProofsNeverRan,
@@ -39,12 +36,6 @@ export enum CoreMessage {
   BrokenEvidenceWhatBroke,
   BrokenEvidenceNoMessage,
   ScenarioCodeErrorsHeading,
-  OneScenarioCodeError,
-  ScenarioCodeErrorCount,
-  ScenarioCodeErrorsFraming,
-  SeveralScnCodesFraming,
-  MisfiledAndSeveralScnCodesFraming,
-  DuplicateScnCodeNotListed,
   FeatureFileNoun,
   FeatureCodeNoun,
   NoFeatureFileJudged,
@@ -56,12 +47,6 @@ export enum CoreMessage {
   ThemPronoun,
   HoldsVerb,
   HoldVerb,
-  DuplicateFeatureCode,
-  ForeignScnCodeOneCarrier,
-  ForeignScnCodeManyCarriers,
-  ForeignScnCodeNoCarrier,
-  NoFeatureCode,
-  ScenarioSeveralScnCodes,
   SummaryViewsHeading,
   RunVerdictHeading,
   VerdictExit,
@@ -102,13 +87,10 @@ export enum CoreMessage {
   RunnerLayerNamesNone,
   RunnerLayerUnnamed,
   NoStepCountedAsItsRunnerRunsIt,
-  RunnerKeyNotALayer,
   ReconcilerStep,
   ReconcilerReconciles,
   ReconcilerRecords,
   StepExcluded,
-  NotChecksEntryMatchesNoStep,
-  NotChecksEntryNotAStepName,
   StepAccountingHeading,
   StepAccountingTableHeader,
   StepAccountingTotal,
@@ -153,11 +135,6 @@ export enum CoreMessage {
   CheckStepEnded,
   AmbiguousNamedStep,
   AmbiguousUnnamedStep,
-  ManifestKindList,
-  ManifestKindObject,
-  ManifestKindString,
-  ManifestKindStringOrNull,
-  ManifestKindOfType,
   OutcomeSatisfied,
   OutcomeMissing,
   OutcomeFailing,
@@ -176,6 +153,41 @@ export enum CoreMessage {
   UnnamedClaimFailedNames,
   SeveralScnCodes,
   SharedScnCode,
+  ConfigurationNotReadIntro = "configuration-not-read-intro",
+  ConfigurationWrongKind = "configuration-wrong-kind",
+  ConfigurationUnknownKey = "configuration-unknown-key",
+  OneScenarioCodeError = "one-scenario-code-error",
+  ScenarioCodeErrorCount = "scenario-code-error-count",
+  ScenarioCodeErrorsFraming = "scenario-code-errors-framing",
+  SeveralScnCodesFraming = "several-scn-codes-framing",
+  MisfiledAndSeveralScnCodesFraming = "misfiled-and-several-scn-codes-framing",
+  DuplicateScnCodeNotListed = "duplicate-scn-code-not-listed",
+  DuplicateFeatureCode = "duplicate-feature-code",
+  ForeignScnCodeCarried = "foreign-scn-code-carried",
+  ForeignScnCodeNoCarrier = "foreign-scn-code-no-carrier",
+  NoFeatureCode = "no-feature-code",
+  ScenarioSeveralScnCodes = "several-scn-codes",
+  RunnerKeyNotALayer = "runner-key-not-a-layer",
+  NotChecksEntryMatchesNoStep = "not-checks-entry-matches-no-step",
+  NotChecksEntryNotAStepName = "not-checks-entry-not-a-step-name",
+  ManifestKindList = "manifest-kind-list",
+  ManifestKindObject = "manifest-kind-object",
+  ManifestKindString = "manifest-kind-string",
+  ManifestKindStringOrNull = "manifest-kind-string-or-null",
+  ManifestKindOfType = "manifest-kind-of-type",
+}
+
+// Each error named under Errors in the inputs, by its code: a handle's value is the code its entry opens with.
+export enum CoreError {
+  ConfigurationWrongKind = "configuration-wrong-kind",
+  ConfigurationUnknownKey = "configuration-unknown-key",
+  RunnerKeyNotALayer = "runner-key-not-a-layer",
+  NotChecksEntryMatchesNoStep = "not-checks-entry-matches-no-step",
+  NotChecksEntryNotAStepName = "not-checks-entry-not-a-step-name",
+  DuplicateFeatureCode = "duplicate-feature-code",
+  ForeignScnCode = "foreign-scn-code",
+  NoFeatureCode = "no-feature-code",
+  SeveralScnCodes = "several-scn-codes",
 }
 
 interface CoreMessageParams {
@@ -186,32 +198,13 @@ interface CoreMessageParams {
   readonly [CoreMessage.ProvenanceSourceSha]: [sha: string];
   readonly [CoreMessage.ProvenanceToolSha]: [sha: string];
   readonly [CoreMessage.ProvenanceToolVersion]: [version: string];
-  readonly [CoreMessage.ConfigurationWrongKind]: [entry: string, is: string, reads: string];
-  readonly [CoreMessage.ConfigurationUnknownKey]: [key: string];
   readonly [CoreMessage.ProofsNeverRan]: [count: number];
   readonly [CoreMessage.RunUnsound]: [proofs: string];
   readonly [CoreMessage.BrokenEvidenceWhatBroke]: [locator: string];
-  readonly [CoreMessage.ScenarioCodeErrorCount]: [count: number];
-  readonly [CoreMessage.ScenarioCodeErrorsFraming]: [count: string];
-  readonly [CoreMessage.SeveralScnCodesFraming]: [count: string];
-  readonly [CoreMessage.MisfiledAndSeveralScnCodesFraming]: [count: string];
   readonly [CoreMessage.ScenarioCodesCleanOver]: [featureFiles: string, featureCodes: string];
   readonly [CoreMessage.CleanNoCodedScenario]: [over: string, them: string];
   readonly [CoreMessage.CleanEachFileOwnCode]: [over: string];
   readonly [CoreMessage.CleanOthersNoFeatureCode]: [over: string, noFeatureCode: number, hold: string];
-  readonly [CoreMessage.DuplicateFeatureCode]: [code: string, fileCount: number, files: string];
-  readonly [CoreMessage.ForeignScnCodeOneCarrier]: [file: string, featureCode: string, scnId: string, named: string, carrier: string];
-  readonly [CoreMessage.ForeignScnCodeManyCarriers]: [
-    file: string,
-    featureCode: string,
-    scnId: string,
-    named: string,
-    carrierCount: number,
-    carriers: string,
-  ];
-  readonly [CoreMessage.ForeignScnCodeNoCarrier]: [file: string, featureCode: string, scnId: string, named: string];
-  readonly [CoreMessage.NoFeatureCode]: [file: string];
-  readonly [CoreMessage.ScenarioSeveralScnCodes]: [file: string, scenario: string, codes: readonly string[]];
   readonly [CoreMessage.VerdictExit]: [code: number];
   readonly [CoreMessage.ScenarioCodeErrorsGloss]: [alsoOutOfBalance: string];
   readonly [CoreMessage.SeveralScnCodesGloss]: [alsoOutOfBalance: string];
@@ -220,11 +213,8 @@ interface CoreMessageParams {
   readonly [CoreMessage.PendingTally]: [pending: number];
   readonly [CoreMessage.EvidenceObservationsSum]: [total: number, onScenario: number, onPhantomClaim: number, onUnnamedClaim: number];
   readonly [CoreMessage.FitnessCiStep]: [steps: number];
-  readonly [CoreMessage.RunnerKeyNotALayer]: [key: string];
   readonly [CoreMessage.ReconcilerStep]: [step: string, whatItIs: string];
   readonly [CoreMessage.StepExcluded]: [entry: string];
-  readonly [CoreMessage.NotChecksEntryMatchesNoStep]: [key: string, entry: string];
-  readonly [CoreMessage.NotChecksEntryNotAStepName]: [key: string, entry: string];
   readonly [CoreMessage.StepAccountingNotAppliedLabel]: [key: string, workflowsRead: string];
   readonly [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [outOfBalance: number, claimReconciliations: number];
   readonly [CoreMessage.NotGroupedByFeature]: [ungrouped: string];
@@ -243,7 +233,6 @@ interface CoreMessageParams {
   readonly [CoreMessage.CheckStepSkipped]: [scnId: string];
   readonly [CoreMessage.CheckStepEnded]: [scnId: string, outcome: string];
   readonly [CoreMessage.AmbiguousNamedStep]: [step: string];
-  readonly [CoreMessage.ManifestKindOfType]: [type: string];
   readonly [CoreMessage.UnnamedClaimGroupCounts]: [ran: number, passed: number, failed: number];
   readonly [CoreMessage.UnnamedClaimCiSteps]: [names: readonly string[]];
   readonly [CoreMessage.UnnamedClaimFailedNames]: [names: readonly string[]];
@@ -251,8 +240,39 @@ interface CoreMessageParams {
   readonly [CoreMessage.SharedScnCode]: [code: string];
 }
 
+// A handle whose value is a string is worded by the data file; the others, by the table below.
+export type WordedCoreMessage = Extract<CoreMessage, string>;
+
+type TabledCoreMessage = Extract<CoreMessage, number>;
+
+export interface CoreMessageValues {
+  readonly [CoreMessage.ConfigurationWrongKind]: { readonly entry: string; readonly is: string; readonly reads: string };
+  readonly [CoreMessage.ConfigurationUnknownKey]: { readonly key: string };
+  readonly [CoreMessage.RunnerKeyNotALayer]: { readonly key: string };
+  readonly [CoreMessage.NotChecksEntryMatchesNoStep]: { readonly key: string; readonly entry: string };
+  readonly [CoreMessage.NotChecksEntryNotAStepName]: { readonly key: string; readonly entry: string };
+  readonly [CoreMessage.ManifestKindOfType]: { readonly type: string };
+  readonly [CoreMessage.ScenarioCodeErrorCount]: { readonly count: number };
+  readonly [CoreMessage.ScenarioCodeErrorsFraming]: { readonly count: string };
+  readonly [CoreMessage.SeveralScnCodesFraming]: { readonly count: string };
+  readonly [CoreMessage.MisfiledAndSeveralScnCodesFraming]: { readonly count: string };
+  readonly [CoreMessage.DuplicateScnCodeNotListed]: { readonly outcome: string };
+  readonly [CoreMessage.DuplicateFeatureCode]: { readonly code: string; readonly fileCount: number; readonly files: string };
+  readonly [CoreMessage.ForeignScnCodeCarried]: {
+    readonly file: string;
+    readonly featureCode: string;
+    readonly scnId: string;
+    readonly named: string;
+    readonly carrierCount: number;
+    readonly carriers: string;
+  };
+  readonly [CoreMessage.ForeignScnCodeNoCarrier]: { readonly file: string; readonly featureCode: string; readonly scnId: string; readonly named: string };
+  readonly [CoreMessage.NoFeatureCode]: { readonly file: string };
+  readonly [CoreMessage.ScenarioSeveralScnCodes]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
+}
+
 export type CoreMessages = {
-  readonly [C in CoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
+  readonly [C in TabledCoreMessage]: C extends keyof CoreMessageParams ? (...params: CoreMessageParams[C]) => string : string;
 };
 
 const SATISFIED = "Evidence Observation satisfies its Evidence Obligation";
@@ -263,14 +283,6 @@ const CITING_NO_SCENARIO = "evidence observations citing no scenario";
 
 const RUNNERS_PLACE = "`specController.runners` in its `package.json`";
 const IN_ITS_FILE = "every coded scenario sits in the file its code names";
-
-const foreignOpening = (file: string, featureCode: string, scnId: string, named: string): string =>
-  `${file} carries the feature code @${featureCode}, but holds the scenario ` +
-  `@${scnId}, whose feature part names ${named}. A reconciliation's by-feature cut groups on the id, so `;
-
-const aKind = (type: string): string => `a ${type}`;
-
-const recode = (featureCode: string): string => `Re-code the scenario for @${featureCode}`;
 
 export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ReportTitle]: "# Evidence Reconciliation",
@@ -288,12 +300,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ProvenanceToolVersion]: (version) => `Tool version: ${version}`,
   [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
   [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
-  [CoreMessage.ConfigurationNotReadIntro]:
-    "The target's package.json holds configuration this run could not use. Each line below says what this run did with its entry, and every account in this report is the one the target gives without it.",
-  [CoreMessage.ConfigurationWrongKind]: (entry, is, reads) =>
-    `${entry} is ${is} where ${reads} is read, so this run read it as absent.`,
-  [CoreMessage.ConfigurationUnknownKey]: (key) =>
-    `${key} is not a key the specController block reads, so this run read nothing from it.`,
   [CoreMessage.RunIntegrityHeading]: "## Run integrity: unsound",
   [CoreMessage.OneProofNeverRan]: "1 Evidence Observation never ran to a result, so the behaviour it proves was never exercised.",
   [CoreMessage.ProofsNeverRan]: (count) =>
@@ -310,20 +316,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.BrokenEvidenceWhatBroke]: (locator) => `${locator} — what broke:`,
   [CoreMessage.BrokenEvidenceNoMessage]: "(no message reported by the runner)",
   [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
-  [CoreMessage.OneScenarioCodeError]: "1 scenario code error",
-  [CoreMessage.ScenarioCodeErrorCount]: (count) => `${count} scenario code errors`,
-  [CoreMessage.ScenarioCodeErrorsFraming]: (count) =>
-    `${count} — each misfiles a scenario code, so the by-feature cut below cannot be trusted, and ` +
-    "the run fails (exit 1). Every account still reconciles as it would if the code were filed " +
-    "correctly.",
-  [CoreMessage.SeveralScnCodesFraming]: (count) =>
-    `${count} — each is a scenario carrying more than one scenario code, so no account was raised for it ` +
-    "under any of them, and the run fails (exit 1).",
-  [CoreMessage.MisfiledAndSeveralScnCodesFraming]: (count) =>
-    `${count} — each either misfiles a scenario code, so the by-feature cut below cannot be trusted, or ` +
-    "is a scenario carrying more than one scenario code, so no account was raised for it under any of " +
-    "them. The run fails (exit 1).",
-  [CoreMessage.DuplicateScnCodeNotListed]: `A duplicated @SCN code is not listed here: it is reported on its account's rows, as "${DUPLICATE_SCN_CODE}".`,
   [CoreMessage.FeatureFileNoun]: "feature file",
   [CoreMessage.FeatureCodeNoun]: "feature code",
   [CoreMessage.NoFeatureFileJudged]: "No feature file was judged, so no scenario code is vouched for.",
@@ -339,29 +331,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.ThemPronoun]: "them",
   [CoreMessage.HoldsVerb]: "holds",
   [CoreMessage.HoldVerb]: "hold",
-  [CoreMessage.DuplicateFeatureCode]: (code, fileCount, files) =>
-    `the feature code @${code} is carried by ${fileCount} feature ` +
-    `files — ${files}. A feature code names exactly one feature file: a ` +
-    `reconciliation's by-feature cut groups on it, so two files sharing a code report as one ` +
-    `row and attribute one file's scenarios to the other. Give one of them a code of its own.`,
-  [CoreMessage.ForeignScnCodeOneCarrier]: (file, featureCode, scnId, named, carrier) =>
-    `${foreignOpening(file, featureCode, scnId, named)}it counts this scenario under ${carrier}'s row, not ${file}'s. ` +
-    `${recode(featureCode)}, or move it to ${carrier}.`,
-  [CoreMessage.ForeignScnCodeManyCarriers]: (file, featureCode, scnId, named, carrierCount, carriers) =>
-    `${foreignOpening(file, featureCode, scnId, named)}it counts this scenario under the one row for ${named}, which ${carrierCount} feature ` +
-    `files carry — ${carriers} — so that row cannot say which of them it belongs to. ` +
-    `${recode(featureCode)}, or move it once a single file carries ${named}.`,
-  [CoreMessage.ForeignScnCodeNoCarrier]: (file, featureCode, scnId, named) =>
-    `${foreignOpening(file, featureCode, scnId, named)}it opens a row for ${named}, which no feature file carries as its header code, so ` +
-    `that row stands for no file. ${recode(featureCode)}.`,
-  [CoreMessage.NoFeatureCode]: (file) =>
-    `${file} carries no feature code, but its scenarios carry @SCN codes. A feature ` +
-    `file is the class its scenarios' codes are filed under: give it a header code of its own, ` +
-    `and code its scenarios for it.`,
-  [CoreMessage.ScenarioSeveralScnCodes]: (file, scenario, codes) =>
-    `${file}'s scenario "${scenario}" carries ${codes.length} @SCN codes — ${codes.join(", ")}. A scenario ` +
-    `is one account, so it raises its evidence obligations under none of them, and a test citing any ` +
-    `of them cites a code no scenario carries. Give it one code.`,
   [CoreMessage.SummaryViewsHeading]: "## Summary views",
   [CoreMessage.RunVerdictHeading]: "### Run verdict",
   [CoreMessage.VerdictExit]: (code) => `exit ${code}`,
@@ -445,16 +414,10 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.RunnerLayerUnnamed]:
     `unnamed: the target leaves this layer's runner undeclared: ${RUNNERS_PLACE} is missing or not a block, leaves the layer out, or gives it a value that is neither a string nor \`null\`. A string there names the layer's runner.`,
   [CoreMessage.NoStepCountedAsItsRunnerRunsIt]: "no step counted as its runner runs it.",
-  [CoreMessage.RunnerKeyNotALayer]: (key) =>
-    `${key} — not a layer: the runner block is keyed by the four layers, and this key excludes nothing.`,
   [CoreMessage.ReconcilerStep]: (step, whatItIs) => `${step} — the reconciler: ${whatItIs}.`,
   [CoreMessage.ReconcilerReconciles]: "this step runs the reconciliation this report is",
   [CoreMessage.ReconcilerRecords]: "this step writes the step record the reconciliation reads",
   [CoreMessage.StepExcluded]: (entry) => `${entry} — excluded: the target names this step a non-check.`,
-  [CoreMessage.NotChecksEntryMatchesNoStep]: (key, entry) =>
-    `${key} entry ${entry} matches no step of the workflows this run read, so it excludes nothing.`,
-  [CoreMessage.NotChecksEntryNotAStepName]: (key, entry) =>
-    `${key} entry ${entry} does not name a step as \`<workflow file>:<job id>:<step name>\`, so it excludes nothing.`,
   [CoreMessage.StepAccountingHeading]: "### Step accounting",
   [CoreMessage.StepAccountingTableHeader]:
     "| Workflow | Job | Steps read | Candidates | Runners | Reconciler | Excluded | GitHub plumbing | Accounted for |",
@@ -532,11 +495,6 @@ export const CORE_MESSAGES: CoreMessages = {
   [CoreMessage.AmbiguousNamedStep]: (step) =>
     `The step "${step}" is ambiguous — two or more step definitions match it, so the step never ran.`,
   [CoreMessage.AmbiguousUnnamedStep]: "A step is ambiguous — two or more step definitions match it, so the step never ran.",
-  [CoreMessage.ManifestKindList]: "a list",
-  [CoreMessage.ManifestKindObject]: "an object",
-  [CoreMessage.ManifestKindString]: aKind("string"),
-  [CoreMessage.ManifestKindStringOrNull]: "a string or null",
-  [CoreMessage.ManifestKindOfType]: aKind,
   [CoreMessage.OutcomeSatisfied]: SATISFIED,
   [CoreMessage.OutcomeMissing]: MISSING,
   [CoreMessage.OutcomeFailing]: "Evidence Observation is failing",

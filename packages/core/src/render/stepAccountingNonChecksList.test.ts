@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
 import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
@@ -89,7 +90,7 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
 
     expect(section.indexOf(label)).toBeGreaterThan(tableEnd);
     expect(excludedList(section, 3)).toStrictEqual([label, excluded(codeSpan("ci.yml:quality:Types")), ""]);
-    expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it.each([
@@ -104,7 +105,7 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const section = stepAccounting(reportLines(["ci.yml:quality:Lint"]));
     expect(section.length).toBeGreaterThan(0);
     expect(section).not.toContain(label);
-    expect(section.some((line) => line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(section.some((line) => line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 
   it("lists one line for each step an entry matches", () => {
@@ -131,7 +132,7 @@ describe("[SCN-RPT-048] the step-accounting section lists each excluded step ben
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
     expect(lines).not.toContain(label);
-    expect(lines.some((line) => line.includes(excludedMark()) || line.includes(CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("", "\0").replace(/^[^\0]*\0/, "")))).toBe(false);
+    expect(lines.some((line) => line.includes(excludedMark()) || line.includes(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "", entry: "\0" }).replace(/^[^\0]*\0/, "")))).toBe(false);
   });
 });
 

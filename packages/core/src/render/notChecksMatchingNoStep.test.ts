@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { entryOf } from "./inputErrorEntry.test-utils.js";
 import { codeSpan } from "./codeSpan.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
@@ -33,10 +35,10 @@ function reportOf({ entry, workflowsRead, runners }: Target) {
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const section = (lines: readonly string[]): string[] | undefined => (lines.includes(heading) ? sectionUnder(heading)(lines) : undefined);
 
-const named = (entry: string): string => `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryMatchesNoStep]("`specController.notChecks`", `\`${entry}\``)}`;
+const named = (entry: string): string => entryOf(coreMessage(CoreMessage.NotChecksEntryMatchesNoStep, { key: "`specController.notChecks`", entry: `\`${entry}\`` }));
 const notAStepName = (entry: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.NotChecksEntryNotAStepName]("`specController.notChecks`", codeSpan(entry))}`;
-const notALayer = (): string => `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer]("`specController.runners.lint`")}`;
+  entryOf(coreMessage(CoreMessage.NotChecksEntryNotAStepName, { key: "`specController.notChecks`", entry: codeSpan(entry) }));
+const notALayer = (): string => entryOf(coreMessage(CoreMessage.RunnerKeyNotALayer, { key: "`specController.runners.lint`" }));
 
 describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
   it.each([
@@ -49,7 +51,7 @@ describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the
 
     expect(reconciliation.summary.nonChecksMatchingNoStep).toStrictEqual(judged);
     expect(section(lines)).toStrictEqual(
-      judged && [heading, "", CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro], "", ...judged.map(named), ""]
+      judged && [heading, "", coreMessage(CoreMessage.ConfigurationNotReadIntro), "", ...judged.map(named), ""]
     );
   });
 
@@ -79,7 +81,7 @@ describe("[SCN-RPT-087] a notChecks entry that does not name a workflow, a job a
     const { nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting } = reconciliation.summary;
 
     expect([nonChecksNotAStepName, nonChecksMatchingNoStep, stepAccounting?.nonChecksNamingAWorkflowNotRead]).toStrictEqual([[entry], undefined, undefined]);
-    expect(section(lines)).toStrictEqual([heading, "", CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro], "", notAStepName(entry), ""]);
+    expect(section(lines)).toStrictEqual([heading, "", coreMessage(CoreMessage.ConfigurationNotReadIntro), "", notAStepName(entry), ""]);
   });
 
   it.each([

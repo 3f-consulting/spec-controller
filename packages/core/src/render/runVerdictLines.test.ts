@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CORE_MESSAGES, CoreMessage, type CoreMessages } from "./messages.js";
 import type { EvidenceObservation, Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
@@ -35,7 +35,7 @@ function verdictSectionOf(md: string): string[] {
   return lines.slice(start, end);
 }
 
-function verdictLine(headline: CoreMessage, gloss: string, exitCode: number): string {
+function verdictLine(headline: keyof CoreMessages, gloss: string, exitCode: number): string {
   return `${CORE_MESSAGES[headline] as string} — ${gloss} (${CORE_MESSAGES[CoreMessage.VerdictExit](exitCode)})`;
 }
 

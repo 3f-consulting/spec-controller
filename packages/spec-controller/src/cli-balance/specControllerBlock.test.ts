@@ -1,10 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage } from "@3f-consulting/spec-controller-core/internal";
+import { CORE_MESSAGES, CoreMessage, coreMessage } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+
+const CUT = "\u0000";
+// A wrong-kind entry's words around its values: the opening names the entry, the closing is every such entry's.
+const wrongKindWords = (entry: string): string[] => coreMessage(CoreMessage.ConfigurationWrongKind, { entry, is: CUT, reads: CUT }).split(CUT);
+const wrongKindOpening = (entry: string): string => wrongKindWords(`\`${entry}\``)[0] ?? CUT;
+const wrongKindClosing = (): string => wrongKindWords(CUT).at(-1) ?? CUT;
+const configurationEntries = (report: string): string[] => {
+  const lines = report.split("\n");
+  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
+  if (start === -1) return [];
+  const end = lines.findIndex((line, at) => at > start && line.startsWith("#"));
+  return lines.slice(start, end === -1 ? undefined : end).filter((line) => line.startsWith("- "));
+};
+// An entry is a list line ending in its words, whatever lead opens it.
+const isEntryOf = (words: string) => (line: string): boolean => line.startsWith("- ") && line.endsWith(` ${words}`);
 
 const block = { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Checkout"], deferralTags: ["deferred"] };
 
@@ -50,7 +65,7 @@ describe("[SCN-CFG-004] a specController entry of a kind its reader does not tak
 
   it.each(examples)("reconciles a target holding %s, writing nothing to stderr and exiting as the target without it does", (entry, written, without) => {
     const run = balanceOf(written);
-    expect(run.report).toContain(`- \`${entry}\` is `);
+    expect(configurationEntries(run.report).some((line) => line.includes(wrongKindOpening(entry)))).toBe(true);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(balanceOf(without).exitCode);
   });
@@ -71,7 +86,7 @@ describe("[SCN-CFG-006] a specController block whose every entry is a kind its r
   it("reconciles a target holding a runners key that is not a layer, given a number, naming no entry as the wrong kind and writing nothing to stderr", () => {
     const run = balanceOf({ ...block, runners: { unit: "vitest", lint: 5 } });
     expect(run.report).toContain("## Run provenance");
-    expect(run.report.split("\n").filter((line) => /^- `[^`]+` is /.test(line))).toEqual([]);
+    expect(configurationEntries(run.report).filter((line) => line.endsWith(wrongKindClosing()))).toEqual([]);
     expect(run.stderr).toBe("");
   });
 });
@@ -82,9 +97,8 @@ describe("[SCN-CFG-007] a saved run re-rendered names the same specController en
     const saved = join(dir, "saved.json");
     const live = captured([...inputsOf(dir), "--format", "md", "--format", `json:${saved}`]);
     const again = captured(["--render-from-json", saved]);
-    const named = (report: string): string[] => report.split("\n").filter((line) => line.startsWith("- `specController."));
-    expect(named(live.report)).toHaveLength(2);
-    expect(named(again.report)).toEqual(named(live.report));
+    expect(configurationEntries(live.report)).toHaveLength(2);
+    expect(configurationEntries(again.report)).toEqual(configurationEntries(live.report));
     expect(again.stderr).toBe("");
   });
 });
@@ -97,9 +111,9 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
     const without = captured([...inputsOf(dir), "--format", "md"]);
     writeFileSync(join(dir, "package.json"), JSON.stringify({ scripts: { test: "vitest run" }, specController: { ...block, [key]: ["x"] } }));
     const run = captured([...inputsOf(dir), "--format", "md"]);
-    expect(run.report.split("\n").filter((line) => line.startsWith("- `specController."))).toEqual([
-      `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`,
-    ]);
+    const entries = configurationEntries(run.report);
+    expect(entries).toHaveLength(1);
+    expect(entries.every(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: `\`specController.${key}\`` })))).toBe(true);
     expect(run.stderr).toBe("");
     expect(run.exitCode).toBe(without.exitCode);
     expect(accounts(run.report)).toMatch(/^## Summary views\n/);

@@ -7,6 +7,8 @@ import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { entryOf } from "./inputErrorEntry.test-utils.js";
 
 let ledger: Ledger;
 beforeEach(() => {
@@ -32,10 +34,11 @@ const render = (extra: Partial<Summary>): string => {
 };
 
 const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
-const wrongKind = CORE_MESSAGES[CoreMessage.ConfigurationWrongKind];
-const unknownKey = CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey];
+const wrongKind = (entry: string, is: string, reads: string): string =>
+  coreMessage(CoreMessage.ConfigurationWrongKind, { entry, is, reads });
+const unknownKey = (key: string): string => coreMessage(CoreMessage.ConfigurationUnknownKey, { key });
 const notChecksAsAString = (): string =>
-  `- ${wrongKind("`specController.notChecks`", CORE_MESSAGES[CoreMessage.ManifestKindString], CORE_MESSAGES[CoreMessage.ManifestKindList])}`;
+  entryOf(wrongKind("`specController.notChecks`", coreMessage(CoreMessage.ManifestKindString), coreMessage(CoreMessage.ManifestKindList)));
 
 const section = (md: string): string[] => {
   const lines = md.split("\n");
@@ -56,14 +59,33 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
     expect(section(md)).toEqual([
       heading,
       "",
-      CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
+      coreMessage(CoreMessage.ConfigurationNotReadIntro),
       "",
       notChecksAsAString(),
-      `- ${wrongKind("`specController.runners.unit`", CORE_MESSAGES[CoreMessage.ManifestKindOfType]("number"), CORE_MESSAGES[CoreMessage.ManifestKindStringOrNull])}`,
+      entryOf(wrongKind("`specController.runners.unit`", coreMessage(CoreMessage.ManifestKindOfType, { type: "number" }), coreMessage(CoreMessage.ManifestKindStringOrNull))),
       "",
     ]);
     expect(md.indexOf(CORE_MESSAGES[CoreMessage.RunProvenanceHeading])).toBeLessThan(md.indexOf(heading));
     expect(md.indexOf(heading)).toBeLessThan(md.indexOf(CORE_MESSAGES[CoreMessage.SummaryViewsHeading]));
+  });
+});
+
+describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a configuration entry of a kind it does not read", () => {
+  it("opens the entry of the wrong kind with its code, and the entry's words after it", () => {
+    const md = render({ configurationOfWrongKind: [{ entry: "specController.notChecks", is: "string", reads: "list" }] });
+    const words = wrongKind("`specController.notChecks`", coreMessage(CoreMessage.ManifestKindString), coreMessage(CoreMessage.ManifestKindList));
+    expect(section(md).filter((l) => l.startsWith("- "))).toEqual([`- \`configuration-wrong-kind\` — ${words}`]);
+  });
+
+  it.each([
+    ["configuration-unknown-key", { configurationKeysNotRead: ["zzz"] }],
+    ["runner-key-not-a-layer", { runnerKeysNotALayer: ["smoke"] }],
+    ["not-checks-entry-matches-no-step", { nonChecksMatchingNoStep: ["lint"] }],
+    ["not-checks-entry-not-a-step-name", { nonChecksNotAStepName: ["Deploy"] }],
+  ] as const)("opens each configuration entry with its own code, %s", (code, extra) => {
+    const entries = section(render(extra)).filter((l) => l.startsWith("- "));
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.startsWith(`- \`${code}\` — `)).toBe(true);
   });
 });
 
@@ -75,8 +97,8 @@ describe("[SCN-RPT-046] the report names a key the specController block does not
     });
     expect(section(md).filter((l) => l.startsWith("- "))).toEqual([
       notChecksAsAString(),
-      `- ${unknownKey("`specController.fitnessChecks`")}`,
-      `- ${unknownKey("`specController.zzz`")}`,
+      entryOf(unknownKey("`specController.fitnessChecks`")),
+      entryOf(unknownKey("`specController.zzz`")),
     ]);
   });
 });
@@ -124,6 +146,7 @@ describe("[SCN-RPT-088] each configuration entry and workflow name the report qu
     { shown: '"ci.yml:build:Test', extra: { nonChecksMatchingNoStep: ['"ci.yml:build:Test'] } },
     { shown: 'ci.yml:build:Run "lint"', extra: { nonChecksMatchingNoStep: ['ci.yml:build:Run "lint"'] } },
     { shown: "c`i.yml", accounting: { workflowsRead: ["c`i.yml"] } },
+    { shown: "specController.a'{b}#c", extra: { configurationKeysNotRead: ["a'{b}#c"] } },
   ])("shows $shown as written", ({ shown, extra, accounting }) => {
     const lines = render(accounting === undefined ? extra : withNotApplied(accounting)).split("\n");
     expect(lines.filter((line) => codeSpansOf(line).includes(shown))).toHaveLength(1);

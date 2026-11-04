@@ -85,4 +85,5 @@ export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";
 
 export { messagesFrom } from "./render/message.js";
+export { CoreError } from "./render/messages.js";
 export type { Message, MessageValues } from "./render/message.js";

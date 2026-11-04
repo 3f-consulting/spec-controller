@@ -42,7 +42,7 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   }
 }
 
-function refuseUsage(error: RefusalLines | string): void {
+function refuseUsage(error: RefusalLines): void {
   shown().error(error);
   endRunOn(USAGE_REFUSAL);
 }

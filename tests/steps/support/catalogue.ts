@@ -5,19 +5,23 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-const APP_CATALOGUE = join(repoRoot, "packages", "spec-controller", "src", "messages.en.json");
+const DATA_FILES = [
+  join(repoRoot, "packages", "spec-controller", "src", "messages.en.json"),
+  join(repoRoot, "packages", "core", "src", "render", "messages.en.json"),
+];
 
 type Values = Readonly<Record<string, string>>;
 
 type Slot = { readonly slot: string };
 
-let appCatalogue: Readonly<Record<string, string>> | undefined;
+let catalogues: readonly Readonly<Record<string, string>>[] | undefined;
 
+// An entry is looked up in the app's data file and in core's; a code both hold is refused, not picked.
 function messageOf(code: string): string {
-  appCatalogue ??= JSON.parse(readFileSync(APP_CATALOGUE, "utf8")) as Record<string, string>;
-  const message = appCatalogue[code];
-  if (message === undefined) throw new Error(`the app's data file has no entry ${code}`);
-  return message;
+  catalogues ??= DATA_FILES.map((file) => JSON.parse(readFileSync(file, "utf8")) as Record<string, string>);
+  const found = catalogues.filter((catalogue) => Object.hasOwn(catalogue, code)).map((catalogue) => catalogue[code]);
+  if (found.length !== 1) throw new Error(`${found.length} data files have an entry ${code}`);
+  return found[0] as string;
 }
 
 function formatterOf(code: string): IntlMessageFormat {

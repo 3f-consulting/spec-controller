@@ -32,10 +32,10 @@ You do not need feature files to start. A project with none, or with feature fil
 
 ## What you need
 
-**Node 22 or later.**
+**Node 22.12 or later.**
 
 ```sh
-node --version   # must be v22.x or higher
+node --version   # must be v22.12 or higher
 ```
 
 If your project uses pnpm: Node 25 and later do not bundle corepack, so install pnpm yourself (`npm install -g pnpm`).
@@ -636,12 +636,15 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 ### Configuration the run cannot use is named, never dropped
 
-- **An entry of a kind its reader does not take** (a `notChecks` written as one string, a runner written as a number) is read as absent.
-- **A key the block does not read at all** (a misspelling, or a key an older version read) is passed over.
-- **A `runners` key that is not one of the four layers** excludes nothing.
-- **A `notChecks` entry that matches no step of a workflow the run read** excludes nothing.
+| Code | The entry |
+| --- | --- |
+| `configuration-wrong-kind` | an entry of a kind its reader does not take (a `notChecks` written as one string, a runner written as a number) is read as absent |
+| `configuration-unknown-key` | a key the block does not read at all (a misspelling, or a key an older version read) is passed over |
+| `runner-key-not-a-layer` | a `runners` key that is not one of the four layers excludes nothing |
+| `not-checks-entry-matches-no-step` | a `notChecks` entry that matches no step of a workflow the run read excludes nothing |
+| `not-checks-entry-not-a-step-name` | a `notChecks` entry that does not name a step as `<workflow file>:<job id>:<step name>` excludes nothing |
 
-None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it.
+None of them refuses the run. Each is named under `### Configuration not read`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without it. Its entry opens with its code, as in `` - `configuration-wrong-kind` — … ``.
 
 ### Limits
 
@@ -827,7 +830,7 @@ The tool judges scenario code errors only over the corpus that `--features` name
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errors.scenarioCodes` in the JSON), in `## Errors in the inputs` right after the run provenance. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errors.scenarioCodes` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-scn-code` — … ``. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
@@ -861,7 +864,7 @@ An error after the run reaches its verdict does not change the exit code. One li
 
 ### Error codes
 
-**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`.
+**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`. An error in the inputs is not a refusal: its entry in the report opens with its code, listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Scenario code errors](#scenario-code-errors).
 
 | Code | Meaning |
 |---|---|

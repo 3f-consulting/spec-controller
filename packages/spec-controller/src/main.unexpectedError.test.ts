@@ -59,7 +59,7 @@ describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 
   });
 
   describe("a usage refusal that escapes the command", () => {
-    const refusing = (): never => refuse("planted refusal");
+    const refusing = (): never => refuse({ lines: () => "planted refusal" });
 
     it("exits 2, the usage code, not 6", () => {
       expect(answer([], refusing).exitCode).toBe(2);

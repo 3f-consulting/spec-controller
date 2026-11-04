@@ -21,6 +21,9 @@ export {
   CoreMessage,
   QUALITY_CHECK_FAULT_MESSAGES,
   type CoreMessages,
+  type CoreMessageValues,
+  type WordedCoreMessage,
 } from "./render/messages.js";
+export { CORE_TEXTS, coreMessage } from "./render/coreText.js";
 
 export { observationsOf, obligationsOf, reconcilingItemsOf } from "./domain/claimReconciliation.js";

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
+  foreignCodeCarriersOf,
   scenarioCodeErrorsOf,
   scenarioCodePopulationOf,
   type FeatureFileScenarios,
@@ -74,6 +75,25 @@ describe("[SCN-STG-022] a scenario whose feature part no file's header carries o
       file("two", "TWO", ["SCN-THR-002"]),
     ]);
     expect(foreign).toMatchObject({ files: ["two.feature"], namedFeatureCode: "THR", namedFeatureFiles: [] });
+  });
+});
+
+describe("[SCN-RPT-055] a foreign code's carriers are none, or the files carrying the named code", () => {
+  const foreign = (namedFeatureFiles: readonly string[]): ForeignScnCodeError => ({
+    kind: "foreign-scn-code",
+    files: ["two.feature"],
+    featureCode: "TWO",
+    scnId: "SCN-ONE-002",
+    namedFeatureCode: "ONE",
+    namedFeatureFiles,
+  });
+
+  it.each([
+    { carriers: [], expected: { kind: "none" } },
+    { carriers: ["one.feature"], expected: { kind: "carried", files: ["one.feature"] } },
+    { carriers: ["one.feature", "uno.feature"], expected: { kind: "carried", files: ["one.feature", "uno.feature"] } },
+  ])("reads $carriers.length carrying files as $expected.kind", ({ carriers, expected }) => {
+    expect(foreignCodeCarriersOf(foreign(carriers))).toStrictEqual(expected);
   });
 });
 

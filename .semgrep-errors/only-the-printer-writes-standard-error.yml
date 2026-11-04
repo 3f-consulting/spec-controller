@@ -1,0 +1,25 @@
+rules:
+  - id: only-the-printer-writes-standard-error
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      This writes to standard error outside the printer, so what it writes reaches the reader with
+      no error code and from no catalogue. Hand a catalogue error to the printer instead.
+    # Product source only: a test writes to standard error to report on itself, never to a user of the tool.
+    paths:
+      include:
+        - "packages/*/src/**"
+      exclude:
+        - "*.test.ts"
+        - "*.test-utils.ts"
+        - "packages/spec-controller/src/standardError.ts"
+    pattern-either:
+      - pattern: console.error(...)
+      - pattern: console.warn(...)
+      - pattern: console.trace(...)
+      - pattern: console.assert(...)
+      - pattern: process.emitWarning(...)
+      - pattern: $O.stderr.write(...)
+      - pattern: stderr.write(...)
+      - pattern: $FS.writeSync(2, ...)
+      - pattern: writeSync(2, ...)

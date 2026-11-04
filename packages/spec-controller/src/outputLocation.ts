@@ -31,7 +31,7 @@ export function writeOrRefuse(what: Unwritable, path: string, write: () => void)
 // Only balance refuses through here; allocate and the host print their own refusals.
 const REFUSING_COMMAND = "balance";
 
-export function refuse(error: RefusalLines | string): never {
+export function refuse(error: RefusalLines): never {
   standardError(process.stderr, REFUSING_COMMAND).error(error);
   throw new UsageRefusal(errorText(error, REFUSING_COMMAND));
 }

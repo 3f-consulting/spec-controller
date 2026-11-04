@@ -1,6 +1,6 @@
 import { endRunOn, forgetRunEnding, UNEXPECTED_ERROR, usageRefusalSet, type ExitCodeHolder } from "./exitCode.js";
 import { APP_MESSAGES, AppError } from "./messages.js";
-import { standardError, type LineWriter } from "./standardError.js";
+import { standardError, type CodedLine, type LineWriter } from "./standardError.js";
 
 interface CrashingProcess extends ExitCodeHolder {
   on(event: "uncaughtException" | "unhandledRejection", listener: (err: unknown) => void): unknown;
@@ -86,9 +86,9 @@ function settleExitCode(proc: ExitCodeHolder): void {
   endRunOn(UNEXPECTED_ERROR, proc);
 }
 
-function unexpectedErrorLine(err: unknown, afterVerdict: boolean): string {
+function unexpectedErrorLine(err: unknown, afterVerdict: boolean): CodedLine {
   const message = afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError;
-  return APP_MESSAGES[message](nameOf(err), firstLineOf(err));
+  return APP_MESSAGES[message](nameOf(err), firstLineOf(err)) as CodedLine;
 }
 
 function nameOf(err: unknown): string {

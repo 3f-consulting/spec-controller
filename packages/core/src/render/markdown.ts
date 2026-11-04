@@ -72,10 +72,10 @@ function observationSuffix(o: EvidenceObservation): string {
   return `${namedSuffix(o)}${resultOf(o)}`;
 }
 
-const RESULT_MESSAGE: Record<EvidenceStatus, CoreMessage> = {
+const RESULT_MESSAGE = {
   passed: CoreMessage.ObservationPassed,
   failed: CoreMessage.ObservationFailed,
-};
+} as const satisfies Record<EvidenceStatus, CoreMessage>;
 
 function resultOf(o: EvidenceObservation): string {
   return o.status === undefined ? "" : ` — ${CORE_MESSAGES[RESULT_MESSAGE[o.status]]}`;

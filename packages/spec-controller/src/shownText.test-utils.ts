@@ -1,3 +1,5 @@
+import { CoreError } from "@3f-consulting/spec-controller-core";
+
 import { AppError, AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 import type { ShownError } from "./refusal.js";
@@ -37,7 +39,7 @@ export function errorCodesShown(text: string): ErrorCodesShown {
 }
 
 function codesIn(line: string): string[] {
-  return Object.values(AppError).flatMap((code) => [
+  return [...Object.values(AppError), ...Object.values(CoreError)].flatMap((code) => [
     ...line.split(`[${code}]`).slice(1).map(() => code),
     ...(line.trimStart().startsWith(`- \`${code}\``) ? [code] : []),
   ]);

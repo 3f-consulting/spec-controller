@@ -274,6 +274,14 @@ jobs:
           semgrep scan --config .semgrep/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep.json" packages
           jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
+      # The printer's other half is the type check: it refuses an error handed to the printer, or an input error entry, that no catalogue holds.
+      - name: Semgrep — nothing in the packages writes to standard error but the printer
+        id: SCN-FIT-076
+        if: always()
+        run: |
+          semgrep scan --config .semgrep-errors/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep-errors.json" packages
+          jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep-errors.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
+
       - name: Comment share — no file cloc counts over its comment-line ceiling
         id: SCN-FIT-023
         if: always()

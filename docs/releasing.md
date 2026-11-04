@@ -312,7 +312,9 @@ The installed venv is cached under a key of the runner's OS, its `python3` versi
 hash. A run whose key is cached restores the venv and installs nothing. A new lock installs afresh.
 Each rule is its own file in [`.semgrep/`](../.semgrep/), with no registry ruleset and metrics off.
 One step scans the packages with every rule in that directory. Semgrep names the rule in each
-finding.
+finding. The rule that only the printer writes to standard error is in
+[`.semgrep-errors/`](../.semgrep-errors/) instead, and a step of its own scans the packages with
+it, so its fitness scenario has a step that answers it alone.
 
 ---
 

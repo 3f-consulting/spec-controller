@@ -12,10 +12,10 @@ Your test tools and CI already write reports of what ran. Each result in them is
 
 ## What you need
 
-- **Node 22 or later.** Check it:
+- **Node 22.12 or later.** Check it:
 
   ```sh
-  node --version   # must be v22.x or higher
+  node --version   # must be v22.12 or higher
   ```
 
   If your project uses pnpm: Node 25 and later do not bundle corepack, so install pnpm yourself (`npm install -g pnpm`).

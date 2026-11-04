@@ -63,7 +63,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   it("prints balance's refusal of a retired flag with [retired-flag] once, after the usage-error prefix, and no code on its pointer lines", () => {
     const retired = checkUnknownFlags({ measurements: "x.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
     expect(retired).not.toBeNull();
-    const shown = errorText(retired ?? "", "balance");
+    const shown = retired === null ? "" : errorText(retired, "balance");
     const words = message(AppError.RetiredFlag, {
       flag: "--measurements",
       scope: "spec-controller balance",

@@ -17,11 +17,15 @@ import { describe, it, expect } from "vitest";
 
 import {
   CORE_MESSAGES,
+  CORE_TEXTS,
   CoreMessage,
   QUALITY_CHECK_FAULT_MESSAGES,
   QualityCheckFaultCode,
+  coreMessage,
+  type CoreMessageValues,
   type CoreMessages,
   type QualityCheckFault,
+  type WordedCoreMessage,
 } from "@3f-consulting/spec-controller-core/internal";
 import type { MessageValues } from "@3f-consulting/spec-controller-core";
 import APP_TEXTS from "./messages.en.json" with { type: "json" };
@@ -169,8 +173,8 @@ function renderedByHandle<C>(handles: object, rendered: (code: C) => string): Re
 }
 
 type CoreTemplate = {
-  [C in CoreMessage]: CoreMessages[C] extends string ? never : C;
-}[CoreMessage];
+  [C in keyof CoreMessages]: CoreMessages[C] extends string ? never : C;
+}[keyof CoreMessages];
 
 const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessages[C]> } = {
   [CoreMessage.ProvenanceTargetRepo]: ["/repo"],
@@ -180,25 +184,13 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.ProvenanceSourceSha]: ["abc1234"],
   [CoreMessage.ProvenanceToolSha]: ["def5678"],
   [CoreMessage.ProvenanceToolVersion]: ["1.0.0"],
-  [CoreMessage.ConfigurationWrongKind]: ["specController.runners", "a string", "an object"],
-  [CoreMessage.ConfigurationUnknownKey]: ["specController.extra"],
   [CoreMessage.ProofsNeverRan]: [2],
   [CoreMessage.RunUnsound]: ["2 proofs never ran."],
   [CoreMessage.BrokenEvidenceWhatBroke]: ["features/a.feature:3"],
-  [CoreMessage.ScenarioCodeErrorCount]: [2],
-  [CoreMessage.ScenarioCodeErrorsFraming]: ["2 scenario code errors"],
-  [CoreMessage.SeveralScnCodesFraming]: ["1 scenario code error"],
-  [CoreMessage.MisfiledAndSeveralScnCodesFraming]: ["2 scenario code errors"],
   [CoreMessage.ScenarioCodesCleanOver]: ["2 feature files", "2 feature codes"],
   [CoreMessage.CleanNoCodedScenario]: ["over 1 feature file", "it"],
   [CoreMessage.CleanEachFileOwnCode]: ["over 2 feature files"],
   [CoreMessage.CleanOthersNoFeatureCode]: ["over 3 feature files", 1, "holds"],
-  [CoreMessage.DuplicateFeatureCode]: ["ABC", 2, "a.feature, b.feature"],
-  [CoreMessage.ForeignScnCodeOneCarrier]: ["a.feature", "ABC", "SCN-DEF-001", "DEF", "d.feature"],
-  [CoreMessage.ForeignScnCodeManyCarriers]: ["a.feature", "ABC", "SCN-DEF-001", "DEF", 2, "d.feature, e.feature"],
-  [CoreMessage.ForeignScnCodeNoCarrier]: ["a.feature", "ABC", "SCN-DEF-001", "DEF"],
-  [CoreMessage.NoFeatureCode]: ["a.feature"],
-  [CoreMessage.ScenarioSeveralScnCodes]: ["a.feature", "a scenario", ["SCN-ABC-001", "SCN-ABC-002"]],
   [CoreMessage.VerdictExit]: [1],
   [CoreMessage.ScenarioCodeErrorsGloss]: [""],
   [CoreMessage.SeveralScnCodesGloss]: [""],
@@ -207,11 +199,8 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.PendingTally]: [1],
   [CoreMessage.EvidenceObservationsSum]: [3, 1, 1, 1],
   [CoreMessage.FitnessCiStep]: [2],
-  [CoreMessage.RunnerKeyNotALayer]: ["smoke"],
   [CoreMessage.ReconcilerStep]: ["ci.yml / build / balance", "this step runs the reconciliation this report is"],
   [CoreMessage.StepExcluded]: ["ci.yml / build / lint"],
-  [CoreMessage.NotChecksEntryMatchesNoStep]: ["`specController.notChecks`", "ci.yml / build / gone"],
-  [CoreMessage.NotChecksEntryNotAStepName]: ["`specController.notChecks`", "`Deploy`"],
   [CoreMessage.StepAccountingNotAppliedLabel]: ["`specController.notChecks`", "`ci.yml`"],
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: [1, 3],
   [CoreMessage.NotGroupedByFeature]: ["1 Claim Reconciliation(s) for cited scenario ids with no real scenario"],
@@ -230,7 +219,6 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.CheckStepSkipped]: ["SCN-ABC-001"],
   [CoreMessage.CheckStepEnded]: ["SCN-ABC-001", "cancelled"],
   [CoreMessage.AmbiguousNamedStep]: ["Given a thing"],
-  [CoreMessage.ManifestKindOfType]: ["number"],
   [CoreMessage.UnnamedClaimGroupCounts]: [3, 2, 1],
   [CoreMessage.UnnamedClaimCiSteps]: [["lint:bar", "lint:foo"]],
   [CoreMessage.UnnamedClaimFailedNames]: [["spawns yarn", "reads the lockfile"]],
@@ -238,8 +226,32 @@ const SAMPLE_CORE_PARAMS: { readonly [C in CoreTemplate]: Parameters<CoreMessage
   [CoreMessage.SharedScnCode]: ["SCN-ABC-001"],
 };
 
+const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessageValues[C] } = {
+  [CoreMessage.ConfigurationWrongKind]: { entry: "specController.runners", is: "a string", reads: "an object" },
+  [CoreMessage.ConfigurationUnknownKey]: { key: "specController.extra" },
+  [CoreMessage.RunnerKeyNotALayer]: { key: "smoke" },
+  [CoreMessage.NotChecksEntryMatchesNoStep]: { key: "`specController.notChecks`", entry: "ci.yml / build / gone" },
+  [CoreMessage.NotChecksEntryNotAStepName]: { key: "`specController.notChecks`", entry: "`Deploy`" },
+  [CoreMessage.ManifestKindOfType]: { type: "number" },
+  [CoreMessage.ScenarioCodeErrorCount]: { count: 2 },
+  [CoreMessage.ScenarioCodeErrorsFraming]: { count: "2 scenario code errors" },
+  [CoreMessage.SeveralScnCodesFraming]: { count: "1 scenario code error" },
+  [CoreMessage.MisfiledAndSeveralScnCodesFraming]: { count: "2 scenario code errors" },
+  [CoreMessage.DuplicateScnCodeNotListed]: { outcome: "Evidence Obligation's @SCN code is carried by another Scenario" },
+  [CoreMessage.DuplicateFeatureCode]: { code: "ABC", fileCount: 2, files: "a.feature, b.feature" },
+  [CoreMessage.ForeignScnCodeCarried]: { file: "a.feature", featureCode: "ABC", scnId: "SCN-DEF-001", named: "DEF", carrierCount: 2, carriers: "d.feature, e.feature" },
+  [CoreMessage.ForeignScnCodeNoCarrier]: { file: "a.feature", featureCode: "ABC", scnId: "SCN-DEF-001", named: "DEF" },
+  [CoreMessage.NoFeatureCode]: { file: "a.feature" },
+  [CoreMessage.ScenarioSeveralScnCodes]: { file: "a.feature", scenario: "a scenario", codeCount: 2, codes: "SCN-ABC-001, SCN-ABC-002" },
+};
+
 function renderedCore(code: CoreMessage): string {
-  const entry = CORE_MESSAGES[code];
+  if (!(code in CORE_MESSAGES)) {
+    const worded = code as WordedCoreMessage;
+    const values = (SAMPLE_CORE_VALUES as Partial<Record<WordedCoreMessage, MessageValues>>)[worded];
+    return (coreMessage as (code: WordedCoreMessage, values?: MessageValues) => string)(worded, values);
+  }
+  const entry = CORE_MESSAGES[code as keyof CoreMessages];
   if (typeof entry === "string") return entry;
   return (entry as (...params: unknown[]) => string)(...SAMPLE_CORE_PARAMS[code as CoreTemplate]);
 }
@@ -401,9 +413,10 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
   it("holds core's report catalogue to every core message code and nothing else", () => {
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
-    expect(keysOf(CORE_MESSAGES)).toEqual(codes);
-    const templates = (codes as CoreMessage[]).filter((code) => typeof CORE_MESSAGES[code] !== "string");
-    expect((keysOf(SAMPLE_CORE_PARAMS) as CoreMessage[]).map((code) => CoreMessage[code])).toEqual(templates.map((code) => CoreMessage[code]));
+    expect(keysOf({ ...CORE_MESSAGES, ...CORE_TEXTS })).toEqual(codes);
+    const tabled = codes.filter((code): code is keyof CoreMessages => typeof code === "number");
+    const templates = tabled.filter((code) => typeof CORE_MESSAGES[code] !== "string");
+    expect((keysOf(SAMPLE_CORE_PARAMS) as (keyof CoreMessages)[]).map((code) => CoreMessage[code])).toEqual(templates.map((code) => CoreMessage[code]));
   });
 
   it("holds the app's catalogue to every app message code and nothing else", () => {
@@ -421,9 +434,11 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
     const root = fileURLToPath(new URL("../../..", import.meta.url));
     const eslint = new ESLint({ cwd: root });
     const text = '{\n  "unknown-flag": "One.",\n  "unknown-flag": "Two."\n}\n';
-    const [result] = await eslint.lintText(text, { filePath: `${root}packages/spec-controller/src/messages.en.json` });
-    const found = result?.messages.map(({ ruleId, message }) => ({ ruleId, message }));
-    expect(found).toEqual([{ ruleId: "json/no-duplicate-keys", message: expect.stringContaining('"unknown-flag"') }]);
+    for (const dataFile of ["packages/spec-controller/src/messages.en.json", "packages/core/src/render/messages.en.json"]) {
+      const [result] = await eslint.lintText(text, { filePath: `${root}${dataFile}` });
+      const found = result?.messages.map(({ ruleId, message }) => ({ ruleId, message }));
+      expect(found).toEqual([{ ruleId: "json/no-duplicate-keys", message: expect.stringContaining('"unknown-flag"') }]);
+    }
   });
 
   it("holds core's fault catalogue to every fault code and nothing else, with no fault rendering blank", () => {
@@ -450,6 +465,9 @@ describe("[SCN-MSG-003] every message belongs to a code", () => {
     const codes = [...codesOf(AppMessage), ...codesOf(AppError)].filter((code) => typeof code === "string");
     expect(codes.length).toBeGreaterThan(0);
     expect(entriesWithoutCode(codes, APP_TEXTS)).toEqual([]);
+    const coreCodes = codesOf(CoreMessage).filter((code) => typeof code === "string");
+    expect(coreCodes.length).toBeGreaterThan(0);
+    expect(entriesWithoutCode(coreCodes, CORE_TEXTS)).toEqual([]);
   });
 });
 
@@ -460,6 +478,7 @@ describe("[SCN-MSG-004] no message is empty", () => {
 
   it("holds the app's data file to messages that are not blank", () => {
     expect(blankEntries(APP_TEXTS)).toEqual([]);
+    expect(blankEntries(CORE_TEXTS)).toEqual([]);
   });
 
   it("holds every entry of core's report catalogue and the app's catalogue to a message that does not render blank, naming it by its handle", () => {
@@ -480,6 +499,7 @@ describe("[SCN-MSG-005] a message uses only the values its code gives it", () =>
 
   it("holds every message in the app's data file to the values its code's sample values give", () => {
     expect(placeholdersNotGiven(APP_TEXTS, SAMPLE_APP_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
+    expect(placeholdersNotGiven(CORE_TEXTS, SAMPLE_CORE_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
   });
 });
 
@@ -495,6 +515,7 @@ describe("[SCN-MSG-006] a message uses every value its code gives it", () => {
 
   it("holds every message in the app's data file to use every value its code's sample values give", () => {
     expect(valuesNotUsed(APP_TEXTS, SAMPLE_APP_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
+    expect(valuesNotUsed(CORE_TEXTS, SAMPLE_CORE_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
   });
 });
 
@@ -506,6 +527,7 @@ describe("[SCN-MSG-007] every message parses", () => {
 
   it("holds every message in the app's data file to parse", () => {
     expect(unparseable(APP_TEXTS)).toEqual([]);
+    expect(unparseable(CORE_TEXTS)).toEqual([]);
   });
 });
 
@@ -528,6 +550,7 @@ describe("[SCN-MSG-008] every message prints its words as written", () => {
 
   it("holds every message in the app's data file to print its words as written", () => {
     expect(notAsWritten(APP_TEXTS)).toEqual([]);
+    expect(notAsWritten(CORE_TEXTS)).toEqual([]);
   });
 });
 
@@ -545,5 +568,6 @@ describe("[SCN-MSG-009] no message chooses between words other than by a count's
 
   it("holds every message in the app's data file to choose between words only by a count's plural forms", () => {
     expect(choosingWords(APP_TEXTS)).toEqual([]);
+    expect(choosingWords(CORE_TEXTS)).toEqual([]);
   });
 });

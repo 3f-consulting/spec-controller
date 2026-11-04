@@ -723,7 +723,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
     return target;
   }
 
-  const printed = (command: string, shown: unknown): string => errorText(shown as RefusalLines | string, command).trimEnd();
+  const printed = (command: string, shown: unknown): string => errorText(shown as RefusalLines, command).trimEnd();
 
   const ROWS: readonly (readonly [string, string, string, () => unknown])[] = [
     ["balance's unreadable corpus", "could-not-be-read", "balance", () => corpusDirRefusal({ path: "features", reason: "EACCES: permission denied, scandir 'features'" })],

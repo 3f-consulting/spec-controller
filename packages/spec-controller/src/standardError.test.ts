@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AppError } from "./messages.js";
-import { errorText, standardError } from "./standardError.js";
+import { errorText, standardError, type CodedLine } from "./standardError.js";
 import { refusal } from "./refusal.js";
 import { errorCodesShown } from "./shownText.test-utils.js";
 
@@ -71,7 +71,7 @@ describe("[SCN-CLI-056] an unknown command is named after the tool", () => {
 
 describe("[SCN-CLI-101] an error given as its words is printed as they are, on its own line", () => {
   it("prints the words, then a newline, whatever the command", () => {
-    const words = "spec-controller stopped on an unexpected error, and gives no verdict: Error: boom";
+    const words = "spec-controller stopped on an unexpected error, and gives no verdict: Error: boom" as CodedLine;
     expect(printedBy("allocate", (shown) => shown.error(words))).toEqual([`${words}\n`]);
     expect(errorText(words, "allocate")).toBe(words);
   });

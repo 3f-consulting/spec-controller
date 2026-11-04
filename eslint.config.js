@@ -508,7 +508,7 @@ export default [
   },
 
   {
-    files: ["packages/*/src/messages.*.json"],
+    files: ["packages/*/src/**/messages.*.json"],
     plugins: { json },
     language: "json/json",
     rules: {

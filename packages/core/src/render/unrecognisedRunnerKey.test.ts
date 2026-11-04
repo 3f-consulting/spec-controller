@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { coreMessage } from "./coreText.js";
+import { entryOf } from "./inputErrorEntry.test-utils.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
 import { sectionUnder } from "./renderedSection.test-utils.js";
@@ -31,10 +33,10 @@ const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
 const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
 
 const notALayer = (key: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.RunnerKeyNotALayer](`\`specController.runners.${key}\``)}`;
+  entryOf(coreMessage(CoreMessage.RunnerKeyNotALayer, { key: `\`specController.runners.${key}\`` }));
 
 const notRead = (key: string): string =>
-  `- ${CORE_MESSAGES[CoreMessage.ConfigurationUnknownKey](`\`specController.${key}\``)}`;
+  entryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: `\`specController.${key}\`` }));
 
 describe("[SCN-RPT-053] each runners key outside the four layers is named under Configuration not read, after the keys the specController block does not read", () => {
   it("gives a target whose only unread configuration is a key outside the four layers the whole section, naming that key", () => {
@@ -43,7 +45,7 @@ describe("[SCN-RPT-053] each runners key outside the four layers is named under 
     expect(section(lines)).toStrictEqual([
       heading,
       "",
-      CORE_MESSAGES[CoreMessage.ConfigurationNotReadIntro],
+      coreMessage(CoreMessage.ConfigurationNotReadIntro),
       "",
       notALayer("lint"),
       "",
