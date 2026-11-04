@@ -1,4 +1,4 @@
-import type { RenderInput } from "../domain/renderInput.js";
+import { featureFilesWithNoFeatureCodeOf, type RenderInput } from "../domain/renderInput.js";
 import { foreignCodeCarriersOf, scenarioCodeErrorsAre, type ForeignScnCodeError, type ScenarioCodeError } from "../domain/scnTags.js";
 import { CORE_MESSAGES, CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
@@ -36,7 +36,7 @@ function cleanStatement(featureFiles: number, featureCodes: number): string {
     return CORE_MESSAGES[CoreMessage.CleanNoCodedScenario](over, them);
   }
   if (featureCodes === featureFiles) return CORE_MESSAGES[CoreMessage.CleanEachFileOwnCode](over);
-  const noFeatureCode = featureFiles - featureCodes;
+  const noFeatureCode = featureFilesWithNoFeatureCodeOf({ featureFiles, featureCodes });
   const hold = noFeatureCode === 1 ? CORE_MESSAGES[CoreMessage.HoldsVerb] : CORE_MESSAGES[CoreMessage.HoldVerb];
   return CORE_MESSAGES[CoreMessage.CleanOthersNoFeatureCode](over, noFeatureCode, hold);
 }
